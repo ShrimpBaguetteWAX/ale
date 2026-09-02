@@ -306,16 +306,31 @@ function Arena({
    */
   const [settled, setSettled] = useState(false)
 
+  /**
+   * Skipping, which is a different question and needs its own answer.
+   *
+   * The hold below is about letting a blow finish before the fight is scored.
+   * A player who presses Skip has said they do not want to watch the blow at
+   * all, so the hold has nothing to wait for — and worse, it used to undo the
+   * skip: pressing it mid-swing left `shownStep` one behind `total` for a
+   * frame, the effect read that as "not there yet" and cleared `settled`, and
+   * the screen played out the last hit and then held for another beat before
+   * the result appeared. Which is exactly what Skip is for avoiding.
+   */
+  const [skipped, setSkipped] = useState(false)
+
   useEffect(() => {
+    /* Already answered; nothing here may overrule it. */
+    if (skipped) return
     if (shownStep < total) {
       setSettled(false)
       return
     }
     const id = setTimeout(() => setSettled(true), FINISH_HOLD_MS / speed)
     return () => clearTimeout(id)
-  }, [shownStep, total, speed])
+  }, [shownStep, total, speed, skipped])
 
-  const finished = settled
+  const finished = settled || skipped
 
   /**
    * Who swings next.
@@ -363,16 +378,17 @@ function Arena({
     }
   }, [replay, shown])
 
+  /* Asking to skip is asking for the result now, not after the last blow. */
   const skip = useCallback(() => {
     setPlaying(false)
     setStep(total)
-    /* Asking to skip is asking for the result now, not after the last blow. */
-    setSettled(true)
+    setSkipped(true)
   }, [total])
 
   const restart = useCallback(() => {
     setStep(0)
     setSettled(false)
+    setSkipped(false)
     setPlaying(true)
   }, [])
 
