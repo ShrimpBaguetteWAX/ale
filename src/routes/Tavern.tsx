@@ -42,6 +42,7 @@ import {
 } from '@/tavern/fighterStats'
 import { hireFighter, revealFighter } from '@/wharf/actions'
 import { readableError } from '@/wharf/errors'
+import { asset } from '@/assets'
 
 /**
  * Card art, keyed by template id.
@@ -52,14 +53,14 @@ import { readableError } from '@/wharf/errors'
  * artwork, so the tile falls back to the generic card.
  */
 function cardArt(t: TavernTemplate): string {
-  return '/assets/cards/' + t.templateid + '.webp'
+  return asset('/assets/cards/') + t.templateid + '.webp'
 }
 
 function onArtError(e: React.SyntheticEvent<HTMLImageElement>) {
   const img = e.currentTarget
   if (img.dataset.fallback) return
   img.dataset.fallback = '1'
-  img.src = '/assets/default-card.png'
+  img.src = asset('/assets/default-card.png')
 }
 
 /** The good/bad arrow for one stat, or nothing where it has no meaning. */
@@ -339,7 +340,7 @@ export default function Tavern() {
 
   return (
     <div className="tavern">
-      <img className="tavern__art" src="/assets/background/bg-tavern.png" alt="" />
+      <img className="tavern__art" src={asset("/assets/background/bg-tavern.png")} alt="" />
       <div className="tavern__scrim" />
 
       <div className="tavern__inner">
@@ -367,7 +368,7 @@ export default function Tavern() {
                 <span
                   className={`hire__value${canAfford ? '' : ' hire__value--short'}`}
                 >
-                  <img src="/assets/icons/energy.png" alt="" />
+                  <img src={asset("/assets/icons/energy.png")} alt="" />
                   {breakdown.cost}
                 </span>
                 <span className="hire__detail">
@@ -410,7 +411,7 @@ export default function Tavern() {
 
             {!revealed ? (
               <div className="tavern__empty">
-                <img src="/assets/fighter/unknown-fighter.jpeg" alt="" />
+                <img src={asset("/assets/fighter/unknown-fighter.jpeg")} alt="" />
                 <p className="muted">
                   Nobody has stepped forward yet. Reveal to see who this tavern
                   has on offer.
@@ -512,7 +513,7 @@ export default function Tavern() {
                     return (
                       <div className="resgrid__cell" key={key}>
                         <img
-                          src={`/assets/icons/elements/${label.toLowerCase()}.png`}
+                          src={asset(`/assets/icons/elements/${label.toLowerCase()}.png`)}
                           alt=""
                         />
                         <span className="resgrid__label">{label}</span>

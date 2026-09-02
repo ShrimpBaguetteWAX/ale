@@ -25,6 +25,7 @@ import { refreshChore } from '@/chores/signal'
 import { readableError } from '@/wharf/errors'
 import { formatNumber, formatDecimals } from '@/format'
 import type { Player } from '@/chain/types'
+import { asset } from '@/assets'
 
 /**
  * The Candle.
@@ -192,7 +193,7 @@ export default function Candle() {
     <div className="candle">
       {/* The one screen that never had its backdrop, though the art was
           already in the build. */}
-      <img className="candle__art" src="/assets/background/bg-candle.png" alt="" />
+      <img className="candle__art" src={asset("/assets/background/bg-candle.png")} alt="" />
       <div className="candle__scrim" />
 
       <header className="candle__head">
@@ -475,14 +476,14 @@ export function Mission({
             <dt>Total in</dt>
             <dd>
               {formatNumber(share.total)}
-              <img src="/assets/icons/gems.png" alt="gems" width={14} height={14} />
+              <img src={asset("/assets/icons/gems.png")} alt="gems" width={14} height={14} />
             </dd>
           </div>
           <div>
             <dt>You put in</dt>
             <dd>
               {formatNumber(share.mine)}
-              <img src="/assets/icons/gems.png" alt="gems" width={14} height={14} />
+              <img src={asset("/assets/icons/gems.png")} alt="gems" width={14} height={14} />
             </dd>
           </div>
           <div>
@@ -519,7 +520,7 @@ export function Mission({
             <strong>{mine > 0 ? 'Add more gems' : 'Contribute gems'}</strong>
             <span className="faint">
               You hold {formatNumber(balance)}
-              <img src="/assets/icons/gems.png" alt="gems" width={13} height={13} />
+              <img src={asset("/assets/icons/gems.png")} alt="gems" width={13} height={13} />
             </span>
           </div>
 
@@ -629,12 +630,12 @@ export function Winnings({
         <>
           <div className="winnings__rows">
             <div className="winnings__row">
-              <img src="/assets/icons/tlm.svg" alt="" width={20} height={20} />
+              <img src={asset("/assets/icons/tlm.svg")} alt="" width={20} height={20} />
               <strong>{formatDecimals(tlm, placesFor(tlm, 'tlm'))}</strong>
               <span>TLM</span>
             </div>
             <div className="winnings__row">
-              <img src="/assets/icons/wax-coin.png" alt="" width={20} height={20} />
+              <img src={asset("/assets/icons/wax-coin.png")} alt="" width={20} height={20} />
               <strong>{formatDecimals(wax, placesFor(wax, 'wax'))}</strong>
               <span>WAX</span>
             </div>

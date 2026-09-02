@@ -1,5 +1,6 @@
 import type { KeyValue, Player } from '@/chain/types'
 import type { CandleOffer } from './types'
+import { asset } from '@/assets'
 
 /**
  * How the candle works, from `recovery.ale`.
@@ -66,9 +67,9 @@ export function tokenSymbol(type: string): string {
 
 export function tokenIcon(type: string): string {
   const t = (type ?? '').toLowerCase()
-  if (t === 'wax') return '/assets/icons/wax-coin.png'
-  if (t === 'shards') return '/assets/icons/shards.svg'
-  return '/assets/icons/tlm.svg'
+  if (t === 'wax') return asset('/assets/icons/wax-coin.png')
+  if (t === 'shards') return asset('/assets/icons/shards.svg')
+  return asset('/assets/icons/tlm.svg')
 }
 
 /* ---------- the offer ---------- */

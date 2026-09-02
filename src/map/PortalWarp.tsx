@@ -1,4 +1,5 @@
 import type { Planet } from '@/chain/config'
+import { asset } from '@/assets'
 
 /**
  * The wormhole, for a portal jump between planets.
@@ -110,7 +111,7 @@ export function PortalWarp({
       <div className="warpgate__arrival" aria-hidden="true">
         <span
           className="warpgate__globe"
-          style={{ backgroundImage: `url('/assets/maps/${to}.jpg')` }}
+          style={{ backgroundImage: `url('${asset(`/assets/maps/${to}.jpg`)}')` }}
         />
         <span className="warpgate__limb" />
       </div>

@@ -82,6 +82,7 @@ import {
 import { refreshChore } from '@/chores/signal'
 import { readableError } from '@/wharf/errors'
 import { formatNumber, formatDecimals, NUM_LOCALE } from '@/format'
+import { asset } from '@/assets'
 
 /**
  * Account.
@@ -263,7 +264,7 @@ export default function Profile() {
         <span
           className="account__avatar"
           style={{
-            backgroundImage: `url('${avatarArt(player.active_avatar)}'), url('/assets/avatar/unknown.webp')`,
+            backgroundImage: `url('${avatarArt(player.active_avatar)}'), url('${asset('/assets/avatar/unknown.webp')}')`,
           }}
           aria-hidden="true"
         />
@@ -517,7 +518,7 @@ export function AvatarTab({
                 const img = e.currentTarget
                 if (img.dataset.fallback) return
                 img.dataset.fallback = '1'
-                img.src = '/assets/avatar/unknown.webp'
+                img.src = asset('/assets/avatar/unknown.webp')
               }}
             />
             <span className="avatarcard__cat">{avatar.avatar_category}</span>
@@ -836,12 +837,12 @@ export function MiningTab({
         </div>
         <div className="splitlabels">
           <span>
-            <img src="/assets/icons/tlm.svg" alt="" width={14} height={14} />
+            <img src={asset("/assets/icons/tlm.svg")} alt="" width={14} height={14} />
             {share}% TLM
           </span>
           <span>
             {100 - share}% Shards
-            <img src="/assets/icons/shards.svg" alt="" width={14} height={14} />
+            <img src={asset("/assets/icons/shards.svg")} alt="" width={14} height={14} />
           </span>
         </div>
 
@@ -901,14 +902,14 @@ export function ToolCard({
     >
       <img
         className="toolcard__art"
-        src={`/assets/cards/${tool.template_id}.webp`}
+        src={asset(`/assets/cards/${tool.template_id}.webp`)}
         alt=""
         loading="lazy"
         onError={(e) => {
           const img = e.currentTarget
           if (img.dataset.fallback) return
           img.dataset.fallback = '1'
-          img.src = '/assets/default-card.png'
+          img.src = asset('/assets/default-card.png')
         }}
       />
       <span className="toolcard__body">
@@ -1332,7 +1333,7 @@ export function CurrencyTab({
           <div className="unlockrow">
             <span>
               {formatNumber(capacity.step)} more rows ·{' '}
-              <img src="/assets/icons/gems.png" alt="" width={13} height={13} />
+              <img src={asset("/assets/icons/gems.png")} alt="" width={13} height={13} />
               {formatNumber(capacity.price)} gems
             </span>
             <span className="spacer" />

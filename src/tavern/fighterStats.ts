@@ -1,5 +1,6 @@
 import type { TavernFighter } from '@/chain/types'
 import { NUM_LOCALE, formatDecimals } from '@/format'
+import { asset } from '@/assets'
 
 /**
  * `creation.ale` / `classtemps` — the per-class stat bands every roll falls
@@ -112,12 +113,12 @@ export type StatGrade =
   | 'red-duble-down'
 
 export const GRADE_ICON: Record<StatGrade, string> = {
-  'gold-up': '/assets/icons/arrows/gold-up.png',
-  'green-duble-up': '/assets/icons/arrows/green-duble-up.png',
-  'green-up': '/assets/icons/arrows/green-up.png',
-  middle: '/assets/icons/arrows/middle.png',
-  'red-down': '/assets/icons/arrows/red-down.png',
-  'red-duble-down': '/assets/icons/arrows/red-duble-down.png',
+  'gold-up': asset('/assets/icons/arrows/gold-up.png'),
+  'green-duble-up': asset('/assets/icons/arrows/green-duble-up.png'),
+  'green-up': asset('/assets/icons/arrows/green-up.png'),
+  middle: asset('/assets/icons/arrows/middle.png'),
+  'red-down': asset('/assets/icons/arrows/red-down.png'),
+  'red-duble-down': asset('/assets/icons/arrows/red-duble-down.png'),
 }
 
 export const GRADE_LABEL: Record<StatGrade, string> = {
@@ -233,7 +234,7 @@ export function abilityName(displayname: string): string {
  * — the sources average 867KB and one is 5MB.
  */
 export function fighterArt(fighter: Pick<TavernFighter, 'classname' | 'racename'>): string {
-  return `/assets/fighters/${fighter.classname}_${fighter.racename}.webp`
+  return asset(`/assets/fighters/${fighter.classname}_${fighter.racename}.webp`)
 }
 
 /**
@@ -248,23 +249,23 @@ export function fighterAvatar(fighter: {
   classname: string
   racename: string
 }): string {
-  return `/assets/fighters/${fighter.classname}_${fighter.racename}_avatar.webp`
+  return asset(`/assets/fighters/${fighter.classname}_${fighter.racename}_avatar.webp`)
 }
 
 export function fighterArtFallback(): string {
-  return '/assets/fighters/unknown_unknown.webp'
+  return asset('/assets/fighters/unknown_unknown.webp')
 }
 
 /** Elemental backdrop behind the portrait. */
 export function elementBackground(element: string): string {
   const known = ['air', 'fire', 'gem', 'metal', 'nature', 'neutral']
   const key = known.includes(element) ? element : 'neutral'
-  return `/assets/fighter/classes/backgrounds/full/full_background_${key}.jpeg`
+  return asset(`/assets/fighter/classes/backgrounds/full/full_background_${key}.jpeg`)
 }
 
 /** Icon beside a stat name, from the original set. */
 export function statIcon(field: string): string {
-  return '/assets/icons/stats/' + field + '.svg'
+  return asset('/assets/icons/stats/') + field + '.svg'
 }
 
 /* ---------- Ability descriptions ---------- */

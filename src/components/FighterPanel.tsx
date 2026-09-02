@@ -19,6 +19,7 @@ import {
   statIcon,
   STAT_LABEL,
 } from '@/tavern/fighterStats'
+import { asset } from '@/assets'
 
 /**
  * The full read on a fighter — the tavern's display, made reusable.
@@ -242,7 +243,7 @@ export function FighterPanel({
             const raw = (fighter as unknown as Record<string, number>)[key]
             return (
               <div className="resgrid__cell" key={key}>
-                <img src={`/assets/icons/elements/${label.toLowerCase()}.png`} alt="" />
+                <img src={asset(`/assets/icons/elements/${label.toLowerCase()}.png`)} alt="" />
                 <span className="resgrid__label">{label}</span>
                 <span className="resgrid__value mono">
                   {formatResistance(raw)}
@@ -280,7 +281,7 @@ export function FighterPanel({
                   {rarity && <span className="ability__rarity">{rarity}</span>}
                   {locked && (
                     <span className="ability__locked">
-                      <img src="/assets/icons/lock.svg" alt="" width={11} height={11} />
+                      <img src={asset("/assets/icons/lock.svg")} alt="" width={11} height={11} />
                       {abilityUnlockLevel
                         ? `Locked until ascension ${abilityUnlockLevel}`
                         : 'Locked until ascension'}

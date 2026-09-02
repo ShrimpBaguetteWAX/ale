@@ -69,6 +69,7 @@ import {
 import { fieldedStats, levelFactor, ageFactor } from '@/fight/scaling'
 import { playArena } from '@/wharf/actions'
 import { readableError } from '@/wharf/errors'
+import { asset } from '@/assets'
 
 /**
  * Challenging an arena.
@@ -390,7 +391,7 @@ export default function Arena() {
 
   return (
     <div className="dungeon arena">
-      <img className="dungeon__art" src="/assets/background/bg-arena.png" alt="" />
+      <img className="dungeon__art" src={asset("/assets/background/bg-arena.png")} alt="" />
       <div className="dungeon__scrim" />
 
       <div className="dungeon__inner">
@@ -424,7 +425,7 @@ export default function Arena() {
                 <span className="dungeon__cost">
                   −{energyCost}
                   <img
-                    src="/assets/icons/energy.png"
+                    src={asset("/assets/icons/energy.png")}
                     alt="energy"
                     width={16}
                     height={16}

@@ -11,6 +11,7 @@ import { useGame } from '@/state/useGame'
 import { NetworkStatus } from '@/components/NetworkStatus'
 import { SwitchWallet } from '@/components/SwitchWallet'
 import { GameLogo } from '@/components/GameLogo'
+import { asset } from '@/assets'
 
 /** Copy is kept verbatim from the live site — players know these words. */
 const PITCHES = [
@@ -30,17 +31,17 @@ const PITCHES = [
 
 const PILLARS = [
   {
-    icon: '/assets/icons/catch.png',
+    icon: asset('/assets/icons/catch.png'),
     title: 'Recruit',
     body: 'Hire fighters at taverns across six planets. Class, race and element decide how a squad holds together.',
   },
   {
-    icon: '/assets/icons/battle.png',
+    icon: asset('/assets/icons/battle.png'),
     title: 'Battle',
     body: 'Run dungeons, take the arena, and climb the weekly tournament ladder for shards and rewards.',
   },
   {
-    icon: '/assets/icons/build.png',
+    icon: asset('/assets/icons/build.png'),
     title: 'Build',
     body: 'Claim land, raise taverns, mines and arenas, and take a cut of everything they generate.',
   },
@@ -71,7 +72,7 @@ export function Landing() {
         <img
           {...HIGH_PRIORITY}
           className="hero__art"
-          src="/assets/background/bg-catch-and-conquer.jpeg"
+          src={asset("/assets/background/bg-catch-and-conquer.jpeg")}
           alt=""
           decoding="async"
         />
@@ -120,7 +121,7 @@ export function Landing() {
         ref={sectionsRef}
         style={
           {
-            '--sections-art': "url('/assets/background/bg-catch-and-conquer-footer.jpeg')",
+            '--sections-art': `url('${asset('/assets/background/bg-catch-and-conquer-footer.jpeg')}')`,
           } as React.CSSProperties
         }
       >

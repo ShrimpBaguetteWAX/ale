@@ -13,6 +13,7 @@ import {
 } from '@/wharf/actions'
 import { fetchSignupStat } from '@/chain/queries'
 import { NUM_LOCALE } from '@/format'
+import { asset } from '@/assets'
 
 /**
  * Signup is two on-chain steps, because that is how the contract works:
@@ -99,7 +100,7 @@ export default function Signup() {
 
   return (
     <div className="auth">
-      <img className="auth__art" src="/assets/background/bg-sign.jpeg" alt="" />
+      <img className="auth__art" src={asset("/assets/background/bg-sign.jpeg")} alt="" />
       <div className="auth__scrim" />
 
       <div className="auth__card panel">

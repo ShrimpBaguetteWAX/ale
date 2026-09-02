@@ -33,6 +33,7 @@ import { claimFarming, stakeCards, unstakeCards } from '@/wharf/actions'
 import { refreshChore } from '@/chores/signal'
 import { readableError } from '@/wharf/errors'
 import { formatNumber } from '@/format'
+import { asset } from '@/assets'
 
 /**
  * Farming.
@@ -310,7 +311,7 @@ export default function Farming() {
               {stakeCost > 0 && (
                 <span className={`cost${stakeCost > gems ? ' cost--short' : ''}`}>
                   −{formatNumber(stakeCost)}
-                  <img src="/assets/icons/gems.png" alt="gems" width={16} height={16} />
+                  <img src={asset("/assets/icons/gems.png")} alt="gems" width={16} height={16} />
                 </span>
               )}
             </button>
@@ -513,14 +514,14 @@ function CardTile({
     >
       <img
         className="cardtile__art"
-        src={`/assets/cards/${templateId}.webp`}
+        src={asset(`/assets/cards/${templateId}.webp`)}
         alt=""
         loading="lazy"
         onError={(e) => {
           const img = e.currentTarget
           if (img.dataset.fallback) return
           img.dataset.fallback = '1'
-          img.src = '/assets/default-card.png'
+          img.src = asset('/assets/default-card.png')
         }}
       />
       <span className="cardtile__name">{name}</span>
@@ -551,17 +552,17 @@ function Rewards({
     <div className="rewards">
       <section className="rewards__summary">
         <div className="tally">
-          <img src="/assets/icons/credits.png" alt="" width={20} height={20} />
+          <img src={asset("/assets/icons/credits.png")} alt="" width={20} height={20} />
           <strong>{formatNumber(total)}</strong>
           <span>Estimated current claim</span>
         </div>
         <div className="tally">
-          <img src="/assets/icons/energy.png" alt="" width={20} height={20} />
+          <img src={asset("/assets/icons/energy.png")} alt="" width={20} height={20} />
           <strong>{formatNumber(perDay)}</strong>
           <span>Mining power per day</span>
         </div>
         <div className="tally">
-          <img src="/assets/icons/credits.png" alt="" width={20} height={20} />
+          <img src={asset("/assets/icons/credits.png")} alt="" width={20} height={20} />
           <strong>{formatNumber(Number(user?.total_reward ?? 0))}</strong>
           <span>Claimed all time</span>
         </div>

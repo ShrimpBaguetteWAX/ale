@@ -6,6 +6,7 @@ import { useChores } from '@/chores/useChores'
 import { CHORE_CHECKS } from '@/chores/checks'
 import { ResourceStrip } from '../ResourceStrip'
 import { NAV_ITEMS, type NavItem } from './nav'
+import { asset } from '@/assets'
 
 function Icon({ item }: { item: NavItem }) {
   return (
@@ -98,14 +99,14 @@ export function AppShell() {
   return (
     <div
       className="shell"
-      style={{ '--shell-art': "url('/assets/background/bg-menu.jpeg')" } as React.CSSProperties}
+      style={{ '--shell-art': `url('${asset('/assets/background/bg-menu.jpeg')}')` } as React.CSSProperties}
     >
       <div className="shell__bg" aria-hidden="true" />
 
       <nav className="rail" aria-label="Game menu">
         <div className="rail__brand">
           <NavLink to="/map">
-            <img src="/assets/logo.png" alt="Alien Legends" width={337} height={152} />
+            <img src={asset("/assets/logo.png")} alt="Alien Legends" width={337} height={152} />
           </NavLink>
         </div>
 
@@ -146,7 +147,7 @@ export function AppShell() {
       </nav>
 
       <header className="topbar">
-        <img className="topbar__logo" src="/assets/logo.png" alt="Alien Legends" />
+        <img className="topbar__logo" src={asset("/assets/logo.png")} alt="Alien Legends" />
         {player && <ResourceStrip player={player} />}
         <span className="spacer" />
         <NetworkStatus />

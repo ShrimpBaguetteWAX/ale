@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import { asset } from '@/assets'
 
 /**
  * The wordmark, lit.
@@ -274,7 +275,7 @@ export function GameLogo({
       <img
         {...(priority ? { fetchpriority: 'high' } : {})}
         className={className}
-        src="/assets/logo.png"
+        src={asset("/assets/logo.png")}
         alt="Alien Legends"
         width={width}
         height={height}

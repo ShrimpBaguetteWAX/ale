@@ -5,6 +5,7 @@ import type {
   RewardLogCapacity,
   RewardLogConfig,
 } from './queries'
+import { asset } from '@/assets'
 
 /**
  * The account screen's rules, from `users` and `cpu.ale`.
@@ -92,7 +93,7 @@ export function claimableAvatars(board: AvatarEntry[]): number[] {
 }
 
 export function avatarArt(id: number | string): string {
-  return `/assets/avatar/${id}.webp`
+  return asset(`/assets/avatar/${id}.webp`)
 }
 
 /* ---------- cpu ---------- */
@@ -145,9 +146,9 @@ export const CURRENCY_LABEL: Record<Currency, string> = {
 }
 
 export const CURRENCY_ICON: Record<Currency, string> = {
-  tlm: '/assets/icons/tlm.svg',
-  wax: '/assets/icons/wax-coin.png',
-  shrds: '/assets/icons/shards.svg',
+  tlm: asset('/assets/icons/tlm.svg'),
+  wax: asset('/assets/icons/wax-coin.png'),
+  shrds: asset('/assets/icons/shards.svg'),
 }
 
 /** What `activestats` calls each one — the key differs from the log's type. */
@@ -210,13 +211,13 @@ export const MINING_POWER: {
   {
     key: 'tlm_mp',
     label: 'TLM MP',
-    icon: '/assets/icons/tlm.svg',
+    icon: asset('/assets/icons/tlm.svg'),
     hint: 'Trilium mining power — summed across the bag, then drawn from the TLM pools',
   },
   {
     key: 'shrd_mp',
     label: 'Shard MP',
-    icon: '/assets/icons/shards.svg',
+    icon: asset('/assets/icons/shards.svg'),
     hint: 'Shard mining power — summed across the bag, then drawn from the shard pools',
   },
 ]

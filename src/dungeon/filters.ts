@@ -9,6 +9,7 @@ import {
   type ClassTemplate,
   type StatGrade,
 } from '@/tavern/fighterStats'
+import { asset } from '@/assets'
 
 /**
  * Roster filtering and sorting, following the live site's model.
@@ -84,7 +85,7 @@ export const MARKERS = [
 ] as const
 
 export function markerIcon(marker: string): string {
-  return marker ? `/assets/markers/${marker}.svg` : '/assets/markers/empty-marker.svg'
+  return marker ? asset(`/assets/markers/${marker}.svg`) : asset('/assets/markers/empty-marker.svg')
 }
 
 export interface SortOption {

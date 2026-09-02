@@ -69,6 +69,7 @@ import {
 } from '@/tavern/fighterStats'
 import { addAuction, bidAuction, buyOffer, cancelAuction } from '@/wharf/actions'
 import { readableError } from '@/wharf/errors'
+import { asset } from '@/assets'
 
 /**
  * The fighter market.
@@ -286,7 +287,7 @@ export default function Market() {
 
   return (
     <div className="market">
-      <img className="market__art" src="/assets/background/bg-shop.png" alt="" />
+      <img className="market__art" src={asset("/assets/background/bg-shop.png")} alt="" />
       <div className="market__scrim" />
 
       <div className="market__inner">
@@ -300,7 +301,7 @@ export default function Market() {
           <span className="spacer" />
           <span className="market__purse mono">
             {player.activestats.gems.toLocaleString(NUM_LOCALE)}
-            <img src="/assets/icons/gems.png" alt="gems" width={18} height={18} />
+            <img src={asset("/assets/icons/gems.png")} alt="gems" width={18} height={18} />
           </span>
           <button
             type="button"
@@ -787,7 +788,7 @@ function ListingHead({
         <span className="listingcard__race">{f.racename}</span>
         <span className="listingcard__element">
           <img
-            src={`/assets/icons/elements/${f.element}.png`}
+            src={asset(`/assets/icons/elements/${f.element}.png`)}
             alt=""
             width={14}
             height={14}
@@ -999,7 +1000,7 @@ export function AuctionCard({
         </span>
         <span className="listingcard__gems mono">
           {auction.current_bid.toLocaleString(NUM_LOCALE)}
-          <img src="/assets/icons/gems.png" alt="gems" width={16} height={16} />
+          <img src={asset("/assets/icons/gems.png")} alt="gems" width={16} height={16} />
         </span>
       </div>
 
@@ -1055,7 +1056,7 @@ export function OfferCard({
         <span className="listingcard__label">Buy now</span>
         <span className="listingcard__gems mono">
           {offer.gems.toLocaleString(NUM_LOCALE)}
-          <img src="/assets/icons/gems.png" alt="gems" width={16} height={16} />
+          <img src={asset("/assets/icons/gems.png")} alt="gems" width={16} height={16} />
         </span>
       </div>
 
@@ -1122,7 +1123,7 @@ export function MyListings({
                   </span>
                   <span className="listingcard__gems mono">
                     {a.current_bid.toLocaleString(NUM_LOCALE)}
-                    <img src="/assets/icons/gems.png" alt="gems" width={16} height={16} />
+                    <img src={asset("/assets/icons/gems.png")} alt="gems" width={16} height={16} />
                   </span>
                 </div>
                 <div className="listingcard__meta">
@@ -1166,7 +1167,7 @@ export function MyListings({
                   <span className="listingcard__label">Listed at</span>
                   <span className="listingcard__gems mono">
                     {o.gems.toLocaleString(NUM_LOCALE)}
-                    <img src="/assets/icons/gems.png" alt="gems" width={16} height={16} />
+                    <img src={asset("/assets/icons/gems.png")} alt="gems" width={16} height={16} />
                   </span>
                 </div>
                 <div className="listingcard__meta">

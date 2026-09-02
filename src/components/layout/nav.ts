@@ -1,3 +1,4 @@
+import { asset } from '@/assets'
 export interface NavItem {
   to: string
   label: string
@@ -33,36 +34,36 @@ export interface NavItem {
  * enough to be worth chasing.
  */
 export const NAV_ITEMS: NavItem[] = [
-  { to: '/map', label: 'World Map', icon: '/assets/icons/menu/world.png', primary: true },
-  { to: '/shop', label: 'Shop', icon: '/assets/icons/menu/coin.png' },
+  { to: '/map', label: 'World Map', icon: asset('/assets/icons/menu/world.png'), primary: true },
+  { to: '/shop', label: 'Shop', icon: asset('/assets/icons/menu/coin.png') },
   {
     to: '/leaderboard',
     label: 'Leaderboards',
-    icon: '/assets/icons/menu/leaderboard.png',
+    icon: asset('/assets/icons/menu/leaderboard.png'),
   },
   {
     to: '/fighters',
     label: 'My Fighters',
-    icon: '/assets/icons/menu/sword.png',
+    icon: asset('/assets/icons/menu/sword.png'),
     primary: true,
   },
   {
     to: '/ascension',
     label: 'Ascension',
-    icon: '/assets/icons/menu/ascension.png',
+    icon: asset('/assets/icons/menu/ascension.png'),
   },
-  { to: '/quests', label: 'Quests', icon: '/assets/icons/menu/quests.png', primary: true },
-  { to: '/candle', label: 'Candle', icon: '/assets/icons/menu/candle.png' },
+  { to: '/quests', label: 'Quests', icon: asset('/assets/icons/menu/quests.png'), primary: true },
+  { to: '/candle', label: 'Candle', icon: asset('/assets/icons/menu/candle.png') },
   {
     to: '/tournament',
     label: 'Tournament',
-    icon: '/assets/icons/menu/tournament.png',
+    icon: asset('/assets/icons/menu/tournament.png'),
     soon: true,
   },
-  { to: '/market', label: 'Market', icon: '/assets/icons/menu/market.png' },
-  { to: '/lands', label: 'My Lands', icon: '/assets/icons/menu/my-land.png' },
-  { to: '/profile', label: 'Account', icon: '/assets/icons/menu/settings.png', primary: true },
-  { to: '/farming', label: 'Farming', icon: '/assets/icons/menu/card.png' },
+  { to: '/market', label: 'Market', icon: asset('/assets/icons/menu/market.png') },
+  { to: '/lands', label: 'My Lands', icon: asset('/assets/icons/menu/my-land.png') },
+  { to: '/profile', label: 'Account', icon: asset('/assets/icons/menu/settings.png'), primary: true },
+  { to: '/farming', label: 'Farming', icon: asset('/assets/icons/menu/card.png') },
 ]
 
 /** Screens that actually exist, keyed by label, for the ComingSoon copy. */

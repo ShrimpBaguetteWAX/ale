@@ -69,6 +69,7 @@ import {
   STAT_LABEL,
 } from '@/tavern/fighterStats'
 import { NUM_LOCALE } from '@/format'
+import { asset } from '@/assets'
 
 /**
  * My Fighters — the roster screen.
@@ -656,7 +657,7 @@ function Cost({
     <span className={`cost${cannot ? ' cost--short' : ''}`}>
       {gain ? '+' : null}
       {value.toLocaleString(NUM_LOCALE)}
-      <img src={`/assets/icons/${icon}.png`} alt={icon} width={16} height={16} />
+      <img src={asset(`/assets/icons/${icon}.png`)} alt={icon} width={16} height={16} />
     </span>
   )
 }
@@ -785,7 +786,7 @@ function RosterFilters({
                 onClick={() => set({ elements: toggle(filter.elements, el as Element) })}
                 title={el}
               >
-                <img src={`/assets/icons/elements/${el}.png`} alt={el} />
+                <img src={asset(`/assets/icons/elements/${el}.png`)} alt={el} />
               </button>
             ))}
           </div>
@@ -1045,7 +1046,7 @@ export function FighterCard({
         />
         <img
           className="fcard__element"
-          src={`/assets/icons/elements/${fighter.element}.png`}
+          src={asset(`/assets/icons/elements/${fighter.element}.png`)}
           alt={fighter.element}
           title={`${fighter.element} damage`}
           width={22}
@@ -1053,7 +1054,7 @@ export function FighterCard({
         />
         <span className="fcard__value" title="Sell value">
           {s.credits.toLocaleString(NUM_LOCALE)}
-          <img src="/assets/icons/credits.png" alt="credits" width={14} height={14} />
+          <img src={asset("/assets/icons/credits.png")} alt="credits" width={14} height={14} />
         </span>
       </div>
 
@@ -1185,7 +1186,7 @@ export function FighterCard({
                 <div className="fstats__row" key={key}>
                   <dt>
                     <img
-                      src={`/assets/icons/elements/${label.toLowerCase()}.png`}
+                      src={asset(`/assets/icons/elements/${label.toLowerCase()}.png`)}
                       alt=""
                       width={13}
                       height={13}
@@ -1243,7 +1244,7 @@ export function FighterCard({
                         {!!a.locked && (
                           <img
                             className="fability__lock"
-                            src="/assets/icons/lock.svg"
+                            src={asset("/assets/icons/lock.svg")}
                             alt="Locked"
                             title={unlockNote}
                             width={11}
@@ -1292,7 +1293,7 @@ export function FighterCard({
         </span>
         <span className="fcard__payCost mono">
           {pay.cost.toLocaleString(NUM_LOCALE)}
-          <img src="/assets/icons/credits.png" alt="credits" width={12} height={12} />
+          <img src={asset("/assets/icons/credits.png")} alt="credits" width={12} height={12} />
         </span>
       </div>
     </article>

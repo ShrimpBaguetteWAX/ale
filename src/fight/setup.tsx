@@ -28,6 +28,7 @@ import {
   formatScaled,
   type ClassTemplate,
 } from '@/tavern/fighterStats'
+import { asset } from '@/assets'
 
 /**
  * The parts of a fight setup screen that the dungeon and the arena share.
@@ -53,7 +54,7 @@ export const mid = (min: number, max: number) => Math.round((min + max) / 2)
 
 /** Element icons live alongside the resistance icons the panel already uses. */
 export const elementIcon = (element: string) =>
-  "/assets/icons/elements/" + (element || "neutral") + ".png"
+  asset("/assets/icons/elements/") + (element || "neutral") + ".png"
 
 /* ---------- adapters into the shared panel ---------- */
 
@@ -224,7 +225,7 @@ export function CombatCard({
           {element && (
             <img
               className="combatcard__element"
-              src={`/assets/icons/elements/${element}.png`}
+              src={asset(`/assets/icons/elements/${element}.png`)}
               alt={element}
               title={element}
               width={20}
@@ -271,7 +272,7 @@ export function CombatCard({
                   className="combatcard__vsbit combatcard__vsbit--bonus"
                   title={`Fires here: ${abilities.bonusNames.join(', ')}`}
                 >
-                  <img src="/assets/icons/medal.svg" alt="" width={10} height={10} />
+                  <img src={asset("/assets/icons/medal.svg")} alt="" width={10} height={10} />
                   {abilities.bonuses}
                 </span>
               )}
@@ -280,7 +281,7 @@ export function CombatCard({
                   className="combatcard__vsbit combatcard__vsbit--exposed"
                   title={`Switches on for the other side: ${abilities.exposureNames.join(', ')}`}
                 >
-                  <img src="/assets/icons/exclamation.svg" alt="" width={10} height={10} />
+                  <img src={asset("/assets/icons/exclamation.svg")} alt="" width={10} height={10} />
                   {abilities.exposure}
                 </span>
               )}
@@ -370,7 +371,7 @@ export function RosterFilters({
             onClick={() => toggleElement(el)}
             title={el}
           >
-            <img src={`/assets/icons/elements/${el}.png`} alt={el} />
+            <img src={asset(`/assets/icons/elements/${el}.png`)} alt={el} />
           </button>
         ))}
       </div>
@@ -489,7 +490,7 @@ export function RosterFilters({
             <span className="matchupbar__label">They field</span>
             {versus.elements.map((e) => (
               <span className="matchupbar__tally" key={e.name} title={e.name}>
-                <img src={`/assets/icons/elements/${e.name}.png`} alt={e.name} width={14} height={14} />
+                <img src={asset(`/assets/icons/elements/${e.name}.png`)} alt={e.name} width={14} height={14} />
                 {e.count}
               </span>
             ))}
@@ -752,14 +753,14 @@ function VersusBadges({ matchup }: { matchup?: Matchup }) {
         className={`vsbadge vsbadge--${atk >= 80 ? 'good' : atk >= 55 ? 'fair' : 'poor'}`}
         title={`${atk}% of this fighter's damage gets past their resistances`}
       >
-        <img src="/assets/icons/swords.svg" alt="Damage lands" width={11} height={11} />
+        <img src={asset("/assets/icons/swords.svg")} alt="Damage lands" width={11} height={11} />
         {atk}%
       </span>
       <span
         className={`vsbadge vsbadge--${def >= 45 ? 'good' : def >= 25 ? 'fair' : 'poor'}`}
         title={`${def}% of their damage is turned away by this fighter's resistances`}
       >
-        <img src="/assets/icons/shield.svg" alt="Damage blocked" width={11} height={11} />
+        <img src={asset("/assets/icons/shield.svg")} alt="Damage blocked" width={11} height={11} />
         {def}%
       </span>
       {matchup.bonuses > 0 && (
@@ -767,7 +768,7 @@ function VersusBadges({ matchup }: { matchup?: Matchup }) {
           className="vsbadge vsbadge--bonus"
           title={`Fires against this team: ${matchup.bonusNames.join(', ')}`}
         >
-          <img src="/assets/icons/medal.svg" alt="Ability bonuses" width={11} height={11} />
+          <img src={asset("/assets/icons/medal.svg")} alt="Ability bonuses" width={11} height={11} />
           {matchup.bonuses}
         </span>
       )}
@@ -785,7 +786,7 @@ function VersusBadges({ matchup }: { matchup?: Matchup }) {
           className="vsbadge vsbadge--exposed"
           title={`Picking this fighter switches on, for them: ${matchup.exposureNames.join(', ')}`}
         >
-          <img src="/assets/icons/exclamation.svg" alt="Gives them" width={11} height={11} />
+          <img src={asset("/assets/icons/exclamation.svg")} alt="Gives them" width={11} height={11} />
           {matchup.exposure}
         </span>
       )}
@@ -814,11 +815,11 @@ export function CardSlot({
           <button type="button" className="cardslot__open" onClick={onOpen}>
             <img
               className="cardslot__art"
-              src={`/assets/cards/${card.template_id}.webp`}
+              src={asset(`/assets/cards/${card.template_id}.webp`)}
               alt=""
               loading="lazy"
               onError={(e) => {
-                e.currentTarget.src = '/assets/default-card.png'
+                e.currentTarget.src = asset('/assets/default-card.png')
               }}
             />
             <span className="cardslot__name">{card.name}</span>
@@ -989,11 +990,11 @@ export function CardGrid({
                 >
                   <img
                     className="nftcard__art"
-                    src={`/assets/cards/${c.template_id}.webp`}
+                    src={asset(`/assets/cards/${c.template_id}.webp`)}
                     alt=""
                     loading="lazy"
                     onError={(e) => {
-                      e.currentTarget.src = '/assets/default-card.png'
+                      e.currentTarget.src = asset('/assets/default-card.png')
                     }}
                   />
                   <span className="nftcard__name">{c.name}</span>
@@ -1007,7 +1008,7 @@ export function CardGrid({
                   {v.element && (
                     <span className="nftcard__element">
                       <img
-                        src={`/assets/icons/elements/${v.element}.png`}
+                        src={asset(`/assets/icons/elements/${v.element}.png`)}
                         alt=""
                         width={14}
                         height={14}

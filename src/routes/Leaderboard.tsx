@@ -30,6 +30,7 @@ import { claimLeaderboardReward } from '@/wharf/actions'
 import { readableError } from '@/wharf/errors'
 import { formatNumber, formatDecimals } from '@/format'
 import { fighterArt, fighterArtFallback } from '@/tavern/fighterStats'
+import { asset } from '@/assets'
 
 /**
  * Leaderboards.
@@ -241,9 +242,9 @@ export default function Leaderboard() {
       <div className="lbtabs" role="tablist" aria-label="Leaderboard">
         {(
           [
-            ['dungeons', 'Dungeons', '/assets/icons/dungeons.svg'],
-            ['arena', 'Arena', '/assets/icons/arena.svg'],
-            ['tournament', 'Tournament', '/assets/icons/tournament.svg'],
+            ['dungeons', 'Dungeons', asset('/assets/icons/dungeons.svg')],
+            ['arena', 'Arena', asset('/assets/icons/arena.svg')],
+            ['tournament', 'Tournament', asset('/assets/icons/tournament.svg')],
           ] as [Tab, string, string][]
         ).map(([key, label, icon]) => (
           <button
@@ -368,7 +369,7 @@ export function DungeonBoard({
                 <span className="lbrow__pays">
                   {rank <= paid ? (
                     <>
-                      <img src="/assets/icons/tlm.svg" alt="TLM" width={14} height={14} />
+                      <img src={asset("/assets/icons/tlm.svg")} alt="TLM" width={14} height={14} />
                       {formatDecimals(dungeonReward(rank, config, pool), 4)}
                     </>
                   ) : (
@@ -526,7 +527,7 @@ export function ArenaBoards({
                           {row.earned_tlm > 0 ? (
                             <>
                               <img
-                                src="/assets/icons/tlm.svg"
+                                src={asset("/assets/icons/tlm.svg")}
                                 alt="TLM"
                                 width={14}
                                 height={14}

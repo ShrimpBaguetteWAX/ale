@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import type { Player } from '@/chain/types'
 import { NUM_LOCALE } from '@/format'
+import { asset } from '@/assets'
 
 function compact(n: number): string {
   if (n < 10_000) return n.toLocaleString(NUM_LOCALE)
@@ -70,14 +71,14 @@ export function ResourceStrip({ player }: { player: Player }) {
   return (
     <div className="resources">
       <Res
-        icon="/assets/icons/energy.png"
+        icon={asset("/assets/icons/energy.png")}
         label="Action points"
         value={s.action_points}
         tone="energy"
       />
-      <Res icon="/assets/icons/gems.png" label="Gems" value={s.gems} tone="gems" />
+      <Res icon={asset("/assets/icons/gems.png")} label="Gems" value={s.gems} tone="gems" />
       <Res
-        icon="/assets/icons/credits.png"
+        icon={asset("/assets/icons/credits.png")}
         label="Credits"
         value={s.credits}
         tone="credits"

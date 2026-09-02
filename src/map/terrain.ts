@@ -1,3 +1,4 @@
+import { asset } from '@/assets'
 /**
  * The map itself is the original planet artwork, so terrain no longer needs a
  * colour ramp. What still needs colour is rarity, which the art doesn't show
@@ -33,7 +34,7 @@ const BUILDING_ICONS: Record<string, string> = {
 
 export function buildingIcon(name: string): string {
   const key = BUILDING_ICONS[name?.toLowerCase()] ?? 'no-build'
-  return `/assets/buildings/${key}.png`
+  return asset(`/assets/buildings/${key}.png`)
 }
 
 /** Planet artwork: 2000x1000, i.e. 50px per tile across the 40x20 grid. */
@@ -42,7 +43,7 @@ export const PLANET_MAP_H = 1000
 export const PLANET_TILE = 50
 
 export function planetMapSrc(planet: string): string {
-  return `/assets/maps/${planet}.jpg`
+  return asset(`/assets/maps/${planet}.jpg`)
 }
 
 /**
@@ -78,10 +79,10 @@ export function landThumbStyle(
  * effect.
  */
 export const MARKER_SRC = {
-  tavern: '/assets/markers/tavern.svg',
-  dungeon: '/assets/markers/dungeons.svg',
-  arena: '/assets/markers/arena.svg',
-  portal: '/assets/old-markers/portal.svg',
+  tavern: asset('/assets/markers/tavern.svg'),
+  dungeon: asset('/assets/markers/dungeons.svg'),
+  arena: asset('/assets/markers/arena.svg'),
+  portal: asset('/assets/old-markers/portal.svg'),
 } as const
 
 export type MarkerKey = keyof typeof MARKER_SRC

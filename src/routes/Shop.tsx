@@ -29,6 +29,7 @@ import {
 import { buyShopItem, buyShopItemWithWax } from '@/wharf/actions'
 import { refreshChore } from '@/chores/signal'
 import { readableError } from '@/wharf/errors'
+import { asset } from '@/assets'
 
 function Amount({ label, icon }: { label: string; icon?: string }) {
   return (
@@ -146,7 +147,7 @@ export default function Shop() {
 
   return (
     <div className="shop">
-      <img className="shop__art" src="/assets/background/bg-shop.png" alt="" />
+      <img className="shop__art" src={asset("/assets/background/bg-shop.png")} alt="" />
       <div className="shop__scrim" />
 
       <div className="shop__inner">

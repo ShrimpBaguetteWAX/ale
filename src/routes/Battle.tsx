@@ -25,6 +25,7 @@ import { fighterArt, fighterArtFallback, formatScaled } from '@/tavern/fighterSt
 import { claimPoolRewards } from '@/wharf/actions'
 import { readableError } from '@/wharf/errors'
 import { NUM_LOCALE } from '@/format'
+import { asset } from '@/assets'
 
 /**
  * The battle replay.
@@ -396,7 +397,7 @@ function Arena({
 
   return (
     <div className="battle">
-      <img className="battle__art" src="/assets/background/bg-fight.png" alt="" />
+      <img className="battle__art" src={asset("/assets/background/bg-fight.png")} alt="" />
       <div className="battle__scrim" />
 
       {!finished && (
@@ -529,7 +530,7 @@ function Arena({
                     key={`el-${step}`}
                   >
                     <img
-                      src={`/assets/icons/elements/${current.element}.png`}
+                      src={asset(`/assets/icons/elements/${current.element}.png`)}
                       alt=""
                       width={22}
                       height={22}
@@ -625,7 +626,7 @@ function Arena({
 /* ---------- the roster strips ---------- */
 
 const avatarArt = (classname: string, racename: string) =>
-  `/assets/fighters/${classname}_${racename}_avatar.webp`
+  asset(`/assets/fighters/${classname}_${racename}_avatar.webp`)
 
 /**
  * A team, at a glance.
@@ -787,7 +788,7 @@ function Duelist({
         {role && (
           <span className={`rolltag rolltag--${role === 'attacker' ? 'atk' : 'def'}`} key={`role-${turn}`}>
             <img
-              src={role === 'attacker' ? '/assets/icons/swords.svg' : '/assets/icons/shield.svg'}
+              src={role === 'attacker' ? asset('/assets/icons/swords.svg') : asset('/assets/icons/shield.svg')}
               alt=""
             />
             {role === 'attacker' ? 'Attacks' : 'Hit'}
@@ -823,7 +824,7 @@ function Duelist({
           {dead ? (
             <img
               className="duelist__art duelist__art--dead"
-              src="/assets/fighter/dead.png"
+              src={asset("/assets/fighter/dead.png")}
               alt="Defeated"
             />
           ) : (
@@ -1313,7 +1314,7 @@ function Result({
                             classname: f.classname,
                             racename: f.racename,
                           })
-                        : '/assets/fighter/dead.png'
+                        : asset('/assets/fighter/dead.png')
                     }
                     alt=""
                     onError={(e) => {
@@ -1355,7 +1356,7 @@ function Result({
                           >
                             <dt>
                               <img
-                                src={`/assets/icons/stats/${s.icon}.svg`}
+                                src={asset(`/assets/icons/stats/${s.icon}.svg`)}
                                 alt=""
                               />
                               {s.title}
@@ -1414,8 +1415,8 @@ function Result({
                 <img
                   src={
                     p.type === 'tlm'
-                      ? '/assets/icons/tlm.svg'
-                      : '/assets/icons/shards.svg'
+                      ? asset('/assets/icons/tlm.svg')
+                      : asset('/assets/icons/shards.svg')
                   }
                   alt=""
                   width={17}

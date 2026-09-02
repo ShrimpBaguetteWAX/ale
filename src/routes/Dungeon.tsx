@@ -74,6 +74,7 @@ import {
 } from '@/fight/setup'
 import { playDungeon } from '@/wharf/actions'
 import { readableError } from '@/wharf/errors'
+import { asset } from '@/assets'
 
 /**
  * What the elements do to one side's totals.
@@ -109,14 +110,14 @@ function Elemental({
         className={`elemental__bit elemental__bit--${land >= 80 ? 'good' : land >= 55 ? 'fair' : 'poor'}`}
         title={`${who} land ${land}% of that damage once the other side's resistances are applied`}
       >
-        <img src="/assets/icons/swords.svg" alt="" width={11} height={11} />
+        <img src={asset("/assets/icons/swords.svg")} alt="" width={11} height={11} />
         {land}%
       </span>
       <span
         className={`elemental__bit elemental__bit--${block >= 45 ? 'good' : block >= 25 ? 'fair' : 'poor'}`}
         title={`${who} turn away ${block}% of the damage coming the other way`}
       >
-        <img src="/assets/icons/shield.svg" alt="" width={11} height={11} />
+        <img src={asset("/assets/icons/shield.svg")} alt="" width={11} height={11} />
         {block}%
       </span>
       {side.bonuses > 0 && (
@@ -124,7 +125,7 @@ function Elemental({
           className="elemental__bit elemental__bit--bonus"
           title={`${side.bonuses} of ${who === 'You' ? 'your' : 'their'} ability firing${side.bonuses === 1 ? '' : 's'} that only this matchup allows, across the whole line-up — the crew-and-weapon fighter included`}
         >
-          <img src="/assets/icons/medal.svg" alt="" width={11} height={11} />
+          <img src={asset("/assets/icons/medal.svg")} alt="" width={11} height={11} />
           {side.bonuses}
         </span>
       )}
@@ -133,7 +134,7 @@ function Elemental({
           className="elemental__bit elemental__bit--exposed"
           title={`${against} ability firing${against === 1 ? '' : 's'} the other side gets out of ${who === 'You' ? 'your' : 'their'} line-up`}
         >
-          <img src="/assets/icons/exclamation.svg" alt="" width={11} height={11} />
+          <img src={asset("/assets/icons/exclamation.svg")} alt="" width={11} height={11} />
           {against}
         </span>
       )}
@@ -616,7 +617,7 @@ export default function Dungeon() {
 
   return (
     <div className="dungeon">
-      <img className="dungeon__art" src="/assets/background/bg-dungeon.png" alt="" />
+      <img className="dungeon__art" src={asset("/assets/background/bg-dungeon.png")} alt="" />
       <div className="dungeon__scrim" />
 
       <div className="dungeon__inner">
@@ -650,7 +651,7 @@ export default function Dungeon() {
                 <span className="dungeon__cost">
                   −{energyCost}
                   <img
-                    src="/assets/icons/energy.png"
+                    src={asset("/assets/icons/energy.png")}
                     alt="energy"
                     width={16}
                     height={16}

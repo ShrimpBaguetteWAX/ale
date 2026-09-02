@@ -1,6 +1,7 @@
 import type { KeyValue, Player } from '@/chain/types'
 import type { Quest, QuestScope } from './types'
 import { NUM_LOCALE, formatDecimals } from '@/format'
+import { asset } from '@/assets'
 
 /**
  * How quests actually work, read out of `quests.ale` rather than off the
@@ -138,7 +139,7 @@ export function rewardOf(quest: Quest): Reward {
     amount,
     label: rewardLabel(amount),
     symbol: type === 'shards' ? 'Shards' : 'TLM',
-    icon: type === 'shards' ? '/assets/icons/shards.svg' : '/assets/icons/tlm.svg',
+    icon: type === 'shards' ? asset('/assets/icons/shards.svg') : asset('/assets/icons/tlm.svg'),
   }
 }
 
@@ -243,7 +244,7 @@ export function formatTimeLeft(ms: number): string {
 
 /** Artwork is per task type *and* cadence — 18 × 3 banners. */
 export function questArt(quest: Quest): string {
-  return `/assets/quests/${quest.task_type}_${quest.quest_scope}.webp`
+  return asset(`/assets/quests/${quest.task_type}_${quest.quest_scope}.webp`)
 }
 
 /** A stable identity for a quest, for React keys and reroll matching. */

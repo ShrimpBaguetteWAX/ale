@@ -3,6 +3,7 @@ import { Link, Navigate, useLocation } from 'react-router-dom'
 import { useGame } from '@/state/useGame'
 import { GameLogo } from '@/components/GameLogo'
 import { readableError } from '@/wharf/errors'
+import { asset } from '@/assets'
 
 /**
  * Wallet connect.
@@ -42,7 +43,7 @@ export function Connect() {
 
   return (
     <div className="auth">
-      <img className="auth__art" src="/assets/background/bg-sign.jpeg" alt="" />
+      <img className="auth__art" src={asset("/assets/background/bg-sign.jpeg")} alt="" />
       <div className="auth__scrim" />
 
       <div className="auth__card panel">

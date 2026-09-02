@@ -1,6 +1,7 @@
 import type { Player } from '@/chain/types'
 import type { ShopCooldown, ShopItem } from './types'
 import { NUM_LOCALE } from '@/format'
+import { asset } from '@/assets'
 
 /** Legend access is a timestamp on the player, not a flag. */
 export function isLegend(player: Player): boolean {
@@ -163,15 +164,15 @@ export function priceOf(item: ShopItem): Price {
     return { label: waxAmount(item.cost_wax).toLocaleString(NUM_LOCALE) + ' WAX' }
   }
   if (item.cost_gem > 0) {
-    return { label: item.cost_gem.toLocaleString(NUM_LOCALE), icon: '/assets/icons/gems.png' }
+    return { label: item.cost_gem.toLocaleString(NUM_LOCALE), icon: asset('/assets/icons/gems.png') }
   }
   if (item.cost_dust > 0) {
-    return { label: item.cost_dust.toLocaleString(NUM_LOCALE), icon: '/assets/icons/credits.png' }
+    return { label: item.cost_dust.toLocaleString(NUM_LOCALE), icon: asset('/assets/icons/credits.png') }
   }
   if (item.cost_action_points > 0) {
     return {
       label: item.cost_action_points.toLocaleString(NUM_LOCALE),
-      icon: '/assets/icons/energy.png',
+      icon: asset('/assets/icons/energy.png'),
     }
   }
   return { label: 'Free' }
@@ -180,15 +181,15 @@ export function priceOf(item: ShopItem): Price {
 /** What this gives, as one line. */
 export function rewardOf(item: ShopItem): Price {
   if (item.gain_gem > 0) {
-    return { label: item.gain_gem.toLocaleString(NUM_LOCALE), icon: '/assets/icons/gems.png' }
+    return { label: item.gain_gem.toLocaleString(NUM_LOCALE), icon: asset('/assets/icons/gems.png') }
   }
   if (item.gain_dust > 0) {
-    return { label: item.gain_dust.toLocaleString(NUM_LOCALE), icon: '/assets/icons/credits.png' }
+    return { label: item.gain_dust.toLocaleString(NUM_LOCALE), icon: asset('/assets/icons/credits.png') }
   }
   if (item.gain_action_points > 0) {
     return {
       label: item.gain_action_points.toLocaleString(NUM_LOCALE),
-      icon: '/assets/icons/energy.png',
+      icon: asset('/assets/icons/energy.png'),
     }
   }
   if (item.gain_legend_acct_seconds > 0) {
@@ -198,7 +199,7 @@ export function rewardOf(item: ShopItem): Price {
 }
 
 export function itemArt(item: ShopItem): string {
-  return `/assets/shop/${item.item}.webp`
+  return asset(`/assets/shop/${item.item}.webp`)
 }
 
 /**

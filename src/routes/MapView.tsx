@@ -34,6 +34,7 @@ import { travel } from '@/wharf/actions'
 import { PortalWarp, WARP_TOTAL_MS } from '@/map/PortalWarp'
 import { readableError } from '@/wharf/errors'
 import { NUM_LOCALE } from '@/format'
+import { asset } from '@/assets'
 
 function Legend({ planet, lands }: { planet: Planet; lands: Land[] | undefined }) {
   const rows: [MarkerKey | 'you' | 'here', string][] = [
@@ -641,7 +642,7 @@ export default function MapView() {
               {travelDistance(player, selected).toFixed(1)} away
             </span>
             <span className="travelcost__value">
-              <img src="/assets/icons/energy.png" alt="" />
+              <img src={asset("/assets/icons/energy.png")} alt="" />
               {cost}
             </span>
           </div>
@@ -712,7 +713,7 @@ export default function MapView() {
                 title={barOpen ? 'Collapse the planet bar' : 'Show every planet'}
                 aria-label={barOpen ? 'Collapse the planet bar' : 'Show every planet'}
               >
-                <img src="/assets/icons/arrow-right.svg" alt="" width={14} height={14} />
+                <img src={asset("/assets/icons/arrow-right.svg")} alt="" width={14} height={14} />
               </button>
             </div>
           </div>
@@ -750,18 +751,18 @@ export default function MapView() {
           */}
           {inTavern ? (
             <Link className="btn btn--charged entertavern" to="/tavern">
-              <img src="/assets/markers/tavern.svg" alt="" />
+              <img src={asset("/assets/markers/tavern.svg")} alt="" />
               Enter Tavern
             </Link>
           ) : dungeonHere ? (
             <Link className="btn btn--charged entertavern enterdungeon" to="/dungeon">
-              <img src="/assets/markers/dungeons.svg" alt="" />
+              <img src={asset("/assets/markers/dungeons.svg")} alt="" />
               Enter Dungeon
             </Link>
           ) : (
             arenaHere && (
               <Link className="btn btn--charged entertavern enterarena" to="/arena">
-                <img src="/assets/markers/arena.svg" alt="" />
+                <img src={asset("/assets/markers/arena.svg")} alt="" />
                 Enter Arena
               </Link>
             )

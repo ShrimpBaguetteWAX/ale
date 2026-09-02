@@ -1,5 +1,6 @@
 import type { PanelFighter } from '@/components/FighterPanel'
 import type { BattleAbility } from './types'
+import { asset } from '@/assets'
 
 /**
  * `fighters.ale` / `nftvalues` — what an Alien Worlds card is worth in a
@@ -40,7 +41,7 @@ export interface NftStats {
 }
 
 /** Where the NFT fighter's own art lives — it has no class art to use. */
-export const NFT_FIGHTER_ART = '/assets/fighters/bonus_fighter_avatar.webp'
+export const NFT_FIGHTER_ART = asset('/assets/fighters/bonus_fighter_avatar.webp')
 
 const RES_KEYS = [
   'res_gem',
@@ -125,7 +126,7 @@ export function nftAsPanel(value: NftValue, name: string): PanelFighter {
     initiative: { min: value.stats.initiative },
     ...resistances,
     abilities: value.ability ?? [],
-    art: `/assets/cards/${value.template_id}.webp`,
+    art: asset(`/assets/cards/${value.template_id}.webp`),
     title: name,
     subtitle: `${value.type === 'crew.worlds' ? 'Crew' : 'Weapon'} · ${value.rarity}${
       value.shine && value.shine !== 'stone' ? ` · ${value.shine}` : ''

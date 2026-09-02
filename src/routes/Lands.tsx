@@ -37,6 +37,7 @@ import {
 import { refreshChore } from '@/chores/signal'
 import { readableError } from '@/wharf/errors'
 import { formatNumber, formatDecimals } from '@/format'
+import { asset } from '@/assets'
 
 /**
  * My Lands.
@@ -329,17 +330,17 @@ export default function Lands() {
               of zeroes was just noise.
             */}
             <div className="lands__totals">
-              <Tally icon="/assets/icons/tlm.svg" label="TLM" value={tlm(totals.tlm)} />
+              <Tally icon={asset("/assets/icons/tlm.svg")} label="TLM" value={tlm(totals.tlm)} />
               {totals.credits > 0 && (
                 <Tally
-                  icon="/assets/icons/credits.png"
+                  icon={asset("/assets/icons/credits.png")}
                   label="Credits"
                   value={formatNumber(totals.credits)}
                 />
               )}
               {totals.gems > 0 && (
                 <Tally
-                  icon="/assets/icons/gems.png"
+                  icon={asset("/assets/icons/gems.png")}
                   label="Gems"
                   value={formatNumber(totals.gems)}
                 />
@@ -351,7 +352,7 @@ export default function Lands() {
               */}
               {totals.shards > 0 && (
                 <Tally
-                  icon="/assets/icons/shards.svg"
+                  icon={asset("/assets/icons/shards.svg")}
                   label="Shards · not paid on claim"
                   value={shards(totals.shards)}
                 />
@@ -519,18 +520,18 @@ export function LandRow({
 
       <div className="landrow__income">
         <span className="coin">
-          <img src="/assets/icons/tlm.svg" alt="TLM" width={14} height={14} />
+          <img src={asset("/assets/icons/tlm.svg")} alt="TLM" width={14} height={14} />
           {tlm(income.tlm)}
         </span>
         {income.credits > 0 && (
           <span className="coin">
-            <img src="/assets/icons/credits.png" alt="Credits" width={14} height={14} />
+            <img src={asset("/assets/icons/credits.png")} alt="Credits" width={14} height={14} />
             {formatNumber(income.credits)}
           </span>
         )}
         {income.shards > 0 && (
           <span className="coin" title="Not paid out when you claim">
-            <img src="/assets/icons/shards.svg" alt="Shards" width={14} height={14} />
+            <img src={asset("/assets/icons/shards.svg")} alt="Shards" width={14} height={14} />
             {shards(income.shards)}
           </span>
         )}
@@ -656,7 +657,7 @@ export function LandPanel({
                   <span className={`cost${tooPoor ? ' cost--short' : ''}`}>
                     {formatNumber(opt.credits)}
                     <img
-                      src="/assets/icons/credits.png"
+                      src={asset("/assets/icons/credits.png")}
                       alt="Credits"
                       width={16}
                       height={16}
@@ -754,7 +755,7 @@ function BuildingPanel({
           <span>You will spend</span>
           <span className={`cost${destroyCost > gems ? ' cost--short' : ''}`}>
             {formatNumber(destroyCost)}
-            <img src="/assets/icons/gems.png" alt="Gems" width={16} height={16} />
+            <img src={asset("/assets/icons/gems.png")} alt="Gems" width={16} height={16} />
           </span>
         </div>
         <div className="qcard__confirmRow">
@@ -815,14 +816,14 @@ function BuildingPanel({
             <dt>Total Cost</dt>
             <dd>
               {credits(cost)}
-              <img src="/assets/icons/credits.png" alt="Credits" width={14} height={14} />
+              <img src={asset("/assets/icons/credits.png")} alt="Credits" width={14} height={14} />
             </dd>
           </div>
           <div>
             <dt>Cost per 0.1x</dt>
             <dd>
               {credits(perPoint)}
-              <img src="/assets/icons/credits.png" alt="Credits" width={14} height={14} />
+              <img src={asset("/assets/icons/credits.png")} alt="Credits" width={14} height={14} />
             </dd>
           </div>
           <div>
@@ -847,7 +848,7 @@ function BuildingPanel({
           Boost
           <span className={`cost${cost > playerCredits ? ' cost--short' : ''}`}>
             {credits(cost)}
-            <img src="/assets/icons/credits.png" alt="Credits" width={16} height={16} />
+            <img src={asset("/assets/icons/credits.png")} alt="Credits" width={16} height={16} />
           </span>
         </button>
       </section>
