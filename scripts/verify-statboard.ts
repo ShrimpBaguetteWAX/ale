@@ -100,6 +100,14 @@ console.log('\ntoken figures')
   check('shards are divided by 10', formatStat('shards_earned', 594563), '59,456')
   check('no decimals survive', formatStat('tlm_earned', 19999), '1')
   check('the fraction is dropped, not rounded up', formatStat('shards_earned', 99), '9')
+  /*
+     WAX carries eight decimal places and these totals are small, so this one
+     keeps a fraction where the others do not.
+  */
+  check('WAX is divided by 100,000,000', formatStat('wax_earned', 16776725695), '167.76')
+  check('and keeps two places even when round', formatStat('wax_earned', 200000000), '2.00')
+  check('a small WAX total still reads', formatStat('wax_earned', 5000000), '0.05')
+  check('below a hundredth it is honest about it', formatStat('wax_earned', 9999), '0.00')
   check('plain counts are untouched', formatStat('dungeons_won', 98), '98')
   check('and still grouped', formatStat('credits_gained', 12002249), '12,002,249')
 }

@@ -32,26 +32,39 @@ export function formatDecimals(value: number, places: number): string {
 }
 
 /**
- * What a raw `permstats` figure has to be divided by to become the number a
- * player recognises.
+ * How a raw `permstats` figure becomes the number a player recognises.
  *
  * The contract counts tokens in their smallest unit, so `tlm_earned` arrives
- * as 104762718 for what the game calls 10,476 TLM and `shards_earned` as
- * 594563 for 59,456 shards. Every other tracked stat is already a plain
- * count, and anything missing from this table is left alone.
+ * as 104762718 for what the game calls 10,476 TLM, `shards_earned` as 594563
+ * for 59,456 shards, and `wax_earned` as 16776725695 for 167.76 WAX. Every
+ * other tracked stat is already a plain count, and anything missing from this
+ * table is left alone.
+ *
+ * Totals are shown whole, because the fraction at the end of a lifetime
+ * figure is noise that only makes the column harder to scan. WAX is the
+ * exception: at eight decimal places the amounts these stats reach are small
+ * enough that dropping the fraction would print most of them as nothing at
+ * all.
  */
-const STAT_SCALE: Record<string, number> = {
-  shards_earned: 10,
-  tlm_earned: 10000,
+const STAT_FORMAT: Record<string, { scale: number; decimals: number }> = {
+  shards_earned: { scale: 10, decimals: 0 },
+  tlm_earned: { scale: 10_000, decimals: 0 },
+  wax_earned: { scale: 100_000_000, decimals: 2 },
 }
 
 /** A tracked stat written the way a player reads it. */
 export function formatStat(key: string, raw: number): string {
-  const value = Number(raw) / (STAT_SCALE[key] ?? 1)
+  const { scale, decimals } = STAT_FORMAT[key] ?? { scale: 1, decimals: 0 }
   /*
-     Truncated rather than rounded, and shown whole: these are lifetime
-     totals, and the fraction of a token at the end of one is noise that only
-     makes the column harder to scan.
+     Truncated rather than rounded, and truncated on the integer the chain
+     actually gave us rather than on a float derived from it: a total should
+     never credit a token nobody earned, and 0.1 + 0.2 is why the arithmetic
+     stays in whole units until the last step.
   */
-  return Math.trunc(value).toLocaleString(NUM_LOCALE)
+  const places = 10 ** decimals
+  const value = Math.trunc(Number(raw) / (scale / places)) / places
+  return value.toLocaleString(NUM_LOCALE, {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  })
 }
