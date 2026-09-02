@@ -8,6 +8,7 @@ import {
 import WebRenderer from '@wharfkit/web-renderer'
 import { WalletPluginAnchor } from '@wharfkit/wallet-plugin-anchor'
 import { WalletPluginCloudWallet } from '@wharfkit/wallet-plugin-cloudwallet'
+import { CosignPlugin } from './cosign'
 import { CHAIN_ID } from '@/chain/config'
 import { endpointPool } from '@/chain/endpoints'
 import { isUserCancel } from './errors'
@@ -29,15 +30,26 @@ export async function getSessionKit(): Promise<SessionKit> {
     url: endpointPool.next(),
   })
 
-  kit = new SessionKit({
-    appName: 'Alien Legends',
-    chains: [chain],
-    ui: new WebRenderer(),
-    walletPlugins: [
-      new WalletPluginAnchor(),
-      new WalletPluginCloudWallet(),
-    ],
-  })
+  kit = new SessionKit(
+    {
+      appName: 'Alien Legends',
+      chains: [chain],
+      ui: new WebRenderer(),
+      walletPlugins: [
+        new WalletPluginAnchor(),
+        new WalletPluginCloudWallet(),
+      ],
+    },
+    {
+      /*
+         The game pays the network cost of every transaction, by putting a
+         `greymassnoop::noop` authorised by `cpu.ale@cpu` in front of the
+         player's own action. See `cosign.ts` for what that permission can and
+         cannot do, and for why the key it needs is in the bundle.
+      */
+      transactPlugins: [new CosignPlugin()],
+    },
+  )
 
   return kit
 }

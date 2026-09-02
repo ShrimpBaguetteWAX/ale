@@ -1093,3 +1093,28 @@
     grid-template-columns: minmax(0, 1fr) 92px 54px;
   }
 }
+
+/*
+ * The icon column on a stat row.
+ *
+ * A fixed-width slot rather than an inline image, so the labels line up
+ * whether or not a stat has an icon — a ragged left edge across twenty-eight
+ * rows is worse than a few blanks.
+ */
+.statline__k {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+.statline__icon {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+}
+.statline__icon--none {
+  /* Empty, but still holds the column. */
+  display: inline-block;
+}

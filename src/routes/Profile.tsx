@@ -114,27 +114,52 @@ function prettyStat(key: string): string {
   return key.replace(/_/g, ' ').replace(/^./, (c) => c.toUpperCase())
 }
 
-function since(iso: string): string {
-  const then = Date.parse(iso + 'Z')
-  if (!Number.isFinite(then)) return '—'
-  const mins = Math.floor((Date.now() - then) / 60000)
-  if (mins < 1) return 'just now'
-  if (mins < 60) return `${mins}m ago`
-  const hrs = Math.floor(mins / 60)
-  if (hrs < 24) return `${hrs}h ago`
-  return `${Math.floor(hrs / 24)}d ago`
+/**
+ * An icon for a tracked stat, where one is unambiguous.
+ *
+ * Matched on the stat's own words rather than a key-by-key table: the
+ * contract adds `permstats` entries as features ship, and a table would show
+ * a bare row for every new one until somebody remembered to extend it. The
+ * order matters — `energy_saved_recruiting` is about energy, not recruits,
+ * so the currencies are tested before the activities.
+ *
+ * Anything unmatched simply has no icon, which is the honest answer for a
+ * stat nobody has given a meaning yet.
+ */
+const STAT_ICONS: [RegExp, string][] = [
+  /* Currencies first: several activity words appear in currency stats. */
+  [/^credits/, '/assets/icons/credits.png'],
+  [/^gems/, '/assets/icons/gems.png'],
+  [/^energy/, '/assets/icons/energy.png'],
+  [/^shards/, '/assets/icons/shards.svg'],
+  [/^tlm/, '/assets/icons/tlm.svg'],
+  [/^wax/, '/assets/icons/wax-coin.png'],
+
+  /* Places and activities. */
+  [/^arenas/, '/assets/icons/arena.svg'],
+  [/dungeon/, '/assets/icons/dungeons.svg'],
+  [/^taverns/, '/assets/markers/tavern.svg'],
+  [/^buildings/, '/assets/icons/build.png'],
+  [/^portals/, '/assets/old-markers/portal.svg'],
+  [/^quests/, '/assets/icons/menu/quests.png'],
+  [/^recruits/, '/assets/icons/add-fighter.svg'],
+  [/^nfts_staked/, '/assets/icons/menu/card.png'],
+  [/^premium/, '/assets/icons/account-legend.svg'],
+  [/travel/, '/assets/icons/menu/world.png'],
+  [/^level_ups/, '/assets/icons/medal.svg'],
+
+  /* Combat. */
+  [/^knockouts/, '/assets/icons/swords.svg'],
+  [/^damage_dealt/, '/assets/icons/stats/damage.svg'],
+  [/^damage_(taken|blocked)/, '/assets/icons/shield.svg'],
+]
+
+export function statIconFor(key: string): string | undefined {
+  return STAT_ICONS.find(([re]) => re.test(key))?.[1]
 }
 
-/** The handful of stats worth showing above the full list. */
-const HIGHLIGHTS = [
-  ['arenas_won', 'Arenas won'],
-  ['dungeons_won', 'Dungeons won'],
-  ['knockouts', 'Knockouts'],
-  ['total_travel_distance', 'Distance travelled'],
-  ['portals_used', 'Portals used'],
-  ['shards_earned', 'Shards earned'],
-] as const
 
+/** The handful of stats worth showing above the full list. */
 /* ---------- the screen ---------- */
 
 export default function Profile() {
@@ -1611,10 +1636,6 @@ export function StatsTab({
   onDisconnect: () => void | Promise<void>
 }) {
   const [showAll, setShowAll] = useState(false)
-  const [lowFx, setLowFx] = useState(
-    () =>
-      typeof document !== 'undefined' && document.documentElement.dataset.fx === 'low',
-  )
 
   const stats = useMemo(() => kvToRecord(player.permstats), [player.permstats])
   const allStats = useMemo(
@@ -1622,81 +1643,9 @@ export function StatsTab({
     [stats],
   )
 
-  const toggleFx = () => {
-    const next = !lowFx
-    setLowFx(next)
-    document.documentElement.dataset.fx = next ? 'low' : 'full'
-    localStorage.setItem('al:fx', next ? 'low' : 'full')
-  }
 
   return (
     <div className="stack">
-      <div className="account__grid">
-        <section className="panel">
-          <div className="panel__title" style={{ marginBottom: 'var(--sp-3)' }}>
-            Record
-          </div>
-          {HIGHLIGHTS.map(([key, label]) => (
-            <div className="statline" key={key}>
-              <span className="statline__k">{label}</span>
-              <span className="statline__v mono">
-                {Number(stats[key] ?? 0).toLocaleString(NUM_LOCALE)}
-              </span>
-            </div>
-          ))}
-        </section>
-
-        <section className="panel">
-          <div className="panel__title" style={{ marginBottom: 'var(--sp-3)' }}>
-            Status
-          </div>
-          <div className="statline">
-            <span className="statline__k">Last action</span>
-            <span className="statline__v">{since(player.last_action)}</span>
-          </div>
-          <div className="statline">
-            <span className="statline__k">Signed up</span>
-            <span className="statline__v">{player.signup_date.slice(0, 10)}</span>
-          </div>
-          <div className="statline">
-            <span className="statline__k">Active taverns</span>
-            <span className="statline__v mono">{player.active_taverns.length}</span>
-          </div>
-          <div className="statline">
-            <span className="statline__k">Mining NFTs</span>
-            <span className="statline__v mono">{player.mine_nfts.length}</span>
-          </div>
-          <div className="statline">
-            <span className="statline__k">Landowner TLM share</span>
-            <span className="statline__v mono">{player.landowner_tlm_share}%</span>
-          </div>
-        </section>
-
-        <section className="panel">
-          <div className="panel__title" style={{ marginBottom: 'var(--sp-3)' }}>
-            Display
-          </div>
-          <div className="row" style={{ alignItems: 'flex-start' }}>
-            <div>
-              <div style={{ fontWeight: 'var(--fw-medium)' }}>Reduced effects</div>
-              <p className="hint" style={{ marginTop: 2 }}>
-                Turns off the background art, glows and the high-DPI map buffer.
-                Worth it on an older phone.
-              </p>
-            </div>
-            <span className="spacer" />
-            <button
-              type="button"
-              className={`btn btn--sm ${lowFx ? 'btn--primary' : 'btn--ghost'}`}
-              onClick={toggleFx}
-              aria-pressed={lowFx}
-            >
-              {lowFx ? 'On' : 'Off'}
-            </button>
-          </div>
-        </section>
-      </div>
-
       <section className="panel">
         <div className="row" style={{ marginBottom: 'var(--sp-3)' }}>
           <span className="panel__title">All stats</span>
@@ -1710,14 +1659,25 @@ export function StatsTab({
           <p className="muted">Nothing recorded yet. Go do something.</p>
         ) : (
           <>
-            {(showAll ? allStats : allStats.slice(0, 8)).map(([k, v]) => (
-              <div className="statline" key={k}>
-                <span className="statline__k">{prettyStat(k)}</span>
-                <span className="statline__v mono">
-                  {Number(v).toLocaleString(NUM_LOCALE)}
-                </span>
-              </div>
-            ))}
+            {(showAll ? allStats : allStats.slice(0, 8)).map(([k, v]) => {
+              const icon = statIconFor(k)
+              return (
+                <div className="statline" key={k}>
+                  <span className="statline__k">
+                    {icon ? (
+                      <img className="statline__icon" src={asset(icon)} alt="" />
+                    ) : (
+                      /* Holds the column so unmatched rows still line up. */
+                      <span className="statline__icon statline__icon--none" />
+                    )}
+                    {prettyStat(k)}
+                  </span>
+                  <span className="statline__v mono">
+                    {Number(v).toLocaleString(NUM_LOCALE)}
+                  </span>
+                </div>
+              )
+            })}
             {allStats.length > 8 && (
               <button
                 type="button"
