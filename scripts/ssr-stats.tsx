@@ -68,6 +68,9 @@ const body = renderToStaticMarkup(
   </div>,
 )
 
+/* A board rendered from the real table, so the sheet can be looked at. */
+import { rankBy, type PlayerStats } from '../src/account/statboard'
+
 const html = `<!doctype html>
 <meta charset="utf-8">
 <title>Account stats</title>

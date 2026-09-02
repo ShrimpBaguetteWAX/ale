@@ -21,6 +21,15 @@ export interface ReadOptions {
   persist?: boolean
   /** Skip the cache for this call but still write the fresh result. */
   refresh?: boolean
+  /**
+   * Milliseconds to wait between pages of a `getAllRows` crawl.
+   *
+   * A table that fits in one page never notices this. One that does not would
+   * otherwise fire its requests back to back as fast as the node answers,
+   * which is the shape of traffic that gets a client rate limited. Reads
+   * behind a loading state can afford to be polite.
+   */
+  pageDelayMs?: number
   signal?: AbortSignal
 }
 
@@ -150,7 +159,7 @@ export async function getAllRows<T>(
   query: TableQuery,
   opts: ReadOptions = {},
 ): Promise<T[]> {
-  const { ttl = TTL.short, persist = false, refresh = false, signal } = opts
+  const { ttl = TTL.short, persist = false, refresh = false, pageDelayMs = 0, signal } = opts
   const key = `all:${keyOf({ ...query, lower_bound: undefined, limit: undefined })}`
 
   if (!refresh && ttl > 0) {
@@ -175,6 +184,9 @@ export async function getAllRows<T>(
       out.push(...res.rows)
       if (!res.more || !res.next_key) break
       lower = res.next_key
+      if (pageDelayMs > 0) {
+        await new Promise((r) => setTimeout(r, pageDelayMs))
+      }
     }
     if (ttl > 0) cacheSet(key, out, ttl, persist)
     return out

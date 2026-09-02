@@ -1118,3 +1118,69 @@
   /* Empty, but still holds the column. */
   display: inline-block;
 }
+
+/*
+ * A stat row that opens its leaderboard.
+ *
+ * Still a row, not a button-looking thing: the affordance is the hover and
+ * the cursor, because twenty-eight buttons stacked in a panel would read as a
+ * menu rather than a list of numbers.
+ */
+.statline--open {
+  width: 100%;
+  background: none;
+  border: 0;
+  border-bottom: 1px solid var(--line-soft);
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease);
+}
+.statline--open:last-of-type {
+  border-bottom: 0;
+}
+.statline--open:hover,
+.statline--open:focus-visible {
+  background: rgb(255 255 255 / 5%);
+}
+.statline--open:hover .statline__k,
+.statline--open:focus-visible .statline__k {
+  color: var(--white);
+}
+
+/* ---------- one stat's leaderboard ---------- */
+
+.statboard__title {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.statboard__row--you {
+  background: rgb(0 186 255 / 12%);
+}
+.statboard__row--you .statline__k {
+  color: var(--white);
+}
+
+/*
+ * The break between the top of the board and the player's own place.
+ *
+ * It says how many were skipped rather than just trailing off, so the gap is
+ * a measurement instead of an ellipsis.
+ */
+.statboard__gap {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-2) 0;
+  font-size: var(--fs-xs);
+  color: var(--text-faint);
+}
+.statboard__gap::before,
+.statboard__gap::after {
+  content: '';
+  flex: 1;
+  border-top: 1px dashed var(--line-soft);
+}

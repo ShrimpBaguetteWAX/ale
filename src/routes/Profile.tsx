@@ -21,6 +21,13 @@ import {
 } from '@/pools/rules'
 import { useGame } from '@/state/useGame'
 import { kvToRecord, type Avatar, type Player } from '@/chain/types'
+import {
+  fetchAllPlayerStats,
+  rankBy,
+  type StatRank,
+} from '@/account/statboard'
+/* The same medal colours the dungeon and arena boards use. */
+import { rankClass } from '@/leaderboard/rules'
 import { landId } from '@/chain/landId'
 import { landThumbStyle } from '@/map/terrain'
 import { fetchAvatars } from '@/chain/queries'
@@ -1628,6 +1635,117 @@ export function CpuTab({
 
 /* ---------- stats ---------- */
 
+/**
+ * Where one stat puts you against everybody else.
+ *
+ * Opened from a row in All stats. The read behind it covers every stat at
+ * once, so the first board a player opens pays for the rest of them.
+ *
+ * The player's own row is pinned below the top of the board when they are not
+ * already in it — a leaderboard you cannot find yourself on is a list of
+ * strangers, and "you are 47th of 61" is the thing most people opened it to
+ * learn.
+ */
+function StatBoard({
+  statKey,
+  label,
+  icon,
+  wallet,
+  onClose,
+}: {
+  statKey: string
+  label: string
+  icon?: string
+  wallet: string
+  onClose: () => void
+}) {
+  const [ranks, setRanks] = useState<StatRank[] | null>(null)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    let live = true
+    fetchAllPlayerStats()
+      .then((players) => live && setRanks(rankBy(players, statKey)))
+      .catch((err) => live && setError(readableError(err)))
+    return () => {
+      live = false
+    }
+  }, [statKey])
+
+  const TOP = 25
+  const mine = ranks?.find((r) => r.wallet === wallet)
+  const shown = ranks?.slice(0, TOP) ?? []
+  const minePinned = mine && mine.rank > TOP ? mine : undefined
+
+  return (
+    <div
+      className="sheet"
+      role="dialog"
+      aria-modal="true"
+      aria-label={`${label} leaderboard`}
+      onClick={onClose}
+    >
+      <div className="sheet__panel" onClick={(e) => e.stopPropagation()}>
+        <div className="row" style={{ marginBottom: 'var(--sp-3)' }}>
+          <span className="panel__title statboard__title">
+            {icon && <img className="statline__icon" src={asset(icon)} alt="" />}
+            {label}
+          </span>
+          <span className="spacer" />
+          <button type="button" className="btn btn--ghost btn--sm" onClick={onClose}>
+            Close
+          </button>
+        </div>
+
+        {error && <div className="alert alert--error">{error}</div>}
+
+        {!ranks && !error && <p className="muted">Reading every player…</p>}
+
+        {ranks && ranks.length === 0 && (
+          <p className="muted">Nobody has recorded this yet.</p>
+        )}
+
+        {ranks && ranks.length > 0 && (
+          <>
+            {shown.map((r) => (
+              <StatBoardRow key={r.wallet} row={r} you={r.wallet === wallet} />
+            ))}
+
+            {minePinned && (
+              <>
+                <div className="statboard__gap">
+                  <span>
+                    {minePinned.rank - TOP - 1} more
+                  </span>
+                </div>
+                <StatBoardRow row={minePinned} you />
+              </>
+            )}
+
+            <p className="hint" style={{ marginTop: 'var(--sp-3)' }}>
+              {ranks.length} player{ranks.length === 1 ? '' : 's'} have recorded this.
+            </p>
+          </>
+        )}
+      </div>
+    </div>
+  )
+}
+
+export function StatBoardRow({ row, you }: { row: StatRank; you: boolean }) {
+  return (
+    <div className={`statline statboard__row${you ? ' statboard__row--you' : ''}`}>
+      <span className="statline__k">
+        <span className={`rank ${rankClass(row.rank)}`}>{row.rank}</span>
+        {row.playertag || row.wallet}
+      </span>
+      <span className="statline__v mono">
+        {row.value.toLocaleString(NUM_LOCALE)}
+      </span>
+    </div>
+  )
+}
+
 export function StatsTab({
   player,
   onDisconnect,
@@ -1636,6 +1754,8 @@ export function StatsTab({
   onDisconnect: () => void | Promise<void>
 }) {
   const [showAll, setShowAll] = useState(false)
+  /* Which stat's board is open, if any. */
+  const [board, setBoard] = useState<string | null>(null)
 
   const stats = useMemo(() => kvToRecord(player.permstats), [player.permstats])
   const allStats = useMemo(
@@ -1662,7 +1782,18 @@ export function StatsTab({
             {(showAll ? allStats : allStats.slice(0, 8)).map(([k, v]) => {
               const icon = statIconFor(k)
               return (
-                <div className="statline" key={k}>
+                /*
+                  A button, not a row with a click handler: this opens a
+                  dialog, so it has to be reachable and operable from the
+                  keyboard like anything else that does.
+                */
+                <button
+                  type="button"
+                  className="statline statline--open"
+                  key={k}
+                  onClick={() => setBoard(k)}
+                  title={`Where you stand on ${prettyStat(k).toLowerCase()}`}
+                >
                   <span className="statline__k">
                     {icon ? (
                       <img className="statline__icon" src={asset(icon)} alt="" />
@@ -1675,7 +1806,7 @@ export function StatsTab({
                   <span className="statline__v mono">
                     {Number(v).toLocaleString(NUM_LOCALE)}
                   </span>
-                </div>
+                </button>
               )
             })}
             {allStats.length > 8 && (
@@ -1691,6 +1822,16 @@ export function StatsTab({
           </>
         )}
       </section>
+
+      {board && (
+        <StatBoard
+          statKey={board}
+          label={prettyStat(board)}
+          icon={statIconFor(board)}
+          wallet={player.wallet}
+          onClose={() => setBoard(null)}
+        />
+      )}
 
       <section className="panel">
         <button
