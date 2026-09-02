@@ -88,7 +88,7 @@ import {
 } from '@/wharf/actions'
 import { refreshChore } from '@/chores/signal'
 import { readableError } from '@/wharf/errors'
-import { formatNumber, formatDecimals, NUM_LOCALE } from '@/format'
+import { formatNumber, formatDecimals, formatStat } from '@/format'
 import { asset } from '@/assets'
 
 /**
@@ -164,6 +164,7 @@ const STAT_ICONS: [RegExp, string][] = [
 export function statIconFor(key: string): string | undefined {
   return STAT_ICONS.find(([re]) => re.test(key))?.[1]
 }
+
 
 
 /** The handful of stats worth showing above the full list. */
@@ -1708,7 +1709,12 @@ function StatBoard({
         {ranks && ranks.length > 0 && (
           <>
             {shown.map((r) => (
-              <StatBoardRow key={r.wallet} row={r} you={r.wallet === wallet} />
+              <StatBoardRow
+                key={r.wallet}
+                row={r}
+                statKey={statKey}
+                you={r.wallet === wallet}
+              />
             ))}
 
             {minePinned && (
@@ -1718,7 +1724,7 @@ function StatBoard({
                     {minePinned.rank - TOP - 1} more
                   </span>
                 </div>
-                <StatBoardRow row={minePinned} you />
+                <StatBoardRow row={minePinned} statKey={statKey} you />
               </>
             )}
 
@@ -1732,7 +1738,15 @@ function StatBoard({
   )
 }
 
-export function StatBoardRow({ row, you }: { row: StatRank; you: boolean }) {
+export function StatBoardRow({
+  row,
+  statKey,
+  you,
+}: {
+  row: StatRank
+  statKey: string
+  you: boolean
+}) {
   return (
     <div className={`statline statboard__row${you ? ' statboard__row--you' : ''}`}>
       <span className="statline__k">
@@ -1740,7 +1754,7 @@ export function StatBoardRow({ row, you }: { row: StatRank; you: boolean }) {
         {row.playertag || row.wallet}
       </span>
       <span className="statline__v mono">
-        {row.value.toLocaleString(NUM_LOCALE)}
+        {formatStat(statKey, row.value)}
       </span>
     </div>
   )
@@ -1803,9 +1817,7 @@ export function StatsTab({
                     )}
                     {prettyStat(k)}
                   </span>
-                  <span className="statline__v mono">
-                    {Number(v).toLocaleString(NUM_LOCALE)}
-                  </span>
+                  <span className="statline__v mono">{formatStat(k, Number(v))}</span>
                 </button>
               )
             })}

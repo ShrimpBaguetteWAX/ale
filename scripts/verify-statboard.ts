@@ -10,6 +10,7 @@
  * be sure the shape coming off the chain is the shape it expects.
  */
 import { rankBy, type PlayerStats } from '../src/account/statboard'
+import { formatStat } from '../src/format'
 
 let pass = 0
 let fail = 0
@@ -87,6 +88,20 @@ console.log('\nwho is left off')
   */
   check('players with nothing recorded are dropped', board.map((r) => r.wallet), ['a.wam'])
   check('an unknown stat gives an empty board', rankBy([player('a.wam', { wins: 3 })], 'nope'), [])
+}
+
+console.log('\ntoken figures')
+{
+  /*
+     The chain counts tokens in their smallest unit. Printed raw, a player's
+     TLM total is four digits too long and their shards ten times too big.
+  */
+  check('TLM is divided by 10,000', formatStat('tlm_earned', 104762718), '10,476')
+  check('shards are divided by 10', formatStat('shards_earned', 594563), '59,456')
+  check('no decimals survive', formatStat('tlm_earned', 19999), '1')
+  check('the fraction is dropped, not rounded up', formatStat('shards_earned', 99), '9')
+  check('plain counts are untouched', formatStat('dungeons_won', 98), '98')
+  check('and still grouped', formatStat('credits_gained', 12002249), '12,002,249')
 }
 
 /* ---------- against the live table ---------- */

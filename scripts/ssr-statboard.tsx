@@ -27,6 +27,19 @@ const css = ['tokens.css', 'global.css', 'app.css', 'account.css', 'leaderboard.
 /** Whoever is somewhere down the board, so the pinned row can be shown. */
 const ME = '5thba.wam'
 
+/*
+   A token stat by default, because that is where the display scaling shows:
+   the chain counts TLM in ten-thousandths, so the raw figures are four
+   digits longer than the ones a player would recognise.
+*/
+const KEY = process.argv[2] || 'tlm_earned'
+const LABEL = KEY.replace(/_/g, ' ').replace(/^./, (c) => c.toUpperCase())
+const ICON = KEY.startsWith('tlm')
+  ? '/assets/icons/tlm.svg'
+  : KEY.startsWith('shards')
+    ? '/assets/icons/shards.svg'
+    : '/assets/icons/dungeons.svg'
+
 /* No top-level await at this build target, so the whole thing runs in main(). */
 async function main() {
   const res = await fetch('https://wax.greymass.com/v1/chain/get_table_rows', {
@@ -51,7 +64,7 @@ async function main() {
   }))
 
   const TOP = 12
-  const ranks = rankBy(players, 'dungeons_won')
+  const ranks = rankBy(players, KEY)
   const mine = ranks.find((r) => r.wallet === ME)
   const pinned = mine && mine.rank > TOP ? mine : undefined
 
@@ -60,19 +73,19 @@ async function main() {
       <div className="sheet__panel">
         <div className="row" style={{ marginBottom: 'var(--sp-3)' }}>
           <span className="panel__title statboard__title">
-            <img className="statline__icon" src="/assets/icons/dungeons.svg" alt="" />
-            Dungeons won
+            <img className="statline__icon" src={ICON} alt="" />
+            {LABEL}
           </span>
         </div>
         {ranks.slice(0, TOP).map((r) => (
-          <StatBoardRow key={r.wallet} row={r} you={r.wallet === ME} />
+          <StatBoardRow key={r.wallet} row={r} statKey={KEY} you={r.wallet === ME} />
         ))}
         {pinned && (
           <>
             <div className="statboard__gap">
               <span>{pinned.rank - TOP - 1} more</span>
             </div>
-            <StatBoardRow row={pinned} you />
+            <StatBoardRow row={pinned} statKey={KEY} you />
           </>
         )}
         <p className="hint" style={{ marginTop: 'var(--sp-3)' }}>

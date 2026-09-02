@@ -30,3 +30,28 @@ export function formatDecimals(value: number, places: number): string {
     maximumFractionDigits: places,
   })
 }
+
+/**
+ * What a raw `permstats` figure has to be divided by to become the number a
+ * player recognises.
+ *
+ * The contract counts tokens in their smallest unit, so `tlm_earned` arrives
+ * as 104762718 for what the game calls 10,476 TLM and `shards_earned` as
+ * 594563 for 59,456 shards. Every other tracked stat is already a plain
+ * count, and anything missing from this table is left alone.
+ */
+const STAT_SCALE: Record<string, number> = {
+  shards_earned: 10,
+  tlm_earned: 10000,
+}
+
+/** A tracked stat written the way a player reads it. */
+export function formatStat(key: string, raw: number): string {
+  const value = Number(raw) / (STAT_SCALE[key] ?? 1)
+  /*
+     Truncated rather than rounded, and shown whole: these are lifetime
+     totals, and the fraction of a token at the end of one is noise that only
+     makes the column harder to scan.
+  */
+  return Math.trunc(value).toLocaleString(NUM_LOCALE)
+}
