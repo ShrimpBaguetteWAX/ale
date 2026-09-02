@@ -1517,3 +1517,100 @@
   border-left: 2px solid var(--gold, #f6a800);
   padding-left: var(--sp-3);
 }
+
+/*
+ * The land's weather.
+ *
+ * Sits between the arena's own strength and the versus panel: it is a fact
+ * about the ground rather than about either team, and it is what a player
+ * wants to know before they start picking rather than after.
+ *
+ * The left edge carries the verdict — green when the roll helps whoever it
+ * catches, red when it hurts, amber when it does both — so the panel can be
+ * read at a glance and then in detail.
+ */
+.weather {
+  --lean-colour: var(--line-soft);
+  border-left: 3px solid var(--lean-colour);
+}
+
+.weather--good {
+  --lean-colour: #6cc000;
+}
+.weather--bad {
+  --lean-colour: #c2253f;
+}
+.weather--mixed {
+  --lean-colour: #f7a600;
+}
+
+.weather__glyph {
+  margin-right: var(--sp-2);
+  vertical-align: -3px;
+  opacity: 0.85;
+}
+
+.weather__name {
+  margin: var(--sp-2) 0 var(--sp-3);
+  font-family: var(--font-display);
+  font-size: var(--fs-md);
+  color: var(--text);
+}
+
+.weather__effects {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.weather__effect {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 9px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--line-soft);
+  background: rgb(0 0 0 / 35%);
+  font-size: var(--fs-xs);
+  color: var(--text-dim);
+}
+
+.weather__effect b {
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.weather__who {
+  margin: var(--sp-3) 0 0;
+  font-size: var(--fs-xs);
+  color: var(--text-dim);
+}
+
+.weather__target {
+  color: var(--text);
+  text-transform: capitalize;
+}
+
+/*
+ * How many fighters on each side the weather actually reaches.
+ *
+ * A side it misses entirely is dimmed rather than hidden: "0 of yours" is
+ * information, and a row that disappears when the count is zero makes the
+ * remaining one look like the only side that was ever checked.
+ */
+.weather__tally {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2) var(--sp-4);
+  margin-top: var(--sp-2);
+  font-size: var(--fs-xs);
+}
+
+.weather__side {
+  color: var(--text-faint);
+}
+
+.weather__side--on {
+  color: var(--lean-colour);
+  font-weight: 600;
+}

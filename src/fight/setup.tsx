@@ -19,13 +19,24 @@ import {
   type Status,
 } from '@/dungeon/filters'
 import type { Matchup } from '@/fight/matchup'
+import {
+  weatherEffectText,
+  weatherHits,
+  weatherIsCalm,
+  weatherLean,
+  weatherTargets,
+  type Weather,
+  type Weatherable,
+} from '@/fight/weather'
 import { rarityRank, type NftValue } from '@/dungeon/nftFighter'
 import type { BattleFighter, RosterFighter } from '@/dungeon/types'
 import {
+  STAT_LABEL,
   elementBackground,
   fighterArt,
   fighterArtFallback,
   formatScaled,
+  statIcon,
   type ClassTemplate,
 } from '@/tavern/fighterStats'
 import { asset } from '@/assets'
@@ -134,6 +145,130 @@ export function Portrait({
 }
 
 /* ---------- the versus line-up ---------- */
+
+/**
+ * The weather standing over the land, and who it is going to catch.
+ *
+ * `apply_weather_and_age` runs before the first blow and before the level and
+ * age scaling, so this is the first thing that happens to a fighter and
+ * everything else compounds on top of it. It was on the screen nowhere, which
+ * left a player picking a team against a modifier they could not see.
+ *
+ * Most rolls are aimed — 862 of the 1,001 on a planet name a class, race or
+ * element — so the count of who it actually reaches on each side is the part
+ * worth reading. "Six of theirs, none of yours" is the whole story of some
+ * fights, and no arrangement of the raw totals says it.
+ */
+export function WeatherPanel({
+  weather,
+  mine,
+  theirs,
+  theirsLabel,
+}: {
+  weather: Weather | null | undefined
+  mine: Weatherable[]
+  theirs: Weatherable[]
+  /** "the defenders" or "the dungeon", so the counts read as a sentence. */
+  theirsLabel: string
+}) {
+  if (!weather) return null
+
+  const calm = weatherIsCalm(weather)
+  const lean = weatherLean(weather)
+  const targets = weatherTargets(weather)
+  const hitMine = mine.filter((f) => weatherHits(weather, f)).length
+  const hitTheirs = theirs.filter((f) => weatherHits(weather, f)).length
+
+  return (
+    <section className={`panel weather weather--${lean}`}>
+      <div className="panel__title">
+        <img
+          className="weather__glyph"
+          src={asset('/assets/icons/menu/world.png')}
+          alt=""
+          width={16}
+          height={16}
+        />
+        Weather
+        <span className="faint dungeon__tally">changes daily</span>
+      </div>
+
+      <p className="weather__name">{weather.displayname}</p>
+
+      {calm ? (
+        <p className="hint">
+          This roll carries no effects. Both sides fight on their own numbers.
+        </p>
+      ) : (
+        <>
+          <div className="weather__effects">
+            {weather.weather_effects.map((e, i) => (
+              <span className="weather__effect" key={i}>
+                <img src={weatherStatIcon(e.statname)} alt="" width={13} height={13} />
+                {STAT_LABEL[e.statname] ?? prettyStatname(e.statname)}
+                <b className="mono">{weatherEffectText(e)}</b>
+              </span>
+            ))}
+          </div>
+
+          <p className="weather__who">
+            {targets.length ? (
+              <>
+                Falls on{' '}
+                {targets.map((t, i) => (
+                  <span className="weather__target" key={t}>
+                    {i > 0 && ' · '}
+                    {t}
+                  </span>
+                ))}
+              </>
+            ) : (
+              <>Falls on every fighter on the field.</>
+            )}
+          </p>
+
+          {/*
+            The count, which is the number the pick actually turns on. Shown
+            for both sides because a modifier that catches five of theirs and
+            one of yours is an advantage, and the same roll the other way
+            round is a problem.
+          */}
+          <div className="weather__tally">
+            <span className={`weather__side${hitMine ? ' weather__side--on' : ''}`}>
+              {hitMine} of your {mine.length === 1 ? 'fighter' : 'fighters'}
+            </span>
+            <span className={`weather__side${hitTheirs ? ' weather__side--on' : ''}`}>
+              {hitTheirs} of {theirsLabel}
+            </span>
+          </div>
+        </>
+      )}
+    </section>
+  )
+}
+
+/** The element a resistance stat belongs to, or nothing. */
+function resElement(statname: string): string | null {
+  const m = /^res_([a-z]+)$/.exec(statname)
+  return m ? m[1] : null
+}
+
+/** `res_fire` reads as "Fire res" rather than as a column name. */
+function prettyStatname(statname: string): string {
+  const el = resElement(statname)
+  if (!el) return statname
+  return el[0].toUpperCase() + el.slice(1) + ' res'
+}
+
+/*
+   Resistances have no icon of their own in `icons/stats`, but they each
+   belong to an element that does — and the element icon is the one a player
+   already reads on every fighter card.
+*/
+function weatherStatIcon(statname: string): string {
+  const el = resElement(statname)
+  return el ? elementIcon(el) : statIcon(statname)
+}
 
 /**
  * What the elements do to one side's totals.

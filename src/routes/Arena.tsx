@@ -26,6 +26,7 @@ import {
 } from '@/fight/matchup'
 import { recallTeam, rememberTeam, restoreTeam } from '@/fight/lastTeam'
 import { autoPickTeam } from '@/fight/autopick'
+import { fetchWeather, type Weather } from '@/fight/weather'
 import {
   NFT_FIGHTER_ART,
   combineNftFighter,
@@ -67,6 +68,7 @@ import {
   DetailSheet,
   Elemental,
   FighterGrid,
+  WeatherPanel,
   POLL_ATTEMPTS,
   POLL_INTERVAL_MS,
   RosterFilters,
@@ -173,6 +175,26 @@ export default function Arena() {
       live = false
     }
   }, [player.wallet, planet, land])
+
+  /*
+     The land's weather, which every fight here is fought in.
+
+     Read from `landtracking` rather than guessed: `rndweather` re-rolls on
+     travel, and the player is standing on this land, so the row is already
+     the one the fight will use.
+  */
+  const [weather, setWeather] = useState<Weather | null>(null)
+
+  useEffect(() => {
+    let live = true
+    fetchWeather(planet, land)
+      .then((w) => live && setWeather(w ?? null))
+      /* Weather is context, not a blocker: a failed read leaves it off. */
+      .catch(() => live && setWeather(null))
+    return () => {
+      live = false
+    }
+  }, [planet, land])
 
   const usableCrew = useMemo(
     () => crewCards.filter((c) => nftValues.has(c.template_id)),
@@ -613,6 +635,18 @@ export default function Arena() {
           xpPerWin={xpPerWin}
           lastFight={arena?.last_fight}
           defenders={arena?.fighters.length ?? 0}
+        />
+
+        {/*
+          Above the versus panel, because it is a fact about the fight rather
+          than about either team, and because it is the thing a player wants
+          to know *before* they start picking.
+        */}
+        <WeatherPanel
+          weather={weather}
+          mine={picked}
+          theirs={enemies}
+          theirsLabel={`the defender${enemies.length === 1 ? '' : 's'}`}
         />
 
         <section className="versus">
