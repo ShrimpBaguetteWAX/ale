@@ -14,6 +14,8 @@ import { renderToStaticMarkup } from 'react-dom/server'
 import { readFileSync, writeFileSync } from 'node:fs'
 import { teamOutlook, type FlatFighter, type SideOutlook } from '../src/fight/matchup'
 import { formatScaled } from '../src/tavern/fighterStats'
+/* The real component, not a copy: a copy is a harness that agrees with itself. */
+import { Elemental } from '../src/fight/setup'
 import type { BattleAbility, BattleFighter } from '../src/dungeon/types'
 
 const css = ['tokens.css', 'global.css', 'app.css', 'dungeon.css']
@@ -59,50 +61,6 @@ const airHunter = {
   condition_group: 'element', condition_name: 'air',
   effect_on_condition_count: 1,
 } as unknown as BattleAbility
-
-/* Copied from Dungeon.tsx so the harness shows exactly what the screen does. */
-function Elemental({
-  side,
-  against,
-  who,
-}: {
-  side: { landShare: number; blockShare: number; bonuses: number }
-  against: number
-  who: string
-}) {
-  const land = Math.round(side.landShare * 100)
-  const block = Math.round(side.blockShare * 100)
-  return (
-    <span className="elemental">
-      <span
-        className={`elemental__bit elemental__bit--${land >= 80 ? 'good' : land >= 55 ? 'fair' : 'poor'}`}
-        title={`${who} land ${land}% of that damage once the other side's resistances are applied`}
-      >
-        <img src="/assets/icons/swords.svg" alt="" width={11} height={11} />
-        {land}%
-      </span>
-      <span
-        className={`elemental__bit elemental__bit--${block >= 45 ? 'good' : block >= 25 ? 'fair' : 'poor'}`}
-        title={`${who} turn away ${block}% of the damage coming the other way`}
-      >
-        <img src="/assets/icons/shield.svg" alt="" width={11} height={11} />
-        {block}%
-      </span>
-      {side.bonuses > 0 && (
-        <span className="elemental__bit elemental__bit--bonus">
-          <img src="/assets/icons/medal.svg" alt="" width={11} height={11} />
-          {side.bonuses}
-        </span>
-      )}
-      {against > 0 && (
-        <span className="elemental__bit elemental__bit--exposed">
-          <img src="/assets/icons/exclamation.svg" alt="" width={11} height={11} />
-          {against}
-        </span>
-      )}
-    </span>
-  )
-}
 
 const Head = ({ side, against, who, label, share }: { side: SideOutlook; against: number; who: string; label: string; share: number }) => (
   <header className="versus__head" style={{ ['--share' as string]: `${share * 100}%` }}>

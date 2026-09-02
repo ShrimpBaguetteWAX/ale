@@ -37,7 +37,6 @@ import {
 import { rememberFight } from '@/dungeon/fightStore'
 import {
   enemyProfile,
-  flatMatchup,
   matchupsFor,
   teamOutlook,
   battleAsFlat,
@@ -46,6 +45,7 @@ import {
 } from '@/fight/matchup'
 import { ageFactor, levelFactor } from '@/fight/scaling'
 import { recallTeam, rememberTeam, restoreTeam } from '@/fight/lastTeam'
+import { autoPickTeam } from '@/fight/autopick'
 import { TEAM_SIZE, type BattleFighter, type RosterFighter } from '@/dungeon/types'
 import {
   STAT_LABEL,
@@ -61,6 +61,7 @@ import {
   CardSlot,
   CombatCard,
   DetailSheet,
+  Elemental,
   FighterGrid,
   POLL_ATTEMPTS,
   POLL_INTERVAL_MS,
@@ -75,72 +76,6 @@ import {
 import { playDungeon } from '@/wharf/actions'
 import { readableError } from '@/wharf/errors'
 import { asset } from '@/assets'
-
-/**
- * What the elements do to one side's totals.
- *
- * The two figures beside a team's health and damage are the part of the
- * matchup the raw sums cannot say: how much of its damage survives the far
- * side's resistances, and how much of what is aimed at it is turned away.
- * They are the difference between a team that looks even on paper and one
- * that is about to lose, and until now the screen never mentioned them.
- */
-function Elemental({
-  side,
-  against,
-  who,
-}: {
-  side: { landShare: number; blockShare: number; bonuses: number }
-  /**
-   * Ability firings the *other* side gets out of this one.
-   *
-   * Each header showed only what its own team's abilities did, which reads as
-   * a scoreboard of one team's strengths rather than a matchup — and it is
-   * the same asymmetry the fighter cards used to have. Both counts on both
-   * sides means a header can be read without looking across at the other.
-   */
-  against: number
-  who: string
-}) {
-  const land = Math.round(side.landShare * 100)
-  const block = Math.round(side.blockShare * 100)
-  return (
-    <span className="elemental">
-      <span
-        className={`elemental__bit elemental__bit--${land >= 80 ? 'good' : land >= 55 ? 'fair' : 'poor'}`}
-        title={`${who} land ${land}% of that damage once the other side's resistances are applied`}
-      >
-        <img src={asset("/assets/icons/swords.svg")} alt="" width={11} height={11} />
-        {land}%
-      </span>
-      <span
-        className={`elemental__bit elemental__bit--${block >= 45 ? 'good' : block >= 25 ? 'fair' : 'poor'}`}
-        title={`${who} turn away ${block}% of the damage coming the other way`}
-      >
-        <img src={asset("/assets/icons/shield.svg")} alt="" width={11} height={11} />
-        {block}%
-      </span>
-      {side.bonuses > 0 && (
-        <span
-          className="elemental__bit elemental__bit--bonus"
-          title={`${side.bonuses} of ${who === 'You' ? 'your' : 'their'} ability firing${side.bonuses === 1 ? '' : 's'} that only this matchup allows, across the whole line-up — the crew-and-weapon fighter included`}
-        >
-          <img src={asset("/assets/icons/medal.svg")} alt="" width={11} height={11} />
-          {side.bonuses}
-        </span>
-      )}
-      {against > 0 && (
-        <span
-          className="elemental__bit elemental__bit--exposed"
-          title={`${against} ability firing${against === 1 ? '' : 's'} the other side gets out of ${who === 'You' ? 'your' : 'their'} line-up`}
-        >
-          <img src={asset("/assets/icons/exclamation.svg")} alt="" width={11} height={11} />
-          {against}
-        </span>
-      )}
-    </span>
-  )
-}
 
 export default function Dungeon() {
   const player = useGame((s) => s.player)!
@@ -345,91 +280,21 @@ export default function Dungeon() {
     })
   }, [])
 
-  /**
-   * Pick the five fighters and two cards that suit *this* dungeon.
-   *
-   * The old version took the five highest raw damage figures, which ignored
-   * every part of the game that decides a fight: a fire fighter topping the
-   * roster is worth nothing against a team that resists fire, an old fighter's
-   * printed damage is not the damage it brings, and a slow one lands it half
-   * as often. So this ranks on the same measure the badges show — damage that
-   * actually gets through, per tick, times how long the fighter survives the
-   * elements coming back — and the player can audit every choice by reading
-   * the numbers on the cards it picked.
-   *
-   * The cards are chosen as a pair rather than one at a time, because the
-   * weapon alone sets the combined fighter's element while both contribute its
-   * damage. Picking the strongest weapon in isolation is exactly how you hand
-   * a resistant dungeon a free 60% off your sixth fighter.
-   */
+  /* Ranked on the matchup, and the cards chosen as a pair. */
   const autoPick = useCallback(() => {
     if (!roster) return
-
-    const available = roster.filter((f) => fighterAvailable(f).available)
-    const ranked = [...available].sort(
-      (a, b) =>
-        (matchups.get(b.fighter_id)?.score ?? 0) -
-          (matchups.get(a.fighter_id)?.score ?? 0) ||
-        a.fighter_id - b.fighter_id,
-    )
-    setTeamIds(ranked.slice(0, TEAM_SIZE).map((f) => f.fighter_id))
-
-    /*
-       Every pair is worth scoring, but not every pair is worth the loop: a
-       big collection would be thousands of combinations for a choice that is
-       decided by the top handful either way. Both sides are trimmed to their
-       strongest few on raw stats first, and the pairing runs on those.
-    */
-    const SHORTLIST = 24
-    const bulk = (c: CardTemplate) => {
-      const v = nftValues.get(c.template_id)
-      return (v?.stats.damage ?? 0) + (v?.stats.health ?? 0)
-    }
-    const shortlist = (cards: CardTemplate[]) =>
-      [...cards].sort((a, b) => bulk(b) - bulk(a)).slice(0, SHORTLIST)
-
-    const crewList = shortlist(usableCrew)
-    const weaponList = shortlist(usableWeapons)
-
-    let bestCrew: CardTemplate | null = null
-    let bestWeapon: CardTemplate | null = null
-    let bestScore = -1
-
-    for (const c of crewList) {
-      const cv = nftValues.get(c.template_id)
-      if (!cv) continue
-      for (const w of weaponList) {
-        const wv = nftValues.get(w.template_id)
-        if (!wv) continue
-        /* `getFighterFromNFT`: stats add, the element comes from the weapon. */
-        const combined = flatMatchup(
-          {
-            element: wv.element,
-            damage: cv.stats.damage + wv.stats.damage,
-            health: cv.stats.health + wv.stats.health,
-            attackspeed: cv.stats.attackspeed + wv.stats.attackspeed,
-            res_gem: cv.stats.res_gem + wv.stats.res_gem,
-            res_metal: cv.stats.res_metal + wv.stats.res_metal,
-            res_air: cv.stats.res_air + wv.stats.res_air,
-            res_fire: cv.stats.res_fire + wv.stats.res_fire,
-            res_nature: cv.stats.res_nature + wv.stats.res_nature,
-            res_neutral: cv.stats.res_neutral + wv.stats.res_neutral,
-            abilities: [...(cv.ability ?? []), ...(wv.ability ?? [])],
-          },
-          enemies,
-        )
-        if (combined.score > bestScore) {
-          bestScore = combined.score
-          bestCrew = c
-          bestWeapon = w
-        }
-      }
-    }
-
-    /* With no enemy line loaded there is nothing to rank against, so fall
-       back to the heaviest card in each slot rather than picking nothing. */
-    setCrew(bestCrew ?? crewList[0] ?? null)
-    setWeapon(bestWeapon ?? weaponList[0] ?? null)
+    const pick = autoPickTeam({
+      roster,
+      matchups,
+      enemies,
+      teamSize: TEAM_SIZE,
+      crewCards: usableCrew,
+      weaponCards: usableWeapons,
+      values: nftValues,
+    })
+    setTeamIds(pick.fighterIds)
+    setCrew(pick.crew)
+    setWeapon(pick.weapon)
   }, [roster, matchups, enemies, usableCrew, usableWeapons, nftValues])
 
   const start = async () => {

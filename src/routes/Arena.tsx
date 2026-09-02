@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useGame } from '@/state/useGame'
 import { landId } from '@/chain/landId'
@@ -14,8 +14,18 @@ import {
   fetchRoster,
   randomHistoryId,
 } from '@/dungeon/queries'
-import { fighterAvailable, teamDamage, teamHealth } from '@/dungeon/rules'
+import { fighterAvailable } from '@/dungeon/rules'
 import { EMPTY_FILTER, type RosterFilter } from '@/dungeon/filters'
+import {
+  battleAsFlat,
+  enemyProfile,
+  matchupBetween,
+  matchupsFor,
+  teamOutlook,
+  type FlatFighter,
+} from '@/fight/matchup'
+import { recallTeam, rememberTeam, restoreTeam } from '@/fight/lastTeam'
+import { autoPickTeam } from '@/fight/autopick'
 import {
   NFT_FIGHTER_ART,
   combineNftFighter,
@@ -55,6 +65,7 @@ import {
   CardSlot,
   CombatCard,
   DetailSheet,
+  Elemental,
   FighterGrid,
   POLL_ATTEMPTS,
   POLL_INTERVAL_MS,
@@ -193,6 +204,22 @@ export default function Arena() {
     [arena, arenaPower, levelMod, ageDecay],
   )
 
+  /*
+     How every fighter in the roster stands against these particular
+     defenders.
+
+     One table, read by four things: the badges on the cards, the matchup
+     filters, the matchup sorts and auto-pick. Recomputed when the arena's
+     power changes, because that is what decides how large the defenders
+     actually are.
+  */
+  const matchups = useMemo(
+    () => matchupsFor(roster ?? [], enemies, levelMod, ageDecay),
+    [roster, enemies, levelMod, ageDecay],
+  )
+
+  const profile = useMemo(() => enemyProfile(enemies), [enemies])
+
   const byId = useMemo(() => {
     const m = new Map<number, RosterFighter>()
     for (const f of roster ?? []) m.set(f.fighter_id, f)
@@ -233,6 +260,54 @@ export default function Arena() {
     tile,
   )
 
+  /*
+     The last team the player challenged with, put back.
+
+     Kept separately from the dungeon team: they are different choices, and a
+     fighter defending an arena cannot challenge one. A remembered fighter
+     that has since been listed on the market, sent to defend or fallen due
+     for a payday is dropped rather than restored — the contract refuses all
+     three, so putting one back would leave the Challenge button dark with no
+     visible cause. What was dropped is said out loud for the same reason.
+  */
+  const restored = useRef(false)
+  const [restoreNote, setRestoreNote] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (restored.current || !roster) return
+    restored.current = true
+
+    const usable = new Map(roster.map((f) => [f.fighter_id, fighterAvailable(f)]))
+    const back = restoreTeam(recallTeam('arena', player.wallet), {
+      teamSize: TEAM_SIZE,
+      usable,
+      crewCards: usableCrew,
+      weaponCards: usableWeapons,
+    })
+
+    if (back.fighterIds.length) setTeamIds(back.fighterIds)
+    if (back.crew) setCrew(back.crew)
+    if (back.weapon) setWeapon(back.weapon)
+
+    if (back.dropped.length) {
+      const named = back.dropped.map((d) => {
+        const f = roster.find((r) => r.fighter_id === d.id)
+        return `${f ? f.classname : `#${d.id}`} (${d.reason})`
+      })
+      setRestoreNote(`Left out of your last team: ${named.join(', ')}.`)
+    }
+  }, [roster, usableCrew, usableWeapons, player.wallet])
+
+  /* Kept current from here on, so leaving without fighting still saves it. */
+  useEffect(() => {
+    if (!restored.current) return
+    rememberTeam('arena', player.wallet, {
+      fighterIds: teamIds,
+      crew: crew?.template_id ?? null,
+      weapon: weapon?.template_id ?? null,
+    })
+  }, [teamIds, crew, weapon, player.wallet])
+
   const toggleFighter = useCallback((f: RosterFighter) => {
     setTeamIds((ids) => {
       if (ids.includes(f.fighter_id)) return ids.filter((id) => id !== f.fighter_id)
@@ -241,30 +316,30 @@ export default function Arena() {
     })
   }, [])
 
+  /*
+     Ranked on the matchup rather than on raw damage, and the cards chosen as
+     a pair — the same reasoning as the dungeon, against a different line.
+
+     Unlike the old version this overwrites the cards already in the slots
+     instead of only filling empty ones. Auto-pick is asking the screen what
+     it would field here; leaving a card the player chose for some other
+     opponent in place made the answer half theirs and half its own.
+  */
   const autoPick = useCallback(() => {
     if (!roster) return
-    const available = roster
-      .filter((f) => fighterAvailable(f).available)
-      .sort(
-        (a, b) =>
-          b.stats.damage_min +
-          b.stats.damage_max -
-          (a.stats.damage_min + a.stats.damage_max),
-      )
-    setTeamIds(available.slice(0, TEAM_SIZE).map((f) => f.fighter_id))
-    const best = (cards: CardTemplate[]) =>
-      [...cards].sort((a, b) => {
-        const av = nftValues.get(a.template_id)
-        const bv = nftValues.get(b.template_id)
-        return (
-          (bv?.stats.damage ?? 0) +
-          (bv?.stats.health ?? 0) -
-          ((av?.stats.damage ?? 0) + (av?.stats.health ?? 0))
-        )
-      })[0] ?? null
-    if (!crew) setCrew(best(usableCrew))
-    if (!weapon) setWeapon(best(usableWeapons))
-  }, [roster, crew, weapon, usableCrew, usableWeapons, nftValues])
+    const pick = autoPickTeam({
+      roster,
+      matchups,
+      enemies,
+      teamSize: TEAM_SIZE,
+      crewCards: usableCrew,
+      weaponCards: usableWeapons,
+      values: nftValues,
+    })
+    setTeamIds(pick.fighterIds)
+    setCrew(pick.crew)
+    setWeapon(pick.weapon)
+  }, [roster, matchups, enemies, usableCrew, usableWeapons, nftValues])
 
   const start = async () => {
     if (!session || !block.ready || !crew || !weapon) return
@@ -369,17 +444,82 @@ export default function Arena() {
     [picked, levelMod, ageDecay],
   )
 
-  const myHealth = teamHealth(myFielded)
-  const myDamage = teamDamage(myFielded)
+  /* The same team in the shape the matchup reads, the NFT fighter included. */
+  const myFlat = useMemo<FlatFighter[]>(() => {
+    const out: FlatFighter[] = picked.map((f, i) => ({
+      element: f.element,
+      classname: f.classname,
+      racename: f.racename,
+      damage: myFielded[i]?.damage ?? 0,
+      health: myFielded[i]?.health ?? 0,
+      attackspeed: mid(f.stats.attackspeed_min, f.stats.attackspeed_max),
+      taunt: mid(f.stats.taunt_min, f.stats.taunt_max),
+      initiative: mid(f.stats.initiative_min, f.stats.initiative_max),
+      res_gem: f.stats.res_gem, res_metal: f.stats.res_metal, res_air: f.stats.res_air,
+      res_fire: f.stats.res_fire, res_nature: f.stats.res_nature,
+      res_neutral: f.stats.res_neutral,
+      abilities: f.stats.abilities ?? [],
+    }))
 
-  const myShare = useMemo(() => {
-    const mineScore =
-      (myHealth + (nftFighter?.health.min ?? 0)) *
-      (myDamage + (nftFighter?.damage.min ?? 0))
-    const theirs = teamHealth(enemies) * teamDamage(enemies)
-    if (mineScore <= 0 && theirs <= 0) return 0.5
-    return mineScore / (mineScore + theirs)
-  }, [myHealth, myDamage, nftFighter, enemies])
+    /* `getFighterFromNFT`: stats add, the element comes from the weapon. */
+    const cv = crew ? nftValues.get(crew.template_id) : undefined
+    const wv = weapon ? nftValues.get(weapon.template_id) : undefined
+    if (cv || wv) {
+      const add = (pick: (v: typeof cv) => number) => (cv ? pick(cv) : 0) + (wv ? pick(wv) : 0)
+      out.push({
+        element: wv?.element ?? cv?.element ?? 'neutral',
+        classname: cv?.classname ?? '',
+        racename: cv?.racename ?? '',
+        damage: add((v) => v!.stats.damage),
+        health: add((v) => v!.stats.health),
+        attackspeed: add((v) => v!.stats.attackspeed),
+        taunt: add((v) => v!.stats.taunt),
+        initiative: add((v) => v!.stats.initiative),
+        res_gem: add((v) => v!.stats.res_gem),
+        res_metal: add((v) => v!.stats.res_metal),
+        res_air: add((v) => v!.stats.res_air),
+        res_fire: add((v) => v!.stats.res_fire),
+        res_nature: add((v) => v!.stats.res_nature),
+        res_neutral: add((v) => v!.stats.res_neutral),
+        abilities: [...(cv?.ability ?? []), ...(wv?.ability ?? [])],
+      })
+    }
+    return out
+  }, [picked, myFielded, crew, weapon, nftValues])
+
+  /*
+     The balance bar, and the figures beside it.
+
+     It used to be health times damage on both sides, which says a team of
+     six is stronger than a team of five and nothing else. The defenders'
+     resistances decide how much of your damage arrives, yours decide how
+     much of theirs does, and abilities that only fire against a particular
+     element or class swing fights the raw sums call even.
+  */
+  const outlook = useMemo(() => teamOutlook(myFlat, enemies), [myFlat, enemies])
+
+  /*
+     Every combatant on the screen against the line opposite it.
+
+     The same computation both ways round — a defender's abilities read
+     against my team is my team's abilities read against theirs with the
+     arguments swapped — which is what lets the two rows be labelled honestly
+     instead of one of them being "bonuses" and the other silence.
+
+     `myFlat` is the picked fighters in order followed by the NFT fighter, so
+     index i lines up with `picked[i]` and the last entry is the sixth.
+  */
+  const enemyFlat = useMemo(() => enemies.map(battleAsFlat), [enemies])
+  const mySlots = useMemo(
+    () => myFlat.map((f) => matchupBetween(f, enemyFlat)),
+    [myFlat, enemyFlat],
+  )
+  const enemySlots = useMemo(
+    () => enemyFlat.map((e) => matchupBetween(e, myFlat)),
+    [enemyFlat, myFlat],
+  )
+
+  const myShare = outlook.share
 
   const counts: Record<Tab, number> = {
     fighters: roster?.length ?? 0,
@@ -462,6 +602,11 @@ export default function Arena() {
         {arenaLoaded && maintained && !arena?.fighters.length && (
           <div className="alert">Nobody is holding this arena yet.</div>
         )}
+        {restoreNote && (
+          <div className="alert alert--note" role="status">
+            {restoreNote}
+          </div>
+        )}
 
         <ArenaStanding
           power={arenaPower}
@@ -478,8 +623,9 @@ export default function Arena() {
             >
               <span className="versus__team">The defenders</span>
               <span className="versus__totals mono">
-                {formatScaled(teamHealth(enemies))} HP ·{' '}
-                {formatScaled(teamDamage(enemies))} DMG
+                {formatScaled(outlook.theirs.health)} HP ·{' '}
+                {formatScaled(outlook.theirs.damage)} DMG
+                <Elemental side={outlook.theirs} against={outlook.mine.bonuses} who="They" />
               </span>
             </header>
 
@@ -497,6 +643,7 @@ export default function Arena() {
                   badge={f.fighter_id === NFT_FIGHTER_ID ? 'NFT' : undefined}
                   art={f.fighter_id === NFT_FIGHTER_ID ? NFT_FIGHTER_ART : undefined}
                   owner={f.gamertag || f.owner}
+                  abilities={picked.length ? enemySlots[i] : undefined}
                   onOpen={() => showEnemy(f)}
                 />
               ))}
@@ -528,8 +675,9 @@ export default function Arena() {
                 </span>
               </span>
               <span className="versus__totals mono">
-                {formatScaled(myHealth + (nftFighter?.health.min ?? 0))} HP ·{' '}
-                {formatScaled(myDamage + (nftFighter?.damage.min ?? 0))} DMG
+                {formatScaled(outlook.mine.health)} HP ·{' '}
+                {formatScaled(outlook.mine.damage)} DMG
+                <Elemental side={outlook.mine} against={outlook.theirs.bonuses} who="You" />
               </span>
             </header>
 
@@ -549,6 +697,7 @@ export default function Arena() {
                     health={myFielded[i]?.health ?? 0}
                     damage={myFielded[i]?.damage ?? 0}
                     side="mine"
+                    abilities={enemies.length ? mySlots[i] : undefined}
                     onOpen={() => showFighter(f)}
                     onRemove={() => toggleFighter(f)}
                   />
@@ -738,6 +887,7 @@ export default function Arena() {
                 filter={filter}
                 onChange={setFilter}
                 roster={roster ?? []}
+                versus={enemies.length ? profile : undefined}
               />
               <FighterGrid
                 roster={roster}
@@ -746,6 +896,7 @@ export default function Arena() {
                 levelMod={levelMod}
                 teamIds={teamIds}
                 full={picked.length >= TEAM_SIZE}
+                matchups={enemies.length ? matchups : undefined}
                 onToggle={toggleFighter}
                 onInspect={showFighter}
               />
