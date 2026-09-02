@@ -30,26 +30,17 @@ export async function getSessionKit(): Promise<SessionKit> {
     url: endpointPool.next(),
   })
 
-  kit = new SessionKit(
-    {
-      appName: 'Alien Legends',
-      chains: [chain],
-      ui: new WebRenderer(),
-      walletPlugins: [
-        new WalletPluginAnchor(),
-        new WalletPluginCloudWallet(),
-      ],
-    },
-    {
-      /*
-         The game pays the network cost of every transaction, by putting a
-         `greymassnoop::noop` authorised by `cpu.ale@cpu` in front of the
-         player's own action. See `cosign.ts` for what that permission can and
-         cannot do, and for why the key it needs is in the bundle.
-      */
-      transactPlugins: [new CosignPlugin()],
-    },
-  )
+  /*
+     No transact plugins here on purpose. A plugin registered on the kit runs
+     on every transaction the game makes; the one the game has is wanted on
+     exactly one action, and `transact` below passes it there.
+  */
+  kit = new SessionKit({
+    appName: 'Alien Legends',
+    chains: [chain],
+    ui: new WebRenderer(),
+    walletPlugins: [new WalletPluginAnchor(), new WalletPluginCloudWallet()],
+  })
 
   return kit
 }
@@ -102,6 +93,19 @@ export interface ActionInput {
 export async function transact(
   session: Session,
   actions: ActionInput[],
+  options: {
+    /**
+     * Have the game pay this transaction's network cost.
+     *
+     * Off by default, and deliberately per-call rather than on the session:
+     * a plugin registered on the kit runs on *everything*, which bills
+     * `cpu.ale` for every fight, claim and step a player takes. The one place
+     * it is wanted is the CPU claim itself, where the player has no CPU left
+     * to pay with — which is the whole reason they are asking. See
+     * `cosign.ts`.
+     */
+    cosign?: boolean
+  } = {},
 ): Promise<TransactResult> {
   return session.transact(
     {
@@ -110,7 +114,11 @@ export async function transact(
         authorization: [session.permissionLevel],
       })),
     },
-    { broadcast: true, expireSeconds: 120 },
+    {
+      broadcast: true,
+      expireSeconds: 120,
+      ...(options.cosign ? { transactPlugins: [new CosignPlugin()] } : {}),
+    },
   )
 }
 

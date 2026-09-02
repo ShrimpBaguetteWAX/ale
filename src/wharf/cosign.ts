@@ -1,4 +1,4 @@
-import { PrivateKey } from '@wharfkit/antelope'
+import { ABI, Action, PrivateKey } from '@wharfkit/antelope'
 import {
   AbstractTransactPlugin,
   prependAction,
@@ -9,7 +9,13 @@ import {
 } from '@wharfkit/session'
 
 /**
- * The game pays the network cost of a player's transactions.
+ * The game pays the network cost of the CPU claim.
+ *
+ * Applied to that one action rather than registered on the session: a
+ * `beforeSign` plugin on the kit runs on everything, which would put the
+ * game's account on the hook for every fight, quest and step a player takes.
+ * The claim is the one transaction where the player genuinely cannot pay —
+ * they are asking precisely because they have no CPU left.
  *
  * `cpu.ale` has a `cpu` permission whose only purpose is to co-authorise a
  * `greymassnoop::noop` action placed ahead of the player's own. A transaction
@@ -50,13 +56,34 @@ const COSIGNER_KEY = '5J2Gm886uvFrr4WrMzEtGhT2HRAhdxM4dHqKZMfe8X3oG8u8p5x'
  * It exists purely to carry an authorisation. Putting it first makes its
  * signer the transaction's first authoriser, and the first authoriser is who
  * the chain bills.
+ *
+ * The ABI is written out here rather than fetched. `Action.from` needs to
+ * know how to serialise `data`, and with a plain object and no ABI it throws
+ * "Missing ABI definition when creating action with untyped action data" —
+ * which, from inside a `beforeSign` hook, lands on every transaction the game
+ * makes. Copied verbatim from `greymassnoop` on chain: one struct, no
+ * fields, because the action takes no arguments and never will.
  */
-const NOOP = {
-  account: 'greymassnoop',
-  name: 'noop',
-  authorization: [{ actor: COSIGNER_ACTOR, permission: COSIGNER_PERMISSION }],
-  data: {},
-}
+const NOOP_ABI = ABI.from({
+  version: 'eosio::abi/1.1',
+  structs: [{ name: 'noop', base: '', fields: [] }],
+  actions: [{ name: 'noop', type: 'noop', ricardian_contract: '' }],
+})
+
+/*
+   Built once, at load. If this ever stops being constructible the module
+   fails to import, which is a great deal easier to find than a wallet dialog
+   that refuses every action.
+*/
+const NOOP = Action.from(
+  {
+    account: 'greymassnoop',
+    name: 'noop',
+    authorization: [{ actor: COSIGNER_ACTOR, permission: COSIGNER_PERMISSION }],
+    data: {},
+  },
+  NOOP_ABI,
+)
 
 export class CosignPlugin extends AbstractTransactPlugin {
   id = 'alien-legends-cosign'

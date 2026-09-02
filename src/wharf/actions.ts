@@ -910,6 +910,10 @@ export function mineRewardPool(session: Session, pool: string) {
  * without error for a player who is not registered, and — importantly — for
  * one whose `legend_access_expiry` has passed. So a trial player can sign
  * this, have it succeed, and receive nothing at all.
+ *
+ * The only cosigned action in the game. A player asking for CPU is by
+ * definition a player who has none, so this is the one transaction they
+ * cannot be asked to pay for themselves.
  */
 export function claimCpu(session: Session) {
   const action: ActionInput = {
@@ -917,7 +921,7 @@ export function claimCpu(session: Session) {
     name: 'maxpowerup',
     data: { user: String(session.actor) },
   }
-  return transact(session, [action])
+  return transact(session, [action], { cosign: true })
 }
 
 /**
