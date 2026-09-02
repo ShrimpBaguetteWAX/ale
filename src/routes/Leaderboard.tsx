@@ -116,7 +116,10 @@ function useBoards(account: string | null): BoardData {
         const poolName = cfg?.lb_tlmpools?.[0]?.first ?? 'tlmdunglb'
 
         const [r, p, cd, s] = await Promise.all([
-          fetchDungeonRanks(25, refresh),
+          /* A hundred, not the top twenty that are paid: the board is also
+             how a player sees where they stand and how far there is to climb,
+             and twenty-five rows answered neither for most people. */
+          fetchDungeonRanks(100, refresh),
           fetchTlmPool(poolName, refresh),
           fetchClaimCooldown(account, refresh),
           fetchArenaSeasons(refresh),

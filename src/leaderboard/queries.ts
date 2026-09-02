@@ -19,7 +19,7 @@ import type {
  * six-fighter defending team with every ability spelled out, so that is
  * megabytes to render twenty names.
  */
-export function fetchDungeonRanks(limit = 25, refresh = false): Promise<DungeonRank[]> {
+export function fetchDungeonRanks(limit = 100, refresh = false): Promise<DungeonRank[]> {
   return getRows<DungeonRank>(
     {
       code: CONTRACTS.dungeons,
