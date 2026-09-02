@@ -36,7 +36,6 @@ import {
   fighterArt,
   fighterArtFallback,
   formatScaled,
-  statIcon,
   type ClassTemplate,
 } from '@/tavern/fighterStats'
 import { asset } from '@/assets'
@@ -147,17 +146,21 @@ export function Portrait({
 /* ---------- the versus line-up ---------- */
 
 /**
- * The weather standing over the land, and who it is going to catch.
+ * The weather standing over the land, on one line.
  *
  * `apply_weather_and_age` runs before the first blow and before the level and
  * age scaling, so this is the first thing that happens to a fighter and
- * everything else compounds on top of it. It was on the screen nowhere, which
- * left a player picking a team against a modifier they could not see.
+ * everything else compounds on top of it. It was on the screen nowhere.
  *
- * Most rolls are aimed — 862 of the 1,001 on a planet name a class, race or
- * element — so the count of who it actually reaches on each side is the part
- * worth reading. "Six of theirs, none of yours" is the whole story of some
- * fights, and no arrangement of the raw totals says it.
+ * It is a strip rather than a panel because it is one fact, and the chain
+ * already words it: `displayname` names the effect *and* who it falls on —
+ * "-20 arcanist damage", "+15 gem fighter cooldown". Spelling that out again
+ * in stat chips and a "falls on" line cost five rows to repeat one sentence.
+ *
+ * What the sentence does not say is the part worth adding: how many fighters
+ * on each side it actually reaches. Most rolls are aimed — 862 of the 1,001
+ * on a planet name a class, race or element — so "4 of yours, 0 of theirs" is
+ * the whole story of some fights.
  */
 export function WeatherPanel({
   weather,
@@ -175,75 +178,45 @@ export function WeatherPanel({
 
   const calm = weatherIsCalm(weather)
   const lean = weatherLean(weather)
-  const targets = weatherTargets(weather)
   const hitMine = mine.filter((f) => weatherHits(weather, f)).length
   const hitTheirs = theirs.filter((f) => weatherHits(weather, f)).length
 
+  /* The detail the strip drops, kept for anyone who hovers it. */
+  const detail = calm
+    ? 'This roll carries no effects.'
+    : weather.weather_effects
+        .map((e) => `${STAT_LABEL[e.statname] ?? prettyStatname(e.statname)} ${weatherEffectText(e)}`)
+        .join(' · ')
+  const targets = weatherTargets(weather)
+  const falls = targets.length
+    ? `Falls on ${targets.join(', ')}`
+    : 'Falls on every fighter on the field'
+
   return (
-    <section className={`panel weather weather--${lean}`}>
-      <div className="panel__title">
-        <img
-          className="weather__glyph"
-          src={asset('/assets/icons/menu/world.png')}
-          alt=""
-          width={16}
-          height={16}
-        />
-        Weather
-        <span className="faint dungeon__tally">changes daily</span>
-      </div>
+    <div
+      className={`weather weather--${lean}`}
+      title={`${detail}. ${falls}. Changes daily.`}
+    >
+      <img
+        className="weather__glyph"
+        src={asset('/assets/icons/menu/world.png')}
+        alt="Weather"
+        width={14}
+        height={14}
+      />
+      <span className="weather__name">{weather.displayname}</span>
 
-      <p className="weather__name">{weather.displayname}</p>
-
-      {calm ? (
-        <p className="hint">
-          This roll carries no effects. Both sides fight on their own numbers.
-        </p>
-      ) : (
-        <>
-          <div className="weather__effects">
-            {weather.weather_effects.map((e, i) => (
-              <span className="weather__effect" key={i}>
-                <img src={weatherStatIcon(e.statname)} alt="" width={13} height={13} />
-                {STAT_LABEL[e.statname] ?? prettyStatname(e.statname)}
-                <b className="mono">{weatherEffectText(e)}</b>
-              </span>
-            ))}
-          </div>
-
-          <p className="weather__who">
-            {targets.length ? (
-              <>
-                Falls on{' '}
-                {targets.map((t, i) => (
-                  <span className="weather__target" key={t}>
-                    {i > 0 && ' · '}
-                    {t}
-                  </span>
-                ))}
-              </>
-            ) : (
-              <>Falls on every fighter on the field.</>
-            )}
-          </p>
-
-          {/*
-            The count, which is the number the pick actually turns on. Shown
-            for both sides because a modifier that catches five of theirs and
-            one of yours is an advantage, and the same roll the other way
-            round is a problem.
-          */}
-          <div className="weather__tally">
-            <span className={`weather__side${hitMine ? ' weather__side--on' : ''}`}>
-              {hitMine} of your {mine.length === 1 ? 'fighter' : 'fighters'}
-            </span>
-            <span className={`weather__side${hitTheirs ? ' weather__side--on' : ''}`}>
-              {hitTheirs} of {theirsLabel}
-            </span>
-          </div>
-        </>
+      {!calm && (
+        <span className="weather__tally">
+          <span className={`weather__side${hitMine ? ' weather__side--on' : ''}`}>
+            {hitMine} of yours
+          </span>
+          <span className={`weather__side${hitTheirs ? ' weather__side--on' : ''}`}>
+            {hitTheirs} of {theirsLabel}
+          </span>
+        </span>
       )}
-    </section>
+    </div>
   )
 }
 
@@ -260,15 +233,6 @@ function prettyStatname(statname: string): string {
   return el[0].toUpperCase() + el.slice(1) + ' res'
 }
 
-/*
-   Resistances have no icon of their own in `icons/stats`, but they each
-   belong to an element that does — and the element icon is the one a player
-   already reads on every fighter card.
-*/
-function weatherStatIcon(statname: string): string {
-  const el = resElement(statname)
-  return el ? elementIcon(el) : statIcon(statname)
-}
 
 /**
  * What the elements do to one side's totals.

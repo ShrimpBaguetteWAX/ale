@@ -1519,19 +1519,30 @@
 }
 
 /*
- * The land's weather.
+ * The land's weather, as a strip.
  *
- * Sits between the arena's own strength and the versus panel: it is a fact
- * about the ground rather than about either team, and it is what a player
- * wants to know before they start picking rather than after.
+ * One fact, so one line: the chain's own `displayname` already names both
+ * the effect and who it falls on, and the only thing worth adding is how many
+ * fighters on each side it reaches. It sits between the arena's own strength
+ * and the versus panel, where it costs a row rather than a screenful.
  *
  * The left edge carries the verdict — green when the roll helps whoever it
- * catches, red when it hurts, amber when it does both — so the panel can be
- * read at a glance and then in detail.
+ * catches, red when it hurts, amber when it does both, and nothing at all for
+ * the ones that are a role rather than a quality.
  */
 .weather {
   --lean-colour: var(--line-soft);
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--sp-2) var(--sp-3);
+  margin-bottom: var(--sp-3);
+  padding: 6px var(--sp-3);
+  border: 1px solid var(--line-soft);
   border-left: 3px solid var(--lean-colour);
+  border-radius: var(--radius-sm);
+  background: rgb(0 0 0 / 30%);
+  font-size: var(--fs-xs);
 }
 
 .weather--good {
@@ -1545,65 +1556,26 @@
 }
 
 .weather__glyph {
-  margin-right: var(--sp-2);
-  vertical-align: -3px;
-  opacity: 0.85;
+  flex: none;
+  opacity: 0.75;
 }
 
 .weather__name {
-  margin: var(--sp-2) 0 var(--sp-3);
-  font-family: var(--font-display);
-  font-size: var(--fs-md);
   color: var(--text);
-}
-
-.weather__effects {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--sp-2);
-}
-
-.weather__effect {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 3px 9px;
-  border-radius: var(--radius-full);
-  border: 1px solid var(--line-soft);
-  background: rgb(0 0 0 / 35%);
-  font-size: var(--fs-xs);
-  color: var(--text-dim);
-}
-
-.weather__effect b {
-  color: var(--text);
-  font-variant-numeric: tabular-nums;
-}
-
-.weather__who {
-  margin: var(--sp-3) 0 0;
-  font-size: var(--fs-xs);
-  color: var(--text-dim);
-}
-
-.weather__target {
-  color: var(--text);
-  text-transform: capitalize;
 }
 
 /*
- * How many fighters on each side the weather actually reaches.
+ * How many fighters on each side the weather reaches.
  *
- * A side it misses entirely is dimmed rather than hidden: "0 of yours" is
- * information, and a row that disappears when the count is zero makes the
- * remaining one look like the only side that was ever checked.
+ * Pushed to the end of the line, and a side it misses is dimmed rather than
+ * dropped: "0 of yours" is information, and a row that disappears at zero
+ * makes the remaining one look like the only side that was ever checked.
  */
 .weather__tally {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--sp-2) var(--sp-4);
-  margin-top: var(--sp-2);
-  font-size: var(--fs-xs);
+  gap: var(--sp-2) var(--sp-3);
+  margin-left: auto;
 }
 
 .weather__side {
