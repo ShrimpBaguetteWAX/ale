@@ -1,0 +1,516 @@
+@import './tokens.css';
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  min-height: 100dvh;
+  font-family: var(--font-body);
+  font-size: var(--fs-md);
+  line-height: 1.55;
+  color: var(--text);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+  overflow-wrap: break-word;
+}
+
+img,
+svg,
+canvas {
+  display: block;
+  max-width: 100%;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-display);
+  font-weight: var(--fw-bold);
+  line-height: 1.2;
+  color: var(--text-heading);
+  letter-spacing: 0.01em;
+}
+
+a {
+  color: var(--cyan);
+  text-decoration: none;
+}
+a:hover {
+  text-decoration: underline;
+}
+
+:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* Custom scrollbar, matching the original's white-gradient thumb. */
+* ::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+  background: transparent;
+}
+* ::-webkit-scrollbar-thumb {
+  background: linear-gradient(90deg, rgb(255 255 255 / 0.55), rgb(217 217 217 / 0.55));
+  border-radius: 10px;
+}
+
+/* ---------- Panels ---------- */
+
+/*
+ * The game's signature surface: a violet glass card with a purple rim.
+ * `backdrop-filter` is deliberately absent — it is one of the most expensive
+ * things a mobile GPU can be asked to do, and a flat tinted fill is
+ * indistinguishable here.
+ */
+.panel {
+  position: relative;
+  background: linear-gradient(180deg, var(--surface-3), var(--surface-1));
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  padding: var(--sp-6);
+  box-shadow: var(--shadow);
+}
+
+.panel--tight {
+  padding: var(--sp-4);
+}
+
+.panel__title {
+  font-family: var(--font-display);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--text-heading);
+}
+
+/* ---------- Buttons ---------- */
+
+.btn {
+  --btn-bg: var(--grad-tertiary);
+  --btn-fg: var(--white);
+  --btn-line: var(--line-bright);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  min-height: 44px; /* thumb-sized on mobile */
+  padding: 0 var(--sp-6);
+  font-family: var(--font-display);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-bold);
+  letter-spacing: 0.06em;
+  color: var(--btn-fg);
+  background: var(--btn-bg);
+  border: 1px solid var(--btn-line);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  text-shadow: 0 1px 2px rgb(0 0 0 / 45%);
+  transition:
+    filter var(--dur-fast) var(--ease),
+    transform var(--dur-fast) var(--ease),
+    box-shadow var(--dur-fast) var(--ease);
+}
+
+.btn:hover:not(:disabled) {
+  filter: brightness(1.12);
+}
+.btn:active:not(:disabled) {
+  transform: translateY(1px);
+  filter: brightness(0.95);
+}
+.btn:disabled {
+  --btn-bg: var(--grad-disabled);
+  --btn-line: var(--white-800);
+  color: rgb(0 0 0 / 55%);
+  text-shadow: none;
+  cursor: not-allowed;
+}
+
+/* The "Play" button: the one the whole landing page points at. */
+.btn--primary {
+  --btn-bg: var(--grad-secondary);
+  --btn-line: var(--cyan);
+  --btn-fg: var(--white);
+  box-shadow: var(--glow-cyan);
+}
+
+.btn--magenta {
+  --btn-bg: var(--grad-primary);
+  --btn-line: var(--magenta);
+  box-shadow: var(--glow-magenta);
+}
+
+.btn--gold {
+  --btn-bg: var(--grad-gold);
+  --btn-line: var(--gold);
+  --btn-fg: #2a1c00;
+  text-shadow: none;
+}
+
+.btn--ghost {
+  --btn-bg: rgb(255 255 255 / 4%);
+  --btn-line: var(--line-bright);
+}
+
+.btn--lg {
+  min-height: 54px;
+  padding: 0 var(--sp-10);
+  font-size: var(--fs-lg);
+}
+
+.btn--sm {
+  min-height: 34px;
+  padding: 0 var(--sp-3);
+  font-size: var(--fs-xs);
+}
+
+.btn--block {
+  width: 100%;
+}
+
+/* ---------- Forms ---------- */
+
+.field {
+  display: block;
+}
+
+.field__label {
+  display: block;
+  margin-bottom: var(--sp-2);
+  font-family: var(--font-display);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--text-dim);
+}
+
+.input {
+  width: 100%;
+  min-height: 48px;
+  padding: 0 var(--sp-4);
+  color: var(--text);
+  background: rgb(0 0 0 / 45%);
+  border: 1px solid var(--line-bright);
+  border-radius: var(--radius-sm);
+}
+.input::placeholder {
+  color: var(--text-faint);
+}
+.input:focus {
+  border-color: var(--cyan);
+  outline: none;
+  box-shadow: var(--glow-cyan);
+}
+.input[aria-invalid='true'] {
+  border-color: var(--red);
+}
+
+.hint {
+  margin-top: var(--sp-2);
+  font-size: var(--fs-xs);
+  color: var(--text-faint);
+}
+.hint--error {
+  color: var(--red);
+}
+
+/* ---------- Feedback ---------- */
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  padding: 2px var(--sp-3);
+  font-family: var(--font-display);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  border: 1px solid var(--line-bright);
+  border-radius: var(--radius-full);
+}
+
+.alert {
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--line);
+  border-left-width: 3px;
+  border-radius: var(--radius-sm);
+  background: rgb(0 0 0 / 40%);
+  font-size: var(--fs-sm);
+}
+.alert--error {
+  border-left-color: var(--red);
+}
+.alert--warn {
+  border-left-color: var(--orange);
+}
+.alert--ok {
+  border-left-color: var(--teal);
+}
+/* Something the screen did on the player's behalf, not something wrong. */
+.alert--note {
+  border-left-color: var(--cyan);
+  color: var(--text-dim);
+}
+
+.spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgb(255 255 255 / 25%);
+  border-top-color: var(--cyan);
+  border-radius: 50%;
+  animation: spin 700ms linear infinite;
+  flex: none;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation-duration: 2s;
+  }
+}
+
+/*
+ * Skeletons instead of spinners wherever the final shape is known. Players
+ * read a shimmering block as "nearly there" and a spinner as "stuck", which
+ * is the whole reason loading screens feel slow.
+ */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    rgb(255 255 255 / 5%) 25%,
+    rgb(255 255 255 / 12%) 37%,
+    rgb(255 255 255 / 5%) 63%
+  );
+  background-size: 400% 100%;
+  border-radius: var(--radius-sm);
+  animation: shimmer 1.4s ease infinite;
+}
+@keyframes shimmer {
+  to {
+    background-position: -135% 0;
+  }
+}
+:root[data-fx='low'] .skeleton {
+  animation: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .skeleton {
+    animation: none;
+  }
+}
+
+/* ---------- Layout helpers ---------- */
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+}
+.row--wrap {
+  flex-wrap: wrap;
+}
+.spacer {
+  flex: 1;
+}
+.muted {
+  color: var(--text-dim);
+}
+.faint {
+  color: var(--text-faint);
+}
+.mono {
+  font-variant-numeric: tabular-nums;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ---------- charged buttons ---------- */
+
+/*
+ * The "this is the thing to press" treatment: a light travelling around the
+ * rim, a shine crossing the face, and a glow that breathes. Introduced for
+ * "Enter Tavern" on the map and shared from there, so the landing page's Play
+ * button reads as the same promise rather than a lookalike that drifts from
+ * it. Colour comes from three custom properties, so a caller changes the hue
+ * without restating the mechanics.
+ */
+.btn--charged {
+  --charge-dim: #a3721a;
+  --charge-mid: #ffeaa7;
+  --charge-hot: #ffffff;
+  --charge-glow: 246 168 0;
+
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  animation: charged-glow 2.4s ease-in-out infinite;
+}
+
+/*
+ * The travelling border. A gradient twice the width slides one full width per
+ * cycle, masked down to the 2px rim: mask-composite cuts the content box out
+ * of the padding box, leaving only the border ring painted.
+ */
+.btn--charged::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  padding: 2px;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    var(--charge-dim) 0%,
+    var(--charge-mid) 18%,
+    var(--charge-hot) 28%,
+    var(--charge-mid) 38%,
+    var(--charge-dim) 56%,
+    var(--charge-mid) 76%,
+    var(--charge-hot) 86%,
+    var(--charge-dim) 100%
+  );
+  background-size: 200% 100%;
+  animation: charged-flow 2.2s linear infinite;
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+}
+
+/* A shine crossing the face, on the beat of the border light. */
+.btn--charged::after {
+  content: '';
+  position: absolute;
+  z-index: 1;
+  top: -60%;
+  bottom: -60%;
+  left: 0;
+  width: 32%;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgb(255 255 255 / 45%),
+    transparent
+  );
+  animation: charged-glint 2.2s linear infinite;
+}
+
+/* Label and icons ride above both layers. */
+.btn--charged > * {
+  position: relative;
+  z-index: 3;
+}
+
+@keyframes charged-flow {
+  to {
+    background-position: -200% 0;
+  }
+}
+
+@keyframes charged-glint {
+  0% {
+    transform: translateX(-140%) skewX(-18deg);
+  }
+  60%,
+  100% {
+    transform: translateX(420%) skewX(-18deg);
+  }
+}
+
+@keyframes charged-glow {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 4px rgb(5 16 30 / 55%),
+      0 6px 22px rgb(0 0 0 / 60%),
+      0 0 20px -4px rgb(var(--charge-glow) / 55%);
+  }
+  50% {
+    box-shadow:
+      0 0 0 4px rgb(5 16 30 / 55%),
+      0 6px 22px rgb(0 0 0 / 60%),
+      0 0 34px 2px rgb(var(--charge-glow) / 90%);
+  }
+}
+
+/*
+ * Without motion it still has to read as a button, so everything settles on a
+ * solid rim and a steady glow rather than freezing mid-sweep.
+ */
+:root[data-fx='low'] .btn--charged,
+:root[data-fx='low'] .btn--charged::before,
+:root[data-fx='low'] .btn--charged::after {
+  animation: none;
+}
+:root[data-fx='low'] .btn--charged {
+  box-shadow: 0 0 0 4px rgb(5 16 30 / 55%), 0 6px 22px rgb(0 0 0 / 60%);
+}
+:root[data-fx='low'] .btn--charged::before {
+  background: var(--charge-mid);
+}
+:root[data-fx='low'] .btn--charged::after {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn--charged,
+  .btn--charged::before,
+  .btn--charged::after {
+    animation: none;
+  }
+  .btn--charged::after {
+    display: none;
+  }
+}

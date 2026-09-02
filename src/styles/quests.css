@@ -1,0 +1,390 @@
+/*
+ * Quests.
+ *
+ * Three cards to a cadence, so the card can afford to be a poster: banner
+ * art, one sentence, one number, one bar, one button. The original crams the
+ * countdown, the reward and the progress into a 300px tile and loses all
+ * three; with only three on screen at a time there is no reason to.
+ */
+
+.quests {
+  display: grid;
+  gap: var(--sp-5);
+  align-content: start;
+  padding-bottom: var(--sp-10);
+}
+
+/* ---------- header ---------- */
+
+.quests__head {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-5);
+  flex-wrap: wrap;
+}
+
+.quests__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-4xl);
+  font-weight: var(--fw-bold);
+  letter-spacing: 0.04em;
+  color: var(--text-heading);
+}
+
+.quests__lede {
+  margin: var(--sp-1) 0 0;
+  max-width: 62ch;
+  font-size: var(--fs-sm);
+  line-height: 1.55;
+  color: var(--text-dim);
+}
+
+.quests__refill {
+  margin-left: auto;
+  min-height: 48px;
+  white-space: nowrap;
+}
+
+.quests__empty {
+  margin: var(--sp-10) auto;
+  max-width: 44ch;
+  text-align: center;
+  color: var(--text-dim);
+}
+
+/* ---------- cadence tabs ---------- */
+
+.scopetabs {
+  display: flex;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+}
+
+.scopetab {
+  display: grid;
+  gap: 2px;
+  justify-items: start;
+  min-width: 160px;
+  padding: var(--sp-2) var(--sp-4);
+  background: rgb(0 0 0 / 35%);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  text-align: left;
+  transition:
+    background var(--dur-fast) var(--ease),
+    border-color var(--dur-fast) var(--ease);
+}
+.scopetab:hover {
+  border-color: var(--purple);
+}
+.scopetab[aria-selected='true'] {
+  background: var(--surface-3);
+  border-color: var(--cyan);
+}
+
+.scopetab__name {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-family: var(--font-display);
+  font-size: var(--fs-md);
+  font-weight: var(--fw-bold);
+  letter-spacing: 0.04em;
+  color: var(--white);
+}
+
+/*
+ * How many quests in this cadence are finished and unclaimed. The whole
+ * reason to look at a tab you are not already on.
+ */
+.scopetab__badge {
+  display: grid;
+  place-items: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: var(--radius-full);
+  background: var(--grad-secondary);
+  font-size: 11px;
+  font-weight: var(--fw-bold);
+  color: #04121a;
+}
+
+.scopetab__meta {
+  font-size: var(--fs-xs);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-faint);
+}
+
+/* ---------- the grid ---------- */
+
+.questgrid {
+  display: grid;
+  gap: var(--sp-4);
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+}
+
+/* ---------- one quest ---------- */
+
+.qcard {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: linear-gradient(180deg, rgb(14 20 38 / 92%), rgb(6 10 24 / 96%));
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+/* The bar's colour is carried on the card so the banner edge can echo it. */
+.qcard--far {
+  --band: linear-gradient(90deg, #c2253f 0%, #f1546e 100%);
+}
+.qcard--near {
+  --band: linear-gradient(90deg, #f7a600 0%, #ffd86b 100%);
+}
+.qcard--done {
+  --band: linear-gradient(90deg, #6cc000 0%, #adde6f 100%);
+  border-color: #6cc000;
+}
+
+.qcard--loading {
+  min-height: 340px;
+  border-color: var(--line-soft);
+  background: linear-gradient(
+    -90deg,
+    rgb(255 255 255 / 4%),
+    rgb(255 255 255 / 10%),
+    rgb(255 255 255 / 4%)
+  );
+  background-size: 400% 400%;
+  animation: qcard-shimmer 1.2s ease-in-out infinite;
+}
+
+@keyframes qcard-shimmer {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 100% 50%;
+  }
+}
+
+/* An unfilled slot: dashed, quiet, and explicit about what fills it. */
+.qcard--slot {
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: var(--sp-1);
+  min-height: 340px;
+  border-style: dashed;
+  border-color: var(--line-soft);
+  background: rgb(0 0 0 / 20%);
+  font-family: var(--font-display);
+  font-size: var(--fs-sm);
+  color: var(--text-faint);
+  text-align: center;
+  padding: var(--sp-4);
+}
+
+/* ---------- banner ---------- */
+
+.qcard__banner {
+  position: relative;
+  aspect-ratio: 2 / 1;
+  overflow: hidden;
+  border-bottom: 2px solid transparent;
+  border-image: var(--band) 1;
+}
+
+.qcard__banner img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.qcard__clock,
+.qcard__ready {
+  position: absolute;
+  top: var(--sp-2);
+  padding: 3px 8px;
+  border-radius: var(--radius-full);
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.qcard__clock {
+  left: var(--sp-2);
+  background: rgb(0 0 0 / 70%);
+  color: var(--white);
+}
+
+.qcard__ready {
+  right: var(--sp-2);
+  background: #6cc000;
+  color: #06210a;
+  font-weight: var(--fw-bold);
+  text-transform: uppercase;
+}
+
+/* ---------- body ---------- */
+
+.qcard__body {
+  display: grid;
+  align-content: start;
+  gap: var(--sp-2);
+  padding: var(--sp-3) var(--sp-4) var(--sp-4);
+}
+
+.qcard__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-bold);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.qcard__desc {
+  margin: 0;
+  font-size: var(--fs-md);
+  line-height: 1.4;
+  color: var(--white);
+}
+
+/*
+ * The reward, given the weight of a headline number rather than a footnote.
+ * It is already escrowed, so it is the most concrete thing on the card.
+ */
+.qcard__reward {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-top: var(--sp-1);
+}
+.qcard__reward img {
+  align-self: center;
+  object-fit: contain;
+}
+.qcard__reward strong {
+  font-family: var(--font-display);
+  font-size: var(--fs-xl);
+  font-weight: var(--fw-bold);
+  color: var(--gold);
+  font-variant-numeric: tabular-nums;
+}
+.qcard__reward span {
+  font-family: var(--font-display);
+  font-size: var(--fs-xs);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+/* ---------- progress ---------- */
+
+.qbar {
+  position: relative;
+  display: grid;
+  place-items: center;
+  height: 22px;
+  margin-top: var(--sp-1);
+  border-radius: var(--radius-full);
+  background: rgb(0 0 0 / 55%);
+  border: 1px solid var(--line-soft);
+  overflow: hidden;
+}
+
+.qbar__fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: var(--band);
+  opacity: 0.75;
+  transition: width var(--dur) var(--ease);
+}
+
+.qbar__text {
+  position: relative;
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: var(--white);
+  text-shadow: 0 1px 3px rgb(0 0 0 / 80%);
+}
+
+/* ---------- actions ---------- */
+
+.qcard__action {
+  margin-top: var(--sp-2);
+  width: 100%;
+  min-height: 44px;
+}
+
+.qcard__confirm {
+  display: grid;
+  gap: var(--sp-2);
+  margin-top: var(--sp-2);
+  padding: var(--sp-3);
+  border: 1px solid rgb(255 52 52 / 40%);
+  border-radius: var(--radius-xs);
+  background: rgb(255 52 52 / 10%);
+}
+
+.qcard__warn {
+  margin: 0;
+  font-size: var(--fs-xs);
+  line-height: 1.45;
+  color: var(--text-dim);
+}
+
+.qcard__confirmRow {
+  display: flex;
+  gap: var(--sp-2);
+}
+.qcard__confirmRow .btn {
+  flex: 1;
+}
+
+/* ---------- expired ---------- */
+
+.expired {
+  display: grid;
+  gap: var(--sp-2);
+  padding: var(--sp-4);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-sm);
+  background: rgb(0 0 0 / 25%);
+}
+
+.expired__list {
+  display: grid;
+  gap: var(--sp-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.expired__list li {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  padding: var(--sp-1) 0;
+  border-bottom: 1px solid var(--line-soft);
+  font-size: var(--fs-sm);
+  color: var(--text-dim);
+}
+.expired__list li:last-child {
+  border-bottom: 0;
+}
+.expired__list .faint {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}

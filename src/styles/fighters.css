@@ -1,0 +1,975 @@
+/*
+ * My Fighters — the roster screen.
+ *
+ * The card is the original's landscape layout, kept because it is the shape
+ * players recognise: an experience rail down the left, the portrait, the
+ * readout, and upkeep along the foot. What changes is that it fluid-fills
+ * instead of sitting at a fixed 487x262, and that state is carried by the
+ * card's own border rather than a filter on the whole thing — a brightness
+ * filter on a locked card dims the numbers you need to read to decide what
+ * to do about it.
+ */
+
+.roster {
+  display: grid;
+  gap: var(--sp-4);
+  align-content: start;
+  padding-bottom: var(--sp-10);
+}
+
+/* The roster wants the full width; a hundred cards in a 1428px column wastes
+   two gutters that could each hold another card. */
+.main__inner:has(> .roster) {
+  max-width: min(1900px, 100%);
+}
+
+/* ---------- header ---------- */
+
+.roster__head {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--sp-4);
+  flex-wrap: wrap;
+}
+
+.roster__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-4xl);
+  font-weight: var(--fw-bold);
+  letter-spacing: 0.04em;
+  color: var(--text-heading);
+}
+
+.roster__counts {
+  display: flex;
+  gap: var(--sp-4);
+  margin: var(--sp-1) 0 0;
+  font-size: var(--fs-sm);
+  color: var(--text-faint);
+}
+.roster__counts strong {
+  color: var(--white);
+  font-variant-numeric: tabular-nums;
+}
+
+.roster__modes {
+  display: flex;
+  margin-left: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xs);
+  overflow: hidden;
+}
+
+.roster__mode {
+  padding: var(--sp-2) var(--sp-5);
+  min-height: 44px;
+  background: rgb(0 0 0 / 35%);
+  border: 0;
+  color: var(--text-dim);
+  font-family: var(--font-display);
+  font-size: var(--fs-sm);
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
+}
+.roster__mode:hover {
+  color: var(--white);
+}
+.roster__mode[aria-selected='true'] {
+  background: var(--surface-3);
+  color: var(--white);
+}
+
+/* ---------- action bar ---------- */
+
+.roster__bar {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+  padding: var(--sp-2) var(--sp-3);
+  background: rgb(0 0 0 / 28%);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-sm);
+}
+
+.roster__hint {
+  margin: 0;
+  font-size: var(--fs-xs);
+  color: var(--text-faint);
+  max-width: 60ch;
+}
+
+/* The per-fighter actions, which only exist while a card is selected. */
+.roster__selected {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding-left: var(--sp-3);
+  border-left: 1px solid var(--line-soft);
+}
+
+.roster__selectedName {
+  font-family: var(--font-display);
+  font-size: var(--fs-xs);
+  text-transform: capitalize;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+.roster__empty {
+  margin: var(--sp-8) auto;
+  max-width: 46ch;
+  text-align: center;
+  color: var(--text-dim);
+}
+
+.linklike {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--cyan);
+  font: inherit;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+/*
+ * A price, always signed.
+ *
+ * The live site prints a bare number next to a credits coin for both the
+ * payday charge and the sell payout — two opposite directions with identical
+ * presentation. The sign is the whole point of this component.
+ */
+.cost {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: var(--sp-2);
+  padding: 2px 6px;
+  border-radius: var(--radius-xs);
+  background: rgb(0 0 0 / 35%);
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-dim);
+}
+.cost img {
+  object-fit: contain;
+}
+/* Cannot afford it: say why, rather than only greying the button out. */
+.cost--short {
+  color: #ff8fa0;
+  background: rgb(255 52 52 / 18%);
+}
+
+.confirm__list {
+  margin: var(--sp-2) 0 0;
+  padding-left: var(--sp-5);
+  font-size: var(--fs-sm);
+  color: var(--text-dim);
+  max-height: 40vh;
+  overflow-y: auto;
+  text-transform: capitalize;
+}
+
+/* ---------- filters ---------- */
+
+.filters__facets {
+  display: flex;
+  gap: var(--sp-5);
+  flex-wrap: wrap;
+}
+
+.facet {
+  display: grid;
+  gap: var(--sp-2);
+  align-content: start;
+}
+.facet--grow {
+  flex: 1;
+  min-width: 260px;
+}
+.facet__note {
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--text-faint);
+}
+
+.filters__markers {
+  display: flex;
+  /* Room for the count badge, which hangs off the corner of each button. */
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+}
+
+.markbtn {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  background: rgb(0 0 0 / 40%);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+  transition:
+    opacity var(--dur-fast) var(--ease),
+    border-color var(--dur-fast) var(--ease),
+    background var(--dur-fast) var(--ease);
+}
+.markbtn img {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+}
+.markbtn:hover:not(:disabled) {
+  border-color: var(--purple);
+}
+.markbtn[aria-pressed='true'] {
+  border-color: var(--cyan);
+  background: rgb(0 186 255 / 18%);
+}
+.markbtn:disabled {
+  cursor: default;
+}
+/* How many fighters carry this marker, so the filter is a tally too. */
+.markbtn__count {
+  position: absolute;
+  right: -3px;
+  bottom: -4px;
+  min-width: 13px;
+  padding: 0 2px;
+  border-radius: var(--radius-full);
+  background: var(--violet);
+  font-family: var(--font-display);
+  font-size: 8px;
+  line-height: 13px;
+  text-align: center;
+  color: var(--white);
+}
+
+/* ---------- the grid ---------- */
+
+.rostergrid {
+  display: grid;
+  gap: var(--sp-3);
+  grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
+}
+
+@media (max-width: 520px) {
+  .rostergrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---------- one card ---------- */
+
+.fcard {
+  --state: var(--line);
+  position: relative;
+  display: grid;
+  grid-template-columns: 10px 148px minmax(0, 1fr);
+  grid-template-rows: minmax(190px, auto) 22px;
+  border: 2px solid var(--state);
+  border-radius: var(--radius-sm);
+  background: linear-gradient(180deg, rgb(14 20 38 / 92%), rgb(6 10 24 / 96%));
+  overflow: hidden;
+  transition: border-color var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease);
+}
+
+.fcard--busy {
+  --state: #ffb03a;
+}
+.fcard--overdue {
+  --state: #ff5a5a;
+}
+/*
+ * Selection is a ring outside the border, not a recolouring of it.
+ *
+ * The border carries state — busy, overdue — and that has to stay readable
+ * across the whole grid; overwriting it on the one card the player has
+ * clicked hides exactly the fighter they are about to act on. So selection
+ * gets its own ring beyond the frame instead.
+ */
+.fcard--selected {
+  box-shadow: 0 0 0 2px #91a6ff, 0 0 20px -4px #91a6ff;
+}
+.fcard--checked {
+  --state: var(--magenta);
+}
+
+.fcard--loading {
+  min-height: 212px;
+  border-color: var(--line-soft);
+  background: linear-gradient(
+    -90deg,
+    rgb(255 255 255 / 4%),
+    rgb(255 255 255 / 10%),
+    rgb(255 255 255 / 4%)
+  );
+  background-size: 400% 400%;
+  animation: fcard-shimmer 1.2s ease-in-out infinite;
+}
+
+@keyframes fcard-shimmer {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 100% 50%;
+  }
+}
+
+/*
+ * The selection target.
+ *
+ * The card holds a tab strip, a marker button and a checkbox, so making the
+ * container itself clickable would mean every one of those stopping
+ * propagation — and would leave the card unreachable by keyboard. This is a
+ * real button underneath everything instead.
+ */
+.fcard__hit {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+.fcard__hit:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: -4px;
+}
+
+.fcard > *:not(.fcard__hit) {
+  position: relative;
+  z-index: 1;
+  pointer-events: none;
+}
+/* …but the controls inside still take clicks. */
+.fcard button:not(.fcard__hit),
+.fcard label,
+.fcard input {
+  pointer-events: auto;
+}
+
+/* ---------- experience rail ---------- */
+
+.fcard__xp {
+  grid-row: 1;
+  grid-column: 1;
+  position: relative;
+  background: rgb(0 0 0 / 55%);
+  border-right: 1px solid var(--line-soft);
+}
+
+.fcard__xpFill {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  background: linear-gradient(0deg, #0187b1, #00baff);
+  transition: height var(--dur) var(--ease);
+}
+/* Enough banked to level: the rail says so without the player opening a tab. */
+.fcard__xpFill--full {
+  background: linear-gradient(0deg, #ebb309, #faff00);
+  box-shadow: 0 0 6px -2px var(--gold);
+}
+
+/* ---------- portrait ---------- */
+
+.fcard__art {
+  grid-row: 1;
+  grid-column: 2;
+  position: relative;
+  background-size: cover;
+  background-position: center;
+  border-right: 1px solid var(--line-soft);
+  overflow: hidden;
+}
+
+/*
+ * The portrait is taken out of flow deliberately.
+ *
+ * The class art is around a thousand pixels tall, and inside a grid row
+ * sized "auto" a "max-height: 100%" image has nothing to measure against —
+ * so the image's own height becomes the row's, and the card grows to five
+ * times the size of its own text. Absolutely positioned, it fills whatever
+ * height the readout beside it settles on and cannot push it.
+ */
+.fcard__fighter {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: bottom center;
+  filter: drop-shadow(0 6px 12px rgb(0 0 0 / 65%));
+}
+
+/* The art behind it is dense foliage or rock; without a ground of its own
+   the element icon simply disappears into it. */
+.fcard__element {
+  position: absolute;
+  top: var(--sp-2);
+  right: var(--sp-2);
+  padding: 3px;
+  border-radius: 50%;
+  background: rgb(0 0 0 / 60%);
+  box-sizing: content-box;
+  object-fit: contain;
+}
+
+.fcard__value {
+  position: absolute;
+  top: var(--sp-2);
+  left: var(--sp-2);
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 5px;
+  border-radius: var(--radius-xs);
+  background: rgb(0 0 0 / 65%);
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  color: var(--white);
+}
+
+/* ---------- body ---------- */
+
+.fcard__body {
+  grid-row: 1;
+  grid-column: 3;
+  display: grid;
+  /*
+   * The single column is minmax(0, 1fr), not the default auto.
+   *
+   * An auto track takes the widest row's min-content as its floor, and the
+   * tab strip does not wrap — so the strip decided how wide the body was and
+   * everything else, the stat readout included, was pushed past the card edge
+   * and cut off by the card's overflow. Capping the floor at 0 puts the card
+   * back in charge of its own width.
+   */
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto auto minmax(0, 1fr);
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  min-width: 0;
+}
+
+.fcard__head {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-2);
+}
+
+.fcard__ident {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.fcard__name {
+  font-family: var(--font-display);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-bold);
+  letter-spacing: 0.02em;
+  text-transform: capitalize;
+  color: var(--white);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fcard__chips {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 6px;
+  border-radius: var(--radius-full);
+  background: rgb(255 255 255 / 8%);
+  font-family: var(--font-display);
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+.chip--level {
+  background: rgb(0 186 255 / 20%);
+  color: #8fe0ff;
+}
+.chip--ready,
+.chip--max {
+  background: rgb(246 168 0 / 22%);
+  color: #ffd469;
+}
+.chip--asc {
+  background: rgb(145 54 188 / 30%);
+  color: #dfb2ff;
+}
+.chip--busy {
+  background: rgb(255 176 58 / 20%);
+  color: #ffc978;
+}
+.chip--overdue {
+  background: rgb(255 52 52 / 22%);
+  color: #ff9aa6;
+}
+
+.fcard__tools {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-left: auto;
+}
+
+.fcard__marker {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xs);
+  background: rgb(0 0 0 / 45%);
+  cursor: pointer;
+}
+.fcard__marker:hover {
+  border-color: var(--cyan);
+}
+.fcard__marker img {
+  object-fit: contain;
+}
+
+/* A checkbox big enough to hit, without relying on the native control's
+   platform-dependent size. */
+.fcard__check {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  cursor: pointer;
+}
+.fcard__check input {
+  position: absolute;
+  opacity: 0;
+  width: 30px;
+  height: 30px;
+  margin: 0;
+  cursor: pointer;
+}
+.fcard__check span {
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--line-bright);
+  border-radius: 4px;
+  background: rgb(0 0 0 / 50%);
+  transition: background var(--dur-fast) var(--ease);
+}
+.fcard__check input:checked + span {
+  background: var(--magenta);
+  border-color: var(--magenta);
+  box-shadow: inset 0 0 0 2px rgb(0 0 0 / 55%);
+}
+.fcard__check input:focus-visible + span {
+  outline: 2px solid var(--cyan);
+  outline-offset: 2px;
+}
+.fcard__check--off {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* ---------- tabs ---------- */
+
+.fcard__tabs {
+  display: flex;
+  gap: 2px;
+}
+
+.fcard__tab {
+  /*
+   * Content width first, leftover space shared after.
+   *
+   * With a zero basis the three labels split the strip evenly and the longest
+   * of them, Resistance, is ellipsised at the narrowest column the roster
+   * actually uses. Sizing from content fits all three there and still lets
+   * them give way further down.
+   */
+  flex: 1 1 auto;
+  /* Labels give way before the card does: a clipped word is readable, a
+     clipped stat column is not. */
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 4px 3px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: rgb(255 255 255 / 4%);
+  color: var(--text-faint);
+  font-family: var(--font-display);
+  font-size: 10px;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: color var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease);
+}
+.fcard__tab:hover {
+  color: var(--white);
+}
+.fcard__tab[aria-selected='true'] {
+  color: var(--white);
+  border-bottom-color: var(--cyan);
+  background: rgb(0 186 255 / 12%);
+}
+
+.fcard__panel {
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* ---------- stat readout ---------- */
+
+.fstats {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+}
+.fstats__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  font-size: var(--fs-xs);
+  color: var(--text-faint);
+  min-width: 0;
+}
+.fstats__row dt {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.fstats__row dt img {
+  flex: none;
+  object-fit: contain;
+  opacity: 0.75;
+}
+.fstats__row dd {
+  margin: 0;
+  color: var(--white);
+  white-space: nowrap;
+  text-transform: capitalize;
+}
+
+/* ---------- abilities ---------- */
+
+/*
+ * Pips above the text, not beside it.
+ *
+ * Stacked in a column they line up with the ability's first line and then
+ * dangle past the end of a short description, which reads as a rendering
+ * fault rather than a control. A row of three sits over the body it switches.
+ */
+.fability {
+  display: grid;
+  /* Names first, then whatever is left for the description. */
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: var(--sp-3);
+  align-content: start;
+  min-height: 0;
+}
+
+/*
+ * The ability names, stacked, one selectable per row.
+ *
+ * They sit on `auto` so the description below keeps whatever is left of the
+ * panel; a fighter with four abilities gives up description lines rather than
+ * pushing the card out of shape.
+ */
+.fability__list {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.fability__pick {
+  --pip: var(--text-faint);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  padding: 1px 5px;
+  border: 1px solid transparent;
+  border-left: 2px solid var(--pip);
+  border-radius: var(--radius-xs);
+  background: rgb(0 0 0 / 30%);
+  color: var(--pip);
+  font-family: var(--font-display);
+  font-size: 10px;
+  text-align: left;
+  cursor: pointer;
+  opacity: 0.55;
+  transition: opacity var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease);
+}
+.fability__pick:hover {
+  opacity: 0.85;
+}
+.fability__pick[aria-pressed='true'] {
+  opacity: 1;
+  background: color-mix(in srgb, var(--pip) 18%, transparent);
+  border-color: color-mix(in srgb, var(--pip) 45%, transparent);
+  border-left-color: var(--pip);
+}
+
+/* The name is what gives way when a card is narrow, never the rarity. */
+.fability__pickName {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/*
+ * The selected ability's text, as a block of its own.
+ *
+ * It used to be a bare left rule, which is the same mark the rows above carry
+ * — so it read as a fourth row belonging to whichever ability sat last in the
+ * list rather than to the one actually selected. A filled, inset panel says
+ * "this is about the highlighted name" instead.
+ *
+ * It clips rather than growing: the list is what must stay whole, since it is
+ * the thing the player is choosing from, and the full text is in the dialog.
+ */
+.fability__body {
+  display: grid;
+  gap: 2px;
+  padding: 6px var(--sp-2);
+  border-left: 2px solid var(--line);
+  border-radius: 0 var(--radius-xs) var(--radius-xs) 0;
+  background: rgb(255 255 255 / 5%);
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.fability__rarity {
+  padding: 0 4px;
+  border-radius: var(--radius-full);
+  background: rgb(255 255 255 / 10%);
+  font-size: 8px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.fability__lock {
+  object-fit: contain;
+  opacity: 0.85;
+}
+
+.fability__desc {
+  font-size: var(--fs-xs);
+  line-height: 1.35;
+  color: var(--text-dim);
+  /* Three lines, then clipped: the card is a scan, and the dialog has the
+     full text. Three rather than four so a fighter carrying the maximum
+     number of abilities still has room to show any of it. */
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ---------- upkeep rail ---------- */
+
+.fcard__pay {
+  grid-row: 2;
+  grid-column: 1 / -1;
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: 0 var(--sp-2);
+  background: #12162a;
+  border-top: 1px solid var(--line-soft);
+  overflow: hidden;
+}
+
+.fcard__payFill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: linear-gradient(90deg, #0187b1, #00baff);
+  opacity: 0.35;
+  transition: width var(--dur) var(--ease);
+}
+.fcard__pay--overdue .fcard__payFill {
+  width: 100% !important;
+  background: linear-gradient(90deg, #7a0f0f, #ff3434);
+  opacity: 0.45;
+}
+
+.fcard__payText,
+.fcard__payCost {
+  position: relative;
+  font-family: var(--font-display);
+  font-size: 9px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+.fcard__payCost {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-left: auto;
+  color: var(--white);
+}
+.fcard__payCost img {
+  object-fit: contain;
+}
+
+/* ---------- the detail dialog ---------- */
+
+.fdialog {
+  width: min(1020px, 100%);
+  max-height: 88vh;
+  overflow-y: auto;
+}
+
+.fdialog__cols {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--sp-5);
+  align-items: start;
+}
+
+@media (max-width: 860px) {
+  .fdialog__cols {
+    grid-template-columns: 1fr;
+  }
+}
+
+.fdialog__side {
+  display: grid;
+  gap: var(--sp-5);
+  align-content: start;
+}
+
+.fdialog__factor {
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-xs);
+  line-height: 1.5;
+  color: var(--text-faint);
+}
+
+.fdialog__class {
+  margin: 0;
+  font-size: var(--fs-sm);
+  line-height: 1.55;
+  color: var(--text-dim);
+}
+
+.fdialog__markers {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+/*
+ * The shared readout switch. Sits in the filter row because it is the same
+ * kind of control — it changes what every card shows, not what one does.
+ */
+.showtabs {
+  display: flex;
+  min-height: 44px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xs);
+  overflow: hidden;
+}
+
+.showtabs__btn {
+  padding: 0 var(--sp-3);
+  border: 0;
+  background: rgb(0 0 0 / 40%);
+  color: var(--text-faint);
+  font-family: var(--font-display);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
+}
+.showtabs__btn:hover {
+  color: var(--white);
+}
+.showtabs__btn[aria-pressed='true'] {
+  background: rgb(0 186 255 / 16%);
+  color: var(--white);
+}
+
+/* A locked ability is dimmed on the card too, and its name with it. */
+.fability__body--locked {
+  opacity: 0.6;
+  border-left-style: dashed;
+}
+.fability__pick--locked {
+  border-left-style: dashed;
+}
+
+/*
+ * The age bonus, on the end of the tab strip.
+ *
+ * Not a row of its own: `.fcard__body` is a three-row grid whose last track
+ * is what gives the card its height, and a fourth child breaks it.
+ *
+ * The scale is the live game's, running +100% down to -100%, so its midpoint
+ * is a fighter that has already lost half its roll rather than one in fair
+ * condition. The colour has to carry that, because the sign does not: "+40%"
+ * still reads as positive while meaning a third of the stats are gone.
+ */
+.fcard__age {
+  /*
+   * The one thing on the strip that never gives way: a truncated "+10" reads
+   * as a different number, where a truncated label still reads as its word.
+   * Safe now that the labels shrink instead.
+   */
+  flex: none;
+  align-self: stretch;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 5px;
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  border-bottom: 2px solid transparent;
+  background: rgb(255 255 255 / 4%);
+  cursor: help;
+}
+
+.fcard__age--fresh {
+  color: var(--teal);
+}
+.fcard__age--worn {
+  color: var(--gold);
+}
+.fcard__age--bad {
+  color: var(--red);
+}

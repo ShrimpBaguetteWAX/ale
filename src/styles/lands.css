@@ -1,0 +1,550 @@
+/*
+ * My Lands.
+ *
+ * The original's two-pane shape: a list of your land on the left, and the
+ * selected plot's controls on the right. Kept because it is the right shape —
+ * you compare lands to decide which needs attention, then act on one without
+ * losing sight of the others.
+ *
+ * The land thumbnails are crops of the planet artwork already downloaded for
+ * the map, positioned by `landThumbStyle`. The original ships 4,800 separate
+ * 50x50 JPEGs to do the same job.
+ */
+
+.lands {
+  display: grid;
+  gap: var(--sp-4);
+  align-content: start;
+  padding-bottom: var(--sp-10);
+}
+
+.main__inner:has(> .lands) {
+  max-width: min(1700px, 100%);
+}
+
+/* ---------- header ---------- */
+
+.lands__head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  flex-wrap: wrap;
+}
+
+.lands__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-4xl);
+  font-weight: var(--fw-bold);
+  letter-spacing: 0.04em;
+  color: var(--text-heading);
+}
+
+.lands__claimAll {
+  margin-left: auto;
+  min-height: 48px;
+  white-space: nowrap;
+}
+
+.lands__empty {
+  margin: var(--sp-10) auto;
+  max-width: 46ch;
+  text-align: center;
+  color: var(--text-dim);
+}
+
+/* ---------- totals ---------- */
+
+/*
+ * Stacked, at the head of the side column.
+ *
+ * Across the top of the screen these read as a dashboard nobody asked for;
+ * in the side column they sit with the panel that acts on a land, and a
+ * vertical stack lets the figures line up on one edge so two lands' worth of
+ * TLM can be compared at a glance.
+ */
+.lands__side {
+  display: grid;
+  gap: var(--sp-3);
+  align-content: start;
+  position: sticky;
+  top: var(--sp-4);
+}
+
+.lands__totals {
+  display: grid;
+  gap: var(--sp-2);
+}
+
+.tally {
+  display: grid;
+  grid-template-columns: 20px auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  background: rgb(0 0 0 / 30%);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-sm);
+}
+.tally img {
+  object-fit: contain;
+}
+.tally strong {
+  font-family: var(--font-display);
+  font-size: var(--fs-lg);
+  font-variant-numeric: tabular-nums;
+  color: var(--white);
+  text-align: right;
+  min-width: 5ch;
+}
+.tally span {
+  font-size: var(--fs-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-faint);
+}
+
+/* ---------- two panes ---------- */
+
+/*
+ * Two columns, and the column headings are a row of their own.
+ *
+ * With the headings inside the list, the side column began a header's height
+ * above the first land — a visible step between the two columns. Placing them
+ * as a grid row that only the left column occupies puts the first tally and
+ * the first land on the same line, with no hard-coded offset to drift.
+ */
+.lands__cols {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 420px;
+  grid-template-rows: auto minmax(0, 1fr);
+  column-gap: var(--sp-4);
+  row-gap: var(--sp-2);
+  align-items: start;
+}
+
+.lands__cols > .landlist__head {
+  grid-column: 1;
+  grid-row: 1;
+}
+.lands__cols > .landlist {
+  grid-column: 1;
+  grid-row: 2;
+}
+.lands__cols > .lands__side {
+  grid-column: 2;
+  grid-row: 2;
+}
+
+@media (max-width: 1100px) {
+  .lands__cols {
+    grid-template-columns: 1fr;
+  }
+  .lands__cols > .lands__side {
+    grid-column: 1;
+    grid-row: 3;
+  }
+}
+
+/* ---------- the list ---------- */
+
+.landlist {
+  display: grid;
+  gap: var(--sp-2);
+}
+
+.landlist__head {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1.2fr) 150px 120px;
+  gap: var(--sp-3);
+  padding: 0 var(--sp-3);
+  font-family: var(--font-display);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+@media (max-width: 720px) {
+  .landlist__head {
+    display: none;
+  }
+}
+
+.landrow {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1.2fr) 150px 120px;
+  gap: var(--sp-3);
+  align-items: center;
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: linear-gradient(180deg, rgb(14 20 38 / 90%), rgb(6 10 24 / 94%));
+  transition: border-color var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease);
+}
+
+.landrow--selected {
+  border-color: var(--cyan);
+  box-shadow: 0 0 0 1px var(--cyan), 0 0 18px -6px var(--cyan);
+}
+
+.landrow--loading {
+  min-height: 76px;
+  border-color: var(--line-soft);
+  background: linear-gradient(
+    -90deg,
+    rgb(255 255 255 / 4%),
+    rgb(255 255 255 / 10%),
+    rgb(255 255 255 / 4%)
+  );
+  background-size: 400% 400%;
+  animation: landrow-shimmer 1.2s ease-in-out infinite;
+}
+
+@keyframes landrow-shimmer {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 100% 50%;
+  }
+}
+
+@media (max-width: 720px) {
+  .landrow {
+    grid-template-columns: 1fr;
+    gap: var(--sp-2);
+  }
+}
+
+/* Selection sits under the row's own controls — see the roster screen. */
+.landrow__hit {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+}
+.landrow__hit:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: -3px;
+}
+.landrow > *:not(.landrow__hit) {
+  position: relative;
+  z-index: 1;
+  pointer-events: none;
+}
+.landrow button:not(.landrow__hit) {
+  pointer-events: auto;
+}
+
+.landrow__land {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  min-width: 0;
+}
+
+/* A crop of the planet artwork, framed in the land's rarity colour. */
+.landthumb {
+  display: block;
+  flex: none;
+  border: 2px solid var(--line);
+  border-radius: var(--radius-xs);
+  background-repeat: no-repeat;
+}
+
+.landrow__ident {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.landrow__name {
+  font-family: var(--font-display);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-bold);
+  color: var(--white);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.landrow__meta {
+  font-size: var(--fs-xs);
+  text-transform: capitalize;
+}
+
+.landrow__income {
+  display: flex;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+}
+
+.coin {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-display);
+  font-size: var(--fs-xs);
+  font-variant-numeric: tabular-nums;
+  color: var(--white);
+}
+.coin img {
+  object-fit: contain;
+}
+
+.landrow__building {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+.landrow__building img {
+  object-fit: contain;
+  flex: none;
+}
+
+/* ---------- boost bar ---------- */
+
+.boostbar {
+  position: relative;
+  display: grid;
+  place-items: center;
+  flex: 1;
+  min-width: 60px;
+  height: 18px;
+  border-radius: var(--radius-full);
+  background: rgb(0 0 0 / 55%);
+  border: 1px solid var(--line-soft);
+  overflow: hidden;
+}
+
+.boostbar--good {
+  --band: #6cc000;
+}
+.boostbar--fair {
+  --band: #f7a600;
+}
+.boostbar--poor {
+  --band: #c2253f;
+}
+
+.boostbar__fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: var(--band);
+  opacity: 0.65;
+  transition: width var(--dur) var(--ease);
+}
+
+.boostbar__text {
+  position: relative;
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  color: var(--white);
+  text-shadow: 0 1px 3px rgb(0 0 0 / 80%);
+}
+
+.landrow__act {
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* ---------- the side pane ---------- */
+
+.landside {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: linear-gradient(180deg, rgb(14 20 38 / 92%), rgb(6 10 24 / 96%));
+  overflow: hidden;
+}
+
+@media (max-width: 1100px) {
+  .lands__side {
+    position: static;
+  }
+}
+
+/* The original's title strip above each pane. */
+.landside__bar {
+  display: block;
+  padding: var(--sp-3) var(--sp-4);
+  background: rgb(32 29 44 / 90%);
+  font-family: var(--font-display);
+  font-size: var(--fs-md);
+  font-weight: var(--fw-bold);
+  color: #c9c9c9;
+}
+
+.landside__empty {
+  display: grid;
+}
+.landside__empty p {
+  margin: 0;
+  padding: var(--sp-16) var(--sp-4);
+  text-align: center;
+  font-family: var(--font-display);
+  font-size: var(--fs-2xl);
+  color: var(--white);
+}
+
+.landpanel {
+  display: grid;
+  gap: var(--sp-4);
+}
+.landpanel > section,
+.landpanel > .btn {
+  margin: 0 var(--sp-4);
+}
+.landpanel > .btn:last-child {
+  margin-bottom: var(--sp-4);
+}
+
+.landpanel__action {
+  width: 100%;
+  min-height: 44px;
+}
+
+.panel__title img {
+  vertical-align: -4px;
+  margin-right: 6px;
+  object-fit: contain;
+}
+
+/* ---------- build menu ---------- */
+
+.buildmenu {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+.buildopt {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--sp-3);
+  padding: var(--sp-3);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-xs);
+  background: rgb(0 0 0 / 25%);
+}
+.buildopt img {
+  object-fit: contain;
+}
+.buildopt .btn {
+  grid-column: 1 / -1;
+  width: 100%;
+  min-height: 40px;
+}
+
+.buildopt__body {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.buildopt__name {
+  font-family: var(--font-display);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-bold);
+  color: var(--white);
+}
+
+.buildopt__note {
+  font-size: var(--fs-xs);
+  line-height: 1.45;
+  color: var(--text-faint);
+}
+
+/* ---------- boost box ---------- */
+
+.boostbox {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+.boostbox__lede {
+  margin: 0;
+  font-size: var(--fs-xs);
+  line-height: 1.5;
+  color: var(--text-dim);
+}
+
+.boostslider {
+  display: grid;
+  gap: var(--sp-1);
+}
+.boostslider input {
+  width: 100%;
+  accent-color: var(--cyan);
+  cursor: pointer;
+}
+
+.boostbox__facts {
+  display: grid;
+  gap: var(--sp-1);
+  margin: 0;
+  padding: var(--sp-3);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-xs);
+  background: rgb(0 0 0 / 25%);
+}
+.boostbox__facts > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+.boostbox__facts dt {
+  font-size: var(--fs-xs);
+  color: var(--text-faint);
+}
+.boostbox__facts dd {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-sm);
+  font-variant-numeric: tabular-nums;
+  color: var(--white);
+}
+.boostbox__facts dd img {
+  object-fit: contain;
+}
+.boostbox__facts dd.warn {
+  color: #ffc978;
+}
+
+/* ---------- destroy ---------- */
+
+.destroybox {
+  display: grid;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  margin: 0 var(--sp-4) var(--sp-4);
+  border: 1px solid rgb(255 52 52 / 45%);
+  border-radius: var(--radius-xs);
+  background: rgb(255 52 52 / 8%);
+}
+
+.destroybox__warn {
+  margin: 0;
+  font-size: var(--fs-sm);
+  line-height: 1.5;
+  color: var(--text-dim);
+}
+
+.destroybox__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  font-family: var(--font-display);
+  font-size: var(--fs-sm);
+  color: var(--white);
+}

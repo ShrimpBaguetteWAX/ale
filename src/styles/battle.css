@@ -1,0 +1,1907 @@
+/*
+ * The battle replay and its result.
+ *
+ * Every animation here is transform or opacity only. Nothing in the loop
+ * touches layout, so a fight with a dozen combatants and a stream of numbers
+ * stays on the compositor and holds frame rate on a cheap phone — which is
+ * the point, since this is the screen the game is watched on.
+ */
+
+.battle {
+  /* Playback beat, scaled by the speed control. Declared here rather than on
+     .stage so the header's progress bar follows it too — a declaration on
+     .stage would beat the inherited value for everything inside it. */
+  --beat: 1;
+  position: relative;
+  min-height: 100%;
+}
+
+.battle--message {
+  display: grid;
+  place-items: center;
+  gap: var(--sp-4);
+  padding: var(--sp-6);
+  text-align: center;
+}
+
+.battle__art {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: -1;
+}
+
+.battle__scrim {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: radial-gradient(
+    120% 80% at 50% 50%,
+    rgb(4 8 20 / 25%),
+    rgb(4 8 20 / 88%)
+  );
+}
+
+:root[data-fx='low'] .battle__art {
+  display: none;
+}
+
+.battle__inner {
+  position: relative;
+  display: grid;
+  gap: var(--sp-3);
+  align-content: start;
+}
+
+/* ---------- transport ---------- */
+
+.battle__bar {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+  padding: var(--sp-2) var(--sp-3);
+  background: rgb(0 0 0 / 45%);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+}
+
+.battle__progress {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  flex: 1;
+  min-width: 160px;
+}
+
+.battle__turn {
+  font-size: var(--fs-xs);
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+.battle__track {
+  position: relative;
+  flex: 1;
+  height: 4px;
+  border-radius: 2px;
+  background: rgb(255 255 255 / 12%);
+  overflow: hidden;
+}
+
+.battle__fill {
+  position: absolute;
+  inset: 0;
+  transform-origin: left center;
+  background: var(--grad-gold);
+  /* Follows the beat, so the bar creeps with the fight rather than
+     snapping a fifth of a second after each attack. */
+  transition: transform calc(900ms * var(--beat, 1)) linear;
+}
+
+.battle__controls {
+  display: flex;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+}
+
+.battle__controls .btn[aria-pressed='true'] {
+  color: var(--white);
+  border-color: var(--purple);
+}
+
+/* ---------- the stage ---------- */
+
+/*
+ * Rosters above, the clash below.
+ *
+ * The blow is staged in three beats:
+ *
+ *   0        both fighters light up -- "these two"
+ *   callout  the attacker swings
+ *   impact   it lands: recoil, flash, the number
+ *
+ * The pause between the first and second beat gives the eye time to settle
+ * before anything moves. --beat scales all of it with the speed control, so
+ * the sequence stays a sequence at 4x instead of six animations landing at
+ * once.
+ */
+.stage {
+  --callout: calc(400ms * var(--beat));
+  /* Keep equal to IMPACT_MS in Battle.tsx: the CSS drives the recoil, the
+     flash and the damage number, and that drives when health, death and the
+     cooldown rings actually change. Drift between them puts a consequence on
+     screen before its cause. */
+  --impact: calc(580ms * var(--beat));
+
+  position: relative;
+  display: grid;
+  gap: var(--sp-3);
+  padding: var(--sp-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background:
+    radial-gradient(120% 90% at 50% 78%, rgb(38 18 52 / 55%), rgb(4 8 20 / 0%) 70%),
+    linear-gradient(180deg, rgb(6 10 24 / 72%), rgb(3 6 16 / 88%));
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+/* A faint arena floor line, to give the fighters something to stand on. */
+.stage::after {
+  content: '';
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  bottom: 26%;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgb(255 255 255 / 12%) 25%,
+    rgb(255 255 255 / 12%) 75%,
+    transparent
+  );
+  pointer-events: none;
+}
+
+/* ---------- roster strips ---------- */
+
+.rosters {
+  display: grid;
+  gap: var(--sp-3);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  position: relative;
+  z-index: 2;
+}
+
+.roster {
+  display: grid;
+  gap: 5px;
+}
+
+.roster__head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+  padding-bottom: 3px;
+  border-bottom: 2px solid rgb(255 255 255 / 8%);
+}
+
+.roster--enemy .roster__head {
+  border-bottom-color: rgb(224 52 79 / 45%);
+}
+.roster--mine .roster__head {
+  border-bottom-color: rgb(0 186 255 / 45%);
+  /* Your side reads right to left, mirroring where it sits on the stage. */
+  flex-direction: row-reverse;
+}
+
+.roster__name {
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: var(--fw-bold);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+.roster--enemy .roster__name {
+  color: #ff8a9c;
+}
+.roster--mine .roster__name {
+  color: var(--cyan);
+}
+
+.roster__alive {
+  font-size: 11px;
+  color: var(--text-faint);
+  margin-left: auto;
+}
+.roster--mine .roster__alive {
+  margin-left: 0;
+  margin-right: auto;
+}
+
+.roster__row {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 5px;
+}
+/* Your team fills from the stage outward, so both strips meet in the middle. */
+.roster--mine .roster__row {
+  direction: rtl;
+}
+.roster--mine .rtile {
+  direction: ltr;
+}
+
+.rtile {
+  position: relative;
+  display: grid;
+  gap: 3px;
+  padding: 3px;
+  background: rgb(0 0 0 / 40%);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-xs);
+  transition:
+    border-color var(--dur-fast) var(--ease),
+    opacity var(--dur) var(--ease),
+    transform var(--dur-fast) var(--ease);
+}
+
+.rtile__art {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  border-radius: 2px;
+  background: rgb(0 0 0 / 40%);
+}
+
+.rtile__bar {
+  display: block;
+  height: 4px;
+  background: #10151f;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.rtile__fill {
+  display: block;
+  height: 100%;
+  background: #4fc728;
+  transition: width 300ms var(--ease);
+}
+.rtile__bar[data-band='mid'] .rtile__fill {
+  background: #ffbe2e;
+}
+.rtile__bar[data-band='low'] .rtile__fill {
+  background: #e0344f;
+}
+
+/* On stage right now. */
+.rtile--active {
+  border-color: var(--white);
+  transform: translateY(-2px);
+  box-shadow: 0 0 12px rgb(255 255 255 / 30%);
+}
+
+/* Swings next — the one piece of state that explains the turn order. */
+.rtile--next {
+  border-color: var(--cyan);
+}
+
+.rtile--dead {
+  opacity: 0.3;
+  filter: grayscale(1);
+}
+
+/* A cross through anyone who is out. */
+.rtile--dead .rtile__out {
+  position: absolute;
+  inset: 3px;
+  pointer-events: none;
+  background:
+    linear-gradient(to bottom right, transparent 46%, #e0344f 46% 54%, transparent 54%),
+    linear-gradient(to bottom left, transparent 46%, #e0344f 46% 54%, transparent 54%);
+  opacity: 0.75;
+}
+
+/* ---------- the duel ---------- */
+
+.duel {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  gap: var(--sp-3);
+  align-items: end;
+  padding: var(--sp-2) 0 0;
+}
+
+.duel__centre {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  padding-bottom: var(--sp-6);
+}
+
+.duel__turn {
+  font-family: var(--font-display);
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  white-space: nowrap;
+}
+
+/* Which element the blow carried, and how much of it got through. */
+.duel__element {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: var(--fw-bold);
+  color: var(--white);
+  background: rgb(0 0 0 / 55%);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  white-space: nowrap;
+  animation: pop-in calc(280ms * var(--beat)) cubic-bezier(0.34, 1.5, 0.5, 1) both;
+}
+@keyframes pop-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.7);
+  }
+  70% {
+    opacity: 1;
+    transform: scale(1.08);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* ---------- one duelist ---------- */
+
+.duelist {
+  display: grid;
+  gap: var(--sp-2);
+  justify-items: center;
+  min-width: 0;
+}
+
+.duelist__frame {
+  position: relative;
+  width: 100%;
+  max-width: 260px;
+  aspect-ratio: 4 / 5;
+  display: grid;
+  place-items: end center;
+}
+
+/* Direction is per side: each fighter leans toward the other. */
+.duelist--enemy {
+  --toward: 26px;
+}
+.duelist--mine {
+  --toward: -26px;
+}
+
+.duelist__body {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: end center;
+  transform-origin: bottom center;
+  isolation: isolate;
+}
+
+.duelist__art {
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 12px 18px rgb(0 0 0 / 65%));
+  transition: filter var(--dur-fast) var(--ease);
+}
+
+/* The dungeon's fighter faces the player's. */
+.duelist--enemy .duelist__art {
+  transform: scaleX(-1);
+}
+
+.duelist__art--dead {
+  max-width: 60%;
+  opacity: 0.85;
+  animation: drop calc(420ms * var(--beat)) ease-out;
+}
+@keyframes drop {
+  from {
+    opacity: 0;
+    transform: translateY(-16px) scale(1.15);
+  }
+}
+
+/*
+ * Firelight, not a coloured disc.
+ *
+ * The static version was three stacked radials, and however carefully they
+ * were tuned they still read as a sticker: light that does not move does not
+ * look like light. This is a small, dim pool that breathes, with embers
+ * drifting up out of it. The pool is deliberately weak — most of the life
+ * comes from the motion, so the colour can stay quiet.
+ *
+ * Every ember is one element animating transform and opacity, so the whole
+ * effect stays on the compositor.
+ */
+.duelist__glow {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  opacity: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.duelist__pool {
+  position: absolute;
+  left: 50%;
+  bottom: -1%;
+  width: 88%;
+  height: 22%;
+  translate: -50% 0;
+  border-radius: 50%;
+  background:
+    radial-gradient(closest-side, var(--glow-core), transparent 55%),
+    radial-gradient(closest-side, var(--glow-soft), transparent 80%);
+  filter: blur(5px);
+  animation: pool-breathe 2600ms ease-in-out infinite;
+}
+
+@keyframes pool-breathe {
+  0%,
+  100% {
+    opacity: 0.78;
+    transform: scale(0.97);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.04);
+  }
+}
+
+/*
+ * One ember. Rises, drifts sideways, shrinks and goes out; the staggered
+ * delays keep the stream irregular without any randomness at runtime.
+ */
+.ember {
+  position: absolute;
+  left: var(--x);
+  bottom: 4%;
+  width: var(--s);
+  height: var(--s);
+  border-radius: 50%;
+  background: var(--ember);
+  box-shadow: 0 0 6px var(--ember-halo);
+  opacity: 0;
+  animation: ember-rise var(--life) ease-out var(--delay) infinite;
+  will-change: transform, opacity;
+}
+
+@keyframes ember-rise {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 0, 0) scale(0.5);
+  }
+  12% {
+    opacity: 0.95;
+    transform: translate3d(calc(var(--drift) * 0.15), calc(var(--rise) * -0.12), 0)
+      scale(1);
+  }
+  55% {
+    opacity: 0.7;
+    transform: translate3d(calc(var(--drift) * 0.6), calc(var(--rise) * -0.55), 0)
+      scale(0.85);
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(var(--drift), calc(var(--rise) * -1), 0) scale(0.35);
+  }
+}
+
+/*
+ * Warm for the fighter swinging, cold-hot for the one taking it. Both are
+ * far weaker than the flat version they replace.
+ */
+.duelist--attacker .duelist__glow {
+  --glow-core: rgb(255 206 130 / 30%);
+  --glow-soft: rgb(255 150 30 / 16%);
+  --ember: rgb(255 214 150 / 95%);
+  --ember-halo: rgb(255 150 30 / 70%);
+  animation: glow-in calc(340ms * var(--beat)) cubic-bezier(0.2, 0.8, 0.3, 1) both;
+}
+
+.duelist--defender .duelist__glow {
+  --glow-core: rgb(255 170 170 / 30%);
+  --glow-soft: rgb(230 50 70 / 16%);
+  --ember: rgb(255 190 185 / 95%);
+  --ember-halo: rgb(255 70 80 / 70%);
+  animation: glow-in calc(340ms * var(--beat)) cubic-bezier(0.2, 0.8, 0.3, 1) both;
+}
+
+@keyframes glow-in {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+/* The contact shadow: tight and dark, so the fighter sits on the floor
+   rather than hovering over the light. */
+.duelist__floor {
+  position: absolute;
+  z-index: -1;
+  left: 50%;
+  bottom: 0;
+  width: 46%;
+  height: 11px;
+  translate: -50% 0;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgb(0 0 0 / 78%), rgb(0 0 0 / 0%) 72%);
+  filter: blur(2px);
+  pointer-events: none;
+}
+
+/* ---------- the swing and the reaction ---------- */
+
+.duelist--attacker .duelist__body {
+  animation: lunge calc(560ms * var(--beat)) cubic-bezier(0.34, 1.4, 0.5, 1)
+    var(--callout) both;
+  z-index: 5;
+}
+@keyframes lunge {
+  0% {
+    transform: translateX(0) scale(1);
+  }
+  22% {
+    transform: translateX(calc(var(--toward) * -0.35)) scale(0.97);
+  }
+  46% {
+    transform: translateX(var(--toward)) scale(1.06);
+  }
+  100% {
+    transform: translateX(0) scale(1);
+  }
+}
+
+.duelist--attacker .duelist__art {
+  filter: drop-shadow(0 12px 18px rgb(0 0 0 / 65%))
+    drop-shadow(0 0 2px rgb(255 233 176 / 85%))
+    drop-shadow(0 0 12px rgb(255 160 40 / 35%));
+}
+
+/*
+ * The reaction starts on contact, not on the wind-up. Played together, a
+ * lunge and a recoil are two bodies moving at once and nothing says which
+ * caused which.
+ */
+.duelist--defender .duelist__body {
+  animation: recoil calc(520ms * var(--beat)) cubic-bezier(0.2, 0.9, 0.3, 1)
+    var(--impact) both;
+  z-index: 4;
+}
+/*
+ * The attacker grows as it drives forward; the defender shrinks as it is
+ * knocked back. One reads as pressure applied, the other as pressure
+ * received, which separates them even mid-motion.
+ */
+@keyframes recoil {
+  0% {
+    transform: translateX(0) scale(1) rotate(0deg);
+  }
+  16% {
+    transform: translateX(calc(var(--toward) * -0.7)) scale(0.93) rotate(3deg);
+  }
+  38% {
+    transform: translateX(calc(var(--toward) * 0.22)) scale(0.97) rotate(-2deg);
+  }
+  62% {
+    transform: translateX(calc(var(--toward) * -0.12)) scale(1) rotate(1deg);
+  }
+  100% {
+    transform: translateX(0) scale(1) rotate(0deg);
+  }
+}
+
+.duelist--defender .duelist__art {
+  filter: drop-shadow(0 12px 18px rgb(0 0 0 / 65%))
+    drop-shadow(0 0 2px rgb(255 200 200 / 85%))
+    drop-shadow(0 0 12px rgb(255 60 80 / 35%));
+}
+
+/* The impact bloom: a white wash over the art, gone in a third of a second. */
+.duelist__flash {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    58% 42% at 50% 58%,
+    rgb(255 255 255 / 90%),
+    rgb(255 255 255 / 0%) 70%
+  );
+  animation: flash calc(320ms * var(--beat)) ease-out var(--impact) both;
+}
+@keyframes flash {
+  from {
+    opacity: 1;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 0;
+    transform: scale(1.3);
+  }
+}
+
+/* ---------- role tags ---------- */
+
+/*
+ * A word beside the icon. Both roles light up on every blow, and at speed the
+ * difference between a sword and a shield is not something a viewer resolves
+ * in the moment it is on screen.
+ */
+.rolltag {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  translate: -50% 0;
+  z-index: 8;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px 4px 8px;
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: var(--fw-bold);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  border-radius: 999px;
+  border: 1px solid currentcolor;
+  text-shadow: 0 1px 3px rgb(0 0 0 / 80%);
+  animation: mark-in calc(340ms * var(--beat)) cubic-bezier(0.34, 1.5, 0.5, 1) both;
+}
+
+.rolltag img {
+  height: 17px;
+  width: 17px;
+  object-fit: contain;
+  flex: none;
+}
+
+.rolltag--atk {
+  color: #ffd24d;
+  background: rgb(94 62 0 / 92%);
+  box-shadow: 0 0 16px rgb(255 184 0 / 55%);
+}
+
+.rolltag--def {
+  color: #ff9aa8;
+  background: rgb(96 12 26 / 92%);
+  box-shadow: 0 0 16px rgb(255 59 59 / 50%);
+}
+
+@keyframes mark-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.5) rotate(-12deg);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.14) rotate(3deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+/* ---------- damage ---------- */
+
+/*
+ * The number is the payoff of the whole sequence, so it gets the display face
+ * at a size that carries: punched past full size, held, then floated off.
+ * Colour separates a routine hit from one that finishes somebody.
+ */
+.dmgnum {
+  position: absolute;
+  top: 14%;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 20;
+  font-family: var(--font-display);
+  font-weight: var(--fw-bold);
+  font-size: 44px;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+  white-space: nowrap;
+  text-shadow:
+    0 3px 0 rgb(0 0 0 / 85%),
+    0 0 22px rgb(0 0 0 / 90%);
+  animation: dmg-punch calc(880ms * var(--beat)) cubic-bezier(0.16, 0.9, 0.3, 1)
+    var(--impact) both;
+}
+
+.dmgnum--hit {
+  color: #ffd44d;
+}
+.dmgnum--strong {
+  color: #ff9040;
+  font-size: 50px;
+}
+.dmgnum--ko {
+  color: #ff4f6d;
+  font-size: 58px;
+  -webkit-text-stroke: 1.5px rgb(255 255 255 / 50%);
+}
+
+@keyframes dmg-punch {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, 18px) scale(0.35);
+  }
+  14% {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1.4);
+  }
+  26% {
+    transform: translate(-50%, -2px) scale(1);
+  }
+  62% {
+    opacity: 1;
+    transform: translate(-50%, -18px) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -58px) scale(0.92);
+  }
+}
+
+/* What the defender's resistance ate, under the big number. */
+.blocknum {
+  position: absolute;
+  top: 34%;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 19;
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: var(--fw-bold);
+  color: #9ec7ff;
+  white-space: nowrap;
+  pointer-events: none;
+  text-shadow: 0 0 8px rgb(0 0 0 / 90%);
+  animation: blocknum-rise calc(880ms * var(--beat)) ease-out var(--impact) both;
+}
+@keyframes blocknum-rise {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, 10px);
+  }
+  22% {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+  70% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -24px);
+  }
+}
+
+/* ---------- ability effects ---------- */
+
+/*
+ * An ability that fires mid-blow has no other way of being seen. It rises off
+ * the fighter it landed on, green for a gain and red for a loss.
+ */
+.effectpill {
+  position: absolute;
+  top: 6%;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 22;
+  padding: 4px 11px;
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: var(--fw-bold);
+  white-space: nowrap;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  text-shadow: 0 0 6px #000;
+  pointer-events: none;
+  animation: effect-rise calc(880ms * var(--beat)) ease-out var(--impact) both;
+}
+
+.effectpill--heal {
+  color: #a6ffb2;
+  background: rgb(30 126 52 / 60%);
+  border-color: #6cc000;
+  box-shadow: 0 0 12px rgb(108 192 0 / 65%);
+}
+
+.effectpill--damage {
+  color: #ffc4c4;
+  background: rgb(153 25 25 / 66%);
+  border-color: #ff4a4a;
+  box-shadow: 0 0 12px rgb(255 46 46 / 65%);
+}
+
+@keyframes effect-rise {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, 12px) scale(0.85);
+  }
+  12% {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1.1);
+  }
+  24% {
+    transform: translate(-50%, 0) scale(1);
+  }
+  70% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -38px) scale(1);
+  }
+}
+
+/* The stamp on a kill. */
+.duelist__ko {
+  position: absolute;
+  top: 44%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 30;
+  padding: 5px var(--sp-3);
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: var(--fw-bold);
+  letter-spacing: 0.16em;
+  color: #fff;
+  background: rgb(153 25 25 / 88%);
+  border: 2px solid #ff4f6d;
+  border-radius: var(--radius-xs);
+  pointer-events: none;
+  animation: ko-stamp calc(880ms * var(--beat)) cubic-bezier(0.2, 1.6, 0.4, 1)
+    var(--impact) both;
+}
+@keyframes ko-stamp {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(2.6) rotate(-18deg);
+  }
+  28% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1) rotate(-8deg);
+  }
+  76% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1) rotate(-8deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1.12) rotate(-8deg);
+  }
+}
+
+.duelist--dead .duelist__plate {
+  opacity: 0.5;
+}
+
+/* ---------- the name plate ---------- */
+
+.duelist__plate {
+  display: grid;
+  gap: 5px;
+  width: 100%;
+  max-width: 260px;
+  padding: var(--sp-2) var(--sp-3);
+  background: rgb(8 13 26 / 88%);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-sm);
+}
+
+/* A team-coloured edge, so a glance says whose fighter this is. */
+.duelist--mine .duelist__plate {
+  border-bottom: 2px solid var(--cyan);
+}
+.duelist--enemy .duelist__plate {
+  border-bottom: 2px solid #e0344f;
+}
+
+.duelist__id {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-2);
+}
+
+.duelist__name {
+  font-family: var(--font-display);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-bold);
+  text-transform: capitalize;
+  color: var(--white);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.duelist__owner {
+  font-size: 10px;
+  color: var(--text-faint);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 45%;
+}
+
+/*
+ * Two layers. The fill drops at once; the trail behind it follows a beat
+ * later, leaving a bright sliver the width of the hit. That sliver is what
+ * makes a bar read as an event rather than as a number quietly changing.
+ */
+.hpbar {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 9px;
+  background: #10151f;
+  border: 1px solid #2b3547;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.hpbar--big {
+  height: 13px;
+}
+
+.hpbar__trail,
+.hpbar__fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  display: block;
+}
+
+.hpbar__trail {
+  background: rgb(255 255 255 / 70%);
+  transition: width calc(520ms * var(--beat)) cubic-bezier(0.4, 0, 0.2, 1)
+    calc(260ms * var(--beat));
+}
+
+.hpbar__fill {
+  transition: width calc(170ms * var(--beat)) cubic-bezier(0.4, 0, 1, 1);
+  background: linear-gradient(180deg, #7ce85a, #35a814);
+}
+
+/* Colour tracks how much is left, so a fighter in trouble looks it. */
+.hpbar[data-band='mid'] .hpbar__fill {
+  background: linear-gradient(180deg, #ffd44d, #e09b12);
+}
+.hpbar[data-band='low'] .hpbar__fill {
+  background: linear-gradient(180deg, #ff7a7a, #d81f3c);
+  animation: hp-pulse 900ms ease-in-out infinite;
+}
+@keyframes hp-pulse {
+  50% {
+    filter: brightness(1.5);
+  }
+}
+
+.duelist__nums {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-2);
+}
+
+.duelist__hp {
+  font-size: 12px;
+  color: #dfe6f2;
+  font-variant-numeric: tabular-nums;
+}
+.duelist__hp em {
+  font-style: normal;
+  color: var(--text-faint);
+}
+
+.duelist__init {
+  font-size: 11px;
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+  cursor: help;
+}
+
+/* ---------- narrow screens ---------- */
+
+@media (max-width: 720px) {
+  .rosters {
+    gap: var(--sp-2);
+  }
+  .duel {
+    gap: var(--sp-2);
+  }
+  .duelist__frame {
+    aspect-ratio: 3 / 4;
+  }
+  .dmgnum {
+    font-size: 32px;
+  }
+  .dmgnum--strong {
+    font-size: 36px;
+  }
+  .dmgnum--ko {
+    font-size: 40px;
+  }
+  .duelist__ko {
+    font-size: 17px;
+  }
+  .roster__name {
+    font-size: 9px;
+    letter-spacing: 0.1em;
+  }
+}
+
+/* ---------- combat log ---------- */
+
+/*
+ * Cumulative and self-scrolling, as the live game's is: a player who looks
+ * away can read back what happened rather than having missed it.
+ */
+.combatlog {
+  max-height: 190px;
+  overflow-y: auto;
+  padding: var(--sp-3);
+  background: rgb(0 0 0 / 45%);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  font-size: var(--fs-sm);
+  scrollbar-width: thin;
+}
+
+.combatlog__entry + .combatlog__entry {
+  margin-top: 6px;
+}
+
+.combatlog__line {
+  margin: 0;
+  color: var(--text-dim);
+}
+/* Only the names capitalise — the sentence around them is prose, and
+   capitalising the whole line turns it into a headline. */
+.combatlog__line strong,
+.combatlog__effect strong {
+  color: var(--white);
+  font-weight: var(--fw-bold);
+  text-transform: capitalize;
+}
+.combatlog__effect strong {
+  color: #b79dff;
+}
+
+.combatlog__ko {
+  font-style: normal;
+  color: var(--red);
+  text-transform: none;
+}
+
+.combatlog__effect {
+  margin: 2px 0 0 var(--sp-3);
+  font-size: var(--fs-xs);
+  color: var(--text-faint);
+}
+/* ---------- result ---------- */
+
+/*
+ * A screen, not a dialog.
+ *
+ * It replaces the fight rather than covering it: the run is over, there is
+ * nothing behind worth seeing through, and a modal would have made the
+ * rewards feel like an interruption rather than the point of having fought.
+ */
+.result {
+  position: relative;
+  display: grid;
+  gap: var(--sp-5);
+  align-content: start;
+  padding-bottom: var(--sp-6);
+}
+
+.result__bar {
+  display: flex;
+  gap: var(--sp-2);
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+/* ---------- verdict and team ---------- */
+
+.result__stage {
+  /* One size drives both the word and the space kept clear above the cards. */
+  --verdict-size: clamp(56px, 10vw, 132px);
+
+  position: relative;
+  display: grid;
+  padding-top: calc(var(--verdict-size) * 0.78);
+}
+
+/*
+ * The verdict sits behind the team. The fighters break the letters, so the
+ * two read as one image rather than as a banner with a list under it.
+ */
+.result__verdict {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  translate: -50% 0;
+  z-index: 0;
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--verdict-size);
+  font-weight: var(--fw-bold);
+  letter-spacing: 0.14em;
+  line-height: 0.9;
+  white-space: nowrap;
+  pointer-events: none;
+  color: rgb(226 234 255 / 30%);
+  -webkit-text-stroke: 2px rgb(255 255 255 / 55%);
+  text-shadow:
+    0 0 28px rgb(120 160 255 / 35%),
+    0 6px 26px rgb(0 0 0 / 70%);
+  animation: verdict-in 700ms cubic-bezier(0.2, 0.9, 0.3, 1) both;
+}
+
+.result__verdict--win {
+  color: rgb(255 219 128 / 34%);
+  -webkit-text-stroke: 2px rgb(255 206 92 / 75%);
+  text-shadow:
+    0 0 30px rgb(255 184 0 / 45%),
+    0 6px 26px rgb(0 0 0 / 70%);
+}
+
+@keyframes verdict-in {
+  from {
+    opacity: 0;
+    transform: scale(1.12);
+  }
+}
+
+.resultgrid {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: var(--sp-2);
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+
+@media (max-width: 1000px) {
+  .resultgrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--sp-3);
+  }
+}
+
+@media (max-width: 560px) {
+  .resultgrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* ---------- one fighter's card ---------- */
+
+/*
+ * The lean. Only the plate uses it now, and a short element tolerates a
+ * steeper angle than a full-height card did, so it is a touch stronger than
+ * the selection screen's.
+ */
+.resultgrid {
+  --lean: -6deg;
+  --lean-back: 6deg;
+}
+
+/*
+ * Art standing on nothing, over a slanted plate.
+ *
+ * The selection screen skews the whole card, which works because its cards
+ * are short and their text is one centred line. A scorecard is twice as tall
+ * and its figures are right-aligned, and counter-skewing a box that tall
+ * displaces its lowest rows sideways by about a twelfth of its width — enough
+ * to push every number past the clip edge and lose it. Skewing only the plate
+ * keeps the slant, keeps the numbers, and lets the verdict show between the
+ * fighters.
+ */
+.rescard {
+  position: relative;
+  display: grid;
+  align-content: end;
+  /* Keeps the backdrop (z-index: -1) behind the card rather than the page. */
+  isolation: isolate;
+}
+
+/*
+ * The slanted backdrop the fighters stand against.
+ *
+ * It runs the full height of the card so the parallelogram reads as one
+ * shape, but it is nearly clear at the top and only gathers weight toward the
+ * plate. That is the balance the earlier version got wrong in both
+ * directions: opaque from the top edge down, it guillotined the verdict;
+ * absent entirely, the fighters had nothing to stand against.
+ */
+.rescard::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  transform: skewX(var(--lean));
+  border-radius: var(--radius-xs);
+  border: 1px solid rgb(255 255 255 / 7%);
+  background: linear-gradient(
+    180deg,
+    rgb(20 26 48 / 0%) 0%,
+    rgb(20 26 48 / 14%) 34%,
+    rgb(17 22 42 / 38%) 62%,
+    rgb(12 16 32 / 58%) 88%,
+    rgb(10 14 28 / 66%) 100%
+  );
+}
+
+.rescard__art {
+  display: grid;
+  place-items: end center;
+  aspect-ratio: 4 / 5;
+}
+
+.rescard__art img {
+  max-width: 88%;
+  max-height: 100%;
+  object-fit: contain;
+  object-position: bottom center;
+  filter: drop-shadow(0 10px 16px rgb(0 0 0 / 65%));
+}
+
+.rescard__plate {
+  position: relative;
+  overflow: hidden;
+  transform: skewX(var(--lean));
+  background: linear-gradient(180deg, rgb(20 20 35 / 94%), rgb(9 12 26 / 96%));
+  border-top: 2px solid rgb(255 255 255 / 34%);
+  border-radius: 0 0 var(--radius-xs) var(--radius-xs);
+}
+
+/*
+ * Counter-skewed and a little wider than the plate, to fill the wedges the
+ * counter-skew leaves at two corners. The plate is short, so the overhang
+ * needed is small — 4% each side against a displacement of roughly 3%.
+ */
+.rescard__plateInner {
+  width: 110%;
+  margin-left: -5%;
+  padding: var(--sp-2) 11% var(--sp-3);
+  transform: skewX(var(--lean-back));
+  text-align: center;
+}
+
+.rescard__race {
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: var(--fw-bold);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #868686;
+}
+
+.rescard__class {
+  font-family: var(--font-display);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-bold);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--white);
+  margin-bottom: var(--sp-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rescard__stats {
+  display: grid;
+  gap: 3px;
+  margin: 0;
+  text-align: left;
+}
+
+.rescard__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: var(--fw-bold);
+  color: #8f8d8d;
+}
+
+.rescard__row dt {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+}
+.rescard__row dt img {
+  width: 11px;
+  height: 11px;
+  flex: none;
+  object-fit: contain;
+  filter: grayscale(100%);
+  opacity: 0.7;
+}
+.rescard__row dd {
+  margin: 0;
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* Best in its column — the read on who carried the run. */
+.rescard__row--best,
+.rescard__row--best dd {
+  color: #b99aff;
+}
+.rescard__row--best dt img {
+  filter: none;
+  opacity: 1;
+}
+
+.rescard__row--down,
+.rescard__row--down dd {
+  color: #ff6d85;
+}
+
+/* ---------- mine power ---------- */
+
+.minepower {
+  display: grid;
+  justify-items: center;
+  gap: var(--sp-3);
+  width: 100%;
+  max-width: 620px;
+  margin: 0 auto;
+}
+
+.minebar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 32px;
+  padding: 0 var(--sp-3);
+  background: #1d1b20;
+  border: 1px solid #c3c3c3;
+}
+
+.minebar__track {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.minebar__fill {
+  display: block;
+  height: 100%;
+  opacity: 0.6;
+  /* Slow enough to watch: this is the reward for the whole run. */
+  transition: width 1100ms cubic-bezier(0.16, 0.9, 0.3, 1);
+}
+.minebar__fill--tlm {
+  background: linear-gradient(90deg, #e1ae2c 0%, #fffe32 100%);
+}
+.minebar__fill--shards {
+  background: linear-gradient(90deg, #ce73e0 0%, #ed92ff 100%);
+}
+
+.minebar__label {
+  position: relative;
+  z-index: 2;
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: var(--fw-bold);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #fff;
+  text-shadow: 0 1px 3px rgb(0 0 0 / 70%);
+  white-space: nowrap;
+}
+
+/* What this run added, outside the bar so it is not lost against the fill. */
+.minebar__gain {
+  position: absolute;
+  left: calc(100% + var(--sp-3));
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: var(--fw-bold);
+  color: var(--teal);
+  white-space: nowrap;
+}
+
+@media (max-width: 720px) {
+  .minebar {
+    /* No room beside the bar on a phone; the gain goes inside it. */
+    justify-content: space-between;
+  }
+  .minebar__gain {
+    position: relative;
+    left: auto;
+    z-index: 2;
+  }
+}
+
+.minepower__hint,
+.minepower__foot {
+  margin: 0;
+  max-width: 52ch;
+  font-size: var(--fs-xs);
+  line-height: 1.5;
+  text-align: center;
+  color: var(--text-faint);
+}
+
+.minepower__estimate {
+  display: flex;
+  gap: var(--sp-4);
+  flex-wrap: wrap;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-size: var(--fs-sm);
+  color: var(--text-dim);
+}
+.minepower__estimate span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.minepower__estimate strong {
+  color: var(--white);
+  font-variant-numeric: tabular-nums;
+}
+
+.minepower__mine {
+  width: 100%;
+  max-width: 420px;
+  min-height: 52px;
+  font-size: var(--fs-md);
+  letter-spacing: 0.14em;
+}
+
+/* ---------- calmer settings ---------- */
+
+/*
+ * With reduced motion or the low-effects setting the fight still plays and
+ * still reads — bars move, numbers appear and fade, knockouts are marked, and
+ * the gold and red pools still say who is doing what. Only the theatre goes:
+ * no lunge, recoil, flash, punch or pulse.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .duelist--attacker .duelist__body,
+  .duelist--defender .duelist__body,
+  .duelist__flash,
+  .rolltag,
+  .duelist__art--dead,
+  .duel__element,
+  .hpbar[data-band="low"] .hpbar__fill,
+  .result__verdict {
+    animation: none;
+  }
+  .duelist__flash {
+    display: none;
+  }
+  .duelist--attacker .duelist__glow,
+  .duelist--defender .duelist__glow {
+    animation: none;
+    opacity: 1;
+  }
+  .duelist__pool {
+    animation: none;
+  }
+  .ember {
+    display: none;
+  }
+  .dmgnum,
+  .blocknum,
+  .effectpill,
+  .duelist__ko {
+    animation: calm-fade calc(880ms * var(--beat)) linear var(--impact) both;
+  }
+  .hpbar__fill,
+  .hpbar__trail,
+  .rtile__fill,
+  .rtile,
+  .battle__fill,
+  .duelist__art {
+    transition: none;
+  }
+  /* The fill still moves, just instantly — the number matters, the growth
+     is the flourish. */
+  .minebar__fill {
+    transition: none;
+  }
+  .result__verdict {
+    opacity: 1;
+  }
+}
+
+:root[data-fx="low"] .duelist--attacker .duelist__body,
+:root[data-fx="low"] .duelist--defender .duelist__body,
+:root[data-fx="low"] .rolltag,
+:root[data-fx="low"] .duel__element,
+:root[data-fx="low"] .hpbar[data-band="low"] .hpbar__fill {
+  animation: none;
+}
+:root[data-fx="low"] .duelist__flash {
+  display: none;
+}
+:root[data-fx="low"] .duelist--attacker .duelist__art,
+:root[data-fx="low"] .duelist--defender .duelist__art {
+  filter: drop-shadow(0 12px 18px rgb(0 0 0 / 65%));
+}
+/* The pools stay: they carry the most information for the least movement. */
+:root[data-fx="low"] .duelist--attacker .duelist__glow,
+:root[data-fx="low"] .duelist--defender .duelist__glow {
+  animation: none;
+  opacity: 1;
+}
+:root[data-fx="low"] .duelist__pool {
+  animation: none;
+}
+/* Nine looping elements per fighter is exactly the sort of thing the cheap
+   path exists to drop. */
+:root[data-fx="low"] .ember {
+  display: none;
+}
+:root[data-fx="low"] .dmgnum,
+:root[data-fx="low"] .blocknum,
+:root[data-fx="low"] .effectpill,
+:root[data-fx="low"] .duelist__ko {
+  animation: calm-fade calc(880ms * var(--beat)) linear var(--impact) both;
+}
+
+/* Held long enough to read, then gone. Opacity only — each element keeps
+   whatever centring its own rule gives it. */
+@keyframes calm-fade {
+  0%,
+  70% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/*
+ * An ability landing on a roster fighter.
+ *
+ * Group effects — the only kind the game currently ships — land mostly on
+ * fighters who are not the two on stage, so this is where they become
+ * visible at all.
+ */
+.rtile__fx {
+  position: absolute;
+  top: 2px;
+  left: 50%;
+  z-index: 4;
+  padding: 1px 5px;
+  border-radius: 999px;
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  pointer-events: none;
+  animation: rtile-fx calc(1100ms * var(--beat, 1)) var(--ease) forwards;
+}
+
+.rtile__fx--heal {
+  background: rgb(28 120 52 / 92%);
+  color: #d6ffd9;
+}
+
+.rtile__fx--harm {
+  background: rgb(150 32 54 / 92%);
+  color: #ffdfe4;
+}
+
+@keyframes rtile-fx {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, 6px);
+  }
+  22% {
+    opacity: 1;
+    transform: translate(-50%, -2px);
+  }
+  76% {
+    opacity: 1;
+    transform: translate(-50%, -6px);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -14px);
+  }
+}
+
+
+/* ---------- threat mark ---------- */
+
+/*
+ * A reticle on whoever is taking the next blow.
+ *
+ * Replaced a pair of bars stacked under the health bar. Three meters of
+ * similar weight on one small portrait read as a single confusing gauge —
+ * worse when a fighter on low health draws its health bar red, directly
+ * against a red threat bar. A game marks the target on the target.
+ */
+.threat {
+  position: absolute;
+  top: 1px;
+  right: 1px;
+  z-index: 4;
+  display: block;
+  width: 15px;
+  height: 15px;
+  color: #ff5f7e;
+  filter: drop-shadow(0 0 4px rgb(0 0 0 / 90%));
+  animation: threat-pulse 1.8s ease-in-out infinite;
+}
+
+.threat svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+@keyframes threat-pulse {
+  0%,
+  100% {
+    opacity: 0.72;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.12);
+  }
+}
+
+/* On the duel plate there is room for it beside the health figure. */
+.duelist__nums .threat {
+  position: static;
+  width: 17px;
+  height: 17px;
+}
+
+:root[data-fx='low'] .threat {
+  animation: none;
+  opacity: 1;
+}
+
+/* ---------- turn order ---------- */
+
+/*
+ * The order strip. The fight is already simulated, so this is the real
+ * sequence rather than a guess.
+ *
+ * It moves as a conveyor: the consumed attack collapses its own width to
+ * nothing and everything behind it slides left under one transition. No
+ * measuring, no positioning, and no jump between turns.
+ */
+.turnq {
+  --slide: 420ms;
+  --turnq-size: 46px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-3);
+  margin: var(--sp-3) 0 var(--sp-2);
+}
+
+.turnq__label {
+  font-size: 10px;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  white-space: nowrap;
+}
+
+.turnq__list {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.turnq__item {
+  position: relative;
+  flex: none;
+  width: var(--turnq-size);
+  height: var(--turnq-size);
+  border-radius: var(--radius-xs);
+  /* Side is the only thing the border says: blue is yours, red is theirs. */
+  border: 2px solid var(--turnq-line);
+  background: rgb(0 0 0 / 45%);
+  overflow: hidden;
+  /* Further down the queue is further off, so it recedes. */
+  opacity: 0.6;
+  transition:
+    width var(--slide) var(--ease),
+    margin var(--slide) var(--ease),
+    opacity var(--slide) var(--ease),
+    transform var(--slide) var(--ease);
+  /* backwards, not both: the entrance animates transform, and a forwards
+     fill would keep owning that property afterwards — blocking the scale an
+     item takes on later when it becomes the one attacking. */
+  animation: turnq-in var(--slide) var(--ease) backwards;
+}
+
+.turnq__item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.turnq__item--mine {
+  --turnq-line: #35d0ff;
+}
+
+.turnq__item--enemy {
+  --turnq-line: #ff4d6d;
+}
+
+/*
+ * The one swinging now. Told apart by weight, not by a third colour: it sits
+ * forward, at full strength, lit in its own side's colour.
+ */
+.turnq__item--now {
+  opacity: 1;
+  z-index: 2;
+  transform: scale(1.22);
+  box-shadow:
+    0 0 0 1px rgb(255 255 255 / 30%),
+    0 0 14px -2px var(--turnq-line);
+}
+
+/*
+ * The consumed attack, collapsing out. Animating its own width is what slides
+ * the rest of the strip: the flex row simply reflows, so nothing else has to
+ * be moved by hand.
+ */
+.turnq__item--out {
+  width: 0;
+  margin-right: -8px;
+  opacity: 0;
+  transform: scale(0.7);
+  border-width: 0;
+}
+
+/* A soft fall-off along the queue, so order reads without counting. */
+.turnq__item:nth-child(2) {
+  opacity: 0.9;
+}
+.turnq__item:nth-child(3) {
+  opacity: 0.78;
+}
+.turnq__item:nth-child(4) {
+  opacity: 0.68;
+}
+
+@keyframes turnq-in {
+  from {
+    opacity: 0;
+    transform: translateX(14px) scale(0.82);
+  }
+}
+
+:root[data-fx='low'] .turnq__item {
+  animation: none;
+  transition: none;
+}
+
+@media (max-width: 719px) {
+  .turnq {
+    --turnq-size: 36px;
+  }
+  .turnq__label {
+    display: none;
+  }
+}
+
+/* ---------- stage entrances ---------- */
+
+/*
+ * A fighter arriving on stage.
+ *
+ * Each duelist is keyed by the fighter standing there, so this runs only when
+ * a genuinely different one steps up — a fighter that holds the stage across
+ * consecutive attacks is not re-animated, and the swap stops being a cut.
+ */
+.duelist {
+  animation: duelist-in calc(320ms * var(--beat, 1)) var(--ease) both;
+}
+
+@keyframes duelist-in {
+  from {
+    opacity: 0;
+  }
+}
+
+.duelist--enemy {
+  animation-name: duelist-in-left;
+}
+
+.duelist--mine {
+  animation-name: duelist-in-right;
+}
+
+@keyframes duelist-in-left {
+  from {
+    opacity: 0;
+    transform: translateX(-22px);
+  }
+}
+
+@keyframes duelist-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(22px);
+  }
+}
+
+:root[data-fx='low'] .duelist {
+  animation: none;
+}
+
+/*
+ * Ability effects in the log.
+ *
+ * Coloured by direction: a heal and a debuff are the same shape in prose, and
+ * a reader scanning the log should not have to parse the sentence to tell
+ * which way a number went.
+ */
+.combatlog__effect--up strong:last-of-type {
+  color: #7fe08a;
+}
+
+.combatlog__effect--down strong:last-of-type {
+  color: #ff8fa3;
+}
+
+.combatlog__effect em {
+  font-style: normal;
+  color: var(--text-faint);
+}

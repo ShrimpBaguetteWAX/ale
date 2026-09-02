@@ -1,0 +1,585 @@
+/*
+ * The tavern.
+ *
+ * Three panels, matching the original's shape: the recruit on offer, what the
+ * tavern will knock off the price, and your NFTs. The hire cost is pinned to
+ * the bottom because it is the number the whole screen is about, and it moves
+ * as you pick cards.
+ */
+
+.tavern {
+  position: relative;
+  min-height: 100%;
+}
+
+.tavern__art {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: -1;
+}
+
+.tavern__scrim {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(180deg, rgb(5 16 30 / 84%), rgb(5 16 30 / 94%));
+}
+
+:root[data-fx='low'] .tavern__art {
+  display: none;
+}
+
+.tavern__inner {
+  position: relative;
+  display: grid;
+  gap: var(--sp-4);
+}
+
+.tavern__head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+}
+
+.tavern__title {
+  font-size: var(--fs-2xl);
+  line-height: 1.1;
+}
+
+.tavern__grid {
+  display: grid;
+  gap: var(--sp-4);
+  grid-template-columns: minmax(0, 1fr);
+}
+
+/*
+ * Recruit and discounts side by side, inventory across the bottom: the
+ * inventory is the widest thing on the screen and benefits most from the room.
+ */
+@media (min-width: 900px) {
+  .tavern__grid {
+    grid-template-columns: minmax(0, 360px) minmax(0, 1fr);
+    /*
+     * Discounts take what they need; the inventory takes the rest, so the
+     * right column ends level with the recruit card instead of leaving a
+     * ragged gap under it.
+     */
+    grid-template-rows: auto 1fr;
+    grid-template-areas:
+      'fighter objectives'
+      'fighter inventory';
+  }
+  .tavern__fighter {
+    grid-area: fighter;
+  }
+  .tavern__objectives {
+    grid-area: objectives;
+  }
+  .tavern__inventory {
+    grid-area: inventory;
+    /* min-height:0 lets the card grid scroll rather than stretch the row. */
+    min-height: 0;
+  }
+}
+
+/* ---------- The recruit ---------- */
+
+.tavern__empty {
+  display: grid;
+  justify-items: center;
+  gap: var(--sp-3);
+  text-align: center;
+  padding-top: var(--sp-3);
+}
+.tavern__empty img {
+  width: 120px;
+  height: 120px;
+  object-fit: contain;
+  border-radius: var(--radius-sm);
+  opacity: 0.6;
+}
+
+.recruit__head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  margin-top: var(--sp-3);
+}
+
+.recruit__class {
+  font-family: var(--font-display);
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-bold);
+  color: var(--white);
+  text-transform: capitalize;
+}
+
+.recruit__meta {
+  font-size: var(--fs-sm);
+  color: var(--text-dim);
+  text-transform: capitalize;
+}
+
+.resgrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--sp-1);
+  margin-top: var(--sp-3);
+}
+
+.resgrid__cell {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  padding: var(--sp-2) var(--sp-1);
+  background: rgb(0 0 0 / 35%);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-xs);
+}
+.resgrid__cell img {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+}
+.resgrid__label {
+  font-size: 10px;
+  color: var(--text-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.resgrid__value {
+  font-family: var(--font-display);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-bold);
+}
+
+.abilities {
+  display: grid;
+  gap: var(--sp-2);
+  margin-top: var(--sp-4);
+}
+
+.ability {
+  padding: var(--sp-2) var(--sp-3);
+  background: rgb(0 0 0 / 35%);
+  border: 1px solid var(--line-soft);
+  border-left: 2px solid var(--purple);
+  border-radius: var(--radius-xs);
+}
+.ability__name {
+  font-family: var(--font-display);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-bold);
+  color: var(--text-heading);
+}
+.ability__desc {
+  font-size: var(--fs-sm);
+  color: var(--text-dim);
+}
+
+/* ---------- Discounts ---------- */
+
+.objectives {
+  display: grid;
+  gap: var(--sp-1);
+  margin-top: var(--sp-3);
+}
+
+.objective {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-2) var(--sp-3);
+  background: rgb(0 0 0 / 30%);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-xs);
+  font-size: var(--fs-sm);
+  transition: border-color var(--dur-fast) var(--ease);
+}
+
+/* Claimed by a selected card — the state the player is working toward. */
+.objective--done {
+  border-color: var(--teal);
+  background: rgb(14 212 168 / 12%);
+}
+.objective--done .objective__label {
+  color: var(--white);
+}
+.objective--done .objective__mod {
+  color: var(--teal);
+}
+
+.objective__label {
+  color: var(--text-dim);
+}
+
+.objective__mod {
+  margin-left: auto;
+  font-family: var(--font-display);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-bold);
+  color: var(--text-faint);
+  white-space: nowrap;
+}
+
+/* ---------- Inventory ---------- */
+
+.tabs {
+  display: flex;
+  gap: var(--sp-1);
+  margin-bottom: var(--sp-3);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.tabs__tab {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex: none;
+  padding: var(--sp-2) var(--sp-3);
+  font-family: var(--font-display);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+  letter-spacing: 0.06em;
+  color: var(--text-dim);
+  background: rgb(0 0 0 / 30%);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+}
+.tabs__tab:hover {
+  color: var(--white);
+}
+.tabs__tab[aria-selected='true'] {
+  color: var(--white);
+  background: var(--violet-glass);
+  border-color: var(--cyan);
+}
+
+.tabs__count {
+  font-size: 10px;
+  color: var(--text-faint);
+}
+.tabs__tab[aria-selected='true'] .tabs__count {
+  color: var(--cyan);
+}
+
+.tavern__inventory {
+  display: flex;
+  flex-direction: column;
+}
+
+.cardgrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  align-content: start;
+  gap: var(--sp-2);
+  flex: 1;
+  min-height: 240px;
+  overflow-y: auto;
+  padding-right: var(--sp-1);
+}
+
+.cardtile {
+  position: relative;
+  display: grid;
+  gap: var(--sp-1);
+  padding: var(--sp-1);
+  background: rgb(0 0 0 / 35%);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+  text-align: center;
+  transition:
+    border-color var(--dur-fast) var(--ease),
+    transform var(--dur-fast) var(--ease);
+}
+.cardtile:hover {
+  border-color: var(--purple);
+}
+.cardtile:active {
+  transform: translateY(1px);
+}
+
+.cardtile--picked {
+  border-color: var(--cyan);
+  background: rgb(0 186 255 / 14%);
+}
+
+.cardtile img {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: contain;
+  border-radius: 3px;
+  background: rgb(0 0 0 / 40%);
+}
+
+.cardtile__name {
+  font-size: 10px;
+  line-height: 1.25;
+  color: var(--text-dim);
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.cardtile__count {
+  position: absolute;
+  right: 4px;
+  top: 4px;
+  padding: 0 4px;
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-dim);
+  background: rgb(5 16 30 / 85%);
+  border-radius: 3px;
+}
+
+/* How much energy this specific card is taking off. */
+.cardtile__gain {
+  position: absolute;
+  left: 4px;
+  top: 4px;
+  padding: 0 5px;
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: var(--fw-bold);
+  color: #04202b;
+  background: var(--teal);
+  border-radius: 3px;
+}
+
+.cardtile--loading {
+  aspect-ratio: 3 / 4;
+  border: 0;
+}
+
+/* ---------- Hire (in the header) ---------- */
+
+.hire {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.hire__cost {
+  display: grid;
+  justify-items: end;
+  gap: 1px;
+  text-align: right;
+}
+
+.hire__value {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-family: var(--font-display);
+  font-size: var(--fs-xl);
+  font-weight: var(--fw-bold);
+  color: var(--cyan);
+  line-height: 1.1;
+}
+.hire__value--short {
+  color: var(--red);
+}
+.hire__value img {
+  width: 18px;
+  height: 18px;
+}
+
+.hire__detail {
+  font-size: var(--fs-xs);
+  color: var(--text-faint);
+  white-space: nowrap;
+}
+
+@media (max-width: 620px) {
+  .hire__detail {
+    display: none;
+  }
+}
+
+/* ---------- Selected cards ---------- */
+
+.picked {
+  display: grid;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-3);
+  padding: var(--sp-2);
+  background: rgb(0 186 255 / 8%);
+  border: 1px solid var(--cyan-deep);
+  border-radius: var(--radius-xs);
+}
+
+.picked__label {
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: var(--fw-bold);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--cyan);
+}
+
+.picked__row {
+  display: flex;
+  gap: var(--sp-2);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.picked__row::-webkit-scrollbar {
+  display: none;
+}
+
+.pickedcard {
+  position: relative;
+  flex: none;
+  width: 54px;
+  padding: 0;
+  border: 1px solid var(--cyan);
+  border-radius: 3px;
+  background: rgb(0 0 0 / 40%);
+  cursor: pointer;
+}
+.pickedcard img {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: contain;
+  border-radius: 2px;
+}
+
+.pickedcard__gain {
+  position: absolute;
+  left: 2px;
+  bottom: 2px;
+  padding: 0 4px;
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: var(--fw-bold);
+  color: #04202b;
+  background: var(--teal);
+  border-radius: 3px;
+}
+.pickedcard__gain--none {
+  color: var(--white);
+  background: var(--white-800);
+}
+
+/* ---------- Recruit portrait ---------- */
+
+/*
+ * Class art over its elemental backdrop. Both come from the original set; the
+ * art is rasterised from SVGs that average 867KB (one is 5MB) — see
+ * scripts/make-thumbs.mjs.
+ */
+.portrait {
+  position: relative;
+  margin-top: var(--sp-3);
+  aspect-ratio: 4 / 3;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--line);
+  overflow: hidden;
+  background-size: cover;
+  background-position: center;
+  display: grid;
+  place-items: end center;
+}
+
+.portrait__art {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: bottom center;
+  filter: drop-shadow(0 4px 12px rgb(0 0 0 / 55%));
+}
+
+.portrait__level {
+  position: absolute;
+  right: var(--sp-2);
+  top: var(--sp-2);
+  background: rgb(5 16 30 / 85%);
+}
+
+/* ---------- Stat grade arrows ---------- */
+
+/*
+ * The good/bad indicator next to a stat. Its meaning is carried by the icon's
+ * alt and title, not by colour alone.
+ */
+.grade {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  margin-left: var(--sp-2);
+  vertical-align: -3px;
+  object-fit: contain;
+}
+
+.resgrid__value .grade {
+  margin-left: 3px;
+  width: 13px;
+  height: 13px;
+  vertical-align: -2px;
+}
+
+/* ---------- Ability rarity ---------- */
+
+.ability__rarity {
+  margin-left: var(--sp-2);
+  font-size: 9px;
+  font-weight: var(--fw-bold);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  opacity: 0.75;
+}
+
+/* Stat icon beside the label, as the original. */
+.statline__icon {
+  display: inline-block;
+  width: 15px;
+  height: 15px;
+  margin-right: var(--sp-2);
+  vertical-align: -2px;
+  opacity: 0.75;
+}
+
+/*
+ * A locked ability.
+ *
+ * Every fighter rolls with its last ability locked until ascension, so this
+ * is not an edge case — it is on every card in the game. Dimmed rather than
+ * hidden, because it is what the fighter will eventually have and that is
+ * worth knowing before you sell them.
+ */
+.ability--locked {
+  opacity: 0.55;
+  border-left-style: dashed;
+}
+
+.ability__locked {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: var(--sp-2);
+  padding: 0 5px;
+  border-radius: var(--radius-full);
+  background: rgb(255 255 255 / 10%);
+  font-size: 9px;
+  font-weight: var(--fw-bold);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  white-space: nowrap;
+}
+.ability__locked img {
+  object-fit: contain;
+  opacity: 0.8;
+}

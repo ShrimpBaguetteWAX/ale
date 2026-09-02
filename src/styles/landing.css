@@ -1,0 +1,430 @@
+/*
+ * Landing page.
+ *
+ * Keeps the original's shape — full-bleed key art, centred logo, one cyan
+ * Play button, a "learn more" chevron — and fixes what was broken: the
+ * sections below the fold used to render as dark cards on an unstyled white
+ * page. Here the artwork carries through behind everything.
+ */
+
+.landing {
+  min-height: 100dvh;
+}
+
+/* ---------- Hero ---------- */
+
+.hero {
+  position: relative;
+  min-height: 100dvh;
+  min-height: 100svh;
+  display: grid;
+  place-items: center;
+  padding: var(--sp-16) var(--sp-5) var(--sp-20);
+  text-align: center;
+  overflow: hidden;
+}
+
+/*
+ * Key art as a real <img> rather than a CSS background, so it can be
+ * decoded async and marked high priority. A 370KB JPEG behind
+ * `background-image` blocks nothing but also gets no priority hint.
+ */
+.hero__art {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  z-index: 0;
+}
+
+/* Legibility floor for the logo and button over a busy, bright image. */
+.hero__scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background:
+    radial-gradient(ellipse 60% 45% at 50% 52%, rgb(5 16 30 / 55%), transparent 70%),
+    linear-gradient(180deg, rgb(5 16 30 / 35%) 0%, transparent 30%, rgb(5 16 30 / 85%) 100%);
+}
+
+.hero__inner {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  justify-items: center;
+  gap: var(--sp-6);
+  width: 100%;
+  max-width: 720px;
+}
+
+.hero__logo {
+  width: min(420px, 72vw);
+  height: auto;
+  filter: drop-shadow(0 4px 18px rgb(0 0 0 / 70%));
+}
+
+.hero__tagline {
+  font-family: var(--font-display);
+  font-size: clamp(var(--fs-md), 1.2vw + 10px, var(--fs-2xl));
+  font-weight: var(--fw-medium);
+  color: var(--white);
+  text-shadow: 0 2px 10px rgb(0 0 0 / 85%);
+  max-width: 24ch;
+}
+
+.hero__cta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+  justify-content: center;
+}
+
+.hero__note {
+  font-size: var(--fs-sm);
+  color: var(--text-dim);
+  text-shadow: 0 1px 6px rgb(0 0 0 / 90%);
+}
+
+/* Scroll affordance — the original's "LEARN MORE" chevron. */
+.hero__more {
+  position: absolute;
+  left: 50%;
+  bottom: var(--sp-6);
+  transform: translateX(-50%);
+  z-index: 2;
+  display: grid;
+  justify-items: center;
+  gap: var(--sp-1);
+  font-family: var(--font-display);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+  letter-spacing: 0.22em;
+  color: var(--white);
+  text-shadow: 0 2px 8px rgb(0 0 0 / 90%);
+  cursor: pointer;
+}
+.hero__more:hover {
+  text-decoration: none;
+  color: var(--cyan);
+}
+.hero__more svg {
+  width: 28px;
+  height: 18px;
+  animation: nudge 1.8s ease-in-out infinite;
+}
+@keyframes nudge {
+  50% {
+    transform: translateY(5px);
+  }
+}
+:root[data-fx='low'] .hero__more svg {
+  animation: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero__more svg {
+    animation: none;
+  }
+}
+
+/* ---------- Content sections ---------- */
+
+.sections {
+  position: relative;
+  background: var(--navy);
+}
+
+/* The footer art from the original, reused as a ground texture. */
+.sections::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: var(--sections-art);
+  background-size: cover;
+  background-position: center;
+  opacity: 0.16;
+  pointer-events: none;
+}
+
+.sections__inner {
+  position: relative;
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding: var(--sp-16) var(--sp-5);
+  display: grid;
+  gap: var(--sp-6);
+}
+
+.pitch {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+.pitch__title {
+  font-size: var(--fs-2xl);
+  color: var(--text-heading);
+}
+
+.pitch__body {
+  /* Cap the measure, not the panel, so cards and prose share one edge. */
+  max-width: 74ch;
+  color: var(--text-dim);
+}
+
+.cards {
+  display: grid;
+  gap: var(--sp-4);
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+}
+
+.card__icon {
+  width: 48px;
+  height: 48px;
+  margin-bottom: var(--sp-3);
+  object-fit: contain;
+}
+
+.card__title {
+  font-size: var(--fs-lg);
+  margin-bottom: var(--sp-2);
+}
+
+.card__body {
+  font-size: var(--fs-sm);
+  color: var(--text-dim);
+}
+
+.landing__foot {
+  position: relative;
+  padding: var(--sp-6) var(--sp-5);
+  border-top: 1px solid var(--line);
+  text-align: center;
+  font-size: var(--fs-xs);
+  color: var(--text-faint);
+}
+
+/* ---------- Auth screens ---------- */
+
+.auth {
+  position: relative;
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: var(--sp-5);
+}
+
+.auth__art {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 0;
+}
+
+.auth__scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(180deg, rgb(5 16 30 / 80%), rgb(5 16 30 / 94%));
+}
+
+.auth__card {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 470px;
+}
+
+.auth__logo {
+  width: 190px;
+  height: auto;
+  margin: 0 auto var(--sp-5);
+}
+
+.auth__title {
+  font-size: var(--fs-2xl);
+  text-align: center;
+}
+
+.auth__lead {
+  margin-top: var(--sp-2);
+  color: var(--text-dim);
+  font-size: var(--fs-sm);
+  text-align: center;
+}
+
+/* ---------- Step list ---------- */
+
+.steps {
+  display: grid;
+  gap: var(--sp-2);
+  margin: var(--sp-6) 0;
+}
+
+.step {
+  display: grid;
+  grid-template-columns: 28px 1fr;
+  gap: var(--sp-3);
+  align-items: start;
+  padding: var(--sp-3);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-sm);
+  background: rgb(0 0 0 / 30%);
+}
+.step--done {
+  border-color: color-mix(in srgb, var(--teal) 50%, transparent);
+}
+.step--active {
+  border-color: var(--cyan);
+  background: rgb(0 186 255 / 10%);
+}
+
+.step__num {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid var(--line-bright);
+  font-family: var(--font-display);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-bold);
+  color: var(--text-dim);
+}
+.step--done .step__num {
+  background: var(--teal);
+  border-color: var(--teal);
+  color: var(--black);
+}
+.step--active .step__num {
+  border-color: var(--cyan);
+  color: var(--cyan);
+}
+
+.step__title {
+  font-family: var(--font-display);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  color: var(--white);
+}
+.step__body {
+  font-size: var(--fs-sm);
+  color: var(--text-dim);
+}
+
+/* ---------- logo glow and sparks ---------- */
+
+/*
+ * The wrapper now stands where the image used to, so it has to carry the
+ * placement: .auth__logo centres itself with margin auto, which an
+ * inline-block parent would quietly ignore.
+ */
+.logofx {
+  position: relative;
+  display: block;
+  width: fit-content;
+  margin-inline: auto;
+  line-height: 0;
+}
+
+/*
+ * Larger than the logo so sparks have somewhere to travel, and behind it so
+ * they emerge from under the wordmark. The overhang is in percentages of the
+ * image, which keeps the effect in proportion at every logo size.
+ */
+.logofx__canvas {
+  position: absolute;
+  inset: -80% -35%;
+  z-index: 0;
+  width: 170%;
+  height: 260%;
+  /* The global reset caps every canvas at 100%, which would clip the
+     overhang back to the logo's own width and hide the sparks behind it. */
+  max-width: none;
+  pointer-events: none;
+}
+
+.logofx img {
+  position: relative;
+  z-index: 1;
+}
+
+/* The Display setting turns decoration off; the component also skips its
+   loop, so this only hides a canvas that was never painted. */
+:root[data-fx='low'] .logofx__canvas {
+  display: none;
+}
+
+/* ---------- switch wallet ---------- */
+
+.switchwallet {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.switchwallet__who {
+  display: block;
+}
+
+/*
+ * A link, not a button: it sits inside a sentence, and giving it button
+ * weight next to the primary call to action would pull the eye away from
+ * the thing the player actually came here to press.
+ */
+.switchwallet button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 4px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--cyan);
+  font: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.switchwallet button:hover:not(:disabled) {
+  color: var(--white);
+}
+
+.switchwallet button:disabled {
+  color: var(--text-dim);
+  cursor: default;
+}
+
+.switchwallet__error {
+  flex-basis: 100%;
+  color: var(--red);
+  font-size: var(--fs-xs);
+}
+
+/* ---------- the Play button ---------- */
+
+/*
+ * Same charged treatment as "Enter Tavern" on the map, recoloured to the
+ * button's own cyan so it stays the page's one blue call to action. The rim
+ * runs from a deep teal through pale cyan to white, which is the gold ramp's
+ * structure in this hue — a flat cyan rim reads as a border, not a light
+ * travelling round one.
+ */
+.heroplay {
+  --charge-dim: #0d5f7a;
+  --charge-mid: #a8ecff;
+  --charge-hot: #ffffff;
+  --charge-glow: 57 198 240;
+}
+
+/* The wallet line on the signup card, where the fee makes it worth a look. */
+.auth__wallet {
+  margin-top: var(--sp-4);
+  font-size: var(--fs-sm);
+  color: var(--text-dim);
+  text-align: center;
+}

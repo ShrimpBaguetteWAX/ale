@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#05070f" />
+    <link rel="icon" href="/ale/favicon.svg" type="image/svg+xml" />
+
+    <title>Alien Legends</title>
+    <meta
+      name="description"
+      content="Stake a commander on one of six planets, march across a living map of surveyed land, and build a roster strong enough to hold it. On WAX."
+    />
+
+    <!--
+      Fonts are preconnected and loaded with display=swap so first paint never
+      waits on the network. Orbitron is the display face, Titillium Web the
+      body face; both were already the game's typography.
+    -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&family=Titillium+Web:wght@400;600;700&display=swap"
+    />
+
+    <!-- Warm the TCP/TLS handshake to the fastest WAX nodes before any read. -->
+    <link rel="preconnect" href="https://wax.greymass.com" crossorigin />
+    <link rel="preconnect" href="https://api.hivebp.io" crossorigin />
+
+    <style>
+      /* Shown until React mounts; deleted on first render. */
+      #boot {
+        position: fixed;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        background: #05070f;
+        color: #6b7a9c;
+        font: 600 12px/1 'Orbitron', system-ui, sans-serif;
+        letter-spacing: 0.35em;
+        text-transform: uppercase;
+      }
+    </style>
+    <script type="module" crossorigin src="/ale/assets/index-Ci0UMiGd.js"></script>
+    <link rel="modulepreload" crossorigin href="/ale/assets/react-CUBPBykP.js">
+    <link rel="modulepreload" crossorigin href="/ale/assets/router-CA0o15om.js">
+    <link rel="stylesheet" crossorigin href="/ale/assets/index-L-72fg3d.css">
+  </head>
+
+  <body>
+    <div id="root"></div>
+    <div id="boot">Alien Legends</div>
+    <noscript>
+      <p style="padding: 24px; color: #e8eeff; font-family: system-ui">
+        Alien Legends needs JavaScript to talk to the WAX blockchain.
+      </p>
+    </noscript>
+  </body>
+</html>

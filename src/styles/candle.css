@@ -1,0 +1,696 @@
+/*
+ * The Candle.
+ *
+ * One mission on the left, winnings on the right. The mission is the screen —
+ * a clock, a gate, a set of running totals and one input — so it is broken
+ * into labelled boxes rather than left as a wall of numbers.
+ */
+
+/*
+ * The backdrop every other screen already had. The art was in the build and
+ * unused, which is most of why this page read as a settings panel: it was the
+ * only one sitting on bare page colour.
+ */
+.candle__art {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: -1;
+}
+
+.candle__scrim {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(180deg, rgb(5 16 30 / 82%), rgb(5 16 30 / 95%));
+}
+
+:root[data-fx='low'] .candle__art {
+  display: none;
+}
+
+.candle {
+  display: grid;
+  gap: var(--sp-4);
+  align-content: start;
+  padding-bottom: var(--sp-10);
+}
+
+.main__inner:has(> .candle) {
+  max-width: min(1400px, 100%);
+}
+
+.candle__head {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-5);
+  flex-wrap: wrap;
+}
+
+.candle__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-4xl);
+  font-weight: var(--fw-bold);
+  letter-spacing: 0.04em;
+  color: var(--text-heading);
+}
+
+.candle__lede {
+  margin: var(--sp-1) 0 0;
+  max-width: 62ch;
+  font-size: var(--fs-sm);
+  line-height: 1.55;
+  color: var(--text-dim);
+}
+
+.candle__empty {
+  margin: var(--sp-10) auto;
+  max-width: 46ch;
+  text-align: center;
+  color: var(--text-dim);
+}
+
+.candle__cols {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 380px;
+  gap: var(--sp-4);
+  align-items: start;
+}
+
+.candle__side {
+  position: sticky;
+  top: var(--sp-4);
+}
+
+@media (max-width: 1000px) {
+  .candle__cols {
+    grid-template-columns: 1fr;
+  }
+  .candle__side {
+    position: static;
+  }
+}
+
+/* ---------- the mission ---------- */
+
+.mission {
+  background:
+    linear-gradient(180deg, rgb(255 255 255 / 5%), rgb(255 255 255 / 0%) 30%),
+    linear-gradient(180deg, rgb(20 30 54 / 92%), rgb(8 16 30 / 94%));
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 8%);
+  display: grid;
+  gap: var(--sp-4);
+  padding: var(--sp-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background-color: rgb(10 16 32 / 94%);
+  background-image: url("/assets/background/bg-candle.png");
+  background-size: cover;
+  background-position: center;
+  background-blend-mode: multiply;
+  box-shadow: var(--shadow);
+}
+
+.mission--loading {
+  min-height: 420px;
+  border-color: var(--line-soft);
+  background-image: linear-gradient(
+    -90deg,
+    rgb(255 255 255 / 4%),
+    rgb(255 255 255 / 10%),
+    rgb(255 255 255 / 4%)
+  );
+  background-size: 400% 400%;
+  animation: mission-shimmer 1.2s ease-in-out infinite;
+}
+
+@keyframes mission-shimmer {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 100% 50%;
+  }
+}
+
+/*
+ * The prize and the clock, side by side.
+ *
+ * The reward used to sit under the title in a thin strip, which put the one
+ * number the whole screen is about below the fold of attention. It is the
+ * hero now, and the candle beside it carries the deadline.
+ */
+.mission__head {
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  flex-wrap: wrap;
+}
+
+.mission__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-xl);
+  font-weight: var(--fw-bold);
+  color: var(--text-heading);
+}
+
+.mission__sub {
+  margin: 2px 0 0;
+  font-size: var(--fs-xs);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.mission__clock {
+  display: grid;
+  justify-items: end;
+  gap: 2px;
+  margin-left: auto;
+}
+.mission__clock span {
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.mission__clock strong {
+  font-family: var(--font-display);
+  font-size: var(--fs-xl);
+  font-variant-numeric: tabular-nums;
+  color: var(--white);
+}
+
+/* The prize, stated once and large. Everything else on the screen is a rate. */
+.mission__intro {
+  flex: 1 1 260px;
+  min-width: 0;
+  display: grid;
+  align-content: start;
+  gap: var(--sp-2);
+}
+
+.mission__phase {
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: var(--fw-bold);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  margin: 0;
+}
+.mission__phase--open {
+  color: var(--teal);
+}
+.mission__phase--closed {
+  color: var(--gold);
+}
+
+/* The number the screen exists to show. */
+.mission__prize {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin-top: var(--sp-1);
+}
+
+.mission__prize img {
+  display: inline-block;
+  align-self: center;
+  filter: drop-shadow(0 0 10px rgb(246 168 0 / 55%));
+}
+
+.mission__prizeval {
+  font-family: var(--font-display);
+  font-size: clamp(28px, 4vw + 8px, 44px);
+  font-weight: var(--fw-bold);
+  line-height: 1;
+  color: var(--white);
+  text-shadow: 0 0 22px rgb(246 168 0 / 45%);
+  font-variant-numeric: tabular-nums;
+}
+
+.mission__prizesym {
+  font-family: var(--font-display);
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-bold);
+  color: var(--gold);
+}
+
+.mission__prizecap {
+  font-size: var(--fs-sm);
+  color: var(--text-dim);
+}
+
+.mission__reward {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid rgb(246 168 0 / 40%);
+  border-radius: var(--radius-xs);
+  background: rgb(246 168 0 / 8%);
+}
+.mission__reward img {
+  align-self: center;
+  object-fit: contain;
+}
+.mission__reward strong {
+  font-family: var(--font-display);
+  font-size: var(--fs-3xl);
+  font-variant-numeric: tabular-nums;
+  color: var(--gold);
+}
+.mission__reward span {
+  font-family: var(--font-display);
+  font-size: var(--fs-xs);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+
+/* ---------- the gate ---------- */
+
+.gate {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid rgb(255 52 52 / 45%);
+  border-radius: var(--radius-xs);
+  background: rgb(255 52 52 / 10%);
+  font-family: var(--font-display);
+  font-size: var(--fs-sm);
+  color: #ff9aa6;
+}
+.gate--ok {
+  border-color: rgb(108 192 0 / 45%);
+  background: rgb(108 192 0 / 10%);
+  color: #adde6f;
+}
+.gate__mark {
+  font-size: var(--fs-lg);
+  line-height: 1;
+}
+
+/* ---------- running totals ---------- */
+
+/*
+ * A stat block, read in one pass.
+ *
+ * These were one full-width row per figure, which made five small numbers
+ * taller than the mission they describe. Auto-fit tiles put them side by side
+ * and let the column decide how many fit.
+ */
+.mission__facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(148px, 1fr));
+  gap: var(--sp-2);
+  margin: 0;
+}
+.mission__facts > div {
+  display: grid;
+  gap: 2px;
+  padding: var(--sp-2) var(--sp-3);
+  background: rgb(0 0 0 / 28%);
+  border: 1px solid rgb(255 255 255 / 7%);
+  border-radius: var(--radius-xs);
+}
+.mission__facts dt {
+  font-size: var(--fs-xs);
+  color: var(--text-faint);
+}
+.mission__facts dd {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-sm);
+  font-variant-numeric: tabular-nums;
+  color: var(--white);
+}
+.mission__facts dd img {
+  object-fit: contain;
+}
+.mission__facts dd .faint {
+  font-size: var(--fs-xs);
+}
+
+/* The projection, set apart so it never reads as the current position. */
+.mission__facts--after {
+  margin-top: var(--sp-2);
+  padding: var(--sp-3);
+  border: 1px dashed var(--line-bright);
+  border-radius: var(--radius-xs);
+  background: rgb(145 54 188 / 12%);
+}
+
+/* ---------- the input ---------- */
+
+.contribute {
+  display: flex;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+}
+.contribute .input {
+  flex: 1;
+  min-width: 120px;
+  min-height: 44px;
+  font-variant-numeric: tabular-nums;
+}
+.contribute .btn {
+  min-height: 44px;
+  white-space: nowrap;
+}
+
+/* ---------- winnings ---------- */
+
+.winnings {
+  background:
+    linear-gradient(180deg, rgb(255 255 255 / 5%), rgb(255 255 255 / 0%) 30%),
+    linear-gradient(180deg, rgb(20 30 54 / 92%), rgb(8 16 30 / 94%));
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 8%);
+  display: grid;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: linear-gradient(180deg, rgb(14 20 38 / 92%), rgb(6 10 24 / 96%));
+}
+
+.winnings__rows {
+  display: grid;
+  gap: var(--sp-2);
+}
+
+.winnings__row {
+  display: grid;
+  grid-template-columns: 20px auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-xs);
+  background: rgb(0 0 0 / 30%);
+}
+.winnings__row img {
+  object-fit: contain;
+}
+.winnings__row strong {
+  font-family: var(--font-display);
+  font-size: var(--fs-lg);
+  font-variant-numeric: tabular-nums;
+  color: var(--white);
+  text-align: right;
+}
+.winnings__row span {
+  font-size: var(--fs-xs);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.winnings__claim {
+  width: 100%;
+  min-height: 44px;
+}
+
+
+/* ---------- the mission clock ---------- */
+
+/*
+ * A ring that empties as the window closes.
+ *
+ * `--left` is the percentage still to run. A conic gradient paints the fill
+ * and a radial mask cuts the middle out, which leaves the centre free for the
+ * countdown itself — the number and the shape saying the same thing, one for
+ * reading and one for glancing.
+ */
+.missionclock {
+  --ring: var(--teal);
+  --ring-glow: rgb(14 212 168 / 55%);
+  position: relative;
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 116px;
+  height: 116px;
+}
+
+.missionclock--soon {
+  --ring: var(--gold);
+  --ring-glow: rgb(246 168 0 / 60%);
+}
+.missionclock--now {
+  --ring: var(--red);
+  --ring-glow: rgb(255 52 52 / 65%);
+}
+.missionclock--done {
+  --ring: var(--text-faint);
+  --ring-glow: rgb(125 135 158 / 35%);
+}
+
+.missionclock__ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: conic-gradient(
+    from -90deg,
+    var(--ring) calc(var(--left, 100) * 1%),
+    rgb(255 255 255 / 7%) 0
+  );
+  -webkit-mask: radial-gradient(circle, transparent 62%, #000 63%);
+  mask: radial-gradient(circle, transparent 62%, #000 63%);
+  filter: drop-shadow(0 0 7px var(--ring-glow));
+  transition: background 1s linear;
+}
+
+/* The last stretch pulses, because that is when it matters. */
+.missionclock--now .missionclock__ring {
+  animation: clock-urgent 1.6s ease-in-out infinite;
+}
+
+@keyframes clock-urgent {
+  50% {
+    filter: drop-shadow(0 0 14px var(--ring-glow));
+  }
+}
+
+.missionclock__face {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  text-align: center;
+  padding: 0 var(--sp-2);
+}
+
+.missionclock__label {
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.missionclock__time {
+  font-family: var(--font-display);
+  font-size: var(--fs-md);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+  color: var(--white);
+}
+
+:root[data-fx='low'] .missionclock__ring {
+  animation: none;
+  filter: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .missionclock__ring {
+    animation: none;
+    transition: none;
+  }
+}
+
+/* The share the player would actually take, given the weight it carries. */
+.mission__facts--lead {
+  border-color: rgb(246 168 0 / 40%) !important;
+  background:
+    linear-gradient(180deg, rgb(246 168 0 / 10%), rgb(246 168 0 / 0%)),
+    rgb(0 0 0 / 28%) !important;
+}
+.mission__facts--lead dd {
+  color: var(--gold);
+}
+
+
+/* ---------- what is coming ---------- */
+
+/*
+ * The queue behind the running mission.
+ *
+ * Deliberately quieter than the mission above it: these are not actionable
+ * yet, and a row that looks pressable when it is not is worse than no row.
+ * Each one leads with what it pays, because that — not the requirement — is
+ * what decides whether to hold gems back for it.
+ */
+.upnext {
+  margin-top: var(--sp-4);
+  padding: var(--sp-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background:
+    linear-gradient(180deg, rgb(255 255 255 / 4%), rgb(255 255 255 / 0%) 40%),
+    rgb(0 0 0 / 26%);
+}
+
+.upnext__rows {
+  display: grid;
+  gap: var(--sp-2);
+  margin-top: var(--sp-3);
+}
+
+.upnext__row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid rgb(255 255 255 / 7%);
+  border-radius: var(--radius-xs);
+  background: rgb(0 0 0 / 28%);
+}
+
+.upnext__icon {
+  display: inline-block;
+  flex: none;
+  opacity: 0.9;
+}
+
+.upnext__what {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+  flex: 1;
+}
+
+.upnext__what strong {
+  font-family: var(--font-display);
+  font-size: var(--fs-sm);
+  color: var(--white);
+  font-variant-numeric: tabular-nums;
+}
+
+.upnext__req {
+  font-size: 11px;
+  color: var(--text-dim);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.upnext__when {
+  display: grid;
+  justify-items: end;
+  gap: 1px;
+  flex: none;
+  text-align: right;
+}
+
+.upnext__when span {
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.upnext__when strong {
+  font-family: var(--font-display);
+  font-size: var(--fs-sm);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-dim);
+}
+
+/* ---------- the compacted mission body ---------- */
+
+/*
+ * The entry gate, as a single strip.
+ *
+ * Full width because it is a hard yes or no on whether the rest of the card
+ * can be used at all — narrowing it would rank it alongside the stat tiles,
+ * which it outranks.
+ */
+.gate__text {
+  min-width: 0;
+}
+
+/* Label above value now that the tiles are narrow. */
+.mission__facts dt {
+  font-size: 10px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.mission__facts dd {
+  justify-content: flex-start;
+  font-family: var(--font-display);
+  font-size: var(--fs-sm);
+  color: var(--white);
+}
+
+/*
+ * The action, as a bar rather than a titled panel.
+ *
+ * One input and one button need a label, not a heading and a paragraph — the
+ * heading said what the button already says, and the paragraph said what the
+ * balance beside it already shows.
+ */
+.missionact {
+  display: grid;
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+  border: 1px solid rgb(246 168 0 / 28%);
+  border-radius: var(--radius-xs);
+  background:
+    linear-gradient(180deg, rgb(246 168 0 / 8%), rgb(246 168 0 / 0%) 60%),
+    rgb(0 0 0 / 32%);
+}
+
+.missionact__lead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+}
+
+.missionact__lead strong {
+  font-family: var(--font-display);
+  font-size: var(--fs-sm);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+
+.missionact__lead .faint {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--fs-sm);
+}
+
+.missionact__lead img {
+  display: inline-block;
+}
+
+/* The card breathes less now that it holds bands rather than panels. */
+.mission {
+  gap: var(--sp-3);
+}

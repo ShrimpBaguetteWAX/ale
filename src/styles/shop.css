@@ -1,0 +1,369 @@
+/*
+ * The shop.
+ *
+ * A ladder of packs per category, with the pack artwork doing the work. The
+ * price sits on the button rather than beside it, because the price *is* the
+ * action: you are not choosing whether to buy so much as which rung to buy at.
+ */
+
+.shop {
+  position: relative;
+  min-height: 100%;
+}
+
+.shop__art {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: -1;
+}
+
+.shop__scrim {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(180deg, rgb(5 16 30 / 86%), rgb(5 16 30 / 95%));
+}
+
+:root[data-fx='low'] .shop__art {
+  display: none;
+}
+
+.shop__inner {
+  position: relative;
+  display: grid;
+  gap: var(--sp-4);
+}
+
+.shop__head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+}
+
+.shop__status {
+  display: grid;
+  justify-items: end;
+  gap: 2px;
+  text-align: right;
+}
+
+/* Legend status earns the gold treatment; trial stays neutral. */
+.tag--legend {
+  color: #2a1c00;
+  background: var(--grad-gold);
+  border-color: var(--gold);
+  font-weight: var(--fw-bold);
+}
+
+/* ---------- Packs ---------- */
+
+.packgrid {
+  display: grid;
+  gap: var(--sp-4);
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+}
+
+.pack {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: linear-gradient(180deg, var(--surface-3), var(--surface-1));
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow);
+  transition: border-color var(--dur-fast) var(--ease);
+}
+.pack:hover {
+  border-color: var(--purple);
+}
+
+/* Still shown, just visibly out of reach — the reason is stated underneath. */
+.pack--blocked {
+  opacity: 0.62;
+}
+
+.pack__art {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  background: rgb(0 0 0 / 35%);
+}
+.pack__art img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.pack__badge {
+  position: absolute;
+  left: var(--sp-2);
+  top: var(--sp-2);
+  padding: 2px var(--sp-2);
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: var(--fw-bold);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #2a1c00;
+  background: var(--grad-gold);
+  border-radius: var(--radius-xs);
+}
+.pack__badge--free {
+  color: #04202b;
+  background: var(--teal);
+}
+
+/*
+ * Flex column, not grid: the button uses margin-top:auto to sit on the
+ * bottom edge, which keeps every buy button on one line across the row no
+ * matter how long a pack name is.
+ */
+.pack__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+  flex: 1;
+}
+
+.pack__title {
+  font-size: var(--fs-sm);
+  line-height: 1.3;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  /*
+   * Two lines are reserved whether or not the name needs them, so the
+   * amounts underneath share a baseline across the row — "Premium Daily
+   * Energy" wraps and the rest do not.
+   */
+  min-height: calc(1.3em * 2);
+}
+
+.pack__offer {
+  font-family: var(--font-display);
+  font-size: var(--fs-xl);
+  font-weight: var(--fw-bold);
+  color: var(--white);
+}
+
+/*
+ * The button carries the price, or the blocker when the pack is out of
+ * reach. Those labels are longer — "Need 49,999 WAX" — and .btn's standard
+ * side padding pushed them onto a second line, which made that one button a
+ * pixel taller than its neighbours and broke the row.
+ */
+.pack .btn {
+  margin-top: auto;
+  padding: 0 var(--sp-2);
+  white-space: nowrap;
+}
+
+.amount {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-variant-numeric: tabular-nums;
+}
+.amount img {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+}
+
+.pack--loading {
+  aspect-ratio: 3 / 4;
+  border: 0;
+}
+
+/* ---------- Legend ---------- */
+
+.legendcard {
+  max-width: 62ch;
+}
+
+.benefits {
+  display: grid;
+  gap: var(--sp-2);
+  margin: var(--sp-3) 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--fs-sm);
+  color: var(--text-dim);
+}
+.benefits li {
+  display: grid;
+  grid-template-columns: 16px 1fr;
+  gap: var(--sp-2);
+}
+.benefits li::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  margin-top: 7px;
+  border-radius: 50%;
+  background: var(--gold);
+}
+
+/* ---------- WAX balance ---------- */
+
+/*
+ * Gem packs are the only things bought with real money, so the wallet balance
+ * gets a line of its own rather than being buried in the blurb.
+ */
+.waxbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+  padding: var(--sp-3) var(--sp-4);
+  background: rgb(0 0 0 / 40%);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--cyan);
+  border-radius: var(--radius-sm);
+}
+
+.waxbar__label {
+  font-size: var(--fs-sm);
+  color: var(--text-dim);
+}
+
+.waxbar__value {
+  font-family: var(--font-display);
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-bold);
+  color: var(--cyan);
+}
+
+/* ---------- Purchase confirmation ---------- */
+
+.confirm {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal);
+  display: grid;
+  place-items: center;
+  padding: var(--sp-4);
+  /* A little heavier than a popover scrim, to seal the page off. */
+  background: rgb(0 0 0 / 78%);
+}
+
+.confirm__panel {
+  /*
+   * Opaque, unlike .panel. The shared panel background is a 28%-violet over
+   * a translucent base, which is right for something sitting on the page and
+   * wrong for a dialog: this is a decision point, and the shop reading
+   * through it is noise. Same colours, no transparency.
+   */
+  background: linear-gradient(180deg, #1b1348, #0a1222);
+  width: 100%;
+  max-width: 460px;
+  max-height: 90dvh;
+  overflow-y: auto;
+  animation: confirm-in var(--dur) var(--ease);
+}
+@keyframes confirm-in {
+  from {
+    transform: translateY(8px);
+    opacity: 0;
+  }
+}
+:root[data-fx='low'] .confirm__panel {
+  animation: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .confirm__panel {
+    animation: none;
+  }
+}
+
+.confirm__title {
+  font-size: var(--fs-lg);
+  margin-bottom: var(--sp-4);
+}
+
+/* Pay on the left, receive on the right — the exchange read literally. */
+.confirm__deal {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-3);
+  background: rgb(0 0 0 / 35%);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-sm);
+}
+
+.confirm__side {
+  display: grid;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.confirm__label {
+  font-size: var(--fs-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-faint);
+}
+
+.confirm__value {
+  font-family: var(--font-display);
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-bold);
+}
+.confirm__value--cost {
+  color: var(--red);
+}
+.confirm__value--gain {
+  color: var(--teal);
+}
+
+.confirm__arrow {
+  flex: none;
+  font-size: var(--fs-xl);
+  color: var(--text-faint);
+}
+
+.confirm__item {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  margin-top: var(--sp-3);
+}
+.confirm__item img {
+  width: 56px;
+  height: 56px;
+  flex: none;
+  object-fit: cover;
+  border-radius: var(--radius-xs);
+  border: 1px solid var(--line);
+}
+
+.confirm__name {
+  font-family: var(--font-display);
+  font-size: var(--fs-md);
+  font-weight: var(--fw-bold);
+  color: var(--white);
+}
+
+.confirm__balance {
+  margin-top: var(--sp-4);
+}
+
+.confirm__actions {
+  display: flex;
+  gap: var(--sp-2);
+  margin-top: var(--sp-5);
+}
+.confirm__actions .btn {
+  flex: 1;
+  /* .btn carries generous side padding for standalone use; in a split pair
+     that pushes "Confirm exchange" onto two lines. */
+  padding: 0 var(--sp-3);
+  white-space: nowrap;
+}

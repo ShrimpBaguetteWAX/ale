@@ -1,0 +1,155 @@
+/*
+ * Alien Legends design tokens.
+ *
+ * These are the game's real tokens, lifted from the live site's Stitches
+ * theme so the rebuild keeps the vibe players already know: the magenta-to-
+ * cyan primary gradient, the deep violet panels, the yellow headings, and
+ * Orbitron / Titillium Web / Ruslan Display.
+ *
+ * What's new is the plumbing around them — a proper surface ramp so panels
+ * can sit on panels, explicit focus and state colours, and effects that are
+ * cheap enough to hold 60fps on a low-end phone.
+ */
+
+:root {
+  /* ---- Brand gradients (verbatim from the original theme) ---- */
+  --grad-primary: linear-gradient(170.01deg, #ff01ff -32.19%, #00baff 116.49%);
+  --grad-secondary: linear-gradient(180deg, #0ed4a8 0%, #00baff 28.54%);
+  --grad-tertiary: linear-gradient(180deg, #000000 0%, #212121 28.54%);
+  --grad-violet: linear-gradient(180deg, #ff01ff 0%, #9136bc 28.54%);
+  --grad-gold: linear-gradient(170.01deg, #ebb309 -32.19%, #f6a800 116.49%);
+  --grad-teal: linear-gradient(170.01deg, #0ed4a8 -32.19%, #2c6256 116.49%);
+  --grad-disabled: linear-gradient(176.22deg, #ffffff -68.3%, #797979 123.24%);
+
+  /* ---- Palette (original names kept so the mapping stays obvious) ---- */
+  --white: #ffffff;
+  --white-800: #797979;
+  --black: #000000;
+  --black-300: #212121;
+
+  --cyan: #00baff; /* blue100 */
+  --cyan-deep: #0187b1; /* blue200 */
+  --violet: #4717ac; /* blue500 — the panel violet */
+  --violet-glass: rgb(71 23 172 / 65%); /* blue500_04 */
+  --navy: #05101e; /* blue700 — page ground */
+  --teal: #0ed4a8; /* green500 / light_blue500 */
+  --magenta: #ff01ff; /* pink500 */
+  --magenta-deep: #c7009b; /* pink400 */
+  --purple: #9136bc;
+  --purple-glass: rgb(145 54 188 / 40%); /* pink500_04 */
+  --yellow: #faff00; /* yellow200 — headings */
+  --gold: #f6a800; /* yellow500 */
+  --gold-deep: #ebb309; /* yellow400 */
+  --orange: #ed8936;
+  --red: #ff3434;
+
+  /* ---- Surfaces ---- */
+  --bg: var(--navy);
+  --surface-1: rgb(10 18 34 / 92%);
+  --surface-2: rgb(20 30 54 / 92%);
+  --surface-3: rgb(71 23 172 / 28%);
+  --line: rgb(145 54 188 / 45%);
+  --line-bright: var(--purple);
+  --line-soft: rgb(255 255 255 / 10%);
+
+  /* ---- Text ---- */
+  --text: #ffffff;
+  --text-dim: #b9c2d6;
+  --text-faint: #7d879e;
+  --text-heading: var(--yellow);
+
+  /* ---- Rarity ---- */
+  --r-common: #b9c2d6;
+  --r-uncommon: var(--teal);
+  --r-rare: var(--cyan);
+  --r-epic: var(--purple);
+  --r-legendary: var(--gold);
+  --r-mythical: var(--red);
+
+  /* ---- Typography (original scale) ---- */
+  --font-display: 'Orbitron', 'Segoe UI', system-ui, sans-serif;
+  --font-accent: 'Ruslan Display', 'Orbitron', serif;
+  --font-body: 'Titillium Web', 'Segoe UI', system-ui, sans-serif;
+
+  --fs-xs: 12px;
+  --fs-sm: 14px;
+  --fs-md: 16px;
+  --fs-lg: 20px;
+  --fs-xl: 22px;
+  --fs-2xl: 24px;
+  --fs-3xl: 26px;
+  --fs-4xl: 28px;
+  --fs-5xl: 30px;
+  --fs-6xl: 32px;
+  --fs-7xl: 34px;
+  /* Hero type is the one place we go fluid, so it fits a 320px phone. */
+  --fs-hero: clamp(28px, 4vw + 12px, 56px);
+
+  --fw-thin: 300;
+  --fw-normal: 400;
+  --fw-medium: 600;
+  --fw-bold: 700;
+  --fw-extrabold: 900;
+
+  /* ---- Space (original 4px scale) ---- */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
+  --sp-8: 32px;
+  --sp-10: 40px;
+  --sp-12: 48px;
+  --sp-16: 64px;
+  --sp-20: 80px;
+
+  /* ---- Radii (original) ---- */
+  --radius-xs: 5px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-full: 9999px;
+
+  /* ---- Layout ---- */
+  --maxw: 1428px;
+  --topbar-h: 60px;
+  --nav-h: 64px;
+  --rail-w: 244px;
+
+  --dur-fast: 120ms;
+  --dur: 200ms;
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+
+  --shadow: 0 4px 20px rgb(0 0 0 / 55%);
+  --glow-cyan: 0 0 16px -2px rgb(0 186 255 / 65%);
+  --glow-magenta: 0 0 16px -2px rgb(255 1 255 / 55%);
+
+  /* ---- z-index (original ladder) ---- */
+  --z-docked: 10;
+  --z-dropdown: 1000;
+  --z-sticky: 1100;
+  --z-overlay: 1300;
+  --z-modal: 1400;
+  --z-toast: 1700;
+}
+
+/*
+ * Reduced-effects mode. Set on <html> at boot from device hints, and
+ * toggleable in Profile. Kills the expensive paint work — blurs, glows,
+ * large shadows — without changing a single colour, so the game still
+ * looks like itself.
+ */
+:root[data-fx='low'] {
+  --shadow: none;
+  --glow-cyan: none;
+  --glow-magenta: none;
+  --surface-1: #0a1222;
+  --surface-2: #141e36;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-fast: 0ms;
+    --dur: 0ms;
+  }
+}

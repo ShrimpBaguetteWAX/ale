@@ -1,0 +1,1231 @@
+/*
+ * The map screen.
+ *
+ * The map is what players spend their time in, so it takes the whole frame:
+ * the planet switcher, legend, zoom and tile inspector all float over it
+ * rather than stacking above and below and squeezing it into a strip.
+ */
+
+.mapview {
+  position: relative;
+  /*
+   * 100% of the shell's main row, not a calc against the viewport. The row
+   * is already sized to whatever the top bar and tab bar leave over, so this
+   * cannot drift when their real heights differ from the tokens by a border
+   * or a safe-area inset.
+   */
+  height: 100%;
+}
+
+.mapwrap {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.mapstage {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--navy);
+  /* Vertical gestures pan the map, so don't let the page scroll steal them. */
+  touch-action: none;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.mapstage:active {
+  cursor: grabbing;
+}
+.mapstage:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: -2px;
+}
+
+.mapstage__canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.mapstage__zoom {
+  position: absolute;
+  right: var(--sp-3);
+  bottom: var(--sp-3);
+  display: grid;
+  gap: var(--sp-2);
+  z-index: 2;
+}
+
+.zoombtn {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  font-family: var(--font-display);
+  font-size: var(--fs-lg);
+  line-height: 1;
+  color: var(--white);
+  background: rgb(5 16 30 / 85%);
+  border: 1px solid var(--line-bright);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+.zoombtn:hover {
+  background: var(--violet-glass);
+}
+.zoombtn--wide {
+  width: auto;
+  padding: 0 var(--sp-3);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+  letter-spacing: 0.08em;
+}
+/* ---------- Overlays on the map ---------- */
+
+.mapoverlay {
+  position: absolute;
+  z-index: 3;
+  background: linear-gradient(180deg, rgb(20 30 54 / 96%), rgb(10 18 34 / 97%));
+  border: 1px solid var(--line-bright);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow);
+}
+
+/* Tile inspector, bottom-left so it never covers the zoom controls. */
+.tilecard {
+  left: var(--sp-3);
+  bottom: var(--sp-3);
+  width: min(320px, calc(100% - var(--sp-3) * 2 - 58px));
+  padding: var(--sp-3);
+  max-height: calc(100% - var(--sp-6));
+  overflow-y: auto;
+}
+
+/*
+ * On a phone the card still floats — with a full-height map there is no
+ * space below it to flow into. It keeps clear of the zoom column on the
+ * right and is capped so it never swallows the map.
+ */
+@media (max-width: 719px) {
+  .tilecard {
+    right: 66px;
+    width: auto;
+    max-height: 52%;
+  }
+}
+
+.tilecard__top {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+}
+
+.tilecard__coords {
+  font-family: var(--font-display);
+  font-size: var(--fs-xl);
+  font-weight: var(--fw-bold);
+  color: var(--white);
+  line-height: 1.1;
+}
+
+.tilecard__id {
+  font-size: var(--fs-xs);
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.tilecard__close {
+  margin-left: auto;
+  width: 28px;
+  height: 28px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-xs);
+  border: 1px solid var(--line-soft);
+  color: var(--text-dim);
+  cursor: pointer;
+}
+.tilecard__close:hover {
+  color: var(--white);
+  border-color: var(--purple);
+}
+
+.tile__thumb {
+  width: 56px;
+  height: 56px;
+  flex: none;
+  border-radius: var(--radius-xs);
+  border: 1px solid var(--line-bright);
+  image-rendering: pixelated;
+}
+
+.buildings {
+  display: grid;
+  gap: var(--sp-1);
+  margin-top: var(--sp-3);
+}
+
+.building {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-1) var(--sp-2);
+  background: rgb(0 0 0 / 35%);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-xs);
+  font-size: var(--fs-sm);
+}
+.building img {
+  width: 28px;
+  height: 28px;
+  flex: none;
+  object-fit: contain;
+}
+/* Name over owner, so the row stays one line tall per building. */
+.building__text {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+
+.building__name {
+  text-transform: capitalize;
+  font-weight: var(--fw-medium);
+  line-height: 1.2;
+}
+
+.building__owner {
+  font-size: var(--fs-xs);
+  color: var(--text-faint);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.building__owner-skeleton {
+  display: inline-block;
+  width: 84px;
+  height: 9px;
+  vertical-align: middle;
+}
+.building__mult {
+  margin-left: auto;
+  font-family: var(--font-display);
+  font-size: var(--fs-xs);
+  color: var(--gold);
+}
+
+/* Travel cost gets its own emphasis — it's the number players act on. */
+.travelcost {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  margin-top: var(--sp-3);
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: rgb(0 0 0 / 40%);
+}
+.travelcost--short {
+  border-color: var(--red);
+}
+.travelcost__value {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-family: var(--font-display);
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-bold);
+  color: var(--cyan);
+}
+.travelcost--short .travelcost__value {
+  color: var(--red);
+}
+.travelcost__value img {
+  width: 20px;
+  height: 20px;
+}
+
+/* ---------- Legend ---------- */
+
+.legendbtn {
+  position: absolute;
+  right: var(--sp-3);
+  top: var(--sp-3);
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  font-family: var(--font-display);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+  letter-spacing: 0.08em;
+  color: var(--text-dim);
+  background: rgb(5 16 30 / 85%);
+  border: 1px solid var(--line-bright);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+.legendbtn:hover,
+.legendbtn[aria-expanded='true'] {
+  color: var(--white);
+  background: var(--violet-glass);
+}
+
+.legendpop {
+  right: var(--sp-3);
+  top: calc(var(--sp-3) + 42px);
+  padding: var(--sp-3);
+  width: 220px;
+}
+
+.legend {
+  display: grid;
+  gap: var(--sp-2);
+  font-size: var(--fs-xs);
+  color: var(--text-dim);
+}
+.legend__row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+/*
+ * The marker SVGs ship at their own sizes (32px up to 108px), so the legend
+ * must constrain them or the dungeon and arena art blows the popover open.
+ */
+.legend__marker {
+  width: 20px;
+  height: 20px;
+  flex: none;
+  object-fit: contain;
+}
+
+.legend__dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex: none;
+}
+
+/* ---------- Planet switcher (overlay, top-left) ---------- */
+
+.planetbar {
+  position: absolute;
+  left: var(--sp-3);
+  top: var(--sp-3);
+  right: 92px; /* clear of the Legend button */
+  z-index: 3;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  pointer-events: none;
+}
+.planetbar > * {
+  pointer-events: auto;
+}
+
+.planetpick {
+  display: flex;
+  gap: var(--sp-2);
+  padding: var(--sp-1);
+  background: rgb(5 16 30 / 80%);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  overflow-x: auto;
+  scrollbar-width: none;
+  max-width: 100%;
+}
+.planetpick::-webkit-scrollbar {
+  display: none;
+}
+
+/*
+ * The collapse control, on the end of the strip.
+ *
+ * Inside the strip rather than beside it, so the bar stays one object and the
+ * arrow lands where the cards stop — which is where the eye already is when a
+ * player decides the row is too wide.
+ */
+.planetpick__toggle {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  align-self: stretch;
+  padding: 0;
+  border: 0;
+  border-left: 1px solid var(--line-soft);
+  border-radius: 0 var(--radius-xs) var(--radius-xs) 0;
+  background: none;
+  cursor: pointer;
+  opacity: 0.55;
+  transition: opacity var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease);
+}
+.planetpick__toggle:hover {
+  opacity: 1;
+  background: rgb(145 54 188 / 22%);
+}
+.planetpick__toggle img {
+  object-fit: contain;
+  transition: transform var(--dur-fast) var(--ease);
+}
+/* Open, the arrow points back the way the strip would fold. */
+.planetpick__toggle[aria-expanded='true'] img {
+  transform: rotate(180deg);
+}
+
+/*
+ * Each planet is a small card rather than a text tab: it has to carry the
+ * planet name plus three counts, and a player deciding where to go next reads
+ * those counts more than the name.
+ */
+.planetcard {
+  display: grid;
+  gap: var(--sp-1);
+  flex: none;
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid transparent;
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+  text-align: left;
+  color: var(--text-dim);
+  transition: background var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
+}
+.planetcard:hover {
+  color: var(--white);
+  background: rgb(145 54 188 / 22%);
+}
+.planetcard[aria-pressed='true'] {
+  color: var(--white);
+  background: var(--violet-glass);
+  border-color: var(--cyan);
+}
+
+.planetcard__name {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+  font-family: var(--font-display);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-bold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* Dot marking the planet the player is actually standing on. Same red as the
+   map pin, so "you are here" reads as one idea in both places. */
+.planetcard__here {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--red);
+  box-shadow: 0 0 0 1px rgb(255 255 255 / 70%);
+  flex: none;
+}
+
+.planetcard__stats {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: var(--fs-xs);
+  font-variant-numeric: tabular-nums;
+}
+
+.pstat {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: var(--text-faint);
+}
+.planetcard[aria-pressed='true'] .pstat {
+  color: var(--text-dim);
+}
+/* Something is available here — worth the player's attention. */
+.pstat--open {
+  color: var(--teal);
+}
+.planetcard[aria-pressed='true'] .pstat--open {
+  color: var(--teal);
+}
+.pstat img {
+  width: 14px;
+  height: 14px;
+  object-fit: contain;
+  opacity: 0.85;
+}
+
+.pstat__skeleton {
+  display: inline-block;
+  width: 14px;
+  height: 10px;
+}
+
+/* "Find me" sits above the zoom stack so both live in the same corner. */
+.findme {
+  position: absolute;
+  right: var(--sp-3);
+  /* Clears the two 42px zoom buttons and the gap between them. */
+  bottom: calc(var(--sp-3) + 100px);
+  z-index: 3;
+}
+
+/* Transient status over the map, so loading never shifts the layout. */
+.maptoast {
+  left: 50%;
+  bottom: var(--sp-5);
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-4);
+  font-size: var(--fs-sm);
+  white-space: nowrap;
+}
+.maptoast--error {
+  border-color: var(--red);
+  color: #ffd9de;
+  white-space: normal;
+  max-width: min(420px, calc(100% - var(--sp-6)));
+}
+
+/* On a phone the toast would collide with the tile card. */
+@media (max-width: 719px) {
+  .maptoast {
+    bottom: var(--sp-3);
+  }
+}
+
+/*
+ * On a phone the tile card wants the full width at the bottom, so the map
+ * controls move to a single column under the Legend button instead of
+ * fighting it for the bottom-right corner.
+ */
+@media (max-width: 719px) {
+  .findme {
+    top: calc(var(--sp-3) + 46px);
+    bottom: auto;
+  }
+
+  .mapstage__zoom {
+    top: calc(var(--sp-3) + 92px);
+    bottom: auto;
+  }
+
+  .tilecard {
+    right: var(--sp-3);
+  }
+
+  /* The popover covers those controls while it is open. */
+  .legendpop {
+    z-index: 4;
+  }
+}
+
+/* ---------- "You are here" marker ---------- */
+
+/*
+ * Deliberately not blue: cyan already means "selected tile" and belongs to
+ * every other accent in the UI, so the player was competing with it. Red is
+ * used by nothing else on the map — gold rings buildings, magenta rings
+ * portals — and the white collar keeps it readable even on the red terrain
+ * of volcano tiles.
+ *
+ * This is a DOM node rather than canvas paint so the pulse animates on the
+ * compositor. Animating it on canvas would mean redrawing 800 tiles and a
+ * 2000x1000 image every frame to move one dot.
+ */
+.playerpin {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 2;
+  display: none;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+  --pin-size: 26px;
+}
+
+.playerpin__core,
+.playerpin__pulse {
+  position: absolute;
+  left: 0;
+  top: 0;
+  border-radius: 50%;
+  /* The parent is positioned on the tile centre, so both children centre on it. */
+  translate: -50% -50%;
+}
+
+.playerpin__core {
+  width: calc(var(--pin-size) * 0.44);
+  height: calc(var(--pin-size) * 0.44);
+  background: var(--red);
+  /* White collar first, dark rim outside it: keeps contrast on both bright
+     sand and dark rock without relying on the glow. */
+  border: 2px solid #ffffff;
+  box-shadow:
+    0 0 0 1px rgb(5 16 30 / 90%),
+    0 0 12px 2px rgb(255 52 52 / 65%);
+}
+
+.playerpin__pulse {
+  width: var(--pin-size);
+  height: var(--pin-size);
+  border: 2px solid var(--red);
+  opacity: 0.9;
+  animation: pin-pulse 2s ease-out infinite;
+}
+
+@keyframes pin-pulse {
+  0% {
+    scale: 0.55;
+    opacity: 0.9;
+  }
+  70% {
+    opacity: 0;
+  }
+  100% {
+    scale: 1.35;
+    opacity: 0;
+  }
+}
+
+/* Reduced effects keeps the marker, drops the animation and the glow. */
+:root[data-fx='low'] .playerpin__pulse {
+  animation: none;
+  opacity: 0.85;
+  scale: 1;
+}
+:root[data-fx='low'] .playerpin__core {
+  box-shadow: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .playerpin__pulse {
+    animation: none;
+    opacity: 0.85;
+    scale: 1;
+  }
+}
+
+/* Legend swatch for the player marker, matching the pin. */
+.legend__dot--you {
+  background: var(--red);
+  border: 2px solid #ffffff;
+  box-shadow: 0 0 0 1px rgb(5 16 30 / 90%);
+}
+
+/*
+ * Call to action when the player is standing in a tavern.
+ *
+ * The only thing on the map the player can act on right now, competing with a
+ * full-bleed illustration behind it — so it is deliberately loud: oversized,
+ * gold, light running along its border, and a shine crossing the face.
+ *
+ * The border light slides a gradient horizontally rather than rotating one.
+ * A rotating conic looks wrong on a shape this wide: constant angular speed
+ * is wildly non-constant along the perimeter, so the light crawls down the
+ * long edges and snaps around the short ones. Sliding gives it one even pace
+ * the whole way round.
+ */
+/*
+ * Position and colour only. The rim light, glint and pulse come from
+ * .btn--charged in global.css, which the map and the landing page share.
+ */
+.entertavern {
+  --btn-bg: var(--grad-gold);
+  --btn-line: transparent;
+  --btn-fg: #2a1c00;
+  position: absolute;
+  left: 50%;
+  bottom: var(--sp-5);
+  /*
+   * Centred with `translate`, not `transform`: `.btn:active` sets its own
+   * transform for the press, which would replace this one and shunt the
+   * button half its width to the right on every click.
+   */
+  translate: -50% 0;
+  z-index: 4;
+  white-space: nowrap;
+  min-height: 56px;
+  padding: 0 var(--sp-6);
+  font-size: var(--fs-md);
+  font-weight: var(--fw-bold);
+  letter-spacing: 0.08em;
+  border-radius: var(--radius-sm);
+  text-shadow: none;
+}
+
+.entertavern img {
+  width: 24px;
+  height: 24px;
+}
+
+/* On a phone the tile card owns the bottom, so the prompt sits up top. */
+@media (max-width: 719px) {
+  .entertavern {
+    bottom: auto;
+    top: calc(var(--sp-3) + 92px);
+    left: var(--sp-3);
+    translate: none;
+  }
+}
+
+/* Legend swatch for the tavern the player is currently standing in. */
+.legend__dot--current {
+  background: transparent;
+  border: 2px solid var(--teal);
+}
+
+/* ---------- travelling ---------- */
+
+/*
+ * The marker flies rather than teleports.
+ *
+ * The movement itself is driven from MapCanvas, a frame at a time, because
+ * the pin has to stay in step with a map that can be panned mid-flight. What
+ * lives here is the dressing: a dash of light along the heading while it
+ * travels, and a ring thrown off where it lands.
+ *
+ * `--warp-ms` and `--warp-angle` are written by the same code that starts the
+ * trip, so the dressing lasts exactly as long as the flight and points the
+ * way it is going.
+ */
+.playerpin__streak {
+  position: absolute;
+  left: 0;
+  top: 0;
+  translate: -50% -50%;
+  rotate: var(--warp-angle, 0deg);
+  width: calc(var(--pin-size) * 1.6);
+  height: calc(var(--pin-size) * 0.16);
+  border-radius: 999px;
+  opacity: 0;
+  background: linear-gradient(
+    90deg,
+    rgb(255 52 52 / 0%),
+    rgb(255 168 168 / 95%) 35%,
+    #ffffff 50%,
+    rgb(255 168 168 / 95%) 65%,
+    rgb(255 52 52 / 0%)
+  );
+  box-shadow: 0 0 12px 2px rgb(255 52 52 / 70%);
+}
+
+.playerpin.is-warping .playerpin__streak {
+  animation: pin-streak var(--warp-ms, 380ms) cubic-bezier(0.16, 0.9, 0.3, 1);
+}
+
+@keyframes pin-streak {
+  0% {
+    opacity: 0;
+    scale: 0.2 1;
+  }
+  18% {
+    opacity: 1;
+    scale: 2.8 1;
+  }
+  100% {
+    opacity: 0;
+    scale: 0.4 1;
+  }
+}
+
+/* The core takes a hit of light as it goes, and settles on arrival. */
+.playerpin.is-warping .playerpin__core {
+  animation: pin-warpcore var(--warp-ms, 380ms) cubic-bezier(0.16, 0.9, 0.3, 1);
+}
+
+@keyframes pin-warpcore {
+  0% {
+    scale: 0.55;
+  }
+  20% {
+    scale: 1.3;
+    box-shadow:
+      0 0 0 1px rgb(5 16 30 / 90%),
+      0 0 22px 6px rgb(255 90 90 / 90%);
+  }
+  100% {
+    scale: 1;
+  }
+}
+
+/* The idle ping would read as a second, slower dot mid-flight. */
+.playerpin.is-warping .playerpin__pulse {
+  animation: none;
+  opacity: 0;
+}
+
+/* Arrival: one hard ring, thrown outward and gone. */
+.playerpin.is-landing .playerpin__pulse {
+  animation: pin-land 560ms cubic-bezier(0.12, 0.75, 0.2, 1);
+}
+
+@keyframes pin-land {
+  0% {
+    scale: 0.25;
+    opacity: 1;
+    border-width: 3px;
+  }
+  100% {
+    scale: 2.6;
+    opacity: 0;
+    border-width: 1px;
+  }
+}
+
+/* Both opt-outs already keep the marker and drop the motion; the flight is
+   never started for either, so this only has to silence the dressing. */
+:root[data-fx='low'] .playerpin__streak,
+:root[data-fx='low'] .playerpin.is-warping .playerpin__core,
+:root[data-fx='low'] .playerpin.is-landing .playerpin__pulse {
+  animation: none;
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .playerpin__streak,
+  .playerpin.is-warping .playerpin__core,
+  .playerpin.is-landing .playerpin__pulse {
+    animation: none;
+  }
+  .playerpin__streak {
+    opacity: 0;
+  }
+}
+
+/* ---------- Portal jump: the wormhole ---------- */
+
+/*
+ * One animation, on one clock.
+ *
+ * Every element below is scheduled by `animation-delay` from the moment the
+ * overlay mounts. Nothing swaps a class, nothing is re-triggered, so there is
+ * no hand-off anywhere in it to be smooth — the earlier three-phase version
+ * had a seam at the switch no matter how carefully the two halves were
+ * matched, because animations restart from their own first keyframe.
+ *
+ *   0ms      the gate opens, the tunnel lights
+ *   1140ms   the far light begins resolving into the planet
+ *   2000ms   the name comes up behind it
+ *   3520ms   the overlay begins dissolving to the map
+ *   4400ms   done
+ *
+ * The tunnel and the planet cross-fade on identical timing curves, one
+ * inverted, so the total light on screen is constant across the middle.
+ *
+ * Note which properties are animated where. The tunnel uses the standalone
+ * `scale` property and the rim's spin uses `rotate` — they are independent
+ * properties, so a scale animation and a rotation animation can run on one
+ * element without either discarding the other.
+ */
+
+.warpgate {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  /*
+     Not a flow container: the rim, the throat and the destination each centre
+     on the viewport independently. As a grid holding the rim and the caption
+     as two rows, the rim sat half the caption's height above the middle while
+     the throat, being inset:0, centred on the true middle.
+  */
+  overflow: hidden;
+  /* No backdrop-filter: the gradient already reaches near-opaque at the edges,
+     so a blur buys nothing visible while asking the compositor to re-filter a
+     full-screen canvas that is repainting underneath it. */
+  background: radial-gradient(circle at 50% 50%, rgb(6 3 24 / 86%), rgb(1 2 8 / 99%) 62%);
+  /*
+     Visible by default, faded in by the animation.
+
+     The animation begins at `opacity: 0` with `fill: both`, so if it ever
+     fails to run the overlay would sit over the whole screen completely
+     invisible - present, covering the map, and showing nothing. Declaring the
+     resting state here means the worst case is a transition that appears
+     without its fade rather than a screen that goes quietly dead.
+  */
+  opacity: 1;
+  animation: warp-overlay 4400ms linear both;
+}
+@keyframes warp-overlay {
+  0%   { opacity: 0; }
+  7%   { opacity: 1; }
+  80%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* ---------- the throat ---------- */
+
+/*
+ * Fades on exactly the curve the planet rises on, inverted, so the sum of the
+ * two is 1 at every instant and the tunnel *becomes* the planet rather than
+ * being replaced by it.
+ */
+.warpgate__throat {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  animation: warp-throat-out 2900ms var(--ease) 1140ms both;
+}
+@keyframes warp-throat-out {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+
+/*
+ * Stars.
+ *
+ * Each is a short streak that starts at the vanishing point and accelerates
+ * out past the camera. `--a` scatters the angle, `--len` the distance, `--dur`
+ * the speed and `--delay` the phase, so no two travel together. They loop for
+ * the whole run and are never interrupted; the throat fading over them is
+ * what ends them. Pinned by top/left rather than by the grid's centring, so
+ * the box *starts* at the vanishing point — centred, its top edge would sit
+ * half its own length above the middle and the field would radiate from a
+ * point above the core.
+ */
+.warpgate__star {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 2px;
+  height: var(--len);
+  margin-left: -1px;
+  border-radius: 2px;
+  transform-origin: 50% 0;
+  /* Dimmer than it looks it should be: sixty-four of these overlapping at the
+     vanishing point stack into a glare that washes out everything behind. */
+  background: linear-gradient(180deg, rgb(198 232 255 / 62%), rgb(90 170 235 / 22%) 38%, transparent);
+  rotate: var(--a);
+  scale: 0.02;
+  opacity: 0;
+  animation: warp-star var(--dur) linear infinite;
+  animation-delay: var(--delay);
+}
+@keyframes warp-star {
+  0%   { scale: 0.01; opacity: 0; }
+  10%  { scale: 0.04; opacity: 0.4; }
+  24%  { scale: 0.14; opacity: 1; }
+  45%  { scale: 0.42; opacity: 1; }
+  68%  { scale: 1.05; opacity: 0.85; }
+  86%  { scale: 2.05; opacity: 0.5; }
+  100% { scale: 3.20; opacity: 0; }
+}
+
+/*
+ * Rings of the throat, behind the stars.
+ *
+ * `--i` staggers the start so the eight are evenly spaced down the tunnel.
+ * Eight at a -325ms stagger exactly covers the 2600ms cycle, so the spacing
+ * holds with no gap to appear and no drift to accumulate.
+ */
+.warpgate__depth {
+  position: absolute;
+  width: 42vmin;
+  height: 42vmin;
+  border-radius: 50%;
+  border: 1px solid rgb(0 186 255 / 34%);
+  box-shadow: 0 0 30px -12px rgb(145 54 188 / 70%) inset;
+  scale: 0.01;
+  opacity: 0;
+  /*
+     Linear, for the same reason as the rim, and with a longer fade-in.
+
+     At 12% the ring was already at full strength while barely off the
+     vanishing point and barely moving, so it read as materialising at a fixed
+     radius rather than emerging from the centre — a ring appearing in the
+     same place every cycle looks like a jump even though nothing snaps.
+  */
+  animation: warp-depth 2600ms linear infinite;
+  animation-delay: calc(var(--i) * -325ms);
+}
+@keyframes warp-depth {
+  0%   { scale: 0.01; opacity: 0;    border-color: rgb(190 240 255 / 70%); }
+  10%  { scale: 0.05; opacity: 0.35; }
+  22%  { scale: 0.13; opacity: 0.9; }
+  40%  { scale: 0.34; opacity: 0.9;  border-color: rgb(0 186 255 / 34%); }
+  60%  { scale: 0.78; opacity: 0.8; }
+  78%  { scale: 1.50; opacity: 0.6; }
+  90%  { scale: 2.30; opacity: 0.3; }
+  100% { scale: 3.40; opacity: 0;    border-color: rgb(145 54 188 / 22%); }
+}
+
+/* The far end of the tunnel: the light the planet resolves out of. */
+.warpgate__core {
+  position: absolute;
+  width: 10vmin;
+  height: 10vmin;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgb(214 242 255 / 62%), rgb(0 150 215 / 34%) 36%, rgb(60 14 112 / 22%) 64%, transparent 74%);
+  animation: warp-core 2000ms ease-in-out infinite;
+}
+@keyframes warp-core {
+  0%, 100% { scale: 1;    opacity: 0.85; }
+  50%      { scale: 1.16; opacity: 1; }
+}
+
+/* ---------- the gate rim ---------- */
+
+.warpgate__ring {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: min(46vmin, 320px);
+  height: min(46vmin, 320px);
+  border-radius: 50%;
+  border: 2px solid rgb(0 186 255 / 40%);
+  box-shadow: 0 0 0 1px rgb(255 255 255 / 8%) inset, 0 0 48px -8px rgb(0 186 255 / 55%);
+  /*
+     One animation covering the whole run rather than an entrance and a
+     separate exit: the rim eases open, holds while the tunnel runs, and is
+     let go past the camera on the same curve it arrived on. Two animations
+     meant a velocity discontinuity at the join — still, then abruptly moving.
+  */
+  /*
+     Linear, with the shape carried by the keyframe values.
+
+     A cubic-bezier on a multi-stop keyframe list is re-applied to *every*
+     segment, not to the curve as a whole — so the rim decelerated to a full
+     stop at 13%, held, then accelerated again, and changed rate abruptly once
+     more at 46%. Three velocity breaks in one animation, all of which read as
+     the ring jumping. Stepping the scale geometrically under linear timing
+     gives a constant apparent speed with no break anywhere.
+  */
+  animation: warp-rim 4400ms linear both;
+}
+@keyframes warp-rim {
+  0%   { scale: 0.42; opacity: 0; }
+  4%   { scale: 0.62; opacity: 0.7; }
+  8%   { scale: 0.76; opacity: 1; }
+  13%  { scale: 0.86; opacity: 1; }
+  30%  { scale: 0.86; opacity: 1; }
+  40%  { scale: 0.92; opacity: 1; }
+  50%  { scale: 1.02; opacity: 1; }
+  60%  { scale: 1.20; opacity: 1; }
+  70%  { scale: 1.50; opacity: 0.9; }
+  80%  { scale: 1.95; opacity: 0.7; }
+  90%  { scale: 2.58; opacity: 0.4; }
+  100% { scale: 3.40; opacity: 0; }
+}
+
+/* The chevrons turn on their own element, on `rotate`, so nothing resets it. */
+.warpgate__spin {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  animation: warp-spin 22s linear infinite;
+}
+@keyframes warp-spin {
+  to { rotate: 360deg; }
+}
+
+.warpgate__chevron {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 12px;
+  height: 18px;
+  margin: -9px 0 0 -6px;
+  background: rgb(0 186 255 / 22%);
+  clip-path: polygon(50% 0, 100% 42%, 78% 100%, 22% 100%, 0 42%);
+  transform: rotate(calc(var(--i) * 40deg)) translateY(calc(min(23vmin, 160px) * -1));
+  animation: warp-chevron 560ms var(--ease) both;
+  animation-delay: calc(var(--i) * 50ms);
+}
+@keyframes warp-chevron {
+  from { background: rgb(0 186 255 / 10%); filter: none; }
+  to   { background: var(--cyan); filter: drop-shadow(0 0 6px rgb(0 186 255 / 90%)); }
+}
+
+/* One burst as the gate locks. */
+.warpgate__surge {
+  position: absolute;
+  inset: 6%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgb(206 236 255 / 62%), rgb(0 160 225 / 20%) 58%, transparent 72%);
+  opacity: 0;
+  animation: warp-surge 820ms var(--ease) 240ms both;
+}
+@keyframes warp-surge {
+  0%   { opacity: 0; scale: 0.1; }
+  32%  { opacity: 1; scale: 1.5; }
+  100% { opacity: 0; scale: 1.85; }
+}
+
+/* ---------- the destination ---------- */
+
+/*
+ * The planet, resolving out of the far end.
+ *
+ * Deliberately slower than everything around it: it comes up out of the light
+ * rather than being switched on, which is the difference between arriving
+ * somewhere and a scene cutting.
+ */
+.warpgate__arrival {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  animation: warp-arrival 2900ms var(--ease) 1140ms both;
+}
+@keyframes warp-arrival {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.warpgate__globe {
+  position: absolute;
+  width: min(34vmin, 240px);
+  height: min(34vmin, 240px);
+  border-radius: 50%;
+  background-size: cover;
+  background-position: center;
+  /* A terminator and a rim light, so the map texture reads as a sphere
+     rather than a circular crop of a picture. */
+  box-shadow:
+    inset -22px -14px 60px -10px rgb(0 0 0 / 88%),
+    inset 14px 10px 46px -14px rgb(150 220 255 / 45%),
+    0 0 70px -12px rgb(0 186 255 / 55%);
+  animation: warp-globe 3200ms cubic-bezier(0.2, 0.7, 0.25, 1) 1140ms both;
+}
+@keyframes warp-globe {
+  0%   { scale: 0.30; filter: brightness(2.2) saturate(0.35) blur(6px); }
+  55%  { scale: 0.92; filter: brightness(1.35) saturate(0.85) blur(0.6px); }
+  100% { scale: 1;    filter: brightness(1) saturate(1) blur(0); }
+}
+
+/* The atmosphere, which lingers a beat after the surface settles. */
+.warpgate__limb {
+  position: absolute;
+  width: min(38vmin, 268px);
+  height: min(38vmin, 268px);
+  border-radius: 50%;
+  background: radial-gradient(circle, transparent 62%, rgb(0 186 255 / 22%) 76%, transparent 84%);
+  animation: warp-limb 3200ms cubic-bezier(0.2, 0.7, 0.25, 1) 1140ms both;
+}
+@keyframes warp-limb {
+  0%   { scale: 0.5; opacity: 0; }
+  60%  { opacity: 1; }
+  100% { scale: 1;   opacity: 0.85; }
+}
+
+/* ---------- the caption ---------- */
+
+.warpgate__label {
+  position: absolute;
+  left: 0;
+  right: 0;
+  /* Just clear of the rim's radius, so it reads as a caption to the planet
+     without displacing anything that is centred on the viewport. */
+  top: calc(50% + min(25vmin, 174px));
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  margin: 0;
+  text-align: center;
+  /* Behind the planet, so it forms and is then named rather than the two
+     arriving together. */
+  animation: warp-caption 1500ms var(--ease) 2000ms both;
+}
+@keyframes warp-caption {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.warpgate__verb {
+  font-family: var(--font-display);
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.warpgate__planet {
+  font-family: var(--font-display);
+  font-size: clamp(28px, 7vmin, 54px);
+  font-weight: var(--fw-bold);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--white);
+  text-shadow: 0 0 24px rgb(0 186 255 / 70%);
+  animation: warp-name 1700ms var(--ease) 2000ms both;
+}
+@keyframes warp-name {
+  from { opacity: 0; letter-spacing: 0.5em; filter: blur(6px); }
+  to   { opacity: 1; letter-spacing: 0.16em; filter: blur(0); }
+}
+
+/* ---------- cheaper, and stiller ---------- */
+
+/*
+ * Two different requests, which an earlier version wrongly treated as one.
+ *
+ * `--calm` comes from the app's low-power detection — four cores or fewer —
+ * and that asks for *cheaper*, not *frozen*. It thins the star field to a
+ * third, drops the blur filters that cost the most, and slows the loops; the
+ * journey still happens. Freezing it there produced an overlay with nothing
+ * moving in it, which reads as the animation being broken.
+ *
+ * `prefers-reduced-motion` is the one that genuinely asks for stillness.
+ */
+.warpgate--calm .warpgate__star:nth-child(3n),
+.warpgate--calm .warpgate__star:nth-child(3n + 1) {
+  display: none;
+}
+.warpgate--calm .warpgate__star {
+  animation-duration: calc(var(--dur) * 1.6);
+}
+.warpgate--calm .warpgate__depth:nth-child(even) {
+  display: none;
+}
+.warpgate--calm .warpgate__depth {
+  animation-duration: 3600ms;
+}
+.warpgate--calm .warpgate__core {
+  animation-duration: 3000ms;
+}
+.warpgate--calm .warpgate__spin {
+  animation-duration: 34s;
+}
+.warpgate--calm .warpgate__globe {
+  animation: warp-globe-calm 3200ms cubic-bezier(0.2, 0.7, 0.25, 1) 1140ms both;
+}
+@keyframes warp-globe-calm {
+  from { scale: 0.5; }
+  to   { scale: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .warpgate__star,
+  .warpgate__core,
+  .warpgate__spin {
+    animation: none;
+  }
+  .warpgate__star {
+    display: none;
+  }
+  .warpgate__depth {
+    animation: none;
+    scale: 1;
+    opacity: 0.45;
+  }
+  .warpgate__depth:not(:first-child) {
+    display: none;
+  }
+  .warpgate__ring {
+    animation: none;
+    scale: 0.86;
+  }
+  .warpgate__globe,
+  .warpgate__limb {
+    animation-name: warp-arrival;
+    animation-duration: 2900ms;
+  }
+}

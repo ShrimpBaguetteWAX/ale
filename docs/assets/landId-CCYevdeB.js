@@ -1,0 +1,1 @@
+const i="abcdefghij";function r(t){return String(t).split("").map(e=>i[Number(e)]).join("")}function l(t,e){return`${r(t)}x${r(e)}`}function o(t,e){return Math.sqrt((t.x-e.x)**2+(t.y-e.y)**2)}function u(t,e,n,s=!1){const c=o(t,e);let a=Math.ceil(c*n.travel_distance_cost)+n.travel_base_cost;return s&&(a+=n.travel_portal_cost),a}export{o as a,l,u as t};

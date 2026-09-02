@@ -1,0 +1,1519 @@
+/*
+ * The dungeon: choosing a team, a difficulty and two Alien Worlds cards
+ * before committing energy to a fight.
+ *
+ * Laid out as two facing columns — the dungeon's team and yours — because
+ * the decision being made is a comparison, and putting the line-ups side by
+ * side is what makes the difficulty slider legible.
+ */
+
+.dungeon {
+  position: relative;
+  min-height: 100%;
+}
+
+.dungeon__art {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: -1;
+}
+
+.dungeon__scrim {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(180deg, rgb(6 10 24 / 82%), rgb(6 10 24 / 94%));
+}
+
+:root[data-fx='low'] .dungeon__art {
+  display: none;
+}
+
+.dungeon__inner {
+  position: relative;
+  display: grid;
+  gap: var(--sp-4);
+}
+
+.dungeon__head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+}
+
+.dungeon__actions {
+  display: flex;
+  gap: var(--sp-2);
+  align-items: center;
+}
+
+/* The one destructive-feeling action on the screen; it spends energy. */
+.btn--danger {
+  --btn-bg: linear-gradient(180deg, #d8324f, #96162f);
+  --btn-line: #ff6d85;
+  --btn-fg: #fff5f6;
+  font-weight: var(--fw-bold);
+}
+
+.dungeon__cost {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: var(--sp-2);
+  padding-left: var(--sp-2);
+  border-left: 1px solid rgb(255 255 255 / 28%);
+  font-variant-numeric: tabular-nums;
+}
+
+.dungeon__tally {
+  margin-left: auto;
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-normal);
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+/* ---------- page width ---------- */
+
+/*
+ * This screen opts out of the shared 1428px content column.
+ *
+ * It stages twelve cards on one line, and on a wide display that cap left
+ * roughly 350px of empty gutter on either side while the fighters were
+ * squeezed into thumbnails. Every other page keeps the column — long text
+ * wants a measure — so the exception is scoped to the pages that are
+ * line-ups rather than reading.
+ */
+.main__inner:has(> .dungeon),
+.main__inner:has(> .battle) {
+  max-width: none;
+}
+
+/*
+ * Restores the title/blurb split that the panel titles rely on. The base rule
+ * in global.css is typography only, so without this the blurb butts straight
+ * against the heading ("DIFFICULTYEnemy x0.63").
+ */
+.dungeon .panel__title,
+.loadout .panel__title {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+}
+
+/* ---------- difficulty ---------- */
+
+.difficulty__row {
+  display: flex;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+  margin-top: var(--sp-3);
+}
+
+.difficulty__step {
+  flex: 1 1 44px;
+  min-width: 44px;
+  min-height: 44px;
+  font-family: var(--font-display);
+  font-size: var(--fs-md);
+  font-weight: var(--fw-bold);
+  color: var(--text-dim);
+  background: rgb(0 0 0 / 35%);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+  transition:
+    color var(--dur-fast) var(--ease),
+    border-color var(--dur-fast) var(--ease),
+    background var(--dur-fast) var(--ease);
+}
+.difficulty__step:hover {
+  border-color: var(--purple);
+  color: var(--white);
+}
+.difficulty__step[aria-checked='true'] {
+  color: #2a0910;
+  background: linear-gradient(180deg, #ff8a5c, #e0344f);
+  border-color: #ff9d78;
+}
+
+/*
+ * The square tile version of `.portrait`, used by the picker grids.
+ *
+ * The base rule is built for the tavern's single 4:3 hero and carries a top
+ * margin to sit under a panel title — inside a grid of tiles that margin is
+ * just a gap above every portrait, so it is reset here along with the aspect
+ * ratio.
+ */
+.portrait--slot {
+  display: block;
+  width: 100%;
+  margin-top: 0;
+  aspect-ratio: 1 / 1;
+  border-radius: var(--radius-xs);
+  background-size: cover;
+  background-position: center;
+  overflow: hidden;
+}
+
+/* ---------- crew and weapon ---------- */
+
+.loadout {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+/*
+ * Two compact card slots, then the combined fighter filling the rest of the
+ * row. The slots alone left most of the width empty, and what belonged there
+ * was the thing they produce.
+ */
+.cardslots {
+  display: grid;
+  gap: var(--sp-2);
+  grid-template-columns: 132px 132px minmax(0, 1fr) auto;
+  align-items: stretch;
+}
+
+@media (max-width: 760px) {
+  .cardslots {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+  .loadout__result {
+    grid-column: 1 / -1;
+  }
+  .cardslots__auto {
+    grid-column: 1 / -1;
+  }
+}
+
+.loadout__result {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+  padding: var(--sp-2) var(--sp-3);
+  background: rgb(0 0 0 / 30%);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-sm);
+}
+
+/*
+ * Icon and figure, the way every other stat in the game is written. The
+ * labels were doing the icons' job at three times the width, and the icons
+ * already exist.
+ */
+.loadout__figures {
+  display: flex;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.loadout__figure {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px var(--sp-2);
+  background: rgb(0 0 0 / 30%);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-xs);
+}
+
+.loadout__icon {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+  flex: none;
+}
+
+.loadout__v {
+  font-family: var(--font-display);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-bold);
+  color: var(--white);
+  font-variant-numeric: tabular-nums;
+}
+
+.loadout__v--element {
+  text-transform: capitalize;
+}
+
+/* Both cards' abilities carry over, named in their rarity colours. */
+.loadout__abilities {
+  display: flex;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+}
+
+.loadout__ability {
+  padding: 3px var(--sp-2);
+  font-size: var(--fs-xs);
+  line-height: 1.2;
+  background: rgb(0 0 0 / 35%);
+  border: 1px solid currentcolor;
+  border-radius: var(--radius-xs);
+  cursor: help;
+}
+
+.loadout__empty {
+  margin: 0;
+  font-size: var(--fs-sm);
+  max-width: 62ch;
+}
+
+.cardslot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: var(--sp-2);
+  background: rgb(0 0 0 / 30%);
+  border: 1px dashed var(--line);
+  border-radius: var(--radius-sm);
+  min-height: 96px;
+}
+/* Filled reads as a commitment rather than an invitation. */
+.cardslot--filled {
+  border-style: solid;
+  border-color: var(--line);
+}
+
+.cardslot__label {
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.cardslot__art {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+}
+
+.cardslot__name,
+.cardslot__empty {
+  font-size: var(--fs-xs);
+  text-align: center;
+  color: var(--text-dim);
+}
+
+.cardslots__auto {
+  align-self: center;
+  white-space: nowrap;
+}
+
+/* ---------- overlays ---------- */
+
+.sheet {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal);
+  display: grid;
+  place-items: center;
+  padding: var(--sp-4);
+  background: rgb(0 0 0 / 78%);
+}
+
+.sheet__panel {
+  /* Opaque, like the shop's confirmation: this is a decision point, and the
+     screen reading through it is noise. */
+  background: linear-gradient(180deg, #1b1348, #0a1222);
+  width: 100%;
+  max-width: 640px;
+  max-height: 90dvh;
+  overflow-y: auto;
+}
+
+
+/* ---------- the picker, on the page ---------- */
+
+/*
+ * The whole roster and both card collections live on the page under the two
+ * line-ups, with structured filters above them and one-click picking. This is
+ * the original's shape and it is the right one: choosing a team is a
+ * comparison, and a modal that covers the opponent you are comparing against
+ * makes it harder than it needs to be.
+ */
+.picker {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+
+.tabs__count {
+  margin-left: 6px;
+  padding: 1px 6px;
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-faint);
+  background: rgb(255 255 255 / 8%);
+  border-radius: 999px;
+}
+.tabs__tab[aria-selected='true'] .tabs__count {
+  color: var(--white);
+  background: rgb(255 255 255 / 18%);
+}
+
+.fightergrid {
+  display: grid;
+  gap: var(--sp-2);
+  grid-template-columns: repeat(auto-fill, minmax(122px, 1fr));
+}
+
+.fightercard {
+  position: relative;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: rgb(0 0 0 / 30%);
+  transition:
+    border-color var(--dur-fast) var(--ease),
+    background var(--dur-fast) var(--ease);
+}
+.fightercard:hover {
+  border-color: var(--purple);
+}
+
+/* In the team: unmistakable at a glance across a grid of forty. Cyan, the
+   same "you picked this" colour the tavern card tiles already use. */
+.fightercard--picked {
+  border-color: var(--cyan);
+  background: rgb(0 186 255 / 14%);
+}
+
+.fightercard--off {
+  opacity: 0.42;
+}
+.fightercard--off:hover {
+  border-color: var(--line);
+}
+
+/*
+ * The whole card is the hit target rather than a button inside it — 122px
+ * square is a comfortable tap on a phone, and making the player aim at a
+ * small "Pick" control would undo the point of putting the grid on the page.
+ */
+.fightercard__hit {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  width: 100%;
+  padding: var(--sp-2);
+  background: none;
+  border: 0;
+  border-radius: inherit;
+  cursor: pointer;
+  text-align: center;
+}
+.fightercard__hit:disabled {
+  cursor: not-allowed;
+}
+
+.fightercard__name {
+  font-family: var(--font-display);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-bold);
+  text-transform: capitalize;
+  color: var(--white);
+  line-height: 1.2;
+}
+
+.fightercard__meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  text-transform: capitalize;
+  color: var(--text-faint);
+}
+
+/*
+ * The age bonus, beside the level.
+ *
+ * The live scale runs +100% down to -100%, so its midpoint is a fighter that
+ * has already lost half its roll rather than one in fair condition. The
+ * colour has to carry that, because the sign does not: "+40%" still reads as
+ * positive while meaning a third of the stats are gone.
+ */
+.fightercard__age {
+  padding: 0 4px;
+  border-radius: var(--radius-full);
+  background: rgb(255 255 255 / 8%);
+  font-family: var(--font-display);
+  font-size: 9px;
+  font-variant-numeric: tabular-nums;
+}
+.fightercard__age--fresh {
+  color: var(--teal);
+}
+.fightercard__age--worn {
+  color: var(--gold);
+}
+.fightercard__age--bad {
+  color: var(--red);
+}
+
+.fightercard__stats {
+  font-size: 10px;
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+/*
+ * The matchup badges, on every roster card.
+ *
+ * Two numbers rather than one grade, because they pull apart: a fighter can
+ * land everything and die immediately, or block everything and tickle. The
+ * colour is the shortcut for a glance across forty cards; the figure is there
+ * for the player who wants to compare two of them properly.
+ */
+.vsbadges {
+  display: flex;
+  gap: 3px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.vsbadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0 4px;
+  border-radius: var(--radius-full);
+  background: rgb(255 255 255 / 7%);
+  font-family: var(--font-display);
+  font-size: 9px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-dim);
+  cursor: help;
+}
+.vsbadge img {
+  opacity: 0.75;
+  object-fit: contain;
+}
+
+.vsbadge--good {
+  background: rgb(0 214 160 / 18%);
+  color: var(--teal);
+}
+.vsbadge--fair {
+  background: rgb(255 176 58 / 16%);
+  color: var(--gold);
+}
+.vsbadge--poor {
+  background: rgb(255 90 90 / 16%);
+  color: var(--red);
+}
+.vsbadge--bonus {
+  background: rgb(145 166 255 / 20%);
+  color: #b6c4ff;
+}
+/* What the pick hands the other side. Warned, not condemned: it can still be
+   the right fighter. */
+.vsbadge--exposed {
+  background: rgb(246 168 0 / 16%);
+  color: var(--gold);
+}
+
+/*
+ * The matchup filters, and who they are measuring against.
+ *
+ * Set apart from the rest of the filter block by a rule: everything above it
+ * asks about the fighter alone, everything in it asks about the fighter
+ * *against this dungeon*, and the two answer differently often enough that
+ * blurring them would be misleading.
+ */
+.matchupbar {
+  display: grid;
+  gap: var(--sp-2);
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--line-soft);
+}
+
+.matchupbar__who {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+  margin: 0;
+  font-size: var(--fs-xs);
+  color: var(--text-faint);
+}
+
+.matchupbar__label {
+  font-family: var(--font-display);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.matchupbar__tally {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 1px 6px;
+  border-radius: var(--radius-full);
+  background: rgb(255 255 255 / 7%);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-dim);
+}
+.matchupbar__tally img {
+  object-fit: contain;
+}
+
+.matchupbar__classes {
+  text-transform: capitalize;
+}
+
+.fightercard__tick {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--cyan);
+}
+
+.fightercard__block {
+  font-size: 10px;
+  color: var(--red);
+}
+
+/* A quiet corner affordance, so details never compete with picking. */
+.fightercard__info {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 22px;
+  height: 22px;
+  font-family: var(--font-display);
+  font-size: 12px;
+  line-height: 1;
+  color: var(--text-faint);
+  background: rgb(0 0 0 / 55%);
+  border: 1px solid var(--line-soft);
+  border-radius: 50%;
+  cursor: pointer;
+}
+.fightercard__info:hover {
+  color: var(--white);
+  border-color: var(--purple);
+}
+
+.fightercard--loading {
+  aspect-ratio: 3 / 4;
+  border: 0;
+}
+
+.slot__remove {
+  padding: 1px 6px;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  background: rgb(0 0 0 / 45%);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+}
+.slot__remove:hover {
+  color: var(--red);
+  border-color: var(--red);
+}
+
+
+/* ---------- filters ---------- */
+
+/*
+ * Structured controls, not a search box.
+ *
+ * Picking a team is a set of specific questions — which of my fire fighters
+ * are free, sorted by damage — and a free-text box answers none of them. The
+ * controls mirror the live site's: element as a multi-select of icons, class,
+ * race, status and sort as pickers, and text search reserved for ability
+ * names, which genuinely are free text.
+ */
+.filters {
+  display: grid;
+  gap: var(--sp-3);
+  padding: var(--sp-3);
+  background: rgb(0 0 0 / 28%);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-sm);
+}
+
+.filters__elements {
+  display: flex;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+}
+
+.elembtn {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  background: rgb(0 0 0 / 40%);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+  /* Unselected elements read as available rather than disabled: desaturated
+     and dimmed, not hidden. */
+  filter: grayscale(1);
+  opacity: 0.55;
+  transition:
+    filter var(--dur-fast) var(--ease),
+    opacity var(--dur-fast) var(--ease),
+    border-color var(--dur-fast) var(--ease);
+}
+.elembtn:hover {
+  opacity: 0.85;
+  border-color: var(--purple);
+}
+.elembtn[aria-pressed='true'] {
+  filter: none;
+  opacity: 1;
+  border-color: var(--cyan);
+  background: rgb(0 186 255 / 14%);
+}
+.elembtn img {
+  width: 26px;
+  height: 26px;
+  object-fit: contain;
+}
+
+.filters__row {
+  display: flex;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+  align-items: end;
+}
+
+.field {
+  display: grid;
+  gap: 4px;
+  min-width: 132px;
+}
+.field--grow {
+  flex: 1;
+  min-width: 180px;
+}
+
+.field__label {
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+/*
+ * Filter controls run shorter than a standalone form field: five of them in a
+ * row at the full 48px reads as a form to fill in rather than a set of
+ * switches, while 44px keeps the tap target honest.
+ */
+.filters .input {
+  min-height: 44px;
+  padding: 0 var(--sp-3);
+  font-size: var(--fs-sm);
+}
+
+.filters select.input {
+  width: 100%;
+  text-transform: capitalize;
+  cursor: pointer;
+  /* Lets the browser paint the native dropdown — arrow, popup and all — in
+     dark, instead of a light menu that ignores the page. */
+  color-scheme: dark;
+}
+
+.filters__clear {
+  align-self: end;
+}
+
+.picker__count {
+  margin: 0;
+  font-size: var(--fs-xs);
+}
+
+/* ---------- NFT cards ---------- */
+
+/*
+ * A crew or weapon card is not decoration: it becomes half of a sixth
+ * fighter. So the tile shows what it contributes — health, damage, element
+ * and how many abilities it brings — rather than only its artwork.
+ */
+.nftcard {
+  position: relative;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-xs);
+  background: rgb(0 0 0 / 35%);
+  transition:
+    border-color var(--dur-fast) var(--ease),
+    background var(--dur-fast) var(--ease);
+}
+.nftcard:hover {
+  border-color: var(--purple);
+}
+.nftcard--picked {
+  border-color: var(--cyan);
+  background: rgb(0 186 255 / 14%);
+}
+
+.nftcard__hit {
+  display: grid;
+  gap: 2px;
+  width: 100%;
+  padding: var(--sp-2);
+  background: none;
+  border: 0;
+  border-radius: inherit;
+  cursor: pointer;
+  text-align: center;
+  justify-items: center;
+}
+
+.nftcard__art {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: contain;
+  border-radius: 3px;
+  background: rgb(0 0 0 / 40%);
+}
+
+.nftcard__name {
+  font-size: 11px;
+  line-height: 1.25;
+  color: var(--white);
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  /* Two lines reserved so every tile's stats line up across the row. */
+  min-height: calc(1.25em * 2);
+}
+
+.nftcard__rarity {
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+/* The same six rarity colours the abilities use, so one legend covers both. */
+.nftcard__rarity--abundant { color: #ffffff; }
+.nftcard__rarity--common { color: #939393; }
+.nftcard__rarity--rare { color: #00baff; }
+.nftcard__rarity--epic { color: #966afd; }
+.nftcard__rarity--legendary { color: #ffb800; }
+.nftcard__rarity--mythical { color: #d30e46; }
+
+.nftcard__stats {
+  font-size: 10px;
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.nftcard__element {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 10px;
+  text-transform: capitalize;
+  color: var(--text-faint);
+}
+
+.nftcard__abilities {
+  font-size: 10px;
+  color: #b79dff;
+}
+
+/* ---------- slots that open a detail view ---------- */
+
+.slot__open {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  padding: 0;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+.cardslot__open {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 0;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+
+.sheet__panel--fighter {
+  max-width: 420px;
+}
+
+/* ---------- shared fighter panel ---------- */
+
+/*
+ * The tavern's fighter display, reused wherever a fighter is being judged.
+ * Its children carry the styling; this only keeps the portrait flush with the
+ * top of whatever contains it, since `.portrait` carries a top margin meant
+ * for sitting under a panel title.
+ */
+.fpanel > .portrait:first-child {
+  margin-top: 0;
+}
+
+/* ---------- the versus screen ---------- */
+
+/*
+ * The matchup, staged as a confrontation.
+ *
+ * Two facing rows with their totals squared off across a divider. The cards
+ * are deliberately large — this is the line-up a player is about to spend
+ * energy on, and the class art only reads as a character at size — and the
+ * opposing row is flipped so both teams face the centre.
+ */
+.versus__side {
+  display: grid;
+  gap: var(--sp-2);
+}
+
+/*
+ * The header doubles as the balance bar: an underline whose width is that
+ * team's share of the matchup. A separate bar cost a whole row and left the
+ * reader to work out which end belonged to whom.
+ */
+.versus__head {
+  position: relative;
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+  padding-bottom: 6px;
+  border-bottom: 2px solid rgb(255 255 255 / 10%);
+}
+
+.versus__head::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: -2px;
+  width: var(--share, 50%);
+  height: 2px;
+  transition: width var(--dur) var(--ease);
+}
+.versus__side--enemy .versus__head::after {
+  background: linear-gradient(90deg, #96162f, #e0344f);
+}
+.versus__side--mine .versus__head::after {
+  background: linear-gradient(90deg, #0ed4a8, #00baff);
+}
+
+/* Your own bar grows from the divider outward, mirroring the line-up. */
+@media (min-width: 1080px) {
+  .versus__side--enemy .versus__head::after {
+    left: auto;
+    right: 0;
+    background: linear-gradient(270deg, #96162f, #e0344f);
+  }
+}
+
+.versus__team {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+  font-family: var(--font-display);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-bold);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.versus__side--enemy .versus__team {
+  color: #ff8a9c;
+}
+.versus__side--mine .versus__team {
+  color: var(--cyan);
+}
+
+.versus__count {
+  font-family: var(--font-body);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-normal);
+  letter-spacing: 0;
+  color: var(--text-faint);
+}
+
+.versus__totals {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  margin-left: auto;
+  font-size: var(--fs-sm);
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+/*
+ * What the elements do to a side's totals, beside the totals themselves.
+ *
+ * The sums alone cannot say whether a team is about to land its damage or
+ * have two thirds of it absorbed, and that is usually the difference between
+ * an even-looking matchup and a loss. Small and muted: the totals stay the
+ * headline, these qualify them.
+ */
+.elemental {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.elemental__bit {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0 5px;
+  border-radius: var(--radius-full);
+  background: rgb(255 255 255 / 7%);
+  font-family: var(--font-display);
+  font-size: 10px;
+  color: var(--text-dim);
+  cursor: help;
+}
+.elemental__bit img {
+  opacity: 0.75;
+  object-fit: contain;
+}
+
+.elemental__bit--good {
+  background: rgb(14 212 168 / 18%);
+  color: var(--teal);
+}
+.elemental__bit--fair {
+  background: rgb(246 168 0 / 16%);
+  color: var(--gold);
+}
+.elemental__bit--poor {
+  background: rgb(255 52 52 / 16%);
+  color: var(--red);
+}
+.elemental__bit--bonus {
+  background: rgb(145 166 255 / 20%);
+  color: #b6c4ff;
+}
+/* What the other side gets out of this line-up. */
+.elemental__bit--exposed {
+  background: rgb(246 168 0 / 20%);
+  color: var(--gold);
+}
+
+/*
+ * One row per team, scrolling sideways rather than wrapping. Six fighters in
+ * two ragged rows stops reading as a line-up; six in a row that scrolls keeps
+ * the confrontation intact on a phone.
+ */
+/*
+ * Six columns, always, and never a scrollbar.
+ *
+ * A fixed six rather than auto-fit so the two rows stay in step: card one
+ * faces card one, which is the whole point of standing the teams opposite
+ * each other. The dungeon fields five or six depending on difficulty, and a
+ * trailing gap is a better price than the rows sizing differently.
+ */
+.versus__row {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 6px;
+}
+
+@media (min-width: 700px) {
+  .versus__row {
+    gap: var(--sp-2);
+  }
+}
+
+/* ---------- the divider ---------- */
+
+/*
+ * Just the badge. It used to carry the strength bar and its caption as well,
+ * which made the middle column as wide as two fighters — space the cards
+ * needed far more than the bar did.
+ */
+.versus__divider {
+  display: grid;
+  place-items: center;
+  padding: 0 var(--sp-2);
+}
+
+/*
+ * Centred against the cards, not the top of the column. The panel aligns its
+ * columns to the start so the two line-ups sit level; the badge wants the
+ * opposite, sitting halfway down the fighters it separates.
+ */
+@media (min-width: 1080px) {
+  .versus__divider {
+    align-self: center;
+  }
+}
+
+.versus__vs {
+  padding: 3px var(--sp-2);
+  font-family: var(--font-display);
+  font-size: var(--fs-md);
+  font-weight: var(--fw-bold);
+  letter-spacing: 0.14em;
+  color: var(--white);
+  background: linear-gradient(180deg, #d8324f, #96162f);
+  border: 1px solid #ff6d85;
+  border-radius: var(--radius-xs);
+  box-shadow: 0 0 16px rgb(216 50 79 / 45%);
+}
+
+/* Stacked, the badge sits on a rule across the full width. */
+@media (max-width: 1079px) {
+  .versus__divider {
+    position: relative;
+    padding: var(--sp-1) 0;
+  }
+  .versus__divider::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 50%;
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgb(255 255 255 / 18%) 20%,
+      rgb(255 255 255 / 18%) 80%,
+      transparent
+    );
+  }
+  .versus__vs {
+    position: relative;
+  }
+}
+
+/* ---------- one combatant ---------- */
+
+/*
+ * Slanted cards, in the manner of a hero-select row.
+ *
+ * The frame is skewed into a parallelogram and everything inside is skewed
+ * back by the same angle, so the artwork and the text stay upright while the
+ * card leans. That leaning edge is what lets six sit in a row and still read
+ * as a line-up rather than a row of boxes.
+ *
+ * The counter-skewed content is deliberately wider than the card and pulled
+ * left by half the excess: un-skewing a child leaves wedges of empty space at
+ * two corners, and the only way to fill them is to give the child more width
+ * than the clip. The excess is the card's height times tan(7deg), rounded up.
+ */
+.versus {
+  --lean: -5deg;
+  --lean-back: 5deg;
+  position: relative;
+  display: grid;
+  gap: var(--sp-3);
+  padding: var(--sp-3);
+  background: linear-gradient(180deg, rgb(28 10 20 / 55%), rgb(6 10 24 / 65%));
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow);
+}
+
+/*
+ * Wide enough, and both teams share a single line with the divider between
+ * them — the confrontation the screen is staging, read left to right in one
+ * pass. Below that width twelve cards cannot be legible side by side, so the
+ * sides stack and the divider becomes a horizontal rule between them.
+ */
+@media (min-width: 1080px) {
+  .versus {
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: start;
+  }
+}
+
+.combatcard {
+  position: relative;
+  border-radius: var(--radius-xs);
+  border: 1px solid var(--line);
+  background-color: rgb(0 0 0 / 35%);
+  background-size: cover;
+  background-position: center;
+  overflow: hidden;
+  transform: skewX(var(--lean));
+  transition:
+    border-color var(--dur-fast) var(--ease),
+    transform var(--dur-fast) var(--ease);
+}
+
+.combatcard--mine {
+  border-color: rgb(0 186 255 / 45%);
+}
+.combatcard--enemy {
+  border-color: rgb(224 52 79 / 45%);
+}
+.combatcard:hover {
+  border-color: var(--purple);
+  /* Keeps the lean while lifting, since transform replaces rather than adds. */
+  transform: skewX(var(--lean)) translateY(-3px);
+}
+
+/*
+ * Wider than the card and pulled left by half the excess.
+ *
+ * Un-skewing a child leaves wedges at two corners, and the overhang needed to
+ * cover them is the card height times tan(lean) — which scales with the card,
+ * so it is set as a share of the width rather than a pixel count. At a 3:4
+ * portrait and 5 degrees the requirement is about 6%; 12% is comfortable at
+ * every size the six-column row produces.
+ */
+.combatcard__hit {
+  display: grid;
+  width: 124%;
+  margin-left: -12%;
+  padding: 0;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  text-align: left;
+  transform: skewX(var(--lean-back));
+}
+
+.combatcard__art {
+  position: relative;
+  display: block;
+  aspect-ratio: 5 / 8;
+  /* Keeps a usable portrait when six cards share a phone's width, where the
+     aspect ratio alone would give about 60px. */
+  min-height: 104px;
+}
+
+/*
+ * Scoped to the class, not `.combatcard__art img`. The badges inside the art
+ * are images too, and a descendant selector stretched the element icon to the
+ * full card and painted it over the fighter.
+ */
+.combatcard__fighter {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: bottom center;
+  filter: drop-shadow(0 4px 10px rgb(0 0 0 / 60%));
+}
+
+/*
+ * The dungeon's fighters face your team. Mirroring one side is what makes a
+ * row of portraits read as two sides of a fight rather than one long queue.
+ */
+.combatcard--enemy .combatcard__fighter {
+  transform: scaleX(-1);
+}
+
+.combatcard__element {
+  position: absolute;
+  left: 6px;
+  top: 6px;
+  /* Explicit, so no inherited rule can grow it over the artwork. */
+  width: 18px;
+  height: 18px;
+  padding: 2px;
+  background: rgb(5 16 30 / 80%);
+  border-radius: 50%;
+}
+
+.combatcard__level,
+.combatcard__badge {
+  position: absolute;
+  right: 6px;
+  top: 6px;
+  padding: 1px 5px;
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: var(--fw-bold);
+  letter-spacing: 0.06em;
+  color: var(--text-dim);
+  background: rgb(5 16 30 / 85%);
+  border-radius: var(--radius-xs);
+}
+.combatcard__badge {
+  color: #2a1c00;
+  background: var(--grad-gold);
+}
+
+/* The name plate sits on a scrim so it stays legible over any artwork. */
+/*
+ * The plate spans the full over-wide content box, so its scrim reaches the
+ * card's slanted edges; the padding then brings the text back inside the
+ * visible parallelogram.
+ */
+.combatcard__plate {
+  position: relative;
+  display: grid;
+  gap: 1px;
+  padding: var(--sp-2) 10%;
+  margin-top: -38px;
+  background: linear-gradient(180deg, rgb(5 16 30 / 0%), rgb(5 16 30 / 94%) 45%);
+}
+
+.combatcard__name {
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: var(--fw-bold);
+  text-transform: capitalize;
+  color: var(--white);
+  line-height: 1.15;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (min-width: 700px) {
+  .combatcard__name {
+    font-size: var(--fs-sm);
+  }
+}
+
+/*
+ * The two ability counts, under a combatant's health and damage.
+ *
+ * Only ever a digit or two, so they sit on the plate rather than taking a row
+ * of their own — and they are hidden entirely when both are zero, which is
+ * most fighters in most dungeons.
+ */
+.combatcard__vs {
+  display: flex;
+  gap: 3px;
+  justify-content: center;
+  /* Holds its line whether or not it has chips, so the band the plate paints
+     is the same height on every card in the row. */
+  min-height: 14px;
+}
+
+.combatcard__vsbit {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0 4px;
+  border-radius: var(--radius-full);
+  font-family: var(--font-display);
+  font-size: 9px;
+  line-height: 14px;
+  cursor: help;
+}
+.combatcard__vsbit img {
+  opacity: 0.8;
+  object-fit: contain;
+}
+.combatcard__vsbit--bonus {
+  background: rgb(145 166 255 / 22%);
+  color: #b6c4ff;
+}
+.combatcard__vsbit--exposed {
+  background: rgb(246 168 0 / 20%);
+  color: var(--gold);
+}
+
+.combatcard__stats {
+  display: flex;
+  gap: 6px;
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Health and damage read at a glance by colour, without a label each. */
+.combatcard__hp::before,
+.combatcard__dmg::before {
+  content: '';
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  margin-right: 3px;
+  border-radius: 50%;
+}
+/* Red for health, yellow for damage — the pairing the rest of the game uses. */
+.combatcard__hp::before {
+  background: #ff5a5a;
+}
+.combatcard__dmg::before {
+  background: #ffb800;
+}
+.combatcard__hp,
+.combatcard__dmg {
+  color: var(--text-dim);
+}
+
+.combatcard__remove {
+  position: absolute;
+  right: 3px;
+  bottom: 3px;
+  width: 22px;
+  height: 22px;
+  font-size: 14px;
+  line-height: 1;
+  color: var(--text-faint);
+  background: rgb(5 16 30 / 88%);
+  border: 1px solid var(--line-soft);
+  border-radius: 50%;
+  cursor: pointer;
+  /* Sits outside the counter-skewed content, so it needs its own. */
+  transform: skewX(var(--lean-back));
+}
+.combatcard__remove:hover {
+  color: var(--red);
+  border-color: var(--red);
+}
+
+/* ---------- empty slots ---------- */
+
+/* Empty slots lean with the rest; their content needs its own counter-skew
+   since there is no `__hit` wrapper to carry it. */
+.combatcard--empty {
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 2px;
+  aspect-ratio: 5 / 8;
+  min-height: 104px;
+  border-style: dashed;
+  border-color: var(--line);
+  background: rgb(0 0 0 / 22%);
+}
+.combatcard--empty > * {
+  transform: skewX(var(--lean-back));
+}
+
+.combatcard--nft {
+  border-color: rgb(145 54 188 / 55%);
+}
+
+.combatcard__plus {
+  font-size: 26px;
+  line-height: 1;
+  color: var(--text-faint);
+}
+
+.combatcard__hint {
+  display: grid;
+  justify-items: center;
+  font-size: 10px;
+  text-align: center;
+  line-height: 1.2;
+  color: var(--text-faint);
+}
+.combatcard__hint em {
+  font-style: normal;
+  font-size: 9px;
+  opacity: 0.75;
+}
+
+.combatcard--loading {
+  aspect-ratio: 5 / 8;
+  min-height: 104px;
+  border: 0;
+}
+
+:root[data-fx='low'] .combatcard:hover {
+  transform: skewX(var(--lean));
+}
+@media (prefers-reduced-motion: reduce) {
+  .combatcard,
+  .versus__head::after {
+    transition: none;
+  }
+  .combatcard:hover {
+    transform: skewX(var(--lean));
+  }
+}
+
+/* ---------- arena ---------- */
+
+/*
+ * The arena reuses the dungeon's whole layout — same versus panel, same
+ * loadout, same picker — so it carries `.dungeon` as well as `.arena` and
+ * only the pieces that have no dungeon counterpart are defined here.
+ */
+
+/*
+ * Defender strength, in place of the difficulty ladder.
+ *
+ * Read the opposite way round to every other bar in the game: a full bar is
+ * a *harder* fight, not a better one, because `arena_power` scales the team
+ * standing against you. So the bands run the other way too — red when the
+ * arena is at full strength, green once challengers have worn it down.
+ */
+.arenabar {
+  position: relative;
+  display: grid;
+  place-items: center;
+  height: 22px;
+  margin-top: var(--sp-3);
+  border-radius: var(--radius-full);
+  background: rgb(0 0 0 / 55%);
+  border: 1px solid var(--line-soft);
+  overflow: hidden;
+}
+
+.arenabar--high {
+  --band: #c2253f;
+}
+.arenabar--mid {
+  --band: #f7a600;
+}
+.arenabar--low {
+  --band: #6cc000;
+}
+
+.arenabar__fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: var(--band);
+  opacity: 0.65;
+  transition: width var(--dur) var(--ease);
+}
+
+.arenabar__text {
+  position: relative;
+  font-family: var(--font-display);
+  font-size: var(--fs-sm);
+  font-variant-numeric: tabular-nums;
+  color: var(--white);
+  text-shadow: 0 1px 3px rgb(0 0 0 / 80%);
+}
+
+/*
+ * Whose fighter a defender is.
+ *
+ * Sits under the class name on the plate, dimmed and a size down, so the card
+ * still reads as a fighter first and an opponent second.
+ */
+.combatcard__owner {
+  font-size: 10px;
+  color: var(--text-dim);
+  line-height: 1.1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* What a win costs, between the matchup and the loadout. */
+.arena__stake {
+  margin-top: var(--sp-3);
+  border-left: 2px solid var(--gold, #f6a800);
+  padding-left: var(--sp-3);
+}

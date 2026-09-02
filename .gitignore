@@ -1,0 +1,14 @@
+node_modules/
+
+# Build scratch for the SSR verification harnesses (scripts/ssr-*.tsx,
+# scripts/verify-*.ts). Regenerate with:
+#   npx vite build --ssr scripts/<name> --outDir .ssr && node .ssr/<name>.js
+.ssr/
+tsconfig.tsbuildinfo
+
+# Generated harness pages. The scripts above write them; they are development
+# instruments, not part of the game.
+public/__*.html
+
+# Editor/tooling local config.
+.claude/
