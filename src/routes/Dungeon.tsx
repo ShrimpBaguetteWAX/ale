@@ -335,7 +335,7 @@ export default function Dungeon() {
         await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS))
         const row = await fetchFight(historyId).catch(() => undefined)
         if (row) {
-          rememberFight(row)
+          rememberFight(row, 'dungeon')
           void refreshPlayer({ force: true })
           navigate(`/battle/${historyId}`)
           return

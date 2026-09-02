@@ -378,7 +378,7 @@ export default function Arena() {
         await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS))
         const row = await fetchFight(historyId).catch(() => undefined)
         if (row) {
-          rememberFight(row)
+          rememberFight(row, 'arena')
           void refreshPlayer({ force: true })
           navigate(`/battle/${historyId}`)
           return

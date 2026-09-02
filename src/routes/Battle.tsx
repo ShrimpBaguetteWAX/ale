@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useGame } from '@/state/useGame'
 import { fetchBattleConfig, fetchFight, fetchFightConfig } from '@/dungeon/queries'
-import { recallFight, rememberFight } from '@/dungeon/fightStore'
+import { recallFight, recallVenue, rememberFight, type Venue } from '@/dungeon/fightStore'
 import {
   DEFAULT_CAPS,
   simulate,
@@ -96,6 +96,14 @@ export default function Battle() {
   const navigate = useNavigate()
 
   const [row, setRow] = useState<FightRow | null>(() => recallFight(historyId) ?? null)
+  /*
+     Where this fight happened, if this browser watched it happen. A replay
+     reached by a direct link has no venue to recall — the chain row does not
+     record one — so the screen falls back to the dungeon, which is what every
+     replay assumed before venues existed.
+  */
+  const venue: Venue = recallVenue(historyId) ?? 'dungeon'
+  const known = recallVenue(historyId) !== undefined
   const [tauntDeduction, setTauntDeduction] = useState<number | null>(null)
   const [caps, setCaps] = useState(DEFAULT_CAPS)
   const [error, setError] = useState<string | null>(null)
@@ -144,8 +152,13 @@ export default function Battle() {
 
   const replay = useMemo<Replay | null>(() => {
     if (!row || tauntDeduction === null) return null
-    return simulate(row, { tauntDeduction, caps, building: 'dungeon' })
-  }, [row, tauntDeduction, caps])
+    /*
+       The venue is not decoration here: abilities can be conditioned on the
+       building hosting the fight, so replaying an arena as a dungeon quietly
+       drops every bonus that only fires in an arena.
+    */
+    return simulate(row, { tauntDeduction, caps, building: venue })
+  }, [row, tauntDeduction, caps, venue])
 
   if (error) {
     return (
@@ -173,6 +186,14 @@ export default function Battle() {
       row={row!}
       playertag={player.playertag}
       onLeave={() => navigate('/map')}
+      /*
+         Losing sends you back to try again; winning sends you out to the map,
+         because the thing you came for is done. Only offered when the venue
+         is actually known — sending a player to /dungeon from a replay that
+         was an arena fight would be worse than sending them to the map.
+      */
+      onRetry={known ? () => navigate(`/${venue}`) : undefined}
+      venue={venue}
     />
   )
 }
@@ -184,11 +205,16 @@ function Arena({
   row,
   playertag,
   onLeave,
+  onRetry,
+  venue,
 }: {
   replay: Replay
   row: FightRow
   playertag: string
   onLeave: () => void
+  /** Back to the screen the fight was started from, where that is known. */
+  onRetry?: () => void
+  venue: Venue
 }) {
   const total = replay.turns.length
 
@@ -631,6 +657,8 @@ function Arena({
           replay={replay}
           row={row}
           onLeave={onLeave}
+          onRetry={onRetry}
+          venue={venue}
           onReplay={restart}
           onDownload={download}
         />
@@ -1142,12 +1170,16 @@ function Result({
   replay,
   row,
   onLeave,
+  onRetry,
+  venue,
   onReplay,
   onDownload,
 }: {
   replay: Replay
   row: FightRow
   onLeave: () => void
+  onRetry?: () => void
+  venue: Venue
   onReplay: () => void
   onDownload: () => void
 }) {
@@ -1289,8 +1321,21 @@ function Result({
         <button type="button" className="btn btn--ghost btn--sm" onClick={onReplay}>
           Watch again
         </button>
-        <button type="button" className="btn btn--primary btn--sm" onClick={onLeave}>
-          Back
+        {/*
+          Where Back goes depends on how the fight went.
+
+          A win is finished business — the rewards are on this screen and the
+          pools have been banked — so it leads out to the map. A loss is not;
+          the player almost certainly wants another go, and making them cross
+          the map to get back to the same tile is the screen sending them the
+          long way round for no reason.
+        */}
+        <button
+          type="button"
+          className="btn btn--primary btn--sm"
+          onClick={won || !onRetry ? onLeave : onRetry}
+        >
+          {won || !onRetry ? 'Back to map' : `Back to the ${venue}`}
         </button>
       </header>
 
