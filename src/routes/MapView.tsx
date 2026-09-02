@@ -36,11 +36,19 @@ import { readableError } from '@/wharf/errors'
 import { NUM_LOCALE } from '@/format'
 import { asset } from '@/assets'
 
-function Legend({ planet, lands }: { planet: Planet; lands: Land[] | undefined }) {
-  const rows: [MarkerKey | 'you' | 'here', string][] = [
+/**
+ * What the markers mean, and the one rule the map cannot show.
+ *
+ * Pared back to the five symbols actually on the grid plus a single sentence.
+ * It had grown to three paragraphs covering tavern ownership, greyed
+ * dungeons, the multiplier, taverns not having one, and the pan/zoom
+ * controls — none of which a player opens a legend to read, and all of which
+ * pushed the symbols themselves off the top of a phone.
+ */
+export function Legend() {
+  const rows: [MarkerKey | 'you', string][] = [
     ['you', 'You are here'],
-    ['tavern', 'Your tavern'],
-    ['here', 'The tavern you are in'],
+    ['tavern', 'Tavern'],
     ['dungeon', 'Dungeon'],
     ['arena', 'Arena'],
     ['portal', 'Portal to another planet'],
@@ -51,8 +59,6 @@ function Legend({ planet, lands }: { planet: Planet; lands: Land[] | undefined }
         <div className="legend__row" key={key}>
           {key === 'you' ? (
             <span className="legend__dot legend__dot--you" />
-          ) : key === 'here' ? (
-            <span className="legend__dot legend__dot--current" />
           ) : (
             <img className="legend__marker" src={MARKER_SRC[key]} alt="" />
           )}
@@ -60,16 +66,8 @@ function Legend({ planet, lands }: { planet: Planet; lands: Land[] | undefined }
         </div>
       ))}
       <p className="hint">
-        Only your own taverns are shown — every player is offered a different
-        set. Greyed dungeons are ones you have already run today.
-      </p>
-      <p className="hint">
-        Gold numbers are a building&rsquo;s current multiplier. Taverns have none
-        &mdash; the score does not affect the trainers they offer.
-      </p>
-      <p className="hint">
-        Drag to pan, pinch or scroll to zoom, arrow keys to step.
-        {lands ? ` ${lands.length} lands on ${planet}.` : ''}
+        Modifiers in dungeons and arenas influence the rewards earned from
+        victories.
       </p>
     </div>
   )
@@ -728,7 +726,7 @@ export default function MapView() {
           </button>
           {legendOpen && (
             <div className="mapoverlay legendpop">
-              <Legend planet={planet} lands={lands} />
+              <Legend />
             </div>
           )}
 

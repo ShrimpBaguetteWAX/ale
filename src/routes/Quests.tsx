@@ -48,7 +48,16 @@ import { asset } from '@/assets'
  * a new one appearing looks like a glitch.
  */
 
-type Busy = { kind: 'refill' } | { kind: 'claim' | 'reroll'; key: string } | null
+/**
+ * What is in flight, keyed by quest.
+ *
+ * A map rather than a single value: one action locking every other card was
+ * the whole complaint. Each key is a `questKey`, or `REFILL` for the header
+ * button, so a card only ever disables itself.
+ */
+type Busy = Map<string, 'claim' | 'reroll' | 'refill'>
+
+const REFILL = '\u0000refill'
 
 /* ---------- data ---------- */
 
@@ -58,7 +67,8 @@ interface QuestData {
   config?: QuestConfig
   loading: boolean
   error: string | null
-  reload: () => Promise<void>
+  /** Resolves with the board it just read, so a caller can poll on it. */
+  reload: () => Promise<ActiveQuests | undefined>
 }
 
 function useQuests(account: string | null): QuestData {
@@ -77,8 +87,8 @@ function useQuests(account: string | null): QuestData {
   }, [])
 
   const load = useCallback(
-    async (refresh: boolean) => {
-      if (!account) return
+    async (refresh: boolean): Promise<ActiveQuests | undefined> => {
+      if (!account) return undefined
       setError(null)
       try {
         const [a, s, c] = await Promise.all([
@@ -86,12 +96,14 @@ function useQuests(account: string | null): QuestData {
           fetchQuestScopes(refresh),
           fetchQuestConfig(),
         ])
-        if (!alive.current) return
+        if (!alive.current) return undefined
         setActive(a)
         setScopes(s)
         setConfig(c)
+        return a
       } catch (err) {
         if (alive.current) setError(readableError(err))
+        return undefined
       } finally {
         if (alive.current) setLoading(false)
       }
@@ -121,7 +133,7 @@ export default function Quests() {
   const { active, scopes, config } = data
 
   const [scope, setScope] = useState<Scope>('day')
-  const [busy, setBusy] = useState<Busy>(null)
+  const [busy, setBusy] = useState<Busy>(() => new Map())
   const [notice, setNotice] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [confirmReroll, setConfirmReroll] = useState<string | null>(null)
@@ -147,24 +159,37 @@ export default function Quests() {
   const credits = player?.activestats.credits ?? 0
 
   /**
-   * Run a quest action, then re-read both the quest row and the player.
+   * Run one quest action, then re-read the board and the player.
    *
    * Both matter: the quest row changes, and so do `permstats` and the credit
-   * balance every progress bar and price on the screen is drawn from. The
-   * node that answers the next read is rarely the one that just applied the
-   * transaction, so this polls rather than reading once.
+   * balance every progress bar and price is drawn from. The node that answers
+   * the next read is rarely the one that just applied the transaction, so this
+   * polls — but it stops the moment the board actually reflects the change
+   * rather than running a fixed six rounds. A reroll that landed on the first
+   * read still left every button dead for another five seconds.
    */
   const run = useCallback(
-    async (mark: Busy, act: () => Promise<unknown>, done: string) => {
+    async (
+      key: string,
+      kind: 'claim' | 'reroll' | 'refill',
+      act: () => Promise<unknown>,
+      done: string,
+      /** True once the freshly read board shows the change. */
+      settled: (fresh: ActiveQuests | undefined) => boolean,
+    ) => {
       if (!session) return
-      setBusy(mark)
+      setBusy((b) => new Map(b).set(key, kind))
       setError(null)
       setNotice(null)
       try {
         await act()
         for (let i = 0; i < 6; i++) {
           await new Promise((r) => setTimeout(r, 900))
-          await Promise.all([data.reload(), refreshPlayer({ force: true })])
+          const [fresh] = await Promise.all([
+            data.reload(),
+            refreshPlayer({ force: true }),
+          ])
+          if (settled(fresh)) break
         }
         /* A claimed quest is no longer waiting. */
         refreshChore('quests')
@@ -172,35 +197,56 @@ export default function Quests() {
       } catch (err) {
         setError(readableError(err))
       } finally {
-        setBusy(null)
+        setBusy((b) => {
+          const next = new Map(b)
+          next.delete(key)
+          return next
+        })
       }
     },
     [session, data, refreshPlayer],
   )
 
-  const doRefill = () =>
-    run(
-      { kind: 'refill' },
+  /*
+     Claiming and rerolling both replace the quest, and `questKey` folds in
+     the name, the target and the reward — so the key leaving the board is the
+     signal that the chain has caught up on this one card.
+  */
+  const gone = (key: string) => (fresh: ActiveQuests | undefined) =>
+    !!fresh && !fresh.quests.some((q) => questKey(q) === key)
+
+  const doRefill = () => {
+    const before = new Set((data.active?.quests ?? []).map(questKey))
+    return run(
+      REFILL,
+      'refill',
       () => getQuests(session!),
       'New quests issued, with their rewards set aside.',
+      /* A refill replaces whichever slots were empty or expired, so the test
+         is that the board is no longer the one we started from. */
+      (fresh) =>
+        !!fresh &&
+        (fresh.quests.length !== before.size ||
+          fresh.quests.some((q) => !before.has(questKey(q)))),
     )
+  }
 
   const doClaim = (quest: Quest) => {
     const r = rewardOf(quest)
+    const key = questKey(quest)
     return run(
-      { kind: 'claim', key: questKey(quest) },
+      key,
+      'claim',
       () => finishQuest(session!, quest),
       `Claimed ${r.label} ${r.symbol}. A new quest has taken its place.`,
+      gone(key),
     )
   }
 
   const doReroll = (quest: Quest) => {
     setConfirmReroll(null)
-    return run(
-      { kind: 'reroll', key: questKey(quest) },
-      () => rerollQuest(session!, quest),
-      'Quest rerolled.',
-    )
+    const key = questKey(quest)
+    return run(key, 'reroll', () => rerollQuest(session!, quest), 'Quest rerolled.', gone(key))
   }
 
   if (!player) return null
@@ -221,10 +267,10 @@ export default function Quests() {
           <button
             type="button"
             className="btn btn--primary quests__refill"
-            disabled={!session || busy !== null}
+            disabled={!session || busy.has(REFILL)}
             onClick={() => void doRefill()}
           >
-            {busy?.kind === 'refill' && <span className="spinner" />}
+            {busy.has(REFILL) && <span className="spinner" />}
             New quests
           </button>
         )}
@@ -240,7 +286,7 @@ export default function Quests() {
             abort with no useful message. Saying so beats leaving someone
             pressing a button that cannot work for them.
           */}
-          {busy === null && !active && (
+          {busy.size === 0 && !active && (
             <>
               {' '}
               If you have never held a quest before, this is a known fault in
@@ -432,8 +478,13 @@ function QuestCard({
   const cost = config?.reroll_cost ?? 0
   const tooPoor = cost > credits
 
-  const working = busy !== null && 'key' in busy && busy.key === key
-  const anyBusy = busy !== null
+  /*
+     Only this card's own action disables it. A quest being claimed says
+     nothing about whether the other two can be acted on, and greying them out
+     made every action feel like it locked the screen.
+  */
+  const working = busy.has(key)
+  const doing = busy.get(key)
 
   /*
    * Red, amber, green — the original's own three bands. A bar that is one
@@ -475,10 +526,10 @@ function QuestCard({
           <button
             type="button"
             className="btn btn--primary qcard__action"
-            disabled={!canAct || anyBusy}
+            disabled={!canAct || working}
             onClick={onClaim}
           >
-            {working && busy?.kind === 'claim' && <span className="spinner" />}
+            {doing === 'claim' && <span className="spinner" />}
             Claim {reward.label} {reward.symbol}
           </button>
         ) : confirming ? (
@@ -503,10 +554,10 @@ function QuestCard({
               <button
                 type="button"
                 className="btn btn--danger btn--sm"
-                disabled={!canAct || anyBusy}
+                disabled={!canAct || working}
                 onClick={onReroll}
               >
-                {working && busy?.kind === 'reroll' && <span className="spinner" />}
+                {doing === 'reroll' && <span className="spinner" />}
                 Reroll
               </button>
             </div>
@@ -515,7 +566,7 @@ function QuestCard({
           <button
             type="button"
             className="btn btn--ghost qcard__action"
-            disabled={!canAct || anyBusy || tooPoor}
+            disabled={!canAct || working || tooPoor}
             onClick={onAskReroll}
             title={
               tooPoor
@@ -525,7 +576,7 @@ function QuestCard({
           >
             Reroll
             <span className={`cost${tooPoor ? ' cost--short' : ''}`}>
-              −{cost.toLocaleString(NUM_LOCALE)}
+              {cost.toLocaleString(NUM_LOCALE)}
               <img src={asset("/assets/icons/credits.png")} alt="credits" width={16} height={16} />
             </span>
           </button>
