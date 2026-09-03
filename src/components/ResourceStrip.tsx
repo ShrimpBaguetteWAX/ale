@@ -10,6 +10,19 @@ function compact(n: number): string {
   return `${(n / 1_000_000).toFixed(2)}M`
 }
 
+/**
+ * Which shop shelf each chip opens, as `SHOP_CATEGORIES` keys.
+ *
+ * Energy is sold as flasks and the category is named for the goods rather
+ * than the currency, so the one that does not match its chip is the one that
+ * has to be written down.
+ */
+const SHOP_TAB: Record<'energy' | 'gems' | 'credits', string> = {
+  gems: 'gems',
+  credits: 'credits',
+  energy: 'flasks',
+}
+
 /** Briefly flag a value that just changed, so spends and rewards register. */
 function useBump(value: number): boolean {
   const [bumped, setBumped] = useState(false)
@@ -51,13 +64,15 @@ function Res({
 }) {
   const bumped = useBump(value)
   /*
-     A link to the shop, because the question a player asks when they look at
-     one of these is "can I afford it", and the answer to "no" is bought in
-     one place. It stays a chip in how it looks — a link only in what it does.
+     A link to the shelf that sells this one, because the question a player
+     asks when they look at one of these is "can I afford it", and being
+     dropped on the gem shelf when the answer was about energy is most of a
+     wasted trip. It stays a chip in how it looks — a link only in what it
+     does.
   */
   return (
     <Link
-      to="/shop"
+      to={`/shop?c=${SHOP_TAB[tone]}`}
       className={`res res--${tone}${bumped ? ' res--bumped' : ''}`}
       title={`${label}: ${value.toLocaleString(NUM_LOCALE)} — get more in the Shop`}
     >
