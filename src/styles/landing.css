@@ -156,9 +156,57 @@
   gap: var(--sp-6);
 }
 
+/* ---------- the pitch cascade ---------- */
+
+/*
+ * Two narrow panels stepping in from the right, then a wide close.
+ *
+ * The live site does not run its copy across the page; it floats it in
+ * half-width slabs offset to the right, so the artwork behind carries the
+ * left of the column and the eye moves down a diagonal rather than reading
+ * three identical bars. The last block breaks the pattern and spans the
+ * whole width, which is what makes it read as a conclusion.
+ *
+ * The offsets are desktop-only. On a phone there is no room to be off to one
+ * side of anything, and a 60% panel indented 20% is a column of text nobody
+ * can read.
+ */
+.pitches {
+  display: grid;
+  gap: var(--sp-5);
+}
+
 .pitch {
   display: grid;
   gap: var(--sp-3);
+  padding: var(--sp-5);
+  border-radius: var(--radius-sm);
+  /*
+     Solid and dark rather than the panel gradient, so the slab sits *on* the
+     background art instead of tinting it — the live site uses a flat warm
+     near-black for exactly that reason.
+  */
+  background: rgb(9 13 24 / 88%);
+  box-shadow: var(--shadow);
+}
+
+/*
+ * A thick edge on one side, in the game's own accents.
+ *
+ * The live site puts a 4px border right around these. Confined to the
+ * leading edge here: a full box at this size reads as a form field, and the
+ * single heavy rule is what says "this is a statement" without shouting.
+ */
+.pitch--far {
+  border-left: 4px solid var(--gold);
+}
+
+.pitch--near {
+  border-left: 4px solid var(--purple);
+}
+
+.pitch--wide {
+  border-left: 4px solid var(--cyan);
 }
 
 .pitch__title {
@@ -167,32 +215,117 @@
 }
 
 .pitch__body {
-  /* Cap the measure, not the panel, so cards and prose share one edge. */
+  /* Cap the measure, not the panel: prose is read, not filled. */
   max-width: 74ch;
   color: var(--text-dim);
+  line-height: 1.6;
 }
 
+@media (min-width: 900px) {
+  .pitch--far,
+  .pitch--near {
+    max-width: 620px;
+    justify-self: end;
+  }
+
+  /* The step: the second slab sits in from the first, not under it. */
+  .pitch--near {
+    margin-right: 9%;
+  }
+
+  .pitch--wide {
+    margin-top: var(--sp-4);
+  }
+}
+
+/* ---------- the three pillars ---------- */
+
+/*
+ * Artwork first, at something like the size it was drawn.
+ *
+ * These were 48px thumbnails above a heading, which is a 523px illustration
+ * spent on an icon. They are the only look at the game the page gives before
+ * the Play button, so they lead the card and the words sit under them.
+ *
+ * The three are drawn to different crops and aspect ratios, so the art gets a
+ * box of one height and stands on the floor of it. Bottom-aligning the cards
+ * instead lines up the *text* underneath, which left the illustrations at
+ * three different heights — 819, 819 and 841 — because the captions are not
+ * the same length.
+ */
 .cards {
   display: grid;
-  gap: var(--sp-4);
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: var(--sp-5);
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  align-items: start;
 }
 
-.card__icon {
-  width: 48px;
-  height: 48px;
-  margin-bottom: var(--sp-3);
+.card {
+  display: grid;
+  justify-items: center;
+  text-align: center;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+.card__art {
+  width: 100%;
+  max-width: 260px;
+  height: 220px;
   object-fit: contain;
+  object-position: bottom;
+  /*
+     The art is cut out on transparency, so it needs no frame — a drop shadow
+     grounds it against the background instead of a box drawn around it.
+  */
+  filter: drop-shadow(0 12px 26px rgb(0 0 0 / 55%));
 }
 
 .card__title {
-  font-size: var(--fs-lg);
-  margin-bottom: var(--sp-2);
+  font-size: var(--fs-xl);
+  margin: 0;
+  color: var(--text-heading);
 }
 
 .card__body {
   font-size: var(--fs-sm);
   color: var(--text-dim);
+  max-width: 34ch;
+}
+
+@media (max-width: 719px) {
+  .pitch {
+    padding: var(--sp-4);
+  }
+
+  .pitch__title {
+    font-size: var(--fs-xl);
+  }
+
+  /*
+     Two across rather than one.
+
+     Stacked, three 260px illustrations are most of a phone screen each and
+     the section becomes a scroll to nowhere; side by side they still read as
+     a set, and the third centres itself under them.
+  */
+  .cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--sp-4);
+  }
+
+  .card:last-child {
+    grid-column: 1 / -1;
+  }
+
+  .card__art {
+    max-width: 200px;
+    height: 150px;
+  }
+
+  .card__title {
+    font-size: var(--fs-lg);
+  }
 }
 
 .landing__foot {

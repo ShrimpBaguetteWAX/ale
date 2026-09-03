@@ -13,17 +13,27 @@ import { SwitchWallet } from '@/components/SwitchWallet'
 import { GameLogo } from '@/components/GameLogo'
 import { asset } from '@/assets'
 
-/** Copy is kept verbatim from the live site — players know these words. */
+/**
+ * Copy is kept verbatim from the live site — players know these words.
+ *
+ * `lane` follows how the live site places them: two narrow panels stepped
+ * down and in from the right, so the artwork behind carries the left of the
+ * page, and then a wide closing statement across the full column. Three
+ * identical full-bleed bars said the same words with none of that shape.
+ */
 const PITCHES = [
   {
+    lane: 'far',
     title: 'Recruit, Battle, Conquer, Repeat',
     body: 'Recruit fighters, explore dungeons, tackle arenas, mine valuable resources, and rise on the leaderboards. Every decision in Alien Legends shapes your journey.',
   },
   {
+    lane: 'near',
     title: 'Build your Squad',
     body: 'Recruit unique fighters with different classes, races, elements, and abilities! From frontliners to debuffers, every fighter brings distinct strengths. Build your squad and master combat in Alien Legends.',
   },
   {
+    lane: 'wide',
     title: 'Become a Legend!',
     body: 'Travel across six diverse planets and carve your legend in the galaxy of Alien Legends. Construct buildings, recruit fighters with unique classes, races, and abilities, and build the ultimate squad. Test your strategy in dungeons, dominate arenas, and compete in epic weekly tournaments. Complete quests, earn rewards, and ascend your fighters to unlock their true potential. Every choice, every battle, and every victory brings you closer to becoming a legend in a universe full of adventure and challenge.',
   },
@@ -125,12 +135,33 @@ export function Landing() {
           } as React.CSSProperties
         }
       >
+        {/*
+          Prose first, then the artwork, then Play — the live site's order.
+          The three pillars are the strongest thing on the page and they were
+          being spent at the top as 48px thumbnails, before the reader had any
+          reason to care what "Recruit" meant.
+        */}
         <div className="sections__inner">
+          <div className="pitches">
+            {PITCHES.map((s) => (
+              <section className={`pitch pitch--${s.lane}`} key={s.title}>
+                <h2 className="pitch__title">{s.title}</h2>
+                <p className="pitch__body">{s.body}</p>
+              </section>
+            ))}
+          </div>
+
+          {/*
+            The pillar art at the size it was drawn. These are 392, 314 and
+            523 pixel illustrations that the page was rendering into a 48px
+            box beside a heading — the whole of what the game looks like,
+            thrown away to make three identical cards.
+          */}
           <div className="cards">
             {PILLARS.map((p) => (
-              <article className="panel" key={p.title}>
+              <article className="card" key={p.title}>
                 <img
-                  className="card__icon"
+                  className="card__art"
                   src={p.icon}
                   alt=""
                   loading="lazy"
@@ -141,13 +172,6 @@ export function Landing() {
               </article>
             ))}
           </div>
-
-          {PITCHES.map((s) => (
-            <section className="panel pitch" key={s.title}>
-              <h2 className="pitch__title">{s.title}</h2>
-              <p className="pitch__body">{s.body}</p>
-            </section>
-          ))}
 
           <div style={{ textAlign: 'center', paddingTop: 'var(--sp-4)' }}>
             <Link className="btn btn--primary btn--charged btn--lg heroplay" to={primary.to}>
