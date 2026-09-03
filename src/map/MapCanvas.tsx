@@ -752,9 +752,26 @@ export function MapCanvas({
     return () => ro.disconnect()
   }, [clamp, drawNow, lowFx])
 
+  /*
+     Recentre when asked, and only when asked.
+
+     `position` is rebuilt by the caller on every render, so listing it here
+     meant the effect re-ran whenever anything above it changed state — and
+     selecting a tile is exactly that. Tapping the map therefore threw the
+     view back onto the player, which on a phone is the whole screen moving
+     out from under a finger.
+
+     The token is the request. A ref remembers which one has been honoured,
+     because `centerOn` is in the dependency list and must not be able to
+     trigger a jump on its own.
+  */
+  const honouredRecenter = useRef(recenterToken)
   useEffect(() => {
-    if (recenterToken && position) centerOn(position.x, position.y)
-  }, [recenterToken, position, centerOn])
+    if (!recenterToken || honouredRecenter.current === recenterToken) return
+    honouredRecenter.current = recenterToken
+    const p = positionRef.current
+    if (p) centerOn(p.x, p.y)
+  }, [recenterToken, centerOn])
 
   // Pointer interaction: mouse, touch and pen all share one path.
   useEffect(() => {
