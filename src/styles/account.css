@@ -952,3 +952,30 @@
   line-height: 1.5;
   color: var(--text-dim);
 }
+
+/*
+ * The tab strip wraps on a phone instead of running off the side.
+ *
+ * Seven tabs at `--sp-5` of padding each want about 560px, and the strip is
+ * `width: fit-content` - so on a 390px screen the box itself was 560 wide,
+ * which widened the page, took the bottom nav off the bottom of it and left
+ * the last three tabs behind an `overflow: hidden` nobody can scroll.
+ *
+ * Wrapping keeps every tab reachable, which a hidden-scroll strip does not.
+ * The buttons share each row they land on, so the block stays a block rather
+ * than a ragged left edge.
+ */
+@media (max-width: 719px) {
+  .accounttabs {
+    width: 100%;
+    min-width: 0;
+    flex-wrap: wrap;
+  }
+
+  .accounttab {
+    flex: 1 1 auto;
+    padding: var(--sp-2);
+    font-size: var(--fs-xs);
+    white-space: nowrap;
+  }
+}

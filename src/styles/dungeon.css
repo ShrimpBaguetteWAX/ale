@@ -2375,3 +2375,93 @@
 .versus__row > p {
   grid-column: 1 / -1;
 }
+
+/*
+ * The loadout, above the phone breakpoint.
+ *
+ * Three things were wrong with it. The card slots were 132px wide and 285
+ * tall, holding a 48px thumbnail near the top - a tall empty box with a
+ * stamp in it, for the two cards the panel is about. The stats then spread to
+ * four columns across 648px, so a fighter's numbers read as a wide thin band
+ * rather than a block. And the resistances were boxed cells under all that,
+ * styled unlike every other stat on the screen though they are the same kind
+ * of fact.
+ *
+ * So: the slots are wide enough to be cards and the art fills them; the two
+ * groups of numbers sit side by side, main stats then resistances; and a
+ * resistance row is drawn exactly like a stat row - same icon size, same
+ * faint label, same figure on the right, same rule under it.
+ */
+@media (min-width: 720px) {
+  .cardslots {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 3fr) auto;
+  }
+
+  .cardslot {
+    justify-content: flex-start;
+    padding: var(--sp-3);
+  }
+
+  /* Fills whatever the row's height turns out to be, rather than 48px of it. */
+  .cardslot__art {
+    flex: 1;
+    width: 100%;
+    height: auto;
+    min-height: 0;
+    max-height: 220px;
+  }
+
+  .cardslot__name {
+    font-size: var(--fs-sm);
+  }
+
+  .loadout .fstats {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 0 var(--sp-5);
+    align-items: start;
+  }
+
+  /* One column each, so the two groups are two lists of six. */
+  .loadout .fstats__lines,
+  .loadout .resgrid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+    margin-top: 0;
+  }
+
+  /* A resistance is a stat, and now looks like one. */
+  .loadout .resgrid__cell {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    padding: var(--sp-2) 0;
+    background: none;
+    border: 0;
+    border-bottom: 1px solid var(--line-soft);
+    border-radius: 0;
+  }
+
+  .loadout .resgrid__cell:last-child {
+    border-bottom: 0;
+  }
+
+  .loadout .resgrid__cell img {
+    width: 18px;
+    height: 18px;
+    flex: none;
+  }
+
+  .loadout .resgrid__label {
+    font-size: var(--fs-sm);
+    letter-spacing: 0;
+    text-transform: capitalize;
+  }
+
+  .loadout .resgrid__value {
+    margin-left: auto;
+    font-family: var(--font-body);
+    font-size: var(--fs-sm);
+    font-weight: var(--fw-normal);
+  }
+}

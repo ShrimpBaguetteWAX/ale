@@ -951,8 +951,21 @@
 
 /* ---------- the name plate ---------- */
 
+/*
+ * One column, capped at the plate.
+ *
+ * Without the cap the column takes the width of the widest row in it - the
+ * name and the owner's tag - and the health bar is `width: 100%` of that
+ * column rather than of the plate. So the bar ran out past the plate’s own
+ * border and across the panel: 68px past it on a 320px screen, and the
+ * longer the name the further it went.
+ *
+ * Both texts on that row already truncate, so there is nothing to lose by
+ * making them fit.
+ */
 .duelist__plate {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 5px;
   width: 100%;
   max-width: 260px;

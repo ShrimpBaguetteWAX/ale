@@ -32,7 +32,12 @@ import {
   type ShardPool,
   type TlmPool,
 } from '@/pools/queries'
-import { liveShardPool, liveTlmPool, mineEstimate } from '@/pools/rules'
+import {
+  MAX_MINE_POWER,
+  liveShardPool,
+  liveTlmPool,
+  mineEstimate,
+} from '@/pools/rules'
 
 /**
  * The battle replay.
@@ -1278,19 +1283,30 @@ function Result({
         const power = banked.find((b) => b.pool === a.pool)?.power ?? 0
 
         /*
-           `mineEstimate` returns the pool's own raw units, so each currency
-           is brought to the figure a player reads: TLM carries four decimal
-           places on the wire, shards one.
+           What a claim from this pool pays: one percent of what is in it.
+
+           `pools.cpp` pays `pool_current * min(reward_power, 10000) /
+           1000000`, and a claim is only allowed at full power - so the
+           figure is always the full-power one, and passing the banked
+           power instead scaled it down by however far along the bar
+           happened to be. That produced a smaller number every time,
+           which read as the reward shrinking rather than as the wait
+           being unfinished; the bar beside it is what says how far off
+           the claim is.
+
+           `mineEstimate` returns the pool's own raw units, so each
+           currency is brought to the figure a player reads: TLM carries
+           four decimal places on the wire, shards one.
         */
         const tlm = tlmPools.find((p) => p.pool === a.pool)
         const shard = shardPools.find((p) => p.pool === a.pool)
         const estimate =
           a.type === 'tlm'
             ? tlm
-              ? mineEstimate(power, liveTlmPool(tlm)) / 10_000
+              ? mineEstimate(MAX_MINE_POWER, liveTlmPool(tlm)) / 10_000
               : null
             : shard
-              ? mineEstimate(power, liveShardPool(shard)) / 10
+              ? mineEstimate(MAX_MINE_POWER, liveShardPool(shard)) / 10
               : null
 
         return {
@@ -1556,7 +1572,13 @@ function Result({
           </button>
 
           <p className="minepower__foot">
-            Better crew and weapon cards raise the minepower a run banks.
+            {/*
+               It is the mining tools equipped on the account that decide
+               this, not the cards in the line-up. The old line credited
+               crew and weapon cards, which is not what the contract reads.
+            */}
+            Your equipped mining tools and account status decide how much
+            Reward Power a run banks.
           </p>
         </section>
       )}

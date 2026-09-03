@@ -411,7 +411,14 @@ export function DungeonBoard({
                   {rank <= paid ? (
                     <>
                       <img src={asset("/assets/icons/tlm.svg")} alt="TLM" width={14} height={14} />
-                      {formatDecimals(dungeonReward(rank, config, pool), 4)}
+                      {/*
+                        Whole Trilium. The reward curve gives four decimal
+                        places because that is TLM’s own precision, but a
+                        column of "323.9938" against "167.7097" is eight
+                        characters of noise around the two digits that
+                        separate one rank from the next.
+                      */}
+                      {formatNumber(Math.floor(dungeonReward(rank, config, pool)))}
                     </>
                   ) : (
                     <span className="faint">—</span>

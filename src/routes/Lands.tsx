@@ -347,13 +347,13 @@ export default function Lands() {
               )}
               {/*
                 Shards are shown plainly, not as a warning. They are ordinary
-                earnings that the claim action happens not to pay out — a fact
-                worth stating once, not an alarm to raise on every screen.
+                earnings, and they have already been settled — a fact worth
+                stating once, not an alarm to raise on every screen.
               */}
               {totals.shards > 0 && (
                 <Tally
                   icon={asset("/assets/icons/shards.svg")}
-                  label="Shards · not paid on claim"
+                  label="Shards, already paid out"
                   value={shards(totals.shards)}
                 />
               )}

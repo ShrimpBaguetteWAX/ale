@@ -152,7 +152,19 @@ export function poolPayout(balance: number, power: number): number {
  * has looking at an empty bar. `pooldesc` answers the other one — what a
  * payment was for — and is used in the ledger instead.
  */
-export const MINEABLE_POOLS: { tlm: string; shards: string; label: string; how: string }[] = [
+/**
+ * `shards` is null where a pool pays no shards.
+ *
+ * Arena Domination is one: the shard side of it is not mined, so listing
+ * `shrdarenadom` on the shards tab put a pool there that a player can
+ * never fill or claim.
+ */
+export const MINEABLE_POOLS: {
+  tlm: string
+  shards: string | null
+  label: string
+  how: string
+}[] = [
   {
     tlm: 'tlmdung',
     shards: 'shrddung',
@@ -167,7 +179,7 @@ export const MINEABLE_POOLS: { tlm: string; shards: string; label: string; how: 
   },
   {
     tlm: 'tlmarenadom',
-    shards: 'shrdarenadom',
+    shards: null,
     label: 'Arena Domination',
     how: 'Earn Rewards by winning Arenas. Hold more Arenas to claim exponentially more often.',
   },
@@ -214,6 +226,8 @@ export function poolBoard(
   const seen = new Set<string>()
   for (const m of MINEABLE_POOLS) {
     const key = wanted === 'shards' ? m.shards : m.tlm
+    /* A pool with no side in this currency is not on this tab. */
+    if (!key) continue
     order.push(key)
     seen.add(key)
   }

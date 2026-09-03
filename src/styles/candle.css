@@ -462,8 +462,12 @@
   position: absolute;
   inset: 0;
   border-radius: 50%;
+  /*
+     No `from`, so the fill starts at twelve o'clock and runs clockwise,
+     which is where a clock starts. `from -90deg` turned the start to nine
+     o'clock - the ring began on the left and emptied towards the top.
+  */
   background: conic-gradient(
-    from -90deg,
     var(--ring) calc(var(--left, 100) * 1%),
     rgb(255 255 255 / 7%) 0
   );
