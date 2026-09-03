@@ -2137,17 +2137,60 @@
  *
  * `FighterStats` draws it now, so it matches the detail panel, the tavern and
  * the market exactly. Stacked rows would be tall, so both grids fill the
- * width they are given instead: two columns of stats on a phone, four or five
- * across a desktop, and the resistances the same.
+ * width they are given: the main stats in a column on the left and the six
+ * resistances in a column on the right, at every size. Two lists of six side
+ * by side is the same arrangement on a phone as on a desktop, which is worth
+ * more than either one being laid out ideally for its own width - and it
+ * costs nothing, because six short rows fit a 130px column.
  */
-.loadout .fstats__lines {
+.loadout .fstats {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  column-gap: var(--sp-4);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 0 var(--sp-5);
+  align-items: start;
 }
 
+.loadout .fstats__lines,
 .loadout .resgrid {
-  grid-template-columns: repeat(auto-fit, minmax(88px, 1fr));
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0;
+  margin-top: 0;
+}
+
+/* A resistance is a stat, and is drawn like one. */
+.loadout .resgrid__cell {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2) 0;
+  background: none;
+  border: 0;
+  border-bottom: 1px solid var(--line-soft);
+  border-radius: 0;
+}
+
+.loadout .resgrid__cell:last-child {
+  border-bottom: 0;
+}
+
+.loadout .resgrid__cell img {
+  width: 18px;
+  height: 18px;
+  flex: none;
+}
+
+.loadout .resgrid__label {
+  font-size: var(--fs-sm);
+  letter-spacing: 0;
+  text-transform: capitalize;
+}
+
+.loadout .resgrid__value {
+  margin-left: auto;
+  font-family: var(--font-body);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-normal);
 }
 
 /*
@@ -2199,35 +2242,18 @@
     height: 15px;
   }
 
-  /*
-     Two columns at 272px: the 140px track the desktop uses needs 292 with
-     its gap, so it fell back to one and the six rows stacked.
-  */
-  .loadout .fstats__lines {
-    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-    column-gap: var(--sp-2);
-  }
-
-  /*
-     The resistance cells lie down on a phone. Stacked (icon over label over
-     value) each cell is 66px and the six of them are 132; on a line they are
-     26 and the block is 86, for the same six numbers.
-  */
-  .loadout .resgrid {
-    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-    gap: 4px;
-    margin-top: var(--sp-2);
+  /* 272px between two columns, so the gap comes down with everything else. */
+  .loadout .fstats {
+    gap: 0 var(--sp-3);
   }
 
   .loadout .resgrid__cell {
-    display: flex;
-    align-items: center;
-    justify-content: center;
     gap: 5px;
+    padding: 5px 0;
   }
 
-  .loadout .resgrid__cell {
-    padding: 4px 2px;
+  .loadout .resgrid__label {
+    font-size: var(--fs-xs);
   }
 
   .loadout .resgrid__cell img {
@@ -2382,12 +2408,17 @@
     padding: var(--sp-3);
   }
 
-  /* Fills whatever the row's height turns out to be, rather than 48px of it. */
+  /*
+     Fills whatever the row's height turns out to be, rather than 48px of it.
+     The floor is there for an image that never arrives: with `height: auto`
+     an undecoded card is zero tall, and a 346px slot with nothing in it
+     reads as broken rather than as loading.
+  */
   .cardslot__art {
     flex: 1;
     width: 100%;
     height: auto;
-    min-height: 0;
+    min-height: 120px;
     max-height: 220px;
   }
 
@@ -2395,53 +2426,4 @@
     font-size: var(--fs-sm);
   }
 
-  .loadout .fstats {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    gap: 0 var(--sp-5);
-    align-items: start;
-  }
-
-  /* One column each, so the two groups are two lists of six. */
-  .loadout .fstats__lines,
-  .loadout .resgrid {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 0;
-    margin-top: 0;
-  }
-
-  /* A resistance is a stat, and now looks like one. */
-  .loadout .resgrid__cell {
-    display: flex;
-    align-items: center;
-    gap: var(--sp-2);
-    padding: var(--sp-2) 0;
-    background: none;
-    border: 0;
-    border-bottom: 1px solid var(--line-soft);
-    border-radius: 0;
-  }
-
-  .loadout .resgrid__cell:last-child {
-    border-bottom: 0;
-  }
-
-  .loadout .resgrid__cell img {
-    width: 18px;
-    height: 18px;
-    flex: none;
-  }
-
-  .loadout .resgrid__label {
-    font-size: var(--fs-sm);
-    letter-spacing: 0;
-    text-transform: capitalize;
-  }
-
-  .loadout .resgrid__value {
-    margin-left: auto;
-    font-family: var(--font-body);
-    font-size: var(--fs-sm);
-    font-weight: var(--fw-normal);
-  }
 }
