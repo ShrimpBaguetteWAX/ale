@@ -204,43 +204,6 @@
   border-radius: var(--radius-sm);
 }
 
-/*
- * Icon and figure, the way every other stat in the game is written. The
- * labels were doing the icons' job at three times the width, and the icons
- * already exist.
- */
-.loadout__figures {
-  display: flex;
-  gap: var(--sp-3);
-  flex-wrap: wrap;
-  align-items: center;
-}
-
-.loadout__figure {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  padding: 3px var(--sp-2);
-  background: rgb(0 0 0 / 30%);
-  border: 1px solid var(--line-soft);
-  border-radius: var(--radius-xs);
-}
-
-.loadout__icon {
-  width: 16px;
-  height: 16px;
-  object-fit: contain;
-  flex: none;
-}
-
-.loadout__v {
-  font-family: var(--font-display);
-  font-size: var(--fs-sm);
-  font-weight: var(--fw-bold);
-  color: var(--white);
-  font-variant-numeric: tabular-nums;
-}
-
 .loadout__v--element {
   text-transform: capitalize;
 }
@@ -2181,5 +2144,122 @@
 
   .versus__row > .combatcard--empty {
     height: calc(100% - var(--underrow));
+  }
+}
+
+/*
+ * The combined fighter, in the presentation the rest of the game uses.
+ *
+ * This was six bordered chips carrying an icon and a figure and no label,
+ * which put "which number is this" in a tooltip - unreachable on a phone -
+ * and left the resistances out altogether, though they decide how much of the
+ * damage on the other side actually lands.
+ *
+ * `FighterStats` draws it now, so it matches the detail panel, the tavern and
+ * the market exactly. Stacked rows would be tall, so both grids fill the
+ * width they are given instead: two columns of stats on a phone, four or five
+ * across a desktop, and the resistances the same.
+ */
+.loadout .fstats__lines {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  column-gap: var(--sp-4);
+}
+
+.loadout .resgrid {
+  grid-template-columns: repeat(auto-fit, minmax(88px, 1fr));
+}
+
+/*
+ * The result panel is a flex row - figures on one side, the View button on
+ * the other - so a block dropped into it shrinks to its content. The stats
+ * take the full width and the button keeps the line under them.
+ */
+.loadout .fstats,
+.loadout .loadout__element {
+  flex: 1 1 100%;
+  min-width: 0;
+}
+
+/*
+ * The loadout on a phone.
+ *
+ * It is a panel about two cards and what they add up to, and it was 462px
+ * before it said anything useful about the fighter they make: a heading with
+ * a subtitle explaining the mechanic, two 96px slots, and a row of unlabelled
+ * chips. The stats are worth their room; the chrome around them is not.
+ *
+ * The subtitle goes - the slots are labelled Crew and Weapon and the result
+ * sits beside them, which is the same sentence in no space at all - the slots
+ * come down to what a card and its label need, and the stat rows and
+ * resistance cells lose the padding that suits a full-width panel.
+ */
+@media (max-width: 719px) {
+  .loadout .panel__title .dungeon__tally {
+    display: none;
+  }
+
+  .cardslot {
+    min-height: 72px;
+    padding: 6px;
+  }
+
+  .cardslot__art {
+    width: 40px;
+    height: 40px;
+  }
+
+  .loadout .statline {
+    padding: 5px 0;
+    font-size: var(--fs-xs);
+  }
+
+  .loadout .statline__icon {
+    width: 15px;
+    height: 15px;
+  }
+
+  /*
+     Two columns at 272px: the 140px track the desktop uses needs 292 with
+     its gap, so it fell back to one and the six rows stacked.
+  */
+  .loadout .fstats__lines {
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    column-gap: var(--sp-2);
+  }
+
+  /*
+     The resistance cells lie down on a phone. Stacked (icon over label over
+     value) each cell is 66px and the six of them are 132; on a line they are
+     26 and the block is 86, for the same six numbers.
+  */
+  .loadout .resgrid {
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 4px;
+    margin-top: var(--sp-2);
+  }
+
+  .loadout .resgrid__cell {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+  }
+
+  .loadout .resgrid__cell {
+    padding: 4px 2px;
+  }
+
+  .loadout .resgrid__cell img {
+    width: 16px;
+    height: 16px;
+  }
+
+  .loadout .resgrid__value {
+    font-size: var(--fs-xs);
+  }
+
+  .loadout__empty {
+    font-size: var(--fs-xs);
   }
 }

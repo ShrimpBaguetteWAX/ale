@@ -155,6 +155,72 @@ function StatLine({
   )
 }
 
+/**
+ * A fighter’s numbers, in the one presentation the game uses for them.
+ *
+ * Lifted out of the panel so that anywhere showing a fighter’s stats shows
+ * them the same way: labelled rows with the stat’s own icon, the grade
+ * arrow where a class template says what good looks like, and the six
+ * resistances under them. The dungeon and arena loadouts were drawing their
+ * own version — six bordered chips carrying an icon and a figure and no
+ * label at all, so which number was which lived in a tooltip.
+ */
+export function FighterStats({
+  fighter,
+  template,
+  resistances = true,
+}: {
+  fighter: PanelFighter
+  template?: ClassTemplate
+  /** Dropped for a side-by-side comparison, where they do not fit. */
+  resistances?: boolean
+}) {
+  return (
+    <div className="fstats">
+      <div className="fstats__lines">
+        {STAT_ORDER.map((field) => (
+          <StatLine
+            key={field}
+            field={field}
+            stat={fighter[field] as PanelStat}
+            template={template}
+          />
+        ))}
+        <div className="statline">
+          <span className="statline__k">Targets</span>
+          {/*
+            An empty target is not "no target": `pick_defender` falls through
+            to highest taunt for anything it does not recognise, and most crew
+            cards leave it blank. Showing the blank would hide a real
+            behaviour behind an apparent gap in the data.
+          */}
+          <span className="statline__v">
+            {fighter.target ? formatTarget(fighter.target) : 'Highest Taunt'}
+          </span>
+        </div>
+      </div>
+
+      {resistances && (
+        <div className="resgrid">
+          {RESISTANCES.map(([key, label]) => {
+            const raw = (fighter as unknown as Record<string, number>)[key]
+            return (
+              <div className="resgrid__cell" key={key}>
+                <img src={asset(`/assets/icons/elements/${label.toLowerCase()}.png`)} alt="" />
+                <span className="resgrid__label">{label}</span>
+                <span className="resgrid__value mono">
+                  {formatResistance(raw)}
+                  <Grade field={key} raw={raw} template={template} />
+                </span>
+              </div>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
+
 export function FighterPanel({
   fighter,
   template,
@@ -215,46 +281,7 @@ export function FighterPanel({
         </div>
       </div>
 
-      <div style={{ marginTop: 'var(--sp-3)' }}>
-        {STAT_ORDER.map((field) => (
-          <StatLine
-            key={field}
-            field={field}
-            stat={fighter[field] as PanelStat}
-            template={template}
-          />
-        ))}
-        <div className="statline">
-          <span className="statline__k">Targets</span>
-          {/*
-            An empty target is not "no target": `pick_defender` falls through
-            to highest taunt for anything it does not recognise, and most crew
-            cards leave it blank. Showing the blank would hide a real
-            behaviour behind an apparent gap in the data.
-          */}
-          <span className="statline__v">
-            {fighter.target ? formatTarget(fighter.target) : 'Highest Taunt'}
-          </span>
-        </div>
-      </div>
-
-      {!compact && (
-        <div className="resgrid">
-          {RESISTANCES.map(([key, label]) => {
-            const raw = (fighter as unknown as Record<string, number>)[key]
-            return (
-              <div className="resgrid__cell" key={key}>
-                <img src={asset(`/assets/icons/elements/${label.toLowerCase()}.png`)} alt="" />
-                <span className="resgrid__label">{label}</span>
-                <span className="resgrid__value mono">
-                  {formatResistance(raw)}
-                  <Grade field={key} raw={raw} template={template} />
-                </span>
-              </div>
-            )
-          })}
-        </div>
-      )}
+      <FighterStats fighter={fighter} template={template} resistances={!compact} />
 
       {!compact && fighter.abilities.length > 0 && (
         <div className="abilities">

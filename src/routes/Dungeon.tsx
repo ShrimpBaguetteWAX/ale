@@ -50,12 +50,10 @@ import { DEFAULT_CAPS, type StatCaps } from '@/dungeon/sim'
 import { autoPickCards, autoPickFighters } from '@/fight/autopick'
 import { TEAM_SIZE, type BattleFighter, type RosterFighter } from '@/dungeon/types'
 import {
-  STAT_LABEL,
   abilityColor,
   abilityName,
   formatScaled,
   resolveAbilityDescription,
-  statIcon,
   type ClassTemplate,
 } from '@/tavern/fighterStats'
 import {
@@ -79,6 +77,7 @@ import {
 import { playDungeon } from '@/wharf/actions'
 import { readableError } from '@/wharf/errors'
 import { asset } from '@/assets'
+import { FighterStats } from '@/components/FighterPanel'
 import { usePhone } from '@/components/usePhone'
 
 export default function Dungeon() {
@@ -836,41 +835,34 @@ export default function Dungeon() {
             <div className="loadout__result">
               {nftFighter ? (
                 <>
-                  <div className="loadout__figures">
-                    {(
-                      [
-                        ['damage', nftFighter.damage.min],
-                        ['health', nftFighter.health.min],
-                        ['taunt', nftFighter.taunt.min],
-                        ['attackspeed', nftFighter.attackspeed.min],
-                        ['initiative', nftFighter.initiative.min],
-                      ] as [string, number][]
-                    ).map(([field, value]) => (
-                      <span
-                        className="loadout__figure"
-                        key={field}
-                        title={STAT_LABEL[field] ?? field}
-                      >
-                        <img
-                          className="loadout__icon"
-                          src={statIcon(field)}
-                          alt={STAT_LABEL[field] ?? field}
-                        />
-                        <span className="loadout__v mono">{formatScaled(value)}</span>
-                      </span>
-                    ))}
-                    <span
-                      className="loadout__figure"
-                      title={`Attacks as ${nftFighter.element} — the weapon decides this`}
-                    >
+                  {/*
+                     The same stat presentation as everywhere else a fighter
+                     is shown: labelled rows with the stat’s own icon, and
+                     the six resistances under them. This was six bordered
+                     chips carrying an icon and a figure and no label, so
+                     which number was which lived in a tooltip — and the
+                     resistances, which decide how much of the damage on the
+                     other side actually lands, were not shown at all.
+                  */}
+                  <FighterStats fighter={nftFighter} />
+
+                  {/*
+                     The element is the loadout’s own line rather than the
+                     panel’s, because here it is a consequence of a choice
+                     still being made: the weapon sets it, and until one is
+                     picked there is nothing to attack as.
+                  */}
+                  <div className="statline loadout__element">
+                    <span className="statline__k">
                       <img
-                        className="loadout__icon"
+                        className="statline__icon"
                         src={elementIcon(nftFighter.element)}
                         alt=""
                       />
-                      <span className="loadout__v loadout__v--element">
-                        {weapon ? nftFighter.element : '—'}
-                      </span>
+                      Attacks as
+                    </span>
+                    <span className="statline__v loadout__v--element">
+                      {weapon ? nftFighter.element : 'pick a weapon'}
                     </span>
                   </div>
 
