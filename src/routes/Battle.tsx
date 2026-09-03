@@ -228,7 +228,12 @@ function Arena({
   /** How many blows have landed. 0 is the opening line-up, `total` the end. */
   const [step, setStep] = useState(0)
   const [playing, setPlaying] = useState(true)
-  const [speed, setSpeed] = useState<Speed>(1)
+  /*
+     Fixed, now that the speed buttons are gone. The value still runs the
+     turn timer, the impact delay and the bar's own beat, so it stays a
+     named thing rather than a 1 sprinkled through four expressions.
+  */
+  const [speed] = useState<Speed>(1)
   const logRef = useRef<HTMLDivElement>(null)
 
   /*
@@ -425,6 +430,13 @@ function Arena({
     setPlaying(true)
   }, [])
 
+
+  /*
+     Still here, and still offered - on the result screen, where a player
+     who wants the numbers has finished watching and has a reason to want
+     them. It was in the bar during the fight as well, which is the one
+     moment nobody is going to open a spreadsheet.
+  */
   const download = useCallback(() => {
     const csv = combatLogCsv(replay)
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
@@ -455,8 +467,19 @@ function Arena({
         style={{ ['--beat' as string]: String(1 / speed) }}
       >
         <header className="battle__bar">
-          <button type="button" className="btn btn--ghost btn--sm" onClick={onLeave}>
-            Back
+          {/*
+            The only control a fight needs.
+
+            The bar carried Back, Play/Pause, three speeds, Skip Fight and
+            Combat Log - seven controls over a fight that lasts under a
+            minute and has no decisions in it. Every one of them answered
+            the same question, "I do not want to watch the rest of this",
+            and Skip answers it best: it goes straight to the result, which
+            is what Back was being used for as well, except that Back threw
+            the result away.
+          */}
+          <button type="button" className="btn btn--ghost btn--sm" onClick={skip}>
+            Skip Fight
           </button>
 
           <div className="battle__progress">
@@ -471,41 +494,6 @@ function Arena({
             </span>
           </div>
 
-          <div className="battle__controls">
-            {!finished && (
-              <button
-                type="button"
-                className="btn btn--ghost btn--sm"
-                onClick={() => setPlaying((p) => !p)}
-              >
-                {playing ? 'Pause' : 'Play'}
-              </button>
-            )}
-            {SPEEDS.map((s) => (
-              <button
-                type="button"
-                key={s}
-                className="btn btn--ghost btn--sm"
-                aria-pressed={speed === s}
-                onClick={() => setSpeed(s)}
-              >
-                {s}×
-              </button>
-            ))}
-            {!finished && (
-              <button type="button" className="btn btn--ghost btn--sm" onClick={skip}>
-                Skip Fight
-              </button>
-            )}
-            <button
-              type="button"
-              className="btn btn--ghost btn--sm"
-              onClick={download}
-              disabled={step === 0}
-            >
-              Combat Log
-            </button>
-          </div>
         </header>
 
         {/*

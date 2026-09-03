@@ -25,6 +25,7 @@ import Shop from '../src/routes/Shop'
 import Arena from '../src/routes/Arena'
 import Dungeon from '../src/routes/Dungeon'
 import Profile from '../src/routes/Profile'
+import Leaderboard from '../src/routes/Leaderboard'
 import { useGame } from '../src/state/useGame'
 import { fetchConfig } from '../src/chain/queries'
 
@@ -88,6 +89,7 @@ createRoot(document.getElementById('root')!).render(
           <Route path="/arena" element={<Arena />} />
           <Route path="/dungeon" element={<Dungeon />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/leaderboard" element={<Leaderboard />} />
           <Route path="*" element={<div className="panel">Not in this harness.</div>} />
         </Route>
       </Routes>

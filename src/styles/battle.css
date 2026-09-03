@@ -101,17 +101,6 @@
   transition: transform calc(900ms * var(--beat, 1)) linear;
 }
 
-.battle__controls {
-  display: flex;
-  gap: var(--sp-2);
-  flex-wrap: wrap;
-}
-
-.battle__controls .btn[aria-pressed='true'] {
-  color: var(--white);
-  border-color: var(--purple);
-}
-
 /* ---------- the stage ---------- */
 
 /*

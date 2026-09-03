@@ -165,18 +165,6 @@
   }
 }
 
-@media (max-width: 820px) {
-  .lbtable__head {
-    display: none;
-  }
-  .lbrow--dungeon,
-  .lbrow--arena {
-    grid-template-columns: 44px minmax(0, 1fr) auto;
-  }
-  .lbrow__team {
-    display: none;
-  }
-}
 
 /* ---------- cells ---------- */
 
@@ -394,4 +382,80 @@
   font-size: var(--fs-xs);
   font-variant-numeric: tabular-nums;
   color: var(--text-faint);
+}
+
+/*
+ * The avatar, beside the name it belongs to.
+ *
+ * The who-cell becomes a row: portrait, then the name and wallet stacked
+ * beside it. It stays one grid cell, so the table's columns are untouched -
+ * the avatar takes space from the name, which had a whole column to itself
+ * for two lines of text.
+ */
+.lbrow__who {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.lbrow__id {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+
+.lbrow__avatar {
+  flex: none;
+  width: 34px;
+  height: 34px;
+  object-fit: cover;
+  background: rgb(0 0 0 / 40%);
+  border: 1px solid var(--line);
+  border-radius: 50%;
+}
+
+/* The player's own row is already outlined; the portrait follows it. */
+.lbrow--you .lbrow__avatar {
+  border-color: var(--cyan);
+}
+
+@media (max-width: 719px) {
+  .lbrow__avatar {
+    width: 28px;
+    height: 28px;
+  }
+}
+
+/*
+ * The narrow row.
+ *
+ * This block used to sit above the cell rules, where `.lbrow__team { display:
+ * flex }` came later at the same specificity and won - so on a phone the
+ * defending team kept its 214px, the player's name was squeezed to 40px of a
+ * 348px row, and the rating and payout dropped onto lines of their own. The
+ * table header was hidden, which is what made it look like the block was
+ * working.
+ *
+ * Six portraits of a team the row is not about are the first thing to go when
+ * there is no room; who, how much, and how much they are paid are the row.
+ */
+@media (max-width: 820px) {
+  .lbtable__head {
+    display: none;
+  }
+
+  /*
+     Four cells survive the narrowing - rank, player, rating, payout - so
+     there are four columns. Three left the payout to an implicit row, which
+     made every row 90px tall with a number floating under the name.
+  */
+  .lbrow--dungeon,
+  .lbrow--arena {
+    grid-template-columns: 44px minmax(0, 1fr) auto auto;
+    gap: var(--sp-2);
+  }
+
+  .lbrow__team {
+    display: none;
+  }
 }
