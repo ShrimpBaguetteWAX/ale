@@ -441,6 +441,18 @@ export function CombatCard({
     </span>
   ) : null
 
+  const removeButton = onRemove ? (
+    <button
+      type="button"
+      className="combatcard__remove"
+      onClick={onRemove}
+      aria-label={`Remove ${classname}`}
+      title="Remove from team"
+    >
+      ×
+    </button>
+  ) : null
+
   return (
     <div className="combatslot">
       {/*
@@ -520,20 +532,18 @@ export function CombatCard({
         </span>
       </button>
 
-      {onRemove && (
-        <button
-          type="button"
-          className="combatcard__remove"
-          onClick={onRemove}
-          aria-label={`Remove ${classname}`}
-          title="Remove from team"
-        >
-          ×
-        </button>
-      )}
+      {!phone && removeButton}
       </div>
 
-      {phone && counts}
+      {/*
+        The ability counts, under the card rather than on it.
+
+        The row is rendered whether or not it has anything to say. It is
+        what makes every slot in a line-up the same height, and a slot that
+        skipped it grew to fill the row on its own — which is what the NFT
+        fighter, alone in never being given counts, was doing.
+      */}
+      {phone && <div className="combatslot__under">{counts}</div>}
     </div>
   )
 }

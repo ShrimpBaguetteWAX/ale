@@ -1811,10 +1811,13 @@
 
   /*
      Out here it is upright rather than counter-skewed, and it holds its line
-     whether or not it has chips — the cards in a row must still end level
+     whether or not it has chips - the cards in a row must still end level
      with each other.
   */
-  .combatslot > .combatcard__vs {
+  .combatslot__under {
+    display: flex;
+    align-items: center;
+    justify-content: center;
     min-height: 14px;
   }
 }
@@ -2158,5 +2161,25 @@
 @media (max-width: 719px) {
   .weather {
     flex-wrap: nowrap;
+  }
+}
+
+/*
+ * An empty slot leaves room for the same row the cards leave room for.
+ *
+ * The filled slots are a card with the ability counts under it; the empty
+ * ones are a single dashed box that is a direct child of the row, so
+ * `height: 100%` made them as tall as card-plus-counts and they hung 17px
+ * below every card beside them. The row publishes what that costs and the
+ * empty box subtracts it, so the dashed outline ends level with the cards
+ * whether or not anything is standing in the slot.
+ */
+@media (max-width: 719px) {
+  .versus__row {
+    --underrow: 17px;
+  }
+
+  .versus__row > .combatcard--empty {
+    height: calc(100% - var(--underrow));
   }
 }
