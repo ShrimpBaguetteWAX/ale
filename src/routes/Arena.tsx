@@ -392,7 +392,13 @@ export default function Arena() {
       disabled={!roster}
       title="Choose the five fighters that suit this opponent"
     >
-      Auto-pick fighters
+      {/*
+         The word the header does not need. On the "Your team" line there
+         is nothing else it could be picking, and the full label is what
+         made that header wrap onto a second line — which dropped the
+         whole team a row below the defenders.
+      */}
+      Auto-pick<span className="teamauto__what"> fighters</span>
     </button>
   )
 

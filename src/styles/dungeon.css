@@ -1144,7 +1144,6 @@
 @media (min-width: 1080px) {
   .versus {
     grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
-    align-items: start;
   }
 }
 
@@ -1901,16 +1900,263 @@
  * header has no spare room there, the totals already wrap onto their own
  * line, and a third item would make it three.
  */
-.versus__head .teamauto {
-  align-self: center;
-}
-
 @media (max-width: 719px) {
   .titlebadges {
     gap: 6px;
   }
+}
+
+/*
+ * The corner badges, inside the card rather than under its edge.
+ *
+ * They are positioned against `.combatcard__art`, and the art is not the
+ * card: it is a child of `.combatcard__hit`, which is 124% of the card wide
+ * and pulled 12% left so that un-skewing the content still covers the wedges
+ * the lean leaves at two corners. So `left: 6px` was six pixels from a point
+ * outside the card, and the card clips. Measured at 1280: the element badge
+ * lost 5.7px of itself on every card, and the level badge cleared the other
+ * edge by 2.8px — which is why a narrower phone card lost that one too.
+ *
+ * Two things have to be cleared, and both scale with the card: the 12%
+ * overhang, and the lean, which at the top of the card pushes both edges
+ * right by about 8.75% of half the card height. `20% + 2px` covers the sum at
+ * every width the six-column row produces — checked at 390, 1280 and wide.
+ *
+ * The art also gets an explicit width. Its `aspect-ratio` and `min-height`
+ * were re-deriving a width from the height on a phone — 65px inside a 58px
+ * box — so the badges were starting from a different place at each size.
+ */
+.combatcard__art {
+  width: 100%;
+}
+
+.combatcard__element {
+  left: calc(20% + 2px);
+}
+
+.combatcard__level,
+.combatcard__badge {
+  right: calc(20% + 2px);
+}
+
+/*
+ * The chips share one line on a phone.
+ *
+ * They are one thought — the conditions this fight happens under — and two
+ * stacked bars for it pushed the matchup down a row for no reading benefit.
+ * The weather takes what is left after the figure, and its name clips with an
+ * ellipsis rather than wrapping; the whole roll is on the chip's tooltip, and
+ * the part that matters — the number and the stat — is at the front of it.
+ *
+ * The icons are sized together, and the shield is `contain` because its
+ * artwork is 43x57 rather than square: stretched to a square box it would be
+ * a fatter shield than the element mark beside it, which is what made them
+ * look like two different sizes.
+ */
+.weather__stat,
+.arenastanding__icon {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+}
+
+@media (max-width: 719px) {
+  .titlebadges {
+    flex-wrap: nowrap;
+  }
+
+  .weather,
+  .arenastanding {
+    min-width: 0;
+    gap: 4px 6px;
+    padding: 4px 8px 4px 6px;
+    font-size: var(--fs-xs);
+  }
+
+  .weather {
+    flex: 1 1 auto;
+  }
 
   .arenastanding {
-    font-size: var(--fs-xs);
+    flex: 0 0 auto;
+  }
+
+  .weather__name {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .weather__stat,
+  .arenastanding__icon {
+    width: 16px;
+    height: 16px;
+  }
+
+  /*
+     The empty NFT slot stops growing past its neighbours.
+
+     "NFT Fighter" and "crew + weapon" both wrap on a 46px card, and four
+     lines of text is taller than the 5:8 box the slot is meant to be — so the
+     slot grew, and every card in the row stretched with it. The second line
+     is a note about what fills the slot; the slot is empty, the two card
+     pickers below say the same thing, and it is the first thing to go when
+     there is no room for it.
+  */
+  .combatcard__hint em {
+    display: none;
+  }
+
+  .combatcard__hint {
+    font-size: 9px;
+  }
+}
+
+/*
+ * The two headers stand the same height, so the two rows of cards start on
+ * the same line.
+ *
+ * Putting the auto-pick button on the "Your team" line made that header as
+ * tall as a button while the defenders' stayed as tall as a line of text, and
+ * a header is what its row of cards sits under — so one side's fighters hung
+ * lower than the other's. The button is trimmed to a size that fits a header
+ * rather than a toolbar, and both headers are floored at the same height so
+ * the sides cannot drift apart again whatever either one happens to contain.
+ */
+.versus__head {
+  min-height: 28px;
+}
+
+.versus__head .teamauto {
+  align-self: center;
+  min-height: 26px;
+  padding: 0 10px;
+  font-size: var(--fs-xs);
+}
+
+/*
+ * The two chips read as one line of text, so the labels match: same size,
+ * same weight, same colour. Defender strength was a dimmed label beside a
+ * bright weather name, which made it look like a caption for the chip next to
+ * it rather than a fact of its own.
+ */
+.arenastanding__label {
+  color: var(--text);
+  font-weight: var(--fw-medium);
+}
+
+/*
+ * Side by side, the two headers share a row.
+ *
+ * A header is what its row of cards sits under, and the two sides were laid
+ * out independently - so the moment the "Your team" header took a second line
+ * to fit the auto-pick button, that side's fighters hung 38px below the
+ * defenders'.
+ *
+ * Keeping both headers to one line was the first attempt, and it does not
+ * hold: at 1280 with the nav open each side is 435px, and forbidding the wrap
+ * only moved it inside the header - "YOUR TEAM" broke across two lines
+ * instead, and the rows were still 24px apart.
+ *
+ * So the sides stop being boxes. `display: contents` hands their headers and
+ * rows straight to the versus grid, where both headers are row one and both
+ * card rows are row two: whatever either header does, the two rows start on
+ * the same line, because it is the same line. The headers stretch to fill the
+ * row, so their underlines - the share bars - stay level too.
+ *
+ * Below 1080 the sides stack and none of this applies; there they are boxes
+ * again, one above the other.
+ */
+@media (min-width: 1080px) {
+  .versus {
+    grid-template-rows: auto auto;
+    align-items: stretch;
+    row-gap: var(--sp-2);
+    column-gap: var(--sp-3);
+  }
+
+  .versus__side {
+    display: contents;
+  }
+
+  .versus__side--enemy .versus__head {
+    grid-area: 1 / 1 / 2 / 2;
+  }
+
+  .versus__side--enemy .versus__row {
+    grid-area: 2 / 1 / 3 / 2;
+    align-self: start;
+  }
+
+  /* Centred on the cards it stands between, not on the headers as well. */
+  .versus__divider {
+    grid-area: 2 / 2 / 3 / 3;
+    align-self: center;
+  }
+
+  .versus__side--mine .versus__head {
+    grid-area: 1 / 3 / 2 / 4;
+  }
+
+  .versus__side--mine .versus__row {
+    grid-area: 2 / 3 / 3 / 4;
+    align-self: start;
+  }
+
+  .versus__totals {
+    min-width: 0;
+  }
+
+  .versus__head .teamauto__what {
+    display: none;
+  }
+}
+
+/*
+ * ...and the content sits at the bottom of that shared row.
+ *
+ * Stretching both headers to the taller of the two is what levels the card
+ * rows, but it left the shorter header's text floating 46px above its own
+ * underline - the share bar reads as belonging to whatever is directly under
+ * it, and 46px of nothing is not that.
+ *
+ * Packing the lines to the end puts every header's text immediately above its
+ * own bar, whether it is one line or two. Both bars are level because the row
+ * is, and both sets of headings sit on the same line as each other.
+ */
+@media (min-width: 1080px) {
+  .versus__head {
+    align-content: flex-end;
+    gap: var(--sp-2);
+  }
+}
+
+/*
+ * The empty slot is as tall as the cards beside it.
+ *
+ * `aspect-ratio` gives it a definite height, and a definite height does not
+ * stretch - so the slot was whatever 5:8 made it while its neighbours were
+ * whatever their content made them, and the two disagreed in both directions:
+ * taller than the cards when its label wrapped to four lines, shorter than
+ * them once the label was trimmed. An explicit height defers to the row, and
+ * the ratio still decides the shape when a row is all empty slots.
+ */
+.combatcard--empty {
+  width: 100%;
+  height: 100%;
+}
+
+/*
+ * The weather chip keeps its mark and its name on one line.
+ *
+ * It wraps by design - a roll can name several stats and they should run onto
+ * a second line rather than off the end - but at phone width, sharing the
+ * line with Defender strength, the first thing to wrap was the name away from
+ * its own icon, and the chip stood two lines tall to say one thing.
+ */
+@media (max-width: 719px) {
+  .weather {
+    flex-wrap: nowrap;
   }
 }
