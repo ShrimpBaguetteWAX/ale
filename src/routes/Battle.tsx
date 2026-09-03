@@ -26,6 +26,13 @@ import { claimPoolRewards } from '@/wharf/actions'
 import { readableError } from '@/wharf/errors'
 import { NUM_LOCALE } from '@/format'
 import { asset } from '@/assets'
+import {
+  fetchShardPools,
+  fetchTlmPools,
+  type ShardPool,
+  type TlmPool,
+} from '@/pools/queries'
+import { liveShardPool, liveTlmPool, mineEstimate } from '@/pools/rules'
 
 /**
  * The battle replay.
@@ -1241,21 +1248,64 @@ function Result({
   const banked = player.reward_power ?? []
   const added = row.reward_power_added ?? []
 
+  /*
+     The pools themselves, so the estimate can be what the contract would
+     pay rather than a restatement of the bar above it.
+
+     Which pools those are comes off the fight row — `reward_power_added`
+     names `tlmdung`/`shrddung` after a dungeon and `tlmarena`/`shrdarena`
+     after an arena — so the venue is already settled and there is nothing to
+     infer here.
+  */
+  const [tlmPools, setTlmPools] = useState<TlmPool[]>([])
+  const [shardPools, setShardPools] = useState<ShardPool[]>([])
+
+  useEffect(() => {
+    let live = true
+    Promise.all([fetchTlmPools(), fetchShardPools()])
+      .then(([t, sh]) => {
+        if (!live) return
+        setTlmPools(t)
+        setShardPools(sh)
+      })
+      /* No pools read means no estimate; the bars still work. */
+      .catch(() => {})
+    return () => {
+      live = false
+    }
+  }, [])
+
   const pools = useMemo(
     () =>
       added.map((a) => {
         const power = banked.find((b) => b.pool === a.pool)?.power ?? 0
+
+        /*
+           `mineEstimate` returns the pool's own raw units, so each currency
+           is brought to the figure a player reads: TLM carries four decimal
+           places on the wire, shards one.
+        */
+        const tlm = tlmPools.find((p) => p.pool === a.pool)
+        const shard = shardPools.find((p) => p.pool === a.pool)
+        const estimate =
+          a.type === 'tlm'
+            ? tlm
+              ? mineEstimate(power, liveTlmPool(tlm)) / 10_000
+              : null
+            : shard
+              ? mineEstimate(power, liveShardPool(shard)) / 10
+              : null
+
         return {
           pool: a.pool,
           type: a.type,
           percent: poolPercent(power),
           addedPercent: a.power / 100,
-          /* The estimate the game quotes is the banked percentage itself. */
-          estimate: power / 100,
+          estimate,
           ready: power >= FULL_POWER,
         }
       }),
-    [added, banked],
+    [added, banked, tlmPools, shardPools],
   )
 
   const claimable = pools.filter((p) => p.ready)
@@ -1472,6 +1522,7 @@ function Result({
 
           <div className="minepower__estimate">
             {pools.map((p) => (
+              p.estimate === null ? null : (
               <span key={p.pool}>
                 <img
                   src={
@@ -1488,6 +1539,7 @@ function Result({
                   {p.estimate.toLocaleString('en-US', { maximumFractionDigits: 2 })}
                 </strong>
               </span>
+              )
             ))}
           </div>
 

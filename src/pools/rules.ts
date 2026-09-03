@@ -299,3 +299,29 @@ export function poolAmount(raw: number, places: number): string {
   const whole = Math.floor(raw / Math.pow(10, places))
   return whole < 1 ? '<1' : whole.toLocaleString(NUM_LOCALE)
 }
+
+/** `max_mine_power` in `pools.cpp`: one mine takes at most this much power. */
+export const MAX_MINE_POWER = 10_000
+
+/**
+ * What mining a pool would actually pay, in the pool's own raw units.
+ *
+ * The contract is explicit about it and it has nothing to do with the
+ * percentage on the bar:
+ *
+ *     mine_power_used = min(reward_power, max_mine_power)
+ *     reward          = pool_current * mine_power_used / 1000000
+ *
+ * So a pool mined at full power pays one percent of whatever is standing in
+ * it. Quoting the banked percentage instead — which is what the victory
+ * screen did — answers a different question entirely, and the two only ever
+ * agree by accident.
+ *
+ * `current` is the projected balance from `liveTlmPool` / `liveShardPool`,
+ * because the contract runs `updtlmpool` / `updshardpool` before it pays and
+ * a pool days past its fill expiry is badly under-reported without it.
+ */
+export function mineEstimate(power: number, current: number): number {
+  const used = Math.min(Math.max(0, power), MAX_MINE_POWER)
+  return Math.floor((current * used) / 1_000_000)
+}
