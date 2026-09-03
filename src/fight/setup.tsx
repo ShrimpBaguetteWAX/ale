@@ -979,6 +979,18 @@ export function RosterFilters({
  * different questions, and to a buyer they are the same question with
  * different units.
  */
+/**
+ * Why the two ungraded stats take a number rather than an arrow.
+ *
+ * Worth saying: a player who has learnt to read the arrows would otherwise
+ * read their absence here as an omission rather than as the point.
+ */
+function numberNote(stat: string): string {
+  return stat === 'age'
+    ? 'Condition rather than a roll: +100% is untouched, 0% has lost half its stats.'
+    : 'Taunt has no quality arrow — high suits a tank, low keeps a fighter out of the way — so it takes a number instead.'
+}
+
 export function QualityFilters({
   filter,
   onChange,
@@ -1031,7 +1043,17 @@ export function QualityFilters({
           ))}
         </select>
 
-        <span className="qfilter__at">at least</span>
+        {/*
+          "at least" in full where there is room for it, the symbol where
+          there is not — a phone spends a third of this row on two words that
+          the comparison either side of them already implies.
+        */}
+        <span className="qfilter__at">
+          <span className="qfilter__atLong">at least</span>
+          <span className="qfilter__atShort" aria-hidden="true">
+            ≥
+          </span>
+        </span>
 
         {graded ? (
           <select
@@ -1055,7 +1077,9 @@ export function QualityFilters({
             min={stat === 'age' ? -100 : 0}
             inputMode="numeric"
             value={value}
-            aria-label={`Minimum ${label(stat)}`}
+            /* Also the note beside it, which a phone has no room to print. */
+            aria-label={`Minimum ${label(stat)}. ${numberNote(stat)}`}
+            title={numberNote(stat)}
             onChange={(e) => setValue(e.target.value)}
           />
         )}
@@ -1064,13 +1088,7 @@ export function QualityFilters({
           Add
         </button>
 
-        {!graded && (
-          <span className="qfilter__note">
-            {stat === 'age'
-              ? 'Condition rather than a roll: +100% is untouched, 0% has lost half its stats.'
-              : 'Taunt has no quality arrow — high suits a tank, low keeps a fighter out of the way — so it takes a number instead.'}
-          </span>
-        )}
+        {!graded && <span className="qfilter__note">{numberNote(stat)}</span>}
       </div>
 
       {rules.length > 0 && (

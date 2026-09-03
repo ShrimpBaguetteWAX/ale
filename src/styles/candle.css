@@ -698,3 +698,113 @@
 .mission {
   gap: var(--sp-3);
 }
+
+/*
+ * The player count, which opens the board rather than only stating it.
+ *
+ * It has to stay a figure in a row of figures - the tiles either side of it
+ * are plain numbers and a button styled like a button would read as the only
+ * thing on the row worth pressing. So it borrows the tile's own type and
+ * earns its affordance from a hairline underline and the word beside it.
+ */
+.mission__who {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  border-bottom: 1px dashed rgb(255 255 255 / 28%);
+}
+
+.mission__who:hover:not(:disabled) {
+  border-bottom-color: var(--cyan);
+}
+
+.mission__who:disabled {
+  cursor: default;
+  border-bottom-color: transparent;
+}
+
+.mission__whoHint {
+  font-family: var(--font-body);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-normal);
+  color: var(--text-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.mission__who:disabled .mission__whoHint {
+  display: none;
+}
+
+/* ---------- who is in ---------- */
+
+.candleboard {
+  display: grid;
+  gap: 2px;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+/*
+ * Rank, face, name, share, gems.
+ *
+ * The two figures are pinned to their own columns rather than allowed to
+ * follow the name, because the whole point of the board is reading down them.
+ */
+.candleboard__row {
+  display: grid;
+  grid-template-columns: 28px 28px minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2);
+  border-radius: var(--radius-xs);
+  background: rgb(255 255 255 / 4%);
+}
+
+.candleboard__row--you {
+  background: rgb(24 179 255 / 14%);
+  box-shadow: inset 0 0 0 1px rgb(24 179 255 / 32%);
+}
+
+.candleboard__avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-full);
+  object-fit: cover;
+  background: rgb(255 255 255 / 6%);
+}
+
+.candleboard__name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.candleboard__you {
+  margin-left: var(--sp-2);
+  padding: 1px 5px;
+  border-radius: var(--radius-full);
+  background: rgb(24 179 255 / 24%);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.candleboard__cut {
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.candleboard__gems {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-variant-numeric: tabular-nums;
+}

@@ -94,14 +94,34 @@ export function withNumericIds<T extends { fighter_id: number }>(fighters: T[]):
   )
 }
 
+/**
+ * The NFT fighter last, whatever order it arrived in.
+ *
+ * It is the sixth fighter — a crew card and a weapon fused together — rather
+ * than a member of the team, and a line-up is read across as the team. The
+ * chain stores it wherever it was added, which on a defending arena team put
+ * it fifth of six, so the row read as though the NFT tag had landed on the
+ * wrong card.
+ *
+ * A stable sort, so everyone else keeps the order the contract gave them.
+ */
+export function nftFighterLast<T extends { fighter_id: number }>(fighters: T[]): T[] {
+  return [...fighters].sort(
+    (a, b) =>
+      Number(a.fighter_id === NFT_FIGHTER_ID) - Number(b.fighter_id === NFT_FIGHTER_ID),
+  )
+}
+
 /** The enemy line-up at a difficulty, before scaling. */
 export function enemiesAt(
   fighters: BattleFighter[],
   difficulty: number,
   nftMinDifficulty: number,
 ): BattleFighter[] {
-  return fighters.filter(
-    (f) => difficulty >= nftMinDifficulty || f.fighter_id !== NFT_FIGHTER_ID,
+  return nftFighterLast(
+    fighters.filter(
+      (f) => difficulty >= nftMinDifficulty || f.fighter_id !== NFT_FIGHTER_ID,
+    ),
   )
 }
 

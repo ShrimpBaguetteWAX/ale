@@ -6,7 +6,7 @@ import {
   fetchCandleTracking,
   fetchContributions,
 } from '@/candle/queries'
-import type { CandleClaim, CandleOffer, CandleTracking } from '@/candle/types'
+import type { CandleClaim, CandleOffer, CandleTracking, Contribution } from '@/candle/types'
 import {
   activeOffer,
   upcomingOffers,
@@ -25,6 +25,9 @@ import { refreshChore } from '@/chores/signal'
 import { readableError } from '@/wharf/errors'
 import { formatNumber, formatDecimals } from '@/format'
 import type { Player } from '@/chain/types'
+import { fetchPlayerTags } from '@/chain/queries'
+import { PlayerAvatar } from '@/components/PlayerAvatar'
+import { rankClass } from '@/leaderboard/rules'
 import { asset } from '@/assets'
 
 /**
@@ -54,6 +57,8 @@ interface CandleData {
   offers: CandleOffer[]
   mine: number
   contributors: number
+  /** Everyone in the running campaign, for the board behind the button. */
+  stakes: Contribution[]
   claim?: CandleClaim
   tracking?: CandleTracking
   loading: boolean
@@ -65,6 +70,7 @@ function useCandle(account: string | null): CandleData {
   const [offers, setOffers] = useState<CandleOffer[]>([])
   const [mine, setMine] = useState(0)
   const [contributors, setContributors] = useState(0)
+  const [stakes, setStakes] = useState<Contribution[]>([])
   const [claim, setClaim] = useState<CandleClaim>()
   const [tracking, setTracking] = useState<CandleTracking>()
   const [loading, setLoading] = useState(true)
@@ -102,6 +108,7 @@ function useCandle(account: string | null): CandleData {
         setClaim(c)
         setTracking(t)
         setContributors(rows.length)
+        setStakes(rows)
         setMine(Number(rows.find((r) => r.wallet === account)?.amount ?? 0))
       } catch (err) {
         if (alive.current) setError(readableError(err))
@@ -119,7 +126,7 @@ function useCandle(account: string | null): CandleData {
 
   const reload = useCallback(() => load(true), [load])
 
-  return { offers, mine, contributors, claim, tracking, loading, error, reload }
+  return { offers, mine, contributors, stakes, claim, tracking, loading, error, reload }
 }
 
 /* ---------- the screen ---------- */
@@ -131,7 +138,7 @@ export default function Candle() {
   const refreshPlayer = useGame((s) => s.refreshPlayer)
 
   const data = useCandle(account)
-  const { offers, mine, contributors, claim, tracking } = data
+  const { offers, mine, contributors, stakes, claim, tracking } = data
 
   const [gems, setGems] = useState('')
   const [busy, setBusy] = useState<Busy>(null)
@@ -229,6 +236,7 @@ export default function Candle() {
               offer={offer}
               player={player}
               mine={mine}
+              stakes={stakes}
               contributors={contributors}
               now={now}
               balance={balance}
@@ -352,12 +360,128 @@ function MissionClock({
   )
 }
 
+/* ---------- who is in ---------- */
+
+/**
+ * Everyone's stake in the running campaign, biggest first.
+ *
+ * The screen already read this board — it is how a player's share of the pot
+ * is worked out — and then reduced it to a count. But a candle is a contest
+ * between the people in it: what a gem buys depends entirely on who else has
+ * spent and how much, and "14 players" does not say whether that is fourteen
+ * small stakes or one whale and thirteen hopefuls.
+ *
+ * Named and faced rather than listed by wallet, because these are opponents
+ * rather than addresses — the same tag and avatar the leaderboards show.
+ */
+function ContributorBoard({
+  stakes,
+  total,
+  wallet,
+  onClose,
+}: {
+  stakes: Contribution[]
+  total: number
+  wallet: string
+  onClose: () => void
+}) {
+  const [tags, setTags] = useState<Record<string, string>>({})
+  const [avatars, setAvatars] = useState<Record<string, number>>({})
+
+  /*
+     Read only once the board is opened, and from the same cached page the
+     rest of the app resolves names out of — so this is usually no request at
+     all, and never one for a player who does not open it.
+  */
+  useEffect(() => {
+    let live = true
+    fetchPlayerTags()
+      .then((r) => {
+        if (!live) return
+        setTags(r.tags)
+        setAvatars(r.avatars)
+      })
+      /* Names are a courtesy; the wallets underneath are the real answer. */
+      .catch(() => {})
+    return () => {
+      live = false
+    }
+  }, [])
+
+  const rows = useMemo(
+    () => [...stakes].sort((a, b) => Number(b.amount) - Number(a.amount)),
+    [stakes],
+  )
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [onClose])
+
+  return (
+    <div className="sheet" role="dialog" aria-label="Contributors" onClick={onClose}>
+      <div className="sheet__panel panel" onClick={(e) => e.stopPropagation()}>
+        <div className="row" style={{ marginBottom: 'var(--sp-3)' }}>
+          <span className="panel__title">Who is in</span>
+          <span className="spacer" />
+          <button type="button" className="btn btn--ghost btn--sm" onClick={onClose}>
+            Close
+          </button>
+        </div>
+
+        {rows.length === 0 ? (
+          <p className="muted">Nobody has contributed yet.</p>
+        ) : (
+          <div className="candleboard">
+            {rows.map((r, i) => {
+              const amount = Number(r.amount)
+              const cut = total > 0 ? (amount / total) * 100 : 0
+              const you = r.wallet === wallet
+              return (
+                <div
+                  className={`candleboard__row${you ? ' candleboard__row--you' : ''}`}
+                  key={r.wallet}
+                >
+                  <span className={`rank ${rankClass(i + 1)}`}>{i + 1}</span>
+                  <PlayerAvatar
+                    id={avatars[r.wallet]}
+                    name={tags[r.wallet] || r.wallet}
+                    className="candleboard__avatar"
+                    size={28}
+                  />
+                  <span className="candleboard__name">
+                    {tags[r.wallet] || r.wallet}
+                    {you && <span className="candleboard__you">you</span>}
+                  </span>
+                  {/* The share is what the gems actually bought. */}
+                  <span className="candleboard__cut mono">{cut.toFixed(1)}%</span>
+                  <span className="candleboard__gems mono">
+                    {formatNumber(amount)}
+                    <img
+                      src={asset('/assets/icons/gems.png')}
+                      alt="gems"
+                      width={14}
+                      height={14}
+                    />
+                  </span>
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 /* ---------- the running mission ---------- */
 
 export function Mission({
   offer,
   player,
   mine,
+  stakes,
   contributors,
   now,
   balance,
@@ -371,6 +495,7 @@ export function Mission({
   offer: CandleOffer
   player: Player
   mine: number
+  stakes: Contribution[]
   contributors: number
   now: number
   balance: number
@@ -381,6 +506,7 @@ export function Mission({
   onGems: (v: string) => void
   onContribute: () => void
 }) {
+  const [showBoard, setShowBoard] = useState(false)
   const state = offerState(offer, now)
   const gate = eligibility(offer, player)
   const share = shareOf(offer, mine)
@@ -488,7 +614,24 @@ export function Mission({
           </div>
           <div>
             <dt>Players</dt>
-            <dd>{formatNumber(contributors)}</dd>
+            {/*
+              The count opens the board rather than just stating it. What a
+              gem buys here depends on who else has spent and how much, and
+              "14 players" does not say whether that is fourteen small stakes
+              or one whale and thirteen hopefuls.
+            */}
+            <dd>
+              <button
+                type="button"
+                className="mission__who"
+                onClick={() => setShowBoard(true)}
+                disabled={contributors === 0}
+                title="See who has contributed and how much"
+              >
+                {formatNumber(contributors)}
+                <span className="mission__whoHint">view</span>
+              </button>
+            </dd>
           </div>
           {/*
             The rate, not the prize. It is what a contribution is actually
@@ -596,6 +739,15 @@ export function Mission({
             </p>
           )}
         </section>
+      )}
+
+      {showBoard && (
+        <ContributorBoard
+          stakes={stakes}
+          total={share.total}
+          wallet={player.wallet}
+          onClose={() => setShowBoard(false)}
+        />
       )}
     </section>
   )

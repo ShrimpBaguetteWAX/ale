@@ -7,6 +7,7 @@ import type { Planet } from '@/chain/config'
 import {
   BOOST_MAX,
   buildingIcon,
+  boostGradient,
   formatBoost,
   landThumbStyle,
   liveBoostScore,
@@ -548,7 +549,12 @@ export function LandRow({
               height={30}
             />
             <span className={`boostbar boostbar--${band}`}>
-              <span className="boostbar__fill" style={{ width: `${percent}%` }} />
+              {/* Coloured by the figure rather than by which of three bands
+                  it falls in — see `boostGradient`. */}
+              <span
+                className="boostbar__fill"
+                style={{ width: `${percent}%`, background: boostGradient(percent) }}
+              />
               <span className="boostbar__text">{formatBoost(percent)}</span>
             </span>
           </>

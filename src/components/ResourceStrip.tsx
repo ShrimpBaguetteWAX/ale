@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
 import type { Player } from '@/chain/types'
 import { NUM_LOCALE } from '@/format'
 import { asset } from '@/assets'
@@ -49,10 +50,16 @@ function Res({
   tone: 'energy' | 'gems' | 'credits'
 }) {
   const bumped = useBump(value)
+  /*
+     A link to the shop, because the question a player asks when they look at
+     one of these is "can I afford it", and the answer to "no" is bought in
+     one place. It stays a chip in how it looks — a link only in what it does.
+  */
   return (
-    <span
+    <Link
+      to="/shop"
       className={`res res--${tone}${bumped ? ' res--bumped' : ''}`}
-      title={`${label}: ${value.toLocaleString(NUM_LOCALE)}`}
+      title={`${label}: ${value.toLocaleString(NUM_LOCALE)} — get more in the Shop`}
     >
       <span className="res__inner">
         <span className="res__socket">
@@ -60,8 +67,8 @@ function Res({
         </span>
         <span className="res__value">{compact(value)}</span>
       </span>
-      <span className="sr-only">{label}</span>
-    </span>
+      <span className="sr-only">{label} - open the Shop</span>
+    </Link>
   )
 }
 

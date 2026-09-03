@@ -31,7 +31,7 @@ import { readableError } from '@/wharf/errors'
 import { formatNumber, formatDecimals } from '@/format'
 import { fighterArt, fighterArtFallback } from '@/tavern/fighterStats'
 import { asset } from '@/assets'
-import { avatarArt } from '@/account/rules'
+import { PlayerAvatar } from '@/components/PlayerAvatar'
 
 /**
  * Leaderboards.
@@ -159,39 +159,7 @@ function useBoards(account: string | null): BoardData {
 
 /* ---------- the screen ---------- */
 
-/**
- * The player, as the player chose to be seen.
- *
- * Both leaderboard tables already carried `avatar` on every row and neither
- * drew it, so a board of the best players in the game was a list of wallet
- * addresses. The avatars are unlocked by playing — each one has a permstat
- * it is earned against — which makes them worth showing precisely on the
- * screen that is about who has played the most.
- *
- * `unknown.webp` covers both a player who has never set one (the id is 0)
- * and an id this build has no art for, which is what a new avatar shipped
- * on chain before a client update looks like.
- */
-function PlayerAvatar({ id, name }: { id: number | undefined; name: string }) {
-  const unknown = asset('/assets/avatar/unknown.webp')
-  return (
-    <img
-      className="lbrow__avatar"
-      src={id ? avatarArt(id) : unknown}
-      alt=""
-      title={name}
-      loading="lazy"
-      width={34}
-      height={34}
-      onError={(e) => {
-        const img = e.currentTarget
-        if (img.dataset.fallback) return
-        img.dataset.fallback = '1'
-        img.src = unknown
-      }}
-    />
-  )
-}
+
 
 export default function Leaderboard() {
   const account = useGame((s) => s.account)

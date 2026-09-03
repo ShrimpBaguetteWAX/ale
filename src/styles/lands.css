@@ -336,8 +336,9 @@
 .boostbar__fill {
   position: absolute;
   inset: 0 auto 0 0;
+  /* Set inline from the figure; the band classes are the fallback. */
   background: var(--band);
-  opacity: 0.65;
+  opacity: 0.85;
   transition: width var(--dur) var(--ease);
 }
 

@@ -459,3 +459,19 @@
     display: none;
   }
 }
+
+/*
+ * The same face on the Account stat boards, at the size those rows run.
+ *
+ * A stat board row is a line of text with a rank on it, not the card the
+ * leaderboard draws, so the avatar sits inline with the name rather than
+ * leading a column of its own.
+ */
+.statboard__avatar {
+  width: 22px;
+  height: 22px;
+  flex: none;
+  border-radius: var(--radius-full);
+  object-fit: cover;
+  background: rgb(255 255 255 / 6%);
+}

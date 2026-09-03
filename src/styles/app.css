@@ -1322,3 +1322,17 @@
   width: 26px;
   height: 26px;
 }
+
+/*
+ * The resource chips are links now, so they must not read as ones.
+ *
+ * They lead to the shop, which is where a player who has just looked at a
+ * number and found it too small is trying to go. The chip's own colour is
+ * the whole design of it, and a browser's link colour and underline would
+ * undo that - so only the cursor gives the affordance away.
+ */
+a.res {
+  color: inherit;
+  text-decoration: none;
+  cursor: pointer;
+}

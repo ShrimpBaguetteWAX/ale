@@ -305,21 +305,33 @@ export function logCapacity(
 /**
  * How a list of tools can be ordered.
  *
- * All three are the contract's own figures: `tlm_mp` and `shrd_mp` are summed
- * separately across the bag, so a player building for Trilium and one
+ * Three of these are the contract's own figures: `tlm_mp` and `shrd_mp` are
+ * summed separately across the bag, so a player building for Trilium and one
  * building for shards are ranking the same tools differently — and the sum is
  * what matters when neither is the priority.
+ *
+ * `quality` is the ordering every other list of NFTs in the game uses, rarity
+ * then shine, and it leads because a bag of tools is a shelf of NFTs before it
+ * is a spreadsheet of mining power.
  */
 export const POWER_SORTS: { key: PowerSort; label: string }[] = [
+  { key: 'quality', label: 'Rarity & shine' },
   { key: 'combined', label: 'Combined' },
   { key: 'tlm_mp', label: 'TLM MP' },
   { key: 'shrd_mp', label: 'Shard MP' },
 ]
 
-export type PowerSort = 'combined' | 'tlm_mp' | 'shrd_mp'
+export type PowerSort = 'quality' | 'combined' | 'tlm_mp' | 'shrd_mp'
 
-/** The figure a given sort ranks on. Absent power sorts last. */
+/**
+ * The figure a given sort ranks on. Absent power sorts last.
+ *
+ * `quality` is not a question about power, so it scores every tool alike and
+ * the callers break the tie on rarity and shine — which is the whole of that
+ * ordering, and is also what every other sort here falls back to.
+ */
 export function powerScore(sort: PowerSort, p: Partial<MiningPower> | undefined): number {
+  if (sort === 'quality') return 0
   if (!p) return -1
   const tlm = Number(p.tlm_mp ?? 0)
   const shrd = Number(p.shrd_mp ?? 0)

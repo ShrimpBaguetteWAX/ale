@@ -154,17 +154,27 @@ export function fetchLiveArenas(planet: Planet) {
  */
 export async function fetchPlayerTags(): Promise<{
   tags: Record<string, string>
+  /**
+   * The face each player picked, `active_avatar`, alongside the name.
+   *
+   * Free: the same rows already carry it, so anywhere that names a player can
+   * show them as they chose to be seen without a second read.
+   */
+  avatars: Record<string, number>
   complete: boolean
 }> {
-  const res = await getRows<Pick<Player, 'wallet' | 'playertag'>>(
+  const res = await getRows<Pick<Player, 'wallet' | 'playertag'> & { active_avatar?: number }>(
     { code: CONTRACTS.players, scope: CONTRACTS.players, table: 'players', limit: 200 },
     { ttl: TTL.long, persist: true },
   )
   const tags: Record<string, string> = {}
+  const avatars: Record<string, number> = {}
   for (const row of res.rows) {
     if (row.playertag) tags[row.wallet] = row.playertag
+    const avatar = Number(row.active_avatar ?? 0)
+    if (avatar > 0) avatars[row.wallet] = avatar
   }
-  return { tags, complete: !res.more }
+  return { tags, avatars, complete: !res.more }
 }
 
 /** One wallet's playertag, for owners the bounded scan above didn't cover. */

@@ -155,6 +155,39 @@ export function formatBoost(percent: number): string {
 }
 
 /**
+ * The boost bar's colour, as a ramp rather than three steps.
+ *
+ * Red up to 30 and green from 70, blending through yellow between. The three
+ * flat bands it replaces could not show a building creeping towards trouble —
+ * everything from 51 to 80 was the same orange, so a land one maintenance
+ * cycle from being disabled looked exactly like a healthy one.
+ *
+ * Hue alone moves. Saturation and lightness are fixed, so a column of these
+ * reads as one bar changing colour rather than as several unrelated ones.
+ */
+export function boostHue(percent: number): number {
+  /* 0 at 30 and below, 1 at 70 and above — the flats the ramp sits between. */
+  const t = Math.min(1, Math.max(0, (percent - 30) / 40))
+  /* 0deg is red, 55 is yellow, 110 is green. */
+  return 110 * t
+}
+
+/**
+ * That colour as the fill's own gradient, deeper at the left edge.
+ *
+ * A flat block of colour at this height reads as a status light; the shading
+ * gives the fill a direction, which is what a bar filling up should look like.
+ */
+export function boostGradient(percent: number): string {
+  const hue = boostHue(percent)
+  return (
+    `linear-gradient(90deg,` +
+    ` hsl(${Math.max(0, hue - 16)} 78% 34%),` +
+    ` hsl(${hue} 76% 48%))`
+  )
+}
+
+/**
  * Whether a building is still usable.
  *
  * `maps.cpp` refuses to run any building whose boost has decayed to

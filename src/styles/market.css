@@ -877,3 +877,74 @@
 .sellpick__marker img {
   object-fit: contain;
 }
+
+/* The long form is the default; the symbol only stands in on a phone. */
+.qfilter__atShort {
+  display: none;
+}
+
+/*
+ * The roll-quality bar, in one row on a phone.
+ *
+ * It is five controls and a paragraph of prose, and at 375px that wrapped to
+ * four lines - a filter taller than the fighters it was filtering, sitting
+ * between the player and the roster on every visit to the screen.
+ *
+ * So the row stops wrapping and the two things that are not controls give way
+ * instead: "at least" becomes the symbol, and the note explaining why taunt
+ * and age take a number rather than an arrow drops out. The note is a reason,
+ * not an instruction - it stays on the field itself, where a screen reader
+ * still reaches it, and the desktop bar still spells it out.
+ */
+@media (max-width: 719px) {
+  .qfilter {
+    padding: var(--sp-2);
+  }
+
+  .qfilter__add {
+    flex-wrap: nowrap;
+    gap: 6px;
+  }
+
+  .qfilter__lead {
+    flex: 0 0 auto;
+    font-size: 9px;
+    letter-spacing: 0.04em;
+    line-height: 1.15;
+    /* Two short lines rather than one long one, which is the row's width. */
+    max-width: 44px;
+  }
+
+  /* The selects carry the labels, so they take what the row has spare. */
+  .qfilter__stat,
+  .qfilter__grade {
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 4px 6px;
+  }
+
+  .qfilter__num {
+    width: 52px;
+  }
+
+  .qfilter__at {
+    flex: 0 0 auto;
+  }
+
+  .qfilter__atLong {
+    display: none;
+  }
+
+  .qfilter__atShort {
+    display: inline;
+  }
+
+  .qfilter__note {
+    display: none;
+  }
+
+  .qfilter__add .btn {
+    flex: 0 0 auto;
+    padding: 4px 8px;
+  }
+}

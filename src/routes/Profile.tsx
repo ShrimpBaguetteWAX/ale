@@ -29,6 +29,8 @@ import {
 /* The same medal colours the dungeon and arena boards use. */
 import { rankClass } from '@/leaderboard/rules'
 import { landId } from '@/chain/landId'
+import { byQuality } from '@/dungeon/nftFighter'
+import { PlayerAvatar } from '@/components/PlayerAvatar'
 import { landThumbStyle } from '@/map/terrain'
 import { fetchAvatars } from '@/chain/queries'
 import { fetchMiningTools, type MiningTool } from '@/chain/atomic'
@@ -676,7 +678,8 @@ export function MiningTab({
     () => (player.mine_nfts ?? []).map(String),
   )
   const [share, setShare] = useState(Number(player.landowner_tlm_share ?? 0))
-  const [sort, setSort] = useState<PowerSort>('combined')
+  /* Rarity and shine, the way every other NFT list in the game opens. */
+  const [sort, setSort] = useState<PowerSort>('quality')
 
   useEffect(() => {
     let cancelled = false
@@ -761,15 +764,16 @@ export function MiningTab({
   const shareChanged = share !== Number(player.landowner_tlm_share ?? 0)
 
   /*
-     Strongest first. Which "strongest" depends on what the player is building
-     for — a bag for Trilium and a bag for shards rank the same tools
-     differently — so the ordering is theirs to choose. Without it a wallet of
-     dozens of tools sits in whatever order AtomicAssets returned.
+     Best first, on whichever axis the player is building for — a bag for
+     Trilium and a bag for shards rank the same tools differently — falling
+     back to rarity and shine, which is the order the tools open in and the
+     one every other list of NFTs in the game uses. Without either, a wallet
+     of dozens sits in whatever order AtomicAssets returned.
    */
   const byPower = useMemo(
     () => (a: MiningTool, b: MiningTool) =>
       powerScore(sort, powerOf(b.template_id)) -
-      powerScore(sort, powerOf(a.template_id)),
+        powerScore(sort, powerOf(a.template_id)) || byQuality(a, b),
     [powerOf, sort],
   )
 
@@ -1111,7 +1115,7 @@ function ToolCatalogue({
     return list.sort((a, b) =>
       sort === 'toolname'
         ? a.toolname.localeCompare(b.toolname)
-        : powerScore(sort, b) - powerScore(sort, a),
+        : powerScore(sort, b) - powerScore(sort, a) || byQuality(a, b),
     )
   }, [templates, query, sort, mineOnly, held])
 
@@ -1822,6 +1826,17 @@ export function StatBoardRow({
     <div className={`statline statboard__row${you ? ' statboard__row--you' : ''}`}>
       <span className="statline__k">
         <span className={`rank ${rankClass(row.rank)}`}>{row.rank}</span>
+        {/*
+          The same face the leaderboards show. These boards rank the same
+          people off the same field, and a row of wallet addresses is what the
+          avatars were unlocked to replace.
+        */}
+        <PlayerAvatar
+          id={row.avatar}
+          name={row.playertag || row.wallet}
+          className="statboard__avatar"
+          size={22}
+        />
         {row.playertag || row.wallet}
       </span>
       <span className="statline__v mono">

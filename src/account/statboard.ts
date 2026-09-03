@@ -26,6 +26,8 @@ import { TTL } from '@/chain/cache'
 export interface PlayerStats {
   wallet: string
   playertag: string
+  /** `active_avatar`: the face the player picked, or 0 for none. */
+  avatar: number
   stats: Record<string, number>
 }
 
@@ -34,6 +36,7 @@ export interface StatRank {
   rank: number
   wallet: string
   playertag: string
+  avatar: number
   value: number
 }
 
@@ -41,6 +44,7 @@ export async function fetchAllPlayerStats(refresh = false): Promise<PlayerStats[
   const rows = await getAllRows<{
     wallet: string
     playertag?: string
+    active_avatar?: number
     permstats?: { first: string; second: number }[]
   }>(
     { code: CONTRACTS.players, scope: CONTRACTS.players, table: 'players' },
@@ -58,6 +62,7 @@ export async function fetchAllPlayerStats(refresh = false): Promise<PlayerStats[
   return rows.map((r) => ({
     wallet: String(r.wallet),
     playertag: String(r.playertag ?? ''),
+    avatar: Number(r.active_avatar ?? 0),
     stats: kvToRecord(r.permstats ?? []) as Record<string, number>,
   }))
 }
@@ -79,6 +84,7 @@ export function rankBy(players: PlayerStats[], key: string): StatRank[] {
     .map((p) => ({
       wallet: p.wallet,
       playertag: p.playertag,
+      avatar: p.avatar,
       value: Number(p.stats[key] ?? 0),
     }))
     .filter((p) => p.value > 0)
