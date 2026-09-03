@@ -285,11 +285,11 @@ export default function Market() {
       const f = listingAsFighter(listing)
       setDetail({
         kind: 'panel',
-        panel: rosterPanel(f),
+        panel: rosterPanel(f, levelMod, ageDecay),
         template: classes.get(f.classname),
       })
     },
-    [classes],
+    [classes, levelMod, ageDecay],
   )
 
   return (
@@ -441,7 +441,7 @@ export default function Market() {
               onInspect={(f) =>
                 setDetail({
                   kind: 'panel',
-                  panel: rosterPanel(f),
+                  panel: rosterPanel(f, levelMod, ageDecay),
                   template: classes.get(f.classname),
                 })
               }

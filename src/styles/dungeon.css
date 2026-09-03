@@ -2551,16 +2551,31 @@
  */
 .combatcard__dormant {
   position: absolute;
-  left: 0;
-  right: 0;
   /*
-     Centred on the artwork, not on the card. The name plate is anchored to
-     the bottom and is a third of the card, so a label centred on the whole
-     thing sat on top of it once the words wrapped - which at 58px they do,
-     to three lines.
+     Overhung past both edges, the way `.combatcard__hit` is.
+
+     Un-skewing a child turns its ends into diagonals, so a band pinned to
+     left:0/right:0 met the card's own leaning edges at a point and left a
+     wedge of artwork showing at the top left and bottom right. The card
+     clips to the parallelogram, so the excess costs nothing and the band
+     reaches the edge at every height it can be.
   */
-  top: 34%;
-  transform: translateY(-50%) skewX(var(--lean-back));
+  left: -12%;
+  right: -12%;
+  /*
+     Sat on the artwork above the name plate, which is anchored to the bottom
+     and takes a third of the card - a label centred on the whole card landed
+     on top of it once the words wrapped, which at 58px they do, to three
+     lines.
+
+     Placed outright rather than centred with translateY(-50%): that offset
+     is half of whatever the wrapped label happens to measure, so it lands on
+     a half pixel about as often as not, and under the card's grayscale
+     filter half a pixel is the difference between text and a smudge. The
+     name plate below it has no such offset and has always been sharp.
+  */
+  top: 27%;
+  transform: skewX(var(--lean-back));
   padding: 4px 3px;
   font-family: var(--font-display);
   font-size: 9px;

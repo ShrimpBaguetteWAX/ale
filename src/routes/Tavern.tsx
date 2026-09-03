@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, Navigate } from 'react-router-dom'
 import { fetchOwnedTemplates, resolveAssetIds } from '@/chain/atomic'
 import { landId } from '@/chain/landId'
+import { byQuality } from '@/dungeon/nftFighter'
 import { useGame } from '@/state/useGame'
 import {
   fetchClassTemplate,
@@ -192,6 +193,8 @@ export default function Tavern() {
     return templates
       .filter((t) => owned.has(t.templateid))
       .map((t) => ({ ...t, count: owned.get(t.templateid) ?? 0 }))
+      /* Best first, the same order the fight pickers use. */
+      .sort(byQuality)
   }, [templates, owned])
 
   const byId = useMemo(

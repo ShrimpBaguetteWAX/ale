@@ -78,16 +78,46 @@ export const elementIcon = (element: string) =>
 
 /* ---------- adapters into the shared panel ---------- */
 
-export function rosterPanel(f: RosterFighter): PanelFighter {
+/**
+ * A roster fighter as the panel shows it: fielded, not stored.
+ *
+ * The numbers on the row are the roll, and nothing fights at its roll —
+ * `apply_weather_and_age` multiplies health and damage by `level_mod ^ level`
+ * and by `age_decay ^ (days²)` before the first blow. At the live 1.15 a
+ * level 7 fighter hits for two and a half times what this screen used to
+ * print, and a fortnight-old one for rather less than it. Both were being
+ * shown raw, so the detail view disagreed with the card that opened it and
+ * with the fight that followed.
+ *
+ * The grade arrows keep comparing the roll, since that is what the class
+ * bands describe — see `PanelStat.grade`.
+ */
+export function rosterPanel(
+  f: RosterFighter,
+  levelMod: number,
+  ageDecay: number,
+  now = Date.now(),
+): PanelFighter {
   const s = f.stats
+  const age = ageFactor(f.creation_date, ageDecay, now)
+  const factor = levelFactor(s.level, levelMod) * age
   return {
     classname: f.classname,
     racename: f.racename,
     element: f.element,
     target: s.target,
     level: s.level,
-    health: { min: s.health_min, max: s.health_max },
-    damage: { min: s.damage_min, max: s.damage_max },
+    age: { bonus: ageBonus(f, ageDecay, now), days: ageDays(f, now), factor: age },
+    health: {
+      min: s.health_min * factor,
+      max: s.health_max * factor,
+      grade: mid(s.health_min, s.health_max),
+    },
+    damage: {
+      min: s.damage_min * factor,
+      max: s.damage_max * factor,
+      grade: mid(s.damage_min, s.damage_max),
+    },
     taunt: { min: s.taunt_min, max: s.taunt_max },
     attackspeed: { min: s.attackspeed_min, max: s.attackspeed_max },
     initiative: { min: s.initiative_min, max: s.initiative_max },

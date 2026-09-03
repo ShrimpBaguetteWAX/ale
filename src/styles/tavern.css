@@ -583,3 +583,50 @@
   object-fit: contain;
   opacity: 0.8;
 }
+
+/*
+ * The age badge on a fighter panel.
+ *
+ * Paired with the multiplier rather than shown alone: the percentage is the
+ * badge the live game uses and it reads backwards - "+100%" is a fighter at
+ * its full roll, "0%" is one already halved - so the number the fight
+ * actually multiplies by goes beside it, where it cannot be misread.
+ *
+ * Sits opposite the name, on the same line as the level tag it explains the
+ * other half of.
+ */
+.fpanel__age {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1px;
+  margin-left: auto;
+  padding: 3px var(--sp-2);
+  border-radius: var(--radius-sm);
+  background: rgb(255 255 255 / 6%);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.fpanel__ageValue {
+  font-family: var(--font-display);
+  font-size: var(--fs-sm);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+
+.fpanel__ageNote {
+  font-size: var(--fs-xs);
+  color: var(--text-dim);
+  line-height: 1.1;
+}
+
+.fpanel__age--fresh .fpanel__ageValue {
+  color: var(--teal);
+}
+.fpanel__age--worn .fpanel__ageValue {
+  color: var(--gold);
+}
+.fpanel__age--bad .fpanel__ageValue {
+  color: var(--red);
+}

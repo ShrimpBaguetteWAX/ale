@@ -314,7 +314,8 @@ export default function Fighters() {
           credits: levelAll.credits,
           gems: levelAll.gems,
         }),
-      `Levelled ${levelAll.ids.length} fighter${levelAll.ids.length === 1 ? '' : 's'}.`,
+      `Gained ${levelAll.ids.length} level${levelAll.ids.length === 1 ? '' : 's'} ` +
+        `across ${levelAll.fighters} fighter${levelAll.fighters === 1 ? '' : 's'}.`,
     )
 
   const doLevelOne = (f: RosterFighter) => {
@@ -448,13 +449,17 @@ export default function Fighters() {
               onClick={() => void doLevelAll()}
               title={
                 levelAll.skipped
-                  ? `${levelAll.skipped} more can level, but one transaction cannot spend over 65,535 credits — press again afterwards`
-                  : 'Every fighter with enough experience banked'
+                  ? `${levelAll.skipped} more fighter${levelAll.skipped === 1 ? '' : 's'} can level, but one transaction cannot spend over 65,535 credits — press again afterwards`
+                  : `Every level banked, across ${levelAll.fighters} fighter${levelAll.fighters === 1 ? '' : 's'} — a fighter owed several takes them all`
               }
             >
               {busy === 'level-all' && <span className="spinner" />}
-              Level all ({levelAll.ids.length}
-              {levelAll.skipped ? ` of ${levelAll.ids.length + levelAll.skipped}` : ''})
+              {/*
+                The count is levels, not fighters: experience is spent a level
+                at a time and a week of fighting routinely banks three of them,
+                so counting heads promised a third of what the button does.
+              */}
+              Level all ({levelAll.ids.length})
               <Cost value={levelAll.credits} icon="credits" short={credits} />
             </button>
 

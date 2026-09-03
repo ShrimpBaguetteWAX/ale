@@ -46,25 +46,26 @@ export async function readMinedRewards(historyId: string): Promise<MinedReward[]
 
     const out: MinedReward[] = []
 
-    /* An eosio asset, already written the way the token is written. */
-    const tlm = String(row.total_tlm ?? '').split(' ')[0]
-    if (Number(tlm) > 0) out.push({ currency: 'tlm', amount: tlm })
+    /*
+       One decimal for both, whatever the token's own precision is.
+
+       TLM is written to four on chain, so a claim arrived as "12.3456 TLM" —
+       four digits of change nobody reads on a screen whose whole job is to
+       show one number and celebrate it.
+    */
+    const tlm = Number(String(row.total_tlm ?? '').split(' ')[0])
+    if (tlm > 0) out.push({ currency: 'tlm', amount: tlm.toFixed(1) })
 
     /* Shards are raw, in their own single decimal place: 1022 is 102.2. */
     const shards = Number(row.total_shards ?? 0)
     if (shards > 0) {
-      out.push({ currency: 'shrds', amount: trimZero((shards / 10).toFixed(1)) })
+      out.push({ currency: 'shrds', amount: (shards / 10).toFixed(1) })
     }
 
     if (out.length) return out
   }
 
   return []
-}
-
-/** "102.0" reads worse than "102"; "102.2" has to keep its place. */
-function trimZero(value: string): string {
-  return value.endsWith('.0') ? value.slice(0, -2) : value
 }
 
 export function MineCelebration({

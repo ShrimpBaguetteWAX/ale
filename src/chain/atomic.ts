@@ -74,6 +74,29 @@ async function pagesFrom<T>(base: string, path: string, limit = 1000): Promise<T
 }
 
 /**
+ * The first node that finds something, asked one at a time.
+ *
+ * For lookups where an empty answer is a verdict rather than a fact — "you do
+ * not own this card" — and a node that has fallen behind gives exactly that
+ * answer for something the player does own. Stops at the first hit, so the
+ * common case is still one request and only a miss pays to be sure.
+ */
+async function firstMatch<T, V>(
+  path: string,
+  pick: (res: T) => V | undefined,
+): Promise<V | undefined> {
+  for (const base of endpointsInOrder()) {
+    try {
+      const found = pick(await getFrom<T>(base, path))
+      if (found !== undefined) return found
+    } catch {
+      /* A node that cannot answer is not a node saying no. */
+    }
+  }
+  return undefined
+}
+
+/**
  * The same read against every healthy node, keeping the fullest answer.
  *
  * A node that has fallen behind does not fail — it answers, from an older
@@ -225,13 +248,26 @@ export async function resolveAssetIds(
 
   const results = await Promise.all(
     wanted.map(async (templateId) => {
-      const res = await get<{ data?: { asset_id: string }[] }>(
+      const path =
         `/atomicassets/v1/assets?owner=${encodeURIComponent(owner)}` +
-          `&collection_name=${collection}` +
-          `&template_id=${templateId}` +
-          `&limit=1&order=asc&sort=asset_id`,
+        `&collection_name=${collection}` +
+        `&template_id=${templateId}` +
+        `&limit=1&order=asc&sort=asset_id`
+
+      /*
+        Every node gets asked before this gives up on a card.
+
+        An empty answer here becomes "you no longer own this" and refuses the
+        hire or the run, so it has to mean the player really sold it — not
+        that the node answering happened to be behind. A node that has not
+        caught up yet returns no rows rather than an error, which is
+        indistinguishable from the real thing on one request and obvious
+        across several.
+      */
+      const assetId = await firstMatch<{ data?: { asset_id: string }[] }, string>(
+        path,
+        (res) => res.data?.[0]?.asset_id,
       )
-      const assetId = res.data?.[0]?.asset_id
       return assetId ? ([templateId, String(assetId)] as const) : null
     }),
   )

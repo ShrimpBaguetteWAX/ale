@@ -19,6 +19,7 @@ import {
   statIcon,
   STAT_LABEL,
 } from '@/tavern/fighterStats'
+import { ageBand, ageNote } from '@/fighters/rules'
 import { asset } from '@/assets'
 
 /**
@@ -72,6 +73,19 @@ export interface PanelFighter {
   res_nature: number
   res_neutral: number
   abilities: BattleAbility[]
+  /**
+   * How far age has eaten into the roll, when the fighter has one.
+   *
+   * The panel prints health and damage as they will be fought with, which
+   * folds level and age together into one number — and of the two only level
+   * is on the screen. A fighter whose damage is quietly a third of what the
+   * badge implies should say so where it is being judged, not only as a
+   * tooltip on the card it was picked from.
+   *
+   * Absent for anything with no birthday: the NFT fighter, a dungeon's own
+   * defenders, an unhired recruit.
+   */
+  age?: { bonus: number; days: number; factor: number }
   /** Overrides the class art — the NFT fighter has no class of its own. */
   art?: string
   /** Shown instead of the class name, for the same reason. */
@@ -288,6 +302,20 @@ export function FighterPanel({
             {fighter.subtitle ?? `${fighter.racename} · ${fighter.element}`}
           </div>
         </div>
+        {fighter.age && (
+          <span
+            className={`fpanel__age fpanel__age--${ageBand(fighter.age.bonus)}`}
+            title={ageNote(fighter.age.bonus, fighter.age.days, fighter.age.factor)}
+          >
+            <span className="fpanel__ageValue mono">
+              {fighter.age.bonus > 0 ? '+' : ''}
+              {fighter.age.bonus.toFixed(0)}%
+            </span>
+            <span className="fpanel__ageNote">
+              age · ×{fighter.age.factor.toFixed(2)}
+            </span>
+          </span>
+        )}
       </div>
 
       <FighterStats fighter={fighter} template={template} resistances={!compact} />

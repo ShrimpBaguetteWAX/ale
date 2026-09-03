@@ -1224,6 +1224,30 @@ function Result({
   const won = replay.winner === 1
   const mine = replay.fighters.filter((f) => f.team === 1)
 
+  /*
+     A win is what earns the Reward Power the pools are mined with.
+
+     The Rewards dot means "you can mine a pool", and it decides that by
+     comparing the reward power on the player row against each pool's
+     threshold — no request of its own. So the row has to be re-read first:
+     firing the check against the copy in state would ask the same question of
+     the same numbers the fight has just changed, and get the same answer.
+
+     With the row refreshed, the run that finally crossed the threshold lights
+     the dot on the victory screen rather than up to a minute later.
+  */
+  useEffect(() => {
+    if (!won) return
+    let cancelled = false
+    void (async () => {
+      await refreshPlayer({ force: true }).catch(() => {})
+      if (!cancelled) refreshChore('rewards')
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [won, refreshPlayer])
+
   /* What the chain would have written for the outcome this replay reached. */
   const expectedLog =
     replay.winner === 1

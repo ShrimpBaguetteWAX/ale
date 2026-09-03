@@ -498,10 +498,10 @@ export default function Arena() {
     (f: RosterFighter) =>
       setDetail({
         kind: 'panel',
-        panel: rosterPanel(f),
+        panel: rosterPanel(f, levelMod, ageDecay),
         template: classes.get(f.classname),
       }),
-    [classes],
+    [classes, levelMod, ageDecay],
   )
 
   const showEnemy = useCallback(

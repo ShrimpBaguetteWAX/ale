@@ -147,38 +147,98 @@ export function levelUpOf(f: RosterFighter, levels: FighterLevel[]): LevelUp {
 const COST_FIELD_MAX = 65_535
 
 /**
- * Every fighter that can level right now, with the exact bill for the batch.
+ * Every level a fighter can take right now, not only the next one.
  *
- * Capped at what the action can express: at 999 credits a level that is 65
- * fighters, and a hundred-strong roster of ready fighters would otherwise
- * build a transaction the contract refuses. `skipped` is what did not fit, so
- * the button can say to press it again.
+ * `levelup` spends the requirement rather than banking it —
+ * `experience - required_experience` — and then raises the bar to the level
+ * above's. A fighter that has been out all week routinely clears two or three
+ * of those in a row, and the button was offering one.
+ *
+ * Walking the ladder here rather than trusting the row: the fighter's own
+ * `required_experience` only describes the step it is standing on, so the
+ * second step has to be read from `levels` the way the contract reads it.
+ *
+ * Terminates on the ladder, which is ten rows — the loop stops as soon as
+ * there is no level above, and every pass spends XP it cannot get back.
+ */
+export function levelChainOf(
+  f: RosterFighter,
+  levels: FighterLevel[],
+): { steps: number; credits: number; gems: number } {
+  let level = f.stats.level
+  let xp = f.stats.experience
+  let need = f.stats.required_experience
+  let credits = 0
+  let gems = 0
+  let steps = 0
+
+  while (need > 0 && xp >= need) {
+    const next = levels.find((l) => l.level === level + 1)
+    if (!next) break
+    /* Charged for the level being left — see the note at the top of the file. */
+    const priced = levels.find((l) => l.level === level)
+
+    xp -= need
+    level += 1
+    need = next.required_experience
+    credits += priced?.unlock_cost_credits ?? 0
+    gems += priced?.unlock_cost_gem ?? 0
+    steps += 1
+  }
+
+  return { steps, credits, gems }
+}
+
+/**
+ * Every level the whole roster can take right now, with the exact bill.
+ *
+ * `ids` counts level-ups, not fighters: the action does a `require_find` and a
+ * `modify` per entry in `fighter_ids`, so the same id twice is the same
+ * fighter levelled twice, off the row the first pass has already written.
+ * One transaction, however many levels are owed.
+ *
+ * Capped at what the action can express — the two cost fields are `uint16`
+ * and checked exactly, so at 999 credits a level that is 65 levels in a
+ * transaction. A fighter is taken whole or not at all, because a count on a
+ * button that half-happens is worse than one that says press again;
+ * `skipped` is what did not fit.
  */
 export function levelAllPlan(
   roster: RosterFighter[],
   levels: FighterLevel[],
-): { ids: number[]; credits: number; gems: number; skipped: number } {
+): {
+  ids: number[]
+  credits: number
+  gems: number
+  skipped: number
+  /** How many distinct fighters those levels belong to. */
+  fighters: number
+} {
   let credits = 0
   let gems = 0
   let skipped = 0
+  let fighters = 0
   const ids: number[] = []
 
   for (const f of roster) {
-    const l = levelUpOf(f, levels)
-    if (!l.ready) continue
+    const chain = levelChainOf(f, levels)
+    if (chain.steps === 0) continue
+
     if (
-      credits + l.cost.credits > COST_FIELD_MAX ||
-      gems + l.cost.gems > COST_FIELD_MAX
+      credits + chain.credits > COST_FIELD_MAX ||
+      gems + chain.gems > COST_FIELD_MAX
     ) {
       skipped += 1
       continue
     }
-    ids.push(f.fighter_id)
-    credits += l.cost.credits
-    gems += l.cost.gems
+
+    for (let i = 0; i < chain.steps; i++) ids.push(f.fighter_id)
+    credits += chain.credits
+    gems += chain.gems
+    fighters += 1
   }
 
-  return { ids, credits, gems, skipped }
+  return { ids, credits, gems, skipped, fighters }
 }
 
 /** Every fighter worth paying, with the running total. */
