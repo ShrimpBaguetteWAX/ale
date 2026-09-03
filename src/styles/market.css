@@ -775,3 +775,64 @@
 .listingcard__age--bad em {
   color: var(--red);
 }
+
+/*
+ * Selling, as a tab.
+ *
+ * It used to be a modal, where a 260px scroll box for the fighter grid was
+ * the right call — a dialog cannot grow. On a tab it is the page that
+ * scrolls, and capping the grid would put a second scrollbar inside the first
+ * for no reason. The filters above it are what makes a long grid navigable
+ * now, which is the whole point of moving it here.
+ */
+.selltab {
+  display: grid;
+  gap: var(--sp-3);
+  margin-top: var(--sp-3);
+  /*
+     The panel is a grid, so this is a grid item, and a grid item's automatic
+     minimum size is its min-content width. The quality filter's row of
+     controls is 438px of that, so without the cap the whole tab was 464px
+     wide inside a 316px panel - and `flex-wrap` on the row never fired,
+     because nothing ever told it to be narrower.
+  */
+  min-width: 0;
+}
+
+.selltab > * {
+  min-width: 0;
+}
+
+.selltab .sellpick {
+  max-height: none;
+  overflow-y: visible;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+}
+
+/* The listing controls read as one group under the fighter being listed. */
+.selltab .field,
+.selltab .checkline,
+.selltab .marketdialog__facts,
+.selltab .hint {
+  max-width: 62ch;
+}
+
+/*
+ * The tab strip may be narrower than its tabs.
+ *
+ * `.tabs` is already a scroll container, but its tabs are `flex: none`, so
+ * its min-content width is the sum of all of them — and `.market__inner` is a
+ * grid, where an item's automatic minimum size is exactly that. So the fourth
+ * tab did not make the strip scroll, it made the strip 464px wide inside a
+ * 298px screen and pushed the page 166px sideways.
+ *
+ * `min-width: 0` lets the grid item be the width it is given, which is the
+ * condition the scroll container needed all along.
+ */
+.market__inner > * {
+  min-width: 0;
+}
+
+.market .tabs {
+  min-width: 0;
+}

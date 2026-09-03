@@ -78,7 +78,16 @@ import { asset } from '@/assets'
  * apart rather than merging them into one price column that would mean two
  * different things in two rows.
  */
-type Tab = 'auctions' | 'offers' | 'mine'
+/**
+ * Selling is a tab, not a dialog.
+ *
+ * It was a modal off a header button, which is the wrong shape twice over:
+ * choosing which of forty fighters to part with is browsing, and a modal is
+ * for a decision already made. It also meant the one screen in the game
+ * where you look hardest at your own roster was the one with no way to
+ * filter it — a flat grid of every sellable fighter, name and level only.
+ */
+type Tab = 'auctions' | 'offers' | 'mine' | 'sell'
 
 /**
  * Which readout every card is showing.
@@ -113,9 +122,8 @@ const RESISTANCES: [string, string][] = [
   ['res_neutral', 'Neutral'],
 ]
 
-/** What the sell / bid / buy dialog is doing. */
+/** What the bid / buy dialog is doing. Selling is a tab. */
 type Dialog =
-  | { kind: 'sell' }
   | { kind: 'bid'; auction: Auction }
   | { kind: 'buy'; offer: InstantOffer }
   | null
@@ -251,6 +259,7 @@ export default function Market() {
     auctions: liveAuctions.length,
     offers: liveOffers.length,
     mine: myAuctions.length + myOffers.length,
+    sell: sellable.length,
   }
 
   const run = async (key: string, fn: () => Promise<unknown>, done: string) => {
@@ -300,14 +309,6 @@ export default function Market() {
             {player.activestats.gems.toLocaleString(NUM_LOCALE)}
             <img src={asset("/assets/icons/gems.png")} alt="gems" width={18} height={18} />
           </span>
-          <button
-            type="button"
-            className="btn btn--primary"
-            onClick={() => setDialog({ kind: 'sell' })}
-            disabled={!!busy}
-          >
-            Sell a fighter
-          </button>
         </header>
 
         {error && <div className="alert alert--error">{error}</div>}
@@ -320,6 +321,7 @@ export default function Market() {
                 ['auctions', 'Auctions'],
                 ['offers', 'Buy Now'],
                 ['mine', 'My Listings'],
+                ['sell', 'Sell'],
               ] as [Tab, string][]
             ).map(([key, label]) => (
               <button
@@ -336,7 +338,7 @@ export default function Market() {
             ))}
           </div>
 
-          {tab !== 'mine' && (
+          {(tab === 'auctions' || tab === 'offers') && (
             <>
               {/*
                 Status and Sort are dropped rather than shown inert. Every
@@ -427,6 +429,29 @@ export default function Market() {
             </ListingGrid>
           )}
 
+          {tab === 'sell' && (
+            <SellTab
+              sellable={sellable}
+              classes={classes}
+              ageDecay={ageDecay}
+              config={config}
+              player={player}
+              busy={busy === 'list'}
+              onList={(fighterId, startPrice, keep_) =>
+                void run(
+                  'list',
+                  () =>
+                    addAuction(session!, {
+                      fighterId,
+                      startPrice,
+                      keepAfterAuction: keep_,
+                    }),
+                  'Listed. It runs for the next two days.',
+                )
+              }
+            />
+          )}
+
           {tab === 'mine' && (
             <MyListings
               auctions={myAuctions}
@@ -454,27 +479,6 @@ export default function Market() {
         </section>
       </div>
 
-      {dialog?.kind === 'sell' && (
-        <SellDialog
-          sellable={sellable}
-          config={config}
-          player={player}
-          busy={busy === 'list'}
-          onClose={() => setDialog(null)}
-          onList={(fighterId, startPrice, keep_) =>
-            void run(
-              'list',
-              () =>
-                addAuction(session!, {
-                  fighterId,
-                  startPrice,
-                  keepAfterAuction: keep_,
-                }),
-              'Listed. It runs for the next two days.',
-            )
-          }
-        />
-      )}
 
       {dialog?.kind === 'bid' && (
         <BidDialog
@@ -1203,23 +1207,40 @@ export function BuyDialog({
   )
 }
 
-export function SellDialog({
+export function SellTab({
   sellable,
+  classes,
+  ageDecay,
   config,
   player,
   busy,
-  onClose,
   onList,
 }: {
   sellable: RosterFighter[]
+  /* The class bands, so the roll-quality rules have something to grade. */
+  classes: Map<string, ClassTemplate>
+  ageDecay: number
   config: MarketConfig | undefined
   player: ReturnType<typeof useGame.getState>['player']
   busy: boolean
-  onClose: () => void
   onList: (fighterId: number, startPrice: number, keep: boolean) => void
 }) {
   const minStart = Number(config?.gems_min_start_bid ?? 0)
   const [pickedId, setPickedId] = useState<number | null>(null)
+
+  /*
+     Its own filter, not the board’s.
+
+     The tabs either side are filtering other people’s listings; this one is
+     filtering your roster, and the two answer different questions with the
+     same controls. Sharing one state would mean picking a fighter to sell
+     re-sorted the auction board behind it.
+  */
+  const [filter, setFilter] = useState<RosterFilter>({ ...EMPTY_FILTER })
+  const shown = useMemo(
+    () => applyFilter(sellable, filter, ageDecay, Date.now(), classes),
+    [sellable, filter, ageDecay, classes],
+  )
   const [price, setPrice] = useState(minStart)
   const [keep, setKeep] = useState(true)
 
@@ -1230,7 +1251,7 @@ export function SellDialog({
   const hours = Math.round(Number(config?.standard_duration_minutes ?? 0) / 60)
 
   return (
-    <Backdrop title="Sell a fighter" onClose={onClose}>
+    <div className="selltab">
       {sellable.length === 0 ? (
         <p className="faint">
           None of your fighters can be listed right now. A fighter has to be
@@ -1238,8 +1259,14 @@ export function SellDialog({
         </p>
       ) : (
         <>
+          <RosterFilters filter={filter} onChange={setFilter} roster={sellable} />
+          <QualityFilters filter={filter} onChange={setFilter} />
+
+          {shown.length === 0 ? (
+            <p className="faint">No fighter you can sell matches these filters.</p>
+          ) : (
           <div className="sellpick">
-            {sellable.map((f) => (
+            {shown.map((f) => (
               <button
                 type="button"
                 key={f.fighter_id}
@@ -1259,6 +1286,7 @@ export function SellDialog({
               </button>
             ))}
           </div>
+          )}
 
           <label className="field">
             <span className="field__label">Starting bid (min {minStart})</span>
@@ -1333,7 +1361,7 @@ export function SellDialog({
           </button>
         </>
       )}
-    </Backdrop>
+    </div>
   )
 }
 

@@ -27,6 +27,7 @@ import Dungeon from '../src/routes/Dungeon'
 import Profile from '../src/routes/Profile'
 import Leaderboard from '../src/routes/Leaderboard'
 import Ascension from '../src/routes/Ascension'
+import Market from '../src/routes/Market'
 import { useGame } from '../src/state/useGame'
 import { fetchConfig } from '../src/chain/queries'
 
@@ -92,6 +93,7 @@ createRoot(document.getElementById('root')!).render(
           <Route path="/profile" element={<Profile />} />
           <Route path="/leaderboard" element={<Leaderboard />} />
           <Route path="/ascension" element={<Ascension />} />
+          <Route path="/market" element={<Market />} />
           <Route path="*" element={<div className="panel">Not in this harness.</div>} />
         </Route>
       </Routes>
