@@ -2263,3 +2263,115 @@
     font-size: var(--fs-xs);
   }
 }
+
+/*
+ * The difficulty wheel.
+ *
+ * A scroll-snapping strip that reads whatever is under the marker.
+ *
+ * The half-width spacers that let step 1 and step 20 reach the middle are
+ * padding on the track, and the track is a grid rather than a flex row.
+ * Both details are load-bearing. As pseudo-element spacers in a flex row the
+ * percentage resolved against the flex container, the flex container sized
+ * itself to its content, and the two agreed on 960px - which is the width of
+ * twenty notches, and 647px wider than the phone. As padding it resolves
+ * against the parent, which is a plain block of known width; and grid is what
+ * makes the browser honour the trailing half, which flex scroll containers
+ * drop.
+ */
+.difficulty__wheel {
+  position: relative;
+  margin-top: var(--sp-3);
+}
+
+.difficulty__track {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 48px;
+  box-sizing: border-box;
+  width: 100%;
+  padding-inline: calc(50% - 24px);
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+}
+
+.difficulty__track::-webkit-scrollbar {
+  display: none;
+}
+
+.difficulty__notch {
+  height: 44px;
+  scroll-snap-align: center;
+  font-family: var(--font-display);
+  font-size: var(--fs-md);
+  font-weight: var(--fw-bold);
+  color: var(--text-faint);
+  background: none;
+  border: 0;
+  cursor: pointer;
+  transition:
+    color var(--dur-fast) var(--ease),
+    transform var(--dur-fast) var(--ease);
+}
+
+/*
+ * The one under the marker. Larger as well as brighter: on a strip the eye
+ * finds size before colour, and the marker frame alone reads as a slot the
+ * numbers pass through rather than as the answer.
+ */
+.difficulty__notch[aria-checked='true'] {
+  color: #2a0910;
+  transform: scale(1.05);
+}
+
+.difficulty__notch[aria-checked='false'] + .difficulty__notch[aria-checked='false'] {
+  color: var(--text-faint);
+}
+
+.difficulty__marker {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: 48px;
+  height: 100%;
+  transform: translateX(-50%);
+  background: linear-gradient(180deg, #ff8a5c, #e0344f);
+  border: 1px solid #ff9d78;
+  border-radius: var(--radius-xs);
+  pointer-events: none;
+  z-index: -1;
+}
+
+:root[data-fx='low'] .difficulty__track {
+  scroll-behavior: auto;
+}
+
+/*
+ * The wheel must be allowed to be narrower than its contents.
+ *
+ * `.dungeon__inner` is a grid, and a grid item's automatic minimum size is
+ * its min-content width - so a panel containing a 960px strip asked for a
+ * 960px column and got it, and the page grew 647px past the phone. The
+ * scroll container is exactly the case that rule exists to protect and
+ * exactly the case that does not want it.
+ */
+.dungeon__inner > * {
+  min-width: 0;
+}
+
+.difficulty__wheel,
+.difficulty__track {
+  min-width: 0;
+}
+
+/*
+ * "This dungeon has no team standing" is a sentence, not a fighter.
+ *
+ * The row is six equal columns and the message was landing in one of them,
+ * which on a phone is 46px - a word per line, and most of them hyphenated.
+ */
+.versus__row > p {
+  grid-column: 1 / -1;
+}

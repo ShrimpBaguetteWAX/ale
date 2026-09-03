@@ -1006,6 +1006,114 @@ export default function Dungeon() {
 
 /* ---------- difficulty ---------- */
 
+/**
+ * Twenty difficulties as a wheel rather than twenty buttons.
+ *
+ * As buttons they are a 44px grid, and on a phone that is four rows and
+ * 200px of panel spent on one number - more room than the line-up it is
+ * setting the difficulty for. They are also a poor fit for buttons: this is
+ * one ordinal value, not twenty independent choices, and a player moves
+ * through it by degrees rather than jumping to 17.
+ *
+ * So it scrolls, snaps, and reads whatever is under the marker. A flick
+ * covers the range, a tap still picks an exact step for anyone who knows
+ * which one they want, and the whole control is one row.
+ */
+function DifficultyWheel({
+  value,
+  onChange,
+}: {
+  value: number
+  onChange: (n: number) => void
+}) {
+  const track = useRef<HTMLDivElement | null>(null)
+  const settling = useRef<number | null>(null)
+
+  /*
+     Bring the selected step under the marker.
+
+     `scrollIntoView` would do this in one line and would also scroll the
+     page to reach it, which on a phone means the panel jumps up the screen
+     every time the difficulty changes. Setting `scrollLeft` moves only the
+     strip.
+  */
+  useEffect(() => {
+    const el = track.current
+    if (!el) return
+    const step = el.children[value - 1] as HTMLElement | undefined
+    if (!step) return
+    const target = step.offsetLeft + step.offsetWidth / 2 - el.clientWidth / 2
+    /* Already there: a scroll started by the finger must not be fought. */
+    if (Math.abs(el.scrollLeft - target) < 2) return
+    /*
+       Assigned rather than `scrollTo({ behavior: ‘smooth’ })`, which is
+       animated on a frame timer and therefore does nothing at all when
+       frames are not being served — a background tab, a hidden pane, a
+       phone that has throttled the page. It ended at 0 every time in the
+       harness. The flick has the browser’s own snap animation; this is the
+       correction after a tap, and instant is the right answer for that
+       anyway.
+    */
+    el.scrollLeft = target
+  }, [value])
+
+  useEffect(
+    () => () => {
+      if (settling.current) window.clearTimeout(settling.current)
+    },
+    [],
+  )
+
+  /* Whichever step is nearest the middle when the strip stops moving. */
+  const settle = () => {
+    const el = track.current
+    if (!el) return
+    const centre = el.scrollLeft + el.clientWidth / 2
+    let best = value
+    let bestGap = Infinity
+    for (let i = 0; i < el.children.length; i++) {
+      const c = el.children[i] as HTMLElement
+      const gap = Math.abs(c.offsetLeft + c.offsetWidth / 2 - centre)
+      if (gap < bestGap) {
+        bestGap = gap
+        best = i + 1
+      }
+    }
+    if (best !== value) onChange(best)
+  }
+
+  return (
+    <div className="difficulty__wheel">
+      <div
+        className="difficulty__track"
+        ref={track}
+        role="radiogroup"
+        aria-label="Difficulty"
+        onScroll={() => {
+          if (settling.current) window.clearTimeout(settling.current)
+          settling.current = window.setTimeout(settle, 110)
+        }}
+      >
+        {DIFFICULTIES.map((d) => (
+          <button
+            type="button"
+            key={d}
+            role="radio"
+            aria-checked={d === value}
+            className="difficulty__notch"
+            onClick={() => onChange(d)}
+          >
+            {d}
+          </button>
+        ))}
+      </div>
+
+      {/* Where the value is read, so the strip has a place to stop. */}
+      <span className="difficulty__marker" aria-hidden="true" />
+    </div>
+  )
+}
+
 function DifficultyPicker({
   value,
   onChange,
@@ -1019,6 +1127,8 @@ function DifficultyPicker({
   xpPerDifficulty: number
   nftMinDifficulty: number
 }) {
+  const phone = usePhone()
+
   return (
     <section className="panel difficulty">
       <div className="panel__title">
@@ -1028,20 +1138,24 @@ function DifficultyPicker({
           {rewardAt(value).toFixed(2)} · {xpFor(value, xpPerDifficulty)} XP
         </span>
       </div>
-      <div className="difficulty__row" role="radiogroup" aria-label="Difficulty">
-        {DIFFICULTIES.map((d) => (
-          <button
-            type="button"
-            key={d}
-            role="radio"
-            aria-checked={d === value}
-            className="difficulty__step"
-            onClick={() => onChange(d)}
-          >
-            {d}
-          </button>
-        ))}
-      </div>
+      {phone ? (
+        <DifficultyWheel value={value} onChange={onChange} />
+      ) : (
+        <div className="difficulty__row" role="radiogroup" aria-label="Difficulty">
+          {DIFFICULTIES.map((d) => (
+            <button
+              type="button"
+              key={d}
+              role="radio"
+              aria-checked={d === value}
+              className="difficulty__step"
+              onClick={() => onChange(d)}
+            >
+              {d}
+            </button>
+          ))}
+        </div>
+      )}
       {value >= nftMinDifficulty && (
         <p className="hint">
           From difficulty {nftMinDifficulty} the dungeon fields its own NFT fighter
