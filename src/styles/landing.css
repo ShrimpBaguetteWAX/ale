@@ -7,8 +7,58 @@
  * page. Here the artwork carries through behind everything.
  */
 
+/*
+ * No background of its own, deliberately.
+ *
+ * The art below is a negative-z-index child, and a negative-z-index child
+ * paints *behind* its parent's background — so a colour here hid the
+ * illustration completely. `body` already carries the navy, which is the
+ * fallback a slow or failed load wants anyway, and it paints first.
+ */
 .landing {
+  position: relative;
   min-height: 100dvh;
+}
+
+/*
+ * The page's one illustration, fixed behind everything.
+ *
+ * It used to be the hero's alone, with the sections carrying a ground of
+ * their own underneath — which is what created a boundary to solve in the
+ * first place. There is no boundary now: the art is pinned to the viewport
+ * and the whole page scrolls over it.
+ *
+ * A real <img> rather than a CSS background so it can take a priority hint;
+ * `fixed` on the element rather than `background-attachment: fixed`, which
+ * mobile Safari has never handled and which repaints the whole surface on
+ * every scroll frame where it does work.
+ */
+.landing__art {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  z-index: -2;
+}
+
+/*
+ * Legibility floor over a busy, bright illustration.
+ *
+ * Also fixed, so it stays with the art it is darkening: a scrim that scrolls
+ * away leaves the copy at the bottom of the page sitting on raw jungle.
+ * Heavier at the foot than the head because the hero's logo and button have
+ * the middle to themselves, while everything below is prose.
+ */
+.landing__scrim {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 60% 45% at 50% 40%, rgb(5 16 30 / 45%), transparent 70%),
+    linear-gradient(180deg, rgb(5 16 30 / 40%) 0%, rgb(5 16 30 / 20%) 28%, rgb(5 16 30 / 72%) 100%);
 }
 
 /* ---------- Hero ---------- */
@@ -19,43 +69,15 @@
   min-height: 100svh;
   display: grid;
   place-items: center;
-  /* The last value carries the overlap the sections are pulled up by, so
-     the chevron still has the hero to itself. */
-  padding: var(--sp-16) var(--sp-5) calc(var(--sp-20) + 14vh);
+  padding: var(--sp-16) var(--sp-5) var(--sp-20);
   text-align: center;
+  /*
+     The logo's effect canvas is drawn wider than the logo on purpose, and
+     this is what keeps it off the page's scroll width — without it a phone
+     gets 39px of horizontal scroll to nowhere. Safe now that the artwork is
+     a fixed sibling rather than a child.
+  */
   overflow: hidden;
-}
-
-/*
- * Key art as a real <img> rather than a CSS background, so it can be
- * decoded async and marked high priority. A 370KB JPEG behind
- * `background-image` blocks nothing but also gets no priority hint.
- */
-.hero__art {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center;
-  z-index: 0;
-}
-
-/*
- * Legibility floor for the logo and button over a busy, bright image.
- *
- * It used to finish at 85% black, which left the section curve below nothing
- * to cut across — a dark shape rising out of a dark bottom is a shape nobody
- * can see. Bottoming out lighter keeps the artwork alive where the sweep
- * crosses it, and the section carries the rest of the way down.
- */
-.hero__scrim {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  background:
-    radial-gradient(ellipse 60% 45% at 50% 52%, rgb(5 16 30 / 55%), transparent 70%),
-    linear-gradient(180deg, rgb(5 16 30 / 35%) 0%, transparent 30%, rgb(5 16 30 / 55%) 100%);
 }
 
 .hero__inner {
@@ -96,17 +118,11 @@
   text-shadow: 0 1px 6px rgb(0 0 0 / 90%);
 }
 
-/*
- * Scroll affordance — the original's "LEARN MORE" chevron.
- *
- * Absolutely positioned, so the hero's bottom padding does not move it: it
- * has to clear the section overlap itself, or it sits under the first slab
- * of copy pointing at nothing.
- */
+/* Scroll affordance — the original's "LEARN MORE" chevron. */
 .hero__more {
   position: absolute;
   left: 50%;
-  bottom: calc(var(--sp-6) + 14vh);
+  bottom: var(--sp-6);
   transform: translateX(-50%);
   z-index: 2;
   display: grid;
@@ -146,54 +162,16 @@
 /* ---------- Content sections ---------- */
 
 /*
- * The dark ground rises out of the key art on a curve.
+ * Transparent: the page has one background and this is not it.
  *
- * The hero ended at a flat edge and this began at another, so the page had a
- * ruled line straight across it at exactly the height of the viewport — the
- * two darks either side are close enough that the seam was the only thing
- * announcing it, which is what made it look like a mistake rather than a
- * boundary.
- *
- * The live site has no boundary to announce: one illustration runs on, and
- * the dark sweeps in from the right and down across it, with the copy sitting
- * on the dark. Same idea here — the section is pulled up over the foot of the
- * hero and its top-left corner is rounded away on a long, shallow ellipse, so
- * the art carries over the top of it on the left and the ground is at full
- * height by the right.
+ * This carried a ground of its own — first the footer artwork, then a flat
+ * colour, with a curve between it and the hero to hide where one stopped and
+ * the other started. With a single illustration fixed behind the whole page
+ * there is nothing to hide and nothing to join: the copy sits on the art, and
+ * each slab brings the only darkness it needs.
  */
 .sections {
   position: relative;
-  z-index: 1;
-  margin-top: -14vh;
-  border-top-left-radius: 100% 14vh;
-  /*
-     Flat, not textured.
-
-     The footer artwork used to sit over this at 16%, which was enough to
-     read as a photograph behind the copy without being enough to read as
-     anything — a faint picture of nothing. The ground below the sweep is one
-     colour now, and the key art above the sweep is the only artwork the
-     section has to carry.
-  */
-  background: #0f1220;
-  /* So the curve clips whatever sits on it. */
-  overflow: hidden;
-}
-
-/* A shallower sweep on a phone, where 14vh of curve is a lot of nothing. */
-@media (max-width: 719px) {
-  .sections {
-    margin-top: -7vh;
-    border-top-left-radius: 100% 7vh;
-  }
-
-  .hero {
-    padding-bottom: calc(var(--sp-20) + 7vh);
-  }
-
-  .hero__more {
-    bottom: calc(var(--sp-6) + 7vh);
-  }
 }
 
 .sections__inner {

@@ -74,19 +74,28 @@ export function Landing() {
 
   return (
     <div className="landing">
+      {/*
+        One illustration behind the whole page, not one per section.
+
+        The hero used to carry its own art and the sections their own ground,
+        which is what put a boundary between them — first a hard line, then a
+        curve to disguise it. There is nothing to disguise if there is only
+        one image: it is fixed behind everything and the page scrolls over it.
+
+        Still an <img> rather than a CSS background, and still first in the
+        document: this is the first paint, so it keeps the priority hint that
+        a background-image cannot be given.
+      */}
+      <img
+        {...HIGH_PRIORITY}
+        className="landing__art"
+        src={asset('/assets/background/bg-ale.png')}
+        alt=""
+        decoding="async"
+      />
+      <div className="landing__scrim" />
+
       <header className="hero">
-        {/*
-          fetchPriority high + eager: this image *is* the first paint, so
-          letting the browser deprioritise it would be exactly wrong.
-        */}
-        <img
-          {...HIGH_PRIORITY}
-          className="hero__art"
-          src={asset("/assets/background/bg-catch-and-conquer.jpeg")}
-          alt=""
-          decoding="async"
-        />
-        <div className="hero__scrim" />
 
         <div style={{ position: 'absolute', top: 16, right: 16, zIndex: 3 }}>
           <NetworkStatus />
