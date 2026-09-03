@@ -97,7 +97,7 @@ export function Landing() {
             {account ? (
               <SwitchWallet />
             ) : (
-              'Play with Anchor or MyCloudWallet. Free to browse.'
+              'Play with Anchor or MyCloudWallet.'
             )}
           </p>
         </div>
