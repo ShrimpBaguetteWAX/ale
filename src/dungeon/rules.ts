@@ -71,6 +71,29 @@ export function scaleEnemies(
  */
 export const NFT_FIGHTER_ID = 99999999999
 
+/**
+ * A defending line with its ids made numbers.
+ *
+ * `fighter_id` is a `uint64`, and the node hands back the ones that fit in
+ * 32 bits as JSON numbers and the ones that do not as strings. Every real
+ * fighter is a small number; the NFT fighter is 99999999999, so it is the
+ * one id in the game that arrives as `"99999999999"` — and `=== ` against
+ * it was therefore false everywhere.
+ *
+ * Which meant the dungeon’s NFT fighter was never recognised: it was not
+ * filtered out below its minimum difficulty, so it stood in every line-up
+ * and counted towards the strength bar at difficulty 1; and it got neither
+ * its badge, its art, nor its name, so it drew as a nameless "Fighter".
+ *
+ * Fixed here rather than at each comparison, because there are a dozen of
+ * those and they are all one `===` away from being wrong again.
+ */
+export function withNumericIds<T extends { fighter_id: number }>(fighters: T[]): T[] {
+  return fighters.map((f) =>
+    typeof f.fighter_id === 'number' ? f : { ...f, fighter_id: Number(f.fighter_id) },
+  )
+}
+
 /** The enemy line-up at a difficulty, before scaling. */
 export function enemiesAt(
   fighters: BattleFighter[],

@@ -2518,3 +2518,56 @@
     height: 14px;
   }
 }
+
+/*
+ * A defender that is on the card but not in the fight.
+ *
+ * The dungeon's own NFT fighter only joins from a difficulty the contract
+ * sets. Below it the card was dropped from the row entirely, which tells a
+ * player nothing — and specifically not that the dungeon has a sixth fighter
+ * waiting a few difficulties up, which is exactly the thing worth knowing
+ * while choosing one.
+ *
+ * Greyed and dimmed so it reads as inactive at a glance, with the reason
+ * written across it. Its numbers stay legible: they are what the fighter will
+ * bring when it does join.
+ */
+.combatcard--dormant {
+  border-style: dashed;
+  border-color: var(--line-soft);
+}
+
+.combatcard--dormant .combatcard__art {
+  filter: grayscale(1);
+  opacity: 0.45;
+}
+
+.combatcard--dormant .combatcard__plate {
+  opacity: 0.75;
+}
+
+.combatcard__dormant {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 46%;
+  padding: 3px 4px;
+  font-family: var(--font-display);
+  font-size: 9px;
+  line-height: 1.2;
+  letter-spacing: 0.02em;
+  text-align: center;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  background: rgb(5 16 30 / 88%);
+  border-top: 1px solid var(--line-soft);
+  border-bottom: 1px solid var(--line-soft);
+  /* Sits outside the counter-skewed content, so it needs its own. */
+  transform: skewX(var(--lean-back));
+}
+
+@media (min-width: 720px) {
+  .combatcard__dormant {
+    font-size: 10px;
+  }
+}

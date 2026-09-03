@@ -14,7 +14,7 @@ import {
   fetchRoster,
   randomHistoryId,
 } from '@/dungeon/queries'
-import { fighterAvailable } from '@/dungeon/rules'
+import { fighterAvailable, withNumericIds } from '@/dungeon/rules'
 import { EMPTY_FILTER, type RosterFilter } from '@/dungeon/filters'
 import {
   battleAsFlat,
@@ -221,7 +221,7 @@ export default function Arena() {
   const enemies = useMemo(
     () =>
       applyArenaPower(
-        (arena?.fighters ?? []).map((f) =>
+        withNumericIds(arena?.fighters ?? []).map((f) =>
           /* Weather, then level and age, then the arena's own power — the
              order `fight()` runs them in, and not interchangeable: the
              weather percentage compounds with the level curve rather than

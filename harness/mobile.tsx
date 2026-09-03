@@ -61,9 +61,14 @@ useGame.setState({
   player: {
     wallet: '5thba.wam',
     playertag: 'Harness',
-    planet: 'magor',
-    x: 21,
-    y: 16,
+    /*
+       Overridable, so a screen can be opened standing somewhere that has
+       the data it is about: `?planet=kavian&x=10&y=5` is a dungeon with a
+       team defending it, which magor 21,16 is not.
+    */
+    planet: params.get('planet') || 'magor',
+    x: Number(params.get('x') ?? 21),
+    y: Number(params.get('y') ?? 16),
     activestats: { action_points: 480, credits: 1204500, gems: 86200, energy: 3400 },
     played_dungeons: [],
     /* Read directly by the map and the shell, so they cannot be absent. */

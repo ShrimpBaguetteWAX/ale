@@ -376,6 +376,7 @@ export function CombatCard({
   abilities,
   owner,
   onOpen,
+  dormant,
 }: {
   element: string
   classname: string
@@ -407,6 +408,16 @@ export function CombatCard({
    */
   owner?: string
   onOpen: () => void
+  /**
+   * Why this fighter is on the card but not in the fight.
+   *
+   * The dungeon’s own NFT fighter only joins from a difficulty the
+   * contract sets, and below it the card used to be dropped from the row
+   * altogether — which tells a player nothing, and specifically not that
+   * the dungeon has a sixth fighter waiting three difficulties up. Shown
+   * greyed with the reason on it instead.
+   */
+  dormant?: string
 }) {
   /*
      On a phone the ability counts move out from under the card and sit
@@ -470,7 +481,7 @@ export function CombatCard({
         parallelogram fills it exactly, by construction.
       */}
       <div
-        className={`combatcard combatcard--${side}`}
+        className={`combatcard combatcard--${side}${dormant ? ' combatcard--dormant' : ''}`}
         style={{ backgroundImage: `url('${elementBackground(element)}')` }}
       >
       <button
@@ -503,6 +514,7 @@ export function CombatCard({
             />
           )}
           {badge && <span className="combatcard__badge">{badge}</span>}
+          {dormant && <span className="combatcard__dormant">{dormant}</span>}
           {level !== undefined && level > 0 && (
             <span className="combatcard__level">L{level}</span>
           )}

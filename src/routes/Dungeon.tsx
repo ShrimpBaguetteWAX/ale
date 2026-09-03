@@ -18,6 +18,7 @@ import {
 import {
   DIFFICULTIES,
   NFT_FIGHTER_ID,
+  withNumericIds,
   canRun,
   enemiesAt,
   fighterAvailable,
@@ -145,7 +146,7 @@ export default function Dungeon() {
         setRoster(r)
         setCrewCards(cards.crew)
         setWeaponCards(cards.weapons)
-        setEnemyTeam(dungeon?.fighters ?? [])
+        setEnemyTeam(withNumericIds(dungeon?.fighters ?? []))
         setDifMods(mods)
         setNftValues(nfts)
         setClasses(temps)
@@ -191,18 +192,34 @@ export default function Dungeon() {
     }
   }, [planet, land])
 
-  const enemies = useMemo(() => {
+  /*
+     The whole defending team, including the NFT fighter that has not
+     joined yet. Drawn, not fought: `enemies` below is the line that
+     actually fights, and everything that compares the two sides reads
+     that one.
+  */
+  const enemyLine = useMemo(() => {
     if (!enemyTeam) return []
     return scaleEnemies(
       /* Weather first, then the difficulty scaling — `apply_weather_and_age`
          runs before the level curve and the two do not commute. */
-      enemiesAt(enemyTeam, difficulty, nftMinDifficulty).map((f) =>
-        applyWeather(f, weather, caps),
-      ),
+      enemyTeam.map((f) => applyWeather(f, weather, caps)),
       difficulty,
       difMods,
     )
-  }, [enemyTeam, difficulty, difMods, nftMinDifficulty, weather, caps])
+  }, [enemyTeam, difficulty, difMods, weather, caps])
+
+  /*
+     Who is actually in the fight at this difficulty.
+
+     The strength bar, the matchup table, the ability counts and auto-pick
+     all read this rather than the line above, because a fighter that will
+     not swing is not part of what the player is up against.
+  */
+  const enemies = useMemo(
+    () => enemiesAt(enemyLine, difficulty, nftMinDifficulty),
+    [enemyLine, difficulty, nftMinDifficulty],
+  )
 
   /*
      How every fighter in the roster stands against this particular line-up.
@@ -670,7 +687,7 @@ export default function Dungeon() {
             </header>
 
             <div className="versus__row">
-              {enemies.map((f, i) => (
+              {enemyLine.map((f, i) => (
                 <CombatCard
                   key={`${f.fighter_id}-${i}`}
                   element={f.element}
@@ -685,7 +702,18 @@ export default function Dungeon() {
                   health={f.health}
                   damage={f.damage}
                   side="enemy"
+                  /*
+                     `enemySlots` is index-aligned with the fighting line,
+                     and the dormant one is always last — so an index past
+                     the end simply has no counts, which is what it should
+                     have: it is not in this fight to have a matchup with.
+                  */
                   abilities={picked.length ? enemySlots[i] : undefined}
+                  dormant={
+                    f.fighter_id === NFT_FIGHTER_ID && difficulty < nftMinDifficulty
+                      ? `Joins at difficulty ${nftMinDifficulty}`
+                      : undefined
+                  }
                   onOpen={() => showEnemy(f)}
                 />
               ))}
