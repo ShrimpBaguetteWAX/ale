@@ -618,13 +618,16 @@
   height: 26px;
   object-fit: contain;
 }
-/* Dim the illustrated icons until active, so the current tab reads first. */
-.tab img {
-  filter: grayscale(0.7) brightness(0.85);
-}
-.tab[aria-current='page'] img {
-  filter: none;
-}
+/*
+ * The icons keep their own colour whether or not their tab is the current
+ * one; the label is what marks it.
+ *
+ * They were greyed out until active, on the theory that the current tab
+ * should read first. It does - it is the one in cyan - and desaturating the
+ * other four bought that at the cost of the thing the icons are for, which
+ * is being recognised at a glance without reading the word under them. A
+ * grey sword and a grey scroll are the same icon from a metre away.
+ */
 
 /* ---------- "More" sheet ---------- */
 
