@@ -1429,3 +1429,75 @@
     height: 15px;
   }
 }
+
+/* ---------- clearing the map ---------- */
+
+/*
+ * The control that puts the map's furniture away, and the state it produces.
+ *
+ * Phone only. A wide screen has room for the controls and the terrain at the
+ * same time; 390 by 640 does not, and the three occupied corners are most of
+ * what a player sees when they are trying to read where to go next.
+ */
+.mapbare {
+  display: none;
+}
+
+@media (max-width: 719px) {
+  .mapbare {
+    position: absolute;
+    right: var(--sp-3);
+    top: var(--sp-3);
+    z-index: 4;
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    color: var(--text-dim);
+    background: linear-gradient(180deg, #16203a, #0a1222);
+    border: 1px solid var(--line-bright);
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow);
+    cursor: pointer;
+  }
+
+  .mapbare svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .mapbare[aria-pressed='true'] {
+    color: var(--white);
+    border-color: var(--cyan);
+  }
+
+  /* The rest of the column moves down to make room for it. */
+  .legendbtn {
+    top: calc(var(--sp-3) + 46px);
+  }
+
+  .findme {
+    top: calc(var(--sp-3) + 92px);
+  }
+
+  .mapstage__zoom {
+    top: calc(var(--sp-3) + 138px);
+  }
+
+  .legendpop {
+    top: calc(var(--sp-3) + 88px);
+  }
+
+  /*
+     Cleared. The tile card stays — it is the action, not the furniture — and
+     so does the prompt to enter whatever is under your feet.
+  */
+  .mapview--bare .planetbar,
+  .mapview--bare .legendbtn,
+  .mapview--bare .legendpop,
+  .mapview--bare .findme,
+  .mapview--bare .mapstage__zoom {
+    display: none;
+  }
+}

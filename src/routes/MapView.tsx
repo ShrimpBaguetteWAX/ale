@@ -160,6 +160,20 @@ export default function MapView() {
   const [travelError, setTravelError] = useState<string | null>(null)
   const [legendOpen, setLegendOpen] = useState(false)
   /*
+     Everything over the map, out of the way.
+
+     A phone gives the map about 390 by 640, and the controls sit in three of
+     its four corners. They are all worth having and none of them is worth
+     having while a player is trying to read the terrain, so this puts the lot
+     away — the planet panel, the legend, Find me and the zoom pair — and
+     leaves the map, the tile they tapped, and the way back.
+
+     Not persisted, and not offered on desktop: it answers "let me look at
+     this for a second", which is a thing you do rather than a preference you
+     hold, and a wide screen has room for both.
+  */
+  const [bare, setBare] = useState(false)
+  /*
      The planet strip, collapsed to the planet being viewed until asked.
 
      Six cards across the top is a lot of map to cover for a control used a
@@ -684,7 +698,7 @@ export default function MapView() {
   )
 
   return (
-    <div className="mapview">
+    <div className={`mapview${bare ? ' mapview--bare' : ''}`}>
       <div className="mapwrap">
         <MapCanvas
           mapSrc={planetMapSrc(planet)}
@@ -748,6 +762,39 @@ export default function MapView() {
               </button>
             </div>
           </div>
+
+          {/*
+            Stays put when everything else goes, because it is the only way
+            back. Head of the column rather than the foot of it: it governs
+            the controls below it, and when they are gone this is where a
+            player looks for them.
+          */}
+          <button
+            type="button"
+            className="mapbare"
+            aria-pressed={bare}
+            onClick={() => {
+              setBare((v) => !v)
+              /* A popover left open over a hidden legend button is a panel
+                 with nothing to close it. */
+              setLegendOpen(false)
+            }}
+            title={bare ? 'Show the map controls' : 'Hide the map controls'}
+            aria-label={bare ? 'Show the map controls' : 'Hide the map controls'}
+          >
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path
+                d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12Z"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinejoin="round"
+              />
+              <circle cx="12" cy="12" r="2.6" stroke="currentColor" strokeWidth="1.8" />
+              {bare && (
+                <path d="M4 20 20 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+              )}
+            </svg>
+          </button>
 
           <button
             type="button"
