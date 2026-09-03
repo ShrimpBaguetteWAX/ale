@@ -727,7 +727,14 @@ export default function Arena() {
                   element={f.element}
                   classname={f.classname}
                   racename={f.racename}
-                  level={f.level}
+                  /*
+                     No level on the NFT fighter. It is a fused crew and
+                     weapon rather than a levelled fighter, and the badge and
+                     the level share the same corner — so passing both put an
+                     L5 over the tag that says what the card is. Your own side
+                     never passed one; the defenders’ side did.
+                  */
+                  level={f.fighter_id === NFT_FIGHTER_ID ? undefined : f.level}
                   health={f.health}
                   damage={f.damage}
                   side="enemy"

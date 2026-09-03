@@ -118,3 +118,39 @@ export function fetchToolTemplates(): Promise<ToolTemplate[]> {
     { ttl: TTL.long, persist: true },
   )
 }
+
+/**
+ * `pools.ale` / `rwrdhistory` — what one claim paid.
+ *
+ * Keyed by the `history_id` the claim itself carries, so the answer is exact
+ * and belongs to this transaction rather than to whatever happened around it.
+ *
+ * This is the record to read, not the reward ledger. `rwrdlog.ale` keeps a
+ * per-wallet history up to a capacity the player buys with gems, so an
+ * account that has never unlocked any rows has nothing there to read back —
+ * and every account has a row here.
+ */
+export interface MineHistory {
+  history_id: string
+  wallet: string
+  timestamp: string
+  /** An eosio asset, e.g. "29.0630 TLM". */
+  total_tlm: string
+  /** Raw, in shards' own single decimal place: 1022 is 102.2. */
+  total_shards: number
+}
+
+export function fetchMineHistory(
+  historyId: string,
+  refresh = true,
+): Promise<MineHistory | undefined> {
+  return getRow<MineHistory>(
+    {
+      code: CONTRACTS.pools,
+      scope: CONTRACTS.pools,
+      table: 'rwrdhistory',
+      key: historyId,
+    },
+    { ttl: TTL.live, refresh },
+  )
+}

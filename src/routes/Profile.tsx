@@ -86,8 +86,13 @@ import {
   unlockRewardRows,
   mineRewardPool,
 } from '@/wharf/actions'
+import { randomHistoryId } from '@/dungeon/queries'
 import { refreshChore } from '@/chores/signal'
-import { MineCelebration, readMinedRewards } from '@/pools/MineCelebration'
+import {
+  MineCelebration,
+  readMinedRewards,
+  type MinedReward,
+} from '@/pools/MineCelebration'
 import { readableError } from '@/wharf/errors'
 import { formatNumber, formatDecimals, formatStat } from '@/format'
 import { asset } from '@/assets'
@@ -222,7 +227,7 @@ export default function Profile({ section = 'account' }: { section?: Section }) 
   }, [section])
   const [busy, setBusy] = useState<Busy>(null)
   /* Which pool the running mine belongs to, so only its button spins. */
-  const [minedRewards, setMinedRewards] = useState<RewardLogEntry[]>([])
+  const [minedRewards, setMinedRewards] = useState<MinedReward[]>([])
   const [minedPool, setMinedPool] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -468,27 +473,26 @@ export default function Profile({ section = 'account' }: { section?: Section }) 
           onMine={(pool) => {
             setMinedPool(pool)
             /*
-               Noted before the transaction, so the row this claim writes
-               can be told from the ones already in the ledger.
+               Made here rather than inside the action, because it is the key
+               to `pools.ale` / `rwrdhistory` — the contract's own record of
+               what this claim paid, and the only way to ask afterwards.
             */
-            const since = Date.now()
-            void run('mine', () => mineRewardPool(session!, pool), 'Mined.').then(
-              async () => {
-                /* The mine writes a ledger row, so drop the cached page. */
-                setLogs((prev) => ({ ...prev, [currencyTab]: undefined }))
-                setMinedPool(null)
-                /*
-                   And show what it paid. The ledger is the receipt: the
-                   pool moves between the bar and the transaction, so the
-                   figure beside the bar is a projection and this is not.
-                */
-                if (currencyTab) {
-                  setMinedRewards(
-                    await readMinedRewards(player.wallet, [currencyTab], since),
-                  )
-                }
-              },
-            )
+            const historyId = randomHistoryId()
+            void run(
+              'mine',
+              () => mineRewardPool(session!, pool, historyId),
+              'Mined.',
+            ).then(async () => {
+              /* The mine writes a ledger row, so drop the cached page. */
+              setLogs((prev) => ({ ...prev, [currencyTab]: undefined }))
+              setMinedPool(null)
+              /*
+                 And show what it paid. Read from the chain rather than taken
+                 from the bar: the pool moves between the two, so the figure
+                 beside the bar is a projection and this is not.
+              */
+              setMinedRewards(await readMinedRewards(historyId))
+            })
           }}
         />
       )}

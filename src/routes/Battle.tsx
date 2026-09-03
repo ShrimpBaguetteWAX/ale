@@ -25,9 +25,11 @@ import { fighterArt, fighterArtFallback, formatScaled } from '@/tavern/fighterSt
 import { claimPoolRewards } from '@/wharf/actions'
 import { readableError } from '@/wharf/errors'
 import { refreshChore } from '@/chores/signal'
-import { MineCelebration, readMinedRewards } from '@/pools/MineCelebration'
-import type { RewardLogEntry } from '@/account/queries'
-import type { Currency } from '@/account/rules'
+import {
+  MineCelebration,
+  readMinedRewards,
+  type MinedReward,
+} from '@/pools/MineCelebration'
 import { NUM_LOCALE } from '@/format'
 import { asset } from '@/assets'
 import {
@@ -1368,17 +1370,12 @@ function Result({
   }, [mine, statOf])
 
   /* The receipt, once the ledger has it. */
-  const [minedRewards, setMinedRewards] = useState<RewardLogEntry[]>([])
+  const [minedRewards, setMinedRewards] = useState<MinedReward[]>([])
 
   const doMine = async () => {
     if (!session || claimable.length === 0) return
     setMining(true)
     setError(null)
-    /*
-       Noted before the transaction, so the ledger rows this claim writes
-       can be told from the ones already there.
-    */
-    const since = Date.now()
     try {
       await claimPoolRewards(
         session,
@@ -1396,16 +1393,12 @@ function Result({
       setNotice('Mined. The pools have been paid out and reset.')
 
       /*
-         What it actually paid. Read rather than computed: the pool moves
-         between the estimate and the transaction, and quoting the
-         projection back as the result would be wrong exactly when the
-         player cares most.
+         What it actually paid, from the contract’s record of this very
+         claim. The pool moves between the estimate and the transaction, so
+         quoting the projection back as the result would be wrong exactly
+         when the player cares most.
       */
-      const currencies = [
-        ...new Set(claimable.map((p) => (p.type === 'tlm' ? 'tlm' : 'shrds'))),
-      ] as Currency[]
-      const paid = await readMinedRewards(player.wallet, currencies, since)
-      setMinedRewards(paid)
+      setMinedRewards(await readMinedRewards(row.history_id))
     } catch (err) {
       setError(readableError(err))
     } finally {

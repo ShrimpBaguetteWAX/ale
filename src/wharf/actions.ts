@@ -2,7 +2,6 @@ import { CONTRACTS } from '@/chain/config'
 import { transact, type ActionInput, type Session } from './session'
 import type { GameConfig } from '@/chain/types'
 import type { Quest } from '@/quests/types'
-import { randomHistoryId } from '@/dungeon/queries'
 
 /**
  * Step 1 of signup: send the WAX fee to `players.ale`.
@@ -886,7 +885,19 @@ export function unlockRewardRows(session: Session, currency: string, rows: numbe
  * pool is a leaderboard one. It files the payment under `history_id`, which
  * the client picks so it can read the result back.
  */
-export function mineRewardPool(session: Session, pool: string) {
+/**
+ * Mine one pool.
+ *
+ * The id is the caller’s rather than made here, because it is the key to
+ * `pools.ale` / `rwrdhistory` — the contract's own record of what this
+ * claim paid. Generating it inside and throwing it away left the screen
+ * with no way to ask.
+ */
+export function mineRewardPool(
+  session: Session,
+  pool: string,
+  historyId: string,
+) {
   const action: ActionInput = {
     account: CONTRACTS.pools,
     name: 'claimpreward',
@@ -894,7 +905,7 @@ export function mineRewardPool(session: Session, pool: string) {
       wallet: String(session.actor),
       player: String(session.actor),
       pool,
-      history_id: randomHistoryId(),
+      history_id: historyId,
     },
   }
   return transact(session, [action])
