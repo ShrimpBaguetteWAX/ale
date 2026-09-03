@@ -208,7 +208,8 @@ export default function App() {
             <Route element={<RequirePlayer />}>
               <Route element={<AppShell />}>
                 <Route path="/map" element={<MapView />} />
-                <Route path="/profile" element={<Profile />} />
+                <Route path="/profile" element={<Profile section="account" />} />
+                <Route path="/rewards" element={<Profile section="rewards" />} />
                 <Route path="/tavern" element={<Tavern />} />
                 <Route path="/fighters" element={<Fighters />} />
                 <Route path="/quests" element={<Quests />} />

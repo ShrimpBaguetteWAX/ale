@@ -106,6 +106,35 @@ import { asset } from '@/assets'
  */
 
 type Tab = 'avatar' | 'mining' | 'cpu' | 'stats' | Currency
+
+/**
+ * Which half of the old account screen this is.
+ *
+ * It was seven tabs where four were a wallet and three were a profile, and
+ * the one dot on the menu entry could only ever mean one of those things.
+ * Split, each half gets a dot that means what it says: Rewards lights up
+ * when a pool can be mined, Account when the free CPU allowance is running
+ * out.
+ *
+ * One component rather than two, because the halves share their data — the
+ * player row, the pools, the ledgers and the config all load together and
+ * several are read by both.
+ */
+export type Section = 'account' | 'rewards'
+
+const SECTION_TABS: Record<Section, [Tab, string][]> = {
+  rewards: [
+    ['mining', 'Mining'],
+    ['tlm', CURRENCY_LABEL.tlm],
+    ['shrds', CURRENCY_LABEL.shrds],
+    ['wax', CURRENCY_LABEL.wax],
+  ],
+  account: [
+    ['avatar', 'Avatar'],
+    ['cpu', 'CPU'],
+    ['stats', 'Stats'],
+  ],
+}
 type Busy =
   | 'tag'
   | 'avatar'
@@ -171,7 +200,7 @@ export function statIconFor(key: string): string | undefined {
 /** The handful of stats worth showing above the full list. */
 /* ---------- the screen ---------- */
 
-export default function Profile() {
+export default function Profile({ section = 'account' }: { section?: Section }) {
   const player = useGame((s) => s.player)!
   const account = useGame((s) => s.account)
   const session = useGame((s) => s.session)
@@ -179,7 +208,18 @@ export default function Profile() {
   const refreshPlayer = useGame((s) => s.refreshPlayer)
   const navigate = useNavigate()
 
-  const [tab, setTab] = useState<Tab>('avatar')
+  /* The first tab of whichever half this is. */
+  const [tab, setTab] = useState<Tab>(() => SECTION_TABS[section][0][0])
+
+  /*
+     Both halves are the same component, so moving between them in the menu
+     is a prop change rather than a mount — without this the Rewards page
+     would open on whatever tab the Account page was left on, and one of the
+     two would render nothing at all.
+  */
+  useEffect(() => {
+    setTab(SECTION_TABS[section][0][0])
+  }, [section])
   const [busy, setBusy] = useState<Busy>(null)
   /* Which pool the running mine belongs to, so only its button spins. */
   const [minedRewards, setMinedRewards] = useState<RewardLogEntry[]>([])
@@ -324,18 +364,12 @@ export default function Profile() {
       {notice && <div className="alert alert--ok">{notice}</div>}
       {error && <div className="alert alert--error">{error}</div>}
 
-      <div className="accounttabs" role="tablist" aria-label="Account">
-        {(
-          [
-            ['avatar', 'Avatar'],
-            ['mining', 'Mining'],
-            ['cpu', 'CPU'],
-            ['tlm', CURRENCY_LABEL.tlm],
-            ['wax', CURRENCY_LABEL.wax],
-            ['shrds', CURRENCY_LABEL.shrds],
-            ['stats', 'Stats'],
-          ] as [Tab, string][]
-        ).map(([key, label]) => (
+      <div
+        className="accounttabs"
+        role="tablist"
+        aria-label={section === 'rewards' ? 'Rewards' : 'Account'}
+      >
+        {SECTION_TABS[section].map(([key, label]) => (
           <button
             type="button"
             key={key}

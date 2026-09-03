@@ -1307,3 +1307,17 @@
 .oddspanel[open] .oddspanel__summary::after {
   content: '▴';
 }
+
+/*
+ * The space a menu icon will occupy once there is one.
+ *
+ * An entry whose artwork does not exist yet keeps the column rather than
+ * losing it: without this its label starts where every other row's picture
+ * does, and the rail stops reading as a list.
+ */
+.navlink__icon--none {
+  display: inline-block;
+  flex: none;
+  width: 28px;
+  height: 28px;
+}

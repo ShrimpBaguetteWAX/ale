@@ -8,7 +8,15 @@ import { ResourceStrip } from '../ResourceStrip'
 import { NAV_ITEMS, TABBAR_ORDER, type NavItem } from './nav'
 import { asset } from '@/assets'
 
+/**
+ * A menu entry’s picture, or the space where one will go.
+ *
+ * An entry the artwork does not cover yet keeps the column rather than
+ * losing it: without the placeholder that row's label starts where every
+ * other row's icon does, and the rail stops looking like a list.
+ */
 function Icon({ item }: { item: NavItem }) {
+  if (!item.icon) return <span className="navlink__icon navlink__icon--none" aria-hidden="true" />
   return (
     <img
       className="navlink__icon"
@@ -20,6 +28,20 @@ function Icon({ item }: { item: NavItem }) {
       decoding="async"
     />
   )
+}
+
+/** The same, for the sheet and the tab bar, which size their own. */
+function MenuArt({ item, size }: { item: NavItem; size: number }) {
+  if (!item.icon) {
+    return (
+      <span
+        className="navlink__icon--none"
+        style={{ width: size, height: size }}
+        aria-hidden="true"
+      />
+    )
+  }
+  return <img src={item.icon} alt="" width={size} height={size} loading="lazy" />
 }
 
 /** Bottom-sheet menu holding everything that doesn't fit the tab bar. */
@@ -57,12 +79,12 @@ function MoreSheet({ items, onClose }: { items: NavItem[]; onClose: () => void }
           {items.map((item) =>
             item.soon ? (
               <span className="sheet__item sheet__item--soon" key={item.to}>
-                <img src={item.icon} alt="" width={34} height={34} loading="lazy" />
+                <MenuArt item={item} size={34} />
                 {item.label}
               </span>
             ) : (
               <NavLink className="sheet__item" key={item.to} to={item.to} onClick={onClose}>
-                <img src={item.icon} alt="" width={34} height={34} loading="lazy" />
+                <MenuArt item={item} size={34} />
                 {item.label}
               </NavLink>
             ),
@@ -181,12 +203,12 @@ export function AppShell() {
         {primary.map((item) =>
           item.soon ? (
             <span className="tab" key={item.to} aria-disabled="true" style={{ opacity: 0.4 }}>
-              <img src={item.icon} alt="" width={26} height={26} />
+              <MenuArt item={item} size={26} />
               {item.label}
             </span>
           ) : (
             <NavLink className="tab" key={item.to} to={item.to}>
-              <img src={item.icon} alt="" width={26} height={26} />
+              <MenuArt item={item} size={26} />
               {item.label}
               {chores[choreFor(item.to)?.key as never] && (
                 <span className="tab__dot" aria-label={choreFor(item.to)?.hint} />

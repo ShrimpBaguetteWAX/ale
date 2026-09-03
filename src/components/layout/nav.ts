@@ -2,7 +2,13 @@ import { asset } from '@/assets'
 export interface NavItem {
   to: string
   label: string
-  /** Original menu artwork from the live game. */
+  /**
+   * Original menu artwork from the live game.
+   *
+   * Empty for an entry the artwork does not cover yet: the rail keeps the
+   * icon column so the labels stay aligned, rather than one row's text
+   * starting where every other row’s picture does.
+   */
   icon: string
   /** Contract is live on chain but the screen isn't built yet. */
   soon?: boolean
@@ -72,6 +78,15 @@ export const NAV_ITEMS: NavItem[] = [
   },
   { to: '/market', label: 'Market', icon: asset('/assets/icons/menu/market.png') },
   { to: '/lands', label: 'My Lands', icon: asset('/assets/icons/menu/my-land.png') },
+  /*
+     Rewards is everything the account screen held that pays out — the
+     mine and the three ledgers — and Account is what is left: who you
+     are, what the game is paying for you, and what you have done. They
+     were one screen of seven tabs where four of them were a wallet and
+     three were a profile, and the dot on it could only ever mean one of
+     those things at a time.
+  */
+  { to: '/rewards', label: 'Rewards', icon: '' },
   { to: '/profile', label: 'Account', icon: asset('/assets/icons/menu/settings.png') },
   { to: '/farming', label: 'Farming', icon: asset('/assets/icons/menu/card.png') },
 ]

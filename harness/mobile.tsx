@@ -96,7 +96,8 @@ createRoot(document.getElementById('root')!).render(
           <Route path="/shop" element={<Shop />} />
           <Route path="/arena" element={<Arena />} />
           <Route path="/dungeon" element={<Dungeon />} />
-          <Route path="/profile" element={<Profile />} />
+          <Route path="/profile" element={<Profile section="account" />} />
+          <Route path="/rewards" element={<Profile section="rewards" />} />
           <Route path="/leaderboard" element={<Leaderboard />} />
           <Route path="/ascension" element={<Ascension />} />
           <Route path="/market" element={<Market />} />

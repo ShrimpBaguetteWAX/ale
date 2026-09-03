@@ -1,4 +1,6 @@
 import type { Player } from '@/chain/types'
+import { fetchCpuConfig, fetchCpuUsage } from '@/account/queries'
+import { cpuStatus } from '@/account/rules'
 import { fetchLandsConfig, fetchPlanetLands } from '@/chain/queries'
 import { fetchOwnedLands } from '@/chain/atomic'
 import type { Planet } from '@/chain/config'
@@ -46,10 +48,14 @@ export type ChoreKey =
   | 'candle'
   | 'lands'
   | 'farming'
+  | 'rewards'
   | 'account'
 
 /** How faint a building's boost has to get before it is worth flagging. */
 export const LAND_BOOST_WARNING = 7
+
+/** How much of the free CPU allowance may be spent before it is flagged. */
+export const CPU_WARNING = 0.75
 
 export interface ChoreCheck {
   key: ChoreKey
@@ -225,8 +231,8 @@ export const CHORE_CHECKS: ChoreCheck[] = [
      so this one re-answers as often as the player row refreshes.
   */
   {
-    key: 'account',
-    to: '/profile',
+    key: 'rewards',
+    to: '/rewards',
     every: MIN,
     hint: 'You can mine a reward pool',
     async run(player) {
@@ -234,6 +240,30 @@ export const CHORE_CHECKS: ChoreCheck[] = [
         const power = Math.max(0, Number(row.power ?? 0))
         return poolHasMinimum(row.pool) ? power >= MINE_POWER : power > 0
       })
+    },
+  },
+
+  /*
+     What is left on Account that is worth interrupting for: the game pays
+     the network cost of a player’s transactions out of `cpu.ale` up to a
+     weekly allowance, and running out is invisible everywhere else — the
+     wallet just quietly starts paying its own resources.
+
+     Three quarters spent rather than all of it, because the point of the
+     dot is to be seen before the thing happens.
+  */
+  {
+    key: 'account',
+    to: '/profile',
+    every: 5 * MIN,
+    hint: 'Your free CPU allowance is running low',
+    async run(player, force) {
+      const [config, usage] = await Promise.all([
+        fetchCpuConfig(),
+        fetchCpuUsage(player.wallet, force),
+      ])
+      const { used, allowance } = cpuStatus(config, usage)
+      return allowance > 0 && used / allowance >= CPU_WARNING
     },
   },
 ]
