@@ -126,15 +126,7 @@ export function Landing() {
         </button>
       </header>
 
-      <div
-        className="sections"
-        ref={sectionsRef}
-        style={
-          {
-            '--sections-art': `url('${asset('/assets/background/bg-catch-and-conquer-footer.jpeg')}')`,
-          } as React.CSSProperties
-        }
-      >
+      <div className="sections" ref={sectionsRef}>
         {/*
           Prose first, then the artwork, then Play — the live site's order.
           The three pillars are the strongest thing on the page and they were

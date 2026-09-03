@@ -166,21 +166,18 @@
   z-index: 1;
   margin-top: -14vh;
   border-top-left-radius: 100% 14vh;
-  background: var(--navy);
-  /* So the ground texture and everything else follow the curve. */
-  overflow: hidden;
-}
+  /*
+     Flat, not textured.
 
-/* The footer art from the original, reused as a ground texture. */
-.sections::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background-image: var(--sections-art);
-  background-size: cover;
-  background-position: center;
-  opacity: 0.16;
-  pointer-events: none;
+     The footer artwork used to sit over this at 16%, which was enough to
+     read as a photograph behind the copy without being enough to read as
+     anything — a faint picture of nothing. The ground below the sweep is one
+     colour now, and the key art above the sweep is the only artwork the
+     section has to carry.
+  */
+  background: #12141f;
+  /* So the curve clips whatever sits on it. */
+  overflow: hidden;
 }
 
 /* A shallower sweep on a phone, where 14vh of curve is a lot of nothing. */
