@@ -148,3 +148,27 @@ export function rarityRank(rarity: string): number {
   const i = RARITY_ORDER.indexOf(rarity.toLowerCase() as (typeof RARITY_ORDER)[number])
   return i < 0 ? RARITY_ORDER.length : i
 }
+
+/** A card's finish, plainest first — the second half of how cards rank. */
+const SHINE_ORDER = ['stone', 'gold', 'xdimension', 'stardust', 'antimatter'] as const
+
+export function shineRank(shine: string): number {
+  const i = SHINE_ORDER.indexOf(shine.toLowerCase() as (typeof SHINE_ORDER)[number])
+  /* An unknown finish is not a better one, so it sorts below stone. */
+  return i < 0 ? -1 : i
+}
+
+/**
+ * Best card first: rarity, then finish.
+ *
+ * The order players read cards in — a mythical is above a legendary whatever
+ * its shine, and within one rarity an antimatter is the prize.
+ */
+export function byQuality(
+  a: { rarity: string; shine?: string },
+  b: { rarity: string; shine?: string },
+): number {
+  const rarity = rarityRank(b.rarity) - rarityRank(a.rarity)
+  if (rarity !== 0) return rarity
+  return shineRank(b.shine ?? '') - shineRank(a.shine ?? '')
+}

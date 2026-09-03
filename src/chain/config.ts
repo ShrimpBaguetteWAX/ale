@@ -37,7 +37,6 @@ export const RPC_ENDPOINTS: readonly string[] = [
 /** AtomicAssets nodes, used for NFT metadata and images. */
 export const ATOMIC_ENDPOINTS: readonly string[] = [
   'https://atomicassets-api.alienworlds.io',
-  'https://aa.wax.blacklusion.io',
   'https://wax.api.atomicassets.io',
   'https://wax-atomic-api.eosphere.io',
 ]

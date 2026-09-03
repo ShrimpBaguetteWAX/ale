@@ -30,7 +30,7 @@ import {
   weatherTargets,
   type Weather,
 } from '@/fight/weather'
-import { rarityRank, type NftValue } from '@/dungeon/nftFighter'
+import { byQuality, rarityRank, type NftValue } from '@/dungeon/nftFighter'
 import type { BattleFighter, RosterFighter } from '@/dungeon/types'
 import {
   FILTER_STATS,
@@ -1402,7 +1402,8 @@ export function CardGrid({
 }) {
   const [rarity, setRarity] = useState('')
   const [element, setElement] = useState('')
-  const [sort, setSort] = useState<'damage' | 'health' | 'rarity'>('damage')
+  /* Best cards first, which is the order a player looks for them in. */
+  const [sort, setSort] = useState<'damage' | 'health' | 'rarity'>('rarity')
 
   const rarities = useMemo(
     () =>
@@ -1426,10 +1427,9 @@ export function CardGrid({
       .sort((a, b) => {
         const av = values.get(a.template_id)!
         const bv = values.get(b.template_id)!
-        if (sort === 'rarity') {
-          return rarityRank(bv.rarity) - rarityRank(av.rarity)
-        }
-        return bv.stats[sort] - av.stats[sort]
+        if (sort === 'rarity') return byQuality(av, bv)
+        /* Same numbers, better card first. */
+        return bv.stats[sort] - av.stats[sort] || byQuality(av, bv)
       })
   }, [cards, values, query, rarity, element, sort])
 
@@ -1487,7 +1487,7 @@ export function CardGrid({
             >
               <option value="damage">Damage added</option>
               <option value="health">Health added</option>
-              <option value="rarity">Rarity</option>
+              <option value="rarity">Rarity &amp; shine</option>
             </select>
           </label>
 

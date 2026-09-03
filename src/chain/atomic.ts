@@ -26,25 +26,88 @@ function endpointsInOrder(): string[] {
   return [...pool.slice(start), ...pool.slice(0, start)]
 }
 
+async function getFrom<T>(base: string, path: string): Promise<T> {
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
+  try {
+    const res = await fetch(base + path, { signal: controller.signal })
+    if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    return (await res.json()) as T
+  } catch (err) {
+    penalties.set(base, Date.now() + PENALTY_MS)
+    throw err
+  } finally {
+    clearTimeout(timer)
+  }
+}
+
 async function get<T>(path: string): Promise<T> {
   const errors: string[] = []
 
   for (const base of endpointsInOrder().slice(0, 3)) {
-    const controller = new AbortController()
-    const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
     try {
-      const res = await fetch(base + path, { signal: controller.signal })
-      if (!res.ok) throw new Error(`HTTP ${res.status}`)
-      return (await res.json()) as T
+      return await getFrom<T>(base, path)
     } catch (err) {
       errors.push(err instanceof Error ? err.message : String(err))
-      penalties.set(base, Date.now() + PENALTY_MS)
-    } finally {
-      clearTimeout(timer)
     }
   }
 
   throw new Error(`AtomicAssets request failed: ${errors.join('; ')}`)
+}
+
+/**
+ * Every page of a listing endpoint, from one node.
+ *
+ * Asks until a page comes back short, so the answer is the whole list rather
+ * than however much the first request happened to carry. Bounded, because a
+ * node that keeps answering "full page" forever must not hang the picker.
+ */
+async function pagesFrom<T>(base: string, path: string, limit = 1000): Promise<T[]> {
+  const out: T[] = []
+  for (let page = 1; page <= 20; page++) {
+    const res = await getFrom<{ data?: T[] }>(base, `${path}&page=${page}&limit=${limit}`)
+    const rows = res.data ?? []
+    out.push(...rows)
+    if (rows.length < limit) break
+  }
+  return out
+}
+
+/**
+ * The same read against every healthy node, keeping the fullest answer.
+ *
+ * A node that has fallen behind does not fail — it answers, from an older
+ * world, and the rotation makes that intermittent: one WAX index was six card
+ * designs and twenty-one inventory rows short, so a weapon the player owns
+ * vanished from the picker on whichever loads happened to land there.
+ *
+ * Being behind can only ever under-report, never invent, so the longest of
+ * several answers is the current one. Each answer is one node's complete view,
+ * never a merge of two, so a card here is a card that node really sees.
+ *
+ * Only the reads that decide which cards a player may field pay for the extra
+ * requests, and both of those are cached.
+ */
+async function fullest<T>(
+  read: (base: string) => Promise<T>,
+  size: (value: T) => number,
+): Promise<T> {
+  const answers = await Promise.allSettled(endpointsInOrder().map(read))
+
+  let best: T | undefined
+  const errors: string[] = []
+  for (const answer of answers) {
+    if (answer.status === 'rejected') {
+      errors.push(String(answer.reason?.message ?? answer.reason))
+      continue
+    }
+    if (!best || size(answer.value) > size(best)) best = answer.value
+  }
+
+  if (best === undefined) {
+    throw new Error(`AtomicAssets request failed on every node: ${errors.join('; ')}`)
+  }
+  return best
 }
 
 interface AssetRow {
@@ -108,8 +171,14 @@ export async function fetchOwnedTemplates(
   const hit = cacheGet<[number, number][]>(key)
   if (hit) return new Map(hit)
 
-  const res = await get<{ data?: { templates?: { template_id: string; assets: string }[] } }>(
-    `/atomicassets/v1/accounts/${encodeURIComponent(owner)}/${collection}`,
+  type Inventory = { data?: { templates?: { template_id: string; assets: string }[] } }
+  const res = await fullest<Inventory>(
+    (base) =>
+      getFrom<Inventory>(
+        base,
+        `/atomicassets/v1/accounts/${encodeURIComponent(owner)}/${collection}`,
+      ),
+    (r) => r.data?.templates?.length ?? 0,
   )
 
   const owned = new Map<number, number>()
@@ -203,24 +272,30 @@ export async function fetchSchemaTemplates(
   schema: string,
   collection = 'alien.worlds',
 ): Promise<Map<number, CardTemplate>> {
-  const key = `templates:${collection}:${schema}`
+  /* Bumped: caches written from a lagging node hold a short catalogue. */
+  const key = `templates:v2:${collection}:${schema}`
   const hit = cacheGet<[number, CardTemplate][]>(key, true)
   if (hit) return new Map(hit)
 
-  const res = await get<{
-    data?: {
-      template_id: string
-      name?: string
-      schema?: { schema_name?: string }
-      immutable_data?: Record<string, unknown>
-    }[]
-  }>(
-    `/atomicassets/v1/templates?collection_name=${collection}` +
-      `&schema_name=${encodeURIComponent(schema)}&limit=1000`,
+  interface TemplateRow {
+    template_id: string
+    name?: string
+    schema?: { schema_name?: string }
+    immutable_data?: Record<string, unknown>
+  }
+
+  const rows = await fullest<TemplateRow[]>(
+    (base) =>
+      pagesFrom<TemplateRow>(
+        base,
+        `/atomicassets/v1/templates?collection_name=${collection}` +
+          `&schema_name=${encodeURIComponent(schema)}`,
+      ),
+    (r) => r.length,
   )
 
   const out = new Map<number, CardTemplate>()
-  for (const row of res.data ?? []) {
+  for (const row of rows) {
     const d = row.immutable_data ?? {}
     const id = Number(row.template_id)
     if (!id) continue
