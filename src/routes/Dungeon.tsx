@@ -94,6 +94,8 @@ export default function Dungeon() {
   const [crewCards, setCrewCards] = useState<CardTemplate[]>([])
   const [weaponCards, setWeaponCards] = useState<CardTemplate[]>([])
   const [nftValues, setNftValues] = useState<Map<number, NftValue>>(new Map())
+  /* Whether the card lists have been read at all, as against being empty. */
+  const [cardsLoaded, setCardsLoaded] = useState(false)
   const [classes, setClasses] = useState<Map<string, ClassTemplate>>(new Map())
   const [enemyTeam, setEnemyTeam] = useState<BattleFighter[] | null>(null)
   const [difMods, setDifMods] = useState<Map<number, number>>(new Map())
@@ -149,6 +151,7 @@ export default function Dungeon() {
         setEnemyTeam(withNumericIds(dungeon?.fighters ?? []))
         setDifMods(mods)
         setNftValues(nfts)
+        setCardsLoaded(true)
         setClasses(temps)
         if (dConfig) setEnergyCost(dConfig.energy_cost)
         if (bConfig) {
@@ -278,10 +281,20 @@ export default function Dungeon() {
      visible cause. What was dropped is said out loud for the same reason.
   */
   const restored = useRef(false)
+  /** Set by the restore, so its own state change is not saved back. */
+  const skipSave = useRef(false)
   const [restoreNote, setRestoreNote] = useState<string | null>(null)
 
+  /*
+     Nothing is restored until the cards have loaded, not just the roster.
+
+     `restoreTeam` resolves a remembered card by looking it up in the
+     usable lists, and an empty list is indistinguishable from "you no
+     longer own this" — so running early dropped the crew and the weapon,
+     and `restored.current` meant it never tried again.
+  */
   useEffect(() => {
-    if (restored.current || !roster) return
+    if (restored.current || !roster || !cardsLoaded) return
     restored.current = true
 
     const usable = new Map(roster.map((f) => [f.fighter_id, fighterAvailable(f)]))
@@ -291,6 +304,15 @@ export default function Dungeon() {
       crewCards: usableCrew,
       weaponCards: usableWeapons,
     })
+
+    /*
+       Putting the team back is not a choice the player made, so it must
+       not be written back over the one they did make. Without this the
+       save below fired on the restore itself — and a restore that could
+       not resolve a card wrote null over it, which is how a weapon left
+       the stored team for good rather than just for this visit.
+    */
+    if (back.fighterIds.length || back.crew || back.weapon) skipSave.current = true
 
     if (back.fighterIds.length) setTeamIds(back.fighterIds)
     if (back.crew) setCrew(back.crew)
@@ -305,11 +327,16 @@ export default function Dungeon() {
         `Left out of your last team: ${named.join(', ')}.`,
       )
     }
-  }, [roster, usableCrew, usableWeapons, player.wallet])
+  }, [roster, cardsLoaded, usableCrew, usableWeapons, player.wallet])
 
   /* Kept current from here on, so leaving without fighting still saves it. */
   useEffect(() => {
     if (!restored.current) return
+    /* Exactly one save is skipped: the one the restore itself caused. */
+    if (skipSave.current) {
+      skipSave.current = false
+      return
+    }
     rememberTeam('dungeon', player.wallet, {
       fighterIds: teamIds,
       crew: crew?.template_id ?? null,
