@@ -560,9 +560,19 @@ export default function Arena() {
         <header className="dungeon__head">
           <div>
             <h1 className="page__title">Arena</h1>
-            <p className="faint" style={{ fontSize: 'var(--fs-sm)' }}>
-              {planet} · {land} · {player.x},{player.y}
-            </p>
+            {/*
+              The weather, where the coordinates used to be. A player standing
+              on a tile does not need to be told which tile — the map put them
+              here — but the roll they are about to fight under changes what
+              team they should bring, and it belongs where they read the
+              heading rather than further down the page.
+            */}
+            <WeatherPanel
+              weather={weather}
+              mine={picked}
+              theirs={enemies}
+              theirsLabel={`the defender${enemies.length === 1 ? '' : 's'}`}
+            />
           </div>
           <span className="spacer" />
           <div className="dungeon__actions">
@@ -635,18 +645,6 @@ export default function Arena() {
           xpPerWin={xpPerWin}
           lastFight={arena?.last_fight}
           defenders={arena?.fighters.length ?? 0}
-        />
-
-        {/*
-          Above the versus panel, because it is a fact about the fight rather
-          than about either team, and because it is the thing a player wants
-          to know *before* they start picking.
-        */}
-        <WeatherPanel
-          weather={weather}
-          mine={picked}
-          theirs={enemies}
-          theirsLabel={`the defender${enemies.length === 1 ? '' : 's'}`}
         />
 
         <section className="versus">

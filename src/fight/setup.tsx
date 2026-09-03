@@ -33,6 +33,7 @@ import type { BattleFighter, RosterFighter } from '@/dungeon/types'
 import {
   STAT_LABEL,
   elementBackground,
+  statIcon,
   fighterArt,
   fighterArtFallback,
   formatScaled,
@@ -178,6 +179,7 @@ export function WeatherPanel({
 
   const calm = weatherIsCalm(weather)
   const lean = weatherLean(weather)
+  const icons = weatherStatIcons(weather)
   const hitMine = mine.filter((f) => weatherHits(weather, f)).length
   const hitTheirs = theirs.filter((f) => weatherHits(weather, f)).length
 
@@ -197,14 +199,28 @@ export function WeatherPanel({
       className={`weather weather--${lean}`}
       title={`${detail}. ${falls}. Changes daily.`}
     >
-      <img
-        className="weather__glyph"
-        src={asset('/assets/icons/menu/world.png')}
-        alt="Weather"
-        width={14}
-        height={14}
-      />
-      <span className="weather__name">{weather.displayname}</span>
+      {/*
+        The stats the roll touches, as their own icons. A generic weather
+        glyph said only "this row is about weather", which the sentence beside
+        it already says; the stat symbols say which numbers move, and that is
+        what a player scans a row like this for.
+      */}
+      {!!icons.length && (
+        <span className="weather__stats">
+          {icons.map(({ src, label }) => (
+            <img
+              className="weather__stat"
+              key={label}
+              src={src}
+              alt={label}
+              title={label}
+              width={18}
+              height={18}
+            />
+          ))}
+        </span>
+      )}
+      <span className="weather__name">{weatherTitle(weather.displayname)}</span>
 
       {!calm && (
         <span className="weather__tally">
@@ -224,6 +240,57 @@ export function WeatherPanel({
 function resElement(statname: string): string | null {
   const m = /^res_([a-z]+)$/.exec(statname)
   return m ? m[1] : null
+}
+
+/**
+ * A roll's name in the game's own capitalisation.
+ *
+ * The chain stores these in running prose — "-25% mystic health", "+15 gem
+ * fighter cooldown" — where every other surface in the game writes Mystic,
+ * Gem and Cooldown as proper terms. Title-casing the lot reads as a label
+ * rather than a sentence fragment, which is what a row under a heading should
+ * be. The joining words stay lower so it does not shout: "-40 Air Resistance
+ * and +20 Nature Resistance".
+ */
+const LOWER = new Set(['and', 'or', 'the', 'a', 'an', 'of', 'to', 'per', 'in', 'on'])
+
+function weatherTitle(name: string): string {
+  return name
+    .split(/(\s+)/)
+    .map((word, i) => {
+      if (!word.trim()) return word
+      if (i > 0 && LOWER.has(word.toLowerCase())) return word.toLowerCase()
+      /*
+         The first character only. Reaching for the first *lowercase* letter
+         instead turns "Altan" into "ALtan", and "+15" and "-20%" are left
+         alone either way because they do not start with one.
+      */
+      return word.charAt(0).toUpperCase() + word.slice(1)
+    })
+    .join('')
+}
+
+/**
+ * One icon per stat a roll touches, in the order the contract lists them.
+ *
+ * Resistances have no icon of their own in `icons/stats`, but each belongs to
+ * an element that does — and the element icon is the one a player already
+ * reads on every fighter card. Deduplicated, because a roll that moves the
+ * same stat twice is still one stat moving.
+ */
+function weatherStatIcons(weather: Weather): { src: string; label: string }[] {
+  const seen = new Set<string>()
+  const out: { src: string; label: string }[] = []
+  for (const e of weather.weather_effects) {
+    if (seen.has(e.statname)) continue
+    seen.add(e.statname)
+    const el = resElement(e.statname)
+    out.push({
+      src: el ? elementIcon(el) : statIcon(e.statname),
+      label: STAT_LABEL[e.statname] ?? prettyStatname(e.statname),
+    })
+  }
+  return out
 }
 
 /** `res_fire` reads as "Fire res" rather than as a column name. */

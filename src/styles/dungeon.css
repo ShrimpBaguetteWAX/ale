@@ -1519,63 +1519,83 @@
 }
 
 /*
- * The land's weather, as a strip.
+ * The land's weather, under the heading.
  *
- * One fact, so one line: the chain's own `displayname` already names both
- * the effect and who it falls on, and the only thing worth adding is how many
- * fighters on each side it reaches. It sits between the arena's own strength
- * and the versus panel, where it costs a row rather than a screenful.
+ * It sits where the coordinates used to, because a player standing on a tile
+ * does not need to be told which tile — but the roll they are about to fight
+ * under decides what team they should bring.
  *
- * The left edge carries the verdict — green when the roll helps whoever it
- * catches, red when it hurts, amber when it does both, and nothing at all for
- * the ones that are a role rather than a quality.
+ * Sized to its content rather than the column, so it reads as a badge
+ * belonging to the title rather than a bar spanning the page. The left edge
+ * and the tinted ground carry the verdict — green when the roll helps
+ * whoever it catches, red when it hurts, amber when it does both, and neither
+ * for the ones that are a role rather than a quality.
  */
 .weather {
-  --lean-colour: var(--line-soft);
-  display: flex;
+  --lean-colour: var(--line-bright);
+  --lean-tint: rgb(255 255 255 / 4%);
+  display: inline-flex;
   align-items: center;
   flex-wrap: wrap;
   gap: var(--sp-2) var(--sp-3);
-  margin-bottom: var(--sp-3);
-  padding: 6px var(--sp-3);
+  margin-top: 6px;
+  padding: 5px var(--sp-3) 5px var(--sp-2);
   border: 1px solid var(--line-soft);
   border-left: 3px solid var(--lean-colour);
   border-radius: var(--radius-sm);
-  background: rgb(0 0 0 / 30%);
-  font-size: var(--fs-xs);
+  background: var(--lean-tint);
+  font-size: var(--fs-sm);
 }
 
 .weather--good {
   --lean-colour: #6cc000;
+  --lean-tint: rgb(108 192 0 / 10%);
 }
 .weather--bad {
   --lean-colour: #c2253f;
+  --lean-tint: rgb(194 37 63 / 12%);
 }
 .weather--mixed {
   --lean-colour: #f7a600;
+  --lean-tint: rgb(247 166 0 / 10%);
 }
 
-.weather__glyph {
-  flex: none;
-  opacity: 0.75;
+/*
+ * The stats the roll moves, as their own symbols.
+ *
+ * Full opacity and a size up from the text: these are the part of the row a
+ * player scans for, and a dimmed 13px icon beside 13px prose is decoration
+ * rather than a signal.
+ */
+.weather__stats {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.weather__stat {
+  display: block;
 }
 
 .weather__name {
   color: var(--text);
+  font-weight: var(--fw-medium);
 }
 
 /*
  * How many fighters on each side the weather reaches.
  *
- * Pushed to the end of the line, and a side it misses is dimmed rather than
- * dropped: "0 of yours" is information, and a row that disappears at zero
- * makes the remaining one look like the only side that was ever checked.
+ * A side it misses is dimmed rather than dropped: "0 of yours" is
+ * information, and a row that disappears at zero makes the remaining one look
+ * like the only side that was ever checked.
  */
 .weather__tally {
-  display: flex;
+  display: inline-flex;
   flex-wrap: wrap;
   gap: var(--sp-2) var(--sp-3);
-  margin-left: auto;
+  padding-left: var(--sp-3);
+  border-left: 1px solid var(--line-soft);
+  font-size: var(--fs-xs);
 }
 
 .weather__side {
