@@ -3,7 +3,7 @@
  *
  * Open it inside the phone frame so the media queries see a narrow viewport:
  *
- *   http://localhost:5273/__mobile.html?src=/harness/mobile.html&w=390&h=760
+ *   http://localhost:5273/harness/frame.html?src=/harness/mobile.html&w=390&h=760
  *
  * The browser pane scales rather than resizing, so a page loaded directly
  * still reports a desktop `innerWidth` and every `@media (max-width: …)`

@@ -1260,9 +1260,22 @@
     z-index: 5;
   }
 
+  /*
+     Solid, not the desktop strip's 80%.
+
+     Over a wide map a translucent rail reads as part of the scene. Over a
+     phone-sized one it lands on the gold Enter prompt, and a bright button
+     showing through a panel looks like a rendering fault rather than a
+     choice. This is the same ground the tile card and the legend already
+     use — the game has one way of putting a panel over the map, and this is
+     now it too.
+  */
   .planetpick {
     flex-wrap: wrap;
     overflow-x: visible;
+    background: linear-gradient(180deg, #16203a, #0a1222);
+    border-color: var(--line-bright);
+    box-shadow: var(--shadow);
   }
 
   /*

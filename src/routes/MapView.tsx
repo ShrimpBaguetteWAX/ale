@@ -160,18 +160,24 @@ export default function MapView() {
   const [travelError, setTravelError] = useState<string | null>(null)
   const [legendOpen, setLegendOpen] = useState(false)
   /*
-     The planet strip, open or collapsed to the one planet being viewed.
+     The planet strip, collapsed to the planet being viewed until asked.
 
-     Six cards across the top of a map is a lot of map to cover for a control
-     the player uses a few times a session, so the choice is remembered rather
-     than reset on every visit — a player who collapsed it wants it collapsed
-     tomorrow too.
+     Six cards across the top is a lot of map to cover for a control used a
+     few times a session, and the map is what the player came to look at — so
+     closed is the default on every size, not just on a phone. Collapsed is
+     not empty: it keeps the card for the planet you are on, which is where
+     the counts that make the bar worth having already are.
+
+     The choice is still remembered, and remembered the way round that makes
+     the stored value mean something: only an explicit open writes '1'. A
+     player who has never touched it gets the collapsed default, and one who
+     opened it yesterday still finds it open today.
   */
   const [barOpen, setBarOpen] = useState(() => {
     try {
-      return localStorage.getItem(PLANETBAR_KEY) !== '0'
+      return localStorage.getItem(PLANETBAR_KEY) === '1'
     } catch {
-      return true
+      return false
     }
   })
   const togglePlanetBar = useCallback(() => {

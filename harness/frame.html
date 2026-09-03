@@ -1,0 +1,49 @@
+<!doctype html>
+<meta charset="utf-8" />
+<title>Phone frame</title>
+<!--
+  A real narrow viewport, for looking at mobile layout.
+
+  The browser pane scales rather than resizing, so `innerWidth` stays wide and
+  every `@media (max-width: …)` keeps evaluating false — which makes mobile
+  work impossible to check there. An iframe has a viewport of its own, and
+  media queries inside it answer to that, so 390px here is 390px to the CSS.
+
+    /harness/frame.html?src=/harness/mobile.html%3Froute=/map&w=390&h=760
+
+  It lives here rather than in public/ so a release build never copies it.
+-->
+<style>
+  body {
+    margin: 0;
+    padding: 16px;
+    background: #0b1220;
+    font: 12px/1.4 system-ui, sans-serif;
+    color: #8fa6bd;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  iframe {
+    border: 1px solid #2a3a5a;
+    border-radius: 12px;
+    background: #05101e;
+    display: block;
+  }
+  code { color: #cfe3ff; }
+</style>
+<div id="label"></div>
+<iframe id="frame"></iframe>
+<script>
+  const q = new URLSearchParams(location.search)
+  const src = q.get('src') || '/harness/mobile.html'
+  const w = Number(q.get('w') || 390)
+  const h = Number(q.get('h') || 760)
+  const f = document.getElementById('frame')
+  f.width = w
+  f.height = h
+  f.src = src
+  document.getElementById('label').innerHTML =
+    `<code>${src}</code> at <code>${w}×${h}</code>`
+</script>
