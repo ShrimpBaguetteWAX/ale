@@ -187,7 +187,16 @@ export function FighterStats({
           />
         ))}
         <div className="statline">
-          <span className="statline__k">Targets</span>
+          {/*
+             The target icon, which existed and was only ever used on the
+             roster screen. Without it this row’s label started 26px left
+             of the five above it, so the one row in the block that is not
+             a number was also the one row out of line.
+          */}
+          <span className="statline__k">
+            <img className="statline__icon" src={statIcon('target')} alt="" />
+            Targets
+          </span>
           {/*
             An empty target is not "no target": `pick_defender` falls through
             to highest taunt for anything it does not recognise, and most crew

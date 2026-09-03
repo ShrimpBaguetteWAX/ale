@@ -871,20 +871,35 @@ export default function Dungeon() {
                     a statistically better one — so they are named here in
                     their rarity colours rather than counted.
                   */}
+                  {/*
+                     What the abilities do, not just what they are called.
+
+                     They were chips with the description on a `title`, which
+                     is a tooltip no phone shows and nobody hovers while
+                     deciding. Two abilities is two lines of text, and they are
+                     the reason a particular pair of cards is worth fielding, so
+                     they go on the screen — in the shape the detail panel
+                     already uses: name over description, rarity colour on the
+                     left edge.
+                  */}
                   {nftFighter.abilities.length > 0 && (
-                    <div className="loadout__abilities">
+                    <div className="abilities loadout__abilities">
                       {nftFighter.abilities.map((a, i) => (
-                        <span
-                          className="loadout__ability"
+                        <div
+                          className="ability"
                           key={`${a.ability}-${i}`}
-                          style={{
-                            color: abilityColor(a.displayname),
-                            borderColor: abilityColor(a.displayname),
-                          }}
-                          title={resolveAbilityDescription(a)}
+                          style={{ borderLeftColor: abilityColor(a.displayname) }}
                         >
-                          {abilityName(a.displayname)}
-                        </span>
+                          <div
+                            className="ability__name"
+                            style={{ color: abilityColor(a.displayname) }}
+                          >
+                            {abilityName(a.displayname)}
+                          </div>
+                          <div className="ability__desc">
+                            {resolveAbilityDescription(a)}
+                          </div>
+                        </div>
                       ))}
                     </div>
                   )}

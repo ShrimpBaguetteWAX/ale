@@ -498,7 +498,14 @@ export default function Tavern() {
                     template={classTemplate}
                   />
                   <div className="statline">
-                    <span className="statline__k">Targets</span>
+                    <span className="statline__k">
+                      <img
+                        className="statline__icon"
+                        src={statIcon('target')}
+                        alt=""
+                      />
+                      Targets
+                    </span>
                     <span className="statline__v">{formatTarget(fighter.target)}</span>
                   </div>
                   <div className="statline">

@@ -209,21 +209,6 @@
 }
 
 /* Both cards' abilities carry over, named in their rarity colours. */
-.loadout__abilities {
-  display: flex;
-  gap: var(--sp-2);
-  flex-wrap: wrap;
-}
-
-.loadout__ability {
-  padding: 3px var(--sp-2);
-  font-size: var(--fs-xs);
-  line-height: 1.2;
-  background: rgb(0 0 0 / 35%);
-  border: 1px solid currentcolor;
-  border-radius: var(--radius-xs);
-  cursor: help;
-}
 
 .loadout__empty {
   margin: 0;
@@ -2426,4 +2411,61 @@
     font-size: var(--fs-sm);
   }
 
+}
+
+/*
+ * The abilities, spelled out.
+ *
+ * They were name-only chips with the description on a `title` — a tooltip no
+ * phone shows and nobody hovers mid-decision — and the abilities are the
+ * reason a particular crew-and-weapon pair is worth fielding. They use the
+ * detail panel's own rows now, so it is the same presentation here as there;
+ * the only thing this adds is a full-width slot in the result panel, which is
+ * a flex row and would otherwise squeeze them into a column.
+ */
+.loadout .loadout__abilities {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--sp-2);
+  /* A full-width slot: the result panel is a flex row and would squeeze
+     two abilities into a column of one word each. */
+  flex: 1 1 100%;
+  min-width: 0;
+  margin-top: var(--sp-2);
+}
+
+/*
+ * The card sits in the middle of its slot.
+ *
+ * The art is capped at 220px and the slot is whatever the row's height turns
+ * out to be — 346px beside a filled result panel — so with the stack packed
+ * to the top all the slack fell below the card and it hung high in its box.
+ */
+@media (min-width: 720px) {
+  .cardslot {
+    justify-content: center;
+  }
+}
+
+/*
+ * The abilities, tightened on a phone.
+ *
+ * Spelling them out costs height — that is the trade, and the descriptions
+ * are why the pair of cards is worth picking — but at 14px in a full-padded
+ * box two of them ran to 168px. At 12px with the rows pulled in they say the
+ * same thing in appreciably less.
+ */
+@media (max-width: 719px) {
+  .loadout .ability {
+    padding: 5px var(--sp-2);
+  }
+
+  .loadout .ability__desc {
+    font-size: var(--fs-xs);
+    line-height: 1.35;
+  }
+
+  .loadout .ability__name {
+    font-size: 11px;
+  }
 }
