@@ -188,6 +188,17 @@ export interface RosterFilter {
   racename: string
   status: Status
   ability: string
+  /**
+   * Only fighters with a level waiting to be taken.
+   *
+   * Not applied by `applyFilter`, and cannot be: whether a fighter can level
+   * depends on the `levels` ladder — a maxed one keeps a requirement on its
+   * row and would otherwise read as ready forever — and that table belongs to
+   * the roster screen rather than to the filter. My Fighters ANDs it in
+   * itself. It lives here anyway so Clear clears it and the active-filter
+   * count counts it, which is the whole of what those two need to know.
+   */
+  levelReady: boolean
   /** Stat-quality floors, ANDed. Empty means the grades are not filtered on. */
   qualities: QualityRule[]
   /** Matchup floors. Only meaningful on a screen that has an enemy team. */
@@ -202,6 +213,7 @@ export const EMPTY_FILTER: RosterFilter = {
   racename: '',
   status: 'All',
   ability: '',
+  levelReady: false,
   qualities: [],
   versus: NO_VERSUS,
   sort: 'level',
@@ -215,6 +227,7 @@ export function isFilterActive(f: RosterFilter): boolean {
     f.racename !== '' ||
     f.status !== 'All' ||
     f.ability !== '' ||
+    f.levelReady ||
     (f.qualities?.length ?? 0) > 0 ||
     (f.versus?.bonuses ?? 0) > 0 ||
     (f.versus?.offense ?? 0) > 0 ||
@@ -430,6 +443,7 @@ export function countActiveFilters(f: RosterFilter): number {
     (f.racename !== '' ? 1 : 0) +
     (f.status !== 'All' ? 1 : 0) +
     (f.ability !== '' ? 1 : 0) +
+    (f.levelReady ? 1 : 0) +
     ((f.qualities?.length ?? 0) > 0 ? 1 : 0) +
     ((f.versus?.bonuses ?? 0) > 0 ? 1 : 0) +
     ((f.versus?.offense ?? 0) > 0 ? 1 : 0) +

@@ -235,10 +235,17 @@ export default function Fighters() {
      So the quality bar would have rendered, accepted rules, and quietly
      changed no result at all.
   */
-  const shown = useMemo(
-    () => applyFilter(roster, filter, ageDecay, now, templates),
-    [roster, filter, ageDecay, now, templates],
-  )
+  const shown = useMemo(() => {
+    const matched = applyFilter(roster, filter, ageDecay, now, templates)
+    /*
+       ANDed here rather than inside `applyFilter`, which has no `levels` and
+       so cannot tell a fighter that can level from one sitting at the ceiling
+       — a maxed fighter keeps a requirement on its row and would read as
+       ready forever. `levelUpOf` checks for a rung above before saying yes.
+    */
+    if (!filter.levelReady) return matched
+    return matched.filter((f) => levelUpOf(f, levels).ready)
+  }, [roster, filter, ageDecay, now, templates, levels])
 
   const selected = roster.find((f) => f.fighter_id === selectedId) ?? null
   const opened = roster.find((f) => f.fighter_id === openedId) ?? null
@@ -246,6 +253,18 @@ export default function Fighters() {
   const lockedCount = useMemo(
     () => roster.filter((f) => f.in_use || wantsPayday(f, now)).length,
     [roster, now],
+  )
+
+  /*
+     How many fighters have a level waiting, for the filter to put on itself.
+
+     Counted off the whole roster rather than what is on screen, because it is
+     what the toggle is offering to narrow *to* — a count of the filtered list
+     would read zero next to a button whose job is to stop it being zero.
+  */
+  const readyToLevel = useMemo(
+    () => roster.filter((f) => levelUpOf(f, levels).ready).length,
+    [roster, levels],
   )
 
   const levelAll = useMemo(() => levelAllPlan(roster, levels), [roster, levels])
@@ -540,6 +559,7 @@ export default function Fighters() {
         onChange={setFilter}
         roster={roster}
         classes={templates}
+        readyToLevel={readyToLevel}
         tab={tab}
         onTab={setTab}
       />
@@ -774,6 +794,7 @@ function RosterFilters({
   onChange,
   roster,
   classes,
+  readyToLevel,
   tab,
   onTab,
 }: {
@@ -781,6 +802,8 @@ function RosterFilters({
   onChange: (f: RosterFilter) => void
   roster: RosterFighter[]
   classes: Map<string, ClassTemplate>
+  /** How many fighters have a level banked, shown on the toggle. */
+  readyToLevel: number
   tab: CardTab
   onTab: (t: CardTab) => void
 }) {
@@ -921,6 +944,29 @@ function RosterFilters({
             onChange={(e) => set({ ability: e.target.value })}
           />
         </label>
+
+        {/*
+          A toggle rather than another entry in Availability: that picker
+          answers "can this fighter be sent out", which is about the fight,
+          and a level waiting is about the roster. It is also the one question
+          here a player asks in order to act on the answer — press it, then
+          press Level all — so it reads better as a switch than as one option
+          buried in a list of five.
+        */}
+        <div className="field">
+          <span className="field__label">Levelling</span>
+          <div className="showtabs" role="group" aria-label="Levelling">
+            <button
+              type="button"
+              className="showtabs__btn"
+              aria-pressed={filter.levelReady}
+              onClick={() => set({ levelReady: !filter.levelReady })}
+              title="Fighters with enough experience banked to take a level"
+            >
+              Ready ({readyToLevel})
+            </button>
+          </div>
+        </div>
 
         {/*
           One readout for every card at once. Comparing forty fighters on
