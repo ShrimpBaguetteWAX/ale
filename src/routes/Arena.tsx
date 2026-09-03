@@ -26,7 +26,8 @@ import {
 } from '@/fight/matchup'
 import { recallTeam, rememberTeam, restoreTeam } from '@/fight/lastTeam'
 import { autoPickTeam } from '@/fight/autopick'
-import { fetchWeather, type Weather } from '@/fight/weather'
+import { applyWeather, fetchWeather, type Weather } from '@/fight/weather'
+import { DEFAULT_CAPS, type StatCaps } from '@/dungeon/sim'
 import {
   NFT_FIGHTER_ART,
   combineNftFighter,
@@ -118,6 +119,8 @@ export default function Arena() {
   const [energyCost, setEnergyCost] = useState(50)
   const [xpPerWin, setXpPerWin] = useState(0)
   const [ageDecay, setAgeDecay] = useState(0)
+  /* Weather is capped as it is applied, so the caps are part of the answer. */
+  const [caps, setCaps] = useState<StatCaps>(DEFAULT_CAPS)
   const [levelMod, setLevelMod] = useState(1)
 
   const [teamIds, setTeamIds] = useState<number[]>([])
@@ -167,6 +170,7 @@ export default function Arena() {
         if (bConfig) {
           setXpPerWin(Number(bConfig.xp_per_arena_win ?? 0))
           setAgeDecay(Number(bConfig.age_decay) || 0)
+          if (bConfig.battle_stat_caps) setCaps(bConfig.battle_stat_caps)
           setLevelMod(Number(bConfig.level_mod) || 1)
         }
       })
@@ -219,11 +223,21 @@ export default function Arena() {
     () =>
       applyArenaPower(
         (arena?.fighters ?? []).map((f) =>
-          fieldedStats(f, f.level, f.creation_date, levelMod, ageDecay),
+          /* Weather, then level and age, then the arena's own power — the
+             order `fight()` runs them in, and not interchangeable: the
+             weather percentage compounds with the level curve rather than
+             landing on top of it. */
+          fieldedStats(
+            applyWeather(f, weather, caps),
+            f.level,
+            f.creation_date,
+            levelMod,
+            ageDecay,
+          ),
         ),
         arenaPower,
       ),
-    [arena, arenaPower, levelMod, ageDecay],
+    [arena, arenaPower, levelMod, ageDecay, weather, caps],
   )
 
   /*
@@ -448,66 +462,84 @@ export default function Arena() {
   )
 
   /*
-     Your own five get the same treatment, for the same reason: team 1 is also
-     passed a difficulty of 0. Their stats are still a min/max band rather
-     than a settled roll, so the midpoint stands in for the roll to expect.
-  */
-  const myFielded = useMemo(
-    () =>
-      picked.map((f) => {
-        const factor =
-          levelFactor(f.stats.level, levelMod) *
-          ageFactor(f.creation_date, ageDecay)
-        return {
-          health: Math.trunc(mid(f.stats.health_min, f.stats.health_max) * factor),
-          damage: Math.trunc(mid(f.stats.damage_min, f.stats.damage_max) * factor),
-        }
-      }),
-    [picked, levelMod, ageDecay],
-  )
+     Your own five, in the shape the matchup reads and the cards print.
 
-  /* The same team in the shape the matchup reads, the NFT fighter included. */
+     Team 1 is passed a difficulty of 0 as well, so it gets the same level and
+     age treatment as the defenders. Their stats are still a min/max band
+     rather than a settled roll, so the midpoint stands in for the roll to
+     expect.
+
+     One bag rather than two. This used to compute health and damage for the
+     cards and then read attackspeed, taunt and the resistances straight off
+     the fighter for the matchup — which was fine while nothing touched them,
+     and stopped being fine the moment weather did. A roll that drops your
+     air resistance has to reach the balance bar, and it only does if the
+     numbers the bar reads come through the same pipe as the ones on screen.
+  */
   const myFlat = useMemo<FlatFighter[]>(() => {
-    const out: FlatFighter[] = picked.map((f, i) => ({
-      element: f.element,
-      classname: f.classname,
-      racename: f.racename,
-      damage: myFielded[i]?.damage ?? 0,
-      health: myFielded[i]?.health ?? 0,
-      attackspeed: mid(f.stats.attackspeed_min, f.stats.attackspeed_max),
-      taunt: mid(f.stats.taunt_min, f.stats.taunt_max),
-      initiative: mid(f.stats.initiative_min, f.stats.initiative_max),
-      res_gem: f.stats.res_gem, res_metal: f.stats.res_metal, res_air: f.stats.res_air,
-      res_fire: f.stats.res_fire, res_nature: f.stats.res_nature,
-      res_neutral: f.stats.res_neutral,
-      abilities: f.stats.abilities ?? [],
-    }))
+    const out: FlatFighter[] = picked.map((f) => {
+      /* Mid roll, then weather, then level and age. The contract's order. */
+      const base = applyWeather(
+        {
+          element: f.element,
+          classname: f.classname,
+          racename: f.racename,
+          health: mid(f.stats.health_min, f.stats.health_max),
+          damage: mid(f.stats.damage_min, f.stats.damage_max),
+          attackspeed: mid(f.stats.attackspeed_min, f.stats.attackspeed_max),
+          taunt: mid(f.stats.taunt_min, f.stats.taunt_max),
+          initiative: mid(f.stats.initiative_min, f.stats.initiative_max),
+          res_gem: f.stats.res_gem, res_metal: f.stats.res_metal, res_air: f.stats.res_air,
+          res_fire: f.stats.res_fire, res_nature: f.stats.res_nature,
+          res_neutral: f.stats.res_neutral,
+        },
+        weather,
+        caps,
+      )
+      const factor =
+        levelFactor(f.stats.level, levelMod) * ageFactor(f.creation_date, ageDecay)
+      return {
+        ...base,
+        health: Math.trunc(base.health * factor),
+        damage: Math.trunc(base.damage * factor),
+        abilities: f.stats.abilities ?? [],
+      }
+    })
 
     /* `getFighterFromNFT`: stats add, the element comes from the weapon. */
     const cv = crew ? nftValues.get(crew.template_id) : undefined
     const wv = weapon ? nftValues.get(weapon.template_id) : undefined
     if (cv || wv) {
       const add = (pick: (v: typeof cv) => number) => (cv ? pick(cv) : 0) + (wv ? pick(wv) : 0)
+      /* The sixth fighter stands on the same ground as the other five, so
+         the weather reaches it too — by the crew card's class and race and
+         the weapon's element, which is what it fights as. */
       out.push({
-        element: wv?.element ?? cv?.element ?? 'neutral',
-        classname: cv?.classname ?? '',
-        racename: cv?.racename ?? '',
-        damage: add((v) => v!.stats.damage),
-        health: add((v) => v!.stats.health),
-        attackspeed: add((v) => v!.stats.attackspeed),
-        taunt: add((v) => v!.stats.taunt),
-        initiative: add((v) => v!.stats.initiative),
-        res_gem: add((v) => v!.stats.res_gem),
-        res_metal: add((v) => v!.stats.res_metal),
-        res_air: add((v) => v!.stats.res_air),
-        res_fire: add((v) => v!.stats.res_fire),
-        res_nature: add((v) => v!.stats.res_nature),
-        res_neutral: add((v) => v!.stats.res_neutral),
+        ...applyWeather(
+          {
+            element: wv?.element ?? cv?.element ?? 'neutral',
+            classname: cv?.classname ?? '',
+            racename: cv?.racename ?? '',
+            damage: add((v) => v!.stats.damage),
+            health: add((v) => v!.stats.health),
+            attackspeed: add((v) => v!.stats.attackspeed),
+            taunt: add((v) => v!.stats.taunt),
+            initiative: add((v) => v!.stats.initiative),
+            res_gem: add((v) => v!.stats.res_gem),
+            res_metal: add((v) => v!.stats.res_metal),
+            res_air: add((v) => v!.stats.res_air),
+            res_fire: add((v) => v!.stats.res_fire),
+            res_nature: add((v) => v!.stats.res_nature),
+            res_neutral: add((v) => v!.stats.res_neutral),
+          },
+          weather,
+          caps,
+        ),
         abilities: [...(cv?.ability ?? []), ...(wv?.ability ?? [])],
       })
     }
     return out
-  }, [picked, myFielded, crew, weapon, nftValues])
+  }, [picked, crew, weapon, nftValues, weather, caps, levelMod, ageDecay])
 
   /*
      The balance bar, and the figures beside it.
@@ -567,12 +599,7 @@ export default function Arena() {
               team they should bring, and it belongs where they read the
               heading rather than further down the page.
             */}
-            <WeatherPanel
-              weather={weather}
-              mine={picked}
-              theirs={enemies}
-              theirsLabel={`the defender${enemies.length === 1 ? '' : 's'}`}
-            />
+            <WeatherPanel weather={weather} />
           </div>
           <span className="spacer" />
           <div className="dungeon__actions">
@@ -718,16 +745,16 @@ export default function Arena() {
                 f ? (
                   /* Fielded, like the header totals above and the picker
                      below: the line-up between them must not be the one place
-                     still printing the stored roll. `myFielded` is
-                     index-aligned with `picked`. */
+                     still printing the stored roll. `myFlat` is
+                     index-aligned with `picked`, the NFT fighter last. */
                   <CombatCard
                     key={f.fighter_id}
                     element={f.element}
                     classname={f.classname}
                     racename={f.racename}
                     level={f.stats.level}
-                    health={myFielded[i]?.health ?? 0}
-                    damage={myFielded[i]?.damage ?? 0}
+                    health={myFlat[i]?.health ?? 0}
+                    damage={myFlat[i]?.damage ?? 0}
                     side="mine"
                     abilities={enemies.length ? mySlots[i] : undefined}
                     onOpen={() => showFighter(f)}

@@ -21,12 +21,10 @@ import {
 import type { Matchup } from '@/fight/matchup'
 import {
   weatherEffectText,
-  weatherHits,
   weatherIsCalm,
   weatherLean,
   weatherTargets,
   type Weather,
-  type Weatherable,
 } from '@/fight/weather'
 import { rarityRank, type NftValue } from '@/dungeon/nftFighter'
 import type { BattleFighter, RosterFighter } from '@/dungeon/types'
@@ -158,30 +156,19 @@ export function Portrait({
  * "-20 arcanist damage", "+15 gem fighter cooldown". Spelling that out again
  * in stat chips and a "falls on" line cost five rows to repeat one sentence.
  *
- * What the sentence does not say is the part worth adding: how many fighters
- * on each side it actually reaches. Most rolls are aimed — 862 of the 1,001
- * on a planet name a class, race or element — so "4 of yours, 0 of theirs" is
- * the whole story of some fights.
+ * It carried a count of how many fighters on each side it reached, which
+ * looked like the most useful thing on the row and was not: "5 of yours · 6
+ * of the defenders" reads as a score without saying what is being scored, and
+ * a number nobody can act on is worse than no number. The weather's effect on
+ * the two teams belongs in the balance bar, where it can be felt rather than
+ * counted.
  */
-export function WeatherPanel({
-  weather,
-  mine,
-  theirs,
-  theirsLabel,
-}: {
-  weather: Weather | null | undefined
-  mine: Weatherable[]
-  theirs: Weatherable[]
-  /** "the defenders" or "the dungeon", so the counts read as a sentence. */
-  theirsLabel: string
-}) {
+export function WeatherPanel({ weather }: { weather: Weather | null | undefined }) {
   if (!weather) return null
 
   const calm = weatherIsCalm(weather)
   const lean = weatherLean(weather)
   const icons = weatherStatIcons(weather)
-  const hitMine = mine.filter((f) => weatherHits(weather, f)).length
-  const hitTheirs = theirs.filter((f) => weatherHits(weather, f)).length
 
   /* The detail the strip drops, kept for anyone who hovers it. */
   const detail = calm
@@ -221,17 +208,6 @@ export function WeatherPanel({
         </span>
       )}
       <span className="weather__name">{weatherTitle(weather.displayname)}</span>
-
-      {!calm && (
-        <span className="weather__tally">
-          <span className={`weather__side${hitMine ? ' weather__side--on' : ''}`}>
-            {hitMine} of yours
-          </span>
-          <span className={`weather__side${hitTheirs ? ' weather__side--on' : ''}`}>
-            {hitTheirs} of {theirsLabel}
-          </span>
-        </span>
-      )}
     </div>
   )
 }

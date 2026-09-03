@@ -1,6 +1,7 @@
 import { getRow } from '@/chain/client'
 import { CONTRACTS } from '@/chain/config'
 import { TTL } from '@/chain/cache'
+import { addValue, capped, type StatCaps } from '@/dungeon/sim'
 
 /**
  * The weather standing over a land, which every fight there is fought in.
@@ -169,4 +170,92 @@ export function weatherEffectText(e: WeatherEffect): string {
     parts.push(`${flat > 0 ? '+' : ''}${flat}`)
   }
   return parts.join(' and ') || 'no change'
+}
+
+/** Everything `apply_weather_and_age` can reach on a fighter. */
+export interface WeatherableStats extends Weatherable {
+  health: number
+  max_health?: number
+  damage: number
+  taunt: number
+  initiative: number
+  attackspeed: number
+  res_gem: number
+  res_metal: number
+  res_air: number
+  res_fire: number
+  res_nature: number
+  res_neutral: number
+}
+
+/** The stats the contract actually branches on, and nothing else. */
+const WEATHERED = new Set([
+  'damage',
+  'health',
+  'taunt',
+  'initiative',
+  'attackspeed',
+  'res_gem',
+  'res_fire',
+  'res_air',
+  'res_metal',
+  'res_neutral',
+  'res_nature',
+])
+
+/**
+ * A fighter as the weather leaves it, before level and age.
+ *
+ * The order is the contract's and it matters. `apply_weather_and_age` runs
+ * weather *first* and then multiplies by `level_mod ^ level` and the age
+ * decay, so a percentage from the sky compounds with the level curve rather
+ * than being added to the end of it. Applying it the other way round would
+ * be a different number on every fighter above level 1.
+ *
+ * Each effect is a percentage step and then a flat one, both capped, exactly
+ * as the contract writes them:
+ *
+ *     stat = check_battle_caps(stat, stat * (100 + percent) / 100)
+ *     stat = add_values(stat, flat, stat_name, true)
+ *
+ * Both lines run even when the figure in them is zero, which is not a
+ * no-op — the cap check still fires, so a roll of "+0% damage" pulls a
+ * fighter above the cap back down to it. Health drags `max_health` along
+ * with it, because a fight where the bar starts fuller than it can ever be
+ * refilled is not the fight the chain will run.
+ *
+ * A fighter the weather does not name comes back untouched, cap check and
+ * all: the contract only enters this loop for the fighters it catches.
+ */
+export function applyWeather<T extends WeatherableStats>(
+  fighter: T,
+  weather: Weather | null | undefined,
+  caps: StatCaps,
+): T {
+  if (!weather || !weather.weather_effects.length) return fighter
+  if (!weatherHits(weather, fighter)) return fighter
+
+  const out: T = { ...fighter }
+
+  for (const e of weather.weather_effects) {
+    if (!WEATHERED.has(e.statname)) continue
+    const stat = e.statname as keyof WeatherableStats
+
+    const step = (value: number): number =>
+      addValue(
+        capped(e.statname, Math.trunc((value * (100 + e.percent_change)) / 100), caps),
+        e.flat_change,
+        e.statname,
+        caps,
+      )
+
+    const current = Number(out[stat] ?? 0)
+    ;(out as Record<string, unknown>)[e.statname] = step(current)
+
+    if (e.statname === 'health' && typeof out.max_health === 'number') {
+      out.max_health = step(out.max_health)
+    }
+  }
+
+  return out
 }

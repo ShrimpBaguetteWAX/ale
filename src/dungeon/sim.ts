@@ -205,7 +205,7 @@ export interface Replay {
 }
 
 /** The contract's cap check: truncate to uint16, then clamp. */
-function capped(stat: string, value: number, caps: StatCaps): number {
+export function capped(stat: string, value: number, caps: StatCaps): number {
   const v = toU16(value)
   const clamp = (lo: number, hi: number) => Math.min(Math.max(v, lo), hi)
   switch (stat) {
@@ -237,7 +237,7 @@ function capped(stat: string, value: number, caps: StatCaps): number {
 }
 
 /** `add_values`: floor at zero, then cap. */
-function addValue(
+export function addValue(
   base: number,
   addition: number,
   stat: string,

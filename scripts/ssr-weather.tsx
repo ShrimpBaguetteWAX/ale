@@ -162,7 +162,7 @@ async function main() {
             <header className="dungeon__head">
               <div>
                 <h1 className="page__title">Arena</h1>
-                <WeatherPanel weather={w} mine={mine} theirs={enemies} theirsLabel="the defenders" />
+                <WeatherPanel weather={w} />
               </div>
             </header>
           </div>,

@@ -16,13 +16,21 @@
  * not a rule.
  */
 import {
+  applyWeather,
   weatherEffectText,
   weatherHits,
   weatherIsCalm,
   weatherLean,
   weatherTargets,
   type Weather,
+  type WeatherableStats,
 } from '../src/fight/weather'
+import { DEFAULT_CAPS, type StatCaps } from '../src/dungeon/sim'
+import { teamOutlook, type FlatFighter } from '../src/fight/matchup'
+import { applyArenaPower } from '../src/arena/rules'
+import { fieldedStats } from '../src/fight/scaling'
+import type { LiveArenaRow } from '../src/arena/queries'
+import type { BattleFighter } from '../src/dungeon/types'
 
 let pass = 0
 let fail = 0
@@ -171,6 +179,105 @@ console.log('\nwhat the targets read as')
   check('and nothing when it catches everybody', weatherTargets(weather()), [])
 }
 
+console.log('\nwhat it does to a fighter')
+{
+  const caps: StatCaps = { ...DEFAULT_CAPS }
+  const base = (over: Partial<WeatherableStats> = {}): WeatherableStats => ({
+    classname: 'arcanist',
+    racename: 'altan',
+    element: 'gem',
+    health: 1000,
+    max_health: 1000,
+    damage: 1000,
+    taunt: 500,
+    initiative: 500,
+    attackspeed: 500,
+    res_gem: 200, res_metal: 200, res_air: 200,
+    res_fire: 200, res_nature: 200, res_neutral: 200,
+    ...over,
+  })
+  const roll = (effects: Weather['weather_effects'], over: Partial<Weather> = {}) =>
+    weather({ weather_effects: effects, ...over })
+
+  /* stat = check_battle_caps(stat, stat * (100 + percent) / 100) */
+  check(
+    'a percentage scales the stat',
+    applyWeather(base(), roll([{ statname: 'damage', percent_change: -35, flat_change: 0 }]), caps).damage,
+    650,
+  )
+  /* stat = add_values(stat, flat, stat_name, true), and flats are tenths */
+  check(
+    'a flat change is added in the contract\'s own units',
+    applyWeather(base(), roll([{ statname: 'damage', percent_change: 0, flat_change: -200 }]), caps).damage,
+    800,
+  )
+  check(
+    'and both run, percentage first',
+    applyWeather(base(), roll([{ statname: 'damage', percent_change: -50, flat_change: 100 }]), caps).damage,
+    600,
+  )
+
+  /* The integer division the contract does, not a float. */
+  check(
+    'the percentage step truncates',
+    applyWeather(base({ damage: 333 }), roll([{ statname: 'damage', percent_change: 15, flat_change: 0 }]), caps).damage,
+    382,
+  )
+
+  check(
+    'health drags max_health with it',
+    (() => {
+      const out = applyWeather(base(), roll([{ statname: 'health', percent_change: 50, flat_change: 0 }]), caps)
+      return [out.health, out.max_health]
+    })(),
+    [1500, 1500],
+  )
+
+  /* check_battle_caps clamps resistances to [0, cap]. */
+  check(
+    'a resistance cannot pass its cap',
+    applyWeather(base({ res_air: 700 }), roll([{ statname: 'res_air', percent_change: 0, flat_change: 400 }]), caps).res_air,
+    caps.res_air,
+  )
+  check(
+    'nor fall below zero',
+    applyWeather(base({ res_air: 100 }), roll([{ statname: 'res_air', percent_change: 0, flat_change: -400 }]), caps).res_air,
+    0,
+  )
+  check(
+    'and damage is held to its floor',
+    applyWeather(base({ damage: 120 }), roll([{ statname: 'damage', percent_change: -90, flat_change: 0 }]), caps).damage,
+    caps.damage_min,
+  )
+
+  /* Only the fighters the roll names. */
+  const aimed = roll([{ statname: 'damage', percent_change: -35, flat_change: 0 }], {
+    affected_class: ['arcanist'],
+  })
+  check('a fighter it names is changed', applyWeather(base(), aimed, caps).damage, 650)
+  check(
+    'one it does not is returned untouched',
+    applyWeather(base({ classname: 'juggernaut' }), aimed, caps).damage,
+    1000,
+  )
+  check('and no weather at all changes nothing', applyWeather(base(), null, caps).damage, 1000)
+
+  /*
+     Several effects compound in the order the contract lists them, and a
+     stat nobody mentioned is left where it was.
+  */
+  const many = applyWeather(
+    base(),
+    roll([
+      { statname: 'damage', percent_change: -20, flat_change: 0 },
+      { statname: 'res_fire', percent_change: 0, flat_change: 300 },
+    ]),
+    caps,
+  )
+  check('every effect lands', [many.damage, many.res_fire], [800, 500])
+  check('and an untouched stat stays put', many.taunt, 500)
+}
+
 /* ---------- against the live tables ---------- */
 
 async function live(): Promise<void> {
@@ -256,6 +363,165 @@ async function live(): Promise<void> {
     console.log(`  ${PLANET}/${c.land_id}: ${weatherLean(w).padEnd(5)} ${w.displayname}`)
   }
   check('live arenas resolve to weather the panel can draw', drawn > 0, true)
+
+  /*
+     What all of that is for: the balance bar. Run a real arena's defenders
+     and a real roster through the pipeline twice — once with the land's
+     weather and once without — and see whether the answer moves.
+  */
+  console.log('\nwhat it does to the balance bar')
+  const bcfg = (
+    await post<Record<string, never>>({
+      code: 'battle.ale', scope: 'battle.ale', table: 'config', limit: 1,
+    })
+  ).rows[0] as Record<string, unknown>
+  const levelMod = Number(bcfg.level_mod) || 1
+  const ageDecay = Number(bcfg.age_decay) || 0
+  const caps = (bcfg.battle_stat_caps as StatCaps) ?? DEFAULT_CAPS
+
+  const owner = (() => {
+    const CHARMAP = '.12345abcdefghijklmnopqrstuvwxyz'
+    const name = '5thba.wam'
+    let value = 0n
+    for (let i = 0; i <= 12; i++) {
+      let c = 0n
+      if (i < name.length && i <= 12) c = BigInt(CHARMAP.indexOf(name[i]))
+      if (i < 12) {
+        c &= 0x1fn
+        c <<= BigInt(64 - 5 * (i + 1))
+      } else {
+        c &= 0x0fn
+      }
+      value |= c
+    }
+    return value
+  })()
+
+  const roster = (
+    await post<Record<string, never>>({
+      code: 'fighters.ale', scope: 'fighters.ale', table: 'fighters',
+      index_position: 2, key_type: 'i128',
+      lower_bound: (owner << 64n).toString(),
+      upper_bound: ((owner << 64n) | 0xffffffffffffffffn).toString(),
+    })
+  ).rows as unknown as {
+    element: string; classname: string; racename: string; creation_date: string
+    stats: Record<string, number> & { abilities?: never[] }
+  }[]
+
+  const mid = (lo: number, hi: number) => Math.round((lo + hi) / 2)
+  const myTeam = (w: Weather | null): FlatFighter[] =>
+    roster.slice(0, 5).map((f) => {
+      const st = f.stats
+      const b = applyWeather(
+        {
+          element: f.element, classname: f.classname, racename: f.racename,
+          health: mid(st.health_min, st.health_max),
+          damage: mid(st.damage_min, st.damage_max),
+          attackspeed: mid(st.attackspeed_min, st.attackspeed_max),
+          taunt: mid(st.taunt_min, st.taunt_max),
+          initiative: mid(st.initiative_min, st.initiative_max),
+          res_gem: st.res_gem, res_metal: st.res_metal, res_air: st.res_air,
+          res_fire: st.res_fire, res_nature: st.res_nature, res_neutral: st.res_neutral,
+        },
+        w, caps,
+      )
+      const factor =
+        Math.pow(levelMod, Math.max(0, st.level)) *
+        Math.pow(ageDecay, Math.pow(Math.max(0, Math.floor((Date.now() - Date.parse(f.creation_date + 'Z')) / 86400000)), 2))
+      return {
+        ...b,
+        health: Math.trunc(b.health * factor),
+        damage: Math.trunc(b.damage * factor),
+        abilities: st.abilities ?? [],
+      }
+    })
+
+  /* Read once; the loop below and the check after it both want them. */
+  const arenaRows = (
+    await post<LiveArenaRow>({ code: 'arena.ale', scope: PLANET, table: 'livearena', limit: 100 })
+  ).rows
+  const powers = (
+    await post<{ land_id: string; arena_power: number }>({
+      code: 'arena.ale', scope: 'arena.ale', table: 'arenacheck', limit: 100,
+    })
+  ).rows
+
+  let moved = 0
+  let looked = 0
+  for (const c of onPlanet.slice(0, 8)) {
+    const t = tracking.find((r) => String(r.land_id) === String(c.land_id))
+    const w = t && all.find((x) => String(x.weather_id) === String(t.weather_id))
+    if (!w) continue
+    const arenaRow = arenaRows.find((r) => String(r.land_id) === String(c.land_id))
+    if (!arenaRow?.fighters.length) continue
+    const power = powers.find((r) => String(r.land_id) === String(c.land_id))?.arena_power
+
+    const defenders = (weatherOn: Weather | null): BattleFighter[] =>
+      applyArenaPower(
+        arenaRow.fighters.map((f) =>
+          fieldedStats(applyWeather(f, weatherOn, caps), f.level, f.creation_date, levelMod, ageDecay),
+        ),
+        Number(power ?? 10000),
+      )
+
+    const without = teamOutlook(myTeam(null), defenders(null)).share
+    const withIt = teamOutlook(myTeam(w), defenders(w)).share
+    looked++
+    if (Math.abs(withIt - without) > 0.0005) moved++
+    console.log(
+      `  ${PLANET}/${String(c.land_id).padEnd(6)} ${(without * 100).toFixed(1)}% -> ${(withIt * 100).toFixed(1)}%` +
+        `  ${w.displayname}`,
+    )
+  }
+  check('the bar was measured against live arenas', looked > 0, true)
+
+  /*
+     Today's sky is mostly resistances for elements nobody on either side
+     attacks with, plus taunt and cooldown — and this bar is a
+     health/damage/element model, so none of those move it. That is the right
+     answer, and it is also a thin demonstration that the pipe is connected.
+
+     So: take a roll from the same table that the bar certainly does read —
+     a global cut to damage — and put it through the same live pipeline. If
+     that does not move the share, weather is not reaching the bar at all.
+  */
+  const loud = all.find(
+    (w) =>
+      !w.affected_class.length && !w.affected_race.length && !w.affected_element.length &&
+      w.weather_effects.some((e) => e.statname === 'damage' && (e.percent_change < 0 || e.flat_change < 0)),
+  )
+  check('the table has a global damage roll to test with', !!loud, true)
+  if (loud) {
+    const c = onPlanet.find((x) => arenaRows.some((r) => String(r.land_id) === String(x.land_id) && r.fighters.length))
+    const arenaRow = arenaRows.find((r) => String(r.land_id) === String(c?.land_id))
+    const power = powers.find((p) => String(p.land_id) === String(c?.land_id))?.arena_power
+    if (arenaRow) {
+      const defenders = (w: Weather | null): BattleFighter[] =>
+        applyArenaPower(
+          arenaRow.fighters.map((f) =>
+            fieldedStats(applyWeather(f, w, caps), f.level, f.creation_date, levelMod, ageDecay),
+          ),
+          Number(power ?? 10000),
+        )
+      const before = teamOutlook(myTeam(null), defenders(null))
+      const after = teamOutlook(myTeam(loud), defenders(loud))
+      console.log(
+        `  ${loud.displayname}: your damage ${before.mine.damage} -> ${after.mine.damage}, ` +
+          `theirs ${before.theirs.damage} -> ${after.theirs.damage}`,
+      )
+      check('a global damage roll reaches both sides', [
+        after.mine.damage < before.mine.damage,
+        after.theirs.damage < before.theirs.damage,
+      ], [true, true])
+    }
+  }
+  /*
+     Not every roll shifts the balance — one that catches both sides evenly
+     leaves the share where it was, which is the right answer rather than a
+     failure. What matters is that the pipeline is live at all.
+  */
+  console.log(`  (${moved} of ${looked} rolls moved the bar)`)
 
   console.log('\n' + (fail === 0 ? `all ${pass} cases passed` : `${fail} FAILED`))
   if (fail) process.exitCode = 1

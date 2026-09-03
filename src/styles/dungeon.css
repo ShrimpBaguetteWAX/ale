@@ -1581,28 +1581,3 @@
   color: var(--text);
   font-weight: var(--fw-medium);
 }
-
-/*
- * How many fighters on each side the weather reaches.
- *
- * A side it misses is dimmed rather than dropped: "0 of yours" is
- * information, and a row that disappears at zero makes the remaining one look
- * like the only side that was ever checked.
- */
-.weather__tally {
-  display: inline-flex;
-  flex-wrap: wrap;
-  gap: var(--sp-2) var(--sp-3);
-  padding-left: var(--sp-3);
-  border-left: 1px solid var(--line-soft);
-  font-size: var(--fs-xs);
-}
-
-.weather__side {
-  color: var(--text-faint);
-}
-
-.weather__side--on {
-  color: var(--lean-colour);
-  font-weight: 600;
-}

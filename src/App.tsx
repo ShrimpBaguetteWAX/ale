@@ -1,4 +1,12 @@
-import { Suspense, lazy, useEffect } from 'react'
+import {
+  Component,
+  Suspense,
+  lazy,
+  useEffect,
+  type ComponentType,
+  type LazyExoticComponent,
+  type ReactNode,
+} from 'react'
 import {
   HashRouter,
   Navigate,
@@ -12,25 +20,136 @@ import { useGame } from './state/useGame'
 import { Landing } from './routes/Landing'
 import { Connect } from './routes/Connect'
 
+/**
+ * A lazily-loaded screen that survives a deploy.
+ *
+ * Vite hashes every chunk, so publishing renames all of them. A player with
+ * the page already open is holding an `index.html` that names chunks the
+ * server no longer has — and the moment they open a screen they have not
+ * visited yet, the import 404s, React unmounts the tree, and they are left
+ * looking at a blank page with the explanation in a console they will never
+ * open. Which is exactly what has been happening.
+ *
+ * Reloading fixes it, because the fresh `index.html` names the chunks that
+ * exist. Doing it automatically means the player never sees the fault; doing
+ * it *once* means a failure that is not a stale deploy — an offline
+ * connection, a genuinely broken build — cannot put the page in a reload
+ * loop. The second failure falls through to the boundary below.
+ */
+const RELOAD_FLAG = 'al.chunkreload'
+
+/*
+   The guard has to survive the reload, which means storage — and storage is
+   the one thing a privacy mode takes away. Without it there is no way to
+   know this is the second attempt, so the honest answer is not to reload at
+   all: an unguarded reload on a genuinely broken build is an infinite loop,
+   and a loop is a worse failure than the blank page it was meant to fix. The
+   boundary below still offers the button.
+*/
+const flag = {
+  available(): boolean {
+    try {
+      sessionStorage.setItem(RELOAD_FLAG + '.probe', '1')
+      sessionStorage.removeItem(RELOAD_FLAG + '.probe')
+      return true
+    } catch {
+      return false
+    }
+  },
+  get(): boolean {
+    try {
+      return sessionStorage.getItem(RELOAD_FLAG) !== null
+    } catch {
+      return true
+    }
+  },
+  set(on: boolean): void {
+    try {
+      if (on) sessionStorage.setItem(RELOAD_FLAG, '1')
+      else sessionStorage.removeItem(RELOAD_FLAG)
+    } catch {
+      /* nothing to do */
+    }
+  },
+}
+
+function lazyScreen<P extends object>(
+  load: () => Promise<{ default: ComponentType<P> }>,
+): LazyExoticComponent<ComponentType<P>> {
+  return lazy(async () => {
+    try {
+      const mod = await load()
+      /* Loaded fine, so a later deploy is allowed its own one reload. */
+      flag.set(false)
+      return mod
+    } catch (err) {
+      /* Already tried, or no way to remember trying. */
+      if (!flag.available() || flag.get()) throw err
+      flag.set(true)
+      window.location.reload()
+      /* The reload is asynchronous. Never resolving keeps the spinner up
+         rather than flashing an error on its way out. */
+      return new Promise<never>(() => {})
+    }
+  })
+}
+
+/**
+ * What is left when even the reload did not help.
+ *
+ * A blank page is the worst possible answer to "the build moved": it looks
+ * like the game is broken rather than out of date, and it offers nothing to
+ * do about it.
+ */
+class ScreenBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
+  state = { failed: false }
+
+  static getDerivedStateFromError() {
+    return { failed: true }
+  }
+
+  render() {
+    if (!this.state.failed) return this.props.children
+    return (
+      <div className="main__inner" style={{ padding: 'var(--sp-8) 0' }}>
+        <div className="alert alert--error">
+          This screen could not be loaded. A new version of the game was
+          probably published while you had this page open.
+        </div>
+        <button
+          type="button"
+          className="btn btn--primary"
+          onClick={() => {
+            flag.set(false)
+            window.location.reload()
+          }}
+        >
+          Reload
+        </button>
+      </div>
+    )
+  }
+}
+
 // Everything past the door is split out: a visitor who only reads the landing
 // page never downloads the game screens or the wallet SDK.
-const Signup = lazy(() => import('./routes/Signup'))
-const MapView = lazy(() => import('./routes/MapView'))
-const Profile = lazy(() => import('./routes/Profile'))
-const Tavern = lazy(() => import('./routes/Tavern'))
-const Fighters = lazy(() => import('./routes/Fighters'))
-const Quests = lazy(() => import('./routes/Quests'))
-const Lands = lazy(() => import('./routes/Lands'))
-const Farming = lazy(() => import('./routes/Farming'))
-const Ascension = lazy(() => import('./routes/Ascension'))
-const Leaderboard = lazy(() => import('./routes/Leaderboard'))
-const Candle = lazy(() => import('./routes/Candle'))
-const Shop = lazy(() => import('./routes/Shop'))
-const Dungeon = lazy(() => import('./routes/Dungeon'))
-const Arena = lazy(() => import('./routes/Arena'))
-const Market = lazy(() => import('./routes/Market'))
-const Battle = lazy(() => import('./routes/Battle'))
-const ComingSoon = lazy(() => import('./routes/ComingSoon'))
+const Signup = lazyScreen(() => import('./routes/Signup'))
+const MapView = lazyScreen(() => import('./routes/MapView'))
+const Profile = lazyScreen(() => import('./routes/Profile'))
+const Tavern = lazyScreen(() => import('./routes/Tavern'))
+const Fighters = lazyScreen(() => import('./routes/Fighters'))
+const Quests = lazyScreen(() => import('./routes/Quests'))
+const Lands = lazyScreen(() => import('./routes/Lands'))
+const Farming = lazyScreen(() => import('./routes/Farming'))
+const Ascension = lazyScreen(() => import('./routes/Ascension'))
+const Leaderboard = lazyScreen(() => import('./routes/Leaderboard'))
+const Candle = lazyScreen(() => import('./routes/Candle'))
+const Shop = lazyScreen(() => import('./routes/Shop'))
+const Dungeon = lazyScreen(() => import('./routes/Dungeon'))
+const Arena = lazyScreen(() => import('./routes/Arena'))
+const Market = lazyScreen(() => import('./routes/Market'))
+const Battle = lazyScreen(() => import('./routes/Battle'))
+const ComingSoon = lazyScreen(() => import('./routes/ComingSoon'))
 
 function Loading({ label = 'Loading' }: { label?: string }) {
   return (
@@ -79,7 +198,8 @@ export default function App() {
   return (
     <HashRouter>
       <Boot>
-        <Suspense fallback={<Loading />}>
+        <ScreenBoundary>
+          <Suspense fallback={<Loading />}>
           <Routes>
             <Route path="/" element={<Landing />} />
             <Route path="/connect" element={<Connect />} />
@@ -116,7 +236,8 @@ export default function App() {
             <Route path="/home" element={<Navigate to="/map" replace />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
-        </Suspense>
+          </Suspense>
+        </ScreenBoundary>
       </Boot>
     </HashRouter>
   )
