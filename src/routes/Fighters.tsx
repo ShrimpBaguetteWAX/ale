@@ -69,6 +69,7 @@ import {
   STAT_LABEL,
 } from '@/tavern/fighterStats'
 import { NUM_LOCALE } from '@/format'
+import { QualityFilters } from '@/fight/setup'
 import { asset } from '@/assets'
 
 /**
@@ -217,9 +218,16 @@ export default function Fighters() {
     return () => clearInterval(id)
   }, [])
 
+  /*
+     The class bands go in, because the roll-quality rules are graded against
+     them: a grade is a comparison with what the class can produce, and
+     without the bands `applyFilter` filters nothing rather than everything.
+     So the quality bar would have rendered, accepted rules, and quietly
+     changed no result at all.
+  */
   const shown = useMemo(
-    () => applyFilter(roster, filter, ageDecay, now),
-    [roster, filter, ageDecay, now],
+    () => applyFilter(roster, filter, ageDecay, now, templates),
+    [roster, filter, ageDecay, now, templates],
   )
 
   const selected = roster.find((f) => f.fighter_id === selectedId) ?? null
@@ -520,6 +528,18 @@ export default function Fighters() {
         tab={tab}
         onTab={setTab}
       />
+
+      {/*
+         The market’s roll-quality filter, on the roster it belongs to.
+
+         It was written for the market and left there, which is the wrong way
+         round: it answers "which of these rolled well", and the screen where
+         that question is asked most is the one showing the fighters you
+         already own — deciding who to ascend, who to field, and which of
+         forty to sell. This bar is above the grid in both modes, so the sell
+         list is filtered by it too.
+      */}
+      <QualityFilters filter={filter} onChange={setFilter} />
 
       {data.loading ? (
         <div className="rostergrid">

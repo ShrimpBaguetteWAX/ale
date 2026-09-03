@@ -16,6 +16,7 @@ import {
   countActiveFilters,
   isFilterActive,
   type Element,
+  type QualityRule,
   type RosterFilter,
   type Status,
 } from '@/dungeon/filters'
@@ -30,13 +31,19 @@ import {
 import { rarityRank, type NftValue } from '@/dungeon/nftFighter'
 import type { BattleFighter, RosterFighter } from '@/dungeon/types'
 import {
+  FILTER_STATS,
+  GRADE_ICON,
+  GRADE_LABEL,
+  GRADE_ORDER,
   STAT_LABEL,
   elementBackground,
+  isGradedStat,
   statIcon,
   fighterArt,
   fighterArtFallback,
   formatScaled,
   type ClassTemplate,
+  type StatGrade,
 } from '@/tavern/fighterStats'
 import { asset } from '@/assets'
 import { usePhone } from '@/components/usePhone'
@@ -844,6 +851,161 @@ export function RosterFilters({
               </select>
             </label>
           </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+/* ---------- filtering on how well a fighter rolled ---------- */
+
+/**
+ * Stat-quality floors, stacked.
+ *
+ * The market's own filter, and the one the roster never needed: everything
+ * above narrows *which* fighters are listed, this narrows how good they are.
+ * Rules are added one at a time and AND together, so "green damage" and "at
+ * least average fire resistance" is one search rather than two.
+ */
+/**
+ * Stat floors, stacked.
+ *
+ * The market's own filter, and the one the roster never needed: everything
+ * above narrows *which* fighters are listed, this narrows how good they are.
+ * Rules AND together, so "green damage" and "at least 40 taunt" is one search
+ * rather than two passes.
+ *
+ * The second control changes shape with the stat, because the stats do not
+ * all answer the same way. Ten of them have a grade and take one; taunt does
+ * not and takes a number. Putting taunt in its own bar said they were
+ * different questions, and to a buyer they are the same question with
+ * different units.
+ */
+export function QualityFilters({
+  filter,
+  onChange,
+}: {
+  filter: RosterFilter
+  onChange: (f: RosterFilter) => void
+}) {
+  const rules = filter.qualities ?? []
+  const [stat, setStat] = useState(FILTER_STATS[0].field)
+  const [grade, setGrade] = useState<StatGrade>('green-up')
+  /* Taunt and age live on different scales, so the box starts somewhere
+     useful for whichever is picked rather than on one number for both. */
+  const [value, setValue] = useState('40')
+
+  const graded = isGradedStat(stat)
+  const label = (field: string) =>
+    FILTER_STATS.find((g) => g.field === field)?.label ?? field
+
+  const add = () => {
+    const min: StatGrade | number = graded
+      ? grade
+      : Math.max(0, Math.floor(Number(value) || 0))
+    /* One rule per stat: two floors on the same stat is just the higher one. */
+    const kept = rules.filter((r) => r.stat !== stat)
+    onChange({ ...filter, qualities: [...kept, { stat, min }] })
+  }
+
+  const drop = (rule: QualityRule) =>
+    onChange({ ...filter, qualities: rules.filter((r) => r.stat !== rule.stat) })
+
+  return (
+    <div className="qfilter">
+      <div className="qfilter__add">
+        <span className="qfilter__lead">Roll quality</span>
+
+        <select
+          className="input qfilter__stat"
+          value={stat}
+          onChange={(e) => {
+            const next = e.target.value
+            setStat(next)
+            if (!isGradedStat(next)) setValue(next === 'age' ? '80' : '40')
+          }}
+          aria-label="Stat"
+        >
+          {FILTER_STATS.map((g) => (
+            <option key={g.field} value={g.field}>
+              {g.label}
+            </option>
+          ))}
+        </select>
+
+        <span className="qfilter__at">at least</span>
+
+        {graded ? (
+          <select
+            className="input qfilter__grade"
+            value={grade}
+            onChange={(e) => setGrade(e.target.value as StatGrade)}
+            aria-label="Minimum grade"
+          >
+            {/* Best first: the useful end of the scale is the top of it. */}
+            {[...GRADE_ORDER].reverse().map((g) => (
+              <option key={g} value={g}>
+                {GRADE_LABEL[g]}
+              </option>
+            ))}
+          </select>
+        ) : (
+          <input
+            className="input qfilter__num"
+            type="number"
+            /* Age bonus runs down to -100, so this one is not floored at 0. */
+            min={stat === 'age' ? -100 : 0}
+            inputMode="numeric"
+            value={value}
+            aria-label={`Minimum ${label(stat)}`}
+            onChange={(e) => setValue(e.target.value)}
+          />
+        )}
+
+        <button type="button" className="btn btn--ghost btn--sm" onClick={add}>
+          Add
+        </button>
+
+        {!graded && (
+          <span className="qfilter__note">
+            {stat === 'age'
+              ? 'Condition rather than a roll: +100% is untouched, 0% has lost half its stats.'
+              : 'Taunt has no quality arrow — high suits a tank, low keeps a fighter out of the way — so it takes a number instead.'}
+          </span>
+        )}
+      </div>
+
+      {rules.length > 0 && (
+        <div className="qfilter__rules">
+          {rules.map((r) => (
+            <button
+              type="button"
+              className="qfilter__rule"
+              key={r.stat}
+              onClick={() => drop(r)}
+              title="Remove this rule"
+            >
+              {typeof r.min === 'number' ? (
+                <span className="qfilter__min mono">
+                  {r.min}
+                  {r.stat === 'age' ? '%+' : '+'}
+                </span>
+              ) : (
+                <img className="qfilter__arrow" src={GRADE_ICON[r.min]} alt="" />
+              )}
+              {label(r.stat)}
+              <span className="qfilter__x" aria-hidden="true">
+                ×
+              </span>
+            </button>
+          ))}
+          <button
+            type="button"
+            className="btn btn--ghost btn--sm"
+            onClick={() => onChange({ ...filter, qualities: [] })}
+          >
+            Clear
+          </button>
         </div>
       )}
     </div>

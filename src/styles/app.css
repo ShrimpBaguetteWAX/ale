@@ -1257,3 +1257,53 @@
   flex: 1;
   border-top: 1px dashed var(--line-soft);
 }
+
+/*
+ * "What can be rolled", folded shut.
+ *
+ * A table of every upgrade in the game with a range and a percentage against
+ * each: worth having, not worth the bottom half of the screen on every visit.
+ * The page is for choosing a fighter and taking an offer, and both of those
+ * sat above a wall of reference material that never changes.
+ */
+.oddspanel > .hint,
+.oddspanel > .oddslist {
+  margin-top: var(--sp-3);
+}
+
+.oddspanel__summary {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+  font-family: var(--font-display);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-bold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-heading);
+  cursor: pointer;
+}
+
+/* The count carries the marker's job of saying there is more inside. */
+.oddspanel__count {
+  font-family: var(--font-body);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-normal);
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.oddspanel__summary::-webkit-details-marker {
+  display: none;
+}
+
+.oddspanel__summary::after {
+  content: '▾';
+  margin-left: auto;
+  font-size: var(--fs-xs);
+  opacity: 0.7;
+}
+
+.oddspanel[open] .oddspanel__summary::after {
+  content: '▴';
+}

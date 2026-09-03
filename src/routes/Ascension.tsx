@@ -558,8 +558,21 @@ function OddsPanel({ odds }: { odds: UpgradeOdds[] }) {
   if (!sorted.length) return null
 
   return (
-    <section className="panel">
-      <h2 className="panel__title">What can be rolled</h2>
+    /*
+       Folded shut.
+
+       It is a table of every upgrade in the game with a range and a
+       percentage against each, which is worth having and is not worth the
+       bottom half of the screen every visit: the page is for choosing a
+       fighter and taking an offer, and both of those were below a wall of
+       reference material. A summary that says how many there are, and
+       opens.
+    */
+    <details className="panel oddspanel">
+      <summary className="oddspanel__summary">
+        What can be rolled
+        <span className="oddspanel__count faint">{sorted.length} upgrades</span>
+      </summary>
       <p className="hint">
         Every offer is drawn by weight: a category first, then an upgrade
         inside it. Each of the three offers is rolled independently.
@@ -591,7 +604,7 @@ function OddsPanel({ odds }: { odds: UpgradeOdds[] }) {
           )
         })}
       </div>
-    </section>
+    </details>
   )
 }
 
