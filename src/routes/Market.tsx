@@ -105,7 +105,7 @@ const READOUTS: [Readout, string][] = [
 ]
 
 /** The five banded stats, in the order the fighter panel uses. */
-const PRIMARY_STATS = ['health', 'damage', 'taunt', 'attackspeed', 'initiative'] as const
+const PRIMARY_STATS = ['damage', 'health', 'taunt', 'attackspeed', 'initiative'] as const
 
 const RESISTANCES: [string, string][] = [
   ['res_fire', 'Fire'],

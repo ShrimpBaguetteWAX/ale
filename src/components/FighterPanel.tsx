@@ -88,9 +88,10 @@ const RESISTANCES: [string, string][] = [
   ['res_neutral', 'Neutral'],
 ]
 
+/* Damage first: it is what a fighter is picked for, health is how long. */
 const STAT_ORDER: (keyof PanelFighter)[] = [
-  'health',
   'damage',
+  'health',
   'taunt',
   'attackspeed',
   'initiative',

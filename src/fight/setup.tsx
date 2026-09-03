@@ -514,9 +514,16 @@ export function CombatCard({
           */}
           <span className="combatcard__name">{classname || racename || 'Fighter'}</span>
           {owner && <span className="combatcard__owner">{owner}</span>}
+          {/*
+            Damage first, health second, here and everywhere else a pair of
+            them is printed. Damage is what a player is choosing on - it is
+            the number the elements move, the number the matchup badges
+            qualify, and the one that decides whether a fighter belongs in
+            this fight; health is how long it keeps doing it.
+          */}
           <span className="combatcard__stats mono">
-            <span className="combatcard__hp">{formatScaled(health)}</span>
             <span className="combatcard__dmg">{formatScaled(damage)}</span>
+            <span className="combatcard__hp">{formatScaled(health)}</span>
           </span>
           {/*
             Rendered whenever there is an opposing line to read, even when
@@ -987,7 +994,7 @@ export function FighterGrid({
                   className="fightercard__stats mono"
                   title={`As fielded: level ${f.stats.level} and ${ageDays(f)} days of age already applied (×${factor.toFixed(3)} of the roll)`}
                 >
-                  {formatScaled(health)} HP · {formatScaled(damage)} DMG
+                  {formatScaled(damage)} DMG · {formatScaled(health)} HP
                 </span>
                 <VersusBadges matchup={matchups?.get(f.fighter_id)} />
                 {inTeam && <span className="fightercard__tick">In team</span>}
@@ -1279,7 +1286,7 @@ export function CardGrid({
                     {v.shine && v.shine !== 'stone' ? ` · ${v.shine}` : ''}
                   </span>
                   <span className="nftcard__stats mono">
-                    +{formatScaled(v.stats.health)} HP · +{formatScaled(v.stats.damage)} DMG
+                    +{formatScaled(v.stats.damage)} DMG · +{formatScaled(v.stats.health)} HP
                   </span>
                   {v.element && (
                     <span className="nftcard__element">

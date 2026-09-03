@@ -664,8 +664,8 @@ export default function Dungeon() {
             >
               <span className="versus__team">The dungeon</span>
               <span className="versus__totals mono">
-                {formatScaled(outlook.theirs.health)} HP ·{' '}
-                {formatScaled(outlook.theirs.damage)} DMG
+                {formatScaled(outlook.theirs.damage)} DMG ·{' '}
+                {formatScaled(outlook.theirs.health)} HP
                 <Elemental side={outlook.theirs} against={outlook.mine.bonuses} who="They" />
               </span>
             </header>
@@ -726,8 +726,8 @@ export default function Dungeon() {
               */}
               {!phone && autoPickButton}
               <span className="versus__totals mono">
-                {formatScaled(outlook.mine.health)} HP ·{' '}
-                {formatScaled(outlook.mine.damage)} DMG
+                {formatScaled(outlook.mine.damage)} DMG ·{' '}
+                {formatScaled(outlook.mine.health)} HP
                 <Elemental side={outlook.mine} against={outlook.theirs.bonuses} who="You" />
               </span>
             </header>
@@ -839,8 +839,8 @@ export default function Dungeon() {
                   <div className="loadout__figures">
                     {(
                       [
-                        ['health', nftFighter.health.min],
                         ['damage', nftFighter.damage.min],
+                        ['health', nftFighter.health.min],
                         ['taunt', nftFighter.taunt.min],
                         ['attackspeed', nftFighter.attackspeed.min],
                         ['initiative', nftFighter.initiative.min],

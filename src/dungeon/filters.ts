@@ -99,8 +99,8 @@ export interface SortOption {
  */
 export const SORTS: SortOption[] = [
   { value: 'level', label: 'Level' },
-  { value: 'health_max', label: 'Health' },
   { value: 'damage_max', label: 'Damage' },
+  { value: 'health_max', label: 'Health' },
   { value: 'initiative_max', label: 'Windup' },
   { value: 'attackspeed_max', label: 'Cooldown' },
   { value: 'taunt_max', label: 'Taunt' },

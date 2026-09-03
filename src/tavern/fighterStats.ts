@@ -435,8 +435,8 @@ export function gradeRank(grade: StatGrade | null): number {
  * The flag is what lets one control ask both kinds of question.
  */
 export const FILTER_STATS: { field: string; label: string; graded: boolean }[] = [
-  { field: 'health', label: 'Health', graded: true },
   { field: 'damage', label: 'Damage', graded: true },
+  { field: 'health', label: 'Health', graded: true },
   { field: 'taunt', label: 'Taunt', graded: false },
   { field: 'age', label: 'Age bonus', graded: false },
   { field: 'attackspeed', label: 'Cooldown', graded: true },
