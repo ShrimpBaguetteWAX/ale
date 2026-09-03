@@ -1834,3 +1834,105 @@
     text-align: center;
   }
 }
+
+/*
+ * A card, and on a phone the ability counts under it.
+ *
+ * The counts used to be a row on the plate, and the plate is the dark band
+ * painted over the bottom of the portrait — so on a 58px card two small chips
+ * cost a fifth of the artwork to say something a player reads once while
+ * choosing. Below the card the band gets that height back, and the chips are
+ * easier to read for not sitting over a portrait.
+ *
+ * The wrapper exists at every width so the markup does not fork, and it is
+ * transparent above the breakpoint: a grid with one child, which stretches to
+ * the wrapper exactly as the card used to stretch to the row.
+ */
+.combatslot {
+  display: grid;
+  min-width: 0;
+}
+
+@media (max-width: 719px) {
+  .combatslot {
+    grid-template-rows: 1fr auto;
+    gap: 3px;
+  }
+
+  /*
+     Out here it is upright rather than counter-skewed, and it holds its line
+     whether or not it has chips — the cards in a row must still end level
+     with each other.
+  */
+  .combatslot > .combatcard__vs {
+    min-height: 14px;
+  }
+}
+
+/*
+ * The filter controls, laid out rather than wrapped, on a phone.
+ *
+ * They were a flex row with a minimum width per field, which on a 298px
+ * column wrapped into whatever fell out: Class and Race shared a line, Status
+ * took one on its own with half of it empty, Sort took another, Ability a
+ * fourth. Four rows for five controls, and at 108px the longer labels —
+ * "Damage blocked", "Ability bonuses" — wrapped to two lines each, which is
+ * where the rest of the height went. 595px open, most of it air.
+ *
+ * Two even columns instead. Every field gets 145px, which is enough for the
+ * longest label on one line, and the search box and the reset take rows of
+ * their own because that is what they are. 595px to 417.
+ */
+@media (max-width: 719px) {
+  .filters__row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--sp-2);
+    align-items: end;
+  }
+
+  .field,
+  .field--grow {
+    min-width: 0;
+    gap: 2px;
+  }
+
+  .field__label {
+    font-size: 9px;
+    letter-spacing: 0.06em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* A search box and a reset are not half-width controls. */
+  .filters__row .field--grow,
+  .filters__clear {
+    grid-column: 1 / -1;
+  }
+
+  .filters__clear {
+    justify-self: start;
+  }
+
+  .matchupbar {
+    gap: var(--sp-2);
+    padding-top: var(--sp-2);
+  }
+
+  .matchupbar__who {
+    gap: 4px 6px;
+    font-size: 11px;
+  }
+}
+
+/*
+ * The field label sits on a span that inherits an 8px bottom margin from the
+ * base type rules, on top of the 2px grid gap that is meant to be the whole
+ * distance between a label and its control. Eight pixels a row, on five rows.
+ */
+@media (max-width: 719px) {
+  .field__label {
+    margin: 0;
+  }
+}

@@ -401,18 +401,59 @@ export function CombatCard({
   onOpen: () => void
   onRemove?: () => void
 }) {
+  /*
+     On a phone the ability counts move out from under the card and sit
+     below it.
+
+     They are a row on the plate, and the plate is the dark band painted
+     over the bottom of the portrait — so on a 58px card those two little
+     chips were costing a fifth of the artwork to say something a player
+     reads once while choosing. Below the card the band gets that height
+     back and the chips are easier to read for not being over a portrait.
+
+     They cannot simply be positioned outside: `.combatcard__hit` is 124%
+     of the card wide by design — that is what covers the wedges the skew
+     leaves — so the card must go on clipping, and anything that escapes
+     it has to be a sibling rather than a descendant.
+  */
+  const phone = usePhone()
+
+  const counts = abilities ? (
+    <span className="combatcard__vs">
+      {abilities.bonuses > 0 && (
+        <span
+          className="combatcard__vsbit combatcard__vsbit--bonus"
+          title={`Fires here: ${abilities.bonusNames.join(', ')}`}
+        >
+          <img src={asset('/assets/icons/medal.svg')} alt="" width={10} height={10} />
+          {abilities.bonuses}
+        </span>
+      )}
+      {abilities.exposure > 0 && (
+        <span
+          className="combatcard__vsbit combatcard__vsbit--exposed"
+          title={`Switches on for the other side: ${abilities.exposureNames.join(', ')}`}
+        >
+          <img src={asset('/assets/icons/exclamation.svg')} alt="" width={10} height={10} />
+          {abilities.exposure}
+        </span>
+      )}
+    </span>
+  ) : null
+
   return (
-    /*
-      The elemental backdrop sits on the skewed card itself, not on the
-      content inside it. The content is counter-skewed to keep the art
-      upright, which leaves wedges of its own background uncovered at two
-      corners however much bleed it is given; painting the backdrop on the
-      parallelogram fills it exactly, by construction.
-    */
-    <div
-      className={`combatcard combatcard--${side}`}
-      style={{ backgroundImage: `url('${elementBackground(element)}')` }}
-    >
+    <div className="combatslot">
+      {/*
+        The elemental backdrop sits on the skewed card itself, not on the
+        content inside it. The content is counter-skewed to keep the art
+        upright, which leaves wedges of its own background uncovered at two
+        corners however much bleed it is given; painting the backdrop on the
+        parallelogram fills it exactly, by construction.
+      */}
+      <div
+        className={`combatcard combatcard--${side}`}
+        style={{ backgroundImage: `url('${elementBackground(element)}')` }}
+      >
       <button
         type="button"
         className="combatcard__hit"
@@ -466,37 +507,16 @@ export function CombatCard({
             <span className="combatcard__dmg">{formatScaled(damage)}</span>
           </span>
           {/*
-            Rendered whenever there is an opposing line to read, even when both
-            counts are zero.
+            Rendered whenever there is an opposing line to read, even when
+            both counts are zero.
 
-            The plate is what paints the dark band over the bottom of the art,
-            so a card that dropped this row painted a shorter band than the
-            ones beside it and the whole line-up looked ragged along the
+            The plate is what paints the dark band over the bottom of the
+            art, so a card that dropped this row painted a shorter band than
+            the ones beside it and the whole line-up looked ragged along the
             bottom. An empty row costs nothing to look at; an uneven band is
             immediately visible.
           */}
-          {!!abilities && (
-            <span className="combatcard__vs">
-              {abilities.bonuses > 0 && (
-                <span
-                  className="combatcard__vsbit combatcard__vsbit--bonus"
-                  title={`Fires here: ${abilities.bonusNames.join(', ')}`}
-                >
-                  <img src={asset("/assets/icons/medal.svg")} alt="" width={10} height={10} />
-                  {abilities.bonuses}
-                </span>
-              )}
-              {abilities.exposure > 0 && (
-                <span
-                  className="combatcard__vsbit combatcard__vsbit--exposed"
-                  title={`Switches on for the other side: ${abilities.exposureNames.join(', ')}`}
-                >
-                  <img src={asset("/assets/icons/exclamation.svg")} alt="" width={10} height={10} />
-                  {abilities.exposure}
-                </span>
-              )}
-            </span>
-          )}
+          {!phone && counts}
         </span>
       </button>
 
@@ -511,6 +531,9 @@ export function CombatCard({
           ×
         </button>
       )}
+      </div>
+
+      {phone && counts}
     </div>
   )
 }
