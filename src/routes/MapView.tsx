@@ -648,17 +648,17 @@ export default function MapView() {
   const enterLink = inTavern ? (
     <Link className="btn btn--charged entertavern" to="/tavern">
       <img src={asset('/assets/markers/tavern.svg')} alt="" />
-      Enter Tavern
+      <span className="entertavern__verb">Enter </span>Tavern
     </Link>
   ) : dungeonHere ? (
     <Link className="btn btn--charged entertavern enterdungeon" to="/dungeon">
       <img src={asset('/assets/markers/dungeons.svg')} alt="" />
-      Enter Dungeon
+      <span className="entertavern__verb">Enter </span>Dungeon
     </Link>
   ) : arenaHere ? (
     <Link className="btn btn--charged entertavern enterarena" to="/arena">
       <img src={asset('/assets/markers/arena.svg')} alt="" />
-      Enter Arena
+      <span className="entertavern__verb">Enter </span>Arena
     </Link>
   ) : null
 

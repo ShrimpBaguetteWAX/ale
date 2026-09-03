@@ -169,7 +169,7 @@ export const MINEABLE_POOLS: { tlm: string; shards: string; label: string; how: 
     tlm: 'tlmarenadom',
     shards: 'shrdarenadom',
     label: 'Arena Domination',
-    how: 'Earn Reward Power by keeping your fighters in the arena after a victory. When a fighter is eventually removed, its accumulated Reward Power is added to this pool.',
+    how: 'Earn Rewards by winning Arenas. Hold more Arenas to claim exponentially more often.',
   },
 ]
 

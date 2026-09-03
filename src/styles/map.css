@@ -1402,9 +1402,74 @@
     overflow: visible;
   }
 
+  /*
+     Equals in the bar.
+
+     The Enter prompt is built to be the loudest thing on a wide map — 56px
+     tall, a size up in type, a 24px glyph — which is right when it is alone
+     in the middle of the screen and wrong beside another button. Here the two
+     are the same offer at the same weight, so it takes the ordinary button
+     metrics and they split the width evenly.
+
+     It keeps its gold: what it does is still different from what Travel does.
+  */
+  /*
+     An even split, from a percentage basis rather than zero.
+
+     With `flex-basis: 0` the two came out 192 and 174 — the Enter button's
+     own padding and border landing on top of its share while the tile card,
+     which has neither, got none. A 50% basis is measured the same way for
+     both, and they resolve to exactly half the bar each.
+  */
+  .mapactions .entertavern,
+  .mapactions .tilecard {
+    flex: 1 1 50%;
+    min-width: 0;
+  }
+
+  /*
+     The tracking and the roomy padding are what made it wider than its half
+     of the bar: nowrap plus 0.08em plus 12px each side put its min-content
+     over the share, so it took what it needed and Travel got the rest.
+  */
   .mapactions .entertavern {
-    flex: 0 1 auto;
+    min-height: 44px;
+    padding: 0 var(--sp-2);
+    font-size: var(--fs-sm);
+    letter-spacing: normal;
     white-space: nowrap;
+  }
+
+  /*
+     No charge in the bar.
+
+     `btn--charged` draws its glow in pseudo-elements that reach outside the
+     button box — fine for a lone call to action floating on a map, but in a
+     packed strip it spills over the button beside it and above the bar
+     entirely. The gold ground already says which of the two this is.
+  */
+  .mapactions .entertavern::before,
+  .mapactions .entertavern::after {
+    display: none;
+  }
+
+  .mapactions .entertavern img {
+    width: 18px;
+    height: 18px;
+  }
+
+  /*
+     "Enter" goes, the destination stays.
+
+     The button cannot shrink past its own text — nowrap and `min-width: auto`
+     — and "Enter Arena" in Orbitron is 190px, more than half the bar. So it
+     took what it needed and Travel got what was left: 192 against 174 rather
+     than level. The marker beside the word already says enter, and a gold
+     button reading "Arena" next to a blue one reading "Travel" is a pair of
+     destinations, which is what they are.
+  */
+  .entertavern__verb {
+    display: none;
   }
 
   /*
