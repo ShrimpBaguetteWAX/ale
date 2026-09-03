@@ -21,7 +21,14 @@ export interface MapCanvasProps {
   lands: Land[]
   position: { x: number; y: number } | null
   selected: { x: number; y: number } | null
-  onSelect: (coords: { x: number; y: number }) => void
+  /**
+   * A tile was chosen.
+   *
+   * `byTouch` because a touch screen synthesises a click after the gesture
+   * ends and the caller has to defend against it; a mouse does not, and
+   * should not pay for the defence.
+   */
+  onSelect: (coords: { x: number; y: number }, byTouch?: boolean) => void
   /** Bumping this recentres the view on the player. */
   recenterToken?: number
   lowFx?: boolean
@@ -835,7 +842,7 @@ export function MapCanvas({
       const gy = Math.floor((p.y - ty) / scale) + PLAY_MIN_Y
       if (gx < PLAY_MIN_X || gx > PLAY_MAX_X) return
       if (gy < PLAY_MIN_Y || gy > PLAY_MAX_Y) return
-      onSelectRef.current({ x: gx, y: gy })
+      onSelectRef.current({ x: gx, y: gy }, e.pointerType === 'touch')
     }
 
     const onWheel = (e: WheelEvent) => {

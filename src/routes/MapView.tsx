@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { PLANETS, PORTAL_EFFECTS, type Planet } from '@/chain/config'
 import { fetchAssetOwners } from '@/chain/atomic'
@@ -146,6 +146,26 @@ export default function MapView() {
   const [landsConfig, setLandsConfig] = useState<LandsConfig | null>(null)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [selected, setSelected] = useState<{ x: number; y: number } | null>(null)
+  /*
+     Whether the tile card is old enough to be pressed.
+
+     Selection happens on `pointerup`, and on a touch screen the browser then
+     synthesises a click at the same coordinates. The card opens along the
+     bottom edge — which is where a thumb tends to be — so it renders under
+     the finger and that synthesised click lands on the Travel button that
+     has just appeared there. One tap on the map, and the player is signing a
+     transaction they never asked for.
+
+     A mouse does not do this: when press and release land on different
+     elements the click is dispatched to their common ancestor, so it goes to
+     the map rather than the button. The compatibility click from a touch has
+     no such rule and simply hits whatever is under the point.
+
+     So the card ignores pointer input until the tap that opened it is over —
+     and only when it was a tap. A mouse never needs the delay and should not
+     have a click of its own swallowed by it.
+  */
+  const [cardArmed, setCardArmed] = useState(true)
   const [recenter, setRecenter] = useState(1)
   const [travelling, setTravelling] = useState(false)
   /*
@@ -440,7 +460,26 @@ export default function MapView() {
   const cost = selected && config ? travelCost(player, selected, config, !!portalTo) : null
   const canAfford = cost === null || player.activestats.action_points >= cost
 
-  const handleSelect = useCallback((c: { x: number; y: number }) => setSelected(c), [])
+  /*
+     Long enough to outlast the synthesised click, which browsers fire up to
+     about 300ms after the touch ends, and short enough that a player who
+     deliberately taps twice is not fighting it.
+  */
+  const SETTLE_MS = 400
+  const settleTimer = useRef<number | undefined>(undefined)
+
+  const handleSelect = useCallback((c: { x: number; y: number }, byTouch?: boolean) => {
+    setSelected(c)
+    window.clearTimeout(settleTimer.current)
+    if (!byTouch) {
+      setCardArmed(true)
+      return
+    }
+    setCardArmed(false)
+    settleTimer.current = window.setTimeout(() => setCardArmed(true), SETTLE_MS)
+  }, [])
+
+  useEffect(() => () => window.clearTimeout(settleTimer.current), [])
 
   const doTravel = async () => {
     if (!session || !selected) return
@@ -564,7 +603,7 @@ export default function MapView() {
     )
 
   const tileCard = selected && (
-    <div className="mapoverlay tilecard">
+    <div className={`mapoverlay tilecard${cardArmed ? '' : ' tilecard--settling'}`}>
       <div className="tilecard__top">
         <div
           className="tile__thumb"

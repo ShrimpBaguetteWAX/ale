@@ -1500,4 +1500,30 @@
   .mapview--bare .mapstage__zoom {
     display: none;
   }
+
+  /*
+     The Enter prompt sits below where the planet bar was, which is the right
+     place while the bar is there and a strange one once it is gone — a lone
+     button hanging a third of the way down an empty map. With the furniture
+     cleared it takes the corner instead.
+  */
+  .mapview--bare .entertavern {
+    top: var(--sp-3);
+  }
+}
+
+/*
+ * The tile card, for the moment after it opens.
+ *
+ * A tap on the map selects on `pointerup`, and a touch screen then
+ * synthesises a click at the same point — by which time the card has
+ * rendered there. Without this, tapping the bottom of the map opened the card
+ * and pressed the button on it in one go.
+ *
+ * Deliberately the whole card and not just the button: the close control has
+ * the same problem in reverse, and a card that half-responds is harder to
+ * reason about than one that does not respond yet.
+ */
+.tilecard--settling {
+  pointer-events: none;
 }
