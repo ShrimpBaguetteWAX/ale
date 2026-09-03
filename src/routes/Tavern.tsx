@@ -462,12 +462,20 @@ export default function Tavern() {
                 </div>
 
                 <div style={{ marginTop: 'var(--sp-3)' }}>
-                  <StatRow
-                    field="health"
-                    min={fighter.health_min}
-                    max={fighter.health_max}
-                    template={classTemplate}
-                  />
+                  {/*
+                     Damage, then health, then the two timings together, then
+                     taunt and who it goes for.
+
+                     Damage leads because it is what a recruit is bought for;
+                     health says how long it keeps doing it. Cooldown and
+                     wind-up are one question in two halves - how often it
+                     swings and how long before the first one - so they sit
+                     together rather than either side of taunt.
+
+                     Cooldown and wind-up, not "attack speed" and "initiative":
+                     the contract's numbers are delays, so lower is better and
+                     the old labels told the player the opposite.
+                  */}
                   <StatRow
                     field="damage"
                     min={fighter.damage_min}
@@ -475,16 +483,11 @@ export default function Tavern() {
                     template={classTemplate}
                   />
                   <StatRow
-                    field="taunt"
-                    min={fighter.taunt_min}
-                    max={fighter.taunt_max}
+                    field="health"
+                    min={fighter.health_min}
+                    max={fighter.health_max}
                     template={classTemplate}
                   />
-                  {/*
-                    Cooldown and wind-up, not "attack speed" and "initiative":
-                    the contract's numbers are delays, so lower is better and
-                    the old labels told the player the opposite.
-                  */}
                   <StatRow
                     field="attackspeed"
                     min={fighter.attackspeed_min}
@@ -495,6 +498,12 @@ export default function Tavern() {
                     field="initiative"
                     min={fighter.initiative_min}
                     max={fighter.initiative_max}
+                    template={classTemplate}
+                  />
+                  <StatRow
+                    field="taunt"
+                    min={fighter.taunt_min}
+                    max={fighter.taunt_max}
                     template={classTemplate}
                   />
                   <div className="statline">

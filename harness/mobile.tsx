@@ -28,6 +28,8 @@ import Profile from '../src/routes/Profile'
 import Leaderboard from '../src/routes/Leaderboard'
 import Ascension from '../src/routes/Ascension'
 import Market from '../src/routes/Market'
+import Tavern from '../src/routes/Tavern'
+import { landId } from '../src/chain/landId'
 import { MineCelebration } from '../src/pools/MineCelebration'
 import { useGame } from '../src/state/useGame'
 import { fetchConfig } from '../src/chain/queries'
@@ -78,6 +80,43 @@ useGame.setState({
     permstats: [],
     reward_power: [],
     last_dungeon_reset: '2026-01-01T00:00:00',
+
+    /*
+       A revealed tavern under the player, so `/tavern` can be opened at
+       all: the screen sends you back to the map unless `last_tavern` names
+       the land you are standing on, and a real wallet is only ever standing
+       on one tile. Ranges rather than fixed numbers because that is what a
+       tavern shows — what the recruit could roll, before `hire` fixes it.
+    */
+    last_tavern: {
+      planet: (params.get('planet') || 'magor') as never,
+      x: Number(params.get('x') ?? 21),
+      y: Number(params.get('y') ?? 16),
+      land_id: landId(Number(params.get('x') ?? 21), Number(params.get('y') ?? 16)),
+      selection_score: 100,
+      boost_score: 250000,
+      displayname: 'Harness Tavern',
+      required_maintenance: '0.0000 TLM',
+      objectives: [],
+    },
+    last_tavern_fighter: {
+      health_min: 180, health_max: 260,
+      damage_min: 90, damage_max: 140,
+      taunt_min: 20, taunt_max: 45,
+      initiative_min: 30, initiative_max: 70,
+      attackspeed_min: 40, attackspeed_max: 95,
+      res_gem: 120, res_metal: 80, res_air: 200,
+      res_fire: 60, res_nature: 150, res_neutral: 100,
+      classname: 'arcanist',
+      racename: 'altan',
+      element: 'gem',
+      target: 'highest_health',
+      abilities: [],
+      experience: 0,
+      required_experience: 100,
+      level: 1,
+      credits: 2500,
+    },
   },
   refreshPlayer: async () => {},
 } as never)
@@ -101,6 +140,7 @@ createRoot(document.getElementById('root')!).render(
           <Route path="/leaderboard" element={<Leaderboard />} />
           <Route path="/ascension" element={<Ascension />} />
           <Route path="/market" element={<Market />} />
+          <Route path="/tavern" element={<Tavern />} />
           {/* The mine receipt, which needs a claim to exist otherwise. */}
           <Route
             path="/cheer"

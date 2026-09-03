@@ -126,6 +126,23 @@ export async function fetchOwnedTemplates(
  * `users::hire` takes asset ids, but the player picks templates — any copy
  * does. Resolving only at hire time keeps the browse step to zero per-asset
  * requests.
+ *
+ * One request per template, rather than one whitelisted request for all of
+ * them. The combined form looked cheaper and was wrong: a page of assets
+ * sorted by id is not distributed evenly across the templates in the
+ * whitelist, so the copies of a card the player holds hundreds of fill the
+ * page and a card they hold one of never appears in it. The caller then reads
+ * that as "you no longer own this" and refuses to start.
+ *
+ * Which is exactly the shape of a rare card paired with a common one — an
+ * antimatter weapon beside a stone crew card. Measured on a real wallet:
+ * template 19627 (405 copies) and 741859 (1 copy) at the old limit of 50
+ * returned fifty rows, every one of them 19627. Asked separately, both
+ * resolve.
+ *
+ * The requests are small, parallel, and there are two of them on the path
+ * that matters — the price of being right about a card somebody spent real
+ * money on.
  */
 export async function resolveAssetIds(
   owner: string,
@@ -134,23 +151,24 @@ export async function resolveAssetIds(
 ): Promise<Map<number, string>> {
   if (templateIds.length === 0) return new Map()
 
-  const res = await get<{
-    data?: { asset_id: string; template?: { template_id: string } }[]
-  }>(
-    `/atomicassets/v1/assets?owner=${encodeURIComponent(owner)}` +
-      `&collection_name=${collection}` +
-      `&template_whitelist=${templateIds.join(',')}` +
-      // Enough rows that every requested template appears even when the
-      // player holds many copies of one of them.
-      `&limit=${Math.min(1000, templateIds.length * 25)}` +
-      `&order=asc&sort=asset_id`,
+  /* One lookup each, however many times a template appears in the list. */
+  const wanted = [...new Set(templateIds)]
+
+  const results = await Promise.all(
+    wanted.map(async (templateId) => {
+      const res = await get<{ data?: { asset_id: string }[] }>(
+        `/atomicassets/v1/assets?owner=${encodeURIComponent(owner)}` +
+          `&collection_name=${collection}` +
+          `&template_id=${templateId}` +
+          `&limit=1&order=asc&sort=asset_id`,
+      )
+      const assetId = res.data?.[0]?.asset_id
+      return assetId ? ([templateId, String(assetId)] as const) : null
+    }),
   )
 
   const found = new Map<number, string>()
-  for (const row of res.data ?? []) {
-    const id = Number(row.template?.template_id)
-    if (id && !found.has(id)) found.set(id, String(row.asset_id))
-  }
+  for (const row of results) if (row) found.set(row[0], row[1])
   return found
 }
 
