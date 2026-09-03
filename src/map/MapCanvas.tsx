@@ -764,7 +764,20 @@ export function MapCanvas({
     const apply = () => {
       const w = Math.max(1, Math.floor(host.clientWidth))
       const h = Math.max(1, Math.floor(host.clientHeight))
-      const dpr = Math.min(window.devicePixelRatio || 1, lowFx ? 1 : 2)
+      /*
+         Always at least the device's own resolution, capped at 2.
+
+         This used to drop to 1 whenever `lowFx` was set, and `lowFx` catches
+         essentially every phone — so the one place the map is drawn on a
+         3x screen was the one place it was drawn at 1x. The markers and the
+         multiplier pills are vector work rasterised into this canvas, and at
+         a third of the panel's real resolution they are visibly soft.
+
+         `lowFx` is about decoration — the loops and the glows — not about
+         how sharply the game is drawn. 2x is the usual ceiling: past it the
+         fill rate costs more than the eye collects.
+      */
+      const dpr = Math.min(window.devicePixelRatio || 1, 2)
       const first = sizeRef.current.w === 0
       sizeRef.current = { w, h, dpr }
       canvas.width = Math.round(w * dpr)

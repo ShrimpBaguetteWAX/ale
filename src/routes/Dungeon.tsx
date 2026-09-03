@@ -45,6 +45,8 @@ import {
 } from '@/fight/matchup'
 import { ageFactor, levelFactor } from '@/fight/scaling'
 import { recallTeam, rememberTeam, restoreTeam } from '@/fight/lastTeam'
+import { applyWeather, fetchWeather, type Weather } from '@/fight/weather'
+import { DEFAULT_CAPS, type StatCaps } from '@/dungeon/sim'
 import { autoPickTeam } from '@/fight/autopick'
 import { TEAM_SIZE, type BattleFighter, type RosterFighter } from '@/dungeon/types'
 import {
@@ -63,6 +65,7 @@ import {
   DetailSheet,
   Elemental,
   FighterGrid,
+  WeatherPanel,
   POLL_ATTEMPTS,
   POLL_INTERVAL_MS,
   RosterFilters,
@@ -97,6 +100,15 @@ export default function Dungeon() {
   const [xpPerDifficulty, setXpPerDifficulty] = useState(0)
   const [nftMinDifficulty, setNftMinDifficulty] = useState(5)
   const [ageDecay, setAgeDecay] = useState(0)
+  /* Weather is capped as it is applied, so the caps are part of the answer. */
+  const [caps, setCaps] = useState<StatCaps>(DEFAULT_CAPS)
+
+  /*
+     The land's weather, which this dungeon is fought in exactly as an arena
+     is. `rndweather` re-rolls on travel and the player is standing here, so
+     the row is already the one the fight will use.
+  */
+  const [weather, setWeather] = useState<Weather | null>(null)
   /* Ranking a roster without it puts a level 1 fighter above a level 10 one. */
   const [levelMod, setLevelMod] = useState(1)
 
@@ -142,6 +154,7 @@ export default function Dungeon() {
           setXpPerDifficulty(bConfig.xp_per_dungeon_difficulty)
           setNftMinDifficulty(bConfig.dungeon_nft_fighter_min_difficulty)
           setAgeDecay(Number(bConfig.age_decay) || 0)
+          if (bConfig.battle_stat_caps) setCaps(bConfig.battle_stat_caps)
           setLevelMod(Number(bConfig.level_mod) || 1)
         }
       })
@@ -167,14 +180,29 @@ export default function Dungeon() {
     [weaponCards, nftValues],
   )
 
+  useEffect(() => {
+    let live = true
+    fetchWeather(planet, land)
+      .then((w) => live && setWeather(w ?? null))
+      /* Weather is context, not a blocker: a failed read leaves it off. */
+      .catch(() => live && setWeather(null))
+    return () => {
+      live = false
+    }
+  }, [planet, land])
+
   const enemies = useMemo(() => {
     if (!enemyTeam) return []
     return scaleEnemies(
-      enemiesAt(enemyTeam, difficulty, nftMinDifficulty),
+      /* Weather first, then the difficulty scaling — `apply_weather_and_age`
+         runs before the level curve and the two do not commute. */
+      enemiesAt(enemyTeam, difficulty, nftMinDifficulty).map((f) =>
+        applyWeather(f, weather, caps),
+      ),
       difficulty,
       difMods,
     )
-  }, [enemyTeam, difficulty, difMods, nftMinDifficulty])
+  }, [enemyTeam, difficulty, difMods, nftMinDifficulty, weather, caps])
 
   /*
      How every fighter in the roster stands against this particular line-up.
@@ -393,33 +421,58 @@ export default function Dungeon() {
      equivalent step in `scaleEnemies`; showing my side unscaled next to it
      was comparing two different things.
   */
+  /*
+     Mid roll, then weather, then level and age — the contract's order, and
+     the same pipeline the arena uses.
+  */
+  const weathered = useMemo(
+    () =>
+      new Map(
+        picked.map((f) => [
+          f.fighter_id,
+          applyWeather(
+            {
+              element: f.element,
+              classname: f.classname,
+              racename: f.racename,
+              health: mid(f.stats.health_min, f.stats.health_max),
+              damage: mid(f.stats.damage_min, f.stats.damage_max),
+              attackspeed: mid(f.stats.attackspeed_min, f.stats.attackspeed_max),
+              taunt: mid(f.stats.taunt_min, f.stats.taunt_max),
+              initiative: mid(f.stats.initiative_min, f.stats.initiative_max),
+              res_gem: f.stats.res_gem, res_metal: f.stats.res_metal,
+              res_air: f.stats.res_air, res_fire: f.stats.res_fire,
+              res_nature: f.stats.res_nature, res_neutral: f.stats.res_neutral,
+            },
+            weather,
+            caps,
+          ),
+        ]),
+      ),
+    [picked, weather, caps],
+  )
+
   const fielded = useMemo(() => {
     const byFighter = new Map<number, { health: number; damage: number }>()
     for (const f of picked) {
       const factor =
         levelFactor(f.stats.level, levelMod) * ageFactor(f.creation_date, ageDecay)
+      const base = weathered.get(f.fighter_id)!
       byFighter.set(f.fighter_id, {
-        health: Math.trunc(mid(f.stats.health_min, f.stats.health_max) * factor),
-        damage: Math.trunc(mid(f.stats.damage_min, f.stats.damage_max) * factor),
+        health: Math.trunc(base.health * factor),
+        damage: Math.trunc(base.damage * factor),
       })
     }
     return byFighter
-  }, [picked, levelMod, ageDecay])
+  }, [picked, levelMod, ageDecay, weathered])
 
   /* The same team in the shape the matchup reads, the NFT fighter included. */
   const myFlat = useMemo<FlatFighter[]>(() => {
+    /* From the weathered bag, so the bar reads what the fight will use. */
     const out: FlatFighter[] = picked.map((f) => ({
-      element: f.element,
-      classname: f.classname,
-      racename: f.racename,
+      ...weathered.get(f.fighter_id)!,
       damage: fielded.get(f.fighter_id)?.damage ?? 0,
       health: fielded.get(f.fighter_id)?.health ?? 0,
-      attackspeed: mid(f.stats.attackspeed_min, f.stats.attackspeed_max),
-      taunt: mid(f.stats.taunt_min, f.stats.taunt_max),
-      initiative: mid(f.stats.initiative_min, f.stats.initiative_max),
-      res_gem: f.stats.res_gem, res_metal: f.stats.res_metal, res_air: f.stats.res_air,
-      res_fire: f.stats.res_fire, res_nature: f.stats.res_nature,
-      res_neutral: f.stats.res_neutral,
       abilities: f.stats.abilities ?? [],
     }))
 
@@ -447,7 +500,7 @@ export default function Dungeon() {
       })
     }
     return out
-  }, [picked, fielded, crew, weapon, nftValues])
+  }, [picked, fielded, weathered, crew, weapon, nftValues, weather, caps])
 
   const outlook = useMemo(() => teamOutlook(myFlat, enemies), [myFlat, enemies])
 
@@ -489,9 +542,13 @@ export default function Dungeon() {
         <header className="dungeon__head">
           <div>
             <h1 className="page__title">Dungeon</h1>
-            <p className="faint" style={{ fontSize: 'var(--fs-sm)' }}>
-              {planet} · {land} · {player.x},{player.y}
-            </p>
+            {/*
+              Where the coordinates used to be, as on the arena screen. A
+              player standing on a tile does not need to be told which tile;
+              the roll they are about to fight under decides what team they
+              should bring.
+            */}
+            <WeatherPanel weather={weather} />
           </div>
           <span className="spacer" />
           <div className="dungeon__actions">
