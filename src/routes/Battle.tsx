@@ -1393,6 +1393,15 @@ function Result({
       setNotice('Mined. The pools have been paid out and reset.')
 
       /*
+         The Rewards dot means "you can mine a reward pool", and this claim
+         has just spent the power that lit it. It re-checks itself off the
+         player row every minute, so without this it can sit there for up to
+         a minute pointing at a screen with nothing left to do — and the
+         player is looking straight at the proof that it is wrong.
+      */
+      refreshChore('rewards')
+
+      /*
          What it actually paid, from the contract’s record of this very
          claim. The pool moves between the estimate and the transaction, so
          quoting the projection back as the result would be wrong exactly

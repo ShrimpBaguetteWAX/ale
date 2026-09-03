@@ -324,8 +324,17 @@ export default function Profile({ section = 'account' }: { section?: Section }) 
           await new Promise((r) => setTimeout(r, 900))
           await Promise.all([refreshPlayer({ force: true }), load()])
         }
-        /* Mining spends the banked reward power. */
-        refreshChore('account')
+        /*
+           Whichever dot this action just answered.
+
+           Mining spends the banked reward power, which is what lights Rewards;
+           claiming a CPU powerup spends the weekly allowance, which is what
+           lights Account. Splitting the screen split these too, and this line
+           kept saying 'account' for both — so a mine refreshed the CPU dot and
+           left the one it had actually changed to notice on its own.
+        */
+        if (mark === 'mine') refreshChore('rewards')
+        if (mark === 'cpu') refreshChore('account')
         setNotice(done)
       } catch (err) {
         setError(readableError(err))
