@@ -1358,6 +1358,7 @@
     bottom: 0;
     z-index: 4;
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     gap: var(--sp-2);
     padding: var(--sp-2);
@@ -1389,17 +1390,35 @@
     box-shadow: none;
   }
 
+  /*
+     The card stops being a box and hands its children to the bar.
+
+     It used to be one half of the row with its own flex layout inside, which
+     meant a note like "you have already run this dungeon today" stacked above
+     the Travel button and made that half two rows tall while the Enter button
+     beside it stayed one — so the two buttons sat at different heights and
+     the note covered half the bar.
+
+     As `contents` the note, the button and the Enter prompt are all items of
+     the same row, so the note can take a line to itself across the whole bar
+     and the buttons share the line under it, level with each other.
+  */
   .mapactions .tilecard {
-    flex: 1 1 auto;
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: var(--sp-2);
-    padding: 0;
-    background: none;
-    border: 0;
-    border-radius: 0;
-    overflow: visible;
+    display: contents;
+  }
+
+  /*
+     Notes and errors first, full width. `order` rather than DOM order,
+     because the Enter prompt is a sibling of the card and the note is inside
+     it — there is no arrangement of the markup that puts them in this order
+     on both sizes.
+  */
+  .mapactions .hint,
+  .mapactions .alert {
+    order: -1;
+    flex: 1 1 100%;
+    margin: 0;
+    text-align: center;
   }
 
   /*
@@ -1422,9 +1441,17 @@
      both, and they resolve to exactly half the bar each.
   */
   .mapactions .entertavern,
-  .mapactions .tilecard {
-    flex: 1 1 50%;
+  .mapactions .tilecard .btn {
+    flex: 1 1 calc(50% - var(--sp-2));
     min-width: 0;
+  }
+
+  .mapactions .entertavern {
+    order: 1;
+  }
+
+  .mapactions .tilecard .btn {
+    order: 2;
   }
 
   /*
@@ -1482,12 +1509,9 @@
     margin: 0;
   }
 
-  /* `btn--block` is width:100%, which pushed the close onto its own line. */
+  /* `btn--block` is width:100%, which would take the whole line. */
   .tilecard .btn {
-    order: 1;
-    flex: 1 1 0;
     width: auto;
-    min-width: 0;
   }
 
   .tilecard .tilecard__top > *:not(.tilecard__close),
