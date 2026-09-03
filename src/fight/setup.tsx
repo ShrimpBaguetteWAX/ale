@@ -374,7 +374,6 @@ export function CombatCard({
   abilities,
   owner,
   onOpen,
-  onRemove,
 }: {
   element: string
   classname: string
@@ -406,7 +405,6 @@ export function CombatCard({
    */
   owner?: string
   onOpen: () => void
-  onRemove?: () => void
 }) {
   /*
      On a phone the ability counts move out from under the card and sit
@@ -425,9 +423,21 @@ export function CombatCard({
   */
   const phone = usePhone()
 
-  const counts = abilities ? (
+  /*
+     Always a row, whether or not there is anything to put in it.
+
+     It used to appear only when `abilities` was given, and the NFT fighter
+     is never given any - so its plate was one row shorter than the five
+     beside it, and because the plate is anchored to the bottom of the card
+     that shortfall came off the top: its name sat 15px lower than every
+     other name in the line-up and its damage and health with it.
+
+     A card in a line-up is read across the row, so the rows have to agree
+     more than any one card has to be compact.
+  */
+  const counts = (
     <span className="combatcard__vs">
-      {abilities.bonuses > 0 && (
+      {!!abilities && abilities.bonuses > 0 && (
         <span
           className="combatcard__vsbit combatcard__vsbit--bonus"
           title={`Fires here: ${abilities.bonusNames.join(', ')}`}
@@ -436,7 +446,7 @@ export function CombatCard({
           {abilities.bonuses}
         </span>
       )}
-      {abilities.exposure > 0 && (
+      {!!abilities && abilities.exposure > 0 && (
         <span
           className="combatcard__vsbit combatcard__vsbit--exposed"
           title={`Switches on for the other side: ${abilities.exposureNames.join(', ')}`}
@@ -446,19 +456,7 @@ export function CombatCard({
         </span>
       )}
     </span>
-  ) : null
-
-  const removeButton = onRemove ? (
-    <button
-      type="button"
-      className="combatcard__remove"
-      onClick={onRemove}
-      aria-label={`Remove ${classname}`}
-      title="Remove from team"
-    >
-      ×
-    </button>
-  ) : null
+  )
 
   return (
     <div className="combatslot">
@@ -546,7 +544,6 @@ export function CombatCard({
         </span>
       </button>
 
-      {!phone && removeButton}
       </div>
 
       {/*

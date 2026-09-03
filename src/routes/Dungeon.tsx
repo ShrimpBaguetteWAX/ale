@@ -745,7 +745,6 @@ export default function Dungeon() {
                     side="mine"
                     abilities={enemies.length ? mySlots[i] : undefined}
                     onOpen={() => showFighter(f)}
-                    onRemove={() => toggleFighter(f)}
                   />
                 ) : (
                   <div className="combatcard combatcard--empty" key={`empty-${i}`}>
