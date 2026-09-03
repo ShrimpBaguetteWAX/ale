@@ -253,11 +253,15 @@ export default function Leaderboard() {
             }
           >
             {busy && <span className="spinner" />}
-            {!canClaim
-              ? `Top ${paidPlaces} only`
-              : onCooldown
-                ? `Rewards available in ${countdown(claimAt - now)}`
-                : 'Claim daily Rewards'}
+            {/*
+              The label says what the button is for, not why it is off. Being
+              outside the paid places is a fact about the board, and the board
+              is the thing on screen underneath — the greyed control and the
+              lede above it carry that between them.
+            */}
+            {onCooldown
+              ? `Rewards available in ${countdown(claimAt - now)}`
+              : 'Claim daily Rewards'}
           </button>
         )}
       </header>
