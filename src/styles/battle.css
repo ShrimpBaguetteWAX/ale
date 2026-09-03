@@ -1968,3 +1968,80 @@
   font-style: normal;
   color: var(--text-faint);
 }
+
+/* ---------- the fighter that holds the arena ---------- */
+
+/*
+ * Winning an arena leaves one of the five standing in it.
+ *
+ * `battle.cpp` draws one of the team at random and hands it to
+ * `inline_fighterchg`, which installs it as the new defender - it cannot be
+ * fielded again until somebody beats it. The result screen announced the win
+ * and said nothing about the cost of it, so a player found out days later
+ * when the fighter would not go into a team.
+ *
+ * Amber rather than red, and a slow breath rather than a flash: this is the
+ * prize being guarded, not a problem. The animation is a filter and a
+ * box-shadow on one element, so it composites and costs a phone nothing.
+ */
+.rescard--holds .rescard__art img {
+  filter: drop-shadow(0 0 10px rgb(247 166 0 / 62%))
+    drop-shadow(0 0 22px rgb(247 166 0 / 34%));
+  animation: holdglow 2.6s var(--ease) infinite;
+}
+
+@keyframes holdglow {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 8px rgb(247 166 0 / 45%))
+      drop-shadow(0 0 18px rgb(247 166 0 / 22%));
+  }
+  50% {
+    filter: drop-shadow(0 0 14px rgb(247 166 0 / 78%))
+      drop-shadow(0 0 30px rgb(247 166 0 / 44%));
+  }
+}
+
+/*
+ * The banner, across the top of the card.
+ *
+ * Above the artwork rather than on the plate: the plate is a stat block and a
+ * sentence in it reads as another row, and this is the one thing on the card
+ * that is not a number.
+ */
+.rescard__holds {
+  position: relative;
+  z-index: 2;
+  margin-bottom: var(--sp-2);
+  padding: 3px var(--sp-2);
+  border-radius: var(--radius-xs);
+  border: 1px solid rgb(247 166 0 / 45%);
+  background: linear-gradient(180deg, rgb(247 166 0 / 26%), rgb(247 166 0 / 12%));
+  box-shadow: 0 0 14px rgb(247 166 0 / 26%);
+  font-family: var(--font-display);
+  font-size: 9px;
+  font-weight: var(--fw-bold);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-align: center;
+  color: #ffcf6b;
+  animation: holdbanner 2.6s var(--ease) infinite;
+}
+
+@keyframes holdbanner {
+  0%,
+  100% {
+    box-shadow: 0 0 10px rgb(247 166 0 / 18%);
+  }
+  50% {
+    box-shadow: 0 0 20px rgb(247 166 0 / 40%);
+  }
+}
+
+/* A phone runs six of these; the breathing is the first thing to go. */
+@media (prefers-reduced-motion: reduce) {
+  .rescard--holds .rescard__art img,
+  .rescard__holds {
+    animation: none;
+  }
+}

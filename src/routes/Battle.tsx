@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useGame } from '@/state/useGame'
+import { landId } from '@/chain/landId'
+import { fetchLiveArena } from '@/arena/queries'
+import { NFT_FIGHTER_ID } from '@/dungeon/rules'
 import { fetchBattleConfig, fetchFight, fetchFightConfig } from '@/dungeon/queries'
 import { recallFight, recallVenue, rememberFight, type Venue } from '@/dungeon/fightStore'
 import {
@@ -104,6 +107,15 @@ const EMBERS = [
   { x: 83, size: 3, drift: -10, rise: 100, delay: 300, life: 2300 },
   { x: 38, size: 2, drift: 4, rise: 74, delay: 1650, life: 1700 },
 ] as const
+
+/**
+ * How long to keep asking the arena who is standing in it.
+ *
+ * The row is written by the same transaction whose result is on screen, so
+ * the first read can beat it there.
+ */
+const DEFENDER_ATTEMPTS = 8
+const DEFENDER_INTERVAL_MS = 900
 
 const SPEEDS = [1, 2, 4] as const
 type Speed = (typeof SPEEDS)[number]
@@ -1224,6 +1236,55 @@ function Result({
   const won = replay.winner === 1
   const mine = replay.fighters.filter((f) => f.team === 1)
 
+  /**
+   * Which of the five is staying behind to hold the arena.
+   *
+   * Winning an arena costs a fighter: `battle.cpp` picks one of the team at
+   * random — `getrandomfrompi` over everyone but the NFT fighter — and hands
+   * it to `inline_fighterchg`, which stands it in the arena as the new
+   * defender. It cannot be fielded again until somebody beats it, and the
+   * screen that announced the win said nothing about it at all.
+   *
+   * Read back from `livearena` rather than re-rolled here. The contract's
+   * draw is deterministic but seeded on a fight position this screen does not
+   * have, and guessing wrong would be worse than not saying: the arena row is
+   * the fact, and the fighter standing in it is the answer.
+   *
+   * Polled, because the row is written by the same transaction whose result
+   * is being displayed and the read can beat it.
+   */
+  const [defending, setDefending] = useState<number | null>(null)
+
+  useEffect(() => {
+    if (!won || venue !== 'arena') return
+    let live = true
+
+    const land = landId(player.x, player.y)
+    const mineIds = new Set(
+      replay.fighters
+        .filter((f) => f.team === 1 && f.fighter_id !== NFT_FIGHTER_ID)
+        .map((f) => Number(f.fighter_id)),
+    )
+
+    void (async () => {
+      for (let i = 0; i < DEFENDER_ATTEMPTS && live; i++) {
+        await new Promise((r) => setTimeout(r, DEFENDER_INTERVAL_MS))
+        const arena = await fetchLiveArena(player.planet, land, true).catch(() => undefined)
+        const held = (arena?.fighters ?? [])
+          .map((f) => Number(f.fighter_id))
+          .find((id) => mineIds.has(id))
+        if (held !== undefined && live) {
+          setDefending(held)
+          return
+        }
+      }
+    })()
+
+    return () => {
+      live = false
+    }
+  }, [won, venue, player.planet, player.x, player.y, replay])
+
   /*
      A win is what earns the Reward Power the pools are mined with.
 
@@ -1492,8 +1553,26 @@ function Result({
           */}
           {mine.map((f) => {
             const survived = survivedOf(f)
+            const holds = defending !== null && Number(f.fighter_id) === defending
             return (
-              <article className="rescard" key={f.uid}>
+              <article
+                className={`rescard${holds ? ' rescard--holds' : ''}`}
+                key={f.uid}
+              >
+                {/*
+                  Winning an arena costs a fighter, and this is the only place
+                  that says which one. It is not a warning — it is the prize
+                  being guarded — so it reads as a commendation and glows like
+                  one rather than sitting in a red alert somewhere.
+                */}
+                {holds && (
+                  <div
+                    className="rescard__holds"
+                    title="This fighter now holds the arena for you, and cannot be fielded again until somebody beats it."
+                  >
+                    Stays to defend
+                  </div>
+                )}
                 <div className="rescard__art">
                   <img
                     src={

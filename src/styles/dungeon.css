@@ -1865,9 +1865,43 @@
   left: calc(20% + 2px);
 }
 
-.combatcard__level,
 .combatcard__badge {
   right: calc(20% + 2px);
+}
+
+/*
+ * The level sits further out than the badge it shares a corner with.
+ *
+ * `20%` was applied to both sides equally, and the two sides are not equal:
+ * the lean pushes the top of the card right, so the left badge needs the full
+ * inset to stay on the artwork while the right one is handed the same amount
+ * of room back. On a phone that symmetry cost about six pixels the row could
+ * not spare — the element mark ran to 61.5 and the level chip started at
+ * 56.4, so the chip sat over the last five pixels of the element.
+ *
+ * Measured on a 52px card: 8.7px of clearance to the nominal right edge and
+ * another 3.3px of lean at the chip's height, so 10% (~6.5px) moves it clear
+ * of the element and still lands inside the parallelogram.
+ */
+.combatcard__level {
+  right: calc(10% + 2px);
+  /* A pixel off each side, which is what takes level 10 clear rather than
+     merely not overlapping. */
+  padding: 1px 4px;
+}
+
+/*
+ * The number without its letter, on a phone.
+ *
+ * The widest level is the one that has to fit, and "L10" was the case that
+ * broke: at the old inset the element mark ran to 61.5 and the chip started
+ * at 56.4, so it sat over the last five pixels of the element. Moving the
+ * chip out bought six of those back and dropping the L buys the rest — a
+ * letter that costs a sixth of the chip to repeat what the corner it sits in
+ * already says.
+ */
+.combatcard__levelL {
+  display: none;
 }
 
 /*

@@ -545,7 +545,16 @@ export function CombatCard({
           )}
           {badge && <span className="combatcard__badge">{badge}</span>}
           {level !== undefined && level > 0 && (
-            <span className="combatcard__level">L{level}</span>
+            <span className="combatcard__level">
+              {/*
+                The L is dropped on a phone. It is a sixth of the chip's width
+                spent on a letter that the chip's own corner already says, and
+                at six cards to a row that sixth is what put "L10" over the
+                element mark opposite it.
+              */}
+              <span className="combatcard__levelL">L</span>
+              {level}
+            </span>
           )}
         </span>
 
