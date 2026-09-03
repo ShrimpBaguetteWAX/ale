@@ -19,7 +19,9 @@
   min-height: 100svh;
   display: grid;
   place-items: center;
-  padding: var(--sp-16) var(--sp-5) var(--sp-20);
+  /* The last value carries the overlap the sections are pulled up by, so
+     the chevron still has the hero to itself. */
+  padding: var(--sp-16) var(--sp-5) calc(var(--sp-20) + 14vh);
   text-align: center;
   overflow: hidden;
 }
@@ -39,14 +41,21 @@
   z-index: 0;
 }
 
-/* Legibility floor for the logo and button over a busy, bright image. */
+/*
+ * Legibility floor for the logo and button over a busy, bright image.
+ *
+ * It used to finish at 85% black, which left the section curve below nothing
+ * to cut across — a dark shape rising out of a dark bottom is a shape nobody
+ * can see. Bottoming out lighter keeps the artwork alive where the sweep
+ * crosses it, and the section carries the rest of the way down.
+ */
 .hero__scrim {
   position: absolute;
   inset: 0;
   z-index: 1;
   background:
     radial-gradient(ellipse 60% 45% at 50% 52%, rgb(5 16 30 / 55%), transparent 70%),
-    linear-gradient(180deg, rgb(5 16 30 / 35%) 0%, transparent 30%, rgb(5 16 30 / 85%) 100%);
+    linear-gradient(180deg, rgb(5 16 30 / 35%) 0%, transparent 30%, rgb(5 16 30 / 55%) 100%);
 }
 
 .hero__inner {
@@ -87,11 +96,17 @@
   text-shadow: 0 1px 6px rgb(0 0 0 / 90%);
 }
 
-/* Scroll affordance — the original's "LEARN MORE" chevron. */
+/*
+ * Scroll affordance — the original's "LEARN MORE" chevron.
+ *
+ * Absolutely positioned, so the hero's bottom padding does not move it: it
+ * has to clear the section overlap itself, or it sits under the first slab
+ * of copy pointing at nothing.
+ */
 .hero__more {
   position: absolute;
   left: 50%;
-  bottom: var(--sp-6);
+  bottom: calc(var(--sp-6) + 14vh);
   transform: translateX(-50%);
   z-index: 2;
   display: grid;
@@ -130,9 +145,30 @@
 
 /* ---------- Content sections ---------- */
 
+/*
+ * The dark ground rises out of the key art on a curve.
+ *
+ * The hero ended at a flat edge and this began at another, so the page had a
+ * ruled line straight across it at exactly the height of the viewport — the
+ * two darks either side are close enough that the seam was the only thing
+ * announcing it, which is what made it look like a mistake rather than a
+ * boundary.
+ *
+ * The live site has no boundary to announce: one illustration runs on, and
+ * the dark sweeps in from the right and down across it, with the copy sitting
+ * on the dark. Same idea here — the section is pulled up over the foot of the
+ * hero and its top-left corner is rounded away on a long, shallow ellipse, so
+ * the art carries over the top of it on the left and the ground is at full
+ * height by the right.
+ */
 .sections {
   position: relative;
+  z-index: 1;
+  margin-top: -14vh;
+  border-top-left-radius: 100% 14vh;
   background: var(--navy);
+  /* So the ground texture and everything else follow the curve. */
+  overflow: hidden;
 }
 
 /* The footer art from the original, reused as a ground texture. */
@@ -145,6 +181,22 @@
   background-position: center;
   opacity: 0.16;
   pointer-events: none;
+}
+
+/* A shallower sweep on a phone, where 14vh of curve is a lot of nothing. */
+@media (max-width: 719px) {
+  .sections {
+    margin-top: -7vh;
+    border-top-left-radius: 100% 7vh;
+  }
+
+  .hero {
+    padding-bottom: calc(var(--sp-20) + 7vh);
+  }
+
+  .hero__more {
+    bottom: calc(var(--sp-6) + 7vh);
+  }
 }
 
 .sections__inner {
