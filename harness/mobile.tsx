@@ -28,6 +28,7 @@ import Profile from '../src/routes/Profile'
 import Leaderboard from '../src/routes/Leaderboard'
 import Ascension from '../src/routes/Ascension'
 import Market from '../src/routes/Market'
+import { MineCelebration } from '../src/pools/MineCelebration'
 import { useGame } from '../src/state/useGame'
 import { fetchConfig } from '../src/chain/queries'
 
@@ -99,6 +100,33 @@ createRoot(document.getElementById('root')!).render(
           <Route path="/leaderboard" element={<Leaderboard />} />
           <Route path="/ascension" element={<Ascension />} />
           <Route path="/market" element={<Market />} />
+          {/* The mine receipt, which needs a claim to exist otherwise. */}
+          <Route
+            path="/cheer"
+            element={
+              <MineCelebration
+                rewards={[
+                  {
+                    index: 1,
+                    type: 'tlm',
+                    timestamp: '2026-09-03T12:00:00',
+                    reward: '13.6764 TLM',
+                    pool: 'tlmdung',
+                    pool_description: 'Dungeon Wins',
+                  },
+                  {
+                    index: 2,
+                    type: 'shrds',
+                    timestamp: '2026-09-03T12:00:00',
+                    reward: '63.1 SHRDS',
+                    pool: 'shrddung',
+                    pool_description: 'Dungeon Wins',
+                  },
+                ]}
+                onClose={() => {}}
+              />
+            }
+          />
           <Route path="*" element={<div className="panel">Not in this harness.</div>} />
         </Route>
       </Routes>

@@ -24,6 +24,10 @@ import type { Battlestats, FightRow } from '@/dungeon/types'
 import { fighterArt, fighterArtFallback, formatScaled } from '@/tavern/fighterStats'
 import { claimPoolRewards } from '@/wharf/actions'
 import { readableError } from '@/wharf/errors'
+import { refreshChore } from '@/chores/signal'
+import { MineCelebration, readMinedRewards } from '@/pools/MineCelebration'
+import type { RewardLogEntry } from '@/account/queries'
+import type { Currency } from '@/account/rules'
 import { NUM_LOCALE } from '@/format'
 import { asset } from '@/assets'
 import {
@@ -374,6 +378,20 @@ function Arena({
   }, [shownStep, total, speed, skipped])
 
   const finished = settled || skipped
+
+  /*
+     A fight pays XP, and enough of it levels a fighter up.
+
+     The nav dot for My Fighters means "a fighter is ready to level up",
+     and it re-checks on its own every three minutes through the cache -
+     so after a run that earned the last XP a fighter needed, the dot
+     could be three minutes late and then still answer from a roster read
+     before the fight. `refreshChore` forces the read, and the moment the
+     result screen appears is when the chain has just been written to.
+  */
+  useEffect(() => {
+    if (finished) refreshChore('fighters')
+  }, [finished])
 
   /**
    * Who swings next.
@@ -1349,10 +1367,18 @@ function Result({
     return out
   }, [mine, statOf])
 
+  /* The receipt, once the ledger has it. */
+  const [minedRewards, setMinedRewards] = useState<RewardLogEntry[]>([])
+
   const doMine = async () => {
     if (!session || claimable.length === 0) return
     setMining(true)
     setError(null)
+    /*
+       Noted before the transaction, so the ledger rows this claim writes
+       can be told from the ones already there.
+    */
+    const since = Date.now()
     try {
       await claimPoolRewards(
         session,
@@ -1368,6 +1394,18 @@ function Result({
       }
       setMined(true)
       setNotice('Mined. The pools have been paid out and reset.')
+
+      /*
+         What it actually paid. Read rather than computed: the pool moves
+         between the estimate and the transaction, and quoting the
+         projection back as the result would be wrong exactly when the
+         player cares most.
+      */
+      const currencies = [
+        ...new Set(claimable.map((p) => (p.type === 'tlm' ? 'tlm' : 'shrds'))),
+      ] as Currency[]
+      const paid = await readMinedRewards(player.wallet, currencies, since)
+      setMinedRewards(paid)
     } catch (err) {
       setError(readableError(err))
     } finally {
@@ -1614,6 +1652,13 @@ function Result({
             </>
           )}
         </p>
+      )}
+
+      {minedRewards.length > 0 && (
+        <MineCelebration
+          rewards={minedRewards}
+          onClose={() => setMinedRewards([])}
+        />
       )}
     </div>
   )

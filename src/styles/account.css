@@ -979,3 +979,130 @@
     white-space: nowrap;
   }
 }
+
+/*
+ * The receipt for a mine.
+ *
+ * A claim spends a run's worth of Reward Power and the screen used to say
+ * "Mined." — the number the player was mining for went into a balance in the
+ * top bar and was never named. This names it, once, and gets out of the way.
+ *
+ * Read from the reward ledger rather than computed: the pool moves between
+ * the estimate beside the bar and the transaction, so the projection and the
+ * payout are not the same number, and only one of them is what happened.
+ */
+.minecheer {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal);
+  display: grid;
+  place-items: center;
+  padding: var(--sp-4);
+  background: rgb(0 0 0 / 72%);
+}
+
+.minecheer__panel {
+  position: relative;
+  display: grid;
+  gap: var(--sp-3);
+  width: min(420px, 100%);
+  padding: var(--sp-5) var(--sp-4) var(--sp-4);
+  text-align: center;
+  background: linear-gradient(180deg, var(--surface-2), var(--surface-1));
+  border: 1px solid var(--line-bright);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow);
+  transform: scale(0.94);
+  opacity: 0;
+  transition:
+    transform var(--dur) var(--ease),
+    opacity var(--dur) var(--ease);
+}
+
+.minecheer__panel--in {
+  transform: scale(1);
+  opacity: 1;
+}
+
+/* A glow behind the panel, so the moment reads as a payout rather than a dialog. */
+.minecheer__burst {
+  position: absolute;
+  inset: -40% -20% auto;
+  height: 200px;
+  background: radial-gradient(closest-side, rgb(246 168 0 / 30%), transparent);
+  pointer-events: none;
+}
+
+.minecheer__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-3xl);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-heading);
+}
+
+.minecheer__sub {
+  margin: 0;
+  font-size: var(--fs-sm);
+  color: var(--text-faint);
+}
+
+.minecheer__rewards {
+  display: grid;
+  gap: var(--sp-2);
+}
+
+.minecheer__reward {
+  display: grid;
+  grid-template-columns: auto auto auto 1fr;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  text-align: left;
+  background: rgb(0 0 0 / 32%);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-sm);
+}
+
+.minecheer__icon {
+  object-fit: contain;
+}
+
+.minecheer__amount {
+  font-family: var(--font-display);
+  font-size: var(--fs-xl);
+  font-weight: var(--fw-bold);
+  color: var(--white);
+}
+
+.minecheer__ticker {
+  font-size: var(--fs-sm);
+  color: var(--text-dim);
+}
+
+/* Which pool paid it, since a claim can settle several at once. */
+.minecheer__pool {
+  justify-self: end;
+  font-size: var(--fs-xs);
+  color: var(--text-faint);
+  text-align: right;
+}
+
+:root[data-fx='low'] .minecheer__panel {
+  transition: none;
+  transform: none;
+  opacity: 1;
+}
+
+@media (max-width: 719px) {
+  .minecheer__reward {
+    grid-template-columns: auto auto 1fr;
+  }
+
+  .minecheer__pool {
+    grid-column: 1 / -1;
+    justify-self: start;
+    text-align: left;
+  }
+}

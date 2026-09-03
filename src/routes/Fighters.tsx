@@ -173,9 +173,19 @@ function useRoster(account: string | null): RosterData {
     [account],
   )
 
+  /*
+     Opening the screen asks the chain, rather than reading the cache.
+
+     XP arrives from fights on other screens, so the roster is stale by
+     definition every time a player comes here from one - and this is the
+     screen where the staleness shows: a fighter with enough XP to level
+     looks like a fighter without, and the only way to find out was to
+     reload the page. One extra read on a screen the player has just
+     deliberately opened is the right trade.
+  */
   useEffect(() => {
     setLoading(true)
-    void load(false)
+    void load(true)
   }, [load])
 
   const reload = useCallback(() => load(true), [load])

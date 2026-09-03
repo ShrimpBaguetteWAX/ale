@@ -87,6 +87,7 @@ import {
   mineRewardPool,
 } from '@/wharf/actions'
 import { refreshChore } from '@/chores/signal'
+import { MineCelebration, readMinedRewards } from '@/pools/MineCelebration'
 import { readableError } from '@/wharf/errors'
 import { formatNumber, formatDecimals, formatStat } from '@/format'
 import { asset } from '@/assets'
@@ -181,6 +182,7 @@ export default function Profile() {
   const [tab, setTab] = useState<Tab>('avatar')
   const [busy, setBusy] = useState<Busy>(null)
   /* Which pool the running mine belongs to, so only its button spins. */
+  const [minedRewards, setMinedRewards] = useState<RewardLogEntry[]>([])
   const [minedPool, setMinedPool] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -431,11 +433,26 @@ export default function Profile() {
           minedPool={minedPool}
           onMine={(pool) => {
             setMinedPool(pool)
+            /*
+               Noted before the transaction, so the row this claim writes
+               can be told from the ones already in the ledger.
+            */
+            const since = Date.now()
             void run('mine', () => mineRewardPool(session!, pool), 'Mined.').then(
-              () => {
+              async () => {
                 /* The mine writes a ledger row, so drop the cached page. */
                 setLogs((prev) => ({ ...prev, [currencyTab]: undefined }))
                 setMinedPool(null)
+                /*
+                   And show what it paid. The ledger is the receipt: the
+                   pool moves between the bar and the transaction, so the
+                   figure beside the bar is a projection and this is not.
+                */
+                if (currencyTab) {
+                  setMinedRewards(
+                    await readMinedRewards(player.wallet, [currencyTab], since),
+                  )
+                }
               },
             )
           }}
@@ -449,6 +466,13 @@ export default function Profile() {
             await disconnect()
             navigate('/', { replace: true })
           }}
+        />
+      )}
+
+      {minedRewards.length > 0 && (
+        <MineCelebration
+          rewards={minedRewards}
+          onClose={() => setMinedRewards([])}
         />
       )}
     </div>
