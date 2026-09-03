@@ -16,6 +16,7 @@ import {
   type TurnEvent,
 } from '@/dungeon/sim'
 import { combatLogCsv } from '@/dungeon/combatLog'
+import { CombatLogSheet } from '@/dungeon/CombatLogSheet'
 import {
   standingAt,
   stateAt,
@@ -1228,6 +1229,7 @@ function Result({
   const session = useGame((s) => s.session)
   const refreshPlayer = useGame((s) => s.refreshPlayer)
 
+  const [showLog, setShowLog] = useState(false)
   const [mining, setMining] = useState(false)
   const [mined, setMined] = useState(false)
   const [notice, setNotice] = useState<string | null>(null)
@@ -1514,8 +1516,18 @@ function Result({
   return (
     <div className="result">
       <header className="result__bar">
-        <button type="button" className="btn btn--ghost btn--sm" onClick={onDownload}>
-          Download Combat Log
+        {/*
+          Reading the fight, not exporting it. The CSV is a compatibility
+          surface for checking the client against the chain; it was the only
+          way to find out why a fight went the way it did, which meant opening
+          a spreadsheet. It is still there, inside.
+        */}
+        <button
+          type="button"
+          className="btn btn--ghost btn--sm"
+          onClick={() => setShowLog(true)}
+        >
+          Display Combat Log
         </button>
         <button type="button" className="btn btn--ghost btn--sm" onClick={onReplay}>
           Watch again
@@ -1777,6 +1789,15 @@ function Result({
         <MineCelebration
           rewards={minedRewards}
           onClose={() => setMinedRewards([])}
+        />
+      )}
+
+      {showLog && (
+        <CombatLogSheet
+          replay={replay}
+          playertag={player.playertag}
+          onClose={() => setShowLog(false)}
+          onDownload={onDownload}
         />
       )}
     </div>

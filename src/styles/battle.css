@@ -2034,3 +2034,240 @@
     animation: none;
   }
 }
+
+/* ---------- the combat log sheet ---------- */
+
+/*
+ * The fight, readable after the fact.
+ *
+ * Built as a transcript rather than a table: each blow is a numbered
+ * paragraph with its arithmetic under it and the abilities it set off
+ * indented beneath that, so the eye runs down the turn numbers and stops
+ * where something happened. A table of the same fields would put the
+ * interesting rows in the same visual weight as ninety plain hits.
+ */
+.clog {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: var(--sp-3);
+  max-height: min(78vh, 760px);
+  width: min(720px, 100%);
+}
+
+.clog__head {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+}
+
+.clog__heading {
+  min-width: 0;
+}
+
+.clog__sub {
+  margin: 2px 0 0;
+  font-size: var(--fs-xs);
+  color: var(--text-faint);
+}
+
+.clog__tools {
+  display: flex;
+  gap: var(--sp-2);
+  margin-left: auto;
+  flex-wrap: wrap;
+}
+
+.clog__body {
+  overflow-y: auto;
+  display: grid;
+  gap: 2px;
+  align-content: start;
+  padding-right: var(--sp-1);
+}
+
+/*
+ * One blow: its number in a fixed gutter, everything else beside it.
+ *
+ * The gutter is what makes the column of numbers scannable - with the number
+ * inline the lines all start at a different place and the sequence is lost.
+ */
+.clog__turn {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  gap: var(--sp-2);
+  padding: var(--sp-2);
+  border-radius: var(--radius-xs);
+  background: rgb(255 255 255 / 3%);
+}
+
+.clog__turn:nth-child(even) {
+  background: rgb(255 255 255 / 5%);
+}
+
+/* A knockout is the one turn in a fight that changes what comes next. */
+.clog__turn--ko {
+  background: rgb(255 52 52 / 8%);
+  box-shadow: inset 2px 0 0 rgb(255 52 52 / 45%);
+}
+
+.clog__turn--opening {
+  background: rgb(24 179 255 / 8%);
+  box-shadow: inset 2px 0 0 rgb(24 179 255 / 40%);
+}
+
+.clog__n {
+  font-family: var(--font-display);
+  font-size: var(--fs-xs);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  color: var(--text-faint);
+  padding-top: 1px;
+}
+
+.clog__what {
+  min-width: 0;
+}
+
+.clog__line {
+  margin: 0;
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 5px;
+  font-size: var(--fs-sm);
+  line-height: 1.4;
+}
+
+/*
+ * Whose fighter it is, by colour.
+ *
+ * A log of twelve class names is unreadable without it - "Juggernaut hit
+ * Juggernaut" is two different fighters on two different sides, and the
+ * fight has two of several classes in it more often than not.
+ */
+.clog__who {
+  font-weight: var(--fw-bold);
+}
+.clog__who--mine {
+  color: var(--cyan);
+}
+.clog__who--theirs {
+  color: #ff9aa6;
+}
+
+.clog__owner {
+  font-size: var(--fs-xs);
+  color: var(--text-faint);
+}
+
+.clog__verb,
+.clog__for {
+  color: var(--text-dim);
+}
+
+.clog__dmg {
+  color: var(--white);
+  font-variant-numeric: tabular-nums;
+}
+
+/*
+ * What the damage was made of.
+ *
+ * Damage alone never says why it was small: an elemental resistance eating
+ * half the blow reads exactly like a weak attacker until the blocked figure
+ * is sitting next to it.
+ */
+.clog__meta {
+  margin: 2px 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  font-size: var(--fs-xs);
+  color: var(--text-faint);
+}
+
+.clog__element {
+  text-transform: capitalize;
+}
+
+.clog__effect {
+  margin: 3px 0 0;
+  display: flex;
+  gap: 5px;
+  font-size: var(--fs-xs);
+  line-height: 1.4;
+  color: var(--text-dim);
+}
+
+.clog__arrow {
+  color: var(--text-faint);
+  flex: none;
+}
+
+.clog__effect--up strong:first-of-type {
+  color: var(--teal);
+}
+.clog__effect--down strong:first-of-type {
+  color: var(--gold);
+}
+
+.clog__trigger {
+  color: var(--text-faint);
+}
+
+.clog__ko {
+  margin: 4px 0 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-xs);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #ff9aa6;
+}
+
+/* A phone loses the gutter's width before it loses the numbers. */
+@media (max-width: 719px) {
+  .clog {
+    max-height: 84vh;
+  }
+
+  .clog__turn {
+    grid-template-columns: 24px minmax(0, 1fr);
+    gap: 6px;
+  }
+
+  .clog__tools {
+    margin-left: 0;
+    width: 100%;
+  }
+}
+
+/* The chain stores class names lowercase; every other screen title-cases. */
+.clog__who {
+  text-transform: capitalize;
+}
+
+/*
+ * Desktop carries the detail; a phone carries the point.
+ *
+ * The sheet exists to be read closely, and on a desktop there is room to say
+ * everything the replay knows about a blow - what was blocked, what element
+ * it came in on, how far past dead it went, what the attacker had left. On a
+ * 391px column those turn four short columns into four wrapped lines each,
+ * and a log you have to scroll through twice as far is a log nobody reads to
+ * the end.
+ *
+ * So the phone keeps the two figures that answer "was that blow a problem" -
+ * how much got through, and what it left standing - plus the colour that says
+ * whose fighter it was. The rest is desktop's.
+ */
+@media (max-width: 719px) {
+  .clog__wide {
+    display: none;
+  }
+}
+
+/* Class names are stored lowercase, and read as names wherever they appear. */
+.clog__name {
+  text-transform: capitalize;
+}
