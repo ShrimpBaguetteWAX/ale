@@ -94,6 +94,17 @@
   box-shadow: var(--shadow);
 }
 
+/*
+ * The wrapper around the two things a player can act on.
+ *
+ * `contents` on a wide screen, so the Enter prompt and the tile card keep the
+ * absolute positions they have always had and this element contributes no box
+ * of its own. It becomes a real bar only on a phone.
+ */
+.mapactions {
+  display: contents;
+}
+
 /* Tile inspector, bottom-left so it never covers the zoom controls. */
 .tilecard {
   left: var(--sp-3);
@@ -1329,33 +1340,71 @@
      step with the first.
   */
   /*
-     Docked, not floating.
+     The action bar: the way in, and the way somewhere else.
 
-     Floating 12px off the bottom left a 12px strip of map showing under it,
-     which matters because the pan slack that makes the covered rows reachable
-     is only invisible if the thing covering them covers them completely.
-     Flush to the edge it is one opaque band, and the map behind it can be
-     panned up into the open with nothing showing through.
+     Docked flush and full width, not floating. The pan slack that makes the
+     covered rows reachable is only invisible if the thing covering them
+     covers them completely — floating 12px up left a strip of map showing
+     underneath, and the slack would have exposed it.
 
-     One row: the action, then the way out of it.
-
-     The close control had a strip of its own along the top, which meant the
-     card grew a 26px lip above a button — and a border rising for nothing
-     reads as a layout fault rather than as a header. Beside the button it
-     costs no height at all, and "leave" sitting next to "go" is the pairing
-     every other confirm on the screen already uses.
+     It is deliberately outside the clear button's reach. Hiding the Enter
+     prompt was the wrong answer to it covering the map: a player standing on
+     a tavern needs the way in, and the map has room for it here.
   */
-  .tilecard {
+  .mapactions {
+    position: absolute;
     left: 0;
     right: 0;
     bottom: 0;
+    z-index: 4;
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    padding: var(--sp-2);
+    background: linear-gradient(180deg, #16203a, #0a1222);
+    border-top: 1px solid var(--line-bright);
+  }
+
+  /* Empty, it should not be a band across the bottom of the map. */
+  .mapactions:empty {
+    display: none;
+  }
+
+  /* The tap that opened the bar must not also press what is in it. */
+  .mapactions--settling {
+    pointer-events: none;
+  }
+
+  /*
+     Both children stop being overlays and become items in the row. The bar
+     carries the ground and the border now, so they carry neither.
+  */
+  .mapactions .entertavern,
+  .mapactions .tilecard {
+    position: static;
+    inset: auto;
+    translate: none;
+    margin: 0;
+    max-height: none;
+    box-shadow: none;
+  }
+
+  .mapactions .tilecard {
+    flex: 1 1 auto;
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     gap: var(--sp-2);
-    padding: var(--sp-2);
-    border-width: 1px 0 0;
+    padding: 0;
+    background: none;
+    border: 0;
     border-radius: 0;
+    overflow: visible;
+  }
+
+  .mapactions .entertavern {
+    flex: 0 1 auto;
+    white-space: nowrap;
   }
 
   /*
@@ -1387,21 +1436,13 @@
      nothing above a button.
   */
   /*
-     The header is only the close control now, so it is sized by it and sent
-     to the end of the row. Still its own target rather than a corner of the
-     button's — a thumb that misses "close" should not spend energy.
+     No close control. The bar is a strip of two actions rather than a card
+     over the map, and tapping another tile replaces what is in it — so there
+     is nothing to dismiss and a third button competing for the width would
+     cost more than it gives back.
   */
   .tilecard__top {
-    order: 2;
-    flex: none;
-    display: block;
-    margin: 0;
-  }
-
-  .tilecard__close {
-    width: 44px;
-    height: 44px;
-    font-size: var(--fs-lg);
+    display: none;
   }
 
   /* The cost rides on the button instead of sitting above it. */
@@ -1514,16 +1555,10 @@
   }
 
   /*
-     The Enter prompt goes with the rest of it.
-
-     It is the other thing that covers tiles a player might want to travel to,
-     and "clear the map" that leaves a button sitting on the top-left corner
-     of it is not clear. Standing on a tavern is not going anywhere: bring the
-     controls back and the way in is still there.
+     The action bar is not furniture and does not clear with the rest. It is
+     docked out of the map's way and the pan slack accounts for it, so there
+     is nothing to gain by hiding the one thing a player is there to press.
   */
-  .mapview--bare .entertavern {
-    display: none;
-  }
 }
 
 /*
@@ -1540,4 +1575,17 @@
  */
 .tilecard--settling {
   pointer-events: none;
+}
+
+/*
+ * The travel button's second word.
+ *
+ * "Travel here" beside "Enter Tavern" is more width than a phone has to give,
+ * and the tile it refers to is the one lit on the map — "here" was doing very
+ * little. A wide screen keeps the full phrase.
+ */
+@media (max-width: 719px) {
+  .travelhere__where {
+    display: none;
+  }
 }

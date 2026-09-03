@@ -592,21 +592,40 @@ export default function MapView() {
   /*
      How much of the map is under something opaque right now.
 
-     Only on a phone: a wide screen has the controls in its corners with room
-     to spare, and the clamp there should keep pinning the grid to the frame.
+     Only the bottom, and only what the docked action bar actually occupies.
+     That bar is the full width of the screen, so the slack it buys is
+     invisible — the strip it exposes is exactly the strip the bar sits on.
+     The controls at the top are not full width, so slack there would show
+     background beside them; the way to reach the tiles under those is the
+     clear button.
 
-     Only the bottom. The travel bar is a docked band the full width of the
-     screen, so the slack it buys is invisible — the strip it exposes is
-     exactly the strip the bar is sitting on. The controls at the top are not
-     full width, so slack there would show background beside them; the way to
-     reach the tiles under those is to put them away, which is what the clear
-     button is for.
+     On a wide screen the bar is `display: contents` and measures zero, which
+     is the right answer there: nothing covers the map that the player cannot
+     pan around.
+
+     Measured rather than assumed: the bar holds one button or two, and on a
+     narrow screen they can wrap onto a second line. A constant would be wrong
+     for two of those three cases.
   */
-  const insets = useMemo(() => {
-    if (!window.matchMedia(`(max-width: 719px)`).matches) return { top: 0, bottom: 0 }
-    /* The docked bar's own height: one 44px button in 8px of padding. */
-    return { top: 0, bottom: selected ? 62 : 0 }
-  }, [selected])
+  const [barHeight, setBarHeight] = useState(0)
+  const actionBar = useRef<HTMLDivElement>(null)
+
+  /* A ref callback that returns a cleanup is a React 19 feature; on 18 the
+     return value is ignored and the observer would leak. */
+  useEffect(() => {
+    const node = actionBar.current
+    if (!node) return
+    const read = () => setBarHeight(node.getBoundingClientRect().height)
+    read()
+    const ro = new ResizeObserver(read)
+    ro.observe(node)
+    return () => ro.disconnect()
+  }, [])
+
+  const insets = useMemo(
+    () => ({ top: 0, bottom: Math.round(barHeight) }),
+    [barHeight],
+  )
   /** Landowner of the selected tile — undefined until the batch resolves. */
   const owner = land ? owners[String(land.asset_id)] : undefined
   /** Gamertag if the landowner plays; empty string once we know they do not. */
@@ -620,8 +639,31 @@ export default function MapView() {
       (a) => a.land_id === land.land_id && a.fighters?.some((f) => f.owner === player.wallet),
     )
 
+  /*
+     One call to action at a time. A tavern and a dungeon can share a land,
+     and stacking two glowing buttons in the same spot would make neither read
+     as the thing to do; the tavern wins because it is the cheaper, reversible
+     action.
+  */
+  const enterLink = inTavern ? (
+    <Link className="btn btn--charged entertavern" to="/tavern">
+      <img src={asset('/assets/markers/tavern.svg')} alt="" />
+      Enter Tavern
+    </Link>
+  ) : dungeonHere ? (
+    <Link className="btn btn--charged entertavern enterdungeon" to="/dungeon">
+      <img src={asset('/assets/markers/dungeons.svg')} alt="" />
+      Enter Dungeon
+    </Link>
+  ) : arenaHere ? (
+    <Link className="btn btn--charged entertavern enterarena" to="/arena">
+      <img src={asset('/assets/markers/arena.svg')} alt="" />
+      Enter Arena
+    </Link>
+  ) : null
+
   const tileCard = selected && (
-    <div className={`mapoverlay tilecard${cardArmed ? '' : ' tilecard--settling'}`}>
+    <div className="mapoverlay tilecard">
       <div className="tilecard__top">
         <div
           className="tile__thumb"
@@ -730,7 +772,13 @@ export default function MapView() {
             disabled={travelling || !canAfford}
           >
             {travelling && <span className="spinner" />}
-            {travelling ? 'Travelling' : 'Travel here'}
+            {travelling ? (
+              'Travelling'
+            ) : (
+              <>
+                Travel<span className="travelhere__where"> here</span>
+              </>
+            )}
             {/*
               Shown only on a phone, where the cost row above is hidden. Until
               the config lands there is no cost to state, and an energy icon
@@ -880,31 +928,6 @@ export default function MapView() {
             Find me
           </button>
 
-          {/*
-            One call to action at a time. A tavern and a dungeon can share a
-            land, and stacking two glowing buttons in the same spot would make
-            neither read as the thing to do; the tavern wins because it is the
-            cheaper, reversible action.
-          */}
-          {inTavern ? (
-            <Link className="btn btn--charged entertavern" to="/tavern">
-              <img src={asset("/assets/markers/tavern.svg")} alt="" />
-              Enter Tavern
-            </Link>
-          ) : dungeonHere ? (
-            <Link className="btn btn--charged entertavern enterdungeon" to="/dungeon">
-              <img src={asset("/assets/markers/dungeons.svg")} alt="" />
-              Enter Dungeon
-            </Link>
-          ) : (
-            arenaHere && (
-              <Link className="btn btn--charged entertavern enterarena" to="/arena">
-                <img src={asset("/assets/markers/arena.svg")} alt="" />
-                Enter Arena
-              </Link>
-            )
-          )}
-
           {loading && (
             <div className="mapoverlay maptoast">
               <span className="spinner" />
@@ -918,7 +941,26 @@ export default function MapView() {
           )}
         </MapCanvas>
 
-        {tileCard}
+        {/*
+          The two things a player can act on, in one place.
+
+          On a phone they are a docked bar along the bottom: the way in to
+          whatever is under your feet, and the way to somewhere else. Grouping
+          them is what lets the Enter prompt stop covering the map without
+          having to disappear — it was the only reason it needed hiding.
+
+          On a wide screen the wrapper is `display: contents`, so both keep
+          the absolute positions they have always had and nothing about that
+          layout changes. `.mapwrap` and `.mapstage` are the same box, so
+          moving the link out of the canvas costs it nothing.
+        */}
+        <div
+          ref={actionBar}
+          className={`mapactions${cardArmed ? '' : ' mapactions--settling'}`}
+        >
+          {enterLink}
+          {tileCard}
+        </div>
       </div>
 
       {/*
