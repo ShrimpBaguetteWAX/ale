@@ -1559,20 +1559,6 @@ function Result({
                 className={`rescard${holds ? ' rescard--holds' : ''}`}
                 key={f.uid}
               >
-                {/*
-                  Winning an arena costs a fighter, and this is the only place
-                  that says which one. It is not a warning — it is the prize
-                  being guarded — so it reads as a commendation and glows like
-                  one rather than sitting in a red alert somewhere.
-                */}
-                {holds && (
-                  <div
-                    className="rescard__holds"
-                    title="This fighter now holds the arena for you, and cannot be fielded again until somebody beats it."
-                  >
-                    Stays to defend
-                  </div>
-                )}
                 <div className="rescard__art">
                   <img
                     src={
@@ -1593,6 +1579,23 @@ function Result({
                   />
                 </div>
 
+                {/*
+                  Winning an arena costs a fighter, and this is the only place
+                  that says which one.
+
+                  Under the artwork rather than over it: the top of these cards
+                  is where VICTORY runs, and a label placed there was printed
+                  through the one word the screen exists to say. Sitting on the
+                  plate instead attaches it to the fighter it is about.
+                */}
+                {holds && (
+                  <div
+                    className="rescard__holds"
+                    title="This fighter now holds the arena for you, and cannot be fielded again until somebody beats it."
+                  >
+                    Stays to defend
+                  </div>
+                )}
                 <div className="rescard__plate">
                   <div className="rescard__plateInner">
                     <div className="rescard__race">{f.racename || 'unknown'}</div>

@@ -1980,34 +1980,37 @@
  * and said nothing about the cost of it, so a player found out days later
  * when the fighter would not go into a team.
  *
- * Amber rather than red, and a slow breath rather than a flash: this is the
- * prize being guarded, not a problem. The animation is a filter and a
- * box-shadow on one element, so it composites and costs a phone nothing.
+ * Quiet on purpose. This is a fact about one card on a screen that has just
+ * declared a victory, not a second announcement competing with it - so the
+ * card is warmed rather than lit, and the only movement is a slow rise and
+ * fall too shallow to catch the eye that is reading the numbers underneath.
+ * A single drop-shadow, composited, on one image.
  */
 .rescard--holds .rescard__art img {
-  filter: drop-shadow(0 0 10px rgb(247 166 0 / 62%))
-    drop-shadow(0 0 22px rgb(247 166 0 / 34%));
-  animation: holdglow 2.6s var(--ease) infinite;
+  filter: drop-shadow(0 0 8px rgb(247 166 0 / 34%));
+  animation: holdglow 4.5s var(--ease) infinite;
 }
 
 @keyframes holdglow {
   0%,
   100% {
-    filter: drop-shadow(0 0 8px rgb(247 166 0 / 45%))
-      drop-shadow(0 0 18px rgb(247 166 0 / 22%));
+    filter: drop-shadow(0 0 6px rgb(247 166 0 / 26%));
   }
   50% {
-    filter: drop-shadow(0 0 14px rgb(247 166 0 / 78%))
-      drop-shadow(0 0 30px rgb(247 166 0 / 44%));
+    filter: drop-shadow(0 0 10px rgb(247 166 0 / 42%));
   }
 }
 
 /*
- * The banner, across the top of the card.
+ * The label, across the top of the card.
  *
  * Above the artwork rather than on the plate: the plate is a stat block and a
  * sentence in it reads as another row, and this is the one thing on the card
  * that is not a number.
+ *
+ * A hairline and amber type rather than a filled banner. Filled, it was the
+ * brightest object on a screen whose subject is the word VICTORY, and it
+ * pulled the eye away from the result to a footnote about it.
  */
 .rescard__holds {
   position: relative;
@@ -2015,33 +2018,19 @@
   margin-bottom: var(--sp-2);
   padding: 3px var(--sp-2);
   border-radius: var(--radius-xs);
-  border: 1px solid rgb(247 166 0 / 45%);
-  background: linear-gradient(180deg, rgb(247 166 0 / 26%), rgb(247 166 0 / 12%));
-  box-shadow: 0 0 14px rgb(247 166 0 / 26%);
+  border: 1px solid rgb(247 166 0 / 26%);
+  background: rgb(247 166 0 / 8%);
   font-family: var(--font-display);
   font-size: 9px;
-  font-weight: var(--fw-bold);
   letter-spacing: 0.06em;
   text-transform: uppercase;
   text-align: center;
-  color: #ffcf6b;
-  animation: holdbanner 2.6s var(--ease) infinite;
+  color: rgb(247 200 130 / 90%);
 }
 
-@keyframes holdbanner {
-  0%,
-  100% {
-    box-shadow: 0 0 10px rgb(247 166 0 / 18%);
-  }
-  50% {
-    box-shadow: 0 0 20px rgb(247 166 0 / 40%);
-  }
-}
-
-/* A phone runs six of these; the breathing is the first thing to go. */
+/* The glow is decoration; the label and the tooltip carry the meaning. */
 @media (prefers-reduced-motion: reduce) {
-  .rescard--holds .rescard__art img,
-  .rescard__holds {
+  .rescard--holds .rescard__art img {
     animation: none;
   }
 }
