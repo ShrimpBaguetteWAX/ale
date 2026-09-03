@@ -404,6 +404,17 @@
 
 .qfilter {
   display: grid;
+  /*
+     A floor of zero on the column.
+     
+     A grid column defaults to "auto", whose minimum is the content's
+     min-content width - and once the add row stopped wrapping on a phone,
+     that min-content was the whole row laid end to end. The column grew to
+     464px inside a 277px panel, which widened the card, the tab strip above
+     it and the page behind that: 139px of horizontal overflow from one row
+     that would not shrink.
+  */
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--sp-2);
   margin-top: var(--sp-2);
   padding: var(--sp-2) var(--sp-3);
@@ -904,23 +915,37 @@
   .qfilter__add {
     flex-wrap: nowrap;
     gap: 6px;
+    /* A flex item's automatic minimum is min-content too, and this row's
+       min-content is every control side by side. */
+    min-width: 0;
   }
 
   .qfilter__lead {
     flex: 0 0 auto;
     font-size: 9px;
     letter-spacing: 0.04em;
-    line-height: 1.15;
-    /* Two short lines rather than one long one, which is the row's width. */
-    max-width: 44px;
+    white-space: nowrap;
   }
 
-  /* The selects carry the labels, so they take what the row has spare. */
+  .qfilter__leadLong {
+    display: none;
+  }
+
+  /*
+     Sized by their own labels, not split down the middle.
+
+     An equal share gave both 69px, which is too little for either: the stat
+     names run to "Initiative" and the grades to "Good for this class", and
+     at that width the select's own arrow was printed over the last letter.
+     Growing from content instead lets each take what it needs and shrink
+     only as far as the row makes it, and the right padding keeps the text
+     clear of the arrow at every width.
+  */
   .qfilter__stat,
   .qfilter__grade {
-    flex: 1 1 0;
+    flex: 1 1 auto;
     min-width: 0;
-    padding: 4px 6px;
+    padding: 4px 18px 4px 6px;
   }
 
   .qfilter__num {

@@ -1033,7 +1033,15 @@ export function QualityFilters({
   return (
     <div className="qfilter">
       <div className="qfilter__add">
-        <span className="qfilter__lead">Roll quality</span>
+        {/*
+          "Roll" alone on a phone. Spelled out the label wrapped to two lines
+          and took fifty pixels to name a hundred and forty of controls, which
+          came off the two selects it was naming — and "Roll ≥ Good for this
+          class" is the same sentence with the same meaning.
+        */}
+        <span className="qfilter__lead">
+          Roll<span className="qfilter__leadLong"> quality</span>
+        </span>
 
         <select
           className="input qfilter__stat"

@@ -630,3 +630,30 @@
 .fpanel__age--bad .fpanel__ageValue {
   color: var(--red);
 }
+
+/*
+ * The tab strip wraps on a phone rather than scrolling out of sight.
+ *
+ * It has always been an overflow-x strip with its scrollbar hidden, which on
+ * a desktop is invisible because the tabs fit. On a 391px phone the market's
+ * four ran to 457px, so half of "My Listings" and all of "Sell" were simply
+ * off the edge with nothing to say they were there - a strip that scrolls but
+ * shows no scrollbar and no cut-off tab reads as broken, not as scrollable.
+ *
+ * Wrapping instead: every tab is on screen, on as many rows as that takes.
+ * They grow to share the row so the rows come out even, and the padding comes
+ * in a little to fit more per row.
+ */
+@media (max-width: 719px) {
+  .tabs {
+    flex-wrap: wrap;
+    overflow-x: visible;
+  }
+
+  .tabs__tab {
+    flex: 1 1 auto;
+    min-width: 0;
+    justify-content: center;
+    padding: var(--sp-2);
+  }
+}
