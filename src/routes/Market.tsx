@@ -437,6 +437,13 @@ export default function Market() {
               config={config}
               player={player}
               busy={busy === 'list'}
+              onInspect={(f) =>
+                setDetail({
+                  kind: 'panel',
+                  panel: rosterPanel(f),
+                  template: classes.get(f.classname),
+                })
+              }
               onList={(fighterId, startPrice, keep_) =>
                 void run(
                   'list',
@@ -1214,6 +1221,7 @@ export function SellTab({
   config,
   player,
   busy,
+  onInspect,
   onList,
 }: {
   sellable: RosterFighter[]
@@ -1223,6 +1231,8 @@ export function SellTab({
   config: MarketConfig | undefined
   player: ReturnType<typeof useGame.getState>['player']
   busy: boolean
+  /* Opens the full panel on the fighter being listed. */
+  onInspect: (fighter: RosterFighter) => void
   onList: (fighterId: number, startPrice: number, keep: boolean) => void
 }) {
   const minStart = Number(config?.gems_min_start_bid ?? 0)
@@ -1347,18 +1357,37 @@ export function SellTab({
             the auction cannot be withdrawn.
           </p>
 
-          <button
-            type="button"
-            className="btn btn--primary btn--block"
-            onClick={() => picked && onList(picked.fighter_id, price, keep)}
-            disabled={busy || !gate.ok}
-            title={gate.reason}
-          >
-            {busy && <span className="spinner" />}
-            {gate.ok
-              ? `List for ${config?.gems_listing_price ?? 0} gems`
-              : gate.reason}
-          </button>
+          <div className="selltab__act">
+            {/*
+               Listing a fighter is permanent for as long as the auction
+               runs, and the grid tile says a class and a level. The whole
+               panel - every graded roll, the resistances, the abilities - is
+               what a seller is actually pricing, so it is one button away
+               rather than something to go and look up on another screen.
+            */}
+            <button
+              type="button"
+              className="btn btn--ghost"
+              onClick={() => picked && onInspect(picked)}
+              disabled={!picked}
+              title={picked ? undefined : 'Pick a fighter first'}
+            >
+              View fighter
+            </button>
+
+            <button
+              type="button"
+              className="btn btn--primary"
+              onClick={() => picked && onList(picked.fighter_id, price, keep)}
+              disabled={busy || !gate.ok}
+              title={gate.reason}
+            >
+              {busy && <span className="spinner" />}
+              {gate.ok
+                ? `List for ${config?.gems_listing_price ?? 0} gems`
+                : gate.reason}
+            </button>
+          </div>
         </>
       )}
     </div>

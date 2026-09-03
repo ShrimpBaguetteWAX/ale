@@ -836,3 +836,21 @@
 .market .tabs {
   min-width: 0;
 }
+
+/*
+ * The two things to do with the fighter you picked, on one line.
+ *
+ * Listing runs for two days and cannot be withdrawn once anybody bids, so
+ * looking properly before committing is part of the same decision - not a
+ * detour onto another screen.
+ */
+.selltab__act {
+  display: flex;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+  align-items: stretch;
+}
+
+.selltab__act .btn--primary {
+  flex: 1 1 200px;
+}
