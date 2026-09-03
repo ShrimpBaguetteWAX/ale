@@ -850,9 +850,25 @@
     display: none;
   }
 
+  /*
+     Pushed to the right, away from the wordmark that now navigates. A tap
+     meant for "home" that lands on a currency chip does nothing, but a thumb
+     reaching for the top-left corner should not have to be careful.
+  */
   .resources {
+    margin-left: auto;
     gap: 5px;
     padding: 3px 2px;
+  }
+
+  /*
+     The spacer that pushes the node indicator to the end has nothing left to
+     push there, and while it still grows it splits the slack with the
+     margin above — leaving the chips stranded mid-bar rather than at the
+     right edge.
+  */
+  .topbar > .spacer {
+    display: none;
   }
 
   .res {

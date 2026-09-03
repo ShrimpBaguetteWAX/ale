@@ -65,23 +65,30 @@ function Res({
   )
 }
 
-/** Energy, gems and credits — the three currencies `spendcur` moves. */
+/**
+ * Gems, credits and energy — the three currencies `spendcur` moves.
+ *
+ * In that order, on every size: the two a player holds and spends deliberately
+ * first, and the one that refills on its own last. Energy led the row before,
+ * which put the number that changes most often — and that a player can do
+ * least about — in the position the eye lands on first.
+ */
 export function ResourceStrip({ player }: { player: Player }) {
   const s = player.activestats
   return (
     <div className="resources">
-      <Res
-        icon={asset("/assets/icons/energy.png")}
-        label="Action points"
-        value={s.action_points}
-        tone="energy"
-      />
       <Res icon={asset("/assets/icons/gems.png")} label="Gems" value={s.gems} tone="gems" />
       <Res
         icon={asset("/assets/icons/credits.png")}
         label="Credits"
         value={s.credits}
         tone="credits"
+      />
+      <Res
+        icon={asset("/assets/icons/energy.png")}
+        label="Action points"
+        value={s.action_points}
+        tone="energy"
       />
     </div>
   )
