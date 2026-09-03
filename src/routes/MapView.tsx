@@ -654,6 +654,17 @@ export default function MapView() {
           >
             {travelling && <span className="spinner" />}
             {travelling ? 'Travelling' : 'Travel here'}
+            {/*
+              Shown only on a phone, where the cost row above is hidden. Until
+              the config lands there is no cost to state, and an energy icon
+              with nothing beside it is worse than no chip.
+            */}
+            {cost !== null && (
+              <span className="btn__cost">
+                <img src={asset('/assets/icons/energy.png')} alt="energy" />
+                {cost}
+              </span>
+            )}
           </button>
 
           {!canAfford && (
@@ -693,7 +704,23 @@ export default function MapView() {
                     status={status}
                     isCurrent={status.planet === player.planet}
                     isViewing={status.planet === planet}
-                    onSelect={() => setPlanet(status.planet)}
+                    onSelect={() => {
+                      setPlanet(status.planet)
+                      /*
+                        On a phone the open grid covers a third of the map and
+                        the prompt under it, so choosing is also dismissing.
+                        On desktop the strip is one row that costs nothing to
+                        leave open, and closing it after every click would
+                        stop a player comparing planets at all.
+
+                        Deliberately not persisted: the player did not choose
+                        to collapse it, so it must not overwrite the choice
+                        the toggle remembers for them.
+                      */
+                      if (window.matchMedia(`(max-width: 719px)`).matches) {
+                        setBarOpen(false)
+                      }
+                    }}
                   />
                 ),
               )}

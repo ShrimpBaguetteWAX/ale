@@ -1229,3 +1229,132 @@
     animation-duration: 2900ms;
   }
 }
+
+/* ---------- the map on a phone ---------- */
+
+/*
+ * Two things on this screen were built for a mouse and a wide frame, and both
+ * ran off the edge of a 390px one.
+ *
+ * The planet strip scrolls sideways on desktop, which is fine when the row
+ * nearly fits and there is a pointer to flick it. On a phone six cards in
+ * 286px means four of them are off-screen with nothing saying so — it reads
+ * as a cut-off bar, not a scrollable one. Opened, it becomes a grid instead:
+ * two columns, wrapping down, every planet visible at once. Closed it is the
+ * one card it always was.
+ *
+ * The tile inspector loses everything but the action. A card carrying a
+ * thumbnail, coordinates, a land id, the buildings on it and their owners is
+ * a panel to read, and on a phone it covered half the map to tell a player
+ * things they can see by looking at the tile they just tapped. What they came
+ * for is whether they can afford to go, so that is what is left: one button
+ * with the cost on it.
+ */
+@media (max-width: 719px) {
+  /*
+     Opened, the grid is a menu, so it covers the Enter prompt beneath it
+     rather than interleaving with it. The prompt sits at a fixed offset that
+     assumes a one-row bar, and three rows reach past it.
+  */
+  .planetbar {
+    z-index: 5;
+  }
+
+  .planetpick {
+    flex-wrap: wrap;
+    overflow-x: visible;
+  }
+
+  /*
+     Two columns, minus the toggle's own width so the arrow keeps its place on
+     the first row rather than being pushed onto one of its own.
+  */
+  .planetpick .planetcard {
+    flex: 1 1 calc(50% - 26px);
+    min-width: 0;
+  }
+
+  /* Collapsed there is one card, and it should not be half a bar wide. */
+  .planetpick:has(.planetcard:only-of-type) .planetcard {
+    flex: 1 1 auto;
+  }
+
+  .planetcard {
+    padding: var(--sp-2);
+  }
+
+  /*
+     Only the action survives. Hidden rather than not rendered, so the same
+     markup serves both sizes and there is no second code path to keep in
+     step with the first.
+  */
+  /* Room along the top for the close control to sit clear of the button. */
+  .tilecard {
+    padding: 26px var(--sp-2) var(--sp-2);
+  }
+
+  .tilecard .tilecard__top > *:not(.tilecard__close),
+  .tilecard .buildings {
+    display: none;
+  }
+
+  /*
+     The close control floats in the corner instead of holding a row of its
+     own: with everything else in the header gone, that row was 28px of
+     nothing above a button.
+  */
+  /*
+     The close control floats along the top instead of holding a row of its
+     own: with everything else in the header gone, that row was 28px of
+     nothing above a button. It keeps clear of the button rather than sitting
+     on its corner — a thumb that misses "close" should not spend energy —
+     and spans wide enough to be hit without looking.
+  */
+  .tilecard__top {
+    position: absolute;
+    inset: 0 0 auto auto;
+    margin: 0;
+  }
+
+  .tilecard__close {
+    width: 52px;
+    height: 26px;
+  }
+
+  /* The cost rides on the button instead of sitting above it. */
+  .tilecard .travelcost {
+    display: none;
+  }
+
+  .tilecard .btn {
+    margin-top: 0 !important;
+  }
+}
+
+/*
+ * The cost, printed on the travel button.
+ *
+ * Only ever shown where the row above it has been taken away — on a wide
+ * screen the `.travelcost` line already says it, and saying it twice would
+ * be worse than saying it once.
+ */
+.btn__cost {
+  display: none;
+}
+
+@media (max-width: 719px) {
+  .btn__cost {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-left: var(--sp-2);
+    padding-left: var(--sp-2);
+    border-left: 1px solid rgb(255 255 255 / 28%);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .btn__cost img {
+    width: 15px;
+    height: 15px;
+  }
+}

@@ -821,15 +821,59 @@
 }
 
 /*
- * On a phone the top bar has to fit three currencies; the node indicator is
- * secondary there, so it collapses to just its status light. The full
- * breakdown is still one tap away.
+ * On a phone the top bar has to fit three currencies in about 250px, and it
+ * was not fitting: the chips came to 291px and the third one scrolled off the
+ * end, which reads as broken rather than as scrollable.
+ *
+ * Two things give the width back. The node indicator goes entirely — it is
+ * diagnostics, and a player on a phone who suspects the network can open the
+ * Account screen. And the chips themselves come down a size: a smaller
+ * socket, a smaller icon and the small type instead of the medium. Everything
+ * that gives each chip its character — the lean, the coloured rim, the wash,
+ * the flare on a change — is untouched, so it is the same object, drawn
+ * smaller.
+ *
+ * Desktop keeps the full-size chips and the indicator.
  */
 @media (max-width: 600px) {
-  .netdot .mono {
+  .netdot {
     display: none;
   }
-  .netdot {
+
+  .resources {
+    gap: 5px;
+    padding: 3px 2px;
+  }
+
+  .res {
+    padding: 2px 8px 2px 2px;
+  }
+
+  .res__inner {
+    gap: 5px;
+  }
+
+  .res__socket {
+    width: 22px;
+    height: 22px;
+  }
+
+  .res__icon {
+    width: 15px;
+    height: 15px;
+  }
+
+  .res__value {
+    font-size: var(--fs-xs);
+  }
+
+  /* The wordmark can afford to give a little back too. */
+  .topbar__logo {
+    width: 72px;
+  }
+
+  .topbar {
+    gap: var(--sp-2);
     padding: var(--sp-2);
   }
 }

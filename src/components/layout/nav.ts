@@ -6,7 +6,17 @@ export interface NavItem {
   icon: string
   /** Contract is live on chain but the screen isn't built yet. */
   soon?: boolean
-  /** Shown in the mobile tab bar rather than the "More" sheet. */
+  /**
+   * Shown in the mobile tab bar rather than the "More" sheet.
+   *
+   * Four of them, chosen for how often a player reaches for the thing rather
+   * than how important it sounds: the map, the roster, the day's quests and
+   * the shop. Account is a place you visit occasionally and on purpose, which
+   * is exactly what the More sheet is for.
+   *
+   * Desktop never reads this — the left rail lists everything — so the tab
+   * bar is the only thing this flag moves.
+   */
   primary?: boolean
 }
 
@@ -35,7 +45,7 @@ export interface NavItem {
  */
 export const NAV_ITEMS: NavItem[] = [
   { to: '/map', label: 'World Map', icon: asset('/assets/icons/menu/world.png'), primary: true },
-  { to: '/shop', label: 'Shop', icon: asset('/assets/icons/menu/coin.png') },
+  { to: '/shop', label: 'Shop', icon: asset('/assets/icons/menu/coin.png'), primary: true },
   {
     to: '/leaderboard',
     label: 'Leaderboards',
@@ -62,9 +72,20 @@ export const NAV_ITEMS: NavItem[] = [
   },
   { to: '/market', label: 'Market', icon: asset('/assets/icons/menu/market.png') },
   { to: '/lands', label: 'My Lands', icon: asset('/assets/icons/menu/my-land.png') },
-  { to: '/profile', label: 'Account', icon: asset('/assets/icons/menu/settings.png'), primary: true },
+  { to: '/profile', label: 'Account', icon: asset('/assets/icons/menu/settings.png') },
   { to: '/farming', label: 'Farming', icon: asset('/assets/icons/menu/card.png') },
 ]
+
+/**
+ * The order the tab bar puts its four in, most-reached first.
+ *
+ * Separate from `NAV_ITEMS` because that list is the desktop rail's order and
+ * the two are answering different questions: the rail is a menu to read down,
+ * the tab bar is four thumbs' worth of the things a player opens most. Left
+ * to the rail's order, Shop would land second because it happens to sit
+ * second in the menu.
+ */
+export const TABBAR_ORDER = ['/map', '/fighters', '/quests', '/shop']
 
 /** Screens that actually exist, keyed by label, for the ComingSoon copy. */
 export const SECTION_BLURBS: Record<string, string> = {

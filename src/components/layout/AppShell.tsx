@@ -5,7 +5,7 @@ import { NetworkStatus } from '../NetworkStatus'
 import { useChores } from '@/chores/useChores'
 import { CHORE_CHECKS } from '@/chores/checks'
 import { ResourceStrip } from '../ResourceStrip'
-import { NAV_ITEMS, type NavItem } from './nav'
+import { NAV_ITEMS, TABBAR_ORDER, type NavItem } from './nav'
 import { asset } from '@/assets'
 
 function Icon({ item }: { item: NavItem }) {
@@ -85,7 +85,10 @@ export function AppShell() {
 
   const closeSheet = useCallback(() => setSheetOpen(false), [])
 
-  const primary = NAV_ITEMS.filter((i) => i.primary)
+  /* Ordered for the thumb, not for the rail. See TABBAR_ORDER. */
+  const primary = NAV_ITEMS.filter((i) => i.primary).sort(
+    (x, y) => TABBAR_ORDER.indexOf(x.to) - TABBAR_ORDER.indexOf(y.to),
+  )
   const secondary = NAV_ITEMS.filter((i) => !i.primary)
 
   /*
