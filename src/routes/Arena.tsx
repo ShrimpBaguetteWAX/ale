@@ -25,7 +25,7 @@ import {
   type FlatFighter,
 } from '@/fight/matchup'
 import { recallTeam, rememberTeam, restoreTeam } from '@/fight/lastTeam'
-import { autoPickTeam } from '@/fight/autopick'
+import { autoPickCards, autoPickFighters } from '@/fight/autopick'
 import { applyWeather, fetchWeather, type Weather } from '@/fight/weather'
 import { DEFAULT_CAPS, type StatCaps } from '@/dungeon/sim'
 import {
@@ -44,7 +44,6 @@ import {
 } from '@/arena/queries'
 import {
   ARENA_POWER_FULL,
-  ARENA_POWER_PER_LOSS,
   NFT_FIGHTER_ID,
   alreadyDefending,
   applyArenaPower,
@@ -361,21 +360,29 @@ export default function Arena() {
      it would field here; leaving a card the player chose for some other
      opponent in place made the answer half theirs and half its own.
   */
-  const autoPick = useCallback(() => {
+  /*
+     Two suggestions, not one.
+
+     They answer different questions and a player usually has an opinion about
+     one of them already: replacing a line-up somebody chose by hand because
+     they wanted a view on the cards is the kind of help nobody asks for
+     twice.
+  */
+  const autoPickTeamOnly = useCallback(() => {
     if (!roster) return
-    const pick = autoPickTeam({
-      roster,
-      matchups,
+    setTeamIds(autoPickFighters(roster, matchups, TEAM_SIZE))
+  }, [roster, matchups])
+
+  const autoPickCardsOnly = useCallback(() => {
+    const pick = autoPickCards({
       enemies,
-      teamSize: TEAM_SIZE,
       crewCards: usableCrew,
       weaponCards: usableWeapons,
       values: nftValues,
     })
-    setTeamIds(pick.fighterIds)
     setCrew(pick.crew)
     setWeapon(pick.weapon)
-  }, [roster, matchups, enemies, usableCrew, usableWeapons, nftValues])
+  }, [enemies, usableCrew, usableWeapons, nftValues])
 
   const start = async () => {
     if (!session || !block.ready || !crew || !weapon) return
@@ -906,13 +913,15 @@ export default function Arena() {
               )}
             </div>
 
+            {/* Beside the slots it fills, and only those. */}
             <button
               type="button"
               className="btn btn--ghost btn--sm cardslots__auto"
-              onClick={autoPick}
-              disabled={!roster}
+              onClick={autoPickCardsOnly}
+              disabled={!usableCrew.length && !usableWeapons.length}
+              title="Choose the crew and weapon pair that suits this opponent"
             >
-              Auto-pick
+              Auto-pick cards
             </button>
           </div>
         </section>
@@ -942,6 +951,16 @@ export default function Arena() {
 
           {tab === 'fighters' ? (
             <>
+              {/* Beside the roster it fills, and only that. */}
+              <button
+                type="button"
+                className="btn btn--ghost btn--sm picker__auto"
+                onClick={autoPickTeamOnly}
+                disabled={!roster}
+                title="Choose the five fighters that suit this opponent"
+              >
+                Auto-pick fighters
+              </button>
               <RosterFilters
                 filter={filter}
                 onChange={setFilter}
@@ -967,7 +986,22 @@ export default function Arena() {
               query={cardQuery}
               onQuery={setCardQuery}
               selected={tab === 'crew' ? crew : weapon}
-              onPick={(c) => (tab === 'crew' ? setCrew(c) : setWeapon(c))}
+              onPick={(c) => {
+                if (tab !== 'crew') {
+                  setWeapon(c)
+                  return
+                }
+                setCrew(c)
+                /*
+                   Straight on to weapons. The pair is one choice made in two
+                   halves — the stats add and the weapon sets the element — so
+                   picking a crew card is never the end of the task, and
+                   leaving the player on a list they have finished with makes
+                   them find the next tab themselves.
+                */
+                setTab('weapon')
+                setCardQuery('')
+              }}
               onInspect={showCard}
               kind={tab}
             />
@@ -1041,11 +1075,6 @@ function ArenaStanding({
         <span className="arenabar__text mono">{percent.toFixed(0)}%</span>
       </div>
 
-      <p className="hint">
-        Health and damage are scaled to this. It falls{' '}
-        {(ARENA_POWER_PER_LOSS / ARENA_POWER_FULL) * 100}% every time a
-        challenger loses here, and returns to full the moment somebody wins.
-      </p>
     </section>
   )
 }

@@ -35,32 +35,42 @@ export interface AutoPicked<TCard> {
  */
 const SHORTLIST = 24
 
-export function autoPickTeam<TCard extends { template_id: number }>(options: {
-  roster: RosterFighter[]
-  /** How each roster fighter stands against this line-up, by fighter id. */
-  matchups: Map<number, Matchup>
+/**
+ * The five fighters, ranked on the matchup.
+ *
+ * Separate from the cards because they are separate decisions. A player who
+ * has chosen their own five and wants a suggestion for the pair should not
+ * have their line-up replaced to get it, and the reverse holds just as much.
+ */
+export function autoPickFighters(
+  roster: RosterFighter[],
+  matchups: Map<number, Matchup>,
+  teamSize: number,
+): number[] {
+  const available = roster.filter((f) => fighterAvailable(f).available)
+  const ranked = [...available].sort(
+    (x, y) =>
+      (matchups.get(y.fighter_id)?.score ?? 0) - (matchups.get(x.fighter_id)?.score ?? 0) ||
+      x.fighter_id - y.fighter_id,
+  )
+  return ranked.slice(0, teamSize).map((f) => f.fighter_id)
+}
+
+/** The crew and weapon pair, chosen together for the reason below. */
+export function autoPickCards<TCard extends { template_id: number }>(options: {
   enemies: BattleFighter[]
-  teamSize: number
   crewCards: TCard[]
   weaponCards: TCard[]
   values: Map<number, NftValue>
-}): AutoPicked<TCard> {
-  const { roster, matchups, enemies, teamSize, crewCards, weaponCards, values } = options
-
-  const available = roster.filter((f) => fighterAvailable(f).available)
-  const ranked = [...available].sort(
-    (a, b) =>
-      (matchups.get(b.fighter_id)?.score ?? 0) - (matchups.get(a.fighter_id)?.score ?? 0) ||
-      a.fighter_id - b.fighter_id,
-  )
-  const fighterIds = ranked.slice(0, teamSize).map((f) => f.fighter_id)
+}): { crew: TCard | null; weapon: TCard | null } {
+  const { enemies, crewCards, weaponCards, values } = options
 
   const bulk = (c: TCard) => {
     const v = values.get(c.template_id)
     return (v?.stats.damage ?? 0) + (v?.stats.health ?? 0)
   }
   const shortlist = (cards: TCard[]) =>
-    [...cards].sort((a, b) => bulk(b) - bulk(a)).slice(0, SHORTLIST)
+    [...cards].sort((x, y) => bulk(y) - bulk(x)).slice(0, SHORTLIST)
 
   const crewList = shortlist(crewCards)
   const weaponList = shortlist(weaponCards)
@@ -110,9 +120,23 @@ export function autoPickTeam<TCard extends { template_id: number }>(options: {
      With no enemy line loaded there is nothing to rank against, so fall back
      to the heaviest card in each slot rather than picking nothing.
   */
+  return { crew: bestCrew ?? crewList[0] ?? null, weapon: bestWeapon ?? weaponList[0] ?? null }
+}
+
+/** Both at once, for anything that still wants the whole line-up. */
+export function autoPickTeam<TCard extends { template_id: number }>(options: {
+  roster: RosterFighter[]
+  /** How each roster fighter stands against this line-up, by fighter id. */
+  matchups: Map<number, Matchup>
+  enemies: BattleFighter[]
+  teamSize: number
+  crewCards: TCard[]
+  weaponCards: TCard[]
+  values: Map<number, NftValue>
+}): AutoPicked<TCard> {
+  const { roster, matchups, enemies, teamSize, crewCards, weaponCards, values } = options
   return {
-    fighterIds,
-    crew: bestCrew ?? crewList[0] ?? null,
-    weapon: bestWeapon ?? weaponList[0] ?? null,
+    fighterIds: autoPickFighters(roster, matchups, teamSize),
+    ...autoPickCards({ enemies, crewCards, weaponCards, values }),
   }
 }

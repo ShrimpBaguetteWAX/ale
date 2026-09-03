@@ -47,7 +47,7 @@ import { ageFactor, levelFactor } from '@/fight/scaling'
 import { recallTeam, rememberTeam, restoreTeam } from '@/fight/lastTeam'
 import { applyWeather, fetchWeather, type Weather } from '@/fight/weather'
 import { DEFAULT_CAPS, type StatCaps } from '@/dungeon/sim'
-import { autoPickTeam } from '@/fight/autopick'
+import { autoPickCards, autoPickFighters } from '@/fight/autopick'
 import { TEAM_SIZE, type BattleFighter, type RosterFighter } from '@/dungeon/types'
 import {
   STAT_LABEL,
@@ -309,21 +309,29 @@ export default function Dungeon() {
   }, [])
 
   /* Ranked on the matchup, and the cards chosen as a pair. */
-  const autoPick = useCallback(() => {
+  /*
+     Two suggestions, not one.
+
+     They answer different questions and a player usually has an opinion about
+     one of them already: replacing a line-up somebody chose by hand because
+     they wanted a view on the cards is the kind of help nobody asks for
+     twice.
+  */
+  const autoPickTeamOnly = useCallback(() => {
     if (!roster) return
-    const pick = autoPickTeam({
-      roster,
-      matchups,
+    setTeamIds(autoPickFighters(roster, matchups, TEAM_SIZE))
+  }, [roster, matchups])
+
+  const autoPickCardsOnly = useCallback(() => {
+    const pick = autoPickCards({
       enemies,
-      teamSize: TEAM_SIZE,
       crewCards: usableCrew,
       weaponCards: usableWeapons,
       values: nftValues,
     })
-    setTeamIds(pick.fighterIds)
     setCrew(pick.crew)
     setWeapon(pick.weapon)
-  }, [roster, matchups, enemies, usableCrew, usableWeapons, nftValues])
+  }, [enemies, usableCrew, usableWeapons, nftValues])
 
   const start = async () => {
     if (!session || !block.ready || !crew || !weapon) return
@@ -868,13 +876,15 @@ export default function Dungeon() {
               )}
             </div>
 
+            {/* Beside the slots it fills, and only those. */}
             <button
               type="button"
               className="btn btn--ghost btn--sm cardslots__auto"
-              onClick={autoPick}
-              disabled={!roster}
+              onClick={autoPickCardsOnly}
+              disabled={!usableCrew.length && !usableWeapons.length}
+              title="Choose the crew and weapon pair that suits this opponent"
             >
-              Auto-pick
+              Auto-pick cards
             </button>
           </div>
         </section>
@@ -904,6 +914,16 @@ export default function Dungeon() {
 
           {tab === 'fighters' ? (
             <>
+              {/* Beside the roster it fills, and only that. */}
+              <button
+                type="button"
+                className="btn btn--ghost btn--sm picker__auto"
+                onClick={autoPickTeamOnly}
+                disabled={!roster}
+                title="Choose the five fighters that suit this opponent"
+              >
+                Auto-pick fighters
+              </button>
               <RosterFilters
                 filter={filter}
                 onChange={setFilter}
@@ -929,7 +949,22 @@ export default function Dungeon() {
               query={cardQuery}
               onQuery={setCardQuery}
               selected={tab === 'crew' ? crew : weapon}
-              onPick={(c) => (tab === 'crew' ? setCrew(c) : setWeapon(c))}
+              onPick={(c) => {
+                if (tab !== 'crew') {
+                  setWeapon(c)
+                  return
+                }
+                setCrew(c)
+                /*
+                   Straight on to weapons. The pair is one choice made in two
+                   halves — the stats add and the weapon sets the element — so
+                   picking a crew card is never the end of the task, and
+                   leaving the player on a list they have finished with makes
+                   them find the next tab themselves.
+                */
+                setTab('weapon')
+                setCardQuery('')
+              }}
               onInspect={showCard}
               kind={tab}
             />

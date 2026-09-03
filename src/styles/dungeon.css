@@ -1262,12 +1262,27 @@
  * card's slanted edges; the padding then brings the text back inside the
  * visible parallelogram.
  */
+/*
+ * The name plate, pinned to the foot of the card.
+ *
+ * It used to flow after the portrait and pull itself up with a negative
+ * margin, which put its bottom edge wherever the content above it happened to
+ * end. On a narrow card that varies: a plate carrying an owner line or an
+ * ability chip came out 73px tall and reached the bottom, while one without
+ * came out 57px and stopped 17px short — so the darkened band floated in the
+ * middle of some cards and not others, in the same row.
+ *
+ * Anchored to the bottom it is the same band on every card whatever it holds,
+ * and the gradient fades upward from an edge instead of from a guess.
+ */
 .combatcard__plate {
-  position: relative;
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
   display: grid;
   gap: 1px;
   padding: var(--sp-2) 10%;
-  margin-top: -38px;
   background: linear-gradient(180deg, rgb(5 16 30 / 0%), rgb(5 16 30 / 94%) 45%);
 }
 
@@ -1580,4 +1595,115 @@
 .weather__name {
   color: var(--text);
   font-weight: var(--fw-medium);
+}
+
+/*
+ * Defender strength, on a phone.
+ *
+ * 196px for one number: a heading that wrapped to two lines, a tally line, a
+ * 22px bar and a three-line explanation of a mechanic that does not change.
+ * On a 390px screen that is most of what is above the fold, and the screen is
+ * there to pick a team.
+ *
+ * The explanation is gone entirely now; what is left is the heading, the
+ * facts, and the bar, compressed into the space the bar alone used to want.
+ */
+@media (max-width: 719px) {
+  .arenastanding {
+    padding: var(--sp-2) var(--sp-3);
+  }
+
+  .arenastanding .panel__title {
+    gap: 0 var(--sp-2);
+    font-size: var(--fs-xs);
+    letter-spacing: 0.1em;
+  }
+
+  .arenastanding .dungeon__tally {
+    flex-basis: 100%;
+    margin-left: 0;
+    font-size: 11px;
+  }
+
+  .arenastanding .arenabar {
+    height: 16px;
+    margin-top: 6px;
+  }
+
+  .arenastanding .arenabar__text {
+    font-size: var(--fs-xs);
+  }
+
+}
+
+/*
+ * Auto-pick, in the list it acts on.
+ *
+ * There used to be one button doing both halves. Two suggestions that replace
+ * different things want two controls, each sitting with what it changes — the
+ * card one beside the slots, this one above the roster.
+ */
+.picker__auto {
+  align-self: flex-start;
+  margin-bottom: var(--sp-2);
+}
+
+/*
+ * The picker on a phone.
+ *
+ * The tab strip wanted 337px in 298 and scrolled sideways, which reads as
+ * broken rather than scrollable; the counts beside each label were the whole
+ * of the overflow. They go — the grid under the tabs is the count, and it is
+ * more current than a number in a heading.
+ *
+ * The filters were laid out for a form: 44px controls, six element buttons at
+ * 44px square, and `--sp-3` between everything. Compacted they still clear
+ * the tap-target floor at 36px while giving most of a screenful back to the
+ * fighters they are there to filter.
+ */
+@media (max-width: 719px) {
+  .picker .tabs__count {
+    display: none;
+  }
+
+  .filters {
+    gap: var(--sp-2);
+    padding: var(--sp-2);
+  }
+
+  .filters__row {
+    gap: var(--sp-2);
+  }
+
+  .filters__elements {
+    gap: 6px;
+  }
+
+  .elembtn {
+    width: 36px;
+    height: 36px;
+  }
+
+  .elembtn img {
+    width: 22px;
+    height: 22px;
+  }
+
+  .field {
+    min-width: 108px;
+  }
+
+  .field--grow {
+    min-width: 140px;
+  }
+
+  .filters .input {
+    min-height: 36px;
+    padding: 0 var(--sp-2);
+    font-size: var(--fs-xs);
+  }
+
+  .filters__clear {
+    min-height: 36px;
+  }
 }
