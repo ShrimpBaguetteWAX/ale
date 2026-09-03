@@ -175,7 +175,7 @@
      colour now, and the key art above the sweep is the only artwork the
      section has to carry.
   */
-  background: #12141f;
+  background: #0f1220;
   /* So the curve clips whatever sits on it. */
   overflow: hidden;
 }
