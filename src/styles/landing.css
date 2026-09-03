@@ -33,11 +33,29 @@
  * mobile Safari has never handled and which repaints the whole surface on
  * every scroll frame where it does work.
  */
+/*
+ * Sized to the *large* viewport, not the current one.
+ *
+ * A phone's address bar collapses as you scroll, which resizes the visual
+ * viewport under everything pinned to it. With `inset: 0` this element
+ * resized too, and since it is an `object-fit: cover` crop, resizing it
+ * recomputes the crop — so the illustration visibly shifted every time the
+ * bar moved. That is the jumping.
+ *
+ * `lvh` is the viewport with the bar retracted, and it does not change while
+ * scrolling. The bar collapsing now uncovers more of an image that was
+ * already that tall rather than restretching it. Bottom is left alone for
+ * the same reason: pinning it would put the height back under the viewport's
+ * control. `100vh` first, because that is what older mobile browsers have
+ * always meant by this and it is already the right number there.
+ */
 .landing__art {
   position: fixed;
-  inset: 0;
+  top: 0;
+  left: 0;
   width: 100%;
-  height: 100%;
+  height: 100vh;
+  height: 100lvh;
   object-fit: cover;
   object-position: center;
   z-index: -2;
@@ -53,7 +71,13 @@
  */
 .landing__scrim {
   position: fixed;
-  inset: 0;
+  top: 0;
+  left: 0;
+  width: 100%;
+  /* Matched to the art, or the gradient re-scales while the art does not
+     and the darkening slides across the picture as the bar moves. */
+  height: 100vh;
+  height: 100lvh;
   z-index: -1;
   pointer-events: none;
   background:
