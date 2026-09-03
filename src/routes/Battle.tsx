@@ -919,7 +919,16 @@ function Duelist({
 
       <div className="duelist__plate">
         <div className="duelist__id">
-          <span className="duelist__name">{fighter.classname}</span>
+          {/*
+            Never empty. The NFT fighter has no class — no crew row on chain
+            carries one — and an empty span contributes no line box, so its
+            name row measured 16px against everyone else's 22. The plate, the
+            portrait above it and the turn queue below all shifted 6px
+            whenever it took the stage.
+          */}
+          <span className="duelist__name">
+            {fighter.classname || fighter.racename || 'Fighter'}
+          </span>
           <span className="duelist__owner">{owner}</span>
         </div>
 

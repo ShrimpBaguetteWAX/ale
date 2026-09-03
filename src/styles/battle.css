@@ -298,11 +298,26 @@
 
 /* ---------- the duel ---------- */
 
+/*
+ * The middle column is a fixed width, not its content’s.
+ *
+ * It holds the attack counter and the odds, and both change text every
+ * turn: "READY" is 43px, "ATTACK 7" and a percentage is 76, and a
+ * two-digit attack is wider again. On an `auto` track that swing came out
+ * of the two `1fr` columns either side, so both fighters slid inward and
+ * outward on every blow. On a desktop the portraits were capped at 260px
+ * and only shifted; on a phone there is no cap, so the frame narrowed, its
+ * ratio made it shorter, and the whole page under the stage moved with it -
+ * 136px to 162px wide, 181 to 216 tall.
+ *
+ * 96px clears the widest line the column can hold at 11px, and the sides
+ * are then whatever is left, equally and always.
+ */
 .duel {
   position: relative;
   z-index: 1;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) 96px minmax(0, 1fr);
   gap: var(--sp-3);
   align-items: end;
   padding: var(--sp-2) 0 0;
@@ -357,20 +372,54 @@
 
 /* ---------- one duelist ---------- */
 
+/*
+ * One column, and it may not be wider than the space it is in.
+ *
+ * A grid column defaults to the widest thing in it, and the widest thing
+ * here is the name plate, whose width is a fighter’s name and its owner’s
+ * tag. The portrait frame is `width: 100%` of that column - so the frame
+ * was sized by the length of a name, its ratio turned that into a height,
+ * and the stage changed height every time the pair on it changed. 126px of
+ * space, frames of 131, 137, 140, 148, 155 and 162.
+ *
+ * `minmax(0, 1fr)` caps the column at the space available. The plate’s own
+ * text already truncates - the name and the owner both carry an ellipsis -
+ * so nothing is lost by making it fit.
+ */
 .duelist {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--sp-2);
   justify-items: center;
   min-width: 0;
 }
 
+/*
+ * The stage a fighter stands on, and the reason it is a fixed box.
+ *
+ * `aspect-ratio` alone did not hold it. It sets the height from the width
+ * only while nothing inside is taller, and the artwork was: the frame was a
+ * grid, the portrait a grid item at `width: auto`, and `max-height: 100%`
+ * on that portrait resolved against a height that was still being decided
+ * by the portrait - a cycle, which the browser resolves by ignoring the
+ * limit. So each fighter got its own natural height at 260px wide, and the
+ * art is not one shape: 362x512 gave a 368px frame, 326x512 gave 408.
+ *
+ * Every attack swapped the pair on stage, the stage changed height, and the
+ * turn queue and everything under it moved - 50px, several times a fight,
+ * while the player is trying to read it.
+ *
+ * The body is taken out of flow instead. The frame’s height then comes
+ * from the ratio alone, `100%` inside it resolves against something
+ * definite, and the portrait is capped rather than consulted. The ratio is
+ * 13/20 rather than 4/5 because that is the box the tallest of the current
+ * art already wanted - fixing the box costs no portrait any size.
+ */
 .duelist__frame {
   position: relative;
   width: 100%;
   max-width: 260px;
-  aspect-ratio: 4 / 5;
-  display: grid;
-  place-items: end center;
+  aspect-ratio: 13 / 20;
 }
 
 /* Direction is per side: each fighter leans toward the other. */
@@ -382,9 +431,8 @@
 }
 
 .duelist__body {
-  position: relative;
-  width: 100%;
-  height: 100%;
+  position: absolute;
+  inset: 0;
   display: grid;
   place-items: end center;
   transform-origin: bottom center;
@@ -395,6 +443,7 @@
   max-width: 100%;
   max-height: 100%;
   width: auto;
+  height: auto;
   object-fit: contain;
   filter: drop-shadow(0 12px 18px rgb(0 0 0 / 65%));
   transition: filter var(--dur-fast) var(--ease);
@@ -921,11 +970,13 @@
   border-bottom: 2px solid #e0344f;
 }
 
+/* Holds its line whatever is in it, for the same reason the row below does. */
 .duelist__id {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
   gap: var(--sp-2);
+  min-height: 22px;
 }
 
 .duelist__name {
@@ -1002,11 +1053,21 @@
   }
 }
 
+/*
+ * The row holds its height whether or not there is a threat mark in it.
+ *
+ * The mark is 17px and disappears when a fighter dies, which took the row
+ * from 22px to 19 - and since the plate is under the portrait and the turn
+ * queue is under the plate, three pixels here moved the whole page. Pinned,
+ * because a number that shifts while you are reading it is worse than three
+ * pixels of empty row.
+ */
 .duelist__nums {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
   gap: var(--sp-2);
+  min-height: 22px;
 }
 
 .duelist__hp {
