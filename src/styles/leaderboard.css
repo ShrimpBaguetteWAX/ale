@@ -475,3 +475,19 @@
   object-fit: cover;
   background: rgb(255 255 255 / 6%);
 }
+
+/*
+ * The claim button sits left on a phone.
+ *
+ * `margin-left: auto` is what puts it opposite the title on a desktop, where
+ * they share a line. On a phone the header wraps and the button drops to a
+ * line of its own - where that same auto margin pushed it to the right edge,
+ * away from the title it belongs to and away from the thumb, on a screen
+ * whose every other control starts at the left margin.
+ */
+@media (max-width: 719px) {
+  .lboard__claim {
+    margin-left: 0;
+    margin-right: auto;
+  }
+}

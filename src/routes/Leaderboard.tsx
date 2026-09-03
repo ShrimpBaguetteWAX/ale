@@ -184,6 +184,24 @@ export default function Leaderboard() {
   const claimAt = cooldown ? Date.parse(cooldown.cooldown_expired + 'Z') : 0
   const onCooldown = claimAt > now
 
+  /**
+   * Whether this wallet is high enough on the board to be paid at all.
+   *
+   * `lbclaim` walks the rating index down from the top for `lb_reward_count`
+   * places looking for the caller, and ends `check(false, "You need to be
+   * above a certain rank to qualify for rewards")` if it does not find them.
+   * So for everyone outside that range the button was an offer to spend a
+   * transaction on a guaranteed failure.
+   *
+   * The count comes from the config rather than the twenty it happens to be,
+   * so the button follows the contract if the number is ever changed. The
+   * board is read a hundred deep and the paid range is the top twenty of it,
+   * so a rank found here is a rank the contract will find too.
+   */
+  const paidPlaces = rewardCount(config)
+  const myRank = ranks.findIndex((r) => r.wallet === player?.wallet) + 1
+  const canClaim = myRank >= 1 && paidPlaces >= 1 && myRank <= paidPlaces
+
   const doClaim = async () => {
     if (!session) return
     setBusy(true)
@@ -224,18 +242,22 @@ export default function Leaderboard() {
           <button
             type="button"
             className="btn btn--primary lboard__claim"
-            disabled={!session || busy || onCooldown}
+            disabled={!session || busy || onCooldown || !canClaim}
             onClick={() => void doClaim()}
             title={
-              onCooldown
-                ? 'One claim a day'
-                : 'Pays out your dungeon leaderboard rank'
+              !canClaim
+                ? `Only the top ${paidPlaces} are paid${myRank ? ` — you are ${myRank}` : ''}`
+                : onCooldown
+                  ? 'One claim a day'
+                  : 'Pays out your dungeon leaderboard rank'
             }
           >
             {busy && <span className="spinner" />}
-            {onCooldown
-              ? `Rewards available in ${countdown(claimAt - now)}`
-              : 'Claim daily Rewards'}
+            {!canClaim
+              ? `Top ${paidPlaces} only`
+              : onCooldown
+                ? `Rewards available in ${countdown(claimAt - now)}`
+                : 'Claim daily Rewards'}
           </button>
         )}
       </header>
