@@ -4,15 +4,22 @@ import { fileURLToPath, URL } from 'node:url'
 
 // GitHub Pages serves this from the repo's /docs folder.
 //
-// `base` is the repo name because this is a project page:
-// shrimpbaguettewax.github.io/ale/. Leave it as '/' only if a custom domain
-// is attached, where the app sits at the domain root instead.
+// `base` is '/' because a custom domain is attached. Pages puts a project
+// page under the repo name — shrimpbaguettewax.github.io/ale/ — but a custom
+// domain serves that same folder at its own root, so every asset path loses
+// the /ale/ prefix. That URL now 301s to new.alienlegends.io, and building
+// with the old base left the site asking for /ale/assets/* on a host that
+// only has /assets/*: every request 404d and the page never started.
+//
+// The CNAME in public/ is what keeps the domain attached. `emptyOutDir`
+// wipes docs/ on every build, including the CNAME file Pages writes there
+// itself, so it has to be reissued from public/ each time.
 //
 // Routing is hash-based (see App.tsx), so Pages needs no 404.html fallback:
 // every route is one document and the server never sees the path.
 export default defineConfig({
   plugins: [react()],
-  base: '/ale/',
+  base: '/',
   resolve: {
     alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },
   },
