@@ -106,10 +106,14 @@ export function withNumericIds<T extends { fighter_id: number }>(fighters: T[]):
  * A stable sort, so everyone else keeps the order the contract gave them.
  */
 export function nftFighterLast<T extends { fighter_id: number }>(fighters: T[]): T[] {
-  return [...fighters].sort(
-    (a, b) =>
-      Number(a.fighter_id === NFT_FIGHTER_ID) - Number(b.fighter_id === NFT_FIGHTER_ID),
-  )
+  /*
+     Coerced, because 99999999999 is over 2^32 and a node sends those as
+     strings while every real fighter id arrives as a number. Comparing the
+     raw field made this a no-op on any list that had not already been through
+     `withNumericIds` — the arena had, so it worked there and nowhere else.
+  */
+  const isNft = (f: T) => Number(f.fighter_id) === NFT_FIGHTER_ID
+  return [...fighters].sort((a, b) => Number(isNft(a)) - Number(isNft(b)))
 }
 
 /** The enemy line-up at a difficulty, before scaling. */

@@ -1260,9 +1260,20 @@ function Result({
     let live = true
 
     const land = landId(player.x, player.y)
+
+    /*
+       Compared as numbers on both sides.
+
+       The NFT fighter's id is 99999999999, which is over 2^32, and a node
+       serialises those as strings while every real fighter id comes back as a
+       number. So `f.fighter_id !== NFT_FIGHTER_ID` was a string against a
+       number, which is always true: the one fighter this is meant to skip was
+       the one it kept, and since the arena row lists it before the roster
+       fighter, the NFT card was what got marked every time.
+    */
     const mineIds = new Set(
       replay.fighters
-        .filter((f) => f.team === 1 && f.fighter_id !== NFT_FIGHTER_ID)
+        .filter((f) => f.team === 1 && Number(f.fighter_id) !== NFT_FIGHTER_ID)
         .map((f) => Number(f.fighter_id)),
     )
 
@@ -1272,7 +1283,7 @@ function Result({
         const arena = await fetchLiveArena(player.planet, land, true).catch(() => undefined)
         const held = (arena?.fighters ?? [])
           .map((f) => Number(f.fighter_id))
-          .find((id) => mineIds.has(id))
+          .find((id) => id !== NFT_FIGHTER_ID && mineIds.has(id))
         if (held !== undefined && live) {
           setDefending(held)
           return
