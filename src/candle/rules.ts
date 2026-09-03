@@ -47,6 +47,21 @@ export function placesFor(value: number, type: string): number {
   return Math.min(precisionOf(type), 4)
 }
 
+/**
+ * Decimal places for a per-gem rate, which is never a whole number.
+ *
+ * This is the figure a contribution is actually judged on, and it moves with
+ * every gem anybody adds — so rounding it to the nearest whole token hid the
+ * movement the screen exists to show: 1.6 and 2.4 both printed as "2", and a
+ * contribution that visibly changed the pot appeared to change nothing.
+ *
+ * Below one it keeps the finer precision `placesFor` gives, where a single
+ * place would round every small rate to "0.0".
+ */
+export function perGemPlaces(value: number, type: string): number {
+  return Number.isFinite(value) && Math.abs(value) >= 1 ? 1 : placesFor(value, type)
+}
+
 /** The token's own precision, for anywhere the raw scale is wanted. */
 export function displayPlaces(type: string): number {
   return precisionOf(type)

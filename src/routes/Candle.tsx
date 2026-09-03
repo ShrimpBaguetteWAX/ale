@@ -19,6 +19,7 @@ import {
   tokenIcon,
   tokenSymbol,
   placesFor,
+  perGemPlaces,
 } from '@/candle/rules'
 import { claimCandle, contributeGems } from '@/wharf/actions'
 import { refreshChore } from '@/chores/signal'
@@ -640,7 +641,7 @@ export function Mission({
           <div>
             <dt>Per gem</dt>
             <dd>
-              {share.total > 0 ? formatDecimals(share.perGem, dp(share.perGem)) : '—'}
+              {share.total > 0 ? formatDecimals(share.perGem, perGemPlaces(share.perGem, type)) : '—'}
               {share.total > 0 && <span className="faint">{symbol}</span>}
             </dd>
           </div>
@@ -719,7 +720,7 @@ export function Mission({
               <div>
                 <dt>Worth per gem after</dt>
                 <dd>
-                  {formatDecimals(after.perGem, dp(after.perGem))}
+                  {formatDecimals(after.perGem, perGemPlaces(after.perGem, type))}
                   <span className="faint">{symbol}</span>
                 </dd>
               </div>
