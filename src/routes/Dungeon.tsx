@@ -79,6 +79,7 @@ import {
 import { playDungeon } from '@/wharf/actions'
 import { readableError } from '@/wharf/errors'
 import { asset } from '@/assets'
+import { usePhone } from '@/components/usePhone'
 
 export default function Dungeon() {
   const player = useGame((s) => s.player)!
@@ -317,10 +318,32 @@ export default function Dungeon() {
      they wanted a view on the cards is the kind of help nobody asks for
      twice.
   */
+
+  /*
+     One button, rendered in one of two places.
+
+     On a desktop it belongs on the "Your team" line: there is a gap there
+     between the name and the totals, and a control that replaces the
+     line-up reads best on the line that names it. A phone header has no
+     spare width — the totals already wrap — so there it goes under the row.
+  */
+  const phone = usePhone()
+
   const autoPickTeamOnly = useCallback(() => {
     if (!roster) return
     setTeamIds(autoPickFighters(roster, matchups, TEAM_SIZE))
   }, [roster, matchups])
+  const autoPickButton = (
+    <button
+      type="button"
+      className="btn btn--ghost btn--sm teamauto"
+      onClick={autoPickTeamOnly}
+      disabled={!roster}
+      title="Choose the five fighters that suit this opponent"
+    >
+      Auto-pick fighters
+    </button>
+  )
 
   const autoPickCardsOnly = useCallback(() => {
     const pick = autoPickCards({
@@ -688,6 +711,14 @@ export default function Dungeon() {
                   {picked.length}/{TEAM_SIZE}
                 </span>
               </span>
+              {/*
+                 In the header on a desktop, where there is a gap between the
+                 team name and the totals doing nothing, and the button is on
+                 the line that names what it replaces. A phone has no such gap
+                 — the header is already two lines there — so it goes under
+                 the row instead.
+              */}
+              {!phone && autoPickButton}
               <span className="versus__totals mono">
                 {formatScaled(outlook.mine.health)} HP ·{' '}
                 {formatScaled(outlook.mine.damage)} DMG
@@ -757,21 +788,7 @@ export default function Dungeon() {
               )}
             </div>
 
-            {/*
-               Under the five it replaces. It used to sit at the top of the
-               roster list, which is where a player goes to choose by hand —
-               so the button that overwrites the line-up was as far from the
-               line-up as the screen allows.
-            */}
-            <button
-              type="button"
-              className="btn btn--ghost btn--sm teamauto"
-              onClick={autoPickTeamOnly}
-              disabled={!roster}
-              title="Choose the five fighters that suit this opponent"
-            >
-              Auto-pick fighters
-            </button>
+            {phone && autoPickButton}
 
           </div>
 

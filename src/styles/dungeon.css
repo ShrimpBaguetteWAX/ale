@@ -1465,53 +1465,6 @@
  */
 
 /*
- * Defender strength, in place of the difficulty ladder.
- *
- * Read the opposite way round to every other bar in the game: a full bar is
- * a *harder* fight, not a better one, because `arena_power` scales the team
- * standing against you. So the bands run the other way too — red when the
- * arena is at full strength, green once challengers have worn it down.
- */
-.arenabar {
-  position: relative;
-  display: grid;
-  place-items: center;
-  height: 22px;
-  margin-top: var(--sp-3);
-  border-radius: var(--radius-full);
-  background: rgb(0 0 0 / 55%);
-  border: 1px solid var(--line-soft);
-  overflow: hidden;
-}
-
-.arenabar--high {
-  --band: #c2253f;
-}
-.arenabar--mid {
-  --band: #f7a600;
-}
-.arenabar--low {
-  --band: #6cc000;
-}
-
-.arenabar__fill {
-  position: absolute;
-  inset: 0 auto 0 0;
-  background: var(--band);
-  opacity: 0.65;
-  transition: width var(--dur) var(--ease);
-}
-
-.arenabar__text {
-  position: relative;
-  font-family: var(--font-display);
-  font-size: var(--fs-sm);
-  font-variant-numeric: tabular-nums;
-  color: var(--white);
-  text-shadow: 0 1px 3px rgb(0 0 0 / 80%);
-}
-
-/*
  * Whose fighter a defender is.
  *
  * Sits under the class name on the plate, dimmed and a size down, so the card
@@ -1548,13 +1501,18 @@
  * green or red card in the middle of a violet page for a badge that is not
  * the most important thing on it.
  *
- * The verdict keeps the left edge, in the palette’s own accents rather
- * than colours mixed for the purpose: teal when the roll helps whoever it
- * catches, red when it hurts, gold when it does both, and the ordinary
- * purple line for the ones that are a role rather than a quality.
+ * The handle on the left edge is the panel violet at every width and for
+ * every roll. It used to carry the verdict — teal, red or gold by whether
+ * the roll helps or hurts — which put a coloured tab on the one element
+ * standing between the page heading and the matchup, competing with both.
+ *
+ * Defender strength shares the shape. The two are the same kind of fact:
+ * conditions this fight happens under that the player did not choose and
+ * cannot change, worth a glance each and no more room than that.
  */
-.weather {
-  --lean-colour: var(--line-bright);
+.weather,
+.arenastanding {
+  --lean-colour: var(--violet);
   display: inline-flex;
   align-items: center;
   flex-wrap: wrap;
@@ -1568,14 +1526,42 @@
   font-size: var(--fs-sm);
 }
 
-.weather--good {
-  --lean-colour: var(--teal);
+/*
+ * The badges sit on the same line, under the heading.
+ */
+.titlebadges {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
 }
-.weather--bad {
-  --lean-colour: var(--red);
+
+.arenastanding__icon {
+  opacity: 0.75;
 }
-.weather--mixed {
-  --lean-colour: var(--gold);
+
+.arenastanding__label {
+  color: var(--text-dim);
+}
+
+/*
+ * The figure carries what the bar’s bands used to say, and reads the
+ * opposite way round to every other number in the game: high is a harder
+ * fight, because `arena_power` scales the team standing against you.
+ */
+.arenastanding__value {
+  font-family: var(--font-display);
+  font-weight: var(--fw-bold);
+  color: var(--band);
+}
+.arenastanding--high {
+  --band: #ff8a9c;
+}
+.arenastanding--mid {
+  --band: var(--gold);
+}
+.arenastanding--low {
+  --band: var(--teal);
 }
 
 /*
@@ -1598,41 +1584,6 @@
 .weather__name {
   color: var(--text);
   font-weight: var(--fw-medium);
-}
-
-/*
- * Defender strength, on a phone.
- *
- * 196px for one number: a heading that wrapped to two lines, a tally line, a
- * 22px bar and a three-line explanation of a mechanic that does not change.
- * On a 390px screen that is most of what is above the fold, and the screen is
- * there to pick a team.
- *
- * Both the explanation and the tally are gone now — a panel called Defender
- * strength should answer that and stop — so what is left is the heading and
- * the bar, in less room than the bar alone used to want.
- */
-@media (max-width: 719px) {
-  .arenastanding {
-    padding: var(--sp-2) var(--sp-3);
-  }
-
-  .arenastanding .panel__title {
-    gap: 0 var(--sp-2);
-    font-size: var(--fs-xs);
-    letter-spacing: 0.1em;
-  }
-
-
-  .arenastanding .arenabar {
-    height: 16px;
-    margin-top: 6px;
-  }
-
-  .arenastanding .arenabar__text {
-    font-size: var(--fs-xs);
-  }
-
 }
 
 /*
@@ -1934,5 +1885,32 @@
 @media (max-width: 719px) {
   .field__label {
     margin: 0;
+  }
+}
+
+/*
+ * Auto-pick, on the line it acts on.
+ *
+ * On a desktop it sits in the "Your team" header, between the name and the
+ * totals — the header is a flex row with the totals pushed right, so there is
+ * a gap there already and the button drops into it. `align-self: center`
+ * because the header aligns on the baseline, and a bordered button aligned on
+ * its text baseline sits low against the heading beside it.
+ *
+ * A phone renders it under the row instead, where it is full width: the
+ * header has no spare room there, the totals already wrap onto their own
+ * line, and a third item would make it three.
+ */
+.versus__head .teamauto {
+  align-self: center;
+}
+
+@media (max-width: 719px) {
+  .titlebadges {
+    gap: 6px;
+  }
+
+  .arenastanding {
+    font-size: var(--fs-xs);
   }
 }

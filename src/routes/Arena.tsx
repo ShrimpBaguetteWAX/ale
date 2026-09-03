@@ -83,6 +83,7 @@ import { fieldedStats, levelFactor, ageFactor } from '@/fight/scaling'
 import { playArena } from '@/wharf/actions'
 import { readableError } from '@/wharf/errors'
 import { asset } from '@/assets'
+import { usePhone } from '@/components/usePhone'
 
 /**
  * Challenging an arena.
@@ -368,10 +369,32 @@ export default function Arena() {
      they wanted a view on the cards is the kind of help nobody asks for
      twice.
   */
+
+  /*
+     One button, rendered in one of two places.
+
+     On a desktop it belongs on the "Your team" line: there is a gap there
+     between the name and the totals, and a control that replaces the
+     line-up reads best on the line that names it. A phone header has no
+     spare width — the totals already wrap — so there it goes under the row.
+  */
+  const phone = usePhone()
+
   const autoPickTeamOnly = useCallback(() => {
     if (!roster) return
     setTeamIds(autoPickFighters(roster, matchups, TEAM_SIZE))
   }, [roster, matchups])
+  const autoPickButton = (
+    <button
+      type="button"
+      className="btn btn--ghost btn--sm teamauto"
+      onClick={autoPickTeamOnly}
+      disabled={!roster}
+      title="Choose the five fighters that suit this opponent"
+    >
+      Auto-pick fighters
+    </button>
+  )
 
   const autoPickCardsOnly = useCallback(() => {
     const pick = autoPickCards({
@@ -606,7 +629,10 @@ export default function Arena() {
               team they should bring, and it belongs where they read the
               heading rather than further down the page.
             */}
-            <WeatherPanel weather={weather} />
+            <div className="titlebadges">
+              <WeatherPanel weather={weather} />
+              <ArenaStanding power={arenaPower} />
+            </div>
           </div>
           <span className="spacer" />
           <div className="dungeon__actions">
@@ -674,7 +700,6 @@ export default function Arena() {
           </div>
         )}
 
-        <ArenaStanding power={arenaPower} />
 
         <section className="versus">
           <div className="versus__side versus__side--enemy">
@@ -735,6 +760,14 @@ export default function Arena() {
                   {picked.length}/{TEAM_SIZE}
                 </span>
               </span>
+              {/*
+                 In the header on a desktop, where there is a gap between the
+                 team name and the totals doing nothing, and the button is on
+                 the line that names what it replaces. A phone has no such gap
+                 — the header is already two lines there — so it goes under
+                 the row instead.
+              */}
+              {!phone && autoPickButton}
               <span className="versus__totals mono">
                 {formatScaled(outlook.mine.health)} HP ·{' '}
                 {formatScaled(outlook.mine.damage)} DMG
@@ -797,21 +830,7 @@ export default function Arena() {
               )}
             </div>
 
-            {/*
-               Under the five it replaces. It used to sit at the top of the
-               roster list, which is where a player goes to choose by hand —
-               so the button that overwrites the line-up was as far from the
-               line-up as the screen allows.
-            */}
-            <button
-              type="button"
-              className="btn btn--ghost btn--sm teamauto"
-              onClick={autoPickTeamOnly}
-              disabled={!roster}
-              title="Choose the five fighters that suit this opponent"
-            >
-              Auto-pick fighters
-            </button>
+            {phone && autoPickButton}
           </div>
         </section>
 
@@ -1031,25 +1050,35 @@ export default function Arena() {
  * damage, it drops by a hundredth of full strength each time a challenger
  * fails, and it snaps back to full the moment somebody wins. A long-unbeaten
  * arena is a *harder* fight than one that has just turned over — the opposite
- * of the intuition a dungeon builds — so the bar is labelled with what the
- * number does rather than left to read as a score.
+ * of the intuition a dungeon builds — so it is labelled with what the number
+ * does rather than left to read as a score.
+ *
+ * A full-width panel with a 22px bar in it for a single percentage was more
+ * presence than one number is worth, and it sat between the heading and the
+ * matchup pushing both apart. It is a chip beside the weather now — the two
+ * are the same kind of fact, conditions this fight happens under that the
+ * player did not choose and cannot change — and the bar is gone. The colour
+ * of the figure keeps what the bands said: red at full strength, gold part
+ * worn, teal once challengers have worn it down.
  */
 function ArenaStanding({ power }: { power: number }) {
   const percent = arenaPowerPercent(power)
   const band = percent >= 90 ? 'high' : percent >= 50 ? 'mid' : 'low'
 
   return (
-    <section className="panel arenastanding">
-      <div className="panel__title">Defender strength</div>
-
-      <div className={`arenabar arenabar--${band}`}>
-        <span
-          className="arenabar__fill"
-          style={{ width: `${Math.min(100, Math.max(0, percent))}%` }}
-        />
-        <span className="arenabar__text mono">{percent.toFixed(0)}%</span>
-      </div>
-
-    </section>
+    <div
+      className={`arenastanding arenastanding--${band}`}
+      title="Arena power scales every defender’s health and damage. It falls each time a challenger fails and snaps back to full the moment somebody wins, so a high figure is the harder fight."
+    >
+      <img
+        className="arenastanding__icon"
+        src={asset('/assets/icons/shield.svg')}
+        alt=""
+        width={16}
+        height={16}
+      />
+      <span className="arenastanding__label">Defender strength</span>
+      <span className="arenastanding__value mono">{percent.toFixed(0)}%</span>
+    </div>
   )
 }
