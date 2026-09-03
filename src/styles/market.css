@@ -927,6 +927,23 @@
     white-space: nowrap;
   }
 
+  /*
+     Gone entirely in the market, where the row is tightest.
+
+     Four tabs and a wider gutter leave this row about eighty pixels less
+     than the roster screen has, and those pixels are worth more to the two
+     selects than to a word: the controls say "Damage" and "Good for this
+     class" themselves, and the box they sit in opens from a button marked
+     Filters. My Fighters has the room, so it keeps the label.
+
+     Scoped to the add row: the market's own Show and Order labels are the
+     same class in a different bar, and hiding those left two rows of
+     controls with nothing saying what they were for.
+  */
+  .market .qfilter__add .qfilter__lead {
+    display: none;
+  }
+
   .qfilter__leadLong {
     display: none;
   }
