@@ -150,7 +150,14 @@ export function AppShell() {
       </nav>
 
       <header className="topbar">
-        <img className="topbar__logo" src={asset("/assets/logo.png")} alt="Alien Legends" />
+        {/*
+          A way home from the top-left corner, which is where a phone player
+          reaches for one. Desktop hides the wordmark entirely and navigates
+          from the rail, so this only ever matters on a narrow screen.
+        */}
+        <NavLink className="topbar__home" to="/map" aria-label="World map">
+          <img className="topbar__logo" src={asset("/assets/logo.png")} alt="Alien Legends" />
+        </NavLink>
         {player && <ResourceStrip player={player} />}
         <span className="spacer" />
         <NetworkStatus />

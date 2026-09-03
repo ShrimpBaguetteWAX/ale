@@ -1270,6 +1270,15 @@
      use — the game has one way of putting a panel over the map, and this is
      now it too.
   */
+  /*
+     Clear of the Legend and Find me buttons by a margin that reads as
+     deliberate. At the desktop offset the panel stopped 4px short of them,
+     which looks like it ran out of room rather than like it was placed.
+  */
+  .planetbar {
+    right: 112px;
+  }
+
   .planetpick {
     flex-wrap: wrap;
     overflow-x: visible;
@@ -1278,13 +1287,32 @@
     box-shadow: var(--shadow);
   }
 
-  /*
-     Two columns, minus the toggle's own width so the arrow keeps its place on
-     the first row rather than being pushed onto one of its own.
-  */
   .planetpick .planetcard {
-    flex: 1 1 calc(50% - 26px);
+    flex: 1 1 calc(50% - var(--sp-2));
     min-width: 0;
+  }
+
+  /*
+     The collapse arrow takes a row of its own.
+
+     Sharing the last line with two cards, it was a third flex item on that
+     line only — so those two grew to 117px where the four above them grew to
+     134px, and the last planet sat visibly out of column. A full-width strip
+     costs 24px, lines every card up, and is a far easier thing to hit than a
+     26px sliver.
+  */
+  .planetpick__toggle[aria-expanded='true'] {
+    flex: 1 1 100%;
+    align-self: auto;
+    height: 24px;
+    border-left: 0;
+    border-top: 1px solid var(--line-soft);
+    border-radius: 0 0 var(--radius-xs) var(--radius-xs);
+  }
+
+  /* Pointing down to close, now that it folds upward rather than leftward. */
+  .planetpick__toggle[aria-expanded='true'] img {
+    transform: rotate(-90deg);
   }
 
   /* Collapsed there is one card, and it should not be half a bar wide. */

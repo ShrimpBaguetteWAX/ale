@@ -99,6 +99,15 @@
   );
 }
 
+/*
+ * The wordmark is a link on the sizes that show it. `display: contents` so
+ * the anchor adds no box of its own — the image keeps being the flex item the
+ * bar was laid out around.
+ */
+.topbar__home {
+  display: contents;
+}
+
 .topbar__logo {
   width: 96px;
   /* The img carries width/height attributes for aspect reservation, so the
@@ -107,6 +116,7 @@
   flex: none;
 }
 @media (min-width: 1024px) {
+  .topbar__home,
   .topbar__logo {
     display: none;
   }
