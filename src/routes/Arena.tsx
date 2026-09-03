@@ -674,12 +674,7 @@ export default function Arena() {
           </div>
         )}
 
-        <ArenaStanding
-          power={arenaPower}
-          xpPerWin={xpPerWin}
-          lastFight={arena?.last_fight}
-          defenders={arena?.fighters.length ?? 0}
-        />
+        <ArenaStanding power={arenaPower} />
 
         <section className="versus">
           <div className="versus__side versus__side--enemy">
@@ -801,6 +796,22 @@ export default function Arena() {
                 </div>
               )}
             </div>
+
+            {/*
+               Under the five it replaces. It used to sit at the top of the
+               roster list, which is where a player goes to choose by hand —
+               so the button that overwrites the line-up was as far from the
+               line-up as the screen allows.
+            */}
+            <button
+              type="button"
+              className="btn btn--ghost btn--sm teamauto"
+              onClick={autoPickTeamOnly}
+              disabled={!roster}
+              title="Choose the five fighters that suit this opponent"
+            >
+              Auto-pick fighters
+            </button>
           </div>
         </section>
 
@@ -813,7 +824,7 @@ export default function Arena() {
         <p className="hint arena__stake">
           Win and one of your five, chosen at random, stays here to defend the
           arena along with your NFT fighter. It is marked in use until somebody
-          knocks it out.
+          knocks it out{xpPerWin ? `, and the win pays ${xpPerWin} XP` : ''}.
         </p>
 
         <section className="panel loadout">
@@ -951,16 +962,6 @@ export default function Arena() {
 
           {tab === 'fighters' ? (
             <>
-              {/* Beside the roster it fills, and only that. */}
-              <button
-                type="button"
-                className="btn btn--ghost btn--sm picker__auto"
-                onClick={autoPickTeamOnly}
-                disabled={!roster}
-                title="Choose the five fighters that suit this opponent"
-              >
-                Auto-pick fighters
-              </button>
               <RosterFilters
                 filter={filter}
                 onChange={setFilter}
@@ -1033,39 +1034,13 @@ export default function Arena() {
  * of the intuition a dungeon builds — so the bar is labelled with what the
  * number does rather than left to read as a score.
  */
-function ArenaStanding({
-  power,
-  xpPerWin,
-  lastFight,
-  defenders,
-}: {
-  power: number
-  xpPerWin: number
-  lastFight: string | undefined
-  defenders: number
-}) {
+function ArenaStanding({ power }: { power: number }) {
   const percent = arenaPowerPercent(power)
   const band = percent >= 90 ? 'high' : percent >= 50 ? 'mid' : 'low'
-  const since = useMemo(() => {
-    if (!lastFight) return null
-    const then = Date.parse(lastFight + 'Z')
-    if (!Number.isFinite(then)) return null
-    const mins = Math.max(0, Math.round((Date.now() - then) / 60000))
-    if (mins < 60) return `${mins} min ago`
-    const hours = Math.round(mins / 60)
-    if (hours < 48) return `${hours} h ago`
-    return `${Math.round(hours / 24)} days ago`
-  }, [lastFight])
 
   return (
     <section className="panel arenastanding">
-      <div className="panel__title">
-        Defender strength
-        <span className="faint dungeon__tally">
-          {defenders} defending · {xpPerWin} XP for a win
-          {since ? ` · last fought ${since}` : ''}
-        </span>
-      </div>
+      <div className="panel__title">Defender strength</div>
 
       <div className={`arenabar arenabar--${band}`}>
         <span

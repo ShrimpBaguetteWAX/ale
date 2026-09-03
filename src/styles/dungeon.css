@@ -1541,38 +1541,41 @@
  * under decides what team they should bring.
  *
  * Sized to its content rather than the column, so it reads as a badge
- * belonging to the title rather than a bar spanning the page. The left edge
- * and the tinted ground carry the verdict — green when the roll helps
- * whoever it catches, red when it hurts, amber when it does both, and neither
- * for the ones that are a role rather than a quality.
+ * belonging to the title rather than a bar spanning the page.
+ *
+ * The ground is the violet every other panel on the screen stands on. It
+ * used to be tinted with the verdict as well as edged with it, which put a
+ * green or red card in the middle of a violet page for a badge that is not
+ * the most important thing on it.
+ *
+ * The verdict keeps the left edge, in the palette’s own accents rather
+ * than colours mixed for the purpose: teal when the roll helps whoever it
+ * catches, red when it hurts, gold when it does both, and the ordinary
+ * purple line for the ones that are a role rather than a quality.
  */
 .weather {
   --lean-colour: var(--line-bright);
-  --lean-tint: rgb(255 255 255 / 4%);
   display: inline-flex;
   align-items: center;
   flex-wrap: wrap;
   gap: var(--sp-2) var(--sp-3);
   margin-top: 6px;
   padding: 5px var(--sp-3) 5px var(--sp-2);
-  border: 1px solid var(--line-soft);
+  border: 1px solid var(--line);
   border-left: 3px solid var(--lean-colour);
   border-radius: var(--radius-sm);
-  background: var(--lean-tint);
+  background: var(--surface-3);
   font-size: var(--fs-sm);
 }
 
 .weather--good {
-  --lean-colour: #6cc000;
-  --lean-tint: rgb(108 192 0 / 10%);
+  --lean-colour: var(--teal);
 }
 .weather--bad {
-  --lean-colour: #c2253f;
-  --lean-tint: rgb(194 37 63 / 12%);
+  --lean-colour: var(--red);
 }
 .weather--mixed {
-  --lean-colour: #f7a600;
-  --lean-tint: rgb(247 166 0 / 10%);
+  --lean-colour: var(--gold);
 }
 
 /*
@@ -1605,8 +1608,9 @@
  * On a 390px screen that is most of what is above the fold, and the screen is
  * there to pick a team.
  *
- * The explanation is gone entirely now; what is left is the heading, the
- * facts, and the bar, compressed into the space the bar alone used to want.
+ * Both the explanation and the tally are gone now — a panel called Defender
+ * strength should answer that and stop — so what is left is the heading and
+ * the bar, in less room than the bar alone used to want.
  */
 @media (max-width: 719px) {
   .arenastanding {
@@ -1619,11 +1623,6 @@
     letter-spacing: 0.1em;
   }
 
-  .arenastanding .dungeon__tally {
-    flex-basis: 100%;
-    margin-left: 0;
-    font-size: 11px;
-  }
 
   .arenastanding .arenabar {
     height: 16px;
@@ -1705,5 +1704,133 @@
 
   .filters__clear {
     min-height: 36px;
+  }
+}
+
+/*
+ * The filter bar, folded away on a phone.
+ *
+ * Even compacted the controls were most of a screen standing between the
+ * player and the grid they filter, on the screen whose whole job is showing
+ * fighters. On a desktop they sit beside that grid rather than on top of it
+ * and earn their room, so this is a phone-only fold — above the breakpoint
+ * the button is not rendered at all and none of this applies.
+ *
+ * The count of what is switched on rides on the button, because a hidden
+ * filter that is still filtering leaves a short grid with nothing on screen
+ * to say why.
+ */
+@media (max-width: 719px) {
+  .filters--folded {
+    padding: 0;
+    background: none;
+    border: 0;
+  }
+
+  .filters--folded > *:not(.filters__toggle) {
+    display: none;
+  }
+
+  .filters__toggle {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    justify-self: start;
+    min-height: 36px;
+    padding: 0 var(--sp-3);
+    color: var(--ink);
+    font: inherit;
+    font-size: var(--fs-xs);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    background: rgb(0 0 0 / 28%);
+    border: 1px solid var(--line-soft);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+  }
+
+  .filters__badge {
+    display: grid;
+    place-items: center;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    color: #0a0714;
+    font-size: 11px;
+    font-weight: 700;
+    background: var(--accent);
+    border-radius: 9px;
+  }
+
+  .filters__chev {
+    opacity: 0.7;
+  }
+}
+
+/*
+ * Auto-pick, under the five fighters it replaces.
+ *
+ * It used to sit at the top of the roster list, which is where a player goes
+ * to choose by hand — so the button that overwrites the line-up was as far
+ * from the line-up as the screen allows, and sitting among the controls for
+ * building one yourself.
+ */
+.teamauto {
+  justify-self: start;
+}
+
+@media (max-width: 719px) {
+  .teamauto {
+    justify-self: stretch;
+  }
+}
+
+/*
+ * The stat line on a card, on a phone.
+ *
+ * The dot before each number is an inline-block, so a line break is allowed
+ * between it and the digits it belongs to. On a 58px card two three-digit
+ * numbers do not fit on one line, and the row folded into two — the dots on
+ * one line, the numbers under them — which made the plate 73px on a 106px
+ * card while a card whose numbers happened to be shorter kept a 57px plate.
+ * Same row, plates at two different heights, and the tall ones darkening half
+ * the portrait.
+ *
+ * So the dots go at this size and the numbers carry the colour themselves,
+ * which is the same signal in less than a third of the width. `nowrap` is set
+ * everywhere as well: wherever the dots do survive they must not break away
+ * from their number again.
+ */
+.combatcard__hp,
+.combatcard__dmg {
+  white-space: nowrap;
+}
+
+@media (max-width: 719px) {
+  .combatcard__plate {
+    padding: 6px 4px;
+  }
+
+  .combatcard__stats {
+    justify-content: center;
+    gap: 5px;
+  }
+
+  .combatcard__hp::before,
+  .combatcard__dmg::before {
+    display: none;
+  }
+
+  .combatcard__hp {
+    color: #ff8a8a;
+  }
+
+  .combatcard__dmg {
+    color: #ffcb4d;
+  }
+
+  .combatcard__name,
+  .combatcard__owner {
+    text-align: center;
   }
 }

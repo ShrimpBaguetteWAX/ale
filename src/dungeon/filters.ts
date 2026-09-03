@@ -413,3 +413,26 @@ export function facetsOf(roster: RosterFighter[]): {
     races: [...races].sort(),
   }
 }
+
+/**
+ * How many of the filters are doing something, for a collapsed filter bar.
+ *
+ * A hidden control that is still filtering is the worst kind: the grid is
+ * short and nothing on screen says why. This is the number that goes on the
+ * button that hides them, so the answer is always in view even when the
+ * controls are not.
+ */
+export function countActiveFilters(f: RosterFilter): number {
+  return (
+    (f.elements.length > 0 ? 1 : 0) +
+    (f.markers.length > 0 ? 1 : 0) +
+    (f.classname !== '' ? 1 : 0) +
+    (f.racename !== '' ? 1 : 0) +
+    (f.status !== 'All' ? 1 : 0) +
+    (f.ability !== '' ? 1 : 0) +
+    ((f.qualities?.length ?? 0) > 0 ? 1 : 0) +
+    ((f.versus?.bonuses ?? 0) > 0 ? 1 : 0) +
+    ((f.versus?.offense ?? 0) > 0 ? 1 : 0) +
+    ((f.versus?.defense ?? 0) > 0 ? 1 : 0)
+  )
+}

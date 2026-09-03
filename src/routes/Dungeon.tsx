@@ -757,6 +757,22 @@ export default function Dungeon() {
               )}
             </div>
 
+            {/*
+               Under the five it replaces. It used to sit at the top of the
+               roster list, which is where a player goes to choose by hand —
+               so the button that overwrites the line-up was as far from the
+               line-up as the screen allows.
+            */}
+            <button
+              type="button"
+              className="btn btn--ghost btn--sm teamauto"
+              onClick={autoPickTeamOnly}
+              disabled={!roster}
+              title="Choose the five fighters that suit this opponent"
+            >
+              Auto-pick fighters
+            </button>
+
           </div>
 
         </section>
@@ -914,16 +930,6 @@ export default function Dungeon() {
 
           {tab === 'fighters' ? (
             <>
-              {/* Beside the roster it fills, and only that. */}
-              <button
-                type="button"
-                className="btn btn--ghost btn--sm picker__auto"
-                onClick={autoPickTeamOnly}
-                disabled={!roster}
-                title="Choose the five fighters that suit this opponent"
-              >
-                Auto-pick fighters
-              </button>
               <RosterFilters
                 filter={filter}
                 onChange={setFilter}

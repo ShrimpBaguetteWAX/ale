@@ -13,6 +13,7 @@ import {
   VERSUS_SORTS,
   applyFilter,
   facetsOf,
+  countActiveFilters,
   isFilterActive,
   type Element,
   type RosterFilter,
@@ -38,6 +39,7 @@ import {
   type ClassTemplate,
 } from '@/tavern/fighterStats'
 import { asset } from '@/assets'
+import { usePhone } from '@/components/usePhone'
 
 /**
  * The parts of a fight setup screen that the dungeon and the arena share.
@@ -560,6 +562,24 @@ export function RosterFilters({
   const { classes, races } = useMemo(() => facetsOf(roster), [roster])
   const set = (patch: Partial<RosterFilter>) => onChange({ ...filter, ...patch })
 
+  /*
+     On a phone the controls are folded away behind a button.
+
+     Nine controls and a matchup read-out is a screenful and a half before a
+     single fighter is visible, on the screen whose whole job is showing
+     fighters. They are worth that room on a desktop, where they sit beside
+     the grid rather than on top of it, so this is a phone-only fold and the
+     button does not exist at all above the breakpoint.
+
+     The count of what is switched on rides on the button, because a hidden
+     filter that is still filtering leaves a short grid with nothing on screen
+     to explain it.
+  */
+  const phone = usePhone()
+  const [open, setOpen] = useState(false)
+  const active = countActiveFilters(filter)
+  const folded = phone && !open
+
   const toggleElement = (el: Element) =>
     set({
       elements: filter.elements.includes(el)
@@ -568,7 +588,22 @@ export function RosterFilters({
     })
 
   return (
-    <div className="filters">
+    <div className={`filters${folded ? ' filters--folded' : ''}`}>
+      {phone && (
+        <button
+          type="button"
+          className="filters__toggle"
+          aria-expanded={open}
+          onClick={() => setOpen((v) => !v)}
+        >
+          <span className="filters__togglelabel">Filters</span>
+          {active > 0 && <span className="filters__badge">{active}</span>}
+          <span className="filters__chev" aria-hidden="true">
+            {open ? '▴' : '▾'}
+          </span>
+        </button>
+      )}
+
       <div className="filters__elements" role="group" aria-label="Element">
         {ELEMENTS.map((el) => (
           <button
