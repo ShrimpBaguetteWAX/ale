@@ -28,6 +28,7 @@ import Profile from '../src/routes/Profile'
 import Leaderboard from '../src/routes/Leaderboard'
 import Ascension from '../src/routes/Ascension'
 import Market from '../src/routes/Market'
+import Candle from '../src/routes/Candle'
 import Tavern from '../src/routes/Tavern'
 import { landId } from '../src/chain/landId'
 import { MineCelebration } from '../src/pools/MineCelebration'
@@ -140,6 +141,7 @@ createRoot(document.getElementById('root')!).render(
           <Route path="/leaderboard" element={<Leaderboard />} />
           <Route path="/ascension" element={<Ascension />} />
           <Route path="/market" element={<Market />} />
+          <Route path="/candle" element={<Candle />} />
           <Route path="/tavern" element={<Tavern />} />
           {/* The mine receipt, which needs a claim to exist otherwise. */}
           <Route

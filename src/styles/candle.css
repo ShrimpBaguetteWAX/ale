@@ -151,12 +151,20 @@
   flex-wrap: wrap;
 }
 
+/*
+ * White, not the heading yellow.
+ *
+ * The screen's own title is already that yellow and sits directly above
+ * this one, so the mission's name was a second neon heading in the same
+ * corner — and it is not the thing on the card worth looking at first. The
+ * prize below it is, and gold is that.
+ */
 .mission__title {
   margin: 0;
   font-family: var(--font-display);
   font-size: var(--fs-xl);
   font-weight: var(--fw-bold);
-  color: var(--text-heading);
+  color: var(--white);
 }
 
 .mission__sub {
@@ -204,11 +212,16 @@
   color: var(--text-faint);
   margin: 0;
 }
-.mission__phase--open {
-  color: var(--teal);
-}
+/*
+ * The phase is a word, not a light.
+ *
+ * Teal for open and gold for closed put two more colours in the corner that
+ * already holds the prize and the clock, to say something the clock beside
+ * it says better — "closes in 6h 08m" is both the state and the urgency.
+ */
+.mission__phase--open,
 .mission__phase--closed {
-  color: var(--gold);
+  color: var(--text-dim);
 }
 
 /* The number the screen exists to show. */
@@ -278,22 +291,30 @@
 
 /* ---------- the gate ---------- */
 
+/*
+ * A line, not a banner.
+ *
+ * Being short of the requirement is worth saying plainly and once. As a
+ * filled red bar the full width of the card it was the loudest object on the
+ * screen, which put the emphasis on a fact the player can do nothing about
+ * from here — above the prize, the rate and the box they came to type in.
+ */
 .gate {
   display: flex;
   align-items: center;
   gap: var(--sp-2);
   padding: var(--sp-2) var(--sp-3);
-  border: 1px solid rgb(255 52 52 / 45%);
+  border: 1px solid rgb(255 52 52 / 22%);
   border-radius: var(--radius-xs);
-  background: rgb(255 52 52 / 10%);
+  background: rgb(255 52 52 / 5%);
   font-family: var(--font-display);
   font-size: var(--fs-sm);
-  color: #ff9aa6;
+  color: rgb(255 154 166 / 82%);
 }
 .gate--ok {
-  border-color: rgb(108 192 0 / 45%);
-  background: rgb(108 192 0 / 10%);
-  color: #adde6f;
+  border-color: rgb(108 192 0 / 22%);
+  background: rgb(108 192 0 / 5%);
+  color: rgb(173 222 111 / 82%);
 }
 .gate__mark {
   font-size: var(--fs-lg);
@@ -348,9 +369,9 @@
 .mission__facts--after {
   margin-top: var(--sp-2);
   padding: var(--sp-3);
-  border: 1px dashed var(--line-bright);
+  border: 1px dashed var(--line-soft);
   border-radius: var(--radius-xs);
-  background: rgb(145 54 188 / 12%);
+  background: rgb(0 0 0 / 22%);
 }
 
 /* ---------- the input ---------- */
@@ -524,11 +545,13 @@
 }
 
 /* The share the player would actually take, given the weight it carries. */
+/*
+ * Marked by its figure rather than by its box. Five tiles in a row and one
+ * of them glowing amber read as an alert; the gold number inside it is
+ * enough to pick it out, and matches the prize it is a share of.
+ */
 .mission__facts--lead {
-  border-color: rgb(246 168 0 / 40%) !important;
-  background:
-    linear-gradient(180deg, rgb(246 168 0 / 10%), rgb(246 168 0 / 0%)),
-    rgb(0 0 0 / 28%) !important;
+  border-color: rgb(246 168 0 / 24%) !important;
 }
 .mission__facts--lead dd {
   color: var(--gold);
@@ -656,15 +679,21 @@
  * heading said what the button already says, and the paragraph said what the
  * balance beside it already shows.
  */
+/*
+ * The box you type in, not a second prize.
+ *
+ * Amber-bordered and amber-washed, it was the same colour as the reward and
+ * a good deal larger, so the eye went to the form rather than to the figure
+ * the form is about. The button inside it is already the one filled control
+ * on the card, which is enough to find.
+ */
 .missionact {
   display: grid;
   gap: var(--sp-2);
   padding: var(--sp-3);
-  border: 1px solid rgb(246 168 0 / 28%);
+  border: 1px solid var(--line-soft);
   border-radius: var(--radius-xs);
-  background:
-    linear-gradient(180deg, rgb(246 168 0 / 8%), rgb(246 168 0 / 0%) 60%),
-    rgb(0 0 0 / 32%);
+  background: rgb(0 0 0 / 32%);
 }
 
 .missionact__lead {
@@ -675,12 +704,20 @@
   flex-wrap: wrap;
 }
 
+/*
+ * Gold on this screen means money.
+ *
+ * The prize, its ticker, the share of the pot, the ring counting the
+ * mission down. A heading over an input is none of those, and painting it
+ * gold as well left the colour meaning "look here" — which is every second
+ * thing on a screen that had eight accents and now has three.
+ */
 .missionact__lead strong {
   font-family: var(--font-display);
   font-size: var(--fs-sm);
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--gold);
+  color: var(--white);
 }
 
 .missionact__lead .faint {
