@@ -589,6 +589,24 @@ export default function MapView() {
     return here
   }, [lands, planet, player.planet, player.x, player.y, player.wallet, arenasByPlanet])
 
+  /*
+     How much of the map is under something opaque right now.
+
+     Only on a phone: a wide screen has the controls in its corners with room
+     to spare, and the clamp there should keep pinning the grid to the frame.
+
+     Only the bottom. The travel bar is a docked band the full width of the
+     screen, so the slack it buys is invisible — the strip it exposes is
+     exactly the strip the bar is sitting on. The controls at the top are not
+     full width, so slack there would show background beside them; the way to
+     reach the tiles under those is to put them away, which is what the clear
+     button is for.
+  */
+  const insets = useMemo(() => {
+    if (!window.matchMedia(`(max-width: 719px)`).matches) return { top: 0, bottom: 0 }
+    /* The docked bar's own height: one 44px button in 8px of padding. */
+    return { top: 0, bottom: selected ? 62 : 0 }
+  }, [selected])
   /** Landowner of the selected tile — undefined until the batch resolves. */
   const owner = land ? owners[String(land.asset_id)] : undefined
   /** Gamertag if the landowner plays; empty string once we know they do not. */
@@ -746,6 +764,8 @@ export default function MapView() {
           selected={selected}
           onSelect={handleSelect}
           recenterToken={recenter}
+          insetTop={insets.top}
+          insetBottom={insets.bottom}
           lowFx={lowFx}
           boostDecayPerHour={landsConfig?.boost_decay_per_hour ?? 0}
           lockedLands={lockedLands}

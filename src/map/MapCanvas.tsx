@@ -31,6 +31,21 @@ export interface MapCanvasProps {
   onSelect: (coords: { x: number; y: number }, byTouch?: boolean) => void
   /** Bumping this recentres the view on the player. */
   recenterToken?: number
+  /**
+   * Bands of the map covered by something opaque, in CSS pixels.
+   *
+   * The map fills the frame and the controls float on top of it, so the tiles
+   * under them cannot be tapped — and the pan clamp pins the grid's edges to
+   * the frame's edges, which means a tile in the top or bottom row can never
+   * be moved out from under one. It was permanently unreachable.
+   *
+   * Telling the clamp how much is covered lets the player pan those rows into
+   * the open. The slack is exactly the height of what is covering them, so
+   * the band it exposes sits behind that same opaque thing: the map still
+   * fills every pixel the player can actually see.
+   */
+  insetTop?: number
+  insetBottom?: number
   lowFx?: boolean
   /** From lands.ale config; used to age stored boost values forward. */
   boostDecayPerHour?: number
@@ -249,6 +264,8 @@ export function MapCanvas({
   selected,
   onSelect,
   recenterToken = 0,
+  insetTop = 0,
+  insetBottom = 0,
   lowFx = false,
   boostDecayPerHour = 0,
   lockedLands,
@@ -683,15 +700,30 @@ export function MapCanvas({
   )
 
   /** Clamp the pan so the grid can't be dragged fully off screen. */
+  /*
+     Kept in a ref so `clamp` stays a stable callback — half the effects in
+     this file list it, and giving it a changing identity would re-run them
+     every time a card opened.
+  */
+  const insetRef = useRef({ top: insetTop, bottom: insetBottom })
+  insetRef.current = { top: insetTop, bottom: insetBottom }
+
   const clamp = useCallback(() => {
     const v = viewRef.current
     const { w, h } = sizeRef.current
+    const { top, bottom } = insetRef.current
     const gridW = GRID_W * v.scale
     const gridH = GRID_H * v.scale
     v.tx = Math.min(0, Math.max(w - gridW, v.tx))
-    v.ty = Math.min(0, Math.max(h - gridH, v.ty))
+    /*
+       The extra room at each end is what makes the first and last rows
+       reachable: pan the grid down by `top` and its first row clears whatever
+       sits at the top; pan it up by `bottom` and the last row clears the
+       travel bar.
+    */
+    v.ty = Math.min(top, Math.max(h - gridH - bottom, v.ty))
     if (gridW < w) v.tx = (w - gridW) / 2
-    if (gridH < h) v.ty = (h - gridH) / 2
+    if (gridH + top + bottom < h) v.ty = (h - gridH) / 2
   }, [])
 
   const centerOn = useCallback(
@@ -758,6 +790,16 @@ export function MapCanvas({
     ro.observe(host)
     return () => ro.disconnect()
   }, [clamp, drawNow, lowFx])
+
+  /*
+     A band that was covered is not any more, so anything panned into its
+     slack has to come back — otherwise closing the tile card leaves a strip
+     of empty background where the map used to reach.
+  */
+  useEffect(() => {
+    clamp()
+    drawNow()
+  }, [insetTop, insetBottom, clamp, drawNow])
 
   /*
      Recentre when asked, and only when asked.

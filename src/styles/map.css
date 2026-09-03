@@ -111,7 +111,6 @@
  */
 @media (max-width: 719px) {
   .tilecard {
-    right: 66px;
     width: auto;
     max-height: 52%;
   }
@@ -1330,6 +1329,14 @@
      step with the first.
   */
   /*
+     Docked, not floating.
+
+     Floating 12px off the bottom left a 12px strip of map showing under it,
+     which matters because the pan slack that makes the covered rows reachable
+     is only invisible if the thing covering them covers them completely.
+     Flush to the edge it is one opaque band, and the map behind it can be
+     panned up into the open with nothing showing through.
+
      One row: the action, then the way out of it.
 
      The close control had a strip of its own along the top, which meant the
@@ -1339,11 +1346,16 @@
      every other confirm on the screen already uses.
   */
   .tilecard {
+    left: 0;
+    right: 0;
+    bottom: 0;
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     gap: var(--sp-2);
     padding: var(--sp-2);
+    border-width: 1px 0 0;
+    border-radius: 0;
   }
 
   /*
@@ -1502,13 +1514,15 @@
   }
 
   /*
-     The Enter prompt sits below where the planet bar was, which is the right
-     place while the bar is there and a strange one once it is gone — a lone
-     button hanging a third of the way down an empty map. With the furniture
-     cleared it takes the corner instead.
+     The Enter prompt goes with the rest of it.
+
+     It is the other thing that covers tiles a player might want to travel to,
+     and "clear the map" that leaves a button sitting on the top-left corner
+     of it is not clear. Standing on a tavern is not going anywhere: bring the
+     controls back and the way in is still there.
   */
   .mapview--bare .entertavern {
-    top: var(--sp-3);
+    display: none;
   }
 }
 
