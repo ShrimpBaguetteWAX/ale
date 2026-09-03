@@ -1329,9 +1329,39 @@
      markup serves both sizes and there is no second code path to keep in
      step with the first.
   */
-  /* Room along the top for the close control to sit clear of the button. */
+  /*
+     One row: the action, then the way out of it.
+
+     The close control had a strip of its own along the top, which meant the
+     card grew a 26px lip above a button — and a border rising for nothing
+     reads as a layout fault rather than as a header. Beside the button it
+     costs no height at all, and "leave" sitting next to "go" is the pairing
+     every other confirm on the screen already uses.
+  */
   .tilecard {
-    padding: 26px var(--sp-2) var(--sp-2);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--sp-2);
+    padding: var(--sp-2);
+  }
+
+  /*
+     Anything that is not the action takes a line of its own — the hints for
+     a tile you cannot travel to, and the error if a travel fails.
+  */
+  .tilecard > .hint,
+  .tilecard > .alert {
+    flex: 1 1 100%;
+    margin: 0;
+  }
+
+  /* `btn--block` is width:100%, which pushed the close onto its own line. */
+  .tilecard .btn {
+    order: 1;
+    flex: 1 1 0;
+    width: auto;
+    min-width: 0;
   }
 
   .tilecard .tilecard__top > *:not(.tilecard__close),
@@ -1345,21 +1375,21 @@
      nothing above a button.
   */
   /*
-     The close control floats along the top instead of holding a row of its
-     own: with everything else in the header gone, that row was 28px of
-     nothing above a button. It keeps clear of the button rather than sitting
-     on its corner — a thumb that misses "close" should not spend energy —
-     and spans wide enough to be hit without looking.
+     The header is only the close control now, so it is sized by it and sent
+     to the end of the row. Still its own target rather than a corner of the
+     button's — a thumb that misses "close" should not spend energy.
   */
   .tilecard__top {
-    position: absolute;
-    inset: 0 0 auto auto;
+    order: 2;
+    flex: none;
+    display: block;
     margin: 0;
   }
 
   .tilecard__close {
-    width: 52px;
-    height: 26px;
+    width: 44px;
+    height: 44px;
+    font-size: var(--fs-lg);
   }
 
   /* The cost rides on the button instead of sitting above it. */

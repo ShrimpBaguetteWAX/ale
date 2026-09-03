@@ -58,12 +58,41 @@ interface View {
 
 const MIN_SCALE = 8
 const MAX_SCALE = 72
+/** Below this the labels crowd into each other; see `showLabels`. */
+const LABEL_SCALE = 34
+
+/**
+ * The breakpoint the map's own layout uses, asked at the moment it matters
+ * rather than captured in a prop: the resize observer below already fires on
+ * a rotation, so reading it there keeps the answer current for free.
+ */
+const PHONE = '(max-width: 719px)'
+const onPhone = () => window.matchMedia(PHONE).matches
+
 /** Movement beyond this during a press counts as a pan, not a tap. */
 const DRAG_SLOP = 6
 const GRID_W = PLAY_MAX_X - PLAY_MIN_X + 1 // 40
 const GRID_H = PLAY_MAX_Y - PLAY_MIN_Y + 1 // 20
 /** Native size of one tile inside the planet artwork. */
 const SRC_TILE = 50
+
+/**
+ * The smallest scale the player may reach.
+ *
+ * Two different answers to "zoomed all the way out", and which one is right
+ * depends on the shape of the frame. On a wide screen it is *contain* — the
+ * whole planet visible, because there is enough width to show it without much
+ * waste. On a phone the same rule is dreadful: the grid is 2:1 and the screen
+ * is about 1:1.6, so containing it puts the map in a thin band with empty
+ * space above and below, and the player is left looking at the letterbox
+ * rather than at the game. There the floor is *cover*, and the map fills the
+ * screen at every zoom level it can reach.
+ */
+function floorScale(w: number, h: number, fill = onPhone()): number {
+  const contain = Math.min(w / GRID_W, h / GRID_H)
+  const cover = Math.max(w / GRID_W, h / GRID_H)
+  return Math.max(MIN_SCALE, fill ? cover : contain)
+}
 
 /**
  * Small pill of text under a marker. Canvas has no text shadow worth using,
@@ -316,8 +345,20 @@ export function MapCanvas({
 
     const showGrid = scale >= 22
     const showMarkers = scale >= 16
-    // Labels need room; below this they overlap into noise.
-    const showLabels = scale >= 34
+    /*
+       Labels need room; below LABEL_SCALE they overlap into noise.
+
+       Except that on a phone the player cannot zoom past the floor, and the
+       floor can sit under that threshold — which left the multipliers
+       invisible at the only zoom level a phone ever opens at. So there the
+       cut-off drops to the floor: whatever the furthest-out view is, it still
+       says what each building pays. A wide screen keeps the original
+       threshold, because it can zoom out far enough for the labels to
+       genuinely collide.
+    */
+    const fill = onPhone()
+    const floor = floorScale(w, h, fill)
+    const showLabels = scale >= (fill ? Math.min(LABEL_SCALE, floor) : LABEL_SCALE)
 
     if (showGrid) {
       ctx.strokeStyle = 'rgba(255,255,255,0.10)'
@@ -662,10 +703,7 @@ export function MapCanvas({
     (factor: number, cx: number, cy: number) => {
       const v = viewRef.current
       const { w, h } = sizeRef.current
-      // Never zoom out past "whole planet fits", it just adds letterboxing.
-      // Floor is 'whole planet visible' — zooming out past that only adds
-      // empty space around the art.
-      const floor = Math.max(MIN_SCALE, Math.min(w / GRID_W, h / GRID_H))
+      const floor = floorScale(w, h)
       const next = Math.min(MAX_SCALE, Math.max(floor, v.scale * factor))
       if (Math.abs(next - v.scale) < 0.01) return
       v.tx = cx - ((cx - v.tx) / v.scale) * next
@@ -696,12 +734,14 @@ export function MapCanvas({
       canvas.style.height = h + 'px'
 
       const v = viewRef.current
-      const fit = Math.min(w / GRID_W, h / GRID_H)
-      // Open on 'cover' so the art fills the panel instead of sitting in
-      // letterbox bars. Zooming out still reaches the whole planet.
+      const floor = floorScale(w, h)
+      /* Open on 'cover' so the art fills the panel rather than sitting in
+         letterbox bars. On a phone that is also the floor, so it stays
+         filled; on a desktop zooming out still reaches the whole planet. */
       if (first) v.scale = Math.max(w / GRID_W, h / GRID_H)
-      // Never leave the player zoomed out past the whole planet.
-      if (v.scale < fit) v.scale = fit
+      /* A rotation or a resize can put the current scale under the new
+         floor — most obviously turning a phone from portrait to landscape. */
+      if (v.scale < floor) v.scale = floor
       clamp()
       drawNow()
     }
