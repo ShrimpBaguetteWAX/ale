@@ -2528,46 +2528,63 @@
  * waiting a few difficulties up, which is exactly the thing worth knowing
  * while choosing one.
  *
- * Greyed and dimmed so it reads as inactive at a glance, with the reason
- * written across it. Its numbers stay legible: they are what the fighter will
- * bring when it does join.
+ * Desaturated, not dimmed. The filter goes on the card so it takes the
+ * elemental backdrop with it - that background is the loudest thing on a
+ * card, and greying the portrait while leaving a blazing orange behind it
+ * made the card look broken rather than inactive. Full opacity throughout:
+ * the numbers are what the fighter brings when it joins, and a fighter you
+ * are being told about is not a fighter to hide.
  */
 .combatcard--dormant {
   border-style: dashed;
   border-color: var(--line-soft);
-}
-
-.combatcard--dormant .combatcard__art {
   filter: grayscale(1);
-  opacity: 0.45;
 }
 
-.combatcard--dormant .combatcard__plate {
-  opacity: 0.75;
-}
-
+/*
+ * The reason, across the card.
+ *
+ * Wraps rather than running off: at 58px a line of this length does not
+ * fit, and the card clipped it to "OINS AT DIFFICULTY" - a label that says
+ * nothing is worse than none. White on near-black because the card under it
+ * is grey by then and dim text on grey is not text.
+ */
 .combatcard__dormant {
   position: absolute;
   left: 0;
   right: 0;
-  top: 46%;
-  padding: 3px 4px;
+  /*
+     Centred on the artwork, not on the card. The name plate is anchored to
+     the bottom and is a third of the card, so a label centred on the whole
+     thing sat on top of it once the words wrapped - which at 58px they do,
+     to three lines.
+  */
+  top: 34%;
+  transform: translateY(-50%) skewX(var(--lean-back));
+  padding: 4px 3px;
   font-family: var(--font-display);
   font-size: 9px;
-  line-height: 1.2;
+  font-weight: var(--fw-bold);
+  line-height: 1.25;
   letter-spacing: 0.02em;
   text-align: center;
   text-transform: uppercase;
-  color: var(--text-dim);
-  background: rgb(5 16 30 / 88%);
-  border-top: 1px solid var(--line-soft);
-  border-bottom: 1px solid var(--line-soft);
-  /* Sits outside the counter-skewed content, so it needs its own. */
-  transform: skewX(var(--lean-back));
+  color: var(--white);
+  background: rgb(5 16 30 / 92%);
+  border-top: 1px solid rgb(255 255 255 / 22%);
+  border-bottom: 1px solid rgb(255 255 255 / 22%);
 }
 
 @media (min-width: 720px) {
   .combatcard__dormant {
     font-size: 10px;
+  }
+}
+
+/* Three short lines rather than five, in the width a phone card has. */
+@media (max-width: 719px) {
+  .combatcard__dormant {
+    font-size: 8px;
+    letter-spacing: 0;
   }
 }

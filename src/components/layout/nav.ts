@@ -86,7 +86,7 @@ export const NAV_ITEMS: NavItem[] = [
      three were a profile, and the dot on it could only ever mean one of
      those things at a time.
   */
-  { to: '/rewards', label: 'Rewards', icon: '' },
+  { to: '/rewards', label: 'Rewards', icon: asset('/assets/icons/menu/rewards.png') },
   { to: '/profile', label: 'Account', icon: asset('/assets/icons/menu/settings.png') },
   { to: '/farming', label: 'Farming', icon: asset('/assets/icons/menu/card.png') },
 ]

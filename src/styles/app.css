@@ -1318,6 +1318,7 @@
 .navlink__icon--none {
   display: inline-block;
   flex: none;
-  width: 28px;
-  height: 28px;
+  /* Matches the real icon box, so a row aligns the same either way. */
+  width: 26px;
+  height: 26px;
 }

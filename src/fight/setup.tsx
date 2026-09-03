@@ -514,7 +514,6 @@ export function CombatCard({
             />
           )}
           {badge && <span className="combatcard__badge">{badge}</span>}
-          {dormant && <span className="combatcard__dormant">{dormant}</span>}
           {level !== undefined && level > 0 && (
             <span className="combatcard__level">L{level}</span>
           )}
@@ -558,6 +557,16 @@ export function CombatCard({
         </span>
       </button>
 
+      {/*
+         A child of the card, not of the artwork.
+
+         `.combatcard__art` is 124% of the card wide - that overhang is what
+         covers the wedges the lean leaves - so a strip spanning the art hung
+         outside the card on both sides and the card clipped the ends off the
+         words. Spanning the card instead means it spans what you can see.
+         Counter-skewed for the same reason every other direct child is.
+      */}
+      {dormant && <span className="combatcard__dormant">{dormant}</span>}
       </div>
 
       {/*
