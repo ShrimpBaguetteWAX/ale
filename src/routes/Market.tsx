@@ -33,6 +33,7 @@ import {
   EMPTY_FILTER,
   applyFilter,
   isFilterActive,
+  markerIcon,
   type RosterFilter,
 } from '@/dungeon/filters'
 import type { RosterFighter } from '@/dungeon/types'
@@ -351,7 +352,7 @@ export default function Market() {
                 filter={filter}
                 onChange={setFilter}
                 roster={filterRoster}
-                omit={['status', 'sort']}
+                omit={['status', 'sort', 'markers']}
               />
               <QualityFilters filter={filter} onChange={setFilter} />
               {/*
@@ -1289,6 +1290,11 @@ export function SellTab({
                   classname={f.classname}
                   racename={f.racename}
                 />
+                {!!f.marker && (
+                  <span className="sellpick__marker" title={`Marked ${f.marker}`}>
+                    <img src={markerIcon(f.marker)} alt="" width={14} height={14} />
+                  </span>
+                )}
                 <span className="sellpick__name">{f.classname}</span>
                 <span className="sellpick__sub mono">
                   L{f.stats.level} · {formatScaled(f.stats.damage_min)} dmg

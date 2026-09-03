@@ -14,7 +14,9 @@ import {
   applyFilter,
   facetsOf,
   countActiveFilters,
+  MARKERS,
   isFilterActive,
+  markerIcon,
   type Element,
   type QualityRule,
   type RosterFilter,
@@ -601,9 +603,24 @@ export function RosterFilters({
    * stamped "Market", so four of the five options match nothing and the fifth
    * matches everything — and `sort`, which it overrides with its own.
    */
-  omit?: ('status' | 'sort')[]
+  omit?: ('status' | 'sort' | 'markers')[]
 }) {
   const { classes, races } = useMemo(() => facetsOf(roster), [roster])
+
+  /*
+     Only markers this roster actually carries, counted.
+
+     There are thirty in the vocabulary and a player uses two or three, so
+     offering all of them is twenty-seven switches that match nothing — and
+     the count doubles as the answer to "how many did I mark".
+  */
+  const usedMarkers = useMemo(() => {
+    const counts = new Map<string, number>()
+    for (const f of roster) {
+      if (f.marker) counts.set(f.marker, (counts.get(f.marker) ?? 0) + 1)
+    }
+    return counts
+  }, [roster])
   const set = (patch: Partial<RosterFilter>) => onChange({ ...filter, ...patch })
 
   /*
@@ -646,6 +663,39 @@ export function RosterFilters({
             {open ? '▴' : '▾'}
           </span>
         </button>
+      )}
+
+      {/*
+         Markers first, because a player who has labelled a fighter is
+         looking for that fighter, and every other control here is a way of
+         describing one you have not found yet.
+
+         Offered only where the roster is your own — a marker is private,
+         and a market listing carries none, so on those tabs it would be a
+         row of switches that match nothing.
+      */}
+      {!omit.includes('markers') && usedMarkers.size > 0 && (
+        <div className="filters__markers" role="group" aria-label="Marker">
+          {MARKERS.filter((m) => usedMarkers.has(m)).map((m) => (
+            <button
+              type="button"
+              key={m || 'none'}
+              className="markbtn"
+              aria-pressed={filter.markers.includes(m)}
+              onClick={() =>
+                set({
+                  markers: filter.markers.includes(m)
+                    ? filter.markers.filter((x) => x !== m)
+                    : [...filter.markers, m],
+                })
+              }
+              title={`${m} — ${usedMarkers.get(m)} fighter${usedMarkers.get(m) === 1 ? '' : 's'}`}
+            >
+              <img src={markerIcon(m)} alt={m} />
+              <span className="markbtn__count">{usedMarkers.get(m)}</span>
+            </button>
+          ))}
+        </div>
       )}
 
       <div className="filters__elements" role="group" aria-label="Element">
@@ -1161,6 +1211,30 @@ export function FighterGrid({
                   <span className="fightercard__block">{state.reason}</span>
                 )}
               </button>
+              {/*
+                 The marker a player put on this fighter.
+
+                 It is a private label, set on the roster screen and used
+                 for exactly this — finding a fighter again in a grid of
+                 forty while picking a team. It was drawn only on the screen
+                 where it is set, which is the one screen where you already
+                 know which fighter you are looking at.
+
+                 Not a control here: the roster screen owns setting it, and
+                 a second way to change it inside a team picker would be a
+                 mis-tap away from re-labelling a fighter you meant to
+                 field.
+              */}
+              {!!f.marker && (
+                <span
+                  className="fightercard__marker"
+                  title={`Marked ${f.marker}`}
+                  aria-label={`Marked ${f.marker}`}
+                >
+                  <img src={markerIcon(f.marker)} alt="" width={16} height={16} />
+                </span>
+              )}
+
               <button
                 type="button"
                 className="fightercard__info"

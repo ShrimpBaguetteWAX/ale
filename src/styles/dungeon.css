@@ -2469,3 +2469,52 @@
     font-size: 11px;
   }
 }
+
+/*
+ * The marker, on a fighter in a picker.
+ *
+ * A private label the player set on the roster screen, and this is what they
+ * set it for: finding that fighter again in a grid of forty while choosing a
+ * team. It was drawn only on the screen where it is set — the one screen
+ * where you already know which fighter you are looking at.
+ *
+ * Read-only here. The roster screen owns setting it, and a second control
+ * inside a team picker would be one mis-tap from re-labelling a fighter you
+ * meant to field.
+ */
+.fightercard__marker {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  background: rgb(0 0 0 / 55%);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-xs);
+  pointer-events: none;
+}
+
+.fightercard__marker img {
+  object-fit: contain;
+}
+
+/* The picker's marker row sits with the element toggles above the fields. */
+.filters .filters__markers {
+  display: flex;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+}
+
+@media (max-width: 719px) {
+  .filters .markbtn {
+    width: 26px;
+    height: 26px;
+  }
+
+  .filters .markbtn img {
+    width: 14px;
+    height: 14px;
+  }
+}
