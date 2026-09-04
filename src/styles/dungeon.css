@@ -2789,7 +2789,13 @@
   font-size: 10px;
   font-weight: var(--fw-bold);
   line-height: 1.25;
-  letter-spacing: 0.02em;
+  /*
+     No tracking. 0.02em is a fifth of a pixel a letter and "DIFFICULTY" is
+     ten of them, which is the two pixels between the word fitting its line
+     and being broken across two — "DIFFICULT / Y 5" at 1440. Orbitron is
+     already a wide face; it does not need the help.
+  */
+  letter-spacing: normal;
   text-align: center;
   text-transform: uppercase;
   color: var(--white);
@@ -2800,9 +2806,6 @@
 
 @media (max-width: 719px) {
   .combatcard__dormant {
-    /* 0.02em is a fifth of a pixel a letter, and the band has none to give
-       away at 49px. The size stays; only the tracking goes. */
-    letter-spacing: 0;
     /*
        The plate is a smaller share of a phone card — the ability counts move
        out from under it to their own row below the card — so the band can sit

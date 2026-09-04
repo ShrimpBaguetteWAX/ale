@@ -1,5 +1,14 @@
 <!doctype html>
 <meta charset="utf-8" />
 <title>Battle harness</title>
+<!--
+  The game's real typography, which index.html loads and this file did not.
+  Without it every screen here renders in the fallback face, and any judgement
+  about how text looks — size, weight, whether it is sharp — is about a font
+  the player never sees.
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&family=Titillium+Web:wght@400;600;700&display=swap" />
 <div id="root"></div>
 <script type="module" src="./battle.tsx"></script>
