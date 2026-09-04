@@ -724,6 +724,14 @@ function OfferPanel({
 }) {
   const offers = fighter.ascension_upgrades ?? []
   /*
+     Which row is being signed, so only that button says so.
+
+     `busy` alone would put "Working…" on all three at once. Nothing has to
+     clear this: the label only reads it while `busy === 'claim'`, so a
+     failed signature reverts every button on its own.
+   */
+  const [taking, setTaking] = useState<number | null>(null)
+  /*
      What the roll is worth to *this* fighter.
 
      The contract grows health and damage by `level_mod ^ level * age_decay`
@@ -814,14 +822,18 @@ function OfferPanel({
                   const short = applied < o.value
                   return (
                     <li key={`${o.stat_name}-${o.value}-${i}`}>
-                      <button
-                        type="button"
+                      {/*
+                        The row is a row, not a control. Making the whole
+                        thing clickable meant a stray tap anywhere on it
+                        spent the ascension and threw the other two rolls
+                        away — the reading surface and the irreversible
+                        action have to be separate things.
+                      */}
+                      <div
                         className={
                           'offerrow offerrow--' +
                           (mixed ? 'mixed' : good ? 'good' : 'bad')
                         }
-                        disabled={!canAct || busy !== null}
-                        onClick={() => onClaim(o.stat_name, o.value, positive)}
                       >
                         <img
                           className="offerrow__icon"
@@ -855,10 +867,25 @@ function OfferPanel({
                           roll spends the ascension and discards the other
                           two, which "Take this" did not say.
                         */}
-                        <span className="offerrow__take">
-                          {busy === 'claim' ? 'Working…' : 'Choose this and ascend'}
-                        </span>
-                      </button>
+                        <button
+                          type="button"
+                          className="offerrow__take"
+                          disabled={!canAct || busy !== null}
+                          onClick={() => {
+                            setTaking(i)
+                            onClaim(o.stat_name, o.value, positive)
+                          }}
+                        >
+                          {busy === 'claim' && taking === i ? (
+                            <>
+                              <span className="spinner" />
+                              Working…
+                            </>
+                          ) : (
+                            'Choose this and ascend'
+                          )}
+                        </button>
+                      </div>
                     </li>
                   )
                 })}

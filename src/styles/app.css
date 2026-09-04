@@ -1319,19 +1319,6 @@
   border-radius: var(--radius-xs);
   background: rgb(0 0 0 / 30%);
   text-align: left;
-  cursor: pointer;
-  transition:
-    border-color var(--dur-fast) var(--ease),
-    background var(--dur-fast) var(--ease);
-}
-
-.offerrow:hover:not(:disabled) {
-  background: rgb(255 255 255 / 6%);
-}
-
-.offerrow:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
 }
 
 .offerrow__icon {
@@ -1358,10 +1345,21 @@
   color: var(--text-faint);
 }
 
+/*
+ * The only thing on the row that does anything.
+ *
+ * It carries a border now that the row around it is inert — a filled patch
+ * of colour reads as a button when the whole row was one, but on its own it
+ * needs an edge to say where the target starts and ends.
+ */
 .offerrow__take {
+  display: flex;
   grid-column: 3;
   grid-row: 1 / 3;
-  padding: 5px var(--sp-3);
+  align-items: center;
+  gap: var(--sp-2);
+  padding: 7px var(--sp-3);
+  border: 1px solid rgb(0 186 255 / 45%);
   border-radius: var(--radius-xs);
   background: rgb(0 186 255 / 16%);
   font-family: var(--font-display);
@@ -1369,11 +1367,42 @@
   letter-spacing: 0.06em;
   color: #9ee6ff;
   white-space: nowrap;
+  cursor: pointer;
+  transition:
+    border-color var(--dur-fast) var(--ease),
+    background var(--dur-fast) var(--ease);
 }
 
-.offerrow:hover:not(:disabled) .offerrow__take {
+.offerrow__take:hover:not(:disabled) {
+  border-color: rgb(0 186 255 / 80%);
   background: rgb(0 186 255 / 30%);
   color: var(--white);
+}
+
+.offerrow__take:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/*
+ * On a phone the button takes its own line.
+ *
+ * Beside the figure it does not fit: it will not wrap, so it holds its full
+ * width and squeezes the value column to nothing — "+1.45 Damage" came out
+ * one character per line. Full width underneath is also the bigger tap
+ * target, which is what this particular button being hard to hit by accident
+ * is worth.
+ */
+@media (max-width: 719px) {
+  .offerrow {
+    grid-template-columns: 20px minmax(0, 1fr);
+    gap: var(--sp-2) var(--sp-3);
+  }
+  .offerrow__take {
+    grid-column: 1 / -1;
+    grid-row: 3;
+    justify-content: center;
+  }
 }
 
 /* Direction, not benefit: a subtraction from a timer is an improvement. */

@@ -151,6 +151,46 @@ void fetchConfig().then((config) => config && useGame.setState({ config }))
  *
  * `?permstats=` is the older name for the same thing and still works.
  */
+/*
+ * `?ascoffer=1` — a fighter with three rolls waiting to be taken.
+ *
+ * The offer panel only exists between `ascend` and `ascclaim`, which on a
+ * real wallet is the few seconds between two signatures. There is no way to
+ * hold a screen open in that window without spending a real ascension, so
+ * the roster read is answered with a copy of the highest-level fighter that
+ * has the flag set and three offers attached — one of each colour, plus a
+ * resistance, which the chain has never actually handed this wallet.
+ */
+if (params.get('ascoffer')) {
+  const real = window.fetch
+  window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
+    const res = await real(input, init)
+    const body = String(init?.body ?? '')
+    if (!body.includes('"fighters"')) return res
+
+    const data = await res.clone().json()
+    const rows = (data.rows ?? []) as Record<string, unknown>[]
+    /* The one the screen would offer to ascend: highest level, no claim due. */
+    const best = [...rows].sort(
+      (a, b) =>
+        Number((b.stats as { level?: number })?.level ?? 0) -
+        Number((a.stats as { level?: number })?.level ?? 0),
+    )[0]
+    if (best) {
+      best.ascension_in_progress = 1
+      best.ascension_upgrades = [
+        { stat_name: 'damage', value: 36, positive: true },
+        { stat_name: 'attackspeed', value: 14, positive: false },
+        { stat_name: 'res_fire', value: 30, positive: true },
+      ]
+    }
+    return new Response(JSON.stringify(data), {
+      status: res.status,
+      headers: { 'content-type': 'application/json' },
+    })
+  }
+}
+
 const borrow = params.get('permstats') ?? params.get('borrow')
 if (borrow) {
   void fetch('https://wax.greymass.com/v1/chain/get_table_rows', {
