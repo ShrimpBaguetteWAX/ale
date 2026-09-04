@@ -1,4 +1,11 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react'
 import { Link, Navigate } from 'react-router-dom'
 import { fetchOwnedTemplates, resolveAssetIds } from '@/chain/atomic'
 import { landId } from '@/chain/landId'
@@ -42,7 +49,9 @@ import {
   type ClassTemplate,
 } from '@/tavern/fighterStats'
 import { fetchFightersConfig } from '@/fighters/queries'
-import { hireFighter, revealFighter } from '@/wharf/actions'
+import { fetchRoster } from '@/dungeon/queries'
+import { MARKERS, markerIcon } from '@/dungeon/filters'
+import { hireFighter, revealFighter, setFighterMarker } from '@/wharf/actions'
 import { readableError } from '@/wharf/errors'
 import { asset } from '@/assets'
 
@@ -86,6 +95,120 @@ function Grade({
       width={16}
       height={16}
     />
+  )
+}
+
+/**
+ * A marker to put on the recruit, chosen before the hire.
+ *
+ * Thirty-one of them, so a button that opens the grid rather than the grid
+ * itself: the header already carries the cost, Hire and Leave, and a row of
+ * swatches six hundred pixels wide would push all three off a laptop.
+ */
+function MarkerPick({
+  value,
+  onChange,
+  disabled,
+}: {
+  value: string
+  onChange: (marker: string) => void
+  disabled: boolean
+}) {
+  const [open, setOpen] = useState(false)
+  const box = useRef<HTMLDivElement>(null)
+  const pop = useRef<HTMLDivElement>(null)
+  /*
+     Nudged back inside the viewport after opening.
+
+     Anchoring to the button's right edge is correct while the header is one
+     line and the button sits near the right of the screen. On a phone the
+     header wraps and the hire row starts at the left margin, which put a
+     232px panel 110px off the left edge. Rather than pick a breakpoint and
+     hope, this measures where it actually landed and shifts it back.
+  */
+  const [shift, setShift] = useState(0)
+
+  useLayoutEffect(() => {
+    if (!open) {
+      setShift(0)
+      return
+    }
+    const el = pop.current
+    if (!el) return
+    const r = el.getBoundingClientRect()
+    const pad = 8
+    if (r.left < pad) setShift(pad - r.left)
+    else if (r.right > window.innerWidth - pad) {
+      setShift(window.innerWidth - pad - r.right)
+    }
+  }, [open])
+
+  useEffect(() => {
+    if (!open) return
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false)
+    const onDown = (e: PointerEvent) => {
+      if (!box.current?.contains(e.target as Node)) setOpen(false)
+    }
+    window.addEventListener('keydown', onKey)
+    window.addEventListener('pointerdown', onDown)
+    return () => {
+      window.removeEventListener('keydown', onKey)
+      window.removeEventListener('pointerdown', onDown)
+    }
+  }, [open])
+
+  return (
+    <div className="markpick" ref={box}>
+      <button
+        type="button"
+        className="markbtn markpick__toggle"
+        aria-pressed={!!value}
+        aria-expanded={open}
+        disabled={disabled}
+        onClick={() => setOpen((v) => !v)}
+        title={value ? `Marker: ${value}` : 'Give this recruit a marker'}
+      >
+        <img src={markerIcon(value)} alt={value || 'no marker'} />
+      </button>
+
+      {open && (
+        <div
+          className="markpick__pop panel"
+          ref={pop}
+          style={shift ? { transform: `translateX(${shift}px)` } : undefined}
+        >
+          <p className="hint" style={{ marginTop: 0 }}>
+            {/*
+              The second signature is stated up front rather than sprung on
+              the player afterwards. `users::hire` takes the cards and the
+              cost and nothing else, and the fighter's id is handed out by
+              `crtfighter` while the hire is running — so there is nothing to
+              mark until it has finished.
+            */}
+            A label for the roster. The fighter does not exist until the hire
+            goes through, so this is set straight after it — one more
+            signature.
+          </p>
+          <div className="markpick__grid">
+            {MARKERS.map((m) => (
+              <button
+                type="button"
+                key={m || 'none'}
+                className="markbtn"
+                aria-pressed={value === m}
+                onClick={() => {
+                  onChange(m)
+                  setOpen(false)
+                }}
+                title={m || 'No marker'}
+              >
+                <img src={markerIcon(m)} alt={m || 'none'} />
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
   )
 }
 
@@ -226,7 +349,16 @@ export default function Tavern() {
   const [owned, setOwned] = useState<Map<number, number> | null>(null)
   const [tab, setTab] = useState(SCHEMA_TABS[0].key)
   const [picked, setPicked] = useState<number[]>([])
-  const [busy, setBusy] = useState<'reveal' | 'hire' | null>(null)
+  const [busy, setBusy] = useState<'reveal' | 'hire' | 'marker' | null>(null)
+  /*
+     A marker to put on the recruit, chosen before the hire runs.
+
+     Held here rather than sent with the hire because it cannot be sent with
+     it: `users::hire` takes the cards and the cost, and the fighter's id is
+     handed out by `crtfighter` while the hire is executing. So the choice is
+     remembered and applied to whatever the roster gained.
+  */
+  const [marker, setMarker] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
   const [classTemplate, setClassTemplate] = useState<ClassTemplate | undefined>()
@@ -377,6 +509,27 @@ export default function Tavern() {
       // The contract wants asset ids; the player picked templates. Resolve
       // one copy of each, in the same order, so the cost the contract
       // recomputes matches the one shown.
+      /*
+         What the roster already holds, so the fighter this hire adds can be
+         told apart afterwards.
+
+         Read before the transaction and only when there is a marker to put
+         on: the roster is a per-owner index and the new row is simply the id
+         that was not there before. Guessing it instead — `available_primary
+         _key` is the next one — would be a race with every other player
+         recruiting, and a wrong id in the same transaction would take the
+         hire down with it.
+      */
+      let before: Set<number> | null = null
+      if (marker) {
+        try {
+          const roster = await fetchRoster(player.wallet, true)
+          before = new Set(roster.map((f) => f.fighter_id))
+        } catch {
+          /* Marked afterwards by hand instead; the hire is what matters. */
+        }
+      }
+
       const resolved = await resolveAssetIds(player.wallet, picked)
       const assetIds = picked
         .map((id) => resolved.get(id))
@@ -433,7 +586,50 @@ export default function Tavern() {
         if (!useGame.getState().player?.last_tavern?.land_id) break
       }
       setPicked([])
-      setNotice('Recruit hired. They have joined your roster.')
+
+      if (!marker || !before) {
+        setNotice('Recruit hired. They have joined your roster.')
+        return
+      }
+
+      /*
+         The marker, once there is a fighter to put it on.
+
+         A separate transaction, so the hire is already done and safe by the
+         time this is asked for — if the player declines it or it fails, they
+         have their recruit and an unmarked row, which they can label from My
+         Fighters like any other.
+      */
+      setBusy('marker')
+      try {
+        let hired: number | undefined
+        for (let i = 0; i < 8 && hired === undefined; i++) {
+          const roster = await fetchRoster(player.wallet, true)
+          hired = roster.map((f) => f.fighter_id).find((id) => !before!.has(id))
+          if (hired === undefined) await new Promise((r) => setTimeout(r, 900))
+        }
+
+        if (hired === undefined) {
+          throw new Error('the roster has not caught up yet')
+        }
+
+        await setFighterMarker(session, hired, marker)
+        setMarker('')
+        setNotice(`Recruit hired and marked ${marker}.`)
+      } catch (err) {
+        /*
+           Reported as a notice, not an error.
+
+           The hire went through — that is the transaction that cost energy
+           and the one the player came for. A red alert here would say the
+           recruit had not been taken on, which is the opposite of what
+           happened.
+        */
+        setNotice(
+          `Recruit hired. The marker did not go on (${readableError(err)}) — ` +
+            'you can set it from My Fighters.',
+        )
+      }
     } catch (err) {
       setError(readableError(err))
     } finally {
@@ -487,14 +683,32 @@ export default function Tavern() {
                 </span>
               </div>
 
+              {/*
+                Beside Hire, because it is a decision about the fighter being
+                hired even though it cannot travel in the same transaction.
+                Choosing it here rather than hunting the new row down in My
+                Fighters is the whole point.
+              */}
+              <MarkerPick
+                value={marker}
+                onChange={setMarker}
+                disabled={busy !== null}
+              />
+
               <button
                 type="button"
                 className="btn btn--primary"
                 onClick={() => void doHire()}
                 disabled={busy !== null || !canAfford}
               >
-                {busy === 'hire' && <span className="spinner" />}
-                {busy === 'hire' ? 'Hiring' : 'Hire recruit'}
+                {(busy === 'hire' || busy === 'marker') && (
+                  <span className="spinner" />
+                )}
+                {busy === 'hire'
+                  ? 'Hiring'
+                  : busy === 'marker'
+                    ? 'Marking'
+                    : 'Hire recruit'}
               </button>
             </div>
           )}

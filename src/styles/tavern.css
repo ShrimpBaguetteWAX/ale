@@ -606,6 +606,63 @@
   }
 }
 
+/* ---------- The recruit's marker ---------- */
+
+/*
+ * A swatch that opens the grid, rather than the grid itself.
+ *
+ * There are thirty-one markers. Laid out inline they are six hundred pixels
+ * of header, which is more than the cost, Hire and Leave put together.
+ */
+.markpick {
+  position: relative;
+  display: flex;
+}
+
+/* Set apart from the empty state, so "none" does not read as a choice. */
+.markpick__toggle[aria-pressed='true'] {
+  border-color: var(--cyan);
+  background: rgb(0 186 255 / 14%);
+}
+
+.markpick__pop {
+  position: absolute;
+  top: calc(100% + var(--sp-2));
+  /* Anchored to its right edge: the button sits near the end of the header,
+     and a popover growing rightward would leave the viewport. */
+  right: 0;
+  z-index: var(--z-dropdown);
+  width: 274px;
+  padding: var(--sp-3);
+  /*
+     Opaque, unlike the panels it borrows its frame from.
+     `--surface-1` is 92% and `--surface-3` a 28% violet, which is right for a
+     card sitting in the page and wrong for one floating over it — the Leave
+     button and the recruit's title read straight through it.
+  */
+  background:
+    linear-gradient(180deg, var(--surface-3), var(--surface-1)),
+    linear-gradient(180deg, #131a2e, #0a1222);
+  box-shadow: 0 14px 34px rgb(0 0 0 / 55%);
+}
+
+.markpick__grid {
+  display: grid;
+  grid-template-columns: repeat(7, 30px);
+  gap: var(--sp-2);
+  margin-top: var(--sp-2);
+}
+
+@media (max-width: 420px) {
+  .markpick__pop {
+    /* Narrower than the panel it would otherwise overflow. */
+    width: 232px;
+  }
+  .markpick__grid {
+    grid-template-columns: repeat(6, 30px);
+  }
+}
+
 /* ---------- Selected cards ---------- */
 
 .picked {
