@@ -164,15 +164,22 @@ export function canCancelAuction(auction: Auction, player: Player): Gate {
  * Mirrors the five checks in `addauction`, in its order, so the reason shown
  * is the reason the contract would have given.
  */
-export function canList(
-  fighter: RosterFighter | null,
-  startPrice: number,
-  player: Player,
-  config: MarketConfig | undefined,
+/**
+ * Whether the contract would accept this fighter for an auction at all.
+ *
+ * The four checks `addauction` makes about the fighter itself, with nothing
+ * about price or the seller's gems — so it can answer "which of my roster
+ * could I list" for a whole list at once, which is a different question from
+ * "can I list this one now" and needs a different shape of answer.
+ *
+ * `canList` calls it rather than repeating the conditions, because a bulk
+ * screen that disagreed with the single-fighter one about who is eligible is
+ * worse than either being wrong on its own.
+ */
+export function listable(
+  fighter: RosterFighter,
   now = Date.now(),
 ): Gate {
-  if (!fighter) return { ok: false, reason: 'Pick a fighter to sell' }
-  if (fighter.owner !== player.wallet) return { ok: false, reason: 'Not your fighter' }
   if (fighter.in_use) {
     return {
       ok: false,
@@ -187,6 +194,21 @@ export function canList(
   if (Number.isFinite(payday) && payday <= now) {
     return { ok: false, reason: 'This fighter wants a payday before it can be sold' }
   }
+  return { ok: true }
+}
+
+export function canList(
+  fighter: RosterFighter | null,
+  startPrice: number,
+  player: Player,
+  config: MarketConfig | undefined,
+  now = Date.now(),
+): Gate {
+  if (!fighter) return { ok: false, reason: 'Pick a fighter to sell' }
+  if (fighter.owner !== player.wallet) return { ok: false, reason: 'Not your fighter' }
+
+  const eligible = listable(fighter, now)
+  if (!eligible.ok) return eligible
 
   const min = Number(config?.gems_min_start_bid ?? 0)
   if (startPrice < min) return { ok: false, reason: `Start at ${min} gems or more` }
@@ -196,6 +218,62 @@ export function canList(
     return { ok: false, reason: `Listing costs ${cost} gems` }
   }
   return { ok: true }
+}
+
+/**
+ * The most fighters one transaction may carry to the market.
+ *
+ * `addauction` has no vector form, so a batch is that many separate actions,
+ * and every one of them ends by running the contract's housekeeping sweeps —
+ * `compauct(10)` and `rmvoldoffers()`. Those cost nothing when nothing is due
+ * and are not free when it is, so the ceiling is CPU rather than anything the
+ * contract states. Ten is chosen to sit well inside it; a failed transaction
+ * lists nothing at all, which is safe but not a good way to find the limit.
+ */
+export const MAX_BULK_LISTINGS = 10
+
+/** What listing this selection would cost and whether it can go through. */
+export function bulkListPlan(
+  fighters: RosterFighter[],
+  startPrice: number,
+  player: Player,
+  config: MarketConfig | undefined,
+  now = Date.now(),
+): { ids: number[]; gems: number; gate: Gate } {
+  const ids = fighters.map((f) => f.fighter_id)
+  const each = Number(config?.gems_listing_price ?? 0)
+  const gems = each * ids.length
+
+  const gate = ((): Gate => {
+    if (ids.length === 0) return { ok: false, reason: 'Pick the fighters to list' }
+    if (ids.length > MAX_BULK_LISTINGS) {
+      return { ok: false, reason: `${MAX_BULK_LISTINGS} at a time` }
+    }
+
+    const min = Number(config?.gems_min_start_bid ?? 0)
+    if (startPrice < min) return { ok: false, reason: `Start at ${min} gems or more` }
+
+    /*
+       Every fighter is checked, not just the first: the contract rejects the
+       whole transaction over any one of them, so a selection that includes a
+       fighter who wants a payday lists none of the other nine.
+    */
+    const bad = fighters.find((f) => !listable(f, now).ok)
+    if (bad) {
+      return {
+        ok: false,
+        reason: `${bad.classname}: ${listable(bad, now).reason}`,
+      }
+    }
+
+    /* The fee is charged per action, so the whole batch has to be affordable. */
+    if (player.activestats.gems < gems) {
+      return { ok: false, reason: `Listing ${ids.length} costs ${gems} gems` }
+    }
+    return { ok: true }
+  })()
+
+  return { ids, gems, gate }
 }
 
 /**

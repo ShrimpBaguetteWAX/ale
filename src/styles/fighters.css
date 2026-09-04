@@ -101,6 +101,67 @@
   max-width: 60ch;
 }
 
+/* ---------- listing on the market ---------- */
+
+/*
+ * The starting bid, inline in the action bar rather than in a dialog.
+ *
+ * It is a term of the thing the button does, and a player pricing a batch
+ * wants to see the roster while they decide. The bar already wraps, so on a
+ * phone this becomes its own line rather than squeezing the button.
+ */
+.roster__price {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: var(--fs-xs);
+  color: var(--text-dim);
+}
+
+.roster__priceLabel {
+  font-family: var(--font-display);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.roster__priceInput {
+  /* Wide enough for five figures and no wider: it is a price, not a field
+     the eye should land on before the fighters. */
+  width: 9ch;
+  padding: 4px var(--sp-2);
+  text-align: right;
+}
+
+.roster__keep {
+  font-size: var(--fs-xs);
+}
+
+@media (max-width: 719px) {
+  /*
+     Three tabs no longer fit beside the title, so the strip takes its own
+     line and splits it evenly. "Sell on market" is the long one and decides
+     the width; equal thirds keep it from making the other two look like
+     afterthoughts.
+  */
+  .roster__modes {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .roster__mode {
+    flex: 1 1 0;
+    min-width: 0;
+    padding: var(--sp-2) var(--sp-2);
+    font-size: var(--fs-xs);
+  }
+
+  .roster__price,
+  .roster__keep {
+    width: 100%;
+  }
+}
+
 /* The per-fighter actions, which only exist while a card is selected. */
 .roster__selected {
   display: flex;

@@ -43,11 +43,14 @@ import {
   wantsPayday,
 } from '@/fighters/rules'
 import {
+  addAuctions,
   levelUpFighters,
   payFighters,
   sellFighters,
   setFighterMarker,
 } from '@/wharf/actions'
+import { fetchMarketConfig, type MarketConfig } from '@/market/queries'
+import { MAX_BULK_LISTINGS, bulkListPlan, listable } from '@/market/rules'
 import { refreshChore } from '@/chores/signal'
 import { readableError } from '@/wharf/errors'
 import type { ClassTemplate } from '@/tavern/fighterStats'
@@ -97,7 +100,15 @@ import { asset } from '@/assets'
  * the class band.
  */
 
-type Mode = 'inventory' | 'sell'
+type Mode = 'inventory' | 'sell' | 'market'
+
+/*
+ * The listing fee is one gem today, and "1 gems each" is what a config value
+ * printed straight into a sentence reads like the day somebody sets it to 1.
+ */
+function gemsWord(n: number): string {
+  return `${n.toLocaleString(NUM_LOCALE)} gem${n === 1 ? '' : 's'}`
+}
 type CardTab = 'primary' | 'resistance' | 'abilities'
 
 const PRIMARY_FIELDS = ['damage', 'health', 'taunt', 'attackspeed', 'initiative'] as const
@@ -215,6 +226,26 @@ export default function Fighters() {
   const [notice, setNotice] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [confirmSell, setConfirmSell] = useState(false)
+  const [confirmList, setConfirmList] = useState(false)
+
+  /*
+     The market's own config, for the listing tab.
+
+     Read here rather than passed down because it is what decides the numbers
+     in the bar — the fee, the minimum bid, what an unsold fighter is relisted
+     at — and quoting any of them from a constant is how a screen ends up
+     disagreeing with the contract after a config change.
+  */
+  const [marketConfig, setMarketConfig] = useState<MarketConfig | undefined>()
+  useEffect(() => {
+    void fetchMarketConfig().then(setMarketConfig)
+  }, [])
+
+  /* The starting bid every fighter in the batch is listed at. */
+  const [startPrice, setStartPrice] = useState(0)
+  const [keepListed, setKeepListed] = useState(true)
+  const minStart = Number(marketConfig?.gems_min_start_bid ?? 0)
+  useEffect(() => setStartPrice(minStart), [minStart])
 
   /*
    * Every derived figure is a function of "now", and a payday cost creeps up
@@ -277,6 +308,12 @@ export default function Fighters() {
   const sellValue = useMemo(
     () => checkedFighters.reduce((sum, f) => sum + (f.stats.credits ?? 0), 0),
     [checkedFighters],
+  )
+
+  /* What the checked fighters would cost to list, and whether they can be. */
+  const listPlan = useMemo(
+    () => bulkListPlan(checkedFighters, startPrice, player!, marketConfig, now),
+    [checkedFighters, startPrice, player, marketConfig, now],
   )
 
   const credits = player?.activestats.credits ?? 0
@@ -357,6 +394,23 @@ export default function Fighters() {
     setSelectedId(null)
   }
 
+  const doList = async () => {
+    setConfirmList(false)
+    await run(
+      'list',
+      () =>
+        addAuctions(session!, {
+          fighterIds: listPlan.ids,
+          startPrice,
+          keepAfterAuction: keepListed,
+        }),
+      `Listed ${listPlan.ids.length} fighter${listPlan.ids.length === 1 ? '' : 's'} ` +
+        `at ${startPrice} gems.`,
+    )
+    setChecked([])
+    setSelectedId(null)
+  }
+
   const doMarker = (f: RosterFighter, marker: string) =>
     run(
       'marker',
@@ -364,17 +418,38 @@ export default function Fighters() {
       marker ? 'Marker set.' : 'Marker cleared.',
     )
 
-  const toggleChecked = useCallback((id: number) => {
-    setChecked((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
-    )
-  }, [])
+  const toggleChecked = useCallback(
+    (id: number) => {
+      setChecked((prev) => {
+        if (prev.includes(id)) return prev.filter((x) => x !== id)
+        /*
+           The market caps a batch; selling to the game does not.
 
-  /* Leaving sell mode drops the selection rather than keeping a hidden one
-     armed for the next visit. */
+           Refused at the tick rather than at the button, so the eleventh
+           card simply does not go on — a player who can select fifteen and
+           then reads "10 at a time" has to work out which five to undo.
+        */
+        if (mode === 'market' && prev.length >= MAX_BULK_LISTINGS) {
+          setError(`The market takes ${MAX_BULK_LISTINGS} fighters at a time.`)
+          return prev
+        }
+        return [...prev, id]
+      })
+    },
+    [mode],
+  )
+
+  /*
+     Changing mode drops the selection rather than keeping a hidden one armed.
+
+     Between the two selling modes as well as on the way back to Inventory:
+     five fighters ticked to sell for credits are not five fighters you meant
+     to put on the market for gems, and carrying the ticks across would mean
+     one click on a differently-labelled button did the other thing.
+  */
   const switchMode = (next: Mode) => {
     setMode(next)
-    if (next === 'inventory') setChecked([])
+    if (next !== mode) setChecked([])
   }
 
   const selectedPay = selected ? paydayOf(selected, config, now) : null
@@ -419,11 +494,82 @@ export default function Fighters() {
           >
             Sell
           </button>
+          {/*
+            Selling to the game and selling to a player are different trades
+            — one is instant credits at a fixed value, the other is gems from
+            somebody else two days later — so they are separate modes rather
+            than one Sell mode with a destination picker.
+          */}
+          <button
+            type="button"
+            role="tab"
+            aria-selected={mode === 'market'}
+            className="roster__mode"
+            onClick={() => switchMode('market')}
+          >
+            Sell on market
+          </button>
         </div>
       </header>
 
       <div className="roster__bar">
-        {mode === 'sell' ? (
+        {mode === 'market' ? (
+          <>
+            {/*
+              The two terms of the listing, then the button.
+
+              One starting bid and one keep-flag for the whole batch rather
+              than per fighter: `addauction` takes them per call, but a form
+              with a price box against each of ten cards is a different screen
+              from "put these on the market", and the players who want to price
+              individually already have the market's own one-at-a-time tab.
+            */}
+            <label className="roster__price">
+              <span className="roster__priceLabel">Start at</span>
+              <input
+                className="input mono roster__priceInput"
+                type="number"
+                min={minStart}
+                step={1}
+                value={startPrice}
+                onChange={(e) =>
+                  setStartPrice(Math.max(0, Math.floor(Number(e.target.value) || 0)))
+                }
+              />
+              <img src={asset('/assets/icons/gems.png')} alt="gems" width={14} height={14} />
+              <em className="faint">min {minStart}</em>
+            </label>
+
+            <label className="checkline roster__keep">
+              <input
+                type="checkbox"
+                checked={keepListed}
+                onChange={(e) => setKeepListed(e.target.checked)}
+              />
+              <span>
+                Keep listed if nobody bids
+                <em className="faint">
+                  {' '}
+                  — at {marketConfig?.gems_instant_buy_price ?? 0} gems
+                </em>
+              </span>
+            </label>
+
+            <span className="spacer" />
+
+            <button
+              type="button"
+              className="btn btn--primary"
+              disabled={!session || !listPlan.gate.ok || !!busy}
+              onClick={() => setConfirmList(true)}
+              title={listPlan.gate.ok ? undefined : listPlan.gate.reason}
+            >
+              {busy === 'list' && <span className="spinner" />}
+              List {checked.length || ''}
+              <Cost value={listPlan.gems} icon="gems" short={gems} />
+            </button>
+          </>
+        ) : mode === 'sell' ? (
           <>
             <p className="roster__hint">
               Selling is permanent — a sold fighter cannot be bought back.
@@ -663,6 +809,54 @@ export default function Fighters() {
           confirmLabel="Sell them"
           onConfirm={() => void doSell()}
           onCancel={() => setConfirmSell(false)}
+        />
+      )}
+
+      {confirmList && (
+        <Confirm
+          title={`List ${listPlan.ids.length} fighter${listPlan.ids.length === 1 ? '' : 's'} on the market?`}
+          body={
+            <>
+              <p>
+                Each starts at <strong>{gemsWord(startPrice)}</strong> and runs
+                for{' '}
+                {Math.round(
+                  Number(marketConfig?.standard_duration_minutes ?? 0) / 60,
+                )}
+                h.
+              </p>
+              {/*
+                The fee is the part worth stating twice. It is charged per
+                fighter, it is charged whether or not anybody bids, and it is
+                the one number a player cannot get back by cancelling.
+              */}
+              <p>
+                The listing fee is{' '}
+                <strong>
+                  {gemsWord(Number(marketConfig?.gems_listing_price ?? 0))} each
+                  — {listPlan.gems.toLocaleString(NUM_LOCALE)} in total
+                </strong>
+                , spent whether or not they sell. They cannot fight while
+                listed.
+              </p>
+              <p className="faint">
+                {keepListed
+                  ? `Unsold fighters stay up as fixed-price offers at ${gemsWord(Number(marketConfig?.gems_instant_buy_price ?? 0))}.`
+                  : 'Unsold fighters come back to you.'}
+              </p>
+              <ul className="confirm__list">
+                {checkedFighters.map((f) => (
+                  <li key={f.fighter_id}>
+                    {f.racename} {f.classname} · level {f.stats.level}
+                    {f.ascension_level > 0 ? ` · asc ${f.ascension_level}` : ''}
+                  </li>
+                ))}
+              </ul>
+            </>
+          }
+          confirmLabel="List them"
+          onConfirm={() => void doList()}
+          onCancel={() => setConfirmList(false)}
         />
       )}
     </div>
@@ -1065,7 +1259,22 @@ export function FighterCard({
   const bonus = ageBonus(fighter, ageDecay, now)
   const abilities = s.abilities ?? []
   const shownAbility = abilities[Math.min(ability, Math.max(0, abilities.length - 1))]
-  const canSell = sellable(fighter)
+  /*
+     What the tick means depends on the mode, and so does who can be ticked.
+
+     Selling to the game only needs the fighter to be idle. The market is
+     stricter — `addauction` also refuses an inactive fighter and one whose
+     payday has come due — and the check is `listable`, the same function the
+     bar's gate uses, so a card that lets itself be ticked cannot be a card
+     the transaction will then reject.
+  */
+  const gate = mode === 'market' ? listable(fighter, now) : { ok: sellable(fighter) }
+  const canCheck = gate.ok
+  const checkTitle = canCheck
+    ? mode === 'market'
+      ? 'Select for the market'
+      : 'Select for selling'
+    : ('reason' in gate && gate.reason) || 'In use — cannot be sold'
   /* Every fighter rolls with its last ability locked, so this note is on
      every card in the game rather than an edge case. */
   const unlockNote = config?.asc_ability_unlock_lvl
@@ -1167,15 +1376,15 @@ export function FighterCard({
           </div>
 
           <div className="fcard__tools">
-            {mode === 'sell' && (
+            {mode !== 'inventory' && (
               <label
-                className={`fcard__check${canSell ? '' : ' fcard__check--off'}`}
-                title={canSell ? 'Select for selling' : 'In use — cannot be sold'}
+                className={`fcard__check${canCheck ? '' : ' fcard__check--off'}`}
+                title={checkTitle}
               >
                 <input
                   type="checkbox"
                   checked={checked}
-                  disabled={!canSell}
+                  disabled={!canCheck}
                   onChange={onCheck}
                 />
                 <span />

@@ -254,17 +254,46 @@ export function addAuction(
   session: Session,
   params: { fighterId: number; startPrice: number; keepAfterAuction: boolean },
 ) {
-  const action: ActionInput = {
+  return addAuctions(session, {
+    fighterIds: [params.fighterId],
+    startPrice: params.startPrice,
+    keepAfterAuction: params.keepAfterAuction,
+  })
+}
+
+/**
+ * List several fighters in one transaction, at the same starting bid.
+ *
+ * `addauction` takes one fighter and has no vector form — unlike `sellfighter`
+ * or `levelup`, which the contract does batch — so this is N actions signed
+ * together rather than one action over a list. That has two consequences worth
+ * knowing about:
+ *
+ *   • The listing fee is charged per action, so the gems come out N times.
+ *   • Each call ends with `compauct(10)` and `rmvoldoffers()`, the contract's
+ *     housekeeping sweeps. They are cheap when nothing is due and not free
+ *     when it is, so a very long list is the one way this can run out of CPU.
+ *     A transaction is all-or-nothing, so the failure mode is "nothing
+ *     happened", not a half-listed roster.
+ *
+ * One signature either way, which is the point: listing eight fighters by hand
+ * was eight trips through the wallet.
+ */
+export function addAuctions(
+  session: Session,
+  params: { fighterIds: number[]; startPrice: number; keepAfterAuction: boolean },
+) {
+  const actions: ActionInput[] = params.fighterIds.map((fighterId) => ({
     account: CONTRACTS.market,
     name: 'addauction',
     data: {
       wallet: String(session.actor),
-      fighter_id: params.fighterId,
+      fighter_id: fighterId,
       startprice: params.startPrice,
       keep_after_auction: params.keepAfterAuction,
     },
-  }
-  return transact(session, [action])
+  }))
+  return transact(session, actions)
 }
 
 /**
