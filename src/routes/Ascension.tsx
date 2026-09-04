@@ -4,7 +4,7 @@ import { fetchBattleConfig, fetchClassTemplates, fetchRoster } from '@/dungeon/q
 import { fetchFighterLevels, fetchFightersConfig } from '@/fighters/queries'
 import type { FighterLevel, FightersConfig } from '@/fighters/types'
 import { battleFactor } from '@/fighters/rules'
-import { FighterCard } from './Fighters'
+import { Cost, FighterCard } from './Fighters'
 import type { RosterFighter } from '@/dungeon/types'
 import {
   fetchAllUpgrades,
@@ -463,7 +463,11 @@ function Builder({
             onClick={onAscend}
           >
             {busy === 'ascend' && <span className="spinner" />}
-            Ascend for {formatNumber(fee)} credits
+            {/* Same chip as the re-roll beside it, and as every price in the
+                roster: one screen should not spell the currency out on one
+                button and mark it with a coin on the next. */}
+            Ascend
+            <Cost value={fee} icon="credits" short={credits} />
           </button>
         </div>
       </section>
@@ -752,7 +756,14 @@ function OfferPanel({
             }
           >
             {busy === 'reroll' && <span className="spinner" />}
-            Re-roll for {formatNumber(rerollFee)}
+            {/*
+              The figure carries its own currency, the way every other price
+              in the game does. "Re-roll for 499" named no unit at all, and
+              this screen spends credits on one button and hands out stat
+              points on the next three.
+            */}
+            Re-roll
+            <Cost value={rerollFee} icon="credits" short={credits} />
           </button>
         </div>
 

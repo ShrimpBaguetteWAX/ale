@@ -885,7 +885,7 @@ export default function Fighters() {
  * value is money coming *in*, sitting in a column of money going out, and
  * that is worth a mark.
  */
-function Cost({
+export function Cost({
   value,
   icon,
   gain,
