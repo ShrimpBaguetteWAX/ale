@@ -99,6 +99,11 @@
     grid-template-columns: minmax(0, 560px) minmax(0, 1fr);
   }
 
+  .tavern__fighter {
+    /* The banner's height, which the figure's crop is derived from. */
+    --band: 210px;
+  }
+
   /*
      The portrait keeps its height rather than taking the new width.
 
@@ -112,7 +117,22 @@
   */
   .tavern__fighter .portrait {
     aspect-ratio: auto;
-    height: 210px;
+    height: var(--band);
+  }
+
+  /*
+     How much of the fighter the band shows.
+
+     The art is a 357x512 portrait and the `<img>` sits in an auto-height grid
+     row, so it renders at whatever height its width implies and the band
+     clips the top of it. At the panel's full width that worked out at 729px
+     tall against a 210px band — the top 29%, which is a forehead. Sizing the
+     image's own box instead decides the crop directly: at 1.35x the band we
+     keep about three quarters of the figure, down to the knees, and the
+     backdrop fills the rest of the width behind it.
+  */
+  .tavern__fighter .portrait__art {
+    height: calc(var(--band) * 1.35);
   }
 
   .recruit__cols {
@@ -121,12 +141,19 @@
     align-items: start;
   }
 
-  .recruit__cols .resgrid {
+  .recruit__cols .recruit__res {
     /* The row above already spaces them; a second gap would double it. */
     margin-top: 0;
-    /* Three across in 250px is 80px a cell, which is not enough for
-       "NEUTRAL" and its figure. Two columns, three rows. */
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    /* One column in the right-hand track, matching the stats beside it. */
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* One per row again, so only the true last row loses its rule. */
+  .recruit__cols .recruit__res .statline:nth-last-child(-n + 2) {
+    border-bottom: 1px solid var(--line-soft);
+  }
+  .recruit__cols .recruit__res .statline:last-child {
+    border-bottom: 0;
   }
 }
 
@@ -180,6 +207,25 @@
   display: grid;
   gap: var(--sp-3);
   margin-top: var(--sp-3);
+}
+
+/*
+ * The recruit's resistances, in the same rows the main stats use.
+ *
+ * Two columns while they sit under the stats rather than beside them: six
+ * full-width rows there would be taller than the block of tiles this
+ * replaced, and the labels are one short word each.
+ */
+.recruit__res {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: var(--sp-4);
+  margin-top: var(--sp-3);
+}
+
+/* Two per row, so the last *row* is the last two cells. */
+.recruit__res .statline:nth-last-child(-n + 2) {
+  border-bottom: 0;
 }
 
 .resgrid {
@@ -282,6 +328,100 @@
   font-weight: var(--fw-bold);
   color: var(--text-faint);
   white-space: nowrap;
+}
+
+/*
+ * Turning over, when a card claims a discount or lets one go.
+ *
+ * Out to edge-on and back rather than a full turn. The row says the same
+ * thing on both sides, so what the half turn is for is the instant in the
+ * middle where it cannot be read — the colours change behind that, and the
+ * row comes back already claimed. A 360 would spend a third of its run
+ * showing the same words mirrored.
+ *
+ * `--i` staggers by position in the list. "Best pick" flips three or four at
+ * once, and 45ms apart turns that from a blink into something running down
+ * the list.
+ */
+@keyframes objective-turn {
+  0% {
+    transform: perspective(700px) rotateX(0) scale(1);
+  }
+  50% {
+    transform: perspective(700px) rotateX(90deg) scale(1.04);
+  }
+  100% {
+    transform: perspective(700px) rotateX(0) scale(1);
+  }
+}
+
+/* Only on the way in. Losing a discount should be legible, not celebrated. */
+@keyframes objective-halo {
+  0% {
+    box-shadow: 0 0 0 0 rgb(14 212 168 / 0%);
+  }
+  55% {
+    box-shadow: 0 0 0 0 rgb(14 212 168 / 0%);
+  }
+  70% {
+    box-shadow: 0 0 22px 2px rgb(14 212 168 / 55%);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgb(14 212 168 / 0%);
+  }
+}
+
+/* The figure that just came off the price, arriving with the colour. */
+@keyframes objective-mod {
+  0%,
+  50% {
+    transform: scale(1);
+  }
+  68% {
+    transform: scale(1.35);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.objective--claimed {
+  animation:
+    objective-turn 460ms var(--ease) both,
+    objective-halo 700ms var(--ease) both;
+  animation-delay: calc(var(--i, 0) * 45ms);
+}
+
+.objective--dropped {
+  /* Quicker and with nothing added: this is an undo. */
+  animation: objective-turn 320ms var(--ease) both;
+  animation-delay: calc(var(--i, 0) * 45ms);
+}
+
+.objective--claimed .objective__mod {
+  display: inline-block;
+  animation: objective-mod 460ms var(--ease) both;
+  animation-delay: calc(var(--i, 0) * 45ms);
+}
+
+/*
+ * The colour is the message; the turn is only how it arrives.
+ *
+ * With effects turned down or motion reduced, the row still goes teal — it
+ * simply does so without moving.
+ */
+:root[data-fx='low'] .objective--claimed,
+:root[data-fx='low'] .objective--dropped,
+:root[data-fx='low'] .objective--claimed .objective__mod {
+  animation: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .objective--claimed,
+  .objective--dropped,
+  .objective--claimed .objective__mod {
+    animation: none;
+  }
 }
 
 /* ---------- Inventory ---------- */

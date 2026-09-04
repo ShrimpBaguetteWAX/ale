@@ -174,6 +174,22 @@ if (borrow) {
               Number(row.last_tavern_fighter?.level ?? 0) > 0
                 ? row.last_tavern_fighter
                 : player.last_tavern_fighter,
+            /*
+               And the tavern itself when it is asking for something. The
+               mock asks for nothing, which is the one tavern where the
+               discounts panel has nothing in it to look at.
+
+               The screen sends you back to the map unless you are standing
+               on the tavern's own land, so the player moves to it.
+            */
+            ...((row.last_tavern?.objectives ?? []).length > 0
+              ? {
+                  last_tavern: row.last_tavern,
+                  planet: row.last_tavern.planet,
+                  x: row.last_tavern.x,
+                  y: row.last_tavern.y,
+                }
+              : {}),
           },
         } as never)
       }

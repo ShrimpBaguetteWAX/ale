@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, Navigate } from 'react-router-dom'
 import { fetchOwnedTemplates, resolveAssetIds } from '@/chain/atomic'
 import { landId } from '@/chain/landId'
@@ -86,6 +86,92 @@ function Grade({
       width={16}
       height={16}
     />
+  )
+}
+
+/**
+ * One discount, which turns over when a card claims or releases it.
+ *
+ * Picking an NFT can change several of these at once — "Best pick" routinely
+ * does — and the discount they buy is the whole reason the inventory below is
+ * on the screen. Without something to mark it, a row two panels away changed
+ * colour and the player found out by looking at the total.
+ *
+ * The flip goes out to edge-on and back rather than a full turn: the content
+ * is the same on both sides, so what a half turn buys is a moment where the
+ * row cannot be seen, which is when the new colours arrive. A full 360 would
+ * show the text mirrored on the way round to say the same thing.
+ *
+ * It fires on change only, never on mount — a screen that flipped every
+ * satisfied objective on arrival would be noise, not feedback. `flip` counts
+ * changes rather than naming a direction so that it can key the element:
+ * re-adding the same class does not restart a CSS animation, and a row with
+ * no state of its own is free to remount.
+ */
+function Objective({
+  label,
+  mod,
+  done,
+  index,
+}: {
+  label: string
+  mod: number
+  done: boolean
+  /** Its place in the list, for the cascade when several change together. */
+  index: number
+}) {
+  /*
+     The last value seen, not a "have I mounted yet" flag.
+
+     StrictMode runs a mount effect, tears it down and runs it again, so a
+     flag set on the first pass is already true on the second and every
+     objective the tavern had satisfied flipped the moment the screen opened.
+     Comparing the value cannot be fooled by being run twice.
+  */
+  const seen = useRef(done)
+  /** The turn in progress, if any: which way it went and how many have run. */
+  const [turn, setTurn] = useState<{ n: number; dir: 'claimed' | 'dropped' } | null>(
+    null,
+  )
+
+  useEffect(() => {
+    if (seen.current === done) return
+    seen.current = done
+    setTurn((t) => ({ n: (t?.n ?? 0) + 1, dir: done ? 'claimed' : 'dropped' }))
+  }, [done])
+
+  return (
+    <div
+      /*
+         Counting turns rather than naming one, because re-adding a class does
+         not restart a CSS animation — a player toggling the same card twice
+         inside half a second would see the second flip skipped. A changed key
+         remounts the row, and a row with no state of its own can afford that.
+      */
+      key={turn?.n ?? 0}
+      className={[
+        'objective',
+        done ? 'objective--done' : '',
+        turn ? `objective--${turn.dir}` : '',
+      ]
+        .filter(Boolean)
+        .join(' ')}
+      style={{ ['--i' as string]: index }}
+      onAnimationEnd={(e) => {
+        /*
+           Dropped off once it has played, so the class is a thing happening
+           rather than a mark left behind. The halo outlasts the turn, so a
+           claim waits for that one; the child's pop bubbles up here and is
+           not ours to act on.
+        */
+        if (e.target !== e.currentTarget) return
+        const last = turn?.dir === 'claimed' ? 'objective-halo' : 'objective-turn'
+        if (e.animationName === last) setTurn(null)
+      }}
+    >
+      <span className="objective__label">{label}</span>
+      <span className="objective__mod">−{mod}</span>
+    </div>
   )
 }
 
@@ -551,17 +637,32 @@ export default function Tavern() {
                   </div>
                 </div>
 
-                <div className="resgrid">
+                {/*
+                  Resistances as stat rows, not tiles.
+
+                  Beside the main stats they are the same kind of thing —
+                  a named figure with a grade against it — and two different
+                  presentations of that, a column of rows next to a block of
+                  cells, read as two unrelated panels rather than one fighter.
+
+                  Its own container rather than the shared `.resgrid`, which
+                  FighterPanel uses in the dungeon, the arena and the market
+                  and which the loadout restyles again.
+                */}
+                <div className="recruit__res">
                   {RESISTANCES.map(([key, label]) => {
                     const raw = (fighter as unknown as Record<string, number>)[key]
                     return (
-                      <div className="resgrid__cell" key={key}>
-                        <img
-                          src={asset(`/assets/icons/elements/${label.toLowerCase()}.png`)}
-                          alt=""
-                        />
-                        <span className="resgrid__label">{label}</span>
-                        <span className="resgrid__value mono">
+                      <div className="statline" key={key}>
+                        <span className="statline__k">
+                          <img
+                            className="statline__icon"
+                            src={asset(`/assets/icons/elements/${label.toLowerCase()}.png`)}
+                            alt=""
+                          />
+                          {label}
+                        </span>
+                        <span className="statline__v mono">
                           {formatResistance(raw)}
                           <Grade field={key} raw={raw} template={classTemplate} />
                         </span>
@@ -641,13 +742,13 @@ export default function Tavern() {
 
             <div className="objectives">
               {objectives.map((o, i) => (
-                <div
-                  className={`objective${breakdown.matched.has(i) ? ' objective--done' : ''}`}
+                <Objective
                   key={`${o.objective_type}-${o.objective_string}-${o.objective_value}-${i}`}
-                >
-                  <span className="objective__label">{objectiveLabel(o)}</span>
-                  <span className="objective__mod">−{o.mod_value}</span>
-                </div>
+                  label={objectiveLabel(o)}
+                  mod={o.mod_value}
+                  done={breakdown.matched.has(i)}
+                  index={i}
+                />
               ))}
               {objectives.length === 0 && (
                 <p className="muted">This tavern is asking for nothing today.</p>
