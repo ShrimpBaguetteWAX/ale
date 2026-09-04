@@ -2778,7 +2778,15 @@
   */
   padding: 4px calc(12% + 4px);
   font-family: var(--font-display);
-  font-size: 9px;
+  /*
+     Ten, not nine or eight.
+
+     Orbitron is a display face and it turns to mush below about ten pixels —
+     which is what "the text is not sharp" was, every time. The size had been
+     dropped to 8px to squeeze a word in that did not fit at any size; with
+     the wording shortened there is nothing left to buy by shrinking it.
+  */
+  font-size: 10px;
   font-weight: var(--fw-bold);
   line-height: 1.25;
   letter-spacing: 0.02em;
@@ -2790,16 +2798,10 @@
   border-bottom: 1px solid rgb(255 255 255 / 22%);
 }
 
-@media (min-width: 720px) {
-  .combatcard__dormant {
-    font-size: 10px;
-  }
-}
-
-/* Three short lines rather than five, in the width a phone card has. */
 @media (max-width: 719px) {
   .combatcard__dormant {
-    font-size: 8px;
+    /* 0.02em is a fifth of a pixel a letter, and the band has none to give
+       away at 49px. The size stays; only the tracking goes. */
     letter-spacing: 0;
     /*
        The plate is a smaller share of a phone card — the ability counts move

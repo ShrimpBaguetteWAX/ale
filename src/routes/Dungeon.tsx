@@ -744,8 +744,22 @@ export default function Dungeon() {
                   */
                   abilities={picked.length ? enemySlots[i] : undefined}
                   dormant={
+                    /*
+                       "Joins at 5", not "Joins at difficulty 5".
+
+                       The word does not fit and never did. A card in a
+                       six-across row is 66px at 1280 and 49px on a phone,
+                       which leaves the band about 40px of text to work with —
+                       and "DIFFICULTY" measures 54px at a legible 10px, or
+                       43px at the 8px it had been shrunk to in order to cope.
+                       So it broke mid-word into "DIFFICULT / Y 5" and was too
+                       small to read either way.
+
+                       The number is unambiguous where it sits: the difficulty
+                       stepper is the control directly above this row.
+                    */
                     f.fighter_id === NFT_FIGHTER_ID && difficulty < nftMinDifficulty
-                      ? `Joins at difficulty ${nftMinDifficulty}`
+                      ? `Joins at ${nftMinDifficulty}`
                       : undefined
                   }
                   onOpen={() => showEnemy(f)}
