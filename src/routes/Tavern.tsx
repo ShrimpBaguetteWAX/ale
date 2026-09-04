@@ -373,8 +373,29 @@ export default function Tavern() {
   */
   const [unlockLevel, setUnlockLevel] = useState<number | undefined>()
 
-  const tavern = player.last_tavern
-  const fighter = player.last_tavern_fighter
+  /*
+     The tavern as it was when the hire started, held for as long as the hire
+     is still going on.
+
+     `users::hire` empties `last_tavern` and `last_tavern_fighter` on the
+     player's row, and the poll that confirms the hire reads that row back —
+     so the recruit, the discounts and the land the screen stands on all
+     vanished the moment the first transaction landed. With a marker chosen
+     that is the middle of the errand, and the player spent the wait between
+     two signatures looking at "nobody has stepped forward yet" and a Reveal
+     button.
+
+     Not the same thing as not clearing it: the row really has emptied, and
+     everything else reading it should see that. This is only what this screen
+     draws until it is finished with it.
+  */
+  const [frozen, setFrozen] = useState<{
+    tavern: typeof player.last_tavern
+    fighter: typeof player.last_tavern_fighter
+  } | null>(null)
+
+  const tavern = frozen?.tavern ?? player.last_tavern
+  const fighter = frozen?.fighter ?? player.last_tavern_fighter
   // The contract requires the player to still be standing on the tavern's
   // land, so the screen is only valid while that holds.
   const onTavernLand = !!tavern?.land_id && tavern.land_id === landId(player.x, player.y)
@@ -515,6 +536,8 @@ export default function Tavern() {
     setBusy('hire')
     setError(null)
     setNotice(null)
+    /* Snapshot before anything can empty the row underneath the screen. */
+    setFrozen({ tavern: player.last_tavern, fighter: player.last_tavern_fighter })
     /* Whether the hire itself went through, which decides the cleanup below. */
     let hired = false
     try {
@@ -562,7 +585,6 @@ export default function Tavern() {
         await refreshPlayer({ force: true })
         if (!useGame.getState().player?.last_tavern?.land_id) break
       }
-      setPicked([])
 
       if (!marker || !before) {
         setNotice('Recruit hired. They have joined your roster.')
@@ -653,8 +675,15 @@ export default function Tavern() {
               }
             : state,
         )
+        /* The cards go back with the recruit they paid for, not before it. */
+        setPicked([])
       }
-      /* Last, because the redirect is held open while this is set. */
+      /*
+         Both last, because both hold the screen: `frozen` is what it draws
+         and `busy` is what keeps the redirect from firing. Dropping either
+         earlier is what emptied the panel between the two signatures.
+      */
+      setFrozen(null)
       setBusy(null)
     }
   }
