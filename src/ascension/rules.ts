@@ -282,6 +282,21 @@ export function upgradeLabel(
   return `${positive ? '+' : '−'}${trimmed(n)}${isResistance(stat) ? '%' : ''} ${statLabel(stat)}`
 }
 
+/** "+0.5 to +1.5", scaled the same way a single offer is. */
+export function upgradeRange(
+  stat: string,
+  min: number,
+  max: number,
+  positive: boolean,
+  factor = 1,
+): string {
+  const sign = positive ? '+' : '−'
+  const unit = isResistance(stat) ? '%' : ''
+  const lo = trimmed(upgradeGain(stat, min, factor))
+  const hi = trimmed(upgradeGain(stat, max, factor))
+  return `${sign}${lo}${unit} to ${sign}${hi}${unit}`
+}
+
 /**
  * The icon the rest of the game uses for this stat.
  *

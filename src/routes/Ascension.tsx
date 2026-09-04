@@ -27,6 +27,7 @@ import {
   statLabel,
   upgradeIcon,
   upgradeLabel,
+  upgradeRange,
   type Requirement,
 } from '@/ascension/rules'
 import {
@@ -264,14 +265,7 @@ export default function Ascension() {
   return (
     <div className="ascension">
       <header className="ascension__head">
-        <div>
-          <h1 className="screen__title">Ascension</h1>
-          <p className="hint">
-            Spend three fighters to push a maxed one past its cap. The three
-            are not interchangeable — between them they have to cover element,
-            race and the Sacrifice ability, and no fighter can cover two.
-          </p>
-        </div>
+        <h1 className="screen__title">Ascension</h1>
       </header>
 
       {error && <div className="alert alert--error">{error}</div>}
@@ -350,7 +344,20 @@ export default function Ascension() {
         />
       )}
 
-      <OddsPanel odds={odds} />
+      {/*
+        Quoted for the fighter on screen: the one mid-ascension if there is
+        one, otherwise the one picked to ascend. With neither, the ranges are
+        the bare stored values and say so by naming nobody.
+      */}
+      <OddsPanel
+        odds={odds}
+        forFighter={pending ?? target ?? undefined}
+        factor={
+          pending ?? target
+            ? battleFactor((pending ?? target)!, levelMod, ageDecay).total
+            : 1
+        }
+      />
     </div>
   )
 }
@@ -749,6 +756,8 @@ function OfferPanel({
           </button>
         </div>
 
+        <h3 className="ascoffer__pickTitle">Pick one of these improvements</h3>
+
         <div className="ascoffer__body">
           {/*
             The roster's own card, not a summary of it. Same fighter, same
@@ -775,7 +784,12 @@ function OfferPanel({
           </div>
 
           <div className="ascoffer__picks">
-            <h3 className="ascoffer__pickTitle">Pick one of these improvements</h3>
+            {/*
+              The heading sits over the card as well as the list, so the two
+              columns start on the same line. Inside the right column it put
+              the first roll a heading's height below the card's top edge and
+              left the pair looking dropped.
+            */}
             {offers.length === 0 ? (
               <p className="muted">No offers on this fighter yet.</p>
             ) : (
@@ -825,8 +839,13 @@ function OfferPanel({
                               ? 'Improvement'
                               : 'Penalty'}
                         </span>
+                        {/*
+                          Naming the consequence, not the gesture. Taking one
+                          roll spends the ascension and discards the other
+                          two, which "Take this" did not say.
+                        */}
                         <span className="offerrow__take">
-                          {busy === 'claim' ? 'Working…' : 'Take this'}
+                          {busy === 'claim' ? 'Working…' : 'Choose this and ascend'}
                         </span>
                       </button>
                     </li>
@@ -843,7 +862,27 @@ function OfferPanel({
 
 /* ---------- what can be rolled ---------- */
 
-function OddsPanel({ odds }: { odds: UpgradeOdds[] }) {
+/**
+ * Every roll in the game, at the size it would be for this fighter.
+ *
+ * The table was printing the contract's stored min and max, so a damage roll
+ * that sits on chain as "5 to 15" was shown as "+5 to +15" — ten times its
+ * displayed size, before the level factor that makes it worth four times
+ * again. It matched nothing on the offers directly above it. Same arithmetic
+ * as an offer now: ten to one, then the fighter's level and age on the two
+ * stats the contract grows.
+ */
+function OddsPanel({
+  odds,
+  factor,
+  forFighter,
+}: {
+  odds: UpgradeOdds[]
+  /** The fighter's level × age multiplier, applied to health and damage. */
+  factor: number
+  /** Whose level the ranges are quoted at, for the line that says so. */
+  forFighter?: RosterFighter
+}) {
   const sorted = useMemo(
     () => [...odds].sort((a, b) => b.chance - a.chance),
     [odds],
@@ -869,6 +908,9 @@ function OddsPanel({ odds }: { odds: UpgradeOdds[] }) {
       <p className="hint">
         Every offer is drawn by weight: a category first, then an upgrade
         inside it. Each of the three offers is rolled independently.
+        {forFighter
+          ? ` Ranges are what a roll would be worth to your level ${forFighter.stats.level} ${forFighter.classname}.`
+          : ''}
       </p>
       <div className="oddslist">
         {sorted.map((u) => {
@@ -878,6 +920,14 @@ function OddsPanel({ odds }: { odds: UpgradeOdds[] }) {
           return (
             <div className="oddsrow" key={`${u.category}-${u.upgrade_name}`}>
               <span className="oddsrow__name">
+                {/* The same mark the offer rows and the stat rows carry. */}
+                <img
+                  className="oddsrow__icon"
+                  src={upgradeIcon(u.stat_name)}
+                  alt=""
+                  width={16}
+                  height={16}
+                />
                 <strong>{statLabel(u.stat_name)}</strong>
                 <em>{u.category}</em>
               </span>
@@ -886,9 +936,7 @@ function OddsPanel({ odds }: { odds: UpgradeOdds[] }) {
                   mixed ? '' : good ? 'is-good' : 'is-bad'
                 }`}
               >
-                {positive ? '+' : '−'}
-                {formatNumber(u.min)} to {positive ? '+' : '−'}
-                {formatNumber(u.max)}
+                {upgradeRange(u.stat_name, u.min, u.max, positive, factor)}
               </span>
               <span className="oddsrow__chance">
                 {(u.chance * 100).toFixed(1)}%
