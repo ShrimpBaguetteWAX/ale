@@ -1753,12 +1753,61 @@
  * would leave the remove bars at six different heights down a row. One
  * fractional track absorbs the slack, and the rows under it stay put.
  */
+/*
+ * The lean belongs to the slot, not to the card alone.
+ *
+ * Skewing the card and the bar separately does not make one shape out of
+ * them: `skewX` displaces a horizontal line in proportion to its distance
+ * from the element's own centre, so a 106px card moves its bottom edge 4.6px
+ * while a 20px bar moves its top edge 0.9px the other way — the two leaning
+ * pieces met at a 5px step. Skewing the one element that contains both makes
+ * the card's bottom edge and the bar's top edge two points on the same
+ * slanted line, which is what "line up" means here.
+ *
+ * The card keeps its own `overflow: hidden` and its own hover lift; it simply
+ * inherits the angle now. Everything counter-skewed inside it still cancels,
+ * because a counter-skew cancels whatever skew it is nested in.
+ */
 .combatslot {
   display: grid;
   grid-template-rows: 1fr;
   grid-auto-rows: auto;
   gap: 3px;
   min-width: 0;
+  transform: skewX(var(--lean));
+}
+
+.combatslot > .combatcard {
+  transform: none;
+}
+
+.combatslot > .combatcard:hover {
+  transform: translateY(-3px);
+}
+
+:root[data-fx='low'] .combatslot > .combatcard:hover {
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .combatslot > .combatcard:hover {
+    transform: none;
+  }
+}
+
+/*
+ * The bare slots lean about the point their neighbours lean about.
+ *
+ * An empty slot and a loading skeleton are direct children of the row rather
+ * than of a `.combatslot`, so they are skewed about their own centre — and
+ * their centre is higher than a slot's by half of whatever the slot carries
+ * below its card. Left alone they leaned around a different pivot from the
+ * cards beside them and the row zig-zagged by a couple of pixels wherever a
+ * gap sat next to a fighter. Moving the origin down by half the rows they
+ * already subtract puts them back on the same slant.
+ */
+.versus__row > .combatcard {
+  transform-origin: 50% calc(50% + (var(--underrow) + var(--removerow)) / 2);
 }
 
 @media (max-width: 719px) {
@@ -1772,6 +1821,10 @@
     align-items: center;
     justify-content: center;
     min-height: 14px;
+    /* Upright, like every other piece of writing on a card. The slot leans
+       now, so staying upright takes the counter-skew that the card's own
+       content has always taken. */
+    transform: skewX(var(--lean-back));
   }
 }
 
@@ -1813,6 +1866,16 @@
   border-color: rgb(255 52 52 / 60%);
   background: rgb(255 52 52 / 16%);
   color: #ff8f8f;
+}
+
+/*
+ * The bar leans with the slot; the writing on it does not.
+ *
+ * Counter-skewed per label rather than on the button, which would un-skew the
+ * parallelogram itself — the lean is the whole point of the bar.
+ */
+.combatslot__remove > * {
+  transform: skewX(var(--lean-back));
 }
 
 /* The cross carries it on a phone, so it is the part that stays legible. */
