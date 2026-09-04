@@ -261,6 +261,44 @@
   height: 20px;
 }
 
+/*
+ * The two legs of a cross-planet trip, under the total they add up to.
+ *
+ * Subordinate to the total on purpose: the number a player decides on is the
+ * one in the box above, and this is the working. Dotted leaders rather than a
+ * table because there are exactly two rows and a table's chrome would weigh
+ * more than the numbers in it.
+ */
+.travelroute {
+  margin: var(--sp-2) 0 0;
+  padding: 0 var(--sp-3);
+  list-style: none;
+  font-size: var(--fs-xs);
+  color: var(--text-faint);
+}
+
+.travelroute li {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+  padding: 2px 0;
+}
+
+/* The leader, which is what keeps a label off its own figure. */
+.travelroute li::after {
+  content: '';
+  order: 1;
+  flex: 1 1 auto;
+  min-width: var(--sp-3);
+  border-bottom: 1px dotted var(--line);
+  transform: translateY(-3px);
+}
+
+.travelroute li > :last-child {
+  order: 2;
+  color: var(--text-dim);
+}
+
 /* ---------- Legend ---------- */
 
 .legendbtn {

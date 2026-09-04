@@ -30,8 +30,9 @@ import {
 import { dungeonMaintained } from '@/dungeon/rules'
 import { arenaMaintained } from '@/arena/rules'
 import { useGame } from '@/state/useGame'
-import { travel } from '@/wharf/actions'
+import { travelVia } from '@/wharf/actions'
 import { PortalWarp, WARP_TOTAL_MS } from '@/map/PortalWarp'
+import { planetRoute } from '@/map/route'
 import { readableError } from '@/wharf/errors'
 import { NUM_LOCALE } from '@/format'
 import { asset } from '@/assets'
@@ -333,21 +334,31 @@ export default function MapView() {
     }
   }, [landsByPlanet, owners])
 
-  // Switching to a planet the warmup hasn't reached yet: pull it now.
+  /*
+    Switching to a planet the warmup hasn't reached yet: pull it now.
+
+    Both the planet being looked at and the one the player is standing on. The
+    second is what holds the portals — a route off this planet is chosen from
+    its teleporter tiles — so while you are looking at somewhere else, the
+    map you are *not* looking at is the one that decides whether the Travel
+    button can be offered at all.
+  */
   useEffect(() => {
-    if (landsByPlanet[planet]) return
     let cancelled = false
-    fetchPlanetLands(planet)
-      .then((rows) => {
-        if (!cancelled) setLandsByPlanet((prev) => ({ ...prev, [planet]: rows }))
-      })
-      .catch((err) => {
-        if (!cancelled) setLoadError(readableError(err))
-      })
+    for (const p of new Set<Planet>([planet, player.planet])) {
+      if (landsByPlanet[p]) continue
+      fetchPlanetLands(p)
+        .then((rows) => {
+          if (!cancelled) setLandsByPlanet((prev) => ({ ...prev, [p]: rows }))
+        })
+        .catch((err) => {
+          if (!cancelled) setLoadError(readableError(err))
+        })
+    }
     return () => {
       cancelled = true
     }
-  }, [planet, landsByPlanet])
+  }, [planet, player.planet, landsByPlanet])
 
   /**
    * Landowners are shown by gamertag where they have one. The wallet is a
@@ -454,10 +465,38 @@ export default function MapView() {
 
   const land = selected ? byCoord.get(selected.x + ',' + selected.y) : undefined
   const onPlanet = planet === player.planet
-  const isHere = !!selected && selected.x === player.x && selected.y === player.y
+  /* Coordinates repeat on every planet, so "here" is a planet as well. */
+  const isHere =
+    !!selected && onPlanet && selected.x === player.x && selected.y === player.y
   const portalTo = land?.special_effect ? PORTAL_EFFECTS[land.special_effect] : undefined
 
-  const cost = selected && config ? travelCost(player, selected, config, !!portalTo) : null
+  /*
+     Getting there from another planet, when that is what this is.
+
+     Built off the player's own planet's lands rather than the ones on screen:
+     the portal that starts the trip is a tile where the player is standing
+     now, not one on the map they are looking at.
+  */
+  const route = useMemo(
+    () =>
+      !onPlanet && selected && land
+        ? planetRoute(
+            player,
+            selected,
+            planet,
+            landsByPlanet[player.planet],
+            land,
+            config,
+          )
+        : null,
+    [onPlanet, selected, land, player, planet, landsByPlanet, config],
+  )
+
+  const cost = selected && config
+    ? onPlanet
+      ? travelCost(player, selected, config, !!portalTo)
+      : (route?.cost ?? null)
+    : null
   const canAfford = cost === null || player.activestats.action_points >= cost
 
   /*
@@ -491,8 +530,12 @@ export default function MapView() {
        Stepping is already animated by the pin flying to its new tile, and the
        map underneath stays the map you were looking at. A jump replaces the
        whole grid, which is the thing worth covering.
+
+       A cross-planet trip is a jump by definition — its first leg is the
+       portal — so it takes the wormhole whether or not the tile it finishes
+       on happens to be a teleporter too.
     */
-    const gate = portalTo
+    const gate = route ? planet : portalTo
 
     try {
       /*
@@ -504,14 +547,31 @@ export default function MapView() {
          means the wait has to happen first. The button keeps its spinner
          throughout, which is what a pending transaction should look like.
       */
-      await travel(session, selected.x, selected.y)
+      /*
+         One signature either way. A cross-planet trip sends both legs in the
+         same transaction: the portal hop, then the walk from where it drops
+         you. All-or-nothing, so a failed second leg cannot leave the player
+         stranded on a portal tile on the wrong side of the map.
+      */
+      await travelVia(
+        session,
+        route ? route.legs.map((l) => ({ x: l.x, y: l.y })) : [selected],
+      )
 
       let arrived: typeof player | null = null
       for (let i = 0; i < 8; i++) {
         await new Promise((r) => setTimeout(r, 700))
         await refreshPlayer({ force: true })
         const p = useGame.getState().player
-        if (p && p.x === selected.x && p.y === selected.y) {
+        /*
+           The planet is part of "arrived" on a cross-planet trip, and only
+           there. Two planets share every coordinate, so waiting on x and y
+           alone would call it done the moment the row happened to read back
+           mid-flight — after the portal hop, which lands on the same x,y the
+           second leg starts from.
+        */
+        if (p && p.x === selected.x && p.y === selected.y &&
+            (!route || p.planet === planet)) {
           arrived = p
           break
         }
@@ -743,10 +803,11 @@ export default function MapView() {
         </div>
       )}
 
-      {!onPlanet ? (
+      {!onPlanet && !route ? (
         <p className="hint">
-          You are on <strong>{player.planet}</strong>. Travel moves you within your
-          current planet — step onto a portal to change planet.
+          You are on <strong>{player.planet}</strong>, and it has no portal to{' '}
+          <strong>{planet}</strong>. Travel to a planet that does, and go on
+          from there.
         </p>
       ) : !land ? (
         <p className="hint">No land exists at these coordinates.</p>
@@ -756,13 +817,41 @@ export default function MapView() {
         <>
           <div className={`travelcost${canAfford ? '' : ' travelcost--short'}`}>
             <span className="statline__k">
-              {travelDistance(player, selected).toFixed(1)} away
+              {route
+                ? `via the ${player.planet} portal at ${route.portal.x},${route.portal.y}`
+                : `${travelDistance(player, selected).toFixed(1)} away`}
             </span>
             <span className="travelcost__value">
               <img src={asset("/assets/icons/energy.png")} alt="" />
               {cost}
             </span>
           </div>
+
+          {/*
+            The two legs, priced separately.
+
+            A player looking at a number twice the size of the one they are
+            used to should be able to see where it went, and the split is not
+            guessable: the first leg carries the portal surcharge and is
+            measured from where they stand, the second from the portal's own
+            coordinates on the far side rather than from anything on screen.
+          */}
+          {route && route.legs.length > 1 && (
+            <ul className="travelroute">
+              <li>
+                <span>
+                  To the portal at {route.portal.x},{route.portal.y}
+                </span>
+                <span className="mono">{route.legs[0].cost}</span>
+              </li>
+              <li>
+                <span>
+                  Across {planet} to {selected.x},{selected.y}
+                </span>
+                <span className="mono">{route.legs[1].cost}</span>
+              </li>
+            </ul>
+          )}
 
           <button
             type="button"

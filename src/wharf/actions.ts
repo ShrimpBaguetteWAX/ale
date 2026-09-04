@@ -53,12 +53,31 @@ export function validatePlayertag(tag: string): string | null {
 
 /** Move to a tile. Costs action points; may teleport via a portal land. */
 export function travel(session: Session, x: number, y: number) {
-  const action: ActionInput = {
+  return travelVia(session, [{ x, y }])
+}
+
+/**
+ * One or more moves, signed together.
+ *
+ * A trip to another planet is two ordinary travels: onto a portal tile, which
+ * swaps the planet and leaves you at that tile's coordinates on the far side,
+ * and then from there to where you were actually going. Antelope runs a
+ * top-level action and all of its inline actions to completion before
+ * starting the next, so the second `travel` reads a player row the first has
+ * already moved and already charged — the legs compose exactly as if they had
+ * been sent one after another, but the player signs once and cannot end up
+ * stranded on the portal tile because a transaction is all-or-nothing.
+ */
+export function travelVia(
+  session: Session,
+  hops: { x: number; y: number }[],
+) {
+  const actions: ActionInput[] = hops.map(({ x, y }) => ({
     account: CONTRACTS.players,
     name: 'travel',
     data: { wallet: String(session.actor), x, y },
-  }
-  return transact(session, [action])
+  }))
+  return transact(session, actions)
 }
 
 /** Choose an unlocked avatar. */
