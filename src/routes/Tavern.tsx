@@ -477,7 +477,17 @@ export default function Tavern() {
     setPicked(suggestCards(objectives, inventory).map((t) => t.templateid))
   }, [objectives, inventory])
 
-  if (!onTavernLand) return <Navigate to="/map" replace />
+  /*
+     Held open while a transaction is still running.
+
+     `hire` empties the tavern on the player's row, so the moment it confirms
+     this screen has no tavern to be standing on and sends the player back to
+     the map. With a marker chosen that happens between the two transactions
+     — the wallet's second prompt would arrive over the map, for a screen the
+     player had already been thrown out of. The redirect waits for the whole
+     errand instead.
+  */
+  if (!onTavernLand && busy === null) return <Navigate to="/map" replace />
 
   const doReveal = async () => {
     if (!session) return
@@ -505,6 +515,8 @@ export default function Tavern() {
     setBusy('hire')
     setError(null)
     setNotice(null)
+    /* Whether the hire itself went through, which decides the cleanup below. */
+    let hired = false
     try {
       // The contract wants asset ids; the player picked templates. Resolve
       // one copy of each, in the same order, so the cost the contract
@@ -542,42 +554,7 @@ export default function Tavern() {
       }
 
       await hireFighter(session, assetIds, breakdown.cost)
-
-      /*
-       * Clear the tavern locally, straight away.
-       *
-       * `users::hire` always empties `last_tavern` and `last_tavern_fighter`,
-       * so once the transaction is accepted this is certain — and waiting for
-       * a read to confirm it is a race the UI can lose. Reads rotate across
-       * nodes, and one that is a block or two behind still returns the
-       * pre-hire row, which left the map still offering "Enter Tavern" for a
-       * tavern the player had just used.
-       */
-      useGame.setState((state) =>
-        state.player
-          ? {
-              player: {
-                ...state.player,
-                last_tavern: {
-                  planet: '',
-                  x: 0,
-                  y: 0,
-                  land_id: '',
-                  selection_score: 0,
-                  boost_score: 0,
-                  displayname: '',
-                  required_maintenance: '1970-01-01T00:00:00',
-                  objectives: [],
-                },
-                last_tavern_fighter: {
-                  ...state.player.last_tavern_fighter,
-                  level: 0,
-                  abilities: [],
-                },
-              },
-            }
-          : state,
-      )
+      hired = true
 
       // Then confirm from chain, which also picks up the spent energy.
       for (let i = 0; i < 8; i++) {
@@ -633,6 +610,51 @@ export default function Tavern() {
     } catch (err) {
       setError(readableError(err))
     } finally {
+      /*
+       * Clear the tavern locally, at the end of the errand rather than the
+       * moment the hire confirms.
+       *
+       * `users::hire` always empties `last_tavern` and `last_tavern_fighter`,
+       * so once the transaction is accepted this is certain — and waiting for
+       * a read to confirm it is a race the UI can lose. Reads rotate across
+       * nodes, and one that is a block or two behind still returns the
+       * pre-hire row, which left the map still offering "Enter Tavern" for a
+       * tavern the player had just used.
+       *
+       * Doing it here rather than straight after the hire is what keeps the
+       * recruit on screen while the marker is being set: emptied early, this
+       * screen has nothing to stand on, falls back to "nobody has stepped
+       * forward yet", and offers a Reveal button in the middle of a second
+       * signature.
+       */
+      if (hired) {
+        useGame.setState((state) =>
+          state.player
+            ? {
+                player: {
+                  ...state.player,
+                  last_tavern: {
+                    planet: '',
+                    x: 0,
+                    y: 0,
+                    land_id: '',
+                    selection_score: 0,
+                    boost_score: 0,
+                    displayname: '',
+                    required_maintenance: '1970-01-01T00:00:00',
+                    objectives: [],
+                  },
+                  last_tavern_fighter: {
+                    ...state.player.last_tavern_fighter,
+                    level: 0,
+                    abilities: [],
+                  },
+                },
+              }
+            : state,
+        )
+      }
+      /* Last, because the redirect is held open while this is set. */
       setBusy(null)
     }
   }

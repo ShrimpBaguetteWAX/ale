@@ -130,6 +130,15 @@ useGame.setState({
   refreshPlayer: async () => {},
 } as never)
 
+/*
+ * The store, reachable from the console.
+ *
+ * Some behaviour only shows up in response to state the app writes for itself
+ * — the tavern emptying its own row after a hire, for one — and there is no
+ * other way to put a screen into that state without sending the transaction.
+ */
+;(window as unknown as { __game: typeof useGame }).__game = useGame
+
 /* The real config, so travel costs are the ones the game charges. */
 void fetchConfig().then((config) => config && useGame.setState({ config }))
 

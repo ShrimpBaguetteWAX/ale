@@ -2747,9 +2747,36 @@
      filter half a pixel is the difference between text and a smudge. The
      name plate below it has no such offset and has always been sharp.
   */
-  top: 27%;
+  /*
+     Anchored above the name plate and growing upward, rather than pinned to
+     a percentage from the top and growing down into it.
+
+     `top: 27%` only held for the number of lines it was measured against. The
+     plate is anchored to the bottom of the card and takes about half of it at
+     the narrowest cards, so once the label wrapped to a third line it grew
+     straight through the fighter's name — 19px of it at 1280, where six cards
+     share the row and each is 66px wide. Anchored the other way round, extra
+     lines go up into the artwork, which has nothing in it.
+  */
+  bottom: 55%;
   transform: skewX(var(--lean-back));
-  padding: 4px 3px;
+  /*
+     The overhang is given back as padding, so the words wrap against what is
+     visible rather than against the box.
+
+     The band is 124% of the card because the ends have to reach past the
+     leaning edges; the card clips it back to 100%. Text laid out in that box
+     is therefore centred over 124% and up to 12% of it falls outside the
+     card — which is how "Joins at difficulty 5" became "OINS AT DIFFICULTY"
+     in a band of widths around 780px, where the whole line happens to fit
+     the ribbon but not the card. Padding each side by the same 12% the
+     element is pulled out by leaves a content box exactly the card's width,
+     so a line that does not fit wraps instead of running off the edge.
+
+     Plus 4px, which is the margin the lean needs: the band is upright inside
+     a leaning card, so the card's edge moves across the band's own height.
+  */
+  padding: 4px calc(12% + 4px);
   font-family: var(--font-display);
   font-size: 9px;
   font-weight: var(--fw-bold);
@@ -2774,5 +2801,11 @@
   .combatcard__dormant {
     font-size: 8px;
     letter-spacing: 0;
+    /*
+       The plate is a smaller share of a phone card — the ability counts move
+       out from under it to their own row below the card — so the band can sit
+       lower here than it can on a desktop.
+    */
+    bottom: 46%;
   }
 }

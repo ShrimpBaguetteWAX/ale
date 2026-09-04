@@ -6,6 +6,7 @@ import {
   fetchLandsConfig,
   fetchLiveArenas,
   fetchPlanetLands,
+  fetchPlayer,
   fetchPlayerTag,
   fetchPlayerTags,
 } from '@/chain/queries'
@@ -558,11 +559,26 @@ export default function MapView() {
         route ? route.legs.map((l) => ({ x: l.x, y: l.y })) : [selected],
       )
 
+      /*
+         Polled without writing to the store, on a jump.
+
+         `refreshPlayer` publishes the new row to everything reading it, and
+         the pin is one of those — so confirming the arrival that way moved
+         the player to the far side of the galaxy and *then* played the
+         wormhole they had already come through. Read it here and hold it;
+         the overlay commits it below, once the screen is covered.
+
+         A step across the same planet keeps publishing as it goes: there is
+         no overlay to wait for, and the pin flying to its new tile is the
+         animation.
+      */
       let arrived: typeof player | null = null
       for (let i = 0; i < 8; i++) {
         await new Promise((r) => setTimeout(r, 700))
-        await refreshPlayer({ force: true })
-        const p = useGame.getState().player
+        const p = gate
+          ? ((await fetchPlayer(player.wallet, true)) ?? null)
+          : (await refreshPlayer({ force: true }),
+            useGame.getState().player ?? null)
         /*
            The planet is part of "arrived" on a cross-planet trip, and only
            there. Two planets share every coordinate, so waiting on x and y
@@ -579,8 +595,16 @@ export default function MapView() {
 
       if (gate && arrived) {
         setJump(gate)
-        /* Let it cover the screen before the grid underneath changes. */
+        /*
+           Everything that moves the player happens behind the overlay.
+
+           The grid changing was already waiting for this; the player's own
+           position is now too. Publishing the row here rather than while
+           polling is what makes the wormhole the moment they travel instead
+           of a flourish after the fact.
+        */
         await new Promise((r) => setTimeout(r, WARP_COVERED_MS))
+        await refreshPlayer({ force: true })
         if (arrived.planet !== planet) setPlanet(arrived.planet)
         setRecenter((n) => n + 1)
         await new Promise((r) => setTimeout(r, WARP_TOTAL_MS - WARP_COVERED_MS))
