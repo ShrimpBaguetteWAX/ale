@@ -1069,8 +1069,8 @@ export function FighterCard({
   /* Every fighter rolls with its last ability locked, so this note is on
      every card in the game rather than an edge case. */
   const unlockNote = config?.asc_ability_unlock_lvl
-    ? `Locked until ascension ${config.asc_ability_unlock_lvl}`
-    : 'Locked until ascension'
+    ? `Unlocks at ascension ${config.asc_ability_unlock_lvl}`
+    : 'Unlocks on ascension'
 
   const classes = [
     'fcard',
@@ -1340,6 +1340,32 @@ export function FighterCard({
                     style={{ borderLeftColor: abilityColor(shownAbility.displayname) }}
                   >
                     <span className="fability__desc">
+                      {/*
+                        What would unlock it, leading the description.
+
+                        The lock glyph on the pick above says "not yet" and
+                        nothing about what changes that; the answer was in a
+                        `title`, which a phone cannot reach at all — and every
+                        fighter in the game rolls with its last ability
+                        locked, so that tooltip was the only place the most
+                        common question on this screen had an answer.
+
+                        Inside the description rather than above it because
+                        this column is 92px wide: on its own line the sentence
+                        wrapped five times and grew the card by 65px, so
+                        picking a locked ability reflowed the grid.
+                      */}
+                      {!!shownAbility.locked && (
+                        <em className="fability__unlock">
+                          <img
+                            src={asset('/assets/icons/lock.svg')}
+                            alt=""
+                            width={10}
+                            height={10}
+                          />
+                          {unlockNote}.{' '}
+                        </em>
+                      )}
                       {resolveAbilityDescription(shownAbility)}
                     </span>
                   </div>

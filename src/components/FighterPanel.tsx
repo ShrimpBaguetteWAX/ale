@@ -348,8 +348,8 @@ export function FighterPanel({
                     <span className="ability__locked">
                       <img src={asset("/assets/icons/lock.svg")} alt="" width={11} height={11} />
                       {abilityUnlockLevel
-                        ? `Locked until ascension ${abilityUnlockLevel}`
-                        : 'Locked until ascension'}
+                        ? `Unlocks at ascension ${abilityUnlockLevel}`
+                        : 'Unlocks on ascension'}
                     </span>
                   )}
                 </div>

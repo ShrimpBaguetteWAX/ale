@@ -193,6 +193,30 @@
 }
 
 /*
+ * Ascension, in the top corner opposite the level along the foot.
+ *
+ * Gold rather than the level's plain white, because the two are different
+ * kinds of fact: a level is where a fighter got to on its own, an ascension
+ * is what somebody paid for. Absent below 1 rather than printed as a zero —
+ * the same rule the roster chip follows.
+ */
+.listingcard__asc {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  z-index: 1;
+  padding: 1px 5px;
+  border: 1px solid rgb(246 168 0 / 45%);
+  border-radius: 999px;
+  background: rgb(10 8 2 / 78%);
+  font-family: var(--font-display);
+  font-size: 9px;
+  font-weight: var(--fw-bold);
+  letter-spacing: 0.04em;
+  color: var(--gold);
+}
+
+/*
  * Who it is.
  *
  * The class carried the whole header before, with the race under it in the
@@ -594,6 +618,51 @@
 .abilityline {
   display: grid;
   gap: 1px;
+}
+
+/*
+ * A locked ability, told apart from one that works.
+ *
+ * Dimmed rather than hidden, and the name keeps its colour: a buyer wants to
+ * know a listing has a Mythic waiting behind an ascension. What it must not
+ * do is read as something the fighter can do today, which is exactly how it
+ * read when it was printed identically to the rest.
+ */
+.abilityline--locked .abilityline__text {
+  opacity: 0.55;
+}
+
+.abilityline--locked .abilityline__name {
+  opacity: 0.75;
+}
+
+/*
+ * The condition, spelled out rather than left to a tooltip.
+ *
+ * A lock glyph says "not yet" and nothing about what would change that — and
+ * on a phone the title attribute it hung the answer on cannot be reached at
+ * all. The level comes from `fighters.ale` config rather than a constant, so
+ * it stays right if the game moves it.
+ */
+.abilityline__lock {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  justify-self: start;
+  margin: 1px 0 2px;
+  padding: 1px 5px;
+  border: 1px solid rgb(246 168 0 / 35%);
+  border-radius: 999px;
+  background: rgb(246 168 0 / 12%);
+  font-size: 9px;
+  font-weight: var(--fw-bold);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+
+.abilityline__lock img {
+  opacity: 0.9;
 }
 
 .abilityline__name {

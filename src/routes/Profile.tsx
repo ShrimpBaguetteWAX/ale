@@ -178,6 +178,16 @@ const STAT_ICONS: [RegExp, string][] = [
   [/^shards/, '/assets/icons/shards.svg'],
   [/^tlm/, '/assets/icons/tlm.svg'],
   [/^wax/, '/assets/icons/wax-coin.png'],
+  /*
+     Two currency stats that do not start with the currency's own name, so
+     the rules above cannot reach them. Both are checked against the
+     contract rather than guessed from the wording: `market.cpp` pays
+     `market_earned` out of `gem_payout` and charges `market_spent` in gems,
+     and `nftstake.cpp` hands `alf_credits_claimed` to `inline_gaincur` in
+     the same argument slot that `sellfighter` fills with credits.
+  */
+  [/^market_(earned|spent)/, '/assets/icons/gems.png'],
+  [/^alf_credits/, '/assets/icons/credits.png'],
 
   /* Places and activities. */
   [/^arenas/, '/assets/icons/arena.svg'],
@@ -191,6 +201,13 @@ const STAT_ICONS: [RegExp, string][] = [
   [/^premium/, '/assets/icons/account-legend.svg'],
   [/travel/, '/assets/icons/menu/world.png'],
   [/^level_ups/, '/assets/icons/medal.svg'],
+  [/^ascensions/, '/assets/icons/menu/ascension.png'],
+  /*
+     The game's own "raised" mark, which is what boosting does: `maps.cpp`
+     records the distance a top-up moves a building's boost score, so the
+     figure is a lift rather than a place or a currency.
+  */
+  [/^boosting/, '/assets/icons/arrows/green-duble-up.png'],
 
   /* Combat. */
   [/^knockouts/, '/assets/icons/swords.svg'],

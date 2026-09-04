@@ -78,6 +78,14 @@ useGame.setState({
     /* Read directly by the map and the shell, so they cannot be absent. */
     active_taverns: [],
     mine_nfts: [],
+    /*
+       Empty by default, and filled from a real wallet with `?permstats=<name>`.
+
+       The All stats panel is a list of whatever `permstats` happens to hold,
+       so with none of them there is nothing on the screen to look at — which
+       is exactly the screen you want when checking that every tracked stat
+       has a symbol beside it.
+    */
     permstats: [],
     reward_power: [],
     last_dungeon_reset: '2026-01-01T00:00:00',
@@ -124,6 +132,39 @@ useGame.setState({
 
 /* The real config, so travel costs are the ones the game charges. */
 void fetchConfig().then((config) => config && useGame.setState({ config }))
+
+/*
+ * `?permstats=<wallet>` — borrow a real player's lifetime counters.
+ *
+ * Read straight off `players.ale` rather than mocked, so the All stats panel
+ * shows the keys the contract actually writes, in the amounts it writes them.
+ */
+const borrow = params.get('permstats')
+if (borrow) {
+  void fetch('https://wax.greymass.com/v1/chain/get_table_rows', {
+    method: 'POST',
+    body: JSON.stringify({
+      json: true,
+      code: 'players.ale',
+      scope: 'players.ale',
+      table: 'players',
+      lower_bound: borrow,
+      upper_bound: borrow,
+      limit: 1,
+    }),
+  })
+    .then((r) => r.json())
+    .then((d) => {
+      const row = d.rows?.[0]
+      if (!row) return
+      const player = useGame.getState().player
+      if (player) {
+        useGame.setState({
+          player: { ...player, permstats: row.permstats ?? [] },
+        } as never)
+      }
+    })
+}
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

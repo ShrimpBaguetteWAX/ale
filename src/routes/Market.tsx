@@ -27,6 +27,7 @@ import {
   type MarketSort,
 } from '@/market/rules'
 import { fetchBattleConfig, fetchClassTemplates, fetchRoster } from '@/dungeon/queries'
+import { fetchFightersConfig } from '@/fighters/queries'
 import { fighterAvailable } from '@/dungeon/rules'
 import { ageBand, ageBonus, ageDays, ageNote, battleFactor } from '@/fighters/rules'
 import {
@@ -142,6 +143,16 @@ export default function Market() {
   /* The age curve. Static config, so this costs one hard-cached read. */
   const [ageDecay, setAgeDecay] = useState(0)
   const [levelMod, setLevelMod] = useState(1)
+  /*
+     The ascension level at which a fighter's locked ability starts working.
+
+     A listing carries the `locked` flag on the ability itself, but not the
+     level that clears it — that lives on `fighters.ale`'s config, the same
+     read My Fighters makes. Without it the market was printing a locked
+     ability exactly like a working one, which overstates every listed
+     fighter by whatever its last ability is worth.
+  */
+  const [unlockLevel, setUnlockLevel] = useState<number | undefined>(undefined)
 
   const [tab, setTab] = useState<Tab>('auctions')
   const [readout, setReadout] = useState<Readout>('stats')
@@ -164,13 +175,14 @@ export default function Market() {
   const load = useCallback(
     async (refresh = false) => {
       try {
-        const [a, o, c, r, t, b] = await Promise.all([
+        const [a, o, c, r, t, b, fc] = await Promise.all([
           fetchAuctions(refresh),
           fetchOffers(refresh),
           fetchMarketConfig(),
           fetchRoster(player.wallet, refresh),
           fetchClassTemplates(),
           fetchBattleConfig(),
+          fetchFightersConfig(),
         ])
         setAuctions(a)
         setOffers(o)
@@ -181,6 +193,7 @@ export default function Market() {
           setAgeDecay(Number(b.age_decay) || 0)
           setLevelMod(Number(b.level_mod) || 1)
         }
+        setUnlockLevel(fc?.asc_ability_unlock_lvl)
       } catch (err) {
         setError(readableError(err))
       }
@@ -394,6 +407,7 @@ export default function Market() {
                   config={config}
                   template={classes.get(a.fighter.classname)}
                   readout={readout}
+                  unlockLevel={unlockLevel}
                   ageDecay={ageDecay}
                   levelMod={levelMod}
                   now={now}
@@ -419,6 +433,7 @@ export default function Market() {
                   offer={o}
                   template={classes.get(o.fighter.classname)}
                   readout={readout}
+                  unlockLevel={unlockLevel}
                   ageDecay={ageDecay}
                   levelMod={levelMod}
                   now={now}
@@ -636,6 +651,24 @@ function ListingHead({
           }}
         />
         <span className="listingcard__level">L{f.level}</span>
+        {/*
+          What the fighter has been ascended to, opposite its level.
+
+          An ascension is permanent, paid for, and the thing that unlocks the
+          last ability — so between two otherwise identical listings it is
+          most of the difference in what they are worth, and the market was
+          the one screen carrying it in the data and not on the card. Absent
+          below 1, the same rule My Fighters uses, so a card with no badge
+          means the same thing on both screens.
+        */}
+        {listing.ascension_level > 0 && (
+          <span
+            className="listingcard__asc"
+            title={`Ascended ${listing.ascension_level} time${listing.ascension_level === 1 ? '' : 's'}`}
+          >
+            Asc {listing.ascension_level}
+          </span>
+        )}
       </span>
 
       <span className="listingcard__who">
@@ -709,10 +742,13 @@ function ListingBody({
   stats,
   template,
   readout,
+  unlockLevel,
 }: {
   stats: RosterFighter['stats']
   template?: ClassTemplate
   readout: Readout
+  /** Ascension level at which a locked ability starts working, from config. */
+  unlockLevel?: number
 }) {
   /* A card can be flipped on its own; the shared picker takes them all back
      in step, which is what `useEffect` on the incoming value does. */
@@ -771,20 +807,44 @@ function ListingBody({
       {shown === 'abilities' && (
         <div className="listingcard__rows listingcard__rows--abilities">
           {abilities.length === 0 && <p className="faint">No abilities.</p>}
-          {abilities.map((a, i) => (
-            <div className="abilityline" key={`${a.ability}-${i}`}>
-              <span
-                className="abilityline__name"
-                style={{ color: abilityColor(a.displayname) }}
+          {abilities.map((a, i) => {
+            /*
+               A locked ability does nothing in a fight.
+
+               Every fighter rolls with its last one locked, so this is the
+               common case rather than an edge one — and on a market card it
+               is the difference between what a fighter does and what it
+               would do after somebody pays for several ascensions. Printed
+               identically to a working ability, it was quietly overstating
+               every listing on the screen.
+            */
+            const locked = !!a.locked
+            return (
+              <div
+                className={`abilityline${locked ? ' abilityline--locked' : ''}`}
+                key={`${a.ability}-${i}`}
               >
-                {abilityName(a.displayname)}
-                {abilityRarity(a.displayname) && (
-                  <em className="abilityline__rarity">{abilityRarity(a.displayname)}</em>
+                <span
+                  className="abilityline__name"
+                  style={{ color: abilityColor(a.displayname) }}
+                >
+                  {abilityName(a.displayname)}
+                  {abilityRarity(a.displayname) && (
+                    <em className="abilityline__rarity">{abilityRarity(a.displayname)}</em>
+                  )}
+                </span>
+                {locked && (
+                  <span className="abilityline__lock">
+                    <img src={asset('/assets/icons/lock.svg')} alt="" width={10} height={10} />
+                    {unlockLevel
+                      ? `Unlocks at ascension ${unlockLevel}`
+                      : 'Unlocks on ascension'}
+                  </span>
                 )}
-              </span>
-              <span className="abilityline__text">{resolveAbilityDescription(a)}</span>
-            </div>
-          ))}
+                <span className="abilityline__text">{resolveAbilityDescription(a)}</span>
+              </div>
+            )
+          })}
         </div>
       )}
     </div>
@@ -822,6 +882,7 @@ export function AuctionCard({
   config,
   template,
   readout,
+  unlockLevel,
   ageDecay,
   levelMod,
   now,
@@ -833,6 +894,7 @@ export function AuctionCard({
   config: MarketConfig | undefined
   template?: ClassTemplate
   readout: Readout
+  unlockLevel?: number
   ageDecay: number
   levelMod: number
   now: number
@@ -847,7 +909,7 @@ export function AuctionCard({
   return (
     <article className={`listingcard${closing ? ' listingcard--closing' : ''}`}>
       <ListingHead listing={auction} onOpen={onOpen} ageDecay={ageDecay} levelMod={levelMod} />
-      <ListingBody stats={auction.fighter} template={template} readout={readout} />
+      <ListingBody stats={auction.fighter} template={template} readout={readout} unlockLevel={unlockLevel} />
 
       <div className="listingcard__price">
         <span className="listingcard__label">
@@ -885,6 +947,7 @@ export function OfferCard({
   offer,
   template,
   readout,
+  unlockLevel,
   ageDecay,
   levelMod,
   now,
@@ -895,6 +958,7 @@ export function OfferCard({
   offer: InstantOffer
   template?: ClassTemplate
   readout: Readout
+  unlockLevel?: number
   ageDecay: number
   levelMod: number
   now: number
@@ -905,7 +969,7 @@ export function OfferCard({
   return (
     <article className="listingcard">
       <ListingHead listing={offer} onOpen={onOpen} ageDecay={ageDecay} levelMod={levelMod} />
-      <ListingBody stats={offer.fighter} template={template} readout={readout} />
+      <ListingBody stats={offer.fighter} template={template} readout={readout} unlockLevel={unlockLevel} />
 
       <div className="listingcard__price">
         <span className="listingcard__label">Buy now</span>

@@ -926,9 +926,44 @@
 }
 
 /* A locked ability is dimmed on the card too, and its name with it. */
-.fability__body--locked {
+/*
+ * The dimming goes on the description, not the whole block.
+ *
+ * `opacity` composites — a child cannot be 1 inside a parent at 0.6 — so
+ * dimming the panel dimmed the one line that has to stay readable along with
+ * the text it qualifies.
+ */
+.fability__body--locked .fability__desc {
   opacity: 0.6;
+}
+
+.fability__body--locked {
   border-left-style: dashed;
+}
+
+/*
+ * The unlock condition, leading the description rather than sitting above it.
+ *
+ * The dashed edge and the dimming say "not working"; neither says what would
+ * change that, and the tooltip that did is unreachable on a phone.
+ *
+ * Inline, and deliberately not a row of its own. This column is 92px wide —
+ * a pill on its own line wrapped "Unlocks at ascension 5" to five lines and
+ * grew the card by 65px the moment a locked ability was picked, so choosing
+ * one reflowed the grid. Running it into the text costs no row at all: it
+ * flows inside the three-line clamp the description already lives in, which
+ * spends the last line of flavour text on the one fact the reader needs
+ * more.
+ */
+.fability__unlock {
+  font-weight: var(--fw-bold);
+  font-style: normal;
+  color: var(--gold);
+}
+
+.fability__unlock img {
+  vertical-align: -1px;
+  margin-right: 2px;
 }
 .fability__pick--locked {
   border-left-style: dashed;
