@@ -840,7 +840,18 @@
 .warpgate {
   position: fixed;
   inset: 0;
-  z-index: 60;
+  /*
+     Above the app's own chrome, which is the whole point of a full-screen
+     transition.
+
+     A hand-picked 60 put it under the top bar and the phone's tab bar, both
+     of which sit on `--z-sticky` (1100) — so the map and the sidebar dimmed
+     away and the currency counters stayed lit over the top of the tunnel,
+     which reads as the overlay having failed rather than as a journey.
+     `--z-overlay` is the token for exactly this: over the sticky chrome,
+     under modals and toasts.
+  */
+  z-index: var(--z-overlay);
   /*
      Not a flow container: the rim, the throat and the destination each centre
      on the viewport independently. As a grid holding the rim and the caption

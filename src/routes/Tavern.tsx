@@ -41,6 +41,7 @@ import {
   midpoint,
   type ClassTemplate,
 } from '@/tavern/fighterStats'
+import { fetchFightersConfig } from '@/fighters/queries'
 import { hireFighter, revealFighter } from '@/wharf/actions'
 import { readableError } from '@/wharf/errors'
 import { asset } from '@/assets'
@@ -143,6 +144,16 @@ export default function Tavern() {
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
   const [classTemplate, setClassTemplate] = useState<ClassTemplate | undefined>()
+  /*
+     The ascension level that clears a locked ability.
+
+     The recruit on offer arrives with its last ability already flagged
+     `locked` — `.p.um.wam`'s Onoros buff, `5thba.wam`'s neutral group buff,
+     every revealed recruit on chain — and this screen was the one place
+     showing it exactly like the ones that work. The level itself lives on
+     `fighters.ale` config, the same read My Fighters and the market make.
+  */
+  const [unlockLevel, setUnlockLevel] = useState<number | undefined>()
 
   const tavern = player.last_tavern
   const fighter = player.last_tavern_fighter
@@ -158,6 +169,9 @@ export default function Tavern() {
     fetchTavernTemplates()
       .then(setTemplates)
       .catch((err) => setError(readableError(err)))
+    fetchFightersConfig()
+      .then((c) => setUnlockLevel(c?.asc_ability_unlock_lvl))
+      .catch(() => {})
   }, [])
 
   useEffect(() => {
@@ -549,9 +563,19 @@ export default function Tavern() {
                   <div className="abilities">
                     {fighter.abilities.map((a, i) => {
                       const rarity = abilityRarity(a.displayname)
+                      /*
+                         The recruit's last ability does not work yet.
+
+                         This is the screen where a player decides whether the
+                         roll is worth the energy, and an ability they cannot
+                         use for several ascensions was reading as one of the
+                         reasons to hire — which is the most expensive place
+                         in the game to overstate a fighter.
+                      */
+                      const locked = !!a.locked
                       return (
                         <div
-                          className="ability"
+                          className={`ability${locked ? ' ability--locked' : ''}`}
                           key={`${a.ability}-${i}`}
                           style={{ borderLeftColor: abilityColor(a.displayname) }}
                         >
@@ -561,6 +585,19 @@ export default function Tavern() {
                           >
                             {abilityName(a.displayname)}
                             {rarity && <span className="ability__rarity">{rarity}</span>}
+                            {locked && (
+                              <span className="ability__locked">
+                                <img
+                                  src={asset('/assets/icons/lock.svg')}
+                                  alt=""
+                                  width={11}
+                                  height={11}
+                                />
+                                {unlockLevel
+                                  ? `Unlocks at ascension ${unlockLevel}`
+                                  : 'Unlocks on ascension'}
+                              </span>
+                            )}
                           </div>
                           <div className="ability__desc">
                             {resolveAbilityDescription(a)}

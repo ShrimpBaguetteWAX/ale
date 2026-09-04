@@ -134,12 +134,15 @@ useGame.setState({
 void fetchConfig().then((config) => config && useGame.setState({ config }))
 
 /*
- * `?permstats=<wallet>` — borrow a real player's lifetime counters.
+ * `?borrow=<wallet>` — take a real player's row for the parts no mock has.
  *
- * Read straight off `players.ale` rather than mocked, so the All stats panel
- * shows the keys the contract actually writes, in the amounts it writes them.
+ * Read straight off `players.ale`: the lifetime counters, so All stats shows
+ * the keys the contract actually writes in the amounts it writes them, and
+ * the tavern recruit, whose last ability arrives flagged `locked`.
+ *
+ * `?permstats=` is the older name for the same thing and still works.
  */
-const borrow = params.get('permstats')
+const borrow = params.get('permstats') ?? params.get('borrow')
 if (borrow) {
   void fetch('https://wax.greymass.com/v1/chain/get_table_rows', {
     method: 'POST',
@@ -160,7 +163,18 @@ if (borrow) {
       const player = useGame.getState().player
       if (player) {
         useGame.setState({
-          player: { ...player, permstats: row.permstats ?? [] },
+          player: {
+            ...player,
+            permstats: row.permstats ?? [],
+            /*
+               The recruit too, when that row has one revealed: its last
+               ability arrives flagged `locked`, and no mock carries that.
+            */
+            last_tavern_fighter:
+              Number(row.last_tavern_fighter?.level ?? 0) > 0
+                ? row.last_tavern_fighter
+                : player.last_tavern_fighter,
+          },
         } as never)
       }
     })
