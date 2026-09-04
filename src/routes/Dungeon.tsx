@@ -807,6 +807,7 @@ export default function Dungeon() {
                     side="mine"
                     abilities={enemies.length ? mySlots[i] : undefined}
                     onOpen={() => showFighter(f)}
+                    onRemove={() => toggleFighter(f)}
                   />
                 ) : (
                   <div className="combatcard combatcard--empty" key={`empty-${i}`}>
@@ -840,6 +841,17 @@ export default function Dungeon() {
                   art={NFT_FIGHTER_ART}
                   badge="NFT"
                   onOpen={() => setDetail({ kind: 'panel', panel: nftFighter })}
+                  /*
+                     The sixth comes out the way it went in: it is not a
+                     roster fighter, it is the crew and the weapon fused, so
+                     removing it puts both cards back. Without this the one
+                     card in the line with no bar under it would be the one
+                     card whose portrait sat 23px lower than the other five.
+                  */
+                  onRemove={() => {
+                    setCrew(null)
+                    setWeapon(null)
+                  }}
                 />
               ) : (
                 <div className="combatcard combatcard--empty combatcard--nft">

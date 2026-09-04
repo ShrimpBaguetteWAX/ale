@@ -406,6 +406,7 @@ export function CombatCard({
   abilities,
   owner,
   onOpen,
+  onRemove,
   dormant,
 }: {
   element: string
@@ -438,6 +439,15 @@ export function CombatCard({
    */
   owner?: string
   onOpen: () => void
+  /**
+   * Take this combatant back out of the line-up, when it can be taken out.
+   *
+   * Unset on the opposing side and on anything not being chosen, so the
+   * button exists only where it means something — but the *space* it takes
+   * is reserved by the row (`--removerow`), so the cards on a side stay level
+   * whether or not every slot in it happens to be filled.
+   */
+  onRemove?: () => void
   /**
    * Why this fighter is on the card but not in the fight.
    *
@@ -617,6 +627,38 @@ export function CombatCard({
         fighter, alone in never being given counts, was doing.
       */}
       {phone && <div className="combatslot__under">{counts}</div>}
+
+      {/*
+        Undo, at the thing it undoes.
+
+        Taking a fighter out meant finding it again in the picker below and
+        tapping it a second time — a list of a hundred, filtered and sorted
+        for choosing rather than for finding one particular card, and on a
+        phone it is not even on screen. The line-up is where a player decides
+        somebody does not belong; the control belongs there too.
+
+        A bar rather than a corner cross: at six cards to a row the card is
+        58px wide on a phone, and a floating × over the artwork is both a
+        smaller target and something to mistake for part of the portrait. It
+        stays upright while the card leans, for the same reason the ability
+        chips out here do — skewing a 20px bar shifts its edges by under a
+        pixel while the card's bottom edge moves by six, so a matching lean
+        would only look like a misalignment.
+      */}
+      {onRemove && (
+        <button
+          type="button"
+          className="combatslot__remove"
+          onClick={onRemove}
+          aria-label={`Remove ${classname || 'this fighter'} from your team`}
+          title={`Remove ${classname || 'this fighter'} from your team`}
+        >
+          <span aria-hidden="true">×</span>
+          {/* The word is desktop-only: 58px does not hold it, and the cross
+              on a red bar under a chosen fighter is not ambiguous. */}
+          <span className="combatslot__removeword">Remove</span>
+        </button>
+      )}
     </div>
   )
 }

@@ -984,6 +984,24 @@
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 6px;
+
+  /*
+     What a slot carries below the card, published to the row.
+
+     A filled slot is a card plus whatever is under it; an empty slot is a
+     single dashed box that is a direct child of this grid, so it can only end
+     level with the cards by subtracting the same amount. Stating it here
+     keeps the two in step — the alternative is a pixel count copied into an
+     unrelated rule, which is how they came apart the last time.
+  */
+  --underrow: 0px;
+  --removeh: 20px;
+  --removerow: 0px;
+}
+
+/* Only my side has fighters to take back out. */
+.versus__side--mine .versus__row {
+  --removerow: calc(var(--removeh) + 3px);
 }
 
 @media (min-width: 700px) {
@@ -1726,17 +1744,24 @@
  * transparent above the breakpoint: a grid with one child, which stretches to
  * the wrapper exactly as the card used to stretch to the row.
  */
+/*
+ * The card takes the height, everything under it takes what it needs.
+ *
+ * An explicit `1fr` first track rather than letting both rows size to their
+ * content: the slot is stretched to the row by the line-up above it, and with
+ * every track auto-sized the leftover height is split between them — which
+ * would leave the remove bars at six different heights down a row. One
+ * fractional track absorbs the slack, and the rows under it stay put.
+ */
 .combatslot {
   display: grid;
+  grid-template-rows: 1fr;
+  grid-auto-rows: auto;
+  gap: 3px;
   min-width: 0;
 }
 
 @media (max-width: 719px) {
-  .combatslot {
-    grid-template-rows: 1fr auto;
-    gap: 3px;
-  }
-
   /*
      Out here it is upright rather than counter-skewed, and it holds its line
      whether or not it has chips - the cards in a row must still end level
@@ -1747,6 +1772,57 @@
     align-items: center;
     justify-content: center;
     min-height: 14px;
+  }
+}
+
+/*
+ * The remove bar, at the foot of a chosen fighter.
+ *
+ * Quiet by default and red only under the pointer: it sits under every
+ * fighter a player has picked, six to a row, and six red bars across the
+ * line-up would read as six warnings. Outlined rather than filled for the
+ * same reason — the row's subject is the cards, and this is the smallest
+ * thing on the screen that can still be hit.
+ *
+ * `--removeh` is the single source for the height, because the empty slots
+ * further down have to subtract exactly this to finish level with the cards.
+ */
+.combatslot__remove {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  height: var(--removeh, 20px);
+  padding: 0 2px;
+  border: 1px solid rgb(255 52 52 / 22%);
+  border-radius: var(--radius-xs);
+  background: rgb(255 52 52 / 6%);
+  color: var(--text-faint);
+  font-size: 10px;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition:
+    background var(--dur-fast) var(--ease),
+    border-color var(--dur-fast) var(--ease),
+    color var(--dur-fast) var(--ease);
+}
+
+.combatslot__remove:hover,
+.combatslot__remove:focus-visible {
+  border-color: rgb(255 52 52 / 60%);
+  background: rgb(255 52 52 / 16%);
+  color: #ff8f8f;
+}
+
+/* The cross carries it on a phone, so it is the part that stays legible. */
+.combatslot__remove > [aria-hidden] {
+  font-size: 13px;
+}
+
+@media (max-width: 719px) {
+  .combatslot__removeword {
+    display: none;
   }
 }
 
@@ -2140,10 +2216,10 @@
   .versus__row {
     --underrow: 17px;
   }
+}
 
-  .versus__row > .combatcard--empty {
-    height: calc(100% - var(--underrow));
-  }
+.versus__row > .combatcard--empty {
+  height: calc(100% - var(--underrow) - var(--removerow));
 }
 
 /*
