@@ -923,6 +923,14 @@
 
 .ascension {
   display: grid;
+  /*
+     The column is capped at zero, not left to `auto`.
+     An auto track takes its widest item's min-content as a floor, and the tab
+     strip does not wrap — so the four tabs decided how wide the screen was
+     and pushed 106px of it past the right edge of a phone. The strip scrolls
+     on its own; the page should not scroll with it.
+  */
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--sp-4);
 }
 
@@ -931,16 +939,197 @@
 }
 
 /* Roster tiles: portrait, then who it is and what it can cover. */
+/* ---------- what has been chosen ---------- */
+
+/*
+ * The four slots, above the list they are filled from.
+ *
+ * Kept on screen the whole time rather than appearing as things are picked:
+ * the errand is "one fighter and three specific sacrifices", and four labelled
+ * boxes say that before the first click. They double as the tab strip's
+ * second face — clicking one opens the list that fills it.
+ */
+.ascpick {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+.ascpick__slots {
+  display: grid;
+  gap: var(--sp-2);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.ascslot {
+  display: grid;
+  gap: 4px;
+  align-content: start;
+  min-width: 0;
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px dashed var(--line);
+  border-radius: var(--radius-xs);
+  background: rgb(0 0 0 / 26%);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color var(--dur-fast) var(--ease),
+    background var(--dur-fast) var(--ease);
+}
+
+.ascslot:hover:not(:disabled) {
+  border-color: var(--cyan);
+}
+
+.ascslot:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* Filled is solid: a dashed box reads as somewhere still to put something. */
+.ascslot--filled {
+  border-style: solid;
+  border-color: var(--line);
+  background: rgb(0 0 0 / 40%);
+}
+
+.ascslot--active {
+  border-color: var(--cyan);
+  box-shadow: inset 0 0 0 1px rgb(53 208 255 / 30%);
+}
+
+.ascslot__label {
+  font-family: var(--font-display);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.ascslot__who {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+.ascslot__art {
+  flex: none;
+  width: 26px;
+  height: 26px;
+  object-fit: cover;
+  border-radius: var(--radius-xs);
+}
+
+.ascslot__name {
+  font-size: var(--fs-sm);
+  color: var(--white);
+  text-transform: capitalize;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ascslot__empty {
+  font-size: var(--fs-sm);
+  color: var(--text-faint);
+}
+
+.ascpick__go {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+}
+
+/* ---------- the four lists ---------- */
+
+.asctabs {
+  display: flex;
+  gap: var(--sp-1);
+  margin-bottom: var(--sp-3);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.asctabs::-webkit-scrollbar {
+  display: none;
+}
+
+.asctabs__tab {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex: none;
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xs);
+  background: rgb(0 0 0 / 35%);
+  color: var(--text-dim);
+  font-family: var(--font-display);
+  font-size: var(--fs-xs);
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition:
+    background var(--dur-fast) var(--ease),
+    color var(--dur-fast) var(--ease),
+    border-color var(--dur-fast) var(--ease);
+}
+
+.asctabs__tab:hover:not(:disabled) {
+  color: var(--white);
+}
+
+.asctabs__tab[aria-selected='true'] {
+  background: var(--surface-3);
+  border-color: var(--cyan);
+  color: var(--white);
+}
+
+.asctabs__tab:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/*
+ * How many fighters the tab holds.
+ *
+ * The number is the half of the label worth reading: a zero here is the
+ * answer to why the plan cannot work, and it should not take opening the tab
+ * to find out.
+ */
+.asctabs__n {
+  padding: 0 5px;
+  border-radius: var(--radius-full);
+  background: rgb(255 255 255 / 10%);
+  font-size: 10px;
+  color: var(--text-dim);
+}
+
+.asctabs__tab[aria-selected='true'] .asctabs__n {
+  background: rgb(53 208 255 / 22%);
+  color: #9ee6ff;
+}
+
+/* ---------- one fighter ---------- */
+
 .ascgrid {
   display: grid;
   gap: var(--sp-2);
-  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(226px, 1fr));
   margin-top: var(--sp-3);
 }
 
-.asctile {
+/*
+ * A fighter card, close enough to the roster's that the same fighter is
+ * recognisable on both screens.
+ *
+ * The old tile was a 56px thumbnail and a line of grey text, which is not
+ * enough to tell two Tacticians apart — and that is the entire question this
+ * screen asks.
+ */
+.asccard {
   display: grid;
-  grid-template-columns: 56px minmax(0, 1fr);
+  grid-template-columns: 64px minmax(0, 1fr);
   gap: var(--sp-3);
   align-items: center;
   padding: var(--sp-2);
@@ -949,122 +1138,124 @@
   background: rgb(0 0 0 / 30%);
   text-align: left;
   cursor: pointer;
-  transition: border-color var(--dur-fast) var(--ease);
+  transition:
+    border-color var(--dur-fast) var(--ease),
+    background var(--dur-fast) var(--ease);
 }
 
-.asctile:hover:not(:disabled) {
+.asccard:hover {
   border-color: var(--cyan);
 }
 
-.asctile--picked {
+.asccard--picked {
   border-color: var(--cyan);
   background: rgb(53 208 255 / 12%);
   box-shadow: inset 0 0 0 1px rgb(53 208 255 / 35%);
 }
 
-.asctile--off {
-  opacity: 0.4;
-  cursor: not-allowed;
+/* The elemental ground the roster and the line-up both stand fighters on. */
+.asccard__art {
+  display: block;
+  width: 64px;
+  height: 64px;
+  border-radius: var(--radius-xs);
+  overflow: hidden;
+  background-size: cover;
+  background-position: center;
 }
 
-.asctile img {
-  width: 56px;
-  height: 56px;
-  object-fit: contain;
+.asccard__art img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top center;
 }
 
-.asctile__body {
+.asccard__body {
   display: grid;
-  gap: 2px;
+  gap: 3px;
   min-width: 0;
 }
 
-.asctile__body strong {
+.asccard__name {
   font-family: var(--font-display);
   font-size: var(--fs-sm);
-  text-transform: capitalize;
+  font-weight: var(--fw-bold);
   color: var(--white);
-}
-
-.asctile__body em {
-  font-size: var(--fs-xs);
-  font-style: normal;
   text-transform: capitalize;
-  color: var(--text-dim);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.asctile__tags {
+.asccard__chips {
   display: flex;
   flex-wrap: wrap;
-  gap: 3px;
-  margin-top: 2px;
+  gap: 4px;
 }
 
-.asctile__tags .tag {
-  padding: 1px 5px;
-  border-radius: 999px;
-  font-size: 9px;
-  font-style: normal;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+/*
+ * Damage then health, the pair and the order every other screen leads with.
+ */
+.asccard__stats {
+  display: flex;
+  gap: var(--sp-3);
+  font-size: var(--fs-sm);
 }
 
-.tag--el { background: rgb(53 208 255 / 22%); color: #9ee6ff; }
-.tag--race { background: rgb(206 115 224 / 22%); color: #eabcf5; }
-.tag--abil { background: rgb(246 168 0 / 22%); color: #ffd68a; }
-.tag--none { background: rgb(255 255 255 / 8%); color: var(--text-faint); }
+.asccard__dmg::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-right: 5px;
+  border-radius: 50%;
+  background: var(--gold);
+  vertical-align: 1px;
+}
 
-.asctile__asc {
+.asccard__hp::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-right: 5px;
+  border-radius: 50%;
+  background: var(--red);
+  vertical-align: 1px;
+}
+
+/* Spoken for by one of the other two requirements. */
+.asccard__note {
   font-size: 9px;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--gold);
 }
 
-/*
- * The three requirements, shown while the pick is built. The contract only
- * says "one or more sacrifices do not match", and the rule that trips people
- * is that one fighter cannot cover two slots — hence a state for "matches,
- * but is already counted".
- */
-.reqs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--sp-2);
-  margin: var(--sp-3) 0;
-}
+@media (max-width: 719px) {
+  /*
+     Two rows of two rather than four across.
 
-.req {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px var(--sp-3);
-  border: 1px solid var(--line-soft);
-  border-radius: var(--radius-full);
-  font-size: var(--fs-xs);
-  color: var(--text-dim);
-}
+     Four slots on a phone is 85px each, which fits neither a name nor the
+     words that say what the slot is for.
+  */
+  .ascpick__slots {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 
-.req b {
-  font-family: var(--font-display);
-}
+  .ascpick__go {
+    justify-content: stretch;
+  }
 
-.req em {
-  font-style: normal;
-  color: var(--text-faint);
-}
+  .ascpick__go .btn {
+    width: 100%;
+  }
 
-.req--ok {
-  border-color: rgb(127 224 138 / 45%);
-  color: #cdf3d2;
+  .ascgrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
-.req--ok b { color: #7fe08a; }
-
-.req--clash {
-  border-color: rgb(246 168 0 / 45%);
-  color: #ffe0a6;
-}
-.req--clash b { color: var(--gold); }
 
 /* ---------- the three offers ---------- */
 

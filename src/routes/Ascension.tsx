@@ -28,7 +28,12 @@ import {
   rerollAscension,
 } from '@/wharf/actions'
 import { readableError } from '@/wharf/errors'
-import { fighterArt, fighterArtFallback } from '@/tavern/fighterStats'
+import {
+  elementBackground,
+  fighterArtFallback,
+  fighterAvatar,
+  formatScaled,
+} from '@/tavern/fighterStats'
 import { formatNumber } from '@/format'
 
 /**
@@ -47,6 +52,23 @@ import { formatNumber } from '@/format'
 
 type Busy = 'ascend' | 'reroll' | 'claim' | null
 
+/**
+ * Which list is on screen.
+ *
+ * Four, because there are four separate choices to make and they have
+ * different candidates: the fighter to push past the cap, and then one
+ * sacrifice for each requirement the contract checks. Shown as tabs rather
+ * than one roster with badges on it because a player working through this is
+ * answering one question at a time, and a list that mixes "could cover race"
+ * with "covers nothing" makes them do the filtering by eye.
+ */
+type Tab = 'target' | Requirement
+
+const TABS: { key: Tab; label: string }[] = [
+  { key: 'target', label: 'Fighter to ascend' },
+  ...REQUIREMENTS.map((r) => ({ key: r.key as Tab, label: r.label })),
+]
+
 export default function Ascension() {
   const account = useGame((s) => s.account)
   const session = useGame((s) => s.session)
@@ -62,7 +84,18 @@ export default function Ascension() {
   const [busy, setBusy] = useState<Busy>(null)
 
   const [targetId, setTargetId] = useState<number | null>(null)
-  const [chosen, setChosen] = useState<number[]>([])
+  /*
+     One sacrifice per requirement, rather than three picked from one pile.
+
+     The contract wants the three requirements covered by three *different*
+     fighters, and the old screen let a player pick any three and then told
+     them it did not work — "covered, but by a fighter already counted" was a
+     sentence it had to have. A slot per requirement makes that arrangement
+     the thing being built rather than something to be solved afterwards, and
+     it is the same shape as the tabs the player picks from.
+  */
+  const [slots, setSlots] = useState<Partial<Record<Requirement, number>>>({})
+  const [tab, setTab] = useState<Tab>('target')
 
   const alive = useRef(true)
   useEffect(() => {
@@ -140,12 +173,30 @@ export default function Ascension() {
     [roster, target],
   )
 
+  /*
+     The candidates for each requirement, which is what each tab lists.
+
+     A fighter can appear under more than one — one that shares the element
+     and carries the ability is offered in both places — and choosing it in
+     one takes it out of the other, because the contract will not count it
+     twice.
+  */
+  const byRequirement = useMemo(() => {
+    const out = {} as Record<Requirement, RosterFighter[]>
+    for (const r of REQUIREMENTS) {
+      out[r.key] = target
+        ? candidates.filter((f) => requirementsMet(f, target).has(r.key))
+        : []
+    }
+    return out
+  }, [candidates, target])
+
   const chosenFighters = useMemo(
     () =>
-      chosen
+      REQUIREMENTS.map((r) => slots[r.key])
         .map((id) => roster.find((f) => f.fighter_id === id))
         .filter((f): f is RosterFighter => !!f),
-    [chosen, roster],
+    [slots, roster],
   )
 
   const check = useMemo(
@@ -157,14 +208,23 @@ export default function Ascension() {
   const fee = Number(config?.ascension_credit_fee ?? 0)
   const rerollFee = Number(config?.ascension_reroll_credit_cost ?? 0)
 
-  const toggle = (id: number) =>
-    setChosen((prev) =>
-      prev.includes(id)
-        ? prev.filter((x) => x !== id)
-        : prev.length >= SACRIFICE_COUNT
-          ? prev
-          : [...prev, id],
-    )
+  /*
+     Assign to a slot, and take the fighter out of whichever slot it was in.
+
+     No fighter can cover two requirements, so moving one is what picking it
+     somewhere else means — rather than a silent refusal, or two slots holding
+     the same fighter for the contract to reject.
+  */
+  const assign = (key: Requirement, id: number) =>
+    setSlots((prev) => {
+      const next: Partial<Record<Requirement, number>> = {}
+      for (const r of REQUIREMENTS) {
+        if (prev[r.key] !== undefined && prev[r.key] !== id) next[r.key] = prev[r.key]
+      }
+      /* Picking the one already in this slot clears it. */
+      if (prev[key] !== id) next[key] = id
+      return next
+    })
 
   if (loading) {
     return (
@@ -225,22 +285,34 @@ export default function Ascension() {
         <Builder
           ready={ready}
           target={target}
-          candidates={candidates}
-          chosen={chosen}
+          byRequirement={byRequirement}
+          slots={slots}
+          chosenFighters={chosenFighters}
           check={check}
           fee={fee}
           credits={credits}
           busy={busy}
           canAct={!!session}
+          tab={tab}
+          onTab={setTab}
           onPickTarget={(id) => {
-            setTargetId(id)
-            setChosen([])
+            setTargetId((prev) => (prev === id ? null : id))
+            setSlots({})
+            /* Straight on to the first sacrifice, which is the next thing to
+               decide — and back to the roster if the pick was undone. */
+            setTab(targetId === id ? 'target' : 'element')
           }}
-          onToggle={toggle}
+          onAssign={assign}
           onAscend={() =>
             void run(
               'ascend',
-              () => ascendFighter(session!, target!.fighter_id, chosen, fee),
+              () =>
+                ascendFighter(
+                  session!,
+                  target!.fighter_id,
+                  chosenFighters.map((f) => f.fighter_id),
+                  fee,
+                ),
               'Ascended. Choose your upgrade.',
             )
           }
@@ -254,153 +326,208 @@ export default function Ascension() {
 
 /* ---------- picking ---------- */
 
+/**
+ * The four choices, one tab each, with what is already chosen kept in view.
+ *
+ * The old screen put every eligible fighter in one grid and tagged each with
+ * what it could cover, which left the player scanning sixty tiles for the one
+ * that says "Ability" while remembering which two they had already taken. A
+ * tab per requirement asks one question at a time, and answers "how many can
+ * I even use here" in the tab itself.
+ */
 function Builder({
   ready,
   target,
-  candidates,
-  chosen,
+  byRequirement,
+  slots,
+  chosenFighters,
   check,
   fee,
   credits,
   busy,
   canAct,
+  tab,
+  onTab,
   onPickTarget,
-  onToggle,
+  onAssign,
   onAscend,
 }: {
   ready: RosterFighter[]
   target: RosterFighter | null
-  candidates: RosterFighter[]
-  chosen: number[]
+  byRequirement: Record<Requirement, RosterFighter[]>
+  slots: Partial<Record<Requirement, number>>
+  chosenFighters: RosterFighter[]
   check: ReturnType<typeof checkSacrifices> | null
   fee: number
   credits: number
   busy: Busy
   canAct: boolean
+  tab: Tab
+  onTab: (t: Tab) => void
   onPickTarget: (id: number) => void
-  onToggle: (id: number) => void
+  onAssign: (key: Requirement, id: number) => void
   onAscend: () => void
 }) {
   const short = credits < fee
-  const complete = chosen.length === SACRIFICE_COUNT && !!check?.ok
+  const complete = chosenFighters.length === SACRIFICE_COUNT && !!check?.ok
+
+  const count = (t: Tab) =>
+    t === 'target' ? ready.length : byRequirement[t].length
+
+  const list = tab === 'target' ? ready : byRequirement[tab]
+  const requirement = REQUIREMENTS.find((r) => r.key === tab)
 
   return (
     <>
-      <section className="panel">
-        <h2 className="panel__title">Choose a fighter to ascend</h2>
-        {ready.length === 0 ? (
-          <p className="muted">
-            No fighter is ready. They have to be at the level cap first — level
-            them up on the My Fighters screen.
-          </p>
-        ) : (
-          <div className="ascgrid">
-            {ready.map((f) => (
-              <FighterTile
-                key={f.fighter_id}
-                fighter={f}
-                picked={target?.fighter_id === f.fighter_id}
-                onClick={() => onPickTarget(f.fighter_id)}
-              />
-            ))}
-          </div>
-        )}
-      </section>
+      {/*
+        What has been chosen so far, above the list it is chosen from.
 
-      {target && (
-        <section className="panel">
-          <div className="row row--wrap">
-            <div className="miningintro">
-              <h2 className="panel__title">
-                Sacrifices ({chosen.length}/{SACRIFICE_COUNT})
-              </h2>
-              <p className="hint">
-                All three must share {target.classname}'s class. Between them
-                they must cover every requirement below.
-              </p>
-            </div>
-            <span className="spacer" />
-            <button
-              type="button"
-              className="btn btn--primary"
-              disabled={!canAct || busy !== null || !complete || short}
-              onClick={onAscend}
-            >
-              {busy === 'ascend' && <span className="spinner" />}
-              Ascend for {formatNumber(fee)} credits
-            </button>
-          </div>
+        Four slots that are always on screen: the fighter being ascended and
+        one per requirement. The empty ones say what belongs in them, so the
+        shape of the whole errand is visible from the first click rather than
+        emerging as tags accumulate across a grid.
+      */}
+      <section className="panel ascpick">
+        <div className="ascpick__slots">
+          <AscSlot
+            label="Ascending"
+            hint="A fighter at the level cap"
+            fighter={target}
+            active={tab === 'target'}
+            onClick={() => onTab('target')}
+          />
+          {REQUIREMENTS.map((r) => (
+            <AscSlot
+              key={r.key}
+              label={r.label}
+              hint={r.hint}
+              fighter={
+                chosenFighters.find((f) => f.fighter_id === slots[r.key]) ?? null
+              }
+              active={tab === r.key}
+              disabled={!target}
+              onClick={() => target && onTab(r.key)}
+            />
+          ))}
+        </div>
 
-          {/*
-            Shown while the pick is being built rather than reported as a
-            failure afterwards: the contract's own message is "one or more
-            sacrifices do not match the required criteria", which does not
-            say which, and the rule is easy to trip on by accident.
-          */}
-          <div className="reqs">
-            {REQUIREMENTS.map((r) => {
-              const filledBy = check?.assignment.get(r.key)
-              const anyMatch = chosen.some((id) => {
-                const f = candidates.find((c) => c.fighter_id === id)
-                return f ? requirementsMet(f, target).has(r.key) : false
-              })
-              const state = filledBy ? 'ok' : anyMatch ? 'clash' : 'todo'
-              return (
-                <span className={`req req--${state}`} key={r.key} title={r.hint}>
-                  <b>{state === 'ok' ? '✓' : state === 'clash' ? '!' : '·'}</b>
-                  {r.label}
-                  {state === 'clash' && (
-                    <em> — covered, but by a fighter already counted</em>
-                  )}
-                </span>
-              )
-            })}
-          </div>
-
+        <div className="ascpick__go">
           {short && (
             <p className="hint hint--error">
               You have {formatNumber(credits)} credits; this costs{' '}
               {formatNumber(fee)}.
             </p>
           )}
+          <button
+            type="button"
+            className="btn btn--primary"
+            disabled={!canAct || busy !== null || !complete || short}
+            onClick={onAscend}
+          >
+            {busy === 'ascend' && <span className="spinner" />}
+            Ascend for {formatNumber(fee)} credits
+          </button>
+        </div>
+      </section>
 
-          {candidates.length === 0 ? (
-            <p className="muted">
-              No other {target.classname} in your roster to sacrifice.
+      <section className="panel">
+        <div className="asctabs" role="tablist">
+          {TABS.map((t) => (
+            <button
+              type="button"
+              key={t.key}
+              role="tab"
+              aria-selected={tab === t.key}
+              className="asctabs__tab"
+              disabled={t.key !== 'target' && !target}
+              onClick={() => onTab(t.key)}
+            >
+              {t.key === 'target' ? 'Ascend' : t.label}
+              {/*
+                The count is the useful half of the label. "Sacrifice ability
+                0" is the answer to why a plan will not work, and it is worth
+                seeing without opening the tab to find out.
+              */}
+              <span className="asctabs__n">{count(t.key)}</span>
+            </button>
+          ))}
+        </div>
+
+        {tab === 'target' ? (
+          <>
+            <p className="hint">
+              Only a fighter at the level cap can be ascended. Level the others
+              up on My Fighters first.
             </p>
-          ) : (
-            <div className="ascgrid">
-              {candidates.map((f) => (
-                <FighterTile
-                  key={f.fighter_id}
-                  fighter={f}
-                  picked={chosen.includes(f.fighter_id)}
-                  meets={requirementsMet(f, target)}
-                  disabled={
-                    !chosen.includes(f.fighter_id) &&
-                    chosen.length >= SACRIFICE_COUNT
-                  }
-                  onClick={() => onToggle(f.fighter_id)}
-                />
-              ))}
-            </div>
-          )}
-        </section>
-      )}
+            {ready.length === 0 ? (
+              <p className="muted">
+                No fighter is ready. They have to be at the level cap first.
+              </p>
+            ) : (
+              <div className="ascgrid">
+                {ready.map((f) => (
+                  <AscCard
+                    key={f.fighter_id}
+                    fighter={f}
+                    picked={target?.fighter_id === f.fighter_id}
+                    onClick={() => onPickTarget(f.fighter_id)}
+                  />
+                ))}
+              </div>
+            )}
+          </>
+        ) : (
+          <>
+            <p className="hint">
+              {requirement?.hint}. Every sacrifice also has to share the
+              {' '}
+              {target?.classname} class, and no fighter can cover two
+              requirements.
+            </p>
+            {list.length === 0 ? (
+              <p className="muted">
+                Nothing in your roster covers this. A sacrifice has to be
+                another {target?.classname} that is not already mid-ascension.
+              </p>
+            ) : (
+              <div className="ascgrid">
+                {list.map((f) => {
+                  /* Already standing in for one of the other two. */
+                  const usedElsewhere = REQUIREMENTS.some(
+                    (r) => r.key !== tab && slots[r.key] === f.fighter_id,
+                  )
+                  return (
+                    <AscCard
+                      key={f.fighter_id}
+                      fighter={f}
+                      picked={slots[tab as Requirement] === f.fighter_id}
+                      note={usedElsewhere ? 'Covering another' : undefined}
+                      onClick={() => onAssign(tab as Requirement, f.fighter_id)}
+                    />
+                  )
+                })}
+              </div>
+            )}
+          </>
+        )}
+      </section>
     </>
   )
 }
 
-function FighterTile({
+/** One of the four things being chosen, filled or still waiting. */
+function AscSlot({
+  label,
+  hint,
   fighter,
-  picked,
-  meets,
+  active,
   disabled = false,
   onClick,
 }: {
-  fighter: RosterFighter
-  picked: boolean
-  meets?: Set<Requirement>
+  label: string
+  hint: string
+  fighter: RosterFighter | null
+  active: boolean
   disabled?: boolean
   onClick: () => void
 }) {
@@ -408,42 +535,106 @@ function FighterTile({
     <button
       type="button"
       className={
-        'asctile' +
-        (picked ? ' asctile--picked' : '') +
-        (disabled ? ' asctile--off' : '')
+        'ascslot' +
+        (fighter ? ' ascslot--filled' : '') +
+        (active ? ' ascslot--active' : '')
       }
-      aria-pressed={picked}
       disabled={disabled}
       onClick={onClick}
+      title={hint}
     >
-      <img
-        src={fighterArt(fighter)}
-        alt=""
-        loading="lazy"
-        onError={(e) => {
-          const img = e.currentTarget
-          if (img.dataset.fallback) return
-          img.dataset.fallback = '1'
-          img.src = fighterArtFallback()
-        }}
-      />
-      <span className="asctile__body">
-        <strong>{fighter.classname}</strong>
-        <em>
-          {fighter.racename} · {fighter.element} · lvl{' '}
-          {formatNumber(Number(fighter.stats?.level ?? 0))}
-        </em>
-        {meets && (
-          <span className="asctile__tags">
-            {meets.has('element') && <i className="tag tag--el">Element</i>}
-            {meets.has('race') && <i className="tag tag--race">Race</i>}
-            {meets.has('ability') && <i className="tag tag--abil">Ability</i>}
-            {meets.size === 0 && <i className="tag tag--none">No match</i>}
+      <span className="ascslot__label">{label}</span>
+      {fighter ? (
+        <span className="ascslot__who">
+          <img
+            className="ascslot__art"
+            src={fighterAvatar(fighter)}
+            alt=""
+            loading="lazy"
+            onError={(e) => {
+              const img = e.currentTarget
+              if (img.dataset.fallback) return
+              img.dataset.fallback = '1'
+              img.src = fighterArtFallback()
+            }}
+          />
+          <span className="ascslot__name">
+            {fighter.racename} {fighter.classname}
           </span>
-        )}
-        {fighter.ascension_level > 0 && (
-          <span className="asctile__asc">Asc {fighter.ascension_level}</span>
-        )}
+        </span>
+      ) : (
+        <span className="ascslot__empty">
+          {disabled ? 'Pick a fighter first' : 'Not chosen'}
+        </span>
+      )}
+    </button>
+  )
+}
+
+/**
+ * A fighter, shown the way the roster shows one.
+ *
+ * The old tile was a 56px thumbnail and one line of grey text, which is not
+ * enough to tell two Tacticians apart — and telling them apart is the whole
+ * of what this screen asks. Same portrait, name, level and the damage/health
+ * pair My Fighters leads with.
+ */
+function AscCard({
+  fighter,
+  picked,
+  note,
+  onClick,
+}: {
+  fighter: RosterFighter
+  picked: boolean
+  note?: string
+  onClick: () => void
+}) {
+  const s = fighter.stats
+  return (
+    <button
+      type="button"
+      className={'asccard' + (picked ? ' asccard--picked' : '')}
+      aria-pressed={picked}
+      onClick={onClick}
+    >
+      <span
+        className="asccard__art"
+        style={{ backgroundImage: `url('${elementBackground(fighter.element)}')` }}
+      >
+        <img
+          src={fighterAvatar(fighter)}
+          alt=""
+          loading="lazy"
+          onError={(e) => {
+            const img = e.currentTarget
+            if (img.dataset.fallback) return
+            img.dataset.fallback = '1'
+            img.src = fighterArtFallback()
+          }}
+        />
+      </span>
+
+      <span className="asccard__body">
+        <span className="asccard__name">
+          {fighter.racename} {fighter.classname}
+        </span>
+        <span className="asccard__chips">
+          <i className="chip chip--level">Lv {Number(s?.level ?? 0)}</i>
+          <i className="chip">{fighter.element}</i>
+          {fighter.ascension_level > 0 && (
+            <i className="chip chip--asc">Asc {fighter.ascension_level}</i>
+          )}
+        </span>
+        <span className="asccard__stats mono">
+          <span className="asccard__dmg">
+            {formatScaled(Number(s?.damage_min ?? 0))}
+          </span>
+          <span className="asccard__hp">
+            {formatScaled(Number(s?.health_min ?? 0))}
+          </span>
+        </span>
+        {note && <span className="asccard__note">{note}</span>}
       </span>
     </button>
   )
