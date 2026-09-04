@@ -10,6 +10,28 @@ import { TTL } from '@/chain/cache'
  * fed. The flat `ascension_credit_fee` is what is actually spent, so that is
  * what the screen quotes.
  */
+/**
+ * The floors and ceilings a fighter's stats are held between.
+ *
+ * Only the floors matter to an ascension: `ascupgrade` adds health, damage
+ * and resistances with no ceiling check at all, and clamps only when it is
+ * *subtracting* from taunt, wind-up or cooldown — a roll that would take one
+ * of those under its floor drops it to the floor instead, so the player gets
+ * less than the number on the offer.
+ */
+export interface StatCaps {
+  health_min: number
+  health_max: number
+  damage_min: number
+  damage_max: number
+  taunt_min: number
+  taunt_max: number
+  initiative_min: number
+  initiative_max: number
+  attackspeed_min: number
+  attackspeed_max: number
+}
+
 export interface AscensionConfig {
   config_id: number
   ascension_credit_fee: number
@@ -17,6 +39,7 @@ export interface AscensionConfig {
   /** A fighter must be exactly this level — not merely at or above it. */
   min_ascension_level: number
   ascension_fee_level_mod: number | string
+  battle_stat_caps: StatCaps
 }
 
 export function fetchAscensionConfig(): Promise<AscensionConfig | undefined> {

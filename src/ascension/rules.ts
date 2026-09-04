@@ -1,5 +1,8 @@
 import type { RosterFighter } from '@/dungeon/types'
-import type { AscensionConfig } from './queries'
+import { statIcon } from '@/tavern/fighterStats'
+import { NUM_LOCALE } from '@/format'
+import { asset } from '@/assets'
+import type { AscensionConfig, StatCaps } from './queries'
 
 /**
  * Ascension, from `ascend.ale`.
@@ -197,7 +200,97 @@ export function isAmbiguous(stat: string): boolean {
   return stat === 'taunt'
 }
 
-/** "+12 Health", "−8 Cooldown". */
-export function upgradeLabel(stat: string, value: number, positive: boolean): string {
-  return `${positive ? '+' : '−'}${value} ${statLabel(stat)}`
+/**
+ * The two stats the contract grows with the fighter.
+ *
+ * `apply_weather_and_age` multiplies health and damage by
+ * `level_mod ^ level * age_decay` before the first blow and leaves cooldown,
+ * wind-up, taunt and the resistances alone. So a rolled +9 damage is worth
+ * four times its face value on a level 10 fighter and a rolled −14 cooldown
+ * is worth exactly its face value, and quoting both at face value would
+ * understate one of them by a factor of four.
+ */
+const SCALED_BY_LEVEL = new Set(['health', 'damage'])
+
+/** Percent-valued stats, which the game prints with a sign rather than a unit. */
+function isResistance(stat: string): boolean {
+  return stat.startsWith('res_')
+}
+
+/**
+ * The three the contract clamps, and only when subtracting.
+ *
+ * `ascupgrade` adds health, damage and every resistance with no ceiling check
+ * at all — the `_max` caps are not consulted. What it does check is the floor
+ * on a *downward* roll of taunt, wind-up or cooldown: if the subtraction
+ * would take the stat under its floor it sets the stat to the floor instead,
+ * so the player gets less than the offer says.
+ */
+const FLOORED = new Set(['taunt', 'initiative', 'attackspeed'])
+
+/**
+ * How much of a rolled upgrade the contract would actually apply.
+ *
+ * In raw units, like the offer itself. Equal to the offer except where a
+ * subtraction runs into a floor, in which case the stat lands on the floor
+ * and the difference is lost.
+ */
+export function appliedValue(
+  stat: string,
+  value: number,
+  positive: boolean,
+  fighter: RosterFighter | undefined,
+  caps: StatCaps | undefined,
+): number {
+  if (positive || !FLOORED.has(stat) || !fighter || !caps) return value
+
+  const current = Number(
+    (fighter.stats as unknown as Record<string, number>)[`${stat}_min`] ?? 0,
+  )
+  const floor = Number((caps as unknown as Record<string, number>)[`${stat}_min`] ?? 0)
+
+  return current - value >= floor ? value : Math.max(0, current - floor)
+}
+
+/**
+ * What a rolled upgrade is actually worth to this fighter.
+ *
+ * Values arrive at ten times their displayed size, like every other stat the
+ * contract stores — the screen was printing them raw, so a −1.4 cooldown read
+ * as −14.
+ */
+export function upgradeGain(stat: string, value: number, factor = 1): number {
+  const base = value / 10
+  return SCALED_BY_LEVEL.has(stat) ? base * factor : base
+}
+
+/** "1.4", "3.63", "12" — as many decimals as the number needs, up to two. */
+function trimmed(n: number): string {
+  return Number(n.toFixed(2)).toLocaleString(NUM_LOCALE, {
+    maximumFractionDigits: 2,
+  })
+}
+
+/** "+12 Health", "−1.4 Cooldown", "+3% Gem resistance". */
+export function upgradeLabel(
+  stat: string,
+  value: number,
+  positive: boolean,
+  factor = 1,
+): string {
+  const n = upgradeGain(stat, value, factor)
+  return `${positive ? '+' : '−'}${trimmed(n)}${isResistance(stat) ? '%' : ''} ${statLabel(stat)}`
+}
+
+/**
+ * The icon the rest of the game uses for this stat.
+ *
+ * `statIcon` only has files for the five main stats; a resistance is named
+ * for its element and takes the element's mark, which is what the tavern and
+ * the fighter panel already show beside one.
+ */
+export function upgradeIcon(stat: string): string {
+  return isResistance(stat)
+    ? asset(`/assets/icons/elements/${stat.slice(4)}.png`)
+    : statIcon(stat)
 }

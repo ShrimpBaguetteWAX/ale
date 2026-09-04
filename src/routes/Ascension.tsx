@@ -1,11 +1,16 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useGame } from '@/state/useGame'
-import { fetchRoster } from '@/dungeon/queries'
+import { fetchBattleConfig, fetchClassTemplates, fetchRoster } from '@/dungeon/queries'
+import { fetchFighterLevels, fetchFightersConfig } from '@/fighters/queries'
+import type { FighterLevel, FightersConfig } from '@/fighters/types'
+import { battleFactor } from '@/fighters/rules'
+import { FighterCard } from './Fighters'
 import type { RosterFighter } from '@/dungeon/types'
 import {
   fetchAllUpgrades,
   fetchAscensionConfig,
   type AscensionConfig,
+  type StatCaps,
   type UpgradeOdds,
 } from '@/ascension/queries'
 import {
@@ -18,7 +23,9 @@ import {
   isAmbiguous,
   isBenefit,
   requirementsMet,
+  appliedValue,
   statLabel,
+  upgradeIcon,
   upgradeLabel,
   type Requirement,
 } from '@/ascension/rules'
@@ -28,6 +35,7 @@ import {
   rerollAscension,
 } from '@/wharf/actions'
 import { readableError } from '@/wharf/errors'
+import type { ClassTemplate } from '@/tavern/fighterStats'
 import {
   elementBackground,
   fighterArtFallback,
@@ -78,6 +86,12 @@ export default function Ascension() {
   const [roster, setRoster] = useState<RosterFighter[]>([])
   const [config, setConfig] = useState<AscensionConfig>()
   const [odds, setOdds] = useState<UpgradeOdds[]>([])
+  /* What the roster card needs to draw a fighter the way My Fighters does. */
+  const [levels, setLevels] = useState<FighterLevel[]>([])
+  const [fighterConfig, setFighterConfig] = useState<FightersConfig>()
+  const [templates, setTemplates] = useState<Map<string, ClassTemplate>>(new Map())
+  const [levelMod, setLevelMod] = useState(1.15)
+  const [ageDecay, setAgeDecay] = useState(1)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
@@ -108,15 +122,26 @@ export default function Ascension() {
   const load = useCallback(async () => {
     if (!account) return
     try {
-      const [r, c, u] = await Promise.all([
+      const [r, c, u, lv, fc, tpl, bc] = await Promise.all([
         fetchRoster(account, true),
         fetchAscensionConfig(),
         fetchAllUpgrades(),
+        fetchFighterLevels(),
+        fetchFightersConfig(),
+        fetchClassTemplates(),
+        fetchBattleConfig(),
       ])
       if (!alive.current) return
       setRoster(r)
       setConfig(c)
       setOdds(u)
+      setLevels(lv)
+      setFighterConfig(fc)
+      setTemplates(tpl)
+      if (bc) {
+        setLevelMod(Number(bc.level_mod) || 1.15)
+        setAgeDecay(Number(bc.age_decay) || 1)
+      }
     } catch (err) {
       if (alive.current) setError(readableError(err))
     } finally {
@@ -255,10 +280,16 @@ export default function Ascension() {
       {pending ? (
         <OfferPanel
           fighter={pending}
+          levels={levels}
+          fighterConfig={fighterConfig}
+          template={templates.get(pending.classname)}
+          levelMod={levelMod}
+          ageDecay={ageDecay}
           rerollFee={rerollFee}
           credits={credits}
           busy={busy}
           canAct={!!session}
+          caps={config?.battle_stat_caps}
           onReroll={() =>
             void run(
               'reroll',
@@ -642,100 +673,171 @@ function AscCard({
 
 /* ---------- the three offers ---------- */
 
+/**
+ * The reward, once the three have been spent.
+ *
+ * The fighter first, then the three rolls to choose between. It is the same
+ * card My Fighters shows — the decision is "which of these three does this
+ * fighter want", and answering it means reading the stats it already has, so
+ * the screen puts them there rather than asking the player to remember them
+ * from another page.
+ */
 function OfferPanel({
   fighter,
+  levels,
+  fighterConfig,
+  template,
+  levelMod,
+  ageDecay,
   rerollFee,
   credits,
   busy,
   canAct,
+  caps,
   onReroll,
   onClaim,
 }: {
   fighter: RosterFighter
+  levels: FighterLevel[]
+  fighterConfig?: FightersConfig
+  template?: ClassTemplate
+  levelMod: number
+  ageDecay: number
   rerollFee: number
   credits: number
   busy: Busy
   canAct: boolean
   onReroll: () => void
+  caps?: StatCaps
   onClaim: (stat: string, value: number, positive: boolean) => void
 }) {
   const offers = fighter.ascension_upgrades ?? []
+  /*
+     What the roll is worth to *this* fighter.
+
+     The contract grows health and damage by `level_mod ^ level * age_decay`
+     before a fight and leaves the rest alone, so the same rolled number means
+     four times as much on a level 10 fighter for two of the eleven stats.
+  */
+  const factor = battleFactor(fighter, levelMod, ageDecay).total
 
   return (
-    <section className="panel">
-      <div className="row row--wrap">
-        <div className="miningintro">
-          <h2 className="panel__title">
-            {fighter.classname} is ascending
-          </h2>
-          <p className="hint">
-            Three upgrades were rolled. Taking one applies it and ends the
-            ascension — the other two are gone.
-          </p>
+    <>
+      <section className="panel ascoffer">
+        <div className="row row--wrap">
+          <div className="miningintro">
+            <h2 className="panel__title">Permanently improve your fighter</h2>
+            <p className="hint">
+              Three upgrades were rolled. Taking one applies it and ends the
+              ascension — the other two are gone.
+            </p>
+          </div>
+          <span className="spacer" />
+          <button
+            type="button"
+            className="btn btn--ghost"
+            disabled={!canAct || busy !== null || credits < rerollFee}
+            onClick={onReroll}
+            title={
+              credits < rerollFee
+                ? `Needs ${formatNumber(rerollFee)} credits`
+                : 'Roll three new offers'
+            }
+          >
+            {busy === 'reroll' && <span className="spinner" />}
+            Re-roll for {formatNumber(rerollFee)}
+          </button>
         </div>
-        <span className="spacer" />
-        <button
-          type="button"
-          className="btn btn--ghost"
-          disabled={!canAct || busy !== null || credits < rerollFee}
-          onClick={onReroll}
-          title={
-            credits < rerollFee
-              ? `Needs ${formatNumber(rerollFee)} credits`
-              : 'Roll three new offers'
-          }
-        >
-          {busy === 'reroll' && <span className="spinner" />}
-          Re-roll for {formatNumber(rerollFee)}
-        </button>
-      </div>
 
-      {offers.length === 0 ? (
-        <p className="muted">No offers on this fighter yet.</p>
-      ) : (
-        <div className="offergrid">
-          {offers.map((o, i) => {
-            const positive = !!o.positive
-            const good = isBenefit(o.stat_name, positive)
-            const mixed = isAmbiguous(o.stat_name)
-            return (
-              <div
-                className={`offer offer--${mixed ? 'mixed' : good ? 'good' : 'bad'}`}
-                key={`${o.stat_name}-${o.value}-${i}`}
-              >
-                <span className="offer__stat">{statLabel(o.stat_name)}</span>
-                <span className="offer__value">
-                  {upgradeLabel(o.stat_name, o.value, positive)}
-                </span>
-                {/*
-                  Direction is not the same as benefit. Cooldown and wind-up
-                  are timers, so a subtraction is an improvement; taunt is
-                  genuinely two-sided and depends on the squad.
-                */}
-                <span className="offer__note">
-                  {mixed
-                    ? positive
-                      ? 'Draws more attacks'
-                      : 'Draws fewer attacks'
-                    : good
-                      ? 'Improvement'
-                      : 'Penalty'}
-                </span>
-                <button
-                  type="button"
-                  className="btn btn--primary btn--sm"
-                  disabled={!canAct || busy !== null}
-                  onClick={() => onClaim(o.stat_name, o.value, positive)}
-                >
-                  {busy === 'claim' && <span className="spinner" />}
-                  Take this
-                </button>
-              </div>
-            )
-          })}
+        <div className="ascoffer__body">
+          {/*
+            The roster's own card, not a summary of it. Same fighter, same
+            three readouts, same place the numbers sit — so what a rolled
+            "+3.63 Damage" is being added to is on the screen beside it.
+          */}
+          <div className="ascoffer__fighter">
+            <FighterCard
+              fighter={fighter}
+              levels={levels}
+              config={fighterConfig}
+              template={template}
+              levelMod={levelMod}
+              ageDecay={ageDecay}
+              now={Date.now()}
+              mode="inventory"
+              tab="primary"
+              selected={false}
+              checked={false}
+              onSelect={() => {}}
+              onCheck={() => {}}
+              onOpen={() => {}}
+            />
+          </div>
+
+          <div className="ascoffer__picks">
+            <h3 className="ascoffer__pickTitle">Pick one of these improvements</h3>
+            {offers.length === 0 ? (
+              <p className="muted">No offers on this fighter yet.</p>
+            ) : (
+              <ul className="offerlist">
+                {offers.map((o, i) => {
+                  const positive = !!o.positive
+                  const good = isBenefit(o.stat_name, positive)
+                  const mixed = isAmbiguous(o.stat_name)
+                  /* What the contract would really apply, floors included. */
+                  const applied = appliedValue(o.stat_name, o.value, positive, fighter, caps)
+                  const short = applied < o.value
+                  return (
+                    <li key={`${o.stat_name}-${o.value}-${i}`}>
+                      <button
+                        type="button"
+                        className={
+                          'offerrow offerrow--' +
+                          (mixed ? 'mixed' : good ? 'good' : 'bad')
+                        }
+                        disabled={!canAct || busy !== null}
+                        onClick={() => onClaim(o.stat_name, o.value, positive)}
+                      >
+                        <img
+                          className="offerrow__icon"
+                          src={upgradeIcon(o.stat_name)}
+                          alt=""
+                          width={20}
+                          height={20}
+                        />
+                        <span className="offerrow__label">
+                          {upgradeLabel(o.stat_name, applied, positive, factor)}
+                        </span>
+                        {/*
+                          Direction is not the same as benefit. Cooldown and
+                          wind-up are timers, so a subtraction is an
+                          improvement; taunt is genuinely two-sided and
+                          depends on the squad.
+                        */}
+                        <span className="offerrow__note">
+                          {short
+                            ? 'Capped — ' + statLabel(o.stat_name).toLowerCase() + ' cannot go lower'
+                            : mixed
+                            ? positive
+                              ? 'Draws more attacks'
+                              : 'Draws fewer attacks'
+                            : good
+                              ? 'Improvement'
+                              : 'Penalty'}
+                        </span>
+                        <span className="offerrow__take">
+                          {busy === 'claim' ? 'Working…' : 'Take this'}
+                        </span>
+                      </button>
+                    </li>
+                  )
+                })}
+              </ul>
+            )}
+          </div>
         </div>
-      )}
-    </section>
+      </section>
+    </>
   )
 }
 
