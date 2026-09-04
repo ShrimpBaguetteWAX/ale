@@ -2708,9 +2708,29 @@
  * the numbers are what the fighter brings when it joins, and a fighter you
  * are being told about is not a fighter to hide.
  */
+/*
+ * Grey, but not by filtering the whole card.
+ *
+ * `filter` puts everything under it through an offscreen surface, and text
+ * drawn into one loses its subpixel antialiasing — which is the whole of
+ * "the label is blurry", reported three times and misdiagnosed twice. The
+ * fighter's name escaped it by being large enough not to show it; the band's
+ * 10px caps did not.
+ *
+ * So the filter goes on the card's contents, and the elemental backdrop —
+ * which is painted on the card itself and would otherwise stay in colour —
+ * is desaturated by blending instead: `luminosity` keeps the image's
+ * lightness and takes its hue and saturation from the flat grey beneath,
+ * which is a greyscale image with no render surface involved.
+ */
 .combatcard--dormant {
   border-style: dashed;
   border-color: var(--line-soft);
+  background-color: rgb(128 128 128);
+  background-blend-mode: luminosity;
+}
+
+.combatcard--dormant .combatcard__hit {
   filter: grayscale(1);
 }
 
