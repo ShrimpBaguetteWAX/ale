@@ -478,7 +478,18 @@ export default function Tavern() {
                   </div>
                 </div>
 
-                <div style={{ marginTop: 'var(--sp-3)' }}>
+                {/*
+                  Stats and resistances side by side where there is room.
+
+                  They are two lists of numbers about the same fighter, and
+                  stacked they pushed the abilities — the thing that actually
+                  separates one recruit from another — a screen and a half
+                  down. Beside each other they cost the height of the taller
+                  one instead of the sum. One column on anything narrower,
+                  where side-by-side would just be two cramped columns.
+                */}
+                <div className="recruit__cols">
+                <div className="recruit__stats">
                   {/*
                      Damage, then health, then the two timings together, then
                      taunt and who it goes for.
@@ -557,6 +568,7 @@ export default function Tavern() {
                       </div>
                     )
                   })}
+                </div>
                 </div>
 
                 {fighter.abilities.length > 0 && (

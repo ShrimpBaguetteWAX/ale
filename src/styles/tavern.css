@@ -86,6 +86,50 @@
   }
 }
 
+/*
+ * A wider recruit card, once there is width to spare.
+ *
+ * 1240 rather than the 900 the rest of this layout turns on: the width has to
+ * come out of the inventory beside it, and below about 1240 that leaves it
+ * too narrow to be worth reading. The inventory is a scroller either way, so
+ * what it loses is columns rather than content.
+ */
+@media (min-width: 1240px) {
+  .tavern__grid {
+    grid-template-columns: minmax(0, 560px) minmax(0, 1fr);
+  }
+
+  /*
+     The portrait keeps its height rather than taking the new width.
+
+     It is `aspect-ratio: 4 / 3`, so a panel 200px wider would have made it
+     150px taller — more than the two-column split saves, and the whole point
+     of the wider panel was to bring what is below the portrait up. Held to a
+     height instead of capped to a width: capping leaves a narrow picture
+     marooned in the middle of a wide card, while a fixed height simply gives
+     the same figure more room either side of it. The art is `contain` and
+     bottom-centred, so it stays put and the backdrop takes the extra.
+  */
+  .tavern__fighter .portrait {
+    aspect-ratio: auto;
+    height: 210px;
+  }
+
+  .recruit__cols {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 250px);
+    /* Two lists of different lengths, each starting at the top of the row. */
+    align-items: start;
+  }
+
+  .recruit__cols .resgrid {
+    /* The row above already spaces them; a second gap would double it. */
+    margin-top: 0;
+    /* Three across in 250px is 80px a cell, which is not enough for
+       "NEUTRAL" and its figure. Two columns, three rows. */
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 /* ---------- The recruit ---------- */
 
 .tavern__empty {
@@ -122,6 +166,20 @@
   font-size: var(--fs-sm);
   color: var(--text-dim);
   text-transform: capitalize;
+}
+
+/*
+ * Stats and resistances: stacked by default, side by side on a wide screen.
+ *
+ * A single column at every width was costing the sum of two lists of numbers
+ * in height, and what it pushed off the bottom was the abilities — the one
+ * part of a recruit that is not a number and the part a player is actually
+ * choosing on. Side by side they cost the taller of the two.
+ */
+.recruit__cols {
+  display: grid;
+  gap: var(--sp-3);
+  margin-top: var(--sp-3);
 }
 
 .resgrid {
