@@ -613,9 +613,23 @@ export function CombatCard({
          covers the wedges the lean leaves - so a strip spanning the art hung
          outside the card on both sides and the card clipped the ends off the
          words. Spanning the card instead means it spans what you can see.
-         Counter-skewed for the same reason every other direct child is.
+
+         The counter-skew goes on a layer the size of the whole card rather
+         than on the band, and that is what makes the words sharp. A skew
+         displaces a line by its distance from the transform-origin, so a
+         counter-skew only cancels the card's lean exactly when the two are
+         taken about the same height. Sitting where it does, the band's own
+         centre is 30px above the card's, which left the text translated
+         2.62px sideways - two whole pixels and a smear across the third.
+         A layer that fills the card shares its centre, so the two skews
+         cancel to nothing. This is the arrangement `.combatcard__hit`
+         already had, which is why the name below has always been sharper.
       */}
-      {dormant && <span className="combatcard__dormant">{dormant}</span>}
+      {dormant && (
+        <span className="combatcard__dormantlayer">
+          <span className="combatcard__dormant">{dormant}</span>
+        </span>
+      )}
       </div>
 
       {/*

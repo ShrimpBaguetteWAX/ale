@@ -1115,6 +1115,14 @@
 
 .combatcard {
   position: relative;
+  /*
+     So the dormant band can size its type to the card rather than to the
+     window. How wide a card is has little to do with the viewport — six of
+     them share one half of the versus block, and that half is 59px per card
+     at 1100 and 139px at 1920 — so a media query is the wrong instrument
+     for anything that has to fit inside one.
+   */
+  container-type: inline-size;
   border-radius: var(--radius-xs);
   border: 1px solid var(--line);
   background-color: rgb(0 0 0 / 35%);
@@ -2749,6 +2757,29 @@
  * nothing is worse than none. White on near-black because the card under it
  * is grey by then and dim text on grey is not text.
  */
+/*
+ * The layer the counter-skew is taken on.
+ *
+ * `skewX` moves a line sideways in proportion to its distance from the
+ * transform-origin, so skewing back by the same angle only lands where it
+ * started when both skews are taken about the same height. The band sits
+ * high on the card, and about its own centre the counter-skew overshot the
+ * card's lean by `tan(5°) × 30px` — the words were painted 2.62px to the
+ * right of the box they were laid out in, which is two pixels of offset and
+ * a smear across the third, and at 10px that is most of a stem.
+ *
+ * Filling the card puts this layer's centre on the card's, so the two skews
+ * cancel exactly. Nothing is drawn here; it exists to be the thing that
+ * leans back.
+ */
+.combatcard__dormantlayer {
+  position: absolute;
+  inset: 0;
+  display: block;
+  pointer-events: none;
+  transform: skewX(var(--lean-back));
+}
+
 .combatcard__dormant {
   position: absolute;
   /*
@@ -2786,7 +2817,6 @@
      lines go up into the artwork, which has nothing in it.
   */
   bottom: 55%;
-  transform: skewX(var(--lean-back));
   /*
      The overhang is given back as padding, so the words wrap against what is
      visible rather than against the box.
@@ -2806,12 +2836,24 @@
   padding: 4px calc(12% + 4px);
   font-family: var(--font-display);
   /*
-     Ten, not nine or eight.
+     Ten is the floor, not the size.
 
-     Orbitron is a display face and it turns to mush below about ten pixels —
-     which is what "the text is not sharp" was, every time. The size had been
-     dropped to 8px to squeeze a word in that did not fit at any size; with
-     the wording shortened there is nothing left to buy by shrinking it.
+     Orbitron is a display face and it thins out badly as it shrinks. Drawn
+     into a canvas and counted, 46% of the lit pixels in bold "DIFFICULTY"
+     are fully on at 10px against 60% at 11px and 68% at 14px — the size the
+     fighter's name below is set in, and the text this label was being
+     compared against. Better than half of it being partial greys is what
+     "not sharp" looks like.
+
+     So it goes to 11 as soon as the card can hold it, measured per card
+     rather than per window. Above a 70px card that costs nothing at almost
+     every width — the label wraps to the same number of lines it did at 10.
+     The exception is a narrow band around a 91px card, where 11px takes a
+     third line; extra lines grow up into the artwork by design, so that is
+     the price of the rest of the range being legible.
+
+     Not 12. It is worth almost nothing over 11 by the same count (61%
+     against 60%) and it costs a line at three of the widths measured.
   */
   font-size: 10px;
   font-weight: var(--fw-bold);
@@ -2829,6 +2871,12 @@
   background: rgb(5 16 30 / 92%);
   border-top: 1px solid rgb(255 255 255 / 22%);
   border-bottom: 1px solid rgb(255 255 255 / 22%);
+}
+
+@container (min-width: 70px) {
+  .combatcard__dormant {
+    font-size: 11px;
+  }
 }
 
 @media (max-width: 719px) {
