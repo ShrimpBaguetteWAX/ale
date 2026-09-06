@@ -45,26 +45,45 @@ export function survival(health: number, meanRes: number): number {
   return health * meanRes
 }
 
+/** The two together: what the fighter deals weighted by what it takes. */
+export function combatScore(surv: number, dps: number): number {
+  return surv * dps
+}
+
+interface Band {
+  floor: number
+  ceiling: number
+}
+
+/**
+ * Best case is the hardest hit on the shortest cooldown, worst case the
+ * softest on the longest — the two stats pull in opposite directions, so the
+ * band's ends pair a ceiling with a floor rather than like with like.
+ */
+function dpsBand(template: ClassTemplate): Band | null {
+  const dmg = classBand('damage', template)
+  const cd = classBand('attackspeed', template)
+  if (cd.floor <= 0 || cd.ceiling <= 0) return null
+  return { floor: dmg.floor / cd.ceiling, ceiling: dmg.ceiling / cd.floor }
+}
+
+function survivalBand(template: ClassTemplate): Band {
+  const hp = classBand('health', template)
+  const res = RESISTANCE_FIELDS.map((f) => classBand(f, template))
+  const mean = (pick: (b: Band) => number) =>
+    res.reduce((a, b) => a + pick(b), 0) / res.length / (STAT_SCALE * 100)
+  return { floor: hp.floor * mean((b) => b.floor), ceiling: hp.ceiling * mean((b) => b.ceiling) }
+}
+
 export function gradeDamagePerSecond(
   damage: number,
   cooldown: number,
   template: ClassTemplate | undefined,
 ): StatGrade | null {
   if (!template) return 'middle'
-  const dmg = classBand('damage', template)
-  const cd = classBand('attackspeed', template)
-  if (cd.floor <= 0 || cd.ceiling <= 0) return 'middle'
-
-  /*
-     Best case is the hardest hit on the shortest cooldown, worst case the
-     softest on the longest — the two stats pull in opposite directions, so
-     the band's ends pair a ceiling with a floor rather than like with like.
-   */
-  return gradeInBand(
-    damagePerSecond(damage, cooldown),
-    dmg.floor / cd.ceiling,
-    dmg.ceiling / cd.floor,
-  )
+  const band = dpsBand(template)
+  if (!band) return 'middle'
+  return gradeInBand(damagePerSecond(damage, cooldown), band.floor, band.ceiling)
 }
 
 export function gradeSurvival(
@@ -73,17 +92,44 @@ export function gradeSurvival(
   template: ClassTemplate | undefined,
 ): StatGrade | null {
   if (!template) return 'middle'
-  const hp = classBand('health', template)
+  const band = survivalBand(template)
+  return gradeInBand(survival(health, meanRes), band.floor, band.ceiling)
+}
 
-  const bands = RESISTANCE_FIELDS.map((f) => classBand(f, template))
-  const resFloor =
-    bands.reduce((a, b) => a + b.floor, 0) / bands.length / (STAT_SCALE * 100)
-  const resCeiling =
-    bands.reduce((a, b) => a + b.ceiling, 0) / bands.length / (STAT_SCALE * 100)
+/** Where a value sits in its band, 0 at the floor and 1 at the ceiling. */
+function position(value: number, band: Band): number {
+  const span = band.ceiling - band.floor
+  if (span <= 0) return 0.5
+  return Math.max(0, (value - band.floor) / span)
+}
 
-  return gradeInBand(
-    survival(health, meanRes),
-    hp.floor * resFloor,
-    hp.ceiling * resCeiling,
-  )
+/**
+ * The score graded on how far up both bands the fighter is, not on where the
+ * product lands between the two products.
+ *
+ * The straight reading is the one that misleads. A product's range is the two
+ * ceilings multiplied, so a fighter sitting halfway up both bands lands a
+ * quarter of the way up that one — and against the live roster it marked 110
+ * of 128 fighters below average, which is not a grade, it is a constant.
+ *
+ * So the two halves are placed in their own bands first and combined after,
+ * as a geometric mean: halfway up both reads as halfway, top of both as the
+ * top, and a fighter strong on one count and hopeless on the other is still
+ * dragged down the way multiplying them should. Same sixths, same bands, one
+ * scale that answers what the arrow is being asked.
+ */
+export function gradeCombatScore(
+  health: number,
+  meanRes: number,
+  damage: number,
+  cooldown: number,
+  template: ClassTemplate | undefined,
+): StatGrade | null {
+  if (!template) return 'middle'
+  const dps = dpsBand(template)
+  if (!dps) return 'middle'
+
+  const s = position(survival(health, meanRes), survivalBand(template))
+  const d = position(damagePerSecond(damage, cooldown), dps)
+  return gradeInBand(Math.sqrt(s * d), 0, 1)
 }

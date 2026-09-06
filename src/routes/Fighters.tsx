@@ -74,7 +74,9 @@ import {
   type StatGrade,
 } from '@/tavern/fighterStats'
 import {
+  combatScore,
   damagePerSecond,
+  gradeCombatScore,
   gradeDamagePerSecond,
   gradeSurvival,
   meanResistance,
@@ -973,6 +975,11 @@ function GradeIcon({ grade }: { grade: StatGrade | null }) {
  *
  * Midpoints only. The spreads are on the Stats tab, and a derived figure
  * built from two of them has no honest spread of its own to print.
+ *
+ * The score at the foot is the two halves multiplied, and it is the row to
+ * read if you only read one: a fighter that hits hard and dies immediately
+ * and one that survives everything and does nothing are both bad in a way
+ * neither half shows on its own.
  */
 function CombatPanel({
   stats,
@@ -995,11 +1002,18 @@ function CombatPanel({
   const meanRes = meanResistance(raw)
   const dps = damagePerSecond(shown('damage', true), shown('attackspeed'))
   const surv = survival(shown('health', true), meanRes)
+  /*
+     The score multiplies the two figures as printed, not as computed.
+
+     Survival shows as a whole number and DPS to two places; multiplying what
+     is behind them gave 114 where the two rows above read 39 and 2.90, and a
+     total that does not come out of the numbers over it is worse than one
+     that is a tenth of a percent off.
+   */
+  const score = combatScore(Math.round(surv), Math.round(dps * 100) / 100)
 
   return (
     <dl className="fstats">
-      <div className="fstats__head">Attack</div>
-
       <div className="fstats__row">
         <dt>
           <img src={statIcon('damage')} alt="" width={13} height={13} />
@@ -1025,8 +1039,6 @@ function CombatPanel({
         </dd>
       </div>
 
-      <div className="fstats__head">Defense</div>
-
       <div className="fstats__row">
         <dt>
           <img src={statIcon('survival')} alt="" width={13} height={13} />
@@ -1049,6 +1061,25 @@ function CombatPanel({
           {STAT_LABEL.taunt}
         </dt>
         <dd className="mono">{shown('taunt')}</dd>
+      </div>
+
+      <div className="fstats__row fstats__row--total">
+        <dt>
+          <img src={statIcon('block')} alt="" width={13} height={13} />
+          Combat score
+        </dt>
+        <dd className="mono">
+          {Math.round(score).toLocaleString(NUM_LOCALE)}
+          <GradeIcon
+            grade={gradeCombatScore(
+              mid('health'),
+              meanRes,
+              mid('damage'),
+              mid('attackspeed'),
+              template,
+            )}
+          />
+        </dd>
       </div>
     </dl>
   )

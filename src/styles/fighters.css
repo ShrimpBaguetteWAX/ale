@@ -759,24 +759,25 @@
 }
 
 /*
- * A category over the rows it groups.
+ * The bottom line, set apart from the four it is made of.
  *
- * Two of them split the Combat readout into what the fighter does to the
- * other side and what it survives from it — four numbers in a column are a
- * list, two pairs are an answer. Sized well under the rows so it reads as a
- * heading rather than another entry.
+ * A rule above it and a heavier figure, so it reads as the total of the rows
+ * rather than a fifth one — it is the number to look at if you only look at
+ * one, and at the same weight as the rest it disappeared into them.
  */
-.fstats__head {
-  margin-top: 2px;
-  font-family: var(--font-display);
-  font-size: 9px;
-  font-weight: var(--fw-bold);
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--gold);
+.fstats__row--total {
+  margin-top: 3px;
+  padding-top: 4px;
+  border-top: 1px solid var(--line-soft);
 }
-.fstats__head:first-child {
-  margin-top: 0;
+.fstats__row--total dt {
+  color: var(--text-dim);
+}
+.fstats__row--total dd {
+  font-family: var(--font-display);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-bold);
+  color: var(--gold);
 }
 
 /* ---------- abilities ---------- */
