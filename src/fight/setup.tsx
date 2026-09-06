@@ -49,7 +49,7 @@ import {
 } from '@/tavern/fighterStats'
 import { asset } from '@/assets'
 import { usePhone } from '@/components/usePhone'
-import { combatFiguresFlat } from '@/fighters/derived'
+import { combatFigures } from '@/fighters/derived'
 import { formatDecimals, NUM_LOCALE } from '@/format'
 
 /**
@@ -395,29 +395,6 @@ export function Elemental({
  * foot of the art, which is what keeps the card legible whatever the
  * illustration behind it does.
  */
-/**
- * A panel fighter as the line-up card wants it.
- *
- * The NFT fighter never passes through the roster: it is a crew card and a
- * weapon fused into a `PanelFighter`, whose stats are settled values carried
- * in the `min` of each range — which is the number its card already prints.
- */
-export function panelCombatant(p: PanelFighter) {
-  return {
-    health: p.health.min,
-    damage: p.damage.min,
-    attackspeed: p.attackspeed.min,
-    initiative: p.initiative.min,
-    taunt: p.taunt.min,
-    res_gem: p.res_gem,
-    res_metal: p.res_metal,
-    res_air: p.res_air,
-    res_fire: p.res_fire,
-    res_nature: p.res_nature,
-    res_neutral: p.res_neutral,
-  }
-}
-
 export function CombatCard({
   element,
   classname,
@@ -426,7 +403,6 @@ export function CombatCard({
   health,
   damage,
   side,
-  stats,
   art,
   badge,
   abilities,
@@ -442,28 +418,6 @@ export function CombatCard({
   health: number
   damage: number
   side: "mine" | "enemy"
-  /**
-   * The settled fighter behind the card, when the caller has it.
-   *
-   * Damage and health on their own are the two numbers that mislead most
-   * here: 90 damage on an 8 cooldown loses to 60 on a 4, and health means
-   * nothing without the resistances. Given the whole combatant the card can
-   * print what the fighter does instead of what it is made of. Optional so a
-   * caller that only has the pair still renders.
-   */
-  stats?: {
-    health: number
-    damage: number
-    attackspeed: number
-    initiative?: number
-    taunt?: number
-    res_gem?: number
-    res_metal?: number
-    res_air?: number
-    res_fire?: number
-    res_nature?: number
-    res_neutral?: number
-  }
   art?: string
   badge?: string
   /**
@@ -523,9 +477,6 @@ export function CombatCard({
      it has to be a sibling rather than a descendant.
   */
   const phone = usePhone()
-
-  /* Derived where the settled numbers are; absent when only the pair is. */
-  const figures = stats ? combatFiguresFlat(stats) : null
 
   /*
      Always a row, whether or not there is anything to put in it.
@@ -633,44 +584,16 @@ export function CombatCard({
           <span className="combatcard__name">{classname || racename || 'Fighter'}</span>
           {owner && <span className="combatcard__owner">{owner}</span>}
           {/*
-            What the fighter does, in the order the roster prints it.
-
-            Damage and health were the pair here, and they are the two that
-            mislead: 90 damage on an 8 cooldown loses to 60 on a 4, and
-            health without the resistances is not survivability. Same four
-            figures and the same total as the Combat tab, so a fighter reads
-            the same on the screen you pick it from as on the one you
-            compare it on.
+            Damage first, health second, here and everywhere else a pair of
+            them is printed. Damage is what a player is choosing on - it is
+            the number the elements move, the number the matchup badges
+            qualify, and the one that decides whether a fighter belongs in
+            this fight; health is how long it keeps doing it.
           */}
-          {figures ? (
-            <span className="combatcard__figures mono">
-              <span className="combatcard__fig">
-                <img src={statIcon('damage')} alt="DPS" title="Damage per cooldown" />
-                {formatDecimals(figures.dps, 2)}
-              </span>
-              <span className="combatcard__fig">
-                <img src={statIcon('survival')} alt="Survival" title="Health weighted by resistances" />
-                {Math.round(figures.survival).toLocaleString(NUM_LOCALE)}
-              </span>
-              <span className="combatcard__fig">
-                <img src={statIcon('initiative')} alt="Windup" title="Wind-up before the first blow" />
-                {formatScaled(stats?.initiative ?? 0)}
-              </span>
-              <span className="combatcard__fig">
-                <img src={statIcon('taunt')} alt="Taunt" title="How much this fighter draws attacks" />
-                {formatScaled(stats?.taunt ?? 0)}
-              </span>
-              <span className="combatcard__fig combatcard__fig--score">
-                <img src={statIcon('block')} alt="Combat score" title="Survival times DPS" />
-                {Math.round(figures.score).toLocaleString(NUM_LOCALE)}
-              </span>
-            </span>
-          ) : (
-            <span className="combatcard__stats mono">
-              <span className="combatcard__dmg">{formatScaled(damage)}</span>
-              <span className="combatcard__hp">{formatScaled(health)}</span>
-            </span>
-          )}
+          <span className="combatcard__stats mono">
+            <span className="combatcard__dmg">{formatScaled(damage)}</span>
+            <span className="combatcard__hp">{formatScaled(health)}</span>
+          </span>
           {/*
             Rendered whenever there is an opposing line to read, even when
             both counts are zero.
@@ -1437,8 +1360,7 @@ export function FighterGrid({
           /* Only the level term is held at 1: age is a fact about the
              fighter rather than a consequence of how far it has been taken. */
           const factor = levelFactor(atLevelOne ? 1 : f.stats.level, levelMod) * age
-          const health = Math.trunc(mid(f.stats.health_min, f.stats.health_max) * factor)
-          const damage = Math.trunc(mid(f.stats.damage_min, f.stats.damage_max) * factor)
+          const figures = combatFigures(f.stats as unknown as Record<string, number>, factor)
           const bonus = ageBonus(f, ageDecay)
 
           return (
@@ -1475,8 +1397,20 @@ export function FighterGrid({
                   {/* Says what the numbers below are, not what the fighter
                       is — a level 10 card showing level 1 damage otherwise
                       simply reads as wrong. */}
-                  {f.racename} · L{f.stats.level}
-                  {atLevelOne && f.stats.level !== 1 && <>&thinsp;→&thinsp;1</>}
+                  {f.racename}
+                  {/*
+                    A chip, not a suffix on the race.
+
+                    Level is what health and damage are multiplied by before
+                    the first blow — `level_mod ^ level`, four times over at
+                    the cap — so a card being judged on those figures has to
+                    say it louder than "· L7" in the same faint grey as the
+                    race beside it.
+                  */}
+                  <span className="fightercard__lv">
+                    L{f.stats.level}
+                    {atLevelOne && f.stats.level !== 1 && <>&thinsp;→&thinsp;1</>}
+                  </span>
                   {/*
                     Age, beside level, because they are the two things scaling
                     the figures underneath — and the only one of the two that
@@ -1494,11 +1428,47 @@ export function FighterGrid({
                     </span>
                   )}
                 </span>
+                {/*
+                  What the fighter does, not what it is made of.
+
+                  Damage and health were the pair here and they are the two
+                  that mislead: 90 damage on an 8 cooldown loses to 60 on a
+                  4, and health without the resistances is not survival. The
+                  same five the roster's Combat tab prints, from the same
+                  function, so a fighter reads the same on the screen it is
+                  picked from as on the one it was compared on.
+                */}
                 <span
-                  className="fightercard__stats mono"
+                  className="fightercard__figs mono"
                   title={`As fielded: level ${f.stats.level} and ${ageDays(f)} days of age already applied (×${factor.toFixed(3)} of the roll)`}
                 >
-                  {formatScaled(damage)} DMG · {formatScaled(health)} HP
+                  <span className="fightercard__fig">
+                    <img src={statIcon('damage')} alt="" width={11} height={11} />
+                    DPS {formatDecimals(figures.dps, 2)}
+                  </span>
+                  <span className="fightercard__fig">
+                    <img src={statIcon('survival')} alt="" width={11} height={11} />
+                    SUR {Math.round(figures.survival).toLocaleString(NUM_LOCALE)}
+                  </span>
+                  <span className="fightercard__fig">
+                    <img src={statIcon('initiative')} alt="" width={11} height={11} />
+                    WND {formatScaled(mid(f.stats.initiative_min, f.stats.initiative_max))}
+                  </span>
+                  <span className="fightercard__fig">
+                    <img src={statIcon('taunt')} alt="" width={11} height={11} />
+                    TNT {formatScaled(mid(f.stats.taunt_min, f.stats.taunt_max))}
+                  </span>
+                  {/* "Score", not "Combat score": the full name needs ten
+                      pixels the row does not have at two cards to a phone,
+                      and the figure beside it is the only gold one here. */}
+                  <span
+                    className="fightercard__fig fightercard__fig--score"
+                    title="Combat score — survival times DPS"
+                  >
+                    <img src={statIcon('block')} alt="" width={11} height={11} />
+                    Score
+                    <b>{Math.round(figures.score).toLocaleString(NUM_LOCALE)}</b>
+                  </span>
                 </span>
                 <VersusBadges matchup={matchups?.get(f.fighter_id)} />
                 {inTeam && <span className="fightercard__tick">In team</span>}

@@ -71,7 +71,6 @@ import {
   battlePanel,
   elementIcon,
   mid,
-  panelCombatant,
   rosterPanel,
   type Detail,
   type Tab,
@@ -536,22 +535,13 @@ export default function Dungeon() {
     [picked, weather, caps],
   )
 
-  /*
-     The whole weathered fighter, not just its health and damage.
-
-     The card prints what the fighter does — damage per cooldown, health
-     against its resistances — so it needs the stats those are made of, and
-     they are already here. Only health and damage take the level and age
-     multiplier; the rest are fought with as rolled.
-  */
   const fielded = useMemo(() => {
-    const byFighter = new Map<number, ReturnType<typeof applyWeather>>()
+    const byFighter = new Map<number, { health: number; damage: number }>()
     for (const f of picked) {
       const factor =
         levelFactor(f.stats.level, levelMod) * ageFactor(f.creation_date, ageDecay)
       const base = weathered.get(f.fighter_id)!
       byFighter.set(f.fighter_id, {
-        ...base,
         health: Math.trunc(base.health * factor),
         damage: Math.trunc(base.damage * factor),
       })
@@ -748,7 +738,6 @@ export default function Dungeon() {
                   level={f.fighter_id === NFT_FIGHTER_ID ? undefined : f.level}
                   health={f.health}
                   damage={f.damage}
-                  stats={f}
                   side="enemy"
                   /*
                      `enemySlots` is index-aligned with the fighting line,
@@ -818,7 +807,6 @@ export default function Dungeon() {
                     level={f.stats.level}
                     health={fielded.get(f.fighter_id)?.health ?? 0}
                     damage={fielded.get(f.fighter_id)?.damage ?? 0}
-                    stats={fielded.get(f.fighter_id)}
                     side="mine"
                     abilities={enemies.length ? mySlots[i] : undefined}
                     onOpen={() => showFighter(f)}
@@ -847,7 +835,6 @@ export default function Dungeon() {
                   racename={nftFighter.subtitle ?? ''}
                   health={nftFighter.health.min}
                   damage={nftFighter.damage.min}
-                  stats={panelCombatant(nftFighter)}
                   side="mine"
                   abilities={
                     enemies.length && mySlots.length > picked.length

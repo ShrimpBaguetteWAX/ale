@@ -74,7 +74,6 @@ import {
   battlePanel,
   elementIcon,
   mid,
-  panelCombatant,
   rosterPanel,
   type Detail,
   type Tab,
@@ -770,7 +769,6 @@ export default function Arena() {
                   level={f.fighter_id === NFT_FIGHTER_ID ? undefined : f.level}
                   health={f.health}
                   damage={f.damage}
-                  stats={f}
                   side="enemy"
                   badge={f.fighter_id === NFT_FIGHTER_ID ? 'NFT' : undefined}
                   art={f.fighter_id === NFT_FIGHTER_ID ? NFT_FIGHTER_ART : undefined}
@@ -836,7 +834,6 @@ export default function Arena() {
                     level={f.stats.level}
                     health={myFlat[i]?.health ?? 0}
                     damage={myFlat[i]?.damage ?? 0}
-                    stats={myFlat[i]}
                     side="mine"
                     abilities={enemies.length ? mySlots[i] : undefined}
                     onOpen={() => showFighter(f)}
@@ -859,7 +856,6 @@ export default function Arena() {
                   racename={nftFighter.subtitle ?? ''}
                   health={nftFighter.health.min}
                   damage={nftFighter.damage.min}
-                  stats={panelCombatant(nftFighter)}
                   side="mine"
                   art={NFT_FIGHTER_ART}
                   badge="NFT"
