@@ -1240,8 +1240,10 @@ export function FighterGrid({
 }) {
   const shown = useMemo(
     () =>
-      roster ? applyFilter(roster, filter, ageDecay, undefined, undefined, matchups) : [],
-    [roster, filter, ageDecay, matchups],
+      roster
+        ? applyFilter(roster, filter, ageDecay, undefined, undefined, matchups, levelMod)
+        : [],
+    [roster, filter, ageDecay, matchups, levelMod],
   )
 
   if (!roster) {

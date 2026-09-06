@@ -285,7 +285,7 @@ export default function Fighters() {
      changed no result at all.
   */
   const shown = useMemo(() => {
-    const matched = applyFilter(roster, filter, ageDecay, now, templates)
+    const matched = applyFilter(roster, filter, ageDecay, now, templates, undefined, levelMod)
     /*
        ANDed here rather than inside `applyFilter`, which has no `levels` and
        so cannot tell a fighter that can level from one sitting at the ceiling
@@ -294,7 +294,7 @@ export default function Fighters() {
     */
     if (!filter.levelReady) return matched
     return matched.filter((f) => levelUpOf(f, levels).ready)
-  }, [roster, filter, ageDecay, now, templates, levels])
+  }, [roster, filter, ageDecay, now, templates, levels, levelMod])
 
   const selected = roster.find((f) => f.fighter_id === selectedId) ?? null
   const opened = roster.find((f) => f.fighter_id === openedId) ?? null

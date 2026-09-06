@@ -450,6 +450,7 @@ export default function Market() {
               sellable={sellable}
               classes={classes}
               ageDecay={ageDecay}
+              levelMod={levelMod}
               config={config}
               player={player}
               busy={busy === 'list'}
@@ -1283,6 +1284,7 @@ export function SellTab({
   sellable,
   classes,
   ageDecay,
+  levelMod,
   config,
   player,
   busy,
@@ -1293,6 +1295,8 @@ export function SellTab({
   /* The class bands, so the roll-quality rules have something to grade. */
   classes: Map<string, ClassTemplate>
   ageDecay: number
+  /* Only the derived sorts read this; see `applyFilter`. */
+  levelMod: number
   config: MarketConfig | undefined
   player: ReturnType<typeof useGame.getState>['player']
   busy: boolean
@@ -1313,8 +1317,8 @@ export function SellTab({
   */
   const [filter, setFilter] = useState<RosterFilter>({ ...EMPTY_FILTER })
   const shown = useMemo(
-    () => applyFilter(sellable, filter, ageDecay, Date.now(), classes),
-    [sellable, filter, ageDecay, classes],
+    () => applyFilter(sellable, filter, ageDecay, Date.now(), classes, undefined, levelMod),
+    [sellable, filter, ageDecay, classes, levelMod],
   )
   const [price, setPrice] = useState(minStart)
   const [keep, setKeep] = useState(true)

@@ -1,7 +1,13 @@
 import type { RosterFighter } from './types'
 import type { Matchup } from '@/fight/matchup'
 import { fighterAvailable } from './rules'
-import { ageBonus } from '@/fighters/rules'
+import { ageBonus, battleFactor } from '@/fighters/rules'
+import {
+  combatScore,
+  damagePerSecond,
+  meanResistance,
+  survival,
+} from '@/fighters/derived'
 import {
   STAT_SCALE,
   gradeOfStat,
@@ -99,6 +105,17 @@ export interface SortOption {
  */
 export const SORTS: SortOption[] = [
   { value: 'level', label: 'Level' },
+  /*
+     The three derived readouts lead the rolled ones.
+
+     Sorting by Damage answers "which hits hardest", which is only half a
+     question — a fighter that hits hardest on the longest cooldown is not
+     the one to field. These rank on the figures the Combat tab prints, so
+     the order agrees with the numbers on the cards being ordered.
+  */
+  { value: 'combat_score', label: 'Combat score' },
+  { value: 'dps', label: 'DPS' },
+  { value: 'survival', label: 'Survival' },
   { value: 'damage_max', label: 'Damage' },
   { value: 'health_max', label: 'Health' },
   { value: 'initiative_max', label: 'Windup' },
@@ -297,6 +314,16 @@ export function applyFilter(
      filters and sorts are not offered either.
   */
   matchups?: Map<number, Matchup>,
+  /*
+     `battle.ale`'s level multiplier, for the three derived sorts.
+
+     Health and damage are fought with at `level_mod ^ level`, so a level 10
+     fighter brings four times its rolled damage and the Combat tab prints
+     that number. Ordering on the rolled one would put cards in an order the
+     figures on them contradict. Defaults to 1, which leaves the age curve
+     alone and is what the callers that do not offer these sorts pass.
+  */
+  levelMod = 1,
 ): RosterFighter[] {
   const ability = filter.ability.trim().toLowerCase()
 
@@ -373,7 +400,35 @@ export function applyFilter(
 
   const value = (f: RosterFighter): number => {
     const s = f.stats
+    /*
+       The derived three, on the same footing as the card.
+
+       Scaled health and damage against unscaled cooldown and resistances,
+       exactly as the Combat tab combines them. The tab then divides by ten
+       to print; that is a constant, so leaving it out changes no order.
+    */
+    const derived = () => {
+      const factor = battleFactor(f, levelMod, ageDecay, now).total
+      const dps = damagePerSecond(
+        mid(s.damage_min, s.damage_max) * factor,
+        mid(s.attackspeed_min, s.attackspeed_max),
+      )
+      const surv = survival(
+        mid(s.health_min, s.health_max) * factor,
+        meanResistance(s as unknown as Record<string, number>),
+      )
+      return { dps, surv }
+    }
+
     switch (filter.sort) {
+      case 'dps':
+        return derived().dps
+      case 'survival':
+        return derived().surv
+      case 'combat_score': {
+        const { dps, surv } = derived()
+        return combatScore(surv, dps)
+      }
       case 'health_max':
         return decayed(mid(s.health_min, s.health_max), f.creation_date, ageDecay, now)
       case 'damage_max':
