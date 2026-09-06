@@ -281,8 +281,16 @@ export function battleFactor(
   levelMod: number,
   ageDecay: number,
   now = Date.now(),
+  /*
+     A level to compute as though the fighter were on, for comparing rolls
+     across levels. Only the level term moves: age is a fact about this
+     fighter, not a consequence of how far it has been taken, and pretending
+     a month-old fighter is new would hide the thing the age chip is there
+     to say.
+  */
+  levelOverride?: number,
 ): { level: number; age: number; total: number } {
-  const level = Math.pow(levelMod, f.stats.level)
+  const level = Math.pow(levelMod, levelOverride ?? f.stats.level)
 
   const created = ts(f.creation_date)
   const days = Number.isFinite(created)

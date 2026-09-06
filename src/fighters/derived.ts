@@ -3,6 +3,7 @@ import {
   STAT_SCALE,
   classBand,
   gradeInBand,
+  statDisplay,
   type ClassTemplate,
   type StatGrade,
 } from '@/tavern/fighterStats'
@@ -48,6 +49,36 @@ export function survival(health: number, meanRes: number): number {
 /** The two together: what the fighter deals weighted by what it takes. */
 export function combatScore(surv: number, dps: number): number {
   return surv * dps
+}
+
+/**
+ * The three figures the Combat tab prints, at the sizes it prints them.
+ *
+ * One function because the card and the sort have to agree exactly. Sorting
+ * on the unrounded values looks equivalent and is not: the score multiplies
+ * two figures that are each rounded first, and a product of roundings is not
+ * monotonic in the product — 8.6 × 4.1 is the smaller pair and prints the
+ * larger score. Ranking on what is not printed put a 36 above a 35.
+ */
+export function combatFigures(
+  stats: Record<string, number>,
+  factor: number,
+): { dps: number; survival: number; score: number } {
+  const shown = (field: string, grow = false) =>
+    statDisplay(
+      stats[`${field}_min`] * (grow ? factor : 1),
+      stats[`${field}_max`] * (grow ? factor : 1),
+    ).value
+
+  const dps = damagePerSecond(shown('damage', true), shown('attackspeed'))
+  const surv = survival(shown('health', true), meanResistance(stats))
+
+  return {
+    dps,
+    survival: surv,
+    /* As printed: survival whole, DPS to two places. */
+    score: combatScore(Math.round(surv), Math.round(dps * 100) / 100),
+  }
 }
 
 interface Band {

@@ -2,12 +2,7 @@ import type { RosterFighter } from './types'
 import type { Matchup } from '@/fight/matchup'
 import { fighterAvailable } from './rules'
 import { ageBonus, battleFactor } from '@/fighters/rules'
-import {
-  combatScore,
-  damagePerSecond,
-  meanResistance,
-  survival,
-} from '@/fighters/derived'
+import { combatFigures } from '@/fighters/derived'
 import {
   STAT_SCALE,
   gradeOfStat,
@@ -324,6 +319,12 @@ export function applyFilter(
      alone and is what the callers that do not offer these sorts pass.
   */
   levelMod = 1,
+  /*
+     Rank the derived sorts as though every fighter were level 1, so an order
+     is a ranking of rolls rather than of who has been levelled. The screen
+     showing those figures has to be showing the same ones.
+  */
+  atLevelOne = false,
 ): RosterFighter[] {
   const ability = filter.ability.trim().toLowerCase()
 
@@ -401,34 +402,23 @@ export function applyFilter(
   const value = (f: RosterFighter): number => {
     const s = f.stats
     /*
-       The derived three, on the same footing as the card.
-
-       Scaled health and damage against unscaled cooldown and resistances,
-       exactly as the Combat tab combines them. The tab then divides by ten
-       to print; that is a constant, so leaving it out changes no order.
+       The derived three, straight from the function the card prints with —
+       including its rounding, because the order has to be the order of the
+       figures on the cards being ordered.
     */
-    const derived = () => {
-      const factor = battleFactor(f, levelMod, ageDecay, now).total
-      const dps = damagePerSecond(
-        mid(s.damage_min, s.damage_max) * factor,
-        mid(s.attackspeed_min, s.attackspeed_max),
+    const derived = () =>
+      combatFigures(
+        s as unknown as Record<string, number>,
+        battleFactor(f, levelMod, ageDecay, now, atLevelOne ? 1 : undefined).total,
       )
-      const surv = survival(
-        mid(s.health_min, s.health_max) * factor,
-        meanResistance(s as unknown as Record<string, number>),
-      )
-      return { dps, surv }
-    }
 
     switch (filter.sort) {
       case 'dps':
         return derived().dps
       case 'survival':
-        return derived().surv
-      case 'combat_score': {
-        const { dps, surv } = derived()
-        return combatScore(surv, dps)
-      }
+        return derived().survival
+      case 'combat_score':
+        return derived().score
       case 'health_max':
         return decayed(mid(s.health_min, s.health_max), f.creation_date, ageDecay, now)
       case 'damage_max':

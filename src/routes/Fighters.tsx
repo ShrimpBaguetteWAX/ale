@@ -74,13 +74,11 @@ import {
   type StatGrade,
 } from '@/tavern/fighterStats'
 import {
-  combatScore,
-  damagePerSecond,
+  combatFigures,
   gradeCombatScore,
   gradeDamagePerSecond,
   gradeSurvival,
   meanResistance,
-  survival,
 } from '@/fighters/derived'
 import { formatDecimals, NUM_LOCALE } from '@/format'
 import { QualityFilters } from '@/fight/setup'
@@ -235,6 +233,14 @@ export default function Fighters() {
 
   const [mode, setMode] = useState<Mode>('inventory')
   const [tab, setTab] = useState<CardTab>('primary')
+  /*
+     A lens on the roster rather than part of the filter.
+
+     `EMPTY_FILTER` is what Clear restores and what `isFilterActive` counts,
+     and this hides nothing — turning it off with Clear, or having it show as
+     a filter in force, would both be wrong.
+  */
+  const [atLevelOne, setAtLevelOne] = useState(false)
   const [filter, setFilter] = useState<RosterFilter>({ ...EMPTY_FILTER })
   const [selectedId, setSelectedId] = useState<number | null>(null)
   const [checked, setChecked] = useState<number[]>([])
@@ -285,7 +291,16 @@ export default function Fighters() {
      changed no result at all.
   */
   const shown = useMemo(() => {
-    const matched = applyFilter(roster, filter, ageDecay, now, templates, undefined, levelMod)
+    const matched = applyFilter(
+      roster,
+      filter,
+      ageDecay,
+      now,
+      templates,
+      undefined,
+      levelMod,
+      atLevelOne,
+    )
     /*
        ANDed here rather than inside `applyFilter`, which has no `levels` and
        so cannot tell a fighter that can level from one sitting at the ceiling
@@ -294,7 +309,7 @@ export default function Fighters() {
     */
     if (!filter.levelReady) return matched
     return matched.filter((f) => levelUpOf(f, levels).ready)
-  }, [roster, filter, ageDecay, now, templates, levels, levelMod])
+  }, [roster, filter, ageDecay, now, templates, levels, levelMod, atLevelOne])
 
   const selected = roster.find((f) => f.fighter_id === selectedId) ?? null
   const opened = roster.find((f) => f.fighter_id === openedId) ?? null
@@ -726,6 +741,8 @@ export default function Fighters() {
         readyToLevel={readyToLevel}
         tab={tab}
         onTab={setTab}
+        atLevelOne={atLevelOne}
+        onAtLevelOne={setAtLevelOne}
       />
 
       {/*
@@ -777,6 +794,7 @@ export default function Fighters() {
               now={now}
               mode={mode}
               tab={tab}
+              atLevelOne={atLevelOne}
               selected={f.fighter_id === selectedId}
               checked={checked.includes(f.fighter_id)}
               onSelect={() =>
@@ -1000,17 +1018,8 @@ function CombatPanel({
       .value
 
   const meanRes = meanResistance(raw)
-  const dps = damagePerSecond(shown('damage', true), shown('attackspeed'))
-  const surv = survival(shown('health', true), meanRes)
-  /*
-     The score multiplies the two figures as printed, not as computed.
-
-     Survival shows as a whole number and DPS to two places; multiplying what
-     is behind them gave 114 where the two rows above read 39 and 2.90, and a
-     total that does not come out of the numbers over it is worse than one
-     that is a tenth of a percent off.
-   */
-  const score = combatScore(Math.round(surv), Math.round(dps * 100) / 100)
+  /* Shared with the sorts, so an order and a card cannot disagree. */
+  const { dps, survival: surv, score } = combatFigures(raw, factor)
 
   return (
     <dl className="fstats">
@@ -1139,6 +1148,8 @@ function RosterFilters({
   readyToLevel,
   tab,
   onTab,
+  atLevelOne,
+  onAtLevelOne,
 }: {
   filter: RosterFilter
   onChange: (f: RosterFilter) => void
@@ -1148,6 +1159,8 @@ function RosterFilters({
   readyToLevel: number
   tab: CardTab
   onTab: (t: CardTab) => void
+  atLevelOne: boolean
+  onAtLevelOne: (on: boolean) => void
 }) {
   const { races } = useMemo(() => facetsOf(roster), [roster])
   const set = (patch: Partial<RosterFilter>) => onChange({ ...filter, ...patch })
@@ -1311,6 +1324,32 @@ function RosterFilters({
         </div>
 
         {/*
+          The same switch shape as Levelling, because it is the same kind of
+          thing: a state the roster is in rather than a subset of it.
+
+          Health and damage are fought with at `level_mod ^ level`, so a level
+          10 fighter shows about four times the damage of the same roll at
+          level 1 — which makes every derived figure and every sort on this
+          screen a ranking of who has been levelled rather than who rolled
+          well. Holding the exponent at 1 puts the whole roster on the terms
+          the newest fighter is on.
+        */}
+        <div className="field">
+          <span className="field__label">Compare</span>
+          <div className="showtabs" role="group" aria-label="Compare">
+            <button
+              type="button"
+              className="showtabs__btn"
+              aria-pressed={atLevelOne}
+              onClick={() => onAtLevelOne(!atLevelOne)}
+              title="Show every fighter's stats as they would be at level 1, so rolls can be compared across levels"
+            >
+              At level 1
+            </button>
+          </div>
+        </div>
+
+        {/*
           One readout for every card at once. Comparing forty fighters on
           fire resistance is the roster's whole job, and per-card tabs turn
           that into forty clicks — a card can still be flipped on its own,
@@ -1361,6 +1400,7 @@ export function FighterCard({
   now,
   mode,
   tab: sharedTab,
+  atLevelOne = false,
   selected,
   checked,
   onSelect,
@@ -1385,6 +1425,15 @@ export function FighterCard({
    * next change to the shared tab takes every card back in step.
    */
   tab: CardTab
+  /**
+   * Show the stats as they would be at level 1.
+   *
+   * Health and damage are fought with at `level_mod ^ level`, so the figures
+   * on a level 10 card are about four times the same roll on a level 1 one
+   * and no comparison between them means anything. Off by default: the
+   * fought-with number is the true one, and this is a lens.
+   */
+  atLevelOne?: boolean
   selected: boolean
   checked: boolean
   onSelect: () => void
@@ -1401,7 +1450,7 @@ export function FighterCard({
   const state = fighterState(fighter, now)
   const pay = paydayOf(fighter, config, now)
   const level = levelUpOf(fighter, levels)
-  const factor = battleFactor(fighter, levelMod, ageDecay, now)
+  const factor = battleFactor(fighter, levelMod, ageDecay, now, atLevelOne ? 1 : undefined)
   const bonus = ageBonus(fighter, ageDecay, now)
   const abilities = s.abilities ?? []
   const shownAbility = abilities[Math.min(ability, Math.max(0, abilities.length - 1))]
@@ -1501,7 +1550,16 @@ export function FighterCard({
               {fighter.racename} {fighter.classname}
             </span>
             <span className="fcard__chips">
-              <span className="chip chip--level">Lv {s.level}</span>
+              {/*
+                The chip says what the numbers below it are, not what the
+                fighter is. Without it a level 10 card showing level 1 damage
+                is simply wrong, and there is nothing on the card to say the
+                roster is being read through a lens.
+              */}
+              <span className={`chip chip--level${atLevelOne ? ' chip--lens' : ''}`}>
+                Lv {s.level}
+                {atLevelOne && s.level !== 1 && <> → 1</>}
+              </span>
               {level.atMax ? (
                 <span className="chip chip--max">MAX</span>
               ) : (

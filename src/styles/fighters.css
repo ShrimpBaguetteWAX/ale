@@ -571,6 +571,12 @@
   background: rgb(0 186 255 / 20%);
   color: #8fe0ff;
 }
+
+/* Reading the roster at level 1: the chip says so, and stops being blue. */
+.chip--lens {
+  background: rgb(246 168 0 / 22%);
+  color: #ffd469;
+}
 .chip--ready,
 .chip--max {
   background: rgb(246 168 0 / 22%);
