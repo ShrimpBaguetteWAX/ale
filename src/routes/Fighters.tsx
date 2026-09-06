@@ -1028,17 +1028,13 @@ function CombatPanel({
         </dd>
       </div>
 
-      <div className="fstats__row">
-        <dt>
-          <img src={statIcon('initiative')} alt="" width={13} height={13} />
-          {STAT_LABEL.initiative}
-        </dt>
-        <dd className="mono">
-          {shown('initiative')}
-          <GradeArrow field="initiative" raw={mid('initiative')} template={template} />
-        </dd>
-      </div>
+      {/*
+        The two halves of the score first, then the two that qualify them.
 
+        DPS and Survival are what the bottom line multiplies, so they read as
+        its working; Windup and Taunt are conditions on the fight rather than
+        parts of the sum.
+      */}
       <div className="fstats__row">
         <dt>
           <img src={statIcon('survival')} alt="" width={13} height={13} />
@@ -1047,6 +1043,17 @@ function CombatPanel({
         <dd className="mono">
           {Math.round(surv).toLocaleString(NUM_LOCALE)}
           <GradeIcon grade={gradeSurvival(mid('health'), meanRes, template)} />
+        </dd>
+      </div>
+
+      <div className="fstats__row">
+        <dt>
+          <img src={statIcon('initiative')} alt="" width={13} height={13} />
+          {STAT_LABEL.initiative}
+        </dt>
+        <dd className="mono">
+          {shown('initiative')}
+          <GradeArrow field="initiative" raw={mid('initiative')} template={template} />
         </dd>
       </div>
 
