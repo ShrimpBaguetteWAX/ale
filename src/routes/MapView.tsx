@@ -30,6 +30,7 @@ import {
 } from '@/map/terrain'
 import { dungeonMaintained } from '@/dungeon/rules'
 import { arenaMaintained } from '@/arena/rules'
+import { fetchCapturedArenas, type CapturedArena } from '@/arena/queries'
 import { useGame } from '@/state/useGame'
 import { travelVia } from '@/wharf/actions'
 import { PortalWarp, WARP_TOTAL_MS } from '@/map/PortalWarp'
@@ -145,6 +146,8 @@ export default function MapView() {
   const [planet, setPlanet] = useState<Planet>(player.planet)
   const [landsByPlanet, setLandsByPlanet] = useState<Partial<Record<Planet, Land[]>>>({})
   const [arenasByPlanet, setArenasByPlanet] = useState<Partial<Record<Planet, LiveArena[]>>>({})
+  /* Arenas the player has won and is now defending — one read, all planets. */
+  const [held, setHeld] = useState<CapturedArena[]>([])
   const [landsConfig, setLandsConfig] = useState<LandsConfig | null>(null)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [selected, setSelected] = useState<{ x: number; y: number } | null>(null)
@@ -307,6 +310,27 @@ export default function MapView() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  /*
+   * Which arenas the player is defending.
+   *
+   * Read fresh rather than from cache: the way onto this screen is usually
+   * straight out of an arena fight, and a minute-old answer would be the one
+   * from before the win. Bounded to the wallet's own rows, so it is a small
+   * request to make on every visit.
+   */
+  useEffect(() => {
+    let cancelled = false
+    void fetchCapturedArenas(player.wallet, true)
+      .then((rows) => {
+        if (!cancelled) setHeld(rows)
+      })
+      /* A missing answer just leaves the arenas unmarked. */
+      .catch(() => {})
+    return () => {
+      cancelled = true
+    }
+  }, [player.wallet])
+
   /**
    * Land is an alien.worlds NFT, so the owner lives in AtomicAssets, not in
    * the game contracts. Only built land needs a name shown, and there are
@@ -444,6 +468,12 @@ export default function MapView() {
           .map((t) => t.land_id),
       ),
     [player.active_taverns, planet],
+  )
+
+  /** The arenas being defended, narrowed to the planet on screen. */
+  const heldArenaLands = useMemo(
+    () => new Set(held.filter((a) => a.planet === planet).map((a) => a.land_id)),
+    [held, planet],
   )
 
   /** The one they are standing in, if it is on the planet being viewed. */
@@ -716,6 +746,11 @@ export default function MapView() {
   const ownerTag = owner ? tags[owner] : undefined
   const ownerResolved = owner !== undefined && ownerTag !== undefined
 
+  /* The selected tile is an arena this player took and is now defending. */
+  const heldHere = land
+    ? held.find((a) => a.planet === planet && a.land_id === land.land_id)
+    : undefined
+
   const arenaOccupiedHere =
     !!land &&
     land.buildings.some((b) => String(b.building_name) === 'arena') &&
@@ -817,8 +852,21 @@ export default function MapView() {
       {dungeonLockedHere && (
         <p className="hint">You have already run this dungeon today.</p>
       )}
-      {arenaOccupiedHere && (
-        <p className="hint">You already have a fighter in this arena.</p>
+      {/*
+        Holding it is the stronger statement, so it replaces the other rather
+        than stacking with it: an arena you hold is one you have a fighter in
+        by definition, and only one of the two says you are being paid for it.
+      */}
+      {heldHere ? (
+        <p className="hint">
+          You hold this arena.{' '}
+          {heldHere.stored_mining_power.toLocaleString(NUM_LOCALE)} mining power
+          banked so far, paid out when you lose it or pull your fighter.
+        </p>
+      ) : (
+        arenaOccupiedHere && (
+          <p className="hint">You already have a fighter in this arena.</p>
+        )
       )}
 
       {travelError && (
@@ -930,6 +978,7 @@ export default function MapView() {
           lowFx={lowFx}
           boostDecayPerHour={landsConfig?.boost_decay_per_hour ?? 0}
           lockedLands={lockedLands}
+          heldArenaLands={heldArenaLands}
           tavernLands={tavernLands}
           currentTavernLand={currentTavernLand}
         >

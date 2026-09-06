@@ -84,6 +84,56 @@ export async function fetchArenaPower(
   return res.rows[0]
 }
 
+/**
+ * `arena.ale` / `arenacap` — the arenas this player currently holds.
+ *
+ * Winning an arena writes a row here, and it stays until somebody takes the
+ * arena back or the player pulls their fighter out (`rmvfighters` settles the
+ * row and erases it). While it stands, `settlereward` adds
+ * `arena_rating / 10000` mining power per hour, multiplied by the square root
+ * of how many arenas the player holds at once — so a second arena is worth
+ * more than half a first one, and the count is worth showing.
+ *
+ * This is not the same question as "do I have a fighter in there".
+ * `livearena` keeps up to six fighters per arena, most of them belonging to
+ * players who have already lost the place; being in that list blocks a
+ * challenge but earns nothing. Holding is what this table records.
+ *
+ * One global table, read through the `wallet` secondary index, so it is one
+ * bounded request for every planet at once rather than a scan.
+ */
+export interface CapturedArena {
+  index: number
+  wallet: string
+  captured_at: string
+  settled_until: string
+  arena_rating: number
+  planet: Planet
+  land_id: string
+  stored_mining_power: number
+}
+
+export async function fetchCapturedArenas(
+  wallet: string,
+  refresh = false,
+): Promise<CapturedArena[]> {
+  const key = nameToUint64(wallet).toString()
+  const res = await getRows<CapturedArena>(
+    {
+      code: CONTRACTS.arena,
+      scope: CONTRACTS.arena,
+      table: 'arenacap',
+      index_position: 2,
+      key_type: 'i64',
+      lower_bound: key,
+      upper_bound: key,
+      limit: 100,
+    },
+    { ttl: TTL.short, refresh },
+  )
+  return res.rows
+}
+
 /** `arena.ale` / `config` — what a challenge costs in energy. */
 export interface ArenaConfig {
   index: number

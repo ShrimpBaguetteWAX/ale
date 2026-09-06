@@ -56,6 +56,15 @@ export interface MapCanvasProps {
    */
   lockedLands?: Set<string>
   /**
+   * Land ids of arenas on this planet the player has won and is defending.
+   *
+   * `arena.ale`'s `arenacap`, not `livearena`: leaving a fighter in an arena
+   * somebody else holds earns nothing, while a held arena is banking mining
+   * power for as long as it stands. The map is where a player looks to see
+   * what they have out in the world, so a held arena is drawn as theirs.
+   */
+  heldArenaLands?: Set<string>
+  /**
    * Land ids of the player's own active taverns on this planet.
    *
    * Taverns are personal: the same tavern land carries a different selection
@@ -269,6 +278,7 @@ export function MapCanvas({
   lowFx = false,
   boostDecayPerHour = 0,
   lockedLands,
+  heldArenaLands,
   tavernLands,
   currentTavernLand,
   children,
@@ -277,6 +287,8 @@ export function MapCanvas({
   decayRef.current = boostDecayPerHour
   const lockedRef = useRef(lockedLands)
   lockedRef.current = lockedLands
+  const heldRef = useRef(heldArenaLands)
+  heldRef.current = heldArenaLands
   const tavernsRef = useRef(tavernLands)
   tavernsRef.current = tavernLands
   const currentTavernRef = useRef(currentTavernLand)
@@ -436,6 +448,8 @@ export function MapCanvas({
         const locked = marker === 'dungeon' && !!lockedRef.current?.has(land.land_id)
         // The tavern they are standing in right now.
         const current = marker === 'tavern' && land.land_id === currentTavernRef.current
+        // An arena they won and are defending, earning mining power.
+        const held = marker === 'arena' && !!heldRef.current?.has(land.land_id)
 
         if (marker) {
           if (showMarkers) {
@@ -447,7 +461,7 @@ export function MapCanvas({
               py,
               scale,
               locked,
-              current,
+              current || held,
             )
 
             if (showLabels) {
@@ -457,6 +471,14 @@ export function MapCanvas({
                 if (dest) drawLabel(ctx, dest, px + scale / 2, labelY, scale, '#ff01ff')
               } else if (current) {
                 drawLabel(ctx, 'Current', px + scale / 2, labelY, scale, '#0ed4a8')
+              } else if (held) {
+                /*
+                   In place of the multiplier, not beside it — there is one
+                   line under a marker. Which arenas are yours is the thing
+                   you cannot work out from anywhere else on this screen,
+                   and the multiplier is still on the tile card.
+                 */
+                drawLabel(ctx, 'Yours', px + scale / 2, labelY, scale, '#0ed4a8')
               } else if (locked) {
                 drawLabel(ctx, 'Played', px + scale / 2, labelY, scale, '#7d879e')
               } else if (marker !== 'tavern') {
@@ -684,7 +706,16 @@ export function MapCanvas({
 
   useEffect(() => {
     drawNow()
-  }, [selected, position, lowFx, lockedLands, tavernLands, currentTavernLand, drawNow])
+  }, [
+    selected,
+    position,
+    lowFx,
+    lockedLands,
+    heldArenaLands,
+    tavernLands,
+    currentTavernLand,
+    drawNow,
+  ])
 
   useEffect(
     () => () => {
