@@ -175,6 +175,7 @@ function drawMarker(
   scale: number,
   locked = false,
   current = false,
+  dim = false,
 ) {
   const cx = px + scale / 2
   const cy = py + scale / 2
@@ -191,15 +192,24 @@ function drawMarker(
         ? '#ff01ff'
         : '#f6a800'
 
-  ctx.fillStyle = locked ? 'rgba(5,16,30,0.86)' : 'rgba(5,16,30,0.72)'
+  ctx.fillStyle = locked || dim ? 'rgba(5,16,30,0.86)' : 'rgba(5,16,30,0.72)'
   ctx.beginPath()
   ctx.arc(cx, cy, size * 0.62, 0, Math.PI * 2)
   ctx.fill()
   ctx.strokeStyle = rim
   ctx.lineWidth = Math.max(1, scale * (current ? 0.06 : 0.035))
+  /*
+     `dim` turns a marker down rather than repainting it.
+
+     A marker's rim colour says what the building is. Swapping it for grey to
+     mean "nothing to do here" spends that colour on a second meaning, so
+     this fades the marker's own colour instead of replacing it — the same
+     idea as the faded art below, applied to the ring as well.
+   */
+  if (dim) ctx.globalAlpha = 0.45
   ctx.stroke()
 
-  if (locked) ctx.globalAlpha = 0.35
+  if (locked || dim) ctx.globalAlpha = 0.35
 
   if (img?.complete && img.naturalWidth > 0) {
     ctx.drawImage(img, cx - size / 2, cy - size / 2, size, size)
@@ -448,7 +458,14 @@ export function MapCanvas({
         const locked = marker === 'dungeon' && !!lockedRef.current?.has(land.land_id)
         // The tavern they are standing in right now.
         const current = marker === 'tavern' && land.land_id === currentTavernRef.current
-        // An arena they won and are defending, earning mining power.
+        /*
+           An arena they won and are defending, earning mining power.
+
+           Dimmed like a spent dungeon, because for the purpose of this map
+           it is spent: `playarena` will not let anyone challenge an arena
+           their own fighter is standing in, so there is nothing here to go
+           and do. Different reason, same answer — not tonight.
+         */
         const held = marker === 'arena' && !!heldRef.current?.has(land.land_id)
 
         if (marker) {
@@ -461,7 +478,8 @@ export function MapCanvas({
               py,
               scale,
               locked,
-              current || held,
+              current,
+              held,
             )
 
             if (showLabels) {
@@ -474,11 +492,19 @@ export function MapCanvas({
               } else if (held) {
                 /*
                    In place of the multiplier, not beside it — there is one
-                   line under a marker. Which arenas are yours is the thing
-                   you cannot work out from anywhere else on this screen,
-                   and the multiplier is still on the tile card.
+                   line under a marker. Which arenas you are defending is the
+                   thing you cannot work out from anywhere else on this
+                   screen, and the multiplier is still on the tile card.
                  */
-                drawLabel(ctx, 'Yours', px + scale / 2, labelY, scale, '#0ed4a8')
+                drawLabel(
+                  ctx,
+                  'Defending',
+                  px + scale / 2,
+                  labelY,
+                  scale,
+                  /* The marker's own gold, turned down with it. */
+                  'rgba(246,168,0,0.55)',
+                )
               } else if (locked) {
                 drawLabel(ctx, 'Played', px + scale / 2, labelY, scale, '#7d879e')
               } else if (marker !== 'tavern') {

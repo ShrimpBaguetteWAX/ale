@@ -859,7 +859,7 @@ export default function MapView() {
       */}
       {heldHere ? (
         <p className="hint">
-          You hold this arena.{' '}
+          You are defending this arena.{' '}
           {heldHere.stored_mining_power.toLocaleString(NUM_LOCALE)} mining power
           banked so far, paid out when you lose it or pull your fighter.
         </p>
