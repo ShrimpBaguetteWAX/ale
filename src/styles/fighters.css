@@ -968,6 +968,16 @@
 }
 
 .showtabs__btn {
+  /*
+     The buttons fill the group, however many there are.
+
+     A filter field is at least 132px wide and the group stretches to it, so
+     a group holding a single button drew its border a good 50px past the
+     button's own background — the switch looked like it had come loose
+     inside its frame. Three buttons already overflow that minimum, so there
+     is no free space to hand out and the Show row is untouched.
+   */
+  flex: 1 1 auto;
   padding: 0 var(--sp-3);
   border: 0;
   background: rgb(0 0 0 / 40%);

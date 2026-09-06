@@ -1925,8 +1925,15 @@
     text-overflow: ellipsis;
   }
 
-  /* A search box and a reset are not half-width controls. */
+  /*
+     A search box and a reset are not half-width controls.
+
+     Nor is a three-way switch: at 159px the readout tabs came to 202px and
+     the group clips what does not fit, so "Abilities" was reading "Abi".
+     Across the full row the three share the space instead.
+   */
   .filters__row .field--grow,
+  .filters__row .field--tabs,
   .filters__clear {
     grid-column: 1 / -1;
   }

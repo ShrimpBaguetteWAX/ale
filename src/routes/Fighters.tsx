@@ -1168,7 +1168,7 @@ function RosterFilters({
           that into forty clicks — a card can still be flipped on its own,
           and changing this brings them all back into step.
         */}
-        <div className="field">
+        <div className="field field--tabs">
           <span className="field__label">Show</span>
           <div className="showtabs" role="group" aria-label="Readout">
             {(['primary', 'resistance', 'abilities'] as CardTab[]).map((t) => (
