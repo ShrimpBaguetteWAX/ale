@@ -70,9 +70,51 @@ export function combatFigures(
       stats[`${field}_max`] * (grow ? factor : 1),
     ).value
 
-  const dps = damagePerSecond(shown('damage', true), shown('attackspeed'))
-  const surv = survival(shown('health', true), meanResistance(stats))
+  return figuresFrom(
+    shown('damage', true),
+    shown('attackspeed'),
+    shown('health', true),
+    meanResistance(stats),
+  )
+}
 
+/**
+ * The same three from a settled fighter rather than a rolled range.
+ *
+ * A line-up card holds one number per stat — the roll has already been made
+ * and weather, level and age already applied — where the roster holds a band.
+ * `formatScaled` is how those are printed, so that is the rounding used here:
+ * each screen's figures agree with the figures beside them, which matters
+ * more than the two screens agreeing to the last unit with each other.
+ */
+export function combatFiguresFlat(v: {
+  health: number
+  damage: number
+  attackspeed: number
+  res_gem?: number
+  res_metal?: number
+  res_air?: number
+  res_fire?: number
+  res_nature?: number
+  res_neutral?: number
+}): { dps: number; survival: number; score: number } {
+  const shown = (n: number) => Math.round(n / STAT_SCALE)
+  return figuresFrom(
+    shown(v.damage),
+    shown(v.attackspeed),
+    shown(v.health),
+    meanResistance(v as unknown as Record<string, number>),
+  )
+}
+
+function figuresFrom(
+  damage: number,
+  cooldown: number,
+  health: number,
+  meanRes: number,
+): { dps: number; survival: number; score: number } {
+  const dps = damagePerSecond(damage, cooldown)
+  const surv = survival(health, meanRes)
   return {
     dps,
     survival: surv,

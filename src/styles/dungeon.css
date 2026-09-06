@@ -1168,13 +1168,22 @@
   transform: skewX(var(--lean-back));
 }
 
+/*
+ * The floor grew, not the ratio.
+ *
+ * The plate is painted over the bottom of the artwork rather than under it,
+ * and its five rows of figures come to about 105px whatever the card is
+ * wide — text does not scale with the column. Making the card proportionally
+ * taller fixed the narrow case and made a wide one 400px tall for the same
+ * 105px of text, so the height the plate needs is stated as a floor instead
+ * and the proportions are left alone above it.
+ */
 .combatcard__art {
   position: relative;
   display: block;
   aspect-ratio: 5 / 8;
-  /* Keeps a usable portrait when six cards share a phone's width, where the
-     aspect ratio alone would give about 60px. */
-  min-height: 104px;
+  /* The plate, plus about as much portrait again. */
+  min-height: 205px;
 }
 
 /*
@@ -1224,6 +1233,21 @@
   background: rgb(5 16 30 / 85%);
   border-radius: var(--radius-xs);
 }
+
+/*
+ * The level, as loud as the badge opposite it.
+ *
+ * Dim grey on a dark chip is what a disabled control looks like, and level is
+ * a third of what decides whether a fighter belongs in a line — health and
+ * damage are multiplied by `level_mod ^ level` before the first blow. The
+ * roster says it in the same cyan; this brings the two into line.
+ */
+.combatcard__level {
+  font-size: 11px;
+  color: #8fe0ff;
+  background: rgb(0 68 102 / 92%);
+  border: 1px solid rgb(0 186 255 / 45%);
+}
 .combatcard__badge {
   color: #2a1c00;
   background: var(--grad-gold);
@@ -1254,8 +1278,8 @@
   right: 0;
   bottom: 0;
   display: grid;
-  gap: 1px;
-  padding: var(--sp-2) 10%;
+  gap: 2px;
+  padding: 6px 10%;
   background: linear-gradient(180deg, rgb(5 16 30 / 0%), rgb(5 16 30 / 94%) 45%);
 }
 
@@ -1322,6 +1346,54 @@
   gap: 6px;
   font-size: 10px;
   font-variant-numeric: tabular-nums;
+}
+
+/*
+ * What the fighter does, five rows deep.
+ *
+ * A row rather than a column for each: at six cards to a side the plate is
+ * about 76px across, which is two figures' worth of width and five figures'
+ * worth of height. The icon carries the label — the same marks the roster's
+ * Combat tab uses, so nothing new has to be learnt to read one.
+ */
+.combatcard__figures {
+  display: grid;
+  gap: 1px;
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-dim);
+}
+
+.combatcard__fig {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  min-width: 0;
+  /* Five rows on a band painted over the artwork: every pixel of leading is
+     a pixel of portrait, and a row of digits needs none of it. */
+  line-height: 1;
+}
+
+.combatcard__fig img {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  object-fit: contain;
+  opacity: 0.75;
+}
+
+/* The total, apart from the four it is made of. */
+.combatcard__fig--score {
+  margin-top: 2px;
+  padding-top: 2px;
+  border-top: 1px solid rgb(255 255 255 / 14%);
+  font-family: var(--font-display);
+  font-weight: var(--fw-bold);
+  color: var(--gold);
+}
+.combatcard__fig--score img {
+  opacity: 1;
 }
 
 /* Health and damage read at a glance by colour, without a label each. */

@@ -49,6 +49,8 @@ import {
 } from '@/tavern/fighterStats'
 import { asset } from '@/assets'
 import { usePhone } from '@/components/usePhone'
+import { combatFiguresFlat } from '@/fighters/derived'
+import { formatDecimals, NUM_LOCALE } from '@/format'
 
 /**
  * The parts of a fight setup screen that the dungeon and the arena share.
@@ -393,6 +395,29 @@ export function Elemental({
  * foot of the art, which is what keeps the card legible whatever the
  * illustration behind it does.
  */
+/**
+ * A panel fighter as the line-up card wants it.
+ *
+ * The NFT fighter never passes through the roster: it is a crew card and a
+ * weapon fused into a `PanelFighter`, whose stats are settled values carried
+ * in the `min` of each range — which is the number its card already prints.
+ */
+export function panelCombatant(p: PanelFighter) {
+  return {
+    health: p.health.min,
+    damage: p.damage.min,
+    attackspeed: p.attackspeed.min,
+    initiative: p.initiative.min,
+    taunt: p.taunt.min,
+    res_gem: p.res_gem,
+    res_metal: p.res_metal,
+    res_air: p.res_air,
+    res_fire: p.res_fire,
+    res_nature: p.res_nature,
+    res_neutral: p.res_neutral,
+  }
+}
+
 export function CombatCard({
   element,
   classname,
@@ -401,6 +426,7 @@ export function CombatCard({
   health,
   damage,
   side,
+  stats,
   art,
   badge,
   abilities,
@@ -416,6 +442,28 @@ export function CombatCard({
   health: number
   damage: number
   side: "mine" | "enemy"
+  /**
+   * The settled fighter behind the card, when the caller has it.
+   *
+   * Damage and health on their own are the two numbers that mislead most
+   * here: 90 damage on an 8 cooldown loses to 60 on a 4, and health means
+   * nothing without the resistances. Given the whole combatant the card can
+   * print what the fighter does instead of what it is made of. Optional so a
+   * caller that only has the pair still renders.
+   */
+  stats?: {
+    health: number
+    damage: number
+    attackspeed: number
+    initiative?: number
+    taunt?: number
+    res_gem?: number
+    res_metal?: number
+    res_air?: number
+    res_fire?: number
+    res_nature?: number
+    res_neutral?: number
+  }
   art?: string
   badge?: string
   /**
@@ -475,6 +523,9 @@ export function CombatCard({
      it has to be a sibling rather than a descendant.
   */
   const phone = usePhone()
+
+  /* Derived where the settled numbers are; absent when only the pair is. */
+  const figures = stats ? combatFiguresFlat(stats) : null
 
   /*
      Always a row, whether or not there is anything to put in it.
@@ -582,16 +633,44 @@ export function CombatCard({
           <span className="combatcard__name">{classname || racename || 'Fighter'}</span>
           {owner && <span className="combatcard__owner">{owner}</span>}
           {/*
-            Damage first, health second, here and everywhere else a pair of
-            them is printed. Damage is what a player is choosing on - it is
-            the number the elements move, the number the matchup badges
-            qualify, and the one that decides whether a fighter belongs in
-            this fight; health is how long it keeps doing it.
+            What the fighter does, in the order the roster prints it.
+
+            Damage and health were the pair here, and they are the two that
+            mislead: 90 damage on an 8 cooldown loses to 60 on a 4, and
+            health without the resistances is not survivability. Same four
+            figures and the same total as the Combat tab, so a fighter reads
+            the same on the screen you pick it from as on the one you
+            compare it on.
           */}
-          <span className="combatcard__stats mono">
-            <span className="combatcard__dmg">{formatScaled(damage)}</span>
-            <span className="combatcard__hp">{formatScaled(health)}</span>
-          </span>
+          {figures ? (
+            <span className="combatcard__figures mono">
+              <span className="combatcard__fig">
+                <img src={statIcon('damage')} alt="DPS" title="Damage per cooldown" />
+                {formatDecimals(figures.dps, 2)}
+              </span>
+              <span className="combatcard__fig">
+                <img src={statIcon('survival')} alt="Survival" title="Health weighted by resistances" />
+                {Math.round(figures.survival).toLocaleString(NUM_LOCALE)}
+              </span>
+              <span className="combatcard__fig">
+                <img src={statIcon('initiative')} alt="Windup" title="Wind-up before the first blow" />
+                {formatScaled(stats?.initiative ?? 0)}
+              </span>
+              <span className="combatcard__fig">
+                <img src={statIcon('taunt')} alt="Taunt" title="How much this fighter draws attacks" />
+                {formatScaled(stats?.taunt ?? 0)}
+              </span>
+              <span className="combatcard__fig combatcard__fig--score">
+                <img src={statIcon('block')} alt="Combat score" title="Survival times DPS" />
+                {Math.round(figures.score).toLocaleString(NUM_LOCALE)}
+              </span>
+            </span>
+          ) : (
+            <span className="combatcard__stats mono">
+              <span className="combatcard__dmg">{formatScaled(damage)}</span>
+              <span className="combatcard__hp">{formatScaled(health)}</span>
+            </span>
+          )}
           {/*
             Rendered whenever there is an opposing line to read, even when
             both counts are zero.
@@ -693,10 +772,20 @@ export function RosterFilters({
   roster,
   omit = [],
   versus,
+  atLevelOne,
+  onAtLevelOne,
 }: {
   filter: RosterFilter
   onChange: (f: RosterFilter) => void
   roster: RosterFighter[]
+  /**
+   * The level-1 lens, when the screen offers it.
+   *
+   * Both handlers or neither: without somewhere to put the answer the switch
+   * would be a control that does nothing, so it is simply not rendered.
+   */
+  atLevelOne?: boolean
+  onAtLevelOne?: (on: boolean) => void
   /**
    * What the fighters are being measured against, when there is an opponent.
    *
@@ -765,6 +854,7 @@ export function RosterFilters({
     })
 
   return (
+    <>
     <div className={`filters${folded ? ' filters--folded' : ''}`}>
       {phone && (
         <button
@@ -905,6 +995,32 @@ export function RosterFilters({
           </label>
         )}
 
+        {onAtLevelOne && (
+          /*
+             The same lens the roster has, for the same reason.
+
+             Health and damage are fought with at `level_mod ^ level`, so the
+             figures on the cards — and the sorts that rank them — put a
+             levelled fighter above a better roll every time. Holding the
+             exponent at 1 answers "which of these rolled well", which is the
+             question when a team is being built out of a mixed roster.
+          */
+          <div className="field">
+            <span className="field__label">Compare</span>
+            <div className="showtabs" role="group" aria-label="Compare">
+              <button
+                type="button"
+                className="showtabs__btn"
+                aria-pressed={!!atLevelOne}
+                onClick={() => onAtLevelOne(!atLevelOne)}
+                title="Show every fighter as it would be at level 1, so rolls can be compared across levels"
+              >
+                At level 1
+              </button>
+            </div>
+          </div>
+        )}
+
         <label className="field field--grow">
           <span className="field__label">Ability</span>
           <input
@@ -1016,7 +1132,24 @@ export function RosterFilters({
           </div>
         </div>
       )}
+
     </div>
+
+    {/*
+       The roll-quality rules, on every screen that picks a fighter.
+
+       Written for the market and left there, then given to the roster, and
+       missing from the one screen where the question is sharpest: this is
+       where a team is chosen, and "damage green or better" is the whole of
+       what a player is doing when they scroll a roster of sixty.
+
+       Beside `.filters` rather than inside it, which is where the other two
+       screens already put it. `.filters select.input` sets a full width that
+       out-specifies the rule sizing these two selects, so nested they came
+       out stacked one per line.
+    */}
+    <QualityFilters filter={filter} onChange={onChange} />
+    </>
   )
 }
 
@@ -1210,6 +1343,7 @@ export function FighterGrid({
   teamIds,
   full,
   levelMod = 1,
+  atLevelOne = false,
   matchups,
   onToggle,
   onInspect,
@@ -1217,6 +1351,8 @@ export function FighterGrid({
   roster: RosterFighter[] | null
   filter: RosterFilter
   ageDecay: number
+  /** Show and rank every fighter as it would be at level 1. */
+  atLevelOne?: boolean
   /**
    * Per-level growth, so the card can show a fighter as it will be fielded.
    *
@@ -1241,9 +1377,18 @@ export function FighterGrid({
   const shown = useMemo(
     () =>
       roster
-        ? applyFilter(roster, filter, ageDecay, undefined, undefined, matchups, levelMod)
+        ? applyFilter(
+            roster,
+            filter,
+            ageDecay,
+            undefined,
+            undefined,
+            matchups,
+            levelMod,
+            atLevelOne,
+          )
         : [],
-    [roster, filter, ageDecay, matchups, levelMod],
+    [roster, filter, ageDecay, matchups, levelMod, atLevelOne],
   )
 
   if (!roster) {
@@ -1289,7 +1434,9 @@ export function FighterGrid({
              now agree exactly.
           */
           const age = ageFactor(f.creation_date, ageDecay)
-          const factor = levelFactor(f.stats.level, levelMod) * age
+          /* Only the level term is held at 1: age is a fact about the
+             fighter rather than a consequence of how far it has been taken. */
+          const factor = levelFactor(atLevelOne ? 1 : f.stats.level, levelMod) * age
           const health = Math.trunc(mid(f.stats.health_min, f.stats.health_max) * factor)
           const damage = Math.trunc(mid(f.stats.damage_min, f.stats.damage_max) * factor)
           const bonus = ageBonus(f, ageDecay)
@@ -1325,7 +1472,11 @@ export function FighterGrid({
                 />
                 <span className="fightercard__name">{f.classname}</span>
                 <span className="fightercard__meta">
+                  {/* Says what the numbers below are, not what the fighter
+                      is — a level 10 card showing level 1 damage otherwise
+                      simply reads as wrong. */}
                   {f.racename} · L{f.stats.level}
+                  {atLevelOne && f.stats.level !== 1 && <>&thinsp;→&thinsp;1</>}
                   {/*
                     Age, beside level, because they are the two things scaling
                     the figures underneath — and the only one of the two that

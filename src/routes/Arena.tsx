@@ -74,6 +74,7 @@ import {
   battlePanel,
   elementIcon,
   mid,
+  panelCombatant,
   rosterPanel,
   type Detail,
   type Tab,
@@ -131,6 +132,9 @@ export default function Arena() {
 
   const [tab, setTab] = useState<Tab>('fighters')
   const [filter, setFilter] = useState<RosterFilter>(EMPTY_FILTER)
+  /* A lens on the roster rather than a filter: it hides nothing, and Clear
+     restores `EMPTY_FILTER`, which this is deliberately not part of. */
+  const [atLevelOne, setAtLevelOne] = useState(false)
   const [cardQuery, setCardQuery] = useState('')
   const [detail, setDetail] = useState<Detail>(null)
 
@@ -766,6 +770,7 @@ export default function Arena() {
                   level={f.fighter_id === NFT_FIGHTER_ID ? undefined : f.level}
                   health={f.health}
                   damage={f.damage}
+                  stats={f}
                   side="enemy"
                   badge={f.fighter_id === NFT_FIGHTER_ID ? 'NFT' : undefined}
                   art={f.fighter_id === NFT_FIGHTER_ID ? NFT_FIGHTER_ART : undefined}
@@ -831,6 +836,7 @@ export default function Arena() {
                     level={f.stats.level}
                     health={myFlat[i]?.health ?? 0}
                     damage={myFlat[i]?.damage ?? 0}
+                    stats={myFlat[i]}
                     side="mine"
                     abilities={enemies.length ? mySlots[i] : undefined}
                     onOpen={() => showFighter(f)}
@@ -853,6 +859,7 @@ export default function Arena() {
                   racename={nftFighter.subtitle ?? ''}
                   health={nftFighter.health.min}
                   damage={nftFighter.damage.min}
+                  stats={panelCombatant(nftFighter)}
                   side="mine"
                   art={NFT_FIGHTER_ART}
                   badge="NFT"
@@ -1044,12 +1051,15 @@ export default function Arena() {
                 onChange={setFilter}
                 roster={roster ?? []}
                 versus={enemies.length ? profile : undefined}
+                atLevelOne={atLevelOne}
+                onAtLevelOne={setAtLevelOne}
               />
               <FighterGrid
                 roster={roster}
                 filter={filter}
                 ageDecay={ageDecay}
                 levelMod={levelMod}
+                atLevelOne={atLevelOne}
                 teamIds={teamIds}
                 full={picked.length >= TEAM_SIZE}
                 matchups={enemies.length ? matchups : undefined}

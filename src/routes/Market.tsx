@@ -367,7 +367,8 @@ export default function Market() {
                 roster={filterRoster}
                 omit={['status', 'sort', 'markers']}
               />
-              <QualityFilters filter={filter} onChange={setFilter} />
+              {/* The roll-quality rules now come with `RosterFilters`, which
+                  is where every screen that has them wanted them. */}
               {/*
                 One bar, two arrangements of the same grid: which face of the
                 cards is up, and what order they are in. They were two boxes
