@@ -6,7 +6,7 @@ import {
   fetchClassTemplates,
   fetchRoster,
 } from '@/dungeon/queries'
-import type { RosterFighter } from '@/dungeon/types'
+import type { RosterFighter, RosterStats } from '@/dungeon/types'
 import {
   ELEMENTS,
   EMPTY_FILTER,
@@ -68,10 +68,19 @@ import {
   GRADE_ICON,
   GRADE_LABEL,
   resolveAbilityDescription,
+  statDisplay,
   statIcon,
   STAT_LABEL,
+  type StatGrade,
 } from '@/tavern/fighterStats'
-import { NUM_LOCALE } from '@/format'
+import {
+  damagePerSecond,
+  gradeDamagePerSecond,
+  gradeSurvival,
+  meanResistance,
+  survival,
+} from '@/fighters/derived'
+import { formatDecimals, NUM_LOCALE } from '@/format'
 import { QualityFilters } from '@/fight/setup'
 import { asset } from '@/assets'
 
@@ -109,7 +118,14 @@ type Mode = 'inventory' | 'sell' | 'market'
 function gemsWord(n: number): string {
   return `${n.toLocaleString(NUM_LOCALE)} gem${n === 1 ? '' : 's'}`
 }
-type CardTab = 'primary' | 'resistance' | 'abilities'
+type CardTab = 'primary' | 'resistance' | 'combat' | 'abilities'
+
+const CARD_TABS: [CardTab, string][] = [
+  ['primary', 'Stats'],
+  ['resistance', 'Res'],
+  ['combat', 'Combat'],
+  ['abilities', 'Abilities'],
+]
 
 const PRIMARY_FIELDS = ['damage', 'health', 'taunt', 'attackspeed', 'initiative'] as const
 
@@ -930,7 +946,10 @@ function GradeArrow({
   template?: ClassTemplate
 }) {
   if (!template) return null
-  const grade = gradeStat(field, raw, template)
+  return <GradeIcon grade={gradeStat(field, raw, template)} />
+}
+
+function GradeIcon({ grade }: { grade: StatGrade | null }) {
   if (!grade) return null
   return (
     <img
@@ -941,6 +960,97 @@ function GradeArrow({
       width={13}
       height={13}
     />
+  )
+}
+
+/**
+ * What the fighter does, rather than what it rolled.
+ *
+ * Damage and cooldown only mean something together, and so do health and the
+ * resistances — 90 damage every 8 seconds is worse than 60 every 4, and the
+ * stat rows say the opposite at a glance. Two numbers a side, in the shape
+ * the choice is actually made in.
+ *
+ * Midpoints only. The spreads are on the Stats tab, and a derived figure
+ * built from two of them has no honest spread of its own to print.
+ */
+function CombatPanel({
+  stats,
+  factor,
+  template,
+}: {
+  stats: RosterStats
+  factor: number
+  template?: ClassTemplate
+}) {
+  const raw = stats as unknown as Record<string, number>
+  const mid = (field: string) => (raw[`${field}_min`] + raw[`${field}_max`]) / 2
+
+  /* The same figures the Stats tab prints, so the arithmetic can be checked
+     against the rows it came from. Only health and damage grow with level. */
+  const shown = (field: string, grow = false) =>
+    statDisplay(raw[`${field}_min`] * (grow ? factor : 1), raw[`${field}_max`] * (grow ? factor : 1))
+      .value
+
+  const meanRes = meanResistance(raw)
+  const dps = damagePerSecond(shown('damage', true), shown('attackspeed'))
+  const surv = survival(shown('health', true), meanRes)
+
+  return (
+    <dl className="fstats">
+      <div className="fstats__head">Attack</div>
+
+      <div className="fstats__row">
+        <dt>
+          <img src={statIcon('damage')} alt="" width={13} height={13} />
+          DPS
+        </dt>
+        <dd className="mono">
+          {formatDecimals(dps, 2)}
+          {/* Graded on the rolled numbers, like every other arrow on the
+              card: the level multiplier lifts every fighter of a level
+              equally and says nothing about the roll. */}
+          <GradeIcon grade={gradeDamagePerSecond(mid('damage'), mid('attackspeed'), template)} />
+        </dd>
+      </div>
+
+      <div className="fstats__row">
+        <dt>
+          <img src={statIcon('initiative')} alt="" width={13} height={13} />
+          {STAT_LABEL.initiative}
+        </dt>
+        <dd className="mono">
+          {shown('initiative')}
+          <GradeArrow field="initiative" raw={mid('initiative')} template={template} />
+        </dd>
+      </div>
+
+      <div className="fstats__head">Defense</div>
+
+      <div className="fstats__row">
+        <dt>
+          <img src={statIcon('survival')} alt="" width={13} height={13} />
+          Survival
+        </dt>
+        <dd className="mono">
+          {Math.round(surv).toLocaleString(NUM_LOCALE)}
+          <GradeIcon grade={gradeSurvival(mid('health'), meanRes, template)} />
+        </dd>
+      </div>
+
+      {/*
+        No arrow on taunt, here as everywhere else. It is a role rather than a
+        quality — a high-taunt fighter is a tank, not a better fighter — and
+        the game has never marked it.
+      */}
+      <div className="fstats__row">
+        <dt>
+          <img src={statIcon('taunt')} alt="" width={13} height={13} />
+          {STAT_LABEL.taunt}
+        </dt>
+        <dd className="mono">{shown('taunt')}</dd>
+      </div>
+    </dl>
   )
 }
 
@@ -1171,7 +1281,9 @@ function RosterFilters({
         <div className="field field--tabs">
           <span className="field__label">Show</span>
           <div className="showtabs" role="group" aria-label="Readout">
-            {(['primary', 'resistance', 'abilities'] as CardTab[]).map((t) => (
+            {/* The same four names the cards use, so the switch and the thing
+                it switches are talking about the same readouts. */}
+            {CARD_TABS.map(([t, label]) => (
               <button
                 type="button"
                 key={t}
@@ -1179,11 +1291,7 @@ function RosterFilters({
                 aria-pressed={tab === t}
                 onClick={() => onTab(t)}
               >
-                {t === 'primary'
-                  ? 'Stats'
-                  : t === 'resistance'
-                    ? 'Resist'
-                    : 'Abilities'}
+                {label}
               </button>
             ))}
           </div>
@@ -1412,7 +1520,7 @@ export function FighterCard({
           was added as its own block.
         */}
         <div className="fcard__tabs" role="tablist">
-          {(['primary', 'resistance', 'abilities'] as CardTab[]).map((t) => (
+          {CARD_TABS.map(([t, label]) => (
             <button
               type="button"
               key={t}
@@ -1421,7 +1529,7 @@ export function FighterCard({
               className="fcard__tab"
               onClick={() => setOverride(t)}
             >
-              {t === 'primary' ? 'Primary' : t === 'resistance' ? 'Resistance' : 'Abilities'}
+              {label}
             </button>
           ))}
 
@@ -1495,6 +1603,8 @@ export function FighterCard({
               ))}
             </dl>
           )}
+
+          {tab === 'combat' && <CombatPanel stats={s} factor={factor.total} template={template} />}
 
           {tab === 'abilities' && (
             <div className="fability">

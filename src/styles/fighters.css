@@ -660,6 +660,29 @@
   gap: 2px;
 }
 
+/*
+ * On a phone the strip wraps rather than shortening the words.
+ *
+ * The body column is 186px beside the portrait and the age chip takes 45 of
+ * them, which leaves about 115px of strip. Four labels need 200 and the
+ * three that were here before needed 207 — this has never fitted, and every
+ * label was being ellipsised to two letters and a dot. Two rows of readable
+ * names cost the card some height and are worth it; a control you cannot
+ * read is not a control.
+ */
+@media (max-width: 719px) {
+  .fcard__tabs {
+    flex-wrap: wrap;
+  }
+  .fcard__tab {
+    flex: 1 1 40%;
+  }
+  .fcard__age {
+    flex: 0 0 auto;
+    margin-left: auto;
+  }
+}
+
 .fcard__tab {
   /*
    * Content width first, leftover space shared after.
@@ -737,6 +760,27 @@
   color: var(--white);
   white-space: nowrap;
   text-transform: capitalize;
+}
+
+/*
+ * A category over the rows it groups.
+ *
+ * Two of them split the Combat readout into what the fighter does to the
+ * other side and what it survives from it — four numbers in a column are a
+ * list, two pairs are an answer. Sized well under the rows so it reads as a
+ * heading rather than another entry.
+ */
+.fstats__head {
+  margin-top: 2px;
+  font-family: var(--font-display);
+  font-size: 9px;
+  font-weight: var(--fw-bold);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+.fstats__head:first-child {
+  margin-top: 0;
 }
 
 /* ---------- abilities ---------- */

@@ -95,6 +95,16 @@ export const STAT_LABEL: Record<string, string> = {
 /** Fields where a smaller number is the better roll. */
 const LOWER_IS_BETTER = new Set(['attackspeed', 'initiative'])
 
+/** The six damage types, in the order every readout lists them. */
+export const RESISTANCE_FIELDS = [
+  'res_gem',
+  'res_metal',
+  'res_air',
+  'res_fire',
+  'res_nature',
+  'res_neutral',
+] as const
+
 /**
  * Fields that get no indicator at all.
  *
@@ -168,20 +178,61 @@ export function gradeStat(
     return 'gold-up'
   }
 
-  const floor = ((b[`${field}_min_min`] ?? 0) + (b[`${field}_max_min`] ?? 0)) / 2
-  const span = ((b[`${field}_min_max`] ?? 0) + (b[`${field}_max_max`] ?? 0)) / 2 - floor
+  const { floor, ceiling } = classBand(field, template)
+  return gradeInBand(rawValue, floor, ceiling, LOWER_IS_BETTER.has(field))
+}
+
+/**
+ * The low and high ends of a class's band for one stat.
+ *
+ * Four numbers describe it — the low and high ends of both the minimum and
+ * the maximum roll — and the original takes the mean of each pair. Exposed
+ * because a derived figure like damage per second has a band too, and it is
+ * built out of the bands of the stats it is made from.
+ */
+export function classBand(
+  field: string,
+  template: ClassTemplate | undefined,
+): { floor: number; ceiling: number } {
+  const b = template?.total_min_max_stats ?? {}
+
+  /* Resistances carry a plain pair rather than the four-number form. */
+  if (field.startsWith('res_')) {
+    return { floor: b[`${field}_min`] ?? 0, ceiling: b[`${field}_max`] ?? 0 }
+  }
+
+  return {
+    floor: ((b[`${field}_min_min`] ?? 0) + (b[`${field}_max_min`] ?? 0)) / 2,
+    ceiling: ((b[`${field}_min_max`] ?? 0) + (b[`${field}_max_max`] ?? 0)) / 2,
+  }
+}
+
+/**
+ * Where a value falls in its band, in the original's sixths.
+ *
+ * Split out so that anything gradeable is graded the same way. The thresholds
+ * are the original's: a tenth of the band at either end is exceptional or
+ * poor, and the four buckets between them are twenty points wide.
+ */
+export function gradeInBand(
+  value: number,
+  floor: number,
+  ceiling: number,
+  lowerIsBetter = false,
+): StatGrade {
+  const span = ceiling - floor
   if (span <= 0) return 'middle'
 
-  if (LOWER_IS_BETTER.has(field)) {
-    if (rawValue < floor + span * 0.1) return 'gold-up'
-    if (rawValue < floor + span * 0.3) return 'green-duble-up'
-    if (rawValue < floor + span * 0.5) return 'green-up'
-    if (rawValue < floor + span * 0.7) return 'middle'
-    if (rawValue < floor + span * 0.9) return 'red-down'
+  if (lowerIsBetter) {
+    if (value < floor + span * 0.1) return 'gold-up'
+    if (value < floor + span * 0.3) return 'green-duble-up'
+    if (value < floor + span * 0.5) return 'green-up'
+    if (value < floor + span * 0.7) return 'middle'
+    if (value < floor + span * 0.9) return 'red-down'
     return 'red-duble-down'
   }
 
-  const over = rawValue - floor
+  const over = value - floor
   if (over <= span * 0.1) return 'red-duble-down'
   if (over <= span * 0.3) return 'red-down'
   if (over <= span * 0.5) return 'middle'
