@@ -1471,6 +1471,19 @@ export function FighterCard({
                   {s.experience.toLocaleString(NUM_LOCALE)} / {s.required_experience.toLocaleString(NUM_LOCALE)} XP
                 </span>
               )}
+              {/*
+                Age sits with level and experience because it is the third
+                thing that says how much fighter is left: level is what it
+                has grown into, XP how far to the next one, and this how much
+                of the roll time has already taken back.
+              */}
+              <span
+                className={`chip chip--age chip--age-${ageBand(bonus)}`}
+                title={ageNote(bonus, ageDays(fighter, now), factor.age)}
+              >
+                {bonus > 0 ? '+' : ''}
+                {bonus.toFixed(0)}%
+              </span>
               {fighter.ascension_level > 0 && (
                 <span className="chip chip--asc">Asc {fighter.ascension_level}</span>
               )}
@@ -1511,13 +1524,13 @@ export function FighterCard({
         </div>
 
         {/*
-          The age bonus rides the tab strip rather than taking a row of its own.
+          The strip is four tabs and nothing else.
 
-          `.fcard__body` is a three-row grid — head, tabs, panel — with the
-          panel on the `minmax(0, 1fr)` track that makes the card a fixed
-          height. A fourth child pushed the panel into an implicit row and the
-          whole card lost its shape, which is exactly what happened when this
-          was added as its own block.
+          The age bonus used to ride here because `.fcard__body` is a
+          three-row grid — head, tabs, panel — and a fourth child pushed the
+          panel into an implicit row and cost the card its shape. Putting the
+          figure in the chip row solves that without spending 45px of a strip
+          that has four names to fit.
         */}
         <div className="fcard__tabs" role="tablist">
           {CARD_TABS.map(([t, label]) => (
@@ -1532,14 +1545,6 @@ export function FighterCard({
               {label}
             </button>
           ))}
-
-          <span
-            className={`fcard__age fcard__age--${ageBand(bonus)}`}
-            title={ageNote(bonus, ageDays(fighter, now), factor.age)}
-          >
-            {bonus > 0 ? '+' : ''}
-            {bonus.toFixed(0)}%
-          </span>
         </div>
 
         <div className="fcard__panel">

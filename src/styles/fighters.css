@@ -663,12 +663,12 @@
 /*
  * On a phone the strip wraps rather than shortening the words.
  *
- * The body column is 186px beside the portrait and the age chip takes 45 of
- * them, which leaves about 115px of strip. Four labels need 200 and the
- * three that were here before needed 207 — this has never fitted, and every
- * label was being ellipsised to two letters and a dot. Two rows of readable
- * names cost the card some height and are worth it; a control you cannot
- * read is not a control.
+ * The body column is 186px beside the portrait and four labels need about
+ * 200 — as the three before them needed 207, which is why every label here
+ * was being ellipsised to two letters and a dot. Moving the age chip out
+ * bought 45px and it is still not enough. Two rows of readable names cost
+ * the card some height and are worth it; a control you cannot read is not a
+ * control.
  */
 @media (max-width: 719px) {
   .fcard__tabs {
@@ -676,10 +676,6 @@
   }
   .fcard__tab {
     flex: 1 1 40%;
-  }
-  .fcard__age {
-    flex: 0 0 auto;
-    margin-left: auto;
   }
 }
 
@@ -1095,31 +1091,27 @@
  * condition. The colour has to carry that, because the sign does not: "+40%"
  * still reads as positive while meaning a third of the stats are gone.
  */
-.fcard__age {
-  /*
-   * The one thing on the strip that never gives way: a truncated "+10" reads
-   * as a different number, where a truncated label still reads as its word.
-   * Safe now that the labels shrink instead.
-   */
-  flex: none;
-  align-self: stretch;
-  display: inline-flex;
-  align-items: center;
-  padding: 0 5px;
-  font-family: var(--font-display);
-  font-size: 10px;
+.chip--age {
   font-variant-numeric: tabular-nums;
-  border-bottom: 2px solid transparent;
-  background: rgb(255 255 255 / 4%);
   cursor: help;
 }
 
-.fcard__age--fresh {
+/*
+ * Tinted like the chips beside it rather than coloured text on the card.
+ *
+ * The band is the whole point — a worn fighter has to look different from a
+ * fresh one at a glance across forty cards — so each takes a wash of its own
+ * colour the way level and ascension do.
+ */
+.chip--age-fresh {
+  background: rgb(14 212 168 / 18%);
   color: var(--teal);
 }
-.fcard__age--worn {
+.chip--age-worn {
+  background: rgb(246 168 0 / 18%);
   color: var(--gold);
 }
-.fcard__age--bad {
+.chip--age-bad {
+  background: rgb(255 90 120 / 18%);
   color: var(--red);
 }
