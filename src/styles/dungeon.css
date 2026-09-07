@@ -857,6 +857,30 @@
   grid-template-columns: repeat(auto-fill, minmax(178px, 1fr));
 }
 
+/*
+ * Two to a row on a phone, not one.
+ *
+ * 178 is the width the three tab labels want; at 294px of column that buys
+ * one card per row, and a wallet of fifty-seven weapons one to a row is a
+ * different screen. The tabs give way instead — they still fit, at nine
+ * pixels with tighter padding — because scanning a list beats reading one
+ * card at a time.
+ */
+@media (max-width: 719px) {
+  .cardgrid--nft {
+    grid-template-columns: repeat(auto-fill, minmax(138px, 1fr));
+  }
+
+  .nftcard__tabs {
+    padding: 0 4px;
+  }
+
+  .nftcard__tab {
+    padding: 3px 1px;
+    letter-spacing: 0;
+  }
+}
+
 .nftcard__stats {
   font-size: 10px;
   color: var(--text-dim);
@@ -971,11 +995,25 @@
   font-weight: var(--fw-bold);
   color: var(--white);
 }
+/*
+ * Clamped rather than clipped.
+ *
+ * The panel is a fixed height so a row of cards stays level whichever tab
+ * each is on, which means a description longer than the box has to go
+ * somewhere. Every ability in the game fits today — the tightest has eight
+ * pixels to spare at two cards to a phone — but an ellipsis says a sentence
+ * was cut, where `overflow: hidden` alone would slice one mid-word and look
+ * like a rendering fault. The full text is in the detail panel behind `i`.
+ */
 .nftability__text {
   margin: 3px 0 0;
   font-size: 10px;
   line-height: 1.35;
   color: var(--text-faint);
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 5;
+  -webkit-box-orient: vertical;
 }
 
 .nftcard__none {
