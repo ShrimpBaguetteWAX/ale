@@ -9,7 +9,7 @@ import { readdirSync, writeFileSync } from 'node:fs'
 import { renderToStaticMarkup } from 'react-dom/server'
 import Candle, { Mission, Winnings } from '../src/routes/Candle'
 import { useGame } from '../src/state/useGame'
-import { activeOffer } from '../src/candle/rules'
+import { activeOffers } from '../src/candle/rules'
 import type { CandleClaim, CandleOffer, Contribution } from '../src/candle/types'
 import type { Player } from '../src/chain/types'
 
@@ -59,7 +59,7 @@ async function main() {
   }
 
   const now = Date.now()
-  const offer = activeOffer(offers, now)
+  const offer = activeOffers(offers, now)[0]
   const contributions = offer
     ? await rows<Contribution>({
         code: 'recovery.ale',

@@ -12,9 +12,10 @@ import type {
 /**
  * Every campaign the contract is holding.
  *
- * There is one at a time and it lasts a day, so this is a single tiny read —
- * but it is written as a list because the table genuinely is one, and a
- * closed campaign lingers in it until `calcclaim` has paid everybody out.
+ * A small read, and genuinely a list: more than one campaign can be running
+ * at the same time, and a closed one lingers in the table until `calcclaim`
+ * has paid everybody out. This read was always right — it was the screen
+ * above it that took the first row and called it "the" campaign.
  */
 export function fetchCandleOffers(refresh = false): Promise<CandleOffer[]> {
   return getAllRows<CandleOffer>(

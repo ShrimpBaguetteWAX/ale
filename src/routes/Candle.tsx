@@ -8,7 +8,7 @@ import {
 } from '@/candle/queries'
 import type { CandleClaim, CandleOffer, CandleTracking, Contribution } from '@/candle/types'
 import {
-  activeOffer,
+  activeOffers,
   upcomingOffers,
   countdown,
   eligibility,
@@ -37,9 +37,14 @@ import { asset } from '@/assets'
 /**
  * The Candle.
  *
- * One campaign runs at a time. It puts up a fixed reward, anyone who meets
- * its requirement can throw gems at it, and when the day is up the reward is
- * split in proportion to what each contributor put in.
+ * A campaign puts up a fixed reward, anyone who meets its requirement can
+ * throw gems at it, and when the day is up the reward is split in proportion
+ * to what each contributor put in.
+ *
+ * Several can run at once. This screen assumed one — it asked for the running
+ * campaign, singular, and got whichever the contract happened to return
+ * first. The second was not shown as running and was not in "Coming up"
+ * either, so a mission a player could have entered was simply missing.
  *
  * That makes it a dilution game, which is the opposite of how a "contribute"
  * screen normally reads. Adding gems raises your share and lowers what every
@@ -53,16 +58,29 @@ import { asset } from '@/assets'
  * nothing to show but qualified or short, and by how much.
  */
 
-type Busy = 'contribute' | 'claim' | null
+type Busy = string | null
 
 /* ---------- data ---------- */
 
+/**
+ * Everyone in one running campaign, and this player's place in it.
+ *
+ * Held per campaign rather than as three loose values, because there can be
+ * more than one running at a time and each has its own board. Flattened, the
+ * second campaign's numbers would overwrite the first's.
+ */
+export interface Board {
+  stakes: Contribution[]
+  contributors: number
+  mine: number
+}
+
+const EMPTY_BOARD: Board = { stakes: [], contributors: 0, mine: 0 }
+
 interface CandleData {
   offers: CandleOffer[]
-  mine: number
-  contributors: number
-  /** Everyone in the running campaign, for the board behind the button. */
-  stakes: Contribution[]
+  /** Keyed by `offer_id`; missing until that campaign's board has been read. */
+  boards: Map<string, Board>
   claim?: CandleClaim
   tracking?: CandleTracking
   loading: boolean
@@ -72,9 +90,7 @@ interface CandleData {
 
 function useCandle(account: string | null): CandleData {
   const [offers, setOffers] = useState<CandleOffer[]>([])
-  const [mine, setMine] = useState(0)
-  const [contributors, setContributors] = useState(0)
-  const [stakes, setStakes] = useState<Contribution[]>([])
+  const [boards, setBoards] = useState<Map<string, Board>>(() => new Map())
   const [claim, setClaim] = useState<CandleClaim>()
   const [tracking, setTracking] = useState<CandleTracking>()
   const [loading, setLoading] = useState(true)
@@ -100,20 +116,32 @@ function useCandle(account: string | null): CandleData {
         ])
 
         /*
-         * Contributions are scoped by offer id, so the board can only be read
-         * once the campaign is known — one more request, and the one that
-         * makes a player's share showable rather than just their own stake.
+         * Contributions are scoped by offer id, so a board can only be read
+         * once its campaign is known — and there can be more than one running,
+         * so this is one request each rather than one in total. They go
+         * together: two campaigns should not appear a request apart.
          */
-        const current = activeOffer(o)
-        const rows = current ? await fetchContributions(current.offer_id, refresh) : []
+        const running = activeOffers(o)
+        const rows = await Promise.all(
+          running.map((offer) => fetchContributions(offer.offer_id, refresh)),
+        )
 
         if (!alive.current) return
         setOffers(o)
         setClaim(c)
         setTracking(t)
-        setContributors(rows.length)
-        setStakes(rows)
-        setMine(Number(rows.find((r) => r.wallet === account)?.amount ?? 0))
+        setBoards(
+          new Map(
+            running.map((offer, i) => [
+              offer.offer_id,
+              {
+                stakes: rows[i],
+                contributors: rows[i].length,
+                mine: Number(rows[i].find((r) => r.wallet === account)?.amount ?? 0),
+              },
+            ]),
+          ),
+        )
       } catch (err) {
         if (alive.current) setError(readableError(err))
       } finally {
@@ -130,7 +158,7 @@ function useCandle(account: string | null): CandleData {
 
   const reload = useCallback(() => load(true), [load])
 
-  return { offers, mine, contributors, stakes, claim, tracking, loading, error, reload }
+  return { offers, boards, claim, tracking, loading, error, reload }
 }
 
 /* ---------- the screen ---------- */
@@ -141,17 +169,29 @@ export default function Candle() {
   const session = useGame((s) => s.session)
 
   const data = useCandle(account)
-  const { offers, mine, contributors, stakes, claim, tracking } = data
+  const { offers, boards, claim, tracking } = data
 
-  const [gems, setGems] = useState('')
   /*
-     `busy` comes back as a plain string because the hook does not know this
-     screen's two buttons. Narrowed here, at the one place it enters the
-     screen, so every `busy === 'claim'` below still has to name a key that
-     exists — and the two child components keep taking `Busy`.
+     One draft per campaign, keyed by offer id.
+
+     A single string was right while there could only be one mission on
+     screen. With two, typing 400 into one of them put 400 into the other as
+     well — and the contribute button reads this number.
   */
-  const { busy: busyKey, error, notice, run } = useAction()
-  const busy = busyKey as Busy
+  const [gems, setGems] = useState<Record<string, string>>({})
+  const setGemsFor = useCallback(
+    (offerId: string, value: string) =>
+      setGems((g) => ({ ...g, [offerId]: value })),
+    [],
+  )
+
+  /*
+     `busy` is the key of whatever is being signed, straight from the hook.
+     It used to be narrowed to a fixed pair, but a contribute button now has
+     to name which campaign it belongs to: one signature at a time still
+     disables them all, while only the one that was pressed spins.
+  */
+  const { busy, error, notice, run } = useAction()
 
   const [now, setNow] = useState(() => Date.now())
   useEffect(() => {
@@ -159,7 +199,8 @@ export default function Candle() {
     return () => clearInterval(id)
   }, [])
 
-  const offer = useMemo(() => activeOffer(offers, now), [offers, now])
+  /* Every campaign running right now, soonest to close first. */
+  const running = useMemo(() => activeOffers(offers, now), [offers, now])
   /* Everything already fetched that has not started yet. */
   const upcoming = useMemo(() => upcomingOffers(offers, now), [offers, now])
 
@@ -171,14 +212,17 @@ export default function Candle() {
 
   if (!player) return null
 
-  const amount = Math.max(0, Math.floor(Number(gems) || 0))
   const balance = player.activestats.gems
 
-  const doContribute = () => {
-    setGems('')
+  const amountFor = (offerId: string) =>
+    Math.max(0, Math.floor(Number(gems[offerId]) || 0))
+
+  const doContribute = (offer: CandleOffer) => {
+    const amount = amountFor(offer.offer_id)
+    setGemsFor(offer.offer_id, '')
     return run(
-      'contribute',
-      () => contributeGems(session!, offer!.offer_id, amount),
+      `contribute:${offer.offer_id}`,
+      () => contributeGems(session!, offer.offer_id, amount),
       'Contribution registered',
       opts('contributeGems'),
     )
@@ -211,7 +255,7 @@ export default function Candle() {
         <div>
           {data.loading ? (
             <div className="mission mission--loading" />
-          ) : !offer ? (
+          ) : running.length === 0 ? (
             <p className="candle__empty">
               No mission is running.
               {tracking &&
@@ -220,21 +264,30 @@ export default function Candle() {
                 )} from now.`}
             </p>
           ) : (
-            <Mission
-              offer={offer}
-              player={player}
-              mine={mine}
-              stakes={stakes}
-              contributors={contributors}
-              now={now}
-              balance={balance}
-              gems={gems}
-              amount={amount}
-              busy={busy}
-              canAct={!!session}
-              onGems={setGems}
-              onContribute={() => void doContribute()}
-            />
+            /* One card each. The contract can run several at once, and it
+               does — the screen used to show whichever came back first. */
+            running.map((offer) => {
+              const board = boards.get(offer.offer_id) ?? EMPTY_BOARD
+              return (
+                <Mission
+                  key={offer.offer_id}
+                  offer={offer}
+                  player={player}
+                  mine={board.mine}
+                  stakes={board.stakes}
+                  contributors={board.contributors}
+                  now={now}
+                  balance={balance}
+                  gems={gems[offer.offer_id] ?? ''}
+                  amount={amountFor(offer.offer_id)}
+                  busy={busy}
+                  busyKey={`contribute:${offer.offer_id}`}
+                  canAct={!!session}
+                  onGems={(value) => setGemsFor(offer.offer_id, value)}
+                  onContribute={() => void doContribute(offer)}
+                />
+              )
+            })
           )}
 
           {upcoming.length > 0 && <UpNext offers={upcoming} now={now} />}
@@ -482,6 +535,7 @@ export function Mission({
   gems,
   amount,
   busy,
+  busyKey = 'contribute',
   canAct,
   onGems,
   onContribute,
@@ -496,6 +550,14 @@ export function Mission({
   gems: string
   amount: number
   busy: Busy
+  /**
+   * The key this card's own button signs under.
+   *
+   * `busy` says what is being signed anywhere on the screen, which is what
+   * disables every button — two signatures cannot be in flight at once. This
+   * says which card is the one that was pressed, so only that spinner runs.
+   */
+  busyKey?: string
   canAct: boolean
   onGems: (v: string) => void
   onContribute: () => void
@@ -687,7 +749,7 @@ export function Mission({
                     : 'Gems are spent immediately'
               }
             >
-              {busy === 'contribute' && <span className="spinner" />}
+              {busy === busyKey && <span className="spinner" />}
               Contribute Gems
             </button>
           </div>

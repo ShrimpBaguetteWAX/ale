@@ -108,16 +108,32 @@ export function offerState(offer: CandleOffer, now = Date.now()): OfferState {
   return { phase: 'open', startsAt, endsAt, msLeft: endsAt - now }
 }
 
-/** The campaign a player can act on: the open one, else the most recent. */
-export function activeOffer(
+/**
+ * The campaigns a player can act on: every open one, else the most recent.
+ *
+ * `find` used to answer this, on the assumption that the contract runs one
+ * campaign at a time. It does not — `addoffer` is free to open a second while
+ * the first is still running, and when it did, the second was invisible:
+ * `find` had already returned, and nothing else on the screen looked at open
+ * offers, so it was not in "Coming up" either. It simply did not exist.
+ *
+ * Soonest to close comes first, because that is the one whose decision cannot
+ * wait. Where none are open the most recently ended is kept, which is what
+ * shows a player the campaign they contributed to while it settles.
+ */
+export function activeOffers(
   offers: CandleOffer[],
   now = Date.now(),
-): CandleOffer | undefined {
-  const open = offers.find((o) => offerState(o, now).phase === 'open')
-  if (open) return open
-  return [...offers].sort(
+): CandleOffer[] {
+  const open = offers
+    .filter((o) => offerState(o, now).phase === 'open')
+    .sort((a, b) => Date.parse(a.offer_end + 'Z') - Date.parse(b.offer_end + 'Z'))
+  if (open.length > 0) return open
+
+  const latest = [...offers].sort(
     (a, b) => Date.parse(b.offer_end + 'Z') - Date.parse(a.offer_end + 'Z'),
   )[0]
+  return latest ? [latest] : []
 }
 
 /**
