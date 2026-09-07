@@ -30,6 +30,8 @@ import Ascension from '../src/routes/Ascension'
 import Market from '../src/routes/Market'
 import Candle from '../src/routes/Candle'
 import Tavern from '../src/routes/Tavern'
+import Lands from '../src/routes/Lands'
+import Farming from '../src/routes/Farming'
 import { landId } from '../src/chain/landId'
 import { MineCelebration } from '../src/pools/MineCelebration'
 import { useGame } from '../src/state/useGame'
@@ -274,6 +276,10 @@ createRoot(document.getElementById('root')!).render(
           <Route path="/market" element={<Market />} />
           <Route path="/candle" element={<Candle />} />
           <Route path="/tavern" element={<Tavern />} />
+          {/* Both were missing, which meant two screens that sign transactions
+              could not be looked at here at all. */}
+          <Route path="/lands" element={<Lands />} />
+          <Route path="/farming" element={<Farming />} />
           {/* The mine receipt, which needs a claim to exist otherwise. */}
           <Route
             path="/cheer"

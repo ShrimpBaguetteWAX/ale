@@ -47,7 +47,7 @@ import {
 } from '@/wharf/actions'
 
 import { MAX_BULK_LISTINGS, bulkListPlan, listable } from '@/market/rules'
-import { refreshChore } from '@/chores/signal'
+import { useAction } from '@/wharf/useAction'
 import { readableError } from '@/wharf/errors'
 import type { ClassTemplate } from '@/tavern/fighterStats'
 import {
@@ -78,6 +78,7 @@ import {
 } from '@/fighters/derived'
 import { formatDecimals, NUM_LOCALE } from '@/format'
 import { QualityFilters } from '@/fight/setup'
+import { ActionBanner } from '@/components/ActionBanner'
 import { asset } from '@/assets'
 
 /**
@@ -233,7 +234,6 @@ export default function Fighters() {
   const account = useGame((s) => s.account)
   const player = useGame((s) => s.player)
   const session = useGame((s) => s.session)
-  const refreshPlayer = useGame((s) => s.refreshPlayer)
 
   const data = useRoster(account)
   const { roster, levels, config, templates, levelMod, ageDecay } = data
@@ -253,9 +253,7 @@ export default function Fighters() {
   const [checked, setChecked] = useState<number[]>([])
   const [openedId, setOpenedId] = useState<number | null>(null)
 
-  const [busy, setBusy] = useState<string | null>(null)
-  const [notice, setNotice] = useState<string | null>(null)
-  const [error, setError] = useState<string | null>(null)
+  const { busy, error, notice, run, setError } = useAction()
   const [confirmSell, setConfirmSell] = useState(false)
   const [confirmList, setConfirmList] = useState(false)
 
@@ -365,39 +363,19 @@ export default function Fighters() {
    * few times is the honest fix; the alternative — patching the local copy
    * optimistically — would show numbers the chain has not agreed to.
    */
-  const run = useCallback(
-    async (label: string, act: () => Promise<unknown>, done: string) => {
-      if (!session) return
-      setBusy(label)
-      setError(null)
-      setNotice(null)
-      try {
-        await act()
-        for (let i = 0; i < 5; i++) {
-          await new Promise((r) => setTimeout(r, 900))
-          await Promise.all([data.reload(), refreshPlayer({ force: true })])
-        }
-        /* A levelled fighter is no longer waiting. */
-        refreshChore('fighters')
-        setNotice(done)
-      } catch (err) {
-        setError(readableError(err))
-      } finally {
-        setBusy(null)
-      }
-    },
-    [session, data, refreshPlayer],
-  )
+  /* A levelled fighter is no longer waiting. */
+  const opts = { after: data.reload, chore: 'fighters' as const }
 
   const doPayAll = () =>
     run(
       'pay-all',
       () => payFighters(session!, payAll.ids),
       `Paid ${payAll.ids.length} fighter${payAll.ids.length === 1 ? '' : 's'}.`,
+      opts,
     )
 
   const doPayOne = (f: RosterFighter) =>
-    run('pay-one', () => payFighters(session!, [f.fighter_id]), 'Fighter paid.')
+    run('pay-one', () => payFighters(session!, [f.fighter_id]), 'Fighter paid.', opts)
 
   const doLevelAll = () =>
     run(
@@ -409,6 +387,7 @@ export default function Fighters() {
         }),
       `Gained ${levelAll.ids.length} level${levelAll.ids.length === 1 ? '' : 's'} ` +
         `across ${levelAll.fighters} fighter${levelAll.fighters === 1 ? '' : 's'}.`,
+      opts,
     )
 
   const doLevelOne = (f: RosterFighter) => {
@@ -417,6 +396,7 @@ export default function Fighters() {
       'level-one',
       () => levelUpFighters(session!, [f.fighter_id], plan.cost),
       'Fighter levelled up.',
+      opts,
     )
   }
 
@@ -426,6 +406,7 @@ export default function Fighters() {
       'sell',
       () => sellFighters(session!, checked),
       `Sold ${checked.length} fighter${checked.length === 1 ? '' : 's'} for ${sellValue.toLocaleString(NUM_LOCALE)} credits.`,
+      opts,
     )
     setChecked([])
     setSelectedId(null)
@@ -443,6 +424,7 @@ export default function Fighters() {
         }),
       `Listed ${listPlan.ids.length} fighter${listPlan.ids.length === 1 ? '' : 's'} ` +
         `at ${startPrice} gems.`,
+      opts,
     )
     setChecked([])
     setSelectedId(null)
@@ -453,6 +435,7 @@ export default function Fighters() {
       'marker',
       () => setFighterMarker(session!, f.fighter_id, marker),
       marker ? 'Marker set.' : 'Marker cleared.',
+      opts,
     )
 
   const toggleChecked = useCallback(
@@ -732,10 +715,7 @@ export default function Fighters() {
         )}
       </div>
 
-      {notice && <div className="alert alert--ok">{notice}</div>}
-      {(error || data.error) && (
-        <div className="alert alert--error">{error ?? data.error}</div>
-      )}
+      <ActionBanner notice={notice} error={error ?? data.error} />
 
       <RosterFilters
         filter={filter}

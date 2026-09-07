@@ -31,6 +31,7 @@ import {
   claimAscensionUpgrade,
   rerollAscension,
 } from '@/wharf/actions'
+import { useAction } from '@/wharf/useAction'
 import { readableError } from '@/wharf/errors'
 import { formatNumber } from '@/format'
 import { useConfig, useLazyConfig } from '@/state/useConfig'
@@ -76,7 +77,6 @@ export default function Ascension() {
   const account = useGame((s) => s.account)
   const session = useGame((s) => s.session)
   const player = useGame((s) => s.player)
-  const refreshPlayer = useGame((s) => s.refreshPlayer)
 
   const [roster, setRoster] = useState<RosterFighter[]>([])
   const [loading, setLoading] = useState(true)
@@ -97,9 +97,10 @@ export default function Ascension() {
   } = useConfig()
   const config = useLazyConfig('ascension')
   const odds = useLazyConfig('upgrades') ?? EMPTY_ODDS
-  const [error, setError] = useState<string | null>(null)
-  const [notice, setNotice] = useState<string | null>(null)
-  const [busy, setBusy] = useState<Busy>(null)
+  /* Narrowed where it enters the screen, so the offer panel keeps taking
+     `Busy` and every comparison still has to name a real button. */
+  const { busy: busyKey, error, notice, run, setError } = useAction()
+  const busy = busyKey as Busy
 
   const [targetId, setTargetId] = useState<number | null>(null)
   /*
@@ -140,29 +141,9 @@ export default function Ascension() {
     void load()
   }, [load])
 
-  const run = useCallback(
-    async (mark: Busy, act: () => Promise<unknown>, done: string) => {
-      if (!session) return
-      setBusy(mark)
-      setError(null)
-      setNotice(null)
-      try {
-        await act()
-        /* The fighter row is rewritten by an inline action, so give the
-           chain a moment and re-read a few times rather than once. */
-        for (let i = 0; i < 5; i++) {
-          await new Promise((r) => setTimeout(r, 900))
-          await Promise.all([refreshPlayer({ force: true }), load()])
-        }
-        setNotice(done)
-      } catch (err) {
-        setError(readableError(err))
-      } finally {
-        setBusy(null)
-      }
-    },
-    [session, refreshPlayer, load],
-  )
+  /* The fighter row is rewritten by an inline action, so the roster is
+     re-read a few times rather than once. */
+  const opts = { after: load }
 
   /* A fighter mid-ascension takes over the screen: it has offers waiting. */
   const pending = useMemo(
@@ -280,6 +261,7 @@ export default function Ascension() {
               'reroll',
               () => rerollAscension(session!, pending.fighter_id, rerollFee),
               'Offers re-rolled.',
+              opts,
             )
           }
           onClaim={(stat, value, positive) =>
@@ -294,6 +276,7 @@ export default function Ascension() {
                   positive,
                 ),
               'Ascension complete.',
+              opts,
             )
           }
         />
@@ -332,6 +315,7 @@ export default function Ascension() {
                   fee,
                 ),
               'Ascended. Choose your upgrade.',
+              opts,
             )
           }
         />

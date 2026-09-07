@@ -30,6 +30,7 @@ import { claimLeaderboardReward } from '@/wharf/actions'
 import { readableError } from '@/wharf/errors'
 import { formatNumber, formatDecimals } from '@/format'
 import { fighterArt, fighterArtFallback } from '@/tavern/fighterStats'
+import { ActionBanner } from '@/components/ActionBanner'
 import { asset } from '@/assets'
 import { PlayerAvatar } from '@/components/PlayerAvatar'
 
@@ -276,10 +277,7 @@ export default function Leaderboard() {
         )}
       </header>
 
-      {notice && <div className="alert alert--ok">{notice}</div>}
-      {(error || data.error) && (
-        <div className="alert alert--error">{error ?? data.error}</div>
-      )}
+      <ActionBanner notice={notice} error={error ?? data.error} />
 
       <div className="lbtabs" role="tablist" aria-label="Leaderboard">
         {(

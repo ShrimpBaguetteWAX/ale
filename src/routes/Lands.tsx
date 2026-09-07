@@ -35,9 +35,10 @@ import {
   claimLandRewards,
   destroyBuilding,
 } from '@/wharf/actions'
-import { refreshChore } from '@/chores/signal'
+import { useAction } from '@/wharf/useAction'
 import { readableError } from '@/wharf/errors'
 import { formatNumber, formatDecimals } from '@/format'
+import { ActionBanner } from '@/components/ActionBanner'
 import { asset } from '@/assets'
 
 /**
@@ -66,6 +67,23 @@ type Busy =
   | { kind: 'claim-all' }
   | { kind: 'claim' | 'build' | 'boost' | 'destroy'; key: string }
   | null
+
+/*
+ * This screen identifies a working button by what it does *and* which land it
+ * does it to; the hook keys one by a single string. Encoded going in, parsed
+ * coming back, so every comparison below and both child components keep the
+ * shape they were written for.
+ */
+type LandBusy = 'claim' | 'build' | 'boost' | 'destroy'
+
+const busyKey = (kind: LandBusy, key: string) => `${kind}:${key}`
+
+function parseBusy(raw: string | null): Busy {
+  if (!raw) return null
+  const at = raw.indexOf(':')
+  if (at < 0) return { kind: 'claim-all' }
+  return { kind: raw.slice(0, at) as LandBusy, key: raw.slice(at + 1) }
+}
 
 function tlm(raw: number): string {
   return formatDecimals(raw / 10_000, 1)
@@ -181,15 +199,13 @@ export default function Lands() {
   const account = useGame((s) => s.account)
   const player = useGame((s) => s.player)
   const session = useGame((s) => s.session)
-  const refreshPlayer = useGame((s) => s.refreshPlayer)
 
   const data = useLands(account)
   const { lands, costs, discounts, config } = data
 
   const [selectedKey, setSelectedKey] = useState<string | null>(null)
-  const [busy, setBusy] = useState<Busy>(null)
-  const [notice, setNotice] = useState<string | null>(null)
-  const [error, setError] = useState<string | null>(null)
+  const { busy: rawBusy, error, notice, run } = useAction()
+  const busy = parseBusy(rawBusy)
 
   /* Boost decays by the hour, so a minute is plenty and costs nothing. */
   const [now, setNow] = useState(() => Date.now())
@@ -205,42 +221,22 @@ export default function Lands() {
     [lands],
   )
 
-  const run = useCallback(
-    async (mark: Busy, act: () => Promise<unknown>, done: string) => {
-      if (!session) return
-      setBusy(mark)
-      setError(null)
-      setNotice(null)
-      try {
-        await act()
-        for (let i = 0; i < 6; i++) {
-          await new Promise((r) => setTimeout(r, 900))
-          await Promise.all([data.reload(), refreshPlayer({ force: true })])
-        }
-        /* Boosting lifts a building back over the mark. */
-        refreshChore('lands')
-        setNotice(done)
-      } catch (err) {
-        setError(readableError(err))
-      } finally {
-        setBusy(null)
-      }
-    },
-    [session, data, refreshPlayer],
-  )
+  /* Boosting lifts a building back over the mark. */
+  const opts = { after: data.reload, chore: 'lands' as const }
 
   const doClaim = (land: OwnedLand) =>
     run(
-      { kind: 'claim', key: landKey(land) },
+      busyKey('claim', landKey(land)),
       () => claimLandRewards(session!, { planet: land.planet, x: land.x, y: land.y }),
       'Land rewards claimed.',
+      opts,
     )
 
   /* The contract takes one land per action, so claiming everything is a run
      of actions rather than one batched call. */
   const doClaimAll = () =>
     run(
-      { kind: 'claim-all' },
+      'claim-all',
       async () => {
         for (const land of claimable) {
           await claimLandRewards(session!, {
@@ -251,6 +247,7 @@ export default function Lands() {
         }
       },
       `Claimed from ${claimable.length} land${claimable.length === 1 ? '' : 's'}.`,
+      opts,
     )
 
   if (!player) return null
@@ -273,10 +270,7 @@ export default function Lands() {
         )}
       </header>
 
-      {notice && <div className="alert alert--ok">{notice}</div>}
-      {(error || data.error) && (
-        <div className="alert alert--error">{error ?? data.error}</div>
-      )}
+      <ActionBanner notice={notice} error={error ?? data.error} />
 
       {data.loading ? (
         <div className="landlist">
@@ -374,7 +368,7 @@ export default function Lands() {
                 canAct={!!session}
                 onBuild={(opt) =>
                   void run(
-                    { kind: 'build', key: landKey(selected) },
+                    busyKey('build', landKey(selected)),
                     () =>
                       buildBuilding(session!, {
                         planet: selected.planet,
@@ -386,11 +380,12 @@ export default function Lands() {
                         costCredits: opt.credits,
                       }),
                     `${buildingLabel(opt.building, costs)} built.`,
+                    opts,
                   )
                 }
                 onBoost={(building, target, cost) =>
                   void run(
-                    { kind: 'boost', key: landKey(selected) },
+                    busyKey('boost', landKey(selected)),
                     () =>
                       boostBuilding(session!, {
                         planet: selected.planet,
@@ -401,11 +396,12 @@ export default function Lands() {
                         target,
                       }),
                     'Boost raised.',
+                    opts,
                   )
                 }
                 onDestroy={(building) =>
                   void run(
-                    { kind: 'destroy', key: landKey(selected) },
+                    busyKey('destroy', landKey(selected)),
                     () =>
                       destroyBuilding(session!, {
                         planet: selected.planet,
@@ -415,6 +411,7 @@ export default function Lands() {
                         costGems: Number(config?.delete_building_gems_cost ?? 0),
                       }),
                     'Building destroyed successfully!',
+                    opts,
                   )
                 }
               />

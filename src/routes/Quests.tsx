@@ -19,7 +19,7 @@ import {
   type ScopeBoard,
 } from '@/quests/rules'
 import { finishQuest, getQuests, rerollQuest } from '@/wharf/actions'
-import { refreshChore } from '@/chores/signal'
+import { useAction } from '@/wharf/useAction'
 import { readableError } from '@/wharf/errors'
 import type { Player } from '@/chain/types'
 import { NUM_LOCALE } from '@/format'
@@ -55,7 +55,12 @@ import { asset } from '@/assets'
  * the whole complaint. Each key is a `questKey`, or `REFILL` for the header
  * button, so a card only ever disables itself.
  */
-type Busy = Map<string, 'claim' | 'reroll' | 'refill'>
+type BusyKind = 'claim' | 'reroll' | 'refill'
+type Busy = Map<string, BusyKind>
+
+/* One key for the hook, which identifies a working button by a single
+   string. The kind never contains a colon, so the first one splits it. */
+const busyKey = (kind: BusyKind, key: string) => `${kind}:${key}`
 
 const REFILL = '\u0000refill'
 
@@ -127,15 +132,28 @@ export default function Quests() {
   const account = useGame((s) => s.account)
   const player = useGame((s) => s.player)
   const session = useGame((s) => s.session)
-  const refreshPlayer = useGame((s) => s.refreshPlayer)
 
   const data = useQuests(account)
   const { active, scopes, config } = data
 
   const [scope, setScope] = useState<Scope>('day')
-  const [busy, setBusy] = useState<Busy>(() => new Map())
-  const [notice, setNotice] = useState<string | null>(null)
-  const [error, setError] = useState<string | null>(null)
+  const { busy: rawBusy, error, notice, run } = useAction()
+  /*
+     The map is rebuilt from the hook's single key.
+
+     It never held more than one entry — the old `run` set one and deleted it
+     on the way out, and two quests cannot be signed at once — so this is the
+     same value it always was, and `busy.has(key)`, `busy.size` and both child
+     components go on working unchanged.
+  */
+  const busy = useMemo<Busy>(() => {
+    const map: Busy = new Map()
+    if (rawBusy) {
+      const at = rawBusy.indexOf(':')
+      map.set(rawBusy.slice(at + 1), rawBusy.slice(0, at) as BusyKind)
+    }
+    return map
+  }, [rawBusy])
   const [confirmReroll, setConfirmReroll] = useState<string | null>(null)
 
   /*
@@ -158,54 +176,14 @@ export default function Quests() {
   const refill = needsRefill(board)
   const credits = player?.activestats.credits ?? 0
 
-  /**
-   * Run one quest action, then re-read the board and the player.
-   *
-   * Both matter: the quest row changes, and so do `permstats` and the credit
-   * balance every progress bar and price is drawn from. The node that answers
-   * the next read is rarely the one that just applied the transaction, so this
-   * polls — but it stops the moment the board actually reflects the change
-   * rather than running a fixed six rounds. A reroll that landed on the first
-   * read still left every button dead for another five seconds.
-   */
-  const run = useCallback(
-    async (
-      key: string,
-      kind: 'claim' | 'reroll' | 'refill',
-      act: () => Promise<unknown>,
-      done: string,
-      /** True once the freshly read board shows the change. */
-      settled: (fresh: ActiveQuests | undefined) => boolean,
-    ) => {
-      if (!session) return
-      setBusy((b) => new Map(b).set(key, kind))
-      setError(null)
-      setNotice(null)
-      try {
-        await act()
-        for (let i = 0; i < 6; i++) {
-          await new Promise((r) => setTimeout(r, 900))
-          const [fresh] = await Promise.all([
-            data.reload(),
-            refreshPlayer({ force: true }),
-          ])
-          if (settled(fresh)) break
-        }
-        /* A claimed quest is no longer waiting. */
-        refreshChore('quests')
-        setNotice(done)
-      } catch (err) {
-        setError(readableError(err))
-      } finally {
-        setBusy((b) => {
-          const next = new Map(b)
-          next.delete(key)
-          return next
-        })
-      }
-    },
-    [session, data, refreshPlayer],
-  )
+  /*
+     Both the board and the player matter after a quest action: the quest row
+     changes, and so do permstats and the credit balance every progress bar
+     and price is drawn from. The waiting stops the moment the board shows the
+     change rather than running a fixed six rounds — a reroll that landed on
+     the first read used to leave every button dead for another five seconds.
+  */
+  const opts = { after: data.reload, chore: 'quests' as const }
 
   /*
      Claiming and rerolling both replace the quest, and `questKey` folds in
@@ -218,16 +196,18 @@ export default function Quests() {
   const doRefill = () => {
     const before = new Set((data.active?.quests ?? []).map(questKey))
     return run(
-      REFILL,
-      'refill',
+      busyKey('refill', REFILL),
       () => getQuests(session!),
       'New quests issued, with their rewards set aside.',
-      /* A refill replaces whichever slots were empty or expired, so the test
-         is that the board is no longer the one we started from. */
-      (fresh) =>
-        !!fresh &&
-        (fresh.quests.length !== before.size ||
-          fresh.quests.some((q) => !before.has(questKey(q)))),
+      {
+        ...opts,
+        /* A refill replaces whichever slots were empty or expired, so the
+           test is that the board is no longer the one we started from. */
+        settled: (fresh) =>
+          !!fresh &&
+          (fresh.quests.length !== before.size ||
+            fresh.quests.some((q) => !before.has(questKey(q)))),
+      },
     )
   }
 
@@ -235,18 +215,22 @@ export default function Quests() {
     const r = rewardOf(quest)
     const key = questKey(quest)
     return run(
-      key,
-      'claim',
+      busyKey('claim', key),
       () => finishQuest(session!, quest),
       `Claimed ${r.label} ${r.symbol}. A new quest has taken its place.`,
-      gone(key),
+      { ...opts, settled: gone(key) },
     )
   }
 
   const doReroll = (quest: Quest) => {
     setConfirmReroll(null)
     const key = questKey(quest)
-    return run(key, 'reroll', () => rerollQuest(session!, quest), 'Quest rerolled.', gone(key))
+    return run(
+      busyKey('reroll', key),
+      () => rerollQuest(session!, quest),
+      'Quest rerolled.',
+      { ...opts, settled: gone(key) },
+    )
   }
 
   if (!player) return null

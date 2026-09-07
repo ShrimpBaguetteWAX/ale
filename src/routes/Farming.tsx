@@ -30,9 +30,10 @@ import {
   type PoolStatus,
 } from '@/farming/rules'
 import { claimFarming, stakeCards, unstakeCards } from '@/wharf/actions'
-import { refreshChore } from '@/chores/signal'
+import { useAction } from '@/wharf/useAction'
 import { readableError } from '@/wharf/errors'
 import { formatNumber } from '@/format'
+import { ActionBanner } from '@/components/ActionBanner'
 import { asset } from '@/assets'
 
 /**
@@ -181,14 +182,14 @@ export default function Farming() {
   const account = useGame((s) => s.account)
   const player = useGame((s) => s.player)
   const session = useGame((s) => s.session)
-  const refreshPlayer = useGame((s) => s.refreshPlayer)
 
   const [tab, setTab] = useState<Tab>('tool.worlds')
   const [mode, setMode] = useState<Mode>('inventory')
   const [picked, setPicked] = useState<string[]>([])
-  const [busy, setBusy] = useState<Busy>(null)
-  const [notice, setNotice] = useState<string | null>(null)
-  const [error, setError] = useState<string | null>(null)
+  /* Narrowed where it enters the screen, so every comparison below still has
+     to name one of this screen's three buttons. */
+  const { busy: busyKey, error, notice, run } = useAction()
+  const busy = busyKey as Busy
 
   const schema: FarmSchema = tab === 'rewards' ? 'tool.worlds' : tab
   const data = useFarm(account, schema)
@@ -234,36 +235,20 @@ export default function Farming() {
   const gems = player?.activestats.gems ?? 0
   const stakeCost = picked.length * gemFee
 
-  const run = useCallback(
-    async (mark: Busy, act: () => Promise<unknown>, done: string) => {
-      if (!session) return
-      setBusy(mark)
-      setError(null)
-      setNotice(null)
-      try {
-        await act()
-        for (let i = 0; i < 6; i++) {
-          await new Promise((r) => setTimeout(r, 900))
-          await Promise.all([data.reload(), refreshPlayer({ force: true })])
-        }
-        setPicked([])
-        /* Claiming resets the power that had capped. */
-        refreshChore('farming')
-        setNotice(done)
-      } catch (err) {
-        setError(readableError(err))
-      } finally {
-        setBusy(null)
-      }
-    },
-    [session, data, refreshPlayer],
-  )
+  /* Whatever was staked or claimed is no longer a pending selection, and
+     claiming resets the power that had capped. */
+  const opts = {
+    after: data.reload,
+    onSettled: () => setPicked([]),
+    chore: 'farming' as const,
+  }
 
   const doStake = () =>
     run(
       'stake',
       () => stakeCards(session!, picked),
       `Staked ${picked.length} card${picked.length === 1 ? '' : 's'}.`,
+      opts,
     )
 
   const doUnstake = () =>
@@ -271,10 +256,11 @@ export default function Farming() {
       'unstake',
       () => unstakeCards(session!, picked),
       `Unstaked ${picked.length} card${picked.length === 1 ? '' : 's'}, and claimed what they had earned.`,
+      opts,
     )
 
   const doClaim = () =>
-    run('claim', () => claimFarming(session!), 'Credits claimed.')
+    run('claim', () => claimFarming(session!), 'Credits claimed.', opts)
 
   const toggle = (id: string) =>
     setPicked((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]))
@@ -351,10 +337,7 @@ export default function Farming() {
         </div>
       )}
 
-      {notice && <div className="alert alert--ok">{notice}</div>}
-      {(error || data.error) && (
-        <div className="alert alert--error">{error ?? data.error}</div>
-      )}
+      <ActionBanner notice={notice} error={error ?? data.error} />
 
       <div className="farmtabs" role="tablist" aria-label="Card type">
         {FARM_SCHEMAS.map((s) => {

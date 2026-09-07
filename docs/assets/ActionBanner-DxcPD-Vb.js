@@ -1,0 +1,1 @@
+import{j as r}from"./react-CUBPBykP.js";function l({notice:a,error:e}){return!a&&!e?null:r.jsxs(r.Fragment,{children:[a&&r.jsx("div",{className:"alert alert--ok",children:a}),e&&r.jsx("div",{className:"alert alert--error",children:e})]})}export{l as A};

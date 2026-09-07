@@ -22,13 +22,14 @@ import {
   perGemPlaces,
 } from '@/candle/rules'
 import { claimCandle, contributeGems } from '@/wharf/actions'
-import { refreshChore } from '@/chores/signal'
+import { useAction } from '@/wharf/useAction'
 import { readableError } from '@/wharf/errors'
 import { formatNumber, formatDecimals } from '@/format'
 import type { Player } from '@/chain/types'
 import { fetchPlayerTags } from '@/chain/queries'
 import { PlayerAvatar } from '@/components/PlayerAvatar'
 import { rankClass } from '@/leaderboard/rules'
+import { ActionBanner } from '@/components/ActionBanner'
 import { asset } from '@/assets'
 
 /**
@@ -136,15 +137,19 @@ export default function Candle() {
   const account = useGame((s) => s.account)
   const player = useGame((s) => s.player)
   const session = useGame((s) => s.session)
-  const refreshPlayer = useGame((s) => s.refreshPlayer)
 
   const data = useCandle(account)
   const { offers, mine, contributors, stakes, claim, tracking } = data
 
   const [gems, setGems] = useState('')
-  const [busy, setBusy] = useState<Busy>(null)
-  const [notice, setNotice] = useState<string | null>(null)
-  const [error, setError] = useState<string | null>(null)
+  /*
+     `busy` comes back as a plain string because the hook does not know this
+     screen's two buttons. Narrowed here, at the one place it enters the
+     screen, so every `busy === 'claim'` below still has to name a key that
+     exists — and the two child components keep taking `Busy`.
+  */
+  const { busy: busyKey, error, notice, run } = useAction()
+  const busy = busyKey as Busy
 
   const [now, setNow] = useState(() => Date.now())
   useEffect(() => {
@@ -156,29 +161,8 @@ export default function Candle() {
   /* Everything already fetched that has not started yet. */
   const upcoming = useMemo(() => upcomingOffers(offers, now), [offers, now])
 
-  const run = useCallback(
-    async (mark: Busy, act: () => Promise<unknown>, done: string) => {
-      if (!session) return
-      setBusy(mark)
-      setError(null)
-      setNotice(null)
-      try {
-        await act()
-        for (let i = 0; i < 6; i++) {
-          await new Promise((r) => setTimeout(r, 900))
-          await Promise.all([data.reload(), refreshPlayer({ force: true })])
-        }
-        /* A claim empties the pot. */
-        refreshChore('candle')
-        setNotice(done)
-      } catch (err) {
-        setError(readableError(err))
-      } finally {
-        setBusy(null)
-      }
-    },
-    [session, data, refreshPlayer],
-  )
+  /* A claim empties the pot, so the dot stops waiting for its own timer. */
+  const opts = { after: data.reload, chore: 'candle' as const }
 
   if (!player) return null
 
@@ -191,11 +175,12 @@ export default function Candle() {
       'contribute',
       () => contributeGems(session!, offer!.offer_id, amount),
       'Contribution registered',
+      opts,
     )
   }
 
   const doClaim = () =>
-    run('claim', () => claimCandle(session!), 'Rewards claimed successfully!')
+    run('claim', () => claimCandle(session!), 'Rewards claimed successfully!', opts)
 
   return (
     <div className="candle">
@@ -215,10 +200,7 @@ export default function Candle() {
         </div>
       </header>
 
-      {notice && <div className="alert alert--ok">{notice}</div>}
-      {(error || data.error) && (
-        <div className="alert alert--error">{error ?? data.error}</div>
-      )}
+      <ActionBanner notice={notice} error={error ?? data.error} />
 
       <div className="candle__cols">
         <div>

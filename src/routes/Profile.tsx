@@ -89,7 +89,7 @@ import {
   mineRewardPool,
 } from '@/wharf/actions'
 import { randomHistoryId } from '@/dungeon/queries'
-import { refreshChore } from '@/chores/signal'
+import { useAction } from '@/wharf/useAction'
 import {
   MineCelebration,
   readMinedRewards,
@@ -229,7 +229,6 @@ export default function Profile({ section = 'account' }: { section?: Section }) 
   const account = useGame((s) => s.account)
   const session = useGame((s) => s.session)
   const disconnect = useGame((s) => s.disconnect)
-  const refreshPlayer = useGame((s) => s.refreshPlayer)
   const navigate = useNavigate()
 
   /* The first tab of whichever half this is. */
@@ -244,12 +243,11 @@ export default function Profile({ section = 'account' }: { section?: Section }) 
   useEffect(() => {
     setTab(SECTION_TABS[section][0][0])
   }, [section])
-  const [busy, setBusy] = useState<Busy>(null)
+  const { busy: busyKey, error, notice, run, setError } = useAction()
+  const busy = busyKey as Busy
   /* Which pool the running mine belongs to, so only its button spins. */
   const [minedRewards, setMinedRewards] = useState<MinedReward[]>([])
   const [minedPool, setMinedPool] = useState<string | null>(null)
-  const [notice, setNotice] = useState<string | null>(null)
-  const [error, setError] = useState<string | null>(null)
 
   const [avatars, setAvatars] = useState<Avatar[]>([])
   const [cpuCfg, setCpuCfg] = useState<CpuConfig>()
@@ -331,38 +329,18 @@ export default function Profile({ section = 'account' }: { section?: Section }) 
     }
   }, [account, currencyTab, logs])
 
-  const run = useCallback(
-    async (mark: Busy, act: () => Promise<unknown>, done: string) => {
-      if (!session) return
-      setBusy(mark)
-      setError(null)
-      setNotice(null)
-      try {
-        await act()
-        for (let i = 0; i < 5; i++) {
-          await new Promise((r) => setTimeout(r, 900))
-          await Promise.all([refreshPlayer({ force: true }), load()])
-        }
-        /*
-           Whichever dot this action just answered.
+  /*
+     Whichever dot the action just answered.
 
-           Mining spends the banked reward power, which is what lights Rewards;
-           claiming a CPU powerup spends the weekly allowance, which is what
-           lights Account. Splitting the screen split these too, and this line
-           kept saying 'account' for both — so a mine refreshed the CPU dot and
-           left the one it had actually changed to notice on its own.
-        */
-        if (mark === 'mine') refreshChore('rewards')
-        if (mark === 'cpu') refreshChore('account')
-        setNotice(done)
-      } catch (err) {
-        setError(readableError(err))
-      } finally {
-        setBusy(null)
-      }
-    },
-    [session, refreshPlayer, load],
-  )
+     Mining spends the banked reward power, which is what lights Rewards;
+     claiming a CPU powerup spends the weekly allowance, which is what lights
+     Account. One shared line used to say 'account' for both, so a mine
+     refreshed the CPU dot and left the one it had actually changed to notice
+     on its own. Naming it per action makes that impossible to get wrong.
+  */
+  const opts = { after: load }
+  const mineOpts = { after: load, chore: 'rewards' as const }
+  const cpuOpts = { after: load, chore: 'account' as const }
 
   const board = useMemo(() => avatarBoard(avatars, player), [avatars, player])
 
@@ -423,13 +401,13 @@ export default function Profile({ section = 'account' }: { section?: Section }) 
           busy={busy}
           canAct={!!session}
           onTag={(tag) =>
-            void run('tag', () => setPlayertag(session!, tag), 'Gamertag saved.')
+            void run('tag', () => setPlayertag(session!, tag), 'Gamertag saved.', opts)
           }
           onSelect={(id) =>
-            void run('avatar', () => setAvatarId(session!, id), 'Avatar selected !')
+            void run('avatar', () => setAvatarId(session!, id), 'Avatar selected !', opts)
           }
           onUnlock={(ids) =>
-            void run('unlock', () => unlockAvatars(session!, ids), 'Avatar unlocked !')
+            void run('unlock', () => unlockAvatars(session!, ids), 'Avatar unlocked !', opts)
           }
         />
       )}
@@ -445,6 +423,7 @@ export default function Profile({ section = 'account' }: { section?: Section }) 
               'mining',
               () => setMiningNfts(session!, ids),
               'Mining settings saved !',
+              opts,
             )
           }
           onShare={(share) =>
@@ -452,6 +431,7 @@ export default function Profile({ section = 'account' }: { section?: Section }) 
               'share',
               () => setLandownerShare(session!, share),
               'Mining settings saved !',
+              opts,
             )
           }
         />
@@ -466,7 +446,7 @@ export default function Profile({ section = 'account' }: { section?: Section }) 
           busy={busy}
           canAct={!!session}
           onClaim={() =>
-            void run('cpu', () => claimCpu(session!), 'CPU claimed.')
+            void run('cpu', () => claimCpu(session!), 'CPU claimed.', cpuOpts)
           }
         />
       )}
@@ -480,13 +460,14 @@ export default function Profile({ section = 'account' }: { section?: Section }) 
           busy={busy}
           canAct={!!session}
           onClaim={() =>
-            void run('claim', () => claimCurrencies(session!), 'Rewards claimed.')
+            void run('claim', () => claimCurrencies(session!), 'Rewards claimed.', opts)
           }
           onUnlock={(rows) =>
             void run(
               'rows',
               () => unlockRewardRows(session!, currencyTab, rows),
               'History unlocked.',
+              opts,
             )
           }
           board={poolBoard(
@@ -510,6 +491,7 @@ export default function Profile({ section = 'account' }: { section?: Section }) 
               'mine',
               () => mineRewardPool(session!, pool, historyId),
               'Mined.',
+              mineOpts,
             ).then(async () => {
               /* The mine writes a ledger row, so drop the cached page. */
               setLogs((prev) => ({ ...prev, [currencyTab]: undefined }))
