@@ -130,6 +130,8 @@ export default function Arena() {
   const [weapon, setWeapon] = useState<CardTemplate | null>(null)
 
   const [tab, setTab] = useState<Tab>('fighters')
+  /* Scrolled to from the empty fighter slots, three panels above it. */
+  const picker = useRef<HTMLElement>(null)
   const [filter, setFilter] = useState<RosterFilter>(EMPTY_FILTER)
   /* A lens on the roster rather than a filter: it hides nothing, and Clear
      restores `EMPTY_FILTER`, which this is deliberately not part of. */
@@ -786,12 +788,25 @@ export default function Arena() {
                     onRemove={() => toggleFighter(f)}
                   />
                 ) : (
-                  <div className="combatcard combatcard--empty" key={`empty-${i}`}>
+                  /* An empty slot takes you to where it gets filled: a plus
+                     sign on a card-shaped hole is read as a control whether
+                     or not it is one, and the grid that fills it is three
+                     panels down the page. */
+                  <button
+                    type="button"
+                    className="combatcard combatcard--empty"
+                    key={`empty-${i}`}
+                    onClick={() => {
+                      setTab('fighters')
+                      picker.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                    }}
+                    title="Choose a fighter for this slot"
+                  >
                     <span className="combatcard__plus" aria-hidden="true">
                       +
                     </span>
                     <span className="combatcard__hint">Fighter {i + 1}</span>
-                  </div>
+                  </button>
                 ),
               )}
 
@@ -1017,7 +1032,7 @@ export default function Arena() {
           </div>
         </section>
 
-        <section className="panel picker">
+        <section className="panel picker" ref={picker}>
           <div className="tabs" role="tablist">
             {(
               [

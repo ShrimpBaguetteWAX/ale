@@ -1678,7 +1678,7 @@
 }
 
 /*
- * The sixth slot is a button, so it needs a button's defaults undone —
+ * Every empty slot is a button, so it needs a button's defaults undone —
  * `.combatcard` already paints it and the UA face would otherwise replace
  * the display font inside it.
  */
