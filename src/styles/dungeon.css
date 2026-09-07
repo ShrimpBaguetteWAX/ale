@@ -455,9 +455,15 @@
 }
 
 .fightercard__meta {
-  display: inline-flex;
+  display: flex;
   align-items: center;
+  justify-content: center;
+  /* Race, level, ascension and age bonus: four things on a 129px line. An
+     ascended fighter has all four and they do not fit, and an inline-flex
+     row that does not wrap simply hangs over both edges of the card. */
+  flex-wrap: wrap;
   gap: 4px;
+  max-width: 100%;
   font-size: 10px;
   text-transform: capitalize;
   color: var(--text-faint);
@@ -476,7 +482,7 @@
   border-radius: var(--radius-full);
   background: rgb(255 255 255 / 8%);
   font-family: var(--font-display);
-  font-size: 9px;
+  font-size: 10px;
   font-variant-numeric: tabular-nums;
 }
 .fightercard__age--fresh {
@@ -506,11 +512,17 @@
   border-radius: var(--radius-full);
   background: rgb(0 186 255 / 20%);
   font-family: var(--font-display);
-  font-size: 9px;
+  font-size: 10px;
   font-weight: var(--fw-bold);
   font-variant-numeric: tabular-nums;
   color: #8fe0ff;
   white-space: nowrap;
+}
+
+/* The ascension chip keeps its neighbours' size. It sits between the level
+   and the age bonus, and 9px between two 10px chips reads as a mistake. */
+.fightercard__meta .chip {
+  font-size: 10px;
 }
 
 /*
@@ -986,6 +998,19 @@
   }
 
   /*
+   * Two lines of meta held open, where the fourth chip wraps.
+   *
+   * On a phone's tile an ascended fighter's row goes to two lines and every
+   * other fighter's stays at one, which would put that card's tabs a row
+   * below its neighbours' — the same thing "In team" was doing before it was
+   * given a slot of its own.
+   */
+  .fightercard__meta {
+    min-height: 38px;
+  }
+
+
+  /*
    * Two rows of two, on the fighter's four.
    *
    * Three labels fit a 138px card; "Abilities" is the fourth and does not.
@@ -1021,7 +1046,7 @@
   justify-content: space-between;
   gap: var(--sp-2);
   min-width: 0;
-  font-size: 10px;
+  font-size: 11px;
   color: var(--text-faint);
 }
 .cardstats__row dt {
