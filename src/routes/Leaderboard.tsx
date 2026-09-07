@@ -640,7 +640,7 @@ export function ArenaBoards({
                                 width={14}
                                 height={14}
                               />
-                              {formatDecimals(row.earned_tlm / 10_000, 4)}
+                              {formatDecimals(row.earned_tlm / 10_000, 0)}
                             </>
                           ) : (
                             <span className="faint">—</span>
