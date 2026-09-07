@@ -139,6 +139,51 @@ export function poolPayout(balance: number, power: number): number {
 }
 
 /**
+ * How many banked mines one signature may spend.
+ *
+ * Power accrues past the threshold and a mine spends only 10,000 of it, so a
+ * player who has not been back for a while has several banked and had to sign
+ * for each one. Ten is a cap on the transaction rather than on the player:
+ * every one of these is a separate `claimpreward` with its own inline
+ * transfer, and a batch has to stay inside the CPU the game pays for.
+ */
+export const MAX_BATCH_MINES = 10
+
+/**
+ * What mining `times` in a row would pay, all told.
+ *
+ * Not `times` × the first payout. Each mine takes a share of what is in the
+ * pool *at that moment* and leaves the rest, so the second is paid against a
+ * smaller pool than the first — ten mines of a full pool pay noticeably less
+ * than ten times one. The pool refills over time, but not within a single
+ * transaction, so this is the arithmetic the chain will do.
+ */
+export function batchPayout(balance: number, power: number, times: number): number {
+  let left = balance
+  let total = 0
+  for (let i = 0; i < times; i++) {
+    const paid = poolPayout(left, power)
+    if (paid <= 0) break
+    total += paid
+    left -= paid
+  }
+  return total
+}
+
+/**
+ * Mines worth batching for one entry: what is banked, capped, and never for a
+ * pool with no minimum.
+ *
+ * A leaderboard pool takes whatever power is there in a single call and
+ * leaves nothing behind, so a second call in the same transaction would spend
+ * nothing and pay nothing.
+ */
+export function batchableMines(entry: PoolEntry): number {
+  if (entry.anyAmount) return 0
+  return Math.min(entry.mines, MAX_BATCH_MINES)
+}
+
+/**
  * The pools a player can mine directly, and how power is earned in each.
  *
  * There is no on-chain list of these: `claimpreward` will mine any pool the

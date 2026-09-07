@@ -946,6 +946,21 @@ export function mineRewardPool(
   session: Session,
   pool: string,
   historyId: string,
+  /**
+   * How many banked mines to spend, in one signature.
+   *
+   * The action itself spends at most `max_mine_power` — 10,000 — and takes
+   * that off the player's banked power, so mining ten is ten copies of it.
+   * They go in one transaction, which makes it one signature and all or
+   * nothing: a batch that runs out of CPU part way leaves the player exactly
+   * as they were rather than half mined.
+   *
+   * They deliberately share a `history_id`. `claimpreward` looks that row up
+   * and adds to it when it already exists — `total_tlm + row.total_tlm`,
+   * `total_shards +=` — so the whole batch lands as a single record of what
+   * this claim paid, which is the same row the celebration reads afterwards.
+   */
+  times = 1,
 ) {
   const action: ActionInput = {
     account: CONTRACTS.pools,
@@ -957,7 +972,7 @@ export function mineRewardPool(
       history_id: historyId,
     },
   }
-  return transact(session, [action])
+  return transact(session, Array.from({ length: Math.max(1, times) }, () => action))
 }
 
 /**

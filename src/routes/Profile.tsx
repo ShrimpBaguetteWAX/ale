@@ -13,6 +13,8 @@ import {
   poolAmount,
   poolBoard,
   trialPenalty,
+  batchPayout,
+  batchableMines,
   MINE_POWER,
   type PoolEntry,
 } from '@/pools/rules'
@@ -474,7 +476,7 @@ export default function Profile({ section = 'account' }: { section?: Section }) 
           )}
           trial={trialPenalty(player.legend_access_expiry, usersCfg?.trial_rewpow_mod)}
           minedPool={minedPool}
-          onMine={(pool) => {
+          onMine={(pool, times) => {
             setMinedPool(pool)
             /*
                Made here rather than inside the action, because it is the key
@@ -484,8 +486,8 @@ export default function Profile({ section = 'account' }: { section?: Section }) 
             const historyId = randomHistoryId()
             void run(
               'mine',
-              () => mineRewardPool(session!, pool, historyId),
-              'Mined.',
+              () => mineRewardPool(session!, pool, historyId, times),
+              times > 1 ? `Mined ${times} times.` : 'Mined.',
               mineOpts,
             ).then(async () => {
               /* The mine writes a ledger row, so drop the cached page. */
@@ -1260,7 +1262,7 @@ export function CurrencyTab({
   /** The share of reward power a trial account banks, or null on Legend. */
   trial: number | null
   minedPool: string | null
-  onMine: (pool: string) => void
+  onMine: (pool: string, times: number) => void
 }) {
   const places = CURRENCY_PRECISION[currency]
   const raw = Number(
@@ -1357,7 +1359,7 @@ export function CurrencyTab({
                 symbol={CURRENCY_LABEL[currency]}
                 busy={busy === 'mine' && minedPool === entry.pool}
                 disabled={!canAct || busy !== null || !entry.ready}
-                onMine={() => onMine(entry.pool)}
+                onMine={(times) => onMine(entry.pool, times)}
               />
             ))}
           </div>
@@ -1465,11 +1467,12 @@ export function PoolRow({
   symbol: string
   busy: boolean
   disabled: boolean
-  onMine: () => void
+  onMine: (times: number) => void
 }) {
   /* Whole units: the fractional tail on a pool balance is pure noise. */
   const payout = poolAmount(entry.payout, places)
   const balance = poolAmount(entry.balance, places)
+  const batch = batchableMines(entry)
 
   return (
     <div className={`poolrow${entry.ready ? ' poolrow--ready' : ''}`}>
@@ -1526,11 +1529,36 @@ export function PoolRow({
           type="button"
           className="btn btn--primary"
           disabled={disabled}
-          onClick={onMine}
+          onClick={() => onMine(1)}
         >
           {busy && <span className="spinner" />}
           Mine
         </button>
+        {/*
+          The banked ones, in a single signature.
+
+          Only when there is more than one to spend — with one banked this
+          button would be the button beside it, under a different name. The
+          count is what it will actually spend, so a player with three banked
+          is offered three rather than ten.
+        */}
+        {batch > 1 && (
+          <button
+            type="button"
+            className="btn"
+            disabled={disabled}
+            onClick={() => onMine(batch)}
+            /* What it pays, because it is not the figure beside it times the
+               count: each mine takes its share of what the pool holds at that
+               moment, so the later ones are paid against a smaller pool. */
+            title={`Spend ${batch} banked mines in one transaction, for about ${poolAmount(
+              batchPayout(entry.balance, MINE_POWER, batch),
+              places,
+            )} ${symbol}`}
+          >
+            Mine ×{batch}
+          </button>
+        )}
       </div>
     </div>
   )
