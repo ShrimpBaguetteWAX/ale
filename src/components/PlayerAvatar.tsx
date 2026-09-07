@@ -1,5 +1,6 @@
 import { avatarArt } from '@/account/rules'
 import { asset } from '@/assets'
+import { GameImg } from '@/components/GameImg'
 
 /**
  * The player, as the player chose to be seen.
@@ -33,7 +34,7 @@ export function PlayerAvatar({
 }) {
   const unknown = asset('/assets/avatar/unknown.webp')
   return (
-    <img
+    <GameImg
       className={className}
       src={id ? avatarArt(id) : unknown}
       alt=""
@@ -41,12 +42,7 @@ export function PlayerAvatar({
       loading="lazy"
       width={size}
       height={size}
-      onError={(e) => {
-        const img = e.currentTarget
-        if (img.dataset.fallback) return
-        img.dataset.fallback = '1'
-        img.src = unknown
-      }}
+      fallback={unknown}
     />
   )
 }

@@ -1,0 +1,1 @@
+import{j as s}from"./react-CUBPBykP.js";function o({fallback:t,...a}){return s.jsx("img",{...a,onError:e=>{const r=e.currentTarget;r.dataset.fallback||(r.dataset.fallback="1",r.src=t)}})}export{o as G};

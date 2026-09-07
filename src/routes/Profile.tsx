@@ -98,6 +98,7 @@ import {
 import { readableError } from '@/wharf/errors'
 import { formatNumber, formatDecimals, formatStat } from '@/format'
 import { asset } from '@/assets'
+import { GameImg } from '@/components/GameImg'
 
 /**
  * Account.
@@ -614,17 +615,12 @@ export function AvatarTab({
       <div className="avatargrid">
         {board.map(({ avatar, state, have, need }) => (
           <article className={`avatarcard avatarcard--${state}`} key={avatar.avatar_id}>
-            <img
+            <GameImg
               className="avatarcard__art"
               src={avatarArt(avatar.avatar_id)}
               alt=""
               loading="lazy"
-              onError={(e) => {
-                const img = e.currentTarget
-                if (img.dataset.fallback) return
-                img.dataset.fallback = '1'
-                img.src = asset('/assets/avatar/unknown.webp')
-              }}
+              fallback={asset('/assets/avatar/unknown.webp')}
             />
             <span className="avatarcard__cat">{avatar.avatar_category}</span>
             <span className="avatarcard__name">{avatar.avatar_name}</span>
@@ -1007,17 +1003,12 @@ export function ToolCard({
       disabled={disabled}
       onClick={onClick}
     >
-      <img
+      <GameImg
         className="toolcard__art"
         src={asset(`/assets/cards/${tool.template_id}.webp`)}
         alt=""
         loading="lazy"
-        onError={(e) => {
-          const img = e.currentTarget
-          if (img.dataset.fallback) return
-          img.dataset.fallback = '1'
-          img.src = asset('/assets/default-card.png')
-        }}
+        fallback={asset('/assets/default-card.png')}
       />
       <span className="toolcard__body">
         <span className="toolcard__name">

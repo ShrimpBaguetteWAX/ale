@@ -80,6 +80,7 @@ import { formatDecimals, NUM_LOCALE } from '@/format'
 import { QualityFilters } from '@/fight/setup'
 import { ActionBanner } from '@/components/ActionBanner'
 import { asset } from '@/assets'
+import { GameImg } from '@/components/GameImg'
 
 /**
  * My Fighters — the roster screen.
@@ -1501,17 +1502,12 @@ export function FighterCard({
         className="fcard__art"
         style={{ backgroundImage: `url('${elementBackground(fighter.element)}')` }}
       >
-        <img
+        <GameImg
           className="fcard__fighter"
           src={fighterArt(fighter)}
           alt=""
           loading="lazy"
-          onError={(e) => {
-            const img = e.currentTarget
-            if (img.dataset.fallback) return
-            img.dataset.fallback = '1'
-            img.src = fighterArtFallback()
-          }}
+          fallback={fighterArtFallback()}
         />
         <img
           className="fcard__element"

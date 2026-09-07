@@ -35,6 +35,7 @@ import { readableError } from '@/wharf/errors'
 import { formatNumber } from '@/format'
 import { ActionBanner } from '@/components/ActionBanner'
 import { asset } from '@/assets'
+import { GameImg } from '@/components/GameImg'
 
 /**
  * Farming.
@@ -495,17 +496,12 @@ function CardTile({
       onClick={onClick}
       title={`${rarity} · ${shine} · weight ${formatNumber(weight)}`}
     >
-      <img
+      <GameImg
         className="cardtile__art"
         src={asset(`/assets/cards/${templateId}.webp`)}
         alt=""
         loading="lazy"
-        onError={(e) => {
-          const img = e.currentTarget
-          if (img.dataset.fallback) return
-          img.dataset.fallback = '1'
-          img.src = asset('/assets/default-card.png')
-        }}
+        fallback={asset('/assets/default-card.png')}
       />
       <span className="cardtile__name">{name}</span>
       <span className={`cardtile__rarity r-${rarity.toLowerCase()}`}>

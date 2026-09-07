@@ -54,6 +54,7 @@ import { MARKERS, markerIcon } from '@/dungeon/filters'
 import { hireFighter, revealFighter, setFighterMarker } from '@/wharf/actions'
 import { readableError } from '@/wharf/errors'
 import { asset } from '@/assets'
+import { GameImg } from '@/components/GameImg'
 
 /**
  * Card art, keyed by template id.
@@ -67,12 +68,8 @@ function cardArt(t: TavernTemplate): string {
   return asset('/assets/cards/') + t.templateid + '.webp'
 }
 
-function onArtError(e: React.SyntheticEvent<HTMLImageElement>) {
-  const img = e.currentTarget
-  if (img.dataset.fallback) return
-  img.dataset.fallback = '1'
-  img.src = asset('/assets/default-card.png')
-}
+/** What a card tile shows when its art is missing. */
+const CARD_FALLBACK = asset('/assets/default-card.png')
 
 /** The good/bad arrow for one stat, or nothing where it has no meaning. */
 function Grade({
@@ -806,16 +803,11 @@ export default function Tavern() {
                     backgroundImage: `url('${elementBackground(fighter.element)}')`,
                   }}
                 >
-                  <img
+                  <GameImg
                     className="portrait__art"
                     src={fighterArt(fighter)}
                     alt={`${fighter.classname} ${fighter.racename}`}
-                    onError={(e) => {
-                      const img = e.currentTarget
-                      if (img.dataset.fallback) return
-                      img.dataset.fallback = '1'
-                      img.src = fighterArtFallback()
-                    }}
+                    fallback={fighterArtFallback()}
                   />
                   <span className="portrait__level tag">Level {fighter.level}</span>
                 </div>
@@ -1069,7 +1061,7 @@ export default function Tavern() {
                         onClick={() => toggle(t.templateid)}
                         title={`${t.cardname} — click to remove`}
                       >
-                        <img src={cardArt(t)} alt="" onError={onArtError} />
+                        <GameImg src={cardArt(t)} alt="" fallback={CARD_FALLBACK} />
                         <span
                           className={
                             'pickedcard__gain' +
@@ -1131,12 +1123,12 @@ export default function Tavern() {
                       onClick={() => toggle(t.templateid)}
                       title={`${t.cardname} · ${t.rarity} ${t.schema}`}
                     >
-                      <img
+                      <GameImg
                         src={cardArt(t)}
                         alt=""
                         loading="lazy"
                         decoding="async"
-                        onError={onArtError}
+                        fallback={CARD_FALLBACK}
                       />
                       <span className="cardtile__name">{t.cardname}</span>
                       {t.count > 1 && <span className="cardtile__count">×{t.count}</span>}

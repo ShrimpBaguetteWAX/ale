@@ -35,6 +35,7 @@ import {
   type MinedReward,
 } from '@/pools/MineCelebration'
 import { NUM_LOCALE } from '@/format'
+import { GameImg } from '@/components/GameImg'
 import { asset } from '@/assets'
 import {
   fetchShardPools,
@@ -764,17 +765,12 @@ function RosterStrip({
               key={f.uid}
               title={`${f.classname} ${f.racename} — ${formatScaled(hp.health)}/${formatScaled(hp.max_health)}`}
             >
-              <img
+              <GameImg
                 className="rtile__art"
                 src={avatarArt(f.classname, f.racename)}
                 alt={f.classname}
                 loading="lazy"
-                onError={(e) => {
-                  const img = e.currentTarget
-                  if (img.dataset.fallback) return
-                  img.dataset.fallback = '1'
-                  img.src = fighterArtFallback()
-                }}
+                fallback={fighterArtFallback()}
               />
               <span className="rtile__bar" data-band={band}>
                 <span className="rtile__fill" style={{ width: `${pct}%` }} />
@@ -900,19 +896,14 @@ function Duelist({
               alt="Defeated"
             />
           ) : (
-            <img
+            <GameImg
               className="duelist__art"
               src={fighterArt({
                 classname: fighter.classname,
                 racename: fighter.racename,
               })}
               alt={`${fighter.classname} ${fighter.racename}`}
-              onError={(e) => {
-                const img = e.currentTarget
-                if (img.dataset.fallback) return
-                img.dataset.fallback = '1'
-                img.src = fighterArtFallback()
-              }}
+              fallback={fighterArtFallback()}
             />
           )}
           {role === 'defender' && <span className="duelist__flash" key={`fl-${turn}`} />}
@@ -1143,16 +1134,11 @@ function TurnQueue({
               key={q.turn}
               title={`${q.current ? 'Attacking now' : `Attack ${q.turn}`} — ${f.classname} (${owner})`}
             >
-              <img
+              <GameImg
                 src={avatarArt(f.classname, f.racename)}
                 alt={f.classname}
                 loading="lazy"
-                onError={(e) => {
-                  const img = e.currentTarget
-                  if (img.dataset.fallback) return
-                  img.dataset.fallback = '1'
-                  img.src = fighterArtFallback()
-                }}
+                fallback={fighterArtFallback()}
               />
             </li>
           )
@@ -1578,7 +1564,7 @@ function Result({
                 key={f.uid}
               >
                 <div className="rescard__art">
-                  <img
+                  <GameImg
                     src={
                       survived
                         ? fighterArt({
@@ -1588,12 +1574,7 @@ function Result({
                         : asset('/assets/fighter/dead.png')
                     }
                     alt=""
-                    onError={(e) => {
-                      const img = e.currentTarget
-                      if (img.dataset.fallback) return
-                      img.dataset.fallback = '1'
-                      img.src = fighterArtFallback()
-                    }}
+                    fallback={fighterArtFallback()}
                   />
                 </div>
 

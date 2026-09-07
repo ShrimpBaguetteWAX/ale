@@ -56,6 +56,7 @@ import { asset } from '@/assets'
 import { usePhone } from '@/components/usePhone'
 import { combatFigures } from '@/fighters/derived'
 import { formatDecimals, NUM_LOCALE } from '@/format'
+import { GameImg } from '@/components/GameImg'
 
 /**
  * The parts of a fight setup screen that the dungeon and the arena share.
@@ -269,17 +270,12 @@ export function Portrait({
       className="portrait portrait--slot"
       style={{ backgroundImage: `url('${elementBackground(element)}')` }}
     >
-      <img
+      <GameImg
         className="portrait__art"
         src={fighterArt({ classname, racename })}
         alt={`${classname} ${racename}`}
         loading="lazy"
-        onError={(e) => {
-          const img = e.currentTarget
-          if (img.dataset.fallback) return
-          img.dataset.fallback = '1'
-          img.src = fighterArtFallback()
-        }}
+        fallback={fighterArtFallback()}
       />
     </span>
   )
@@ -633,17 +629,12 @@ export function CombatCard({
         title={`${classname} — details`}
       >
         <span className="combatcard__art">
-          <img
+          <GameImg
             className="combatcard__fighter"
             src={art ?? fighterArt({ classname, racename })}
             alt={`${classname} ${racename}`}
             loading="lazy"
-            onError={(e) => {
-              const img = e.currentTarget
-              if (img.dataset.fallback) return
-              img.dataset.fallback = "1"
-              img.src = fighterArtFallback()
-            }}
+            fallback={fighterArtFallback()}
           />
           {element && (
             <img

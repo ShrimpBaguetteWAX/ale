@@ -21,6 +21,7 @@ import {
 } from '@/tavern/fighterStats'
 import { ageBand, ageNote } from '@/fighters/rules'
 import { asset } from '@/assets'
+import { GameImg } from '@/components/GameImg'
 
 /**
  * The full read on a fighter — the tavern's display, made reusable.
@@ -274,7 +275,7 @@ export function FighterPanel({
         className="portrait"
         style={{ backgroundImage: `url('${elementBackground(fighter.element)}')` }}
       >
-        <img
+        <GameImg
           className="portrait__art"
           src={art}
           /* The NFT fighter has neither class nor race, so it falls back to
@@ -283,12 +284,7 @@ export function FighterPanel({
             [fighter.classname, fighter.racename].filter(Boolean).join(' ') ||
             (fighter.title ?? 'Fighter')
           }
-          onError={(e) => {
-            const img = e.currentTarget
-            if (img.dataset.fallback) return
-            img.dataset.fallback = '1'
-            img.src = fighterArtFallback()
-          }}
+          fallback={fighterArtFallback()}
         />
         {fighter.level !== undefined && (
           <span className="portrait__level tag">Level {fighter.level}</span>

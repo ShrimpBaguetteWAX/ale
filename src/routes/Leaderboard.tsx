@@ -33,6 +33,7 @@ import { fighterArt, fighterArtFallback } from '@/tavern/fighterStats'
 import { ActionBanner } from '@/components/ActionBanner'
 import { asset } from '@/assets'
 import { PlayerAvatar } from '@/components/PlayerAvatar'
+import { GameImg } from '@/components/GameImg'
 
 /**
  * Leaderboards.
@@ -388,7 +389,7 @@ export function DungeonBoard({
                 */}
                 <span className="lbrow__team">
                   {(row.recent_fighters ?? []).slice(0, 6).map((f, n) => (
-                    <img
+                    <GameImg
                       key={`${row.wallet}-${n}`}
                       src={fighterArt({
                         classname: f.classname,
@@ -397,12 +398,7 @@ export function DungeonBoard({
                       alt={`${f.racename} ${f.classname}`}
                       title={`${f.racename} ${f.classname}`}
                       loading="lazy"
-                      onError={(e) => {
-                        const img = e.currentTarget
-                        if (img.dataset.fallback) return
-                        img.dataset.fallback = '1'
-                        img.src = fighterArtFallback()
-                      }}
+                      fallback={fighterArtFallback()}
                     />
                   ))}
                 </span>
