@@ -207,7 +207,6 @@ export default function Lands() {
   /* Boosting lifts a building back over the mark. */
   const opts = (action: keyof typeof DIRTIES) => ({
     after: data.reload,
-    chore: 'lands' as const,
     dirties: DIRTIES[action],
   })
 

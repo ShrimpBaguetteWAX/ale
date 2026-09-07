@@ -166,7 +166,6 @@ export default function Quests() {
   */
   const opts = (action: keyof typeof DIRTIES) => ({
     after: data.reload,
-    chore: 'quests' as const,
     dirties: DIRTIES[action],
   })
 

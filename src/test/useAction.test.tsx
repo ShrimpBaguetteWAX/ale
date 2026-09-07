@@ -4,6 +4,7 @@ import { useGame } from '@/state/useGame'
 import { useAction } from '@/wharf/useAction'
 import { DIRTIES } from '@/wharf/actions'
 import { cacheDropTable, onTableDrop } from '@/chain/tables'
+import { onChoreRefresh } from '@/chores/signal'
 
 /**
  * That signing something actually clears what it changed.
@@ -301,6 +302,35 @@ describe('useAction', () => {
 
     stop()
     expect(heard).toEqual(['quests'])
+  })
+
+  it('lights the dot the action belongs to, and no other', async () => {
+    /*
+       The dot used to be named beside the action that had already said what
+       it dirtied — the same fact twice, and the pair drifted: Profile
+       refreshed the CPU dot after a mine and left the Rewards dot, the one
+       it had actually changed, to notice on its own timer.
+    */
+    useGame.setState({
+      player: { activestats: { credits: 100 } } as never,
+      refreshPlayer: async () => {},
+    } as never)
+
+    const lit: string[] = []
+    const stop = onChoreRefresh((key) => lit.push(key))
+
+    const { result } = renderHook(() => useAction())
+    await act(async () => {
+      await result.current.run('mine', async () => {}, 'Mined.', {
+        dirties: DIRTIES.mineRewardPool,
+        attempts: 0,
+      })
+    })
+    stop()
+
+    /* `player` is dirtied by almost everything and lights nothing — a table
+       with no dot is absent from the map rather than mapped to one. */
+    expect(lit).toEqual(['rewards'])
   })
 
   it('reports the failure and puts the button back', async () => {

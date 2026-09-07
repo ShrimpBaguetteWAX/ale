@@ -201,7 +201,6 @@ export default function Farming() {
   const opts = (action: keyof typeof DIRTIES) => ({
     after: data.reload,
     onSettled: () => setPicked([]),
-    chore: 'farming' as const,
     dirties: DIRTIES[action],
   })
 

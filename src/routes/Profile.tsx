@@ -331,8 +331,8 @@ export default function Profile({ section = 'account' }: { section?: Section }) 
     after: load,
     dirties: DIRTIES[action],
   })
-  const mineOpts = { ...opts('mineRewardPool'), chore: 'rewards' as const }
-  const cpuOpts = { ...opts('claimCpu'), chore: 'account' as const }
+  const mineOpts = opts('mineRewardPool')
+  const cpuOpts = opts('claimCpu')
 
   const board = useMemo(() => avatarBoard(avatars, player), [avatars, player])
 

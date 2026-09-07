@@ -165,7 +165,6 @@ export default function Candle() {
   /* A claim empties the pot, so the dot stops waiting for its own timer. */
   const opts = (action: keyof typeof DIRTIES) => ({
     after: data.reload,
-    chore: 'candle' as const,
     dirties: DIRTIES[action],
   })
 

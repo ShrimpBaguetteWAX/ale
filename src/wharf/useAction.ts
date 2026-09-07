@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useGame } from '@/state/useGame'
 import { refreshChore } from '@/chores/signal'
-import type { ChoreKey } from '@/chores/checks'
+import { CHORE_FOR_TABLE } from '@/chores/checks'
 import { readableError } from '@/wharf/errors'
 import { announceTableDrop, cacheDropTable, type TableKey } from '@/chain/tables'
 import { confirmThen, CONFIRM_ATTEMPTS, CONFIRM_INTERVAL_MS } from '@/chain/confirm'
@@ -51,8 +51,6 @@ export interface RunOptions<T> {
    * in this codebase since the beginning and was called from nowhere.
    */
   dirties?: readonly TableKey[]
-  /** The chore dot this action clears, if any. */
-  chore?: ChoreKey
   /**
    * Ran once after the chain has caught up, before the notice is shown.
    *
@@ -147,7 +145,6 @@ export function useAction(): ActionState {
       const {
         after,
         settled,
-        chore,
         dirties,
         onSettled,
         attempts = CONFIRM_ATTEMPTS,
@@ -234,11 +231,21 @@ export function useAction(): ActionState {
         */
         for (const table of dirties ?? []) announceTableDrop(table)
 
+        /*
+           And the dots, derived from the same list rather than named again.
+
+           A dot re-checks itself on its own timer — a minute for some, five
+           for others — so without this it can sit there for that long
+           pointing at a screen with nothing left to do, while the player is
+           looking straight at the proof that it is wrong.
+        */
+        for (const table of dirties ?? []) {
+          const dot = CHORE_FOR_TABLE[table as keyof typeof CHORE_FOR_TABLE]
+          if (dot) refreshChore(dot)
+        }
+
         await onSettled?.()
         if (!alive.current) return
-        /* The dot this action was about, so it stops waiting for its own
-           timer to notice what the player just did. */
-        if (chore) refreshChore(chore)
         setNotice(done)
       } catch (err) {
         if (alive.current) setError(readableError(err))

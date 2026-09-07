@@ -1142,7 +1142,7 @@ export const DIRTIES = {
   unlockRewardRows: ['player'],
   setMiningNfts: ['player'],
   setLandownerShare: ['player'],
-  claimCpu: ['player'],
+  claimCpu: ['player', 'cpuUsage'],
   claimLeaderboardReward: ['player', 'leaderboard'],
 
   /* The Candle. */

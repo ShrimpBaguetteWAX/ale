@@ -1,3 +1,4 @@
+import type { TableKey } from '@/chain/tables'
 import type { Player } from '@/chain/types'
 import { fetchCpuConfig, fetchCpuUsage } from '@/account/queries'
 import { cpuStatus } from '@/account/rules'
@@ -267,3 +268,28 @@ export const CHORE_CHECKS: ChoreCheck[] = [
     },
   },
 ]
+
+/**
+ * Which dot a table's staleness belongs to.
+ *
+ * Every screen used to name its own dot beside the action — `chore: 'lands'`
+ * next to an action that had already said it dirties `lands`. The same fact
+ * twice, and the pair could drift: Profile's did, refreshing the CPU dot
+ * after a mine and leaving the Rewards dot to notice on its own.
+ *
+ * So the dot is derived from what the action changed. Tables with no dot are
+ * absent rather than mapped to nothing — `player` above all, which almost
+ * every action touches and which would otherwise light every dot in the game.
+ */
+export const CHORE_FOR_TABLE = {
+  shopCooldowns: 'shop',
+  fighters: 'fighters',
+  quests: 'quests',
+  candleClaims: 'candle',
+  candleStakes: 'candle',
+  lands: 'lands',
+  farmUser: 'farming',
+  farmStaked: 'farming',
+  rewardUsers: 'rewards',
+  cpuUsage: 'account',
+} as const satisfies Partial<Record<TableKey, ChoreKey>>

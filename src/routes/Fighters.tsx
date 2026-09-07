@@ -349,7 +349,6 @@ export default function Fighters() {
   */
   const opts = (action: keyof typeof DIRTIES) => ({
     after: data.reload,
-    chore: 'fighters' as const,
     dirties: DIRTIES[action],
   })
 

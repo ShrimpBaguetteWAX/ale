@@ -43,6 +43,8 @@ export const TABLES = {
   dungeonCooldowns: { code: CONTRACTS.dungeons, table: 'cdclaim' },
   /** Settled and running leaderboard standings. */
   leaderboard: { code: CONTRACTS.arena, table: 'leaderboard' },
+  /** How much of the weekly free-CPU allowance a wallet has spent. */
+  cpuUsage: { code: CONTRACTS.cpu, table: 'cpuusage' },
 } as const
 
 export type TableKey = keyof typeof TABLES
