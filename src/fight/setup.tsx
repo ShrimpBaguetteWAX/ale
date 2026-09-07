@@ -1343,176 +1343,214 @@ export function FighterGrid({
         {shown.map((f) => {
           const state = fighterAvailable(f)
           const inTeam = teamIds.includes(f.fighter_id)
-          const blocked = !state.available || (full && !inTeam)
-
-          /*
-             The numbers this fighter will actually bring, not the ones stored
-             on its row.
-
-             `apply_weather_and_age` scales health and damage by the fighter's
-             own level and by `age_decay ^ (days²)` before the first blow. The
-             picker used to print the stored roll while the line-up beside it
-             printed the fielded figure, so a fighter changed its numbers the
-             moment it was picked. Same arithmetic as the line-up, so the two
-             now agree exactly.
-          */
-          const age = ageFactor(f.creation_date, ageDecay)
-          /* Only the level term is held at 1: age is a fact about the
-             fighter rather than a consequence of how far it has been taken. */
-          const factor = levelFactor(atLevelOne ? 1 : f.stats.level, levelMod) * age
-          const figures = combatFigures(f.stats as unknown as Record<string, number>, factor)
-          const bonus = ageBonus(f, ageDecay)
-
           return (
-            <div
-              className={
-                'fightercard' +
-                (inTeam ? ' fightercard--picked' : '') +
-                (blocked ? ' fightercard--off' : '')
-              }
+            <PickCard
               key={f.fighter_id}
-            >
-              <button
-                type="button"
-                className="fightercard__hit"
-                onClick={() => onToggle(f)}
-                disabled={blocked}
-                title={
-                  state.available
-                    ? inTeam
-                      ? 'Remove from team'
-                      : full
-                        ? 'Your team is full'
-                        : 'Add to team'
-                    : state.reason
-                }
-              >
-                <Portrait
-                  element={f.element}
-                  classname={f.classname}
-                  racename={f.racename}
-                />
-                <span className="fightercard__name">{f.classname}</span>
-                <span className="fightercard__meta">
-                  {/* Says what the numbers below are, not what the fighter
-                      is — a level 10 card showing level 1 damage otherwise
-                      simply reads as wrong. */}
-                  {f.racename}
-                  {/*
-                    A chip, not a suffix on the race.
-
-                    Level is what health and damage are multiplied by before
-                    the first blow — `level_mod ^ level`, four times over at
-                    the cap — so a card being judged on those figures has to
-                    say it louder than "· L7" in the same faint grey as the
-                    race beside it.
-                  */}
-                  <span className="fightercard__lv">
-                    L{f.stats.level}
-                    {atLevelOne && f.stats.level !== 1 && <>&thinsp;→&thinsp;1</>}
-                  </span>
-                  {/*
-                    Age, beside level, because they are the two things scaling
-                    the figures underneath — and the only one of the two that
-                    can quietly halve a fighter while the player is not
-                    watching. The scale is the live game's, +100% down to
-                    -100%, so it reads the same here as on the roster.
-                  */}
-                  {ageDecay > 0 && (
-                    <span
-                      className={`fightercard__age fightercard__age--${ageBand(bonus)}`}
-                      title={ageNote(bonus, ageDays(f), age)}
-                    >
-                      {bonus > 0 ? '+' : ''}
-                      {bonus.toFixed(0)}%
-                    </span>
-                  )}
-                </span>
-                {/*
-                  What the fighter does, not what it is made of.
-
-                  Damage and health were the pair here and they are the two
-                  that mislead: 90 damage on an 8 cooldown loses to 60 on a
-                  4, and health without the resistances is not survival. The
-                  same five the roster's Combat tab prints, from the same
-                  function, so a fighter reads the same on the screen it is
-                  picked from as on the one it was compared on.
-                */}
-                <span
-                  className="fightercard__figs mono"
-                  title={`As fielded: level ${f.stats.level} and ${ageDays(f)} days of age already applied (×${factor.toFixed(3)} of the roll)`}
-                >
-                  <span className="fightercard__fig">
-                    <img src={statIcon('damage')} alt="" width={11} height={11} />
-                    DPS {formatDecimals(figures.dps, 2)}
-                  </span>
-                  <span className="fightercard__fig">
-                    <img src={statIcon('survival')} alt="" width={11} height={11} />
-                    SUR {Math.round(figures.survival).toLocaleString(NUM_LOCALE)}
-                  </span>
-                  <span className="fightercard__fig">
-                    <img src={statIcon('initiative')} alt="" width={11} height={11} />
-                    WND {formatScaled(mid(f.stats.initiative_min, f.stats.initiative_max))}
-                  </span>
-                  <span className="fightercard__fig">
-                    <img src={statIcon('taunt')} alt="" width={11} height={11} />
-                    TNT {formatScaled(mid(f.stats.taunt_min, f.stats.taunt_max))}
-                  </span>
-                  {/* "Score", not "Combat score": the full name needs ten
-                      pixels the row does not have at two cards to a phone,
-                      and the figure beside it is the only gold one here. */}
-                  <span
-                    className="fightercard__fig fightercard__fig--score"
-                    title="Combat score — survival times DPS"
-                  >
-                    <img src={statIcon('block')} alt="" width={11} height={11} />
-                    Score
-                    <b>{Math.round(figures.score).toLocaleString(NUM_LOCALE)}</b>
-                  </span>
-                </span>
-                <VersusBadges matchup={matchups?.get(f.fighter_id)} />
-                {inTeam && <span className="fightercard__tick">In team</span>}
-                {!state.available && (
-                  <span className="fightercard__block">{state.reason}</span>
-                )}
-              </button>
-              {/*
-                 The marker a player put on this fighter.
-
-                 It is a private label, set on the roster screen and used
-                 for exactly this — finding a fighter again in a grid of
-                 forty while picking a team. It was drawn only on the screen
-                 where it is set, which is the one screen where you already
-                 know which fighter you are looking at.
-
-                 Not a control here: the roster screen owns setting it, and
-                 a second way to change it inside a team picker would be a
-                 mis-tap away from re-labelling a fighter you meant to
-                 field.
-              */}
-              {!!f.marker && (
-                <span
-                  className="fightercard__marker"
-                  title={`Marked ${f.marker}`}
-                  aria-label={`Marked ${f.marker}`}
-                >
-                  <img src={markerIcon(f.marker)} alt="" width={16} height={16} />
-                </span>
-              )}
-
-              <button
-                type="button"
-                className="fightercard__info"
-                onClick={() => onInspect(f)}
-                aria-label={`Details for ${f.classname}`}
-              >
-                i
-              </button>
-            </div>
+              fighter={f}
+              ageDecay={ageDecay}
+              levelMod={levelMod}
+              atLevelOne={atLevelOne}
+              matchup={matchups?.get(f.fighter_id)}
+              picked={inTeam}
+              blocked={!state.available || (full && !inTeam)}
+              blockedNote={state.available ? undefined : state.reason}
+              tick={inTeam ? 'In team' : undefined}
+              hint={
+                state.available
+                  ? inTeam
+                    ? 'Remove from team'
+                    : full
+                      ? 'Your team is full'
+                      : 'Add to team'
+                  : state.reason
+              }
+              onClick={() => onToggle(f)}
+              onInspect={() => onInspect(f)}
+            />
           )
         })}
       </div>
     </>
+  )
+}
+
+/**
+ * One fighter, on any screen that asks a player to choose one.
+ *
+ * Lifted out of the team picker so ascension can use it too: that screen was
+ * asking the same question — which of these sixty — off a 56px thumbnail and
+ * a damage/health pair, while this one had the portrait, the level and the
+ * five figures the choice is actually made on. A player comparing fighters
+ * should not have to learn two cards to do it.
+ *
+ * What differs between the two screens is what the card is being picked
+ * *for*, so that is what the props carry: the tick that says it is already
+ * chosen, the note that says why it cannot be, and the matchup badges, which
+ * only exist where there is an opponent to be matched against.
+ */
+export function PickCard({
+  fighter: f,
+  ageDecay,
+  levelMod = 1,
+  atLevelOne = false,
+  matchup,
+  picked,
+  blocked,
+  blockedNote,
+  tick,
+  hint,
+  onClick,
+  onInspect,
+}: {
+  fighter: RosterFighter
+  ageDecay: number
+  levelMod?: number
+  atLevelOne?: boolean
+  matchup?: Matchup
+  picked: boolean
+  blocked?: boolean
+  /** Why it cannot be picked, printed on the card. */
+  blockedNote?: string
+  /** What being picked means here — "In team", "Sacrifice", "Ascending". */
+  tick?: string
+  hint?: string
+  onClick: () => void
+  onInspect?: () => void
+}) {
+  /*
+     The numbers this fighter will actually bring, not the ones stored on its
+     row. `apply_weather_and_age` scales health and damage by the fighter's
+     own level and by `age_decay ^ (days²)` before the first blow.
+  */
+  const age = ageFactor(f.creation_date, ageDecay)
+  /* Only the level term is held at 1: age is a fact about the fighter rather
+     than a consequence of how far it has been taken. */
+  const factor = levelFactor(atLevelOne ? 1 : f.stats.level, levelMod) * age
+  const figures = combatFigures(f.stats as unknown as Record<string, number>, factor)
+  const bonus = ageBonus(f, ageDecay)
+
+  return (
+    <div
+      className={
+        'fightercard' +
+        (picked ? ' fightercard--picked' : '') +
+        (blocked ? ' fightercard--off' : '')
+      }
+    >
+      <button
+        type="button"
+        className="fightercard__hit"
+        onClick={onClick}
+        disabled={blocked}
+        title={hint}
+      >
+        <Portrait element={f.element} classname={f.classname} racename={f.racename} />
+        <span className="fightercard__name">{f.classname}</span>
+        <span className="fightercard__meta">
+          {f.racename}
+          {/*
+            A chip, not a suffix on the race. Level is what health and damage
+            are multiplied by before the first blow — `level_mod ^ level`,
+            four times over at the cap — so a card being judged on those
+            figures has to say it louder than "· L7" in the same faint grey
+            as the race beside it.
+          */}
+          <span className="fightercard__lv">
+            L{f.stats.level}
+            {atLevelOne && f.stats.level !== 1 && <>&thinsp;→&thinsp;1</>}
+          </span>
+          {f.ascension_level > 0 && (
+            <span className="chip chip--asc">Asc {f.ascension_level}</span>
+          )}
+          {/*
+            Age, beside level, because they are the two things scaling the
+            figures underneath — and the only one of the two that can quietly
+            halve a fighter while the player is not watching.
+          */}
+          {ageDecay > 0 && (
+            <span
+              className={`fightercard__age fightercard__age--${ageBand(bonus)}`}
+              title={ageNote(bonus, ageDays(f), age)}
+            >
+              {bonus > 0 ? '+' : ''}
+              {bonus.toFixed(0)}%
+            </span>
+          )}
+        </span>
+
+        {/*
+          What the fighter does, not what it is made of. The same five the
+          roster's Combat tab prints, from the same function, so a fighter
+          reads the same wherever it is being compared.
+        */}
+        <span
+          className="fightercard__figs mono"
+          title={`As fielded: level ${f.stats.level} and ${ageDays(f)} days of age already applied (×${factor.toFixed(3)} of the roll)`}
+        >
+          <span className="fightercard__fig">
+            <img src={statIcon('damage')} alt="" width={11} height={11} />
+            DPS {formatDecimals(figures.dps, 2)}
+          </span>
+          <span className="fightercard__fig">
+            <img src={statIcon('survival')} alt="" width={11} height={11} />
+            SUR {Math.round(figures.survival).toLocaleString(NUM_LOCALE)}
+          </span>
+          <span className="fightercard__fig">
+            <img src={statIcon('initiative')} alt="" width={11} height={11} />
+            WND {formatScaled(mid(f.stats.initiative_min, f.stats.initiative_max))}
+          </span>
+          <span className="fightercard__fig">
+            <img src={statIcon('taunt')} alt="" width={11} height={11} />
+            TNT {formatScaled(mid(f.stats.taunt_min, f.stats.taunt_max))}
+          </span>
+          {/* "Score", not "Combat score": the full name needs ten pixels the
+              row does not have at two cards to a phone, and the figure beside
+              it is the only gold one here. */}
+          <span
+            className="fightercard__fig fightercard__fig--score"
+            title="Combat score — survival times DPS"
+          >
+            <img src={statIcon('block')} alt="" width={11} height={11} />
+            Score
+            <b>{Math.round(figures.score).toLocaleString(NUM_LOCALE)}</b>
+          </span>
+        </span>
+
+        <VersusBadges matchup={matchup} />
+        {tick && <span className="fightercard__tick">{tick}</span>}
+        {blockedNote && <span className="fightercard__block">{blockedNote}</span>}
+      </button>
+
+      {/*
+         The marker a player put on this fighter.
+
+         It is a private label, set on the roster screen and used for exactly
+         this — finding a fighter again in a grid of forty. Not a control
+         here: the roster screen owns setting it, and a second way to change
+         it inside a picker would be a mis-tap away from re-labelling a
+         fighter you meant to choose.
+      */}
+      {!!f.marker && (
+        <span
+          className="fightercard__marker"
+          title={`Marked ${f.marker}`}
+          aria-label={`Marked ${f.marker}`}
+        >
+          <img src={markerIcon(f.marker)} alt="" width={16} height={16} />
+        </span>
+      )}
+
+      {onInspect && (
+        <button
+          type="button"
+          className="fightercard__info"
+          onClick={onInspect}
+          aria-label={`Details for ${f.classname}`}
+        >
+          i
+        </button>
+      )}
+    </div>
   )
 }
 

@@ -1112,125 +1112,12 @@
 
 /* ---------- one fighter ---------- */
 
+/* The team picker's own track, because it now holds the team picker's card. */
 .ascgrid {
   display: grid;
   gap: var(--sp-2);
-  grid-template-columns: repeat(auto-fill, minmax(226px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
   margin-top: var(--sp-3);
-}
-
-/*
- * A fighter card, close enough to the roster's that the same fighter is
- * recognisable on both screens.
- *
- * The old tile was a 56px thumbnail and a line of grey text, which is not
- * enough to tell two Tacticians apart — and that is the entire question this
- * screen asks.
- */
-.asccard {
-  display: grid;
-  grid-template-columns: 64px minmax(0, 1fr);
-  gap: var(--sp-3);
-  align-items: center;
-  padding: var(--sp-2);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-xs);
-  background: rgb(0 0 0 / 30%);
-  text-align: left;
-  cursor: pointer;
-  transition:
-    border-color var(--dur-fast) var(--ease),
-    background var(--dur-fast) var(--ease);
-}
-
-.asccard:hover {
-  border-color: var(--cyan);
-}
-
-.asccard--picked {
-  border-color: var(--cyan);
-  background: rgb(53 208 255 / 12%);
-  box-shadow: inset 0 0 0 1px rgb(53 208 255 / 35%);
-}
-
-/* The elemental ground the roster and the line-up both stand fighters on. */
-.asccard__art {
-  display: block;
-  width: 64px;
-  height: 64px;
-  border-radius: var(--radius-xs);
-  overflow: hidden;
-  background-size: cover;
-  background-position: center;
-}
-
-.asccard__art img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: top center;
-}
-
-.asccard__body {
-  display: grid;
-  gap: 3px;
-  min-width: 0;
-}
-
-.asccard__name {
-  font-family: var(--font-display);
-  font-size: var(--fs-sm);
-  font-weight: var(--fw-bold);
-  color: var(--white);
-  text-transform: capitalize;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.asccard__chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-}
-
-/*
- * Damage then health, the pair and the order every other screen leads with.
- */
-.asccard__stats {
-  display: flex;
-  gap: var(--sp-3);
-  font-size: var(--fs-sm);
-}
-
-.asccard__dmg::before {
-  content: '';
-  display: inline-block;
-  width: 6px;
-  height: 6px;
-  margin-right: 5px;
-  border-radius: 50%;
-  background: var(--gold);
-  vertical-align: 1px;
-}
-
-.asccard__hp::before {
-  content: '';
-  display: inline-block;
-  width: 6px;
-  height: 6px;
-  margin-right: 5px;
-  border-radius: 50%;
-  background: var(--red);
-  vertical-align: 1px;
-}
-
-/* Spoken for by one of the other two requirements. */
-.asccard__note {
-  font-size: 9px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--gold);
 }
 
 @media (max-width: 719px) {
@@ -1250,10 +1137,6 @@
 
   .ascpick__go .btn {
     width: 100%;
-  }
-
-  .ascgrid {
-    grid-template-columns: minmax(0, 1fr);
   }
 }
 

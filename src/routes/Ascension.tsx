@@ -5,6 +5,7 @@ import { fetchFighterLevels, fetchFightersConfig } from '@/fighters/queries'
 import type { FighterLevel, FightersConfig } from '@/fighters/types'
 import { battleFactor } from '@/fighters/rules'
 import { Cost, FighterCard } from './Fighters'
+import { PickCard } from '@/fight/setup'
 import type { RosterFighter } from '@/dungeon/types'
 import {
   fetchAllUpgrades,
@@ -38,10 +39,8 @@ import {
 import { readableError } from '@/wharf/errors'
 import type { ClassTemplate } from '@/tavern/fighterStats'
 import {
-  elementBackground,
   fighterArtFallback,
   fighterAvatar,
-  formatScaled,
 } from '@/tavern/fighterStats'
 import { formatNumber } from '@/format'
 
@@ -314,6 +313,8 @@ export default function Ascension() {
           slots={slots}
           chosenFighters={chosenFighters}
           check={check}
+          ageDecay={ageDecay}
+          levelMod={levelMod}
           fee={fee}
           credits={credits}
           busy={busy}
@@ -380,6 +381,8 @@ function Builder({
   slots,
   chosenFighters,
   check,
+  ageDecay,
+  levelMod,
   fee,
   credits,
   busy,
@@ -396,6 +399,10 @@ function Builder({
   slots: Partial<Record<Requirement, number>>
   chosenFighters: RosterFighter[]
   check: ReturnType<typeof checkSacrifices> | null
+  /* The cards show what a fighter brings to a fight, which is its roll
+     scaled by both. */
+  ageDecay: number
+  levelMod: number
   fee: number
   credits: number
   busy: Busy
@@ -508,12 +515,16 @@ function Builder({
             ) : (
               <div className="ascgrid">
                 {ready.map((f) => (
-                  <AscCard
+                  <PickCard
                     key={f.fighter_id}
                     fighter={f}
+                    ageDecay={ageDecay}
+                    levelMod={levelMod}
                     picked={target?.fighter_id === f.fighter_id}
+                    tick={target?.fighter_id === f.fighter_id ? 'Ascending' : undefined}
+                    hint="Ascend this fighter"
                     onClick={() => onPickTarget(f.fighter_id)}
-                  />
+                    />
                 ))}
               </div>
             )}
@@ -539,13 +550,17 @@ function Builder({
                     (r) => r.key !== tab && slots[r.key] === f.fighter_id,
                   )
                   return (
-                    <AscCard
+                    <PickCard
                       key={f.fighter_id}
                       fighter={f}
+                      ageDecay={ageDecay}
+                      levelMod={levelMod}
                       picked={slots[tab as Requirement] === f.fighter_id}
-                      note={usedElsewhere ? 'Covering another' : undefined}
+                      tick={slots[tab as Requirement] === f.fighter_id ? 'Sacrifice' : undefined}
+                      blockedNote={usedElsewhere ? 'Covering another' : undefined}
+                      hint="Spend this fighter"
                       onClick={() => onAssign(tab as Requirement, f.fighter_id)}
-                    />
+                      />
                   )
                 })}
               </div>
@@ -609,75 +624,6 @@ function AscSlot({
           {disabled ? 'Pick a fighter first' : 'Not chosen'}
         </span>
       )}
-    </button>
-  )
-}
-
-/**
- * A fighter, shown the way the roster shows one.
- *
- * The old tile was a 56px thumbnail and one line of grey text, which is not
- * enough to tell two Tacticians apart — and telling them apart is the whole
- * of what this screen asks. Same portrait, name, level and the damage/health
- * pair My Fighters leads with.
- */
-function AscCard({
-  fighter,
-  picked,
-  note,
-  onClick,
-}: {
-  fighter: RosterFighter
-  picked: boolean
-  note?: string
-  onClick: () => void
-}) {
-  const s = fighter.stats
-  return (
-    <button
-      type="button"
-      className={'asccard' + (picked ? ' asccard--picked' : '')}
-      aria-pressed={picked}
-      onClick={onClick}
-    >
-      <span
-        className="asccard__art"
-        style={{ backgroundImage: `url('${elementBackground(fighter.element)}')` }}
-      >
-        <img
-          src={fighterAvatar(fighter)}
-          alt=""
-          loading="lazy"
-          onError={(e) => {
-            const img = e.currentTarget
-            if (img.dataset.fallback) return
-            img.dataset.fallback = '1'
-            img.src = fighterArtFallback()
-          }}
-        />
-      </span>
-
-      <span className="asccard__body">
-        <span className="asccard__name">
-          {fighter.racename} {fighter.classname}
-        </span>
-        <span className="asccard__chips">
-          <i className="chip chip--level">Lv {Number(s?.level ?? 0)}</i>
-          <i className="chip">{fighter.element}</i>
-          {fighter.ascension_level > 0 && (
-            <i className="chip chip--asc">Asc {fighter.ascension_level}</i>
-          )}
-        </span>
-        <span className="asccard__stats mono">
-          <span className="asccard__dmg">
-            {formatScaled(Number(s?.damage_min ?? 0))}
-          </span>
-          <span className="asccard__hp">
-            {formatScaled(Number(s?.health_min ?? 0))}
-          </span>
-        </span>
-        {note && <span className="asccard__note">{note}</span>}
-      </span>
     </button>
   )
 }
