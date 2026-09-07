@@ -538,7 +538,7 @@ export function ArenaBoards({
                         finished.reduce((sum, r) => sum + r.earned_tlm, 0) / 10_000,
                         0,
                       )} TLM between them`
-                    : `Top ${formatNumber(season.winners)} share ${formatDecimals(pot, 4)} TLM`}
+                    : `Top ${formatNumber(season.winners)} share ${formatDecimals(pot, 0)} TLM`}
                 </p>
               </div>
 
