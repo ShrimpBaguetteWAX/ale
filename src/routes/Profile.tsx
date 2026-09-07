@@ -83,6 +83,7 @@ import {
 import { randomHistoryId } from '@/dungeon/queries'
 import { useAction } from '@/wharf/useAction'
 import { useChainQuery } from '@/chain/useChainQuery'
+import { useModal } from '@/components/useModal'
 import { useLazyConfig } from '@/state/useConfig'
 import { DIRTIES } from '@/wharf/actions'
 import {
@@ -1735,6 +1736,7 @@ function StatBoard({
   const mine = ranks?.find((r) => r.wallet === wallet)
   const shown = ranks?.slice(0, TOP) ?? []
   const minePinned = mine && mine.rank > TOP ? mine : undefined
+  const panel = useModal(onClose)
 
   return (
     <div
@@ -1744,7 +1746,11 @@ function StatBoard({
       aria-label={`${label} leaderboard`}
       onClick={onClose}
     >
-      <div className="sheet__panel" onClick={(e) => e.stopPropagation()}>
+      <div
+        className="sheet__panel"
+        ref={panel}
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="row" style={{ marginBottom: 'var(--sp-3)' }}>
           <span className="panel__title statboard__title">
             {icon && <img className="statline__icon" src={asset(icon)} alt="" />}

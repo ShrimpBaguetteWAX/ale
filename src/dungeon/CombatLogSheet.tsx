@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
+import { useModal } from '@/components/useModal'
 import type { EffectEvent, Replay } from './sim'
 import { NFT_FIGHTER_ID } from './rules'
 import { formatScaled, STAT_LABEL } from '@/tavern/fighterStats'
@@ -68,16 +69,7 @@ export function CombatLogSheet({
   onDownload: () => void
 }) {
   /* Escape closes it, like every other overlay in the game. */
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
-    window.addEventListener('keydown', onKey)
-    const prev = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    return () => {
-      window.removeEventListener('keydown', onKey)
-      document.body.style.overflow = prev
-    }
-  }, [onClose])
+  const panel = useModal(onClose)
 
   const byUid = useMemo(
     () => new Map(replay.fighters.map((f) => [f.uid, f])),
@@ -120,9 +112,16 @@ export function CombatLogSheet({
     .filter(({ i }) => !notableOnly || notable(i))
 
   return (
-    <div className="sheet" role="dialog" aria-label="Combat log" onClick={onClose}>
+    <div
+      className="sheet"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Combat log"
+      onClick={onClose}
+    >
       <div
         className="sheet__panel panel clog"
+        ref={panel}
         onClick={(e) => e.stopPropagation()}
       >
         <header className="clog__head">

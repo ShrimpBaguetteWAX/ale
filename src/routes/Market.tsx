@@ -28,6 +28,7 @@ import {
 import { fetchRoster } from '@/dungeon/queries'
 import { useConfig, useLazyConfig } from '@/state/useConfig'
 import { useChainQuery } from '@/chain/useChainQuery'
+import { useModal } from '@/components/useModal'
 import { useAction } from '@/wharf/useAction'
 import { DIRTIES } from '@/wharf/actions'
 import { fighterAvailable } from '@/dungeon/rules'
@@ -1101,10 +1102,11 @@ function Backdrop({
   onClose: () => void
   children: React.ReactNode
 }) {
+  const panel = useModal(onClose)
   return (
     <div className="sheet" role="dialog" aria-modal="true" aria-label={title}>
       <div className="sheet__scrim" onClick={onClose} />
-      <div className="sheet__panel marketdialog">
+      <div className="sheet__panel marketdialog" ref={panel}>
         <header className="sheet__head">
           <h2 className="panel__title">{title}</h2>
           <button

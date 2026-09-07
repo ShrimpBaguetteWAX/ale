@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useModal } from '@/components/useModal'
 import { fetchMineHistory } from '@/pools/queries'
 import { CURRENCY_ICON, CURRENCY_LABEL, type Currency } from '@/account/rules'
 
@@ -86,18 +87,19 @@ export function MineCelebration({
   }, [])
 
   /* Escape closes it: it is a celebration, not a decision. */
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [onClose])
+  const panel = useModal(onClose)
 
   return (
-    <div className="minecheer" role="dialog" aria-label="Mining rewards" onClick={onClose}>
+    <div
+      className="minecheer"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Mining rewards"
+      onClick={onClose}
+    >
       <div
         className={`minecheer__panel${shown ? ' minecheer__panel--in' : ''}`}
+        ref={panel}
         onClick={(e) => e.stopPropagation()}
       >
         <span className="minecheer__burst" aria-hidden="true" />

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useModal } from '@/components/useModal'
 import { useSearchParams } from 'react-router-dom'
 import { useGame } from '@/state/useGame'
 import { fetchShopCooldowns, fetchWaxBalance } from '@/shop/queries'
@@ -299,16 +300,7 @@ function ConfirmPurchase({
   onCancel: () => void
   onConfirm: () => void
 }) {
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onCancel()
-    window.addEventListener('keydown', onKey)
-    const prev = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    return () => {
-      window.removeEventListener('keydown', onKey)
-      document.body.style.overflow = prev
-    }
-  }, [onCancel])
+  const panel = useModal(onCancel)
 
   const price = priceOf(item)
   const reward = rewardOf(item)
@@ -323,7 +315,11 @@ function ConfirmPurchase({
       aria-label="Confirm purchase"
       onClick={onCancel}
     >
-      <div className="confirm__panel panel" onClick={(e) => e.stopPropagation()}>
+      <div
+        className="confirm__panel panel"
+        ref={panel}
+        onClick={(e) => e.stopPropagation()}
+      >
         <h2 className="confirm__title">You are about to exchange the following</h2>
 
         <div className="confirm__deal">

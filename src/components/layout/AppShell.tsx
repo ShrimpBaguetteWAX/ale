@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { useModal } from '@/components/useModal'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useGame } from '@/state/useGame'
 import { NetworkStatus } from '../NetworkStatus'
@@ -46,17 +47,7 @@ function MenuArt({ item, size }: { item: NavItem; size: number }) {
 
 /** Bottom-sheet menu holding everything that doesn't fit the tab bar. */
 function MoreSheet({ items, onClose }: { items: NavItem[]; onClose: () => void }) {
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
-    window.addEventListener('keydown', onKey)
-    // Stop the page behind the sheet from scrolling with it.
-    const prev = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    return () => {
-      window.removeEventListener('keydown', onKey)
-      document.body.style.overflow = prev
-    }
-  }, [onClose])
+  const panel = useModal(onClose)
 
   return (
     <div
@@ -66,7 +57,11 @@ function MoreSheet({ items, onClose }: { items: NavItem[]; onClose: () => void }
       aria-label="More sections"
       onClick={onClose}
     >
-      <div className="sheet__panel" onClick={(e) => e.stopPropagation()}>
+      <div
+        className="sheet__panel"
+        ref={panel}
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="row">
           <span className="panel__title">All sections</span>
           <span className="spacer" />

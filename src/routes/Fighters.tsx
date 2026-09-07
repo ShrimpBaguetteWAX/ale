@@ -49,6 +49,7 @@ import {
 import { MAX_BULK_LISTINGS, bulkListPlan, listable } from '@/market/rules'
 import { useAction } from '@/wharf/useAction'
 import { useChainQuery } from '@/chain/useChainQuery'
+import { useModal } from '@/components/useModal'
 import { DIRTIES } from '@/wharf/actions'
 import type { ClassTemplate } from '@/tavern/fighterStats'
 import {
@@ -1084,15 +1085,15 @@ function Confirm({
   onConfirm: () => void
   onCancel: () => void
 }) {
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onCancel()
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [onCancel])
+  const box = useModal(onCancel)
 
   return (
     <div className="sheet" role="dialog" aria-modal="true" onClick={onCancel}>
-      <div className="sheet__panel panel" onClick={(e) => e.stopPropagation()}>
+      <div
+        className="sheet__panel panel"
+        ref={box}
+        onClick={(e) => e.stopPropagation()}
+      >
         <h2 className="panel__title">{title}</h2>
         {body}
         <div className="confirm__actions">
@@ -1854,16 +1855,7 @@ export function FighterDialog({
   onMarker: (marker: string) => void
   onClose: () => void
 }) {
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
-    window.addEventListener('keydown', onKey)
-    const prev = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    return () => {
-      window.removeEventListener('keydown', onKey)
-      document.body.style.overflow = prev
-    }
-  }, [onClose])
+  const box = useModal(onClose)
 
   const s = fighter.stats
   const factor = battleFactor(fighter, levelMod, ageDecay, now)
@@ -1876,6 +1868,7 @@ export function FighterDialog({
     <div className="sheet" role="dialog" aria-modal="true" onClick={onClose}>
       <div
         className="sheet__panel panel fdialog"
+        ref={box}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="fdialog__cols">

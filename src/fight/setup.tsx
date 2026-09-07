@@ -54,6 +54,7 @@ import {
 } from '@/tavern/fighterStats'
 import { asset } from '@/assets'
 import { usePhone } from '@/components/usePhone'
+import { useModal } from '@/components/useModal'
 import { combatFigures } from '@/fighters/derived'
 import { formatDecimals, NUM_LOCALE } from '@/format'
 import { GameImg } from '@/components/GameImg'
@@ -2248,21 +2249,15 @@ export function DetailSheet({
   template?: ClassTemplate
   onClose: () => void
 }) {
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
-    window.addEventListener('keydown', onKey)
-    const prev = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    return () => {
-      window.removeEventListener('keydown', onKey)
-      document.body.style.overflow = prev
-    }
-  }, [onClose])
+  /* Named for the box rather than the fighter: `panel` here is already the
+     fighter being shown. */
+  const box = useModal(onClose)
 
   return (
     <div className="sheet" role="dialog" aria-modal="true" onClick={onClose}>
       <div
         className="sheet__panel panel sheet__panel--fighter"
+        ref={box}
         onClick={(e) => e.stopPropagation()}
       >
         <FighterPanel fighter={panel} template={template} />

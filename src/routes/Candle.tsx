@@ -23,6 +23,7 @@ import {
 } from '@/candle/rules'
 import { claimCandle, contributeGems } from '@/wharf/actions'
 import { useAction } from '@/wharf/useAction'
+import { useModal } from '@/components/useModal'
 import { DIRTIES } from '@/wharf/actions'
 import { readableError } from '@/wharf/errors'
 import { formatNumber, formatDecimals } from '@/format'
@@ -400,15 +401,21 @@ function ContributorBoard({
     [stakes],
   )
 
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [onClose])
+  const panel = useModal(onClose)
 
   return (
-    <div className="sheet" role="dialog" aria-label="Contributors" onClick={onClose}>
-      <div className="sheet__panel panel" onClick={(e) => e.stopPropagation()}>
+    <div
+      className="sheet"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Contributors"
+      onClick={onClose}
+    >
+      <div
+        className="sheet__panel panel"
+        ref={panel}
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="row" style={{ marginBottom: 'var(--sp-3)' }}>
           <span className="panel__title">Who is in</span>
           <span className="spacer" />
