@@ -3,7 +3,7 @@ import { act, renderHook } from '@testing-library/react'
 import { useGame } from '@/state/useGame'
 import { useAction } from '@/wharf/useAction'
 import { DIRTIES } from '@/wharf/actions'
-import { cacheDropTable } from '@/chain/tables'
+import { cacheDropTable, onTableDrop } from '@/chain/tables'
 
 /**
  * That signing something actually clears what it changed.
@@ -204,6 +204,103 @@ describe('useAction', () => {
 
     expect(result.current.error).toBeNull()
     expect(result.current.notice).toBe('Claimed.')
+  })
+
+  it('re-reads past the cache on every round, not just the first', async () => {
+    /*
+       The regression this test exists for, found in the game rather than
+       here: a claimed quest stayed on the board under a message saying it
+       had been claimed.
+
+       The screen's re-read goes through the cache, and these rows are held
+       for a minute. The first round is almost always "not yet" — so that
+       answer became the answer every later round got, the wait could never
+       end, and the board never changed. The loops this replaced all passed
+       `refresh: true`; the hook has to do the equivalent itself.
+
+       Here the read is served from a store that only changes when its cache
+       entry has been dropped, which is exactly what the real client does.
+    */
+    useGame.setState({
+      player: { activestats: { credits: 100 } } as never,
+      refreshPlayer: async () => {},
+    } as never)
+
+    /*
+       Through the real cache, not a stand-in for one. The drop is silent
+       while the wait is going — that is the fix for the other half of this
+       bug — so nothing outside the hook can observe it, and a fake cache
+       here would only be testing the fake.
+    */
+    const { fetchActiveQuests } = await import('@/quests/queries')
+    cacheDropTable('quests')
+
+    let chainReads = 0
+    const stub = globalThis.fetch as unknown as { mock: { calls: unknown[] } }
+    globalThis.fetch = (async (url: string) => {
+      if (!String(url).includes('get_table_rows')) {
+        return { ok: true, status: 200, json: async () => ({}) }
+      }
+      chainReads++
+      /* The chain catches up on the third read, and not before. */
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({
+          rows: chainReads >= 3 ? [{ wallet: 'smoke.wam', quests: [] }] : [],
+          more: false,
+        }),
+      }
+    }) as never
+
+    const { result } = renderHook(() => useAction())
+    await act(async () => {
+      await result.current.run('claim', async () => {}, 'Claimed.', {
+        after: () => fetchActiveQuests('smoke.wam'),
+        settled: (board) => !!board,
+        dirties: ['quests'],
+        attempts: 6,
+        intervalMs: 0,
+      })
+    })
+
+    globalThis.fetch = stub as never
+
+    /* Three reads means each round went to the chain. One would mean the
+       first "not yet" had been served back for the rest of the wait. */
+    expect(chainReads, 'every round should have gone past the cache').toBe(3)
+  })
+
+  it('tells the screens only once the chain has caught up', async () => {
+    /*
+       The other half of the same bug. Announced before the wait, a screen
+       watching the table re-reads at once, gets the pre-transaction answer,
+       and writes it back into the cache the confirmation is about to read.
+    */
+    useGame.setState({
+      player: { activestats: { credits: 100 } } as never,
+      refreshPlayer: async () => {},
+    } as never)
+
+    const heard: string[] = []
+    const stop = onTableDrop((key) => heard.push(key))
+
+    const { result } = renderHook(() => useAction())
+    await act(async () => {
+      await result.current.run('claim', async () => {}, 'Claimed.', {
+        after: async () => {
+          /* Nothing has been announced yet, while the wait is still going. */
+          expect(heard).toEqual([])
+          return undefined
+        },
+        dirties: ['quests'],
+        attempts: 1,
+        intervalMs: 0,
+      })
+    })
+
+    stop()
+    expect(heard).toEqual(['quests'])
   })
 
   it('reports the failure and puts the button back', async () => {

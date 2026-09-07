@@ -59,7 +59,25 @@ export type TableKey = keyof typeof TABLES
  * `rows:code|scope|table|…`, and the scope sits between the two parts that
  * name the table.
  */
-export function cacheDropTable(key: TableKey, scope?: string): void {
+export function cacheDropTable(
+  key: TableKey,
+  scope?: string,
+  /**
+   * Whether to tell the screens.
+   *
+   * Off for the drop an action makes *before* it waits for the chain, and
+   * that is not a detail — announcing there caused a bug worth recording.
+   * A screen woken by the drop re-read at once, got the pre-transaction
+   * answer because the chain had not caught up yet, and wrote it back into
+   * the cache the confirmation was about to read from. Every round after
+   * that was a cache hit on stale data, so the wait never settled and the
+   * quest a player had just claimed stayed on the board under a message
+   * saying it had been claimed.
+   *
+   * So: forget quietly, wait for the chain, then say so.
+   */
+  announce = true,
+): void {
   const { code, table } = TABLES[key]
 
   cacheDropWhere((cacheKey) => {
@@ -71,6 +89,11 @@ export function cacheDropTable(key: TableKey, scope?: string): void {
     return scope === undefined || parts[1] === scope
   })
 
+  if (announce) announceTableDrop(key)
+}
+
+/** Tell the screens a table is stale, without dropping anything. */
+export function announceTableDrop(key: TableKey): void {
   for (const fn of watchers) fn(key)
 }
 

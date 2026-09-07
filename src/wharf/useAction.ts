@@ -3,7 +3,7 @@ import { useGame } from '@/state/useGame'
 import { refreshChore } from '@/chores/signal'
 import type { ChoreKey } from '@/chores/checks'
 import { readableError } from '@/wharf/errors'
-import { cacheDropTable, type TableKey } from '@/chain/tables'
+import { announceTableDrop, cacheDropTable, type TableKey } from '@/chain/tables'
 import { confirmThen, CONFIRM_ATTEMPTS, CONFIRM_INTERVAL_MS } from '@/chain/confirm'
 
 /**
@@ -162,14 +162,24 @@ export function useAction(): ActionState {
         await act()
 
         /*
-           Before anything is re-read, not after.
+           Forget before re-reading — but quietly.
 
-           A drop that happens after the first re-read would be dropping the
-           entry that read just wrote — throwing away a fresh answer and
-           leaving the stale one nowhere. Order is the whole correctness
-           argument here, and it is one line apart from being wrong.
+           Forgetting has to come first, or the confirmation below would be
+           asking a cache that still holds the answer from before the
+           transaction, and could never see it change.
+
+           Telling the screens has to come last. Announced here, a screen
+           watching one of these tables re-reads at once, gets the
+           pre-transaction answer because the chain has not caught up yet,
+           and writes it back into the cache the confirmation is about to
+           read from. Every round after that is a cache hit on stale data.
+           That is not hypothetical: it is what made a claimed quest stay on
+           the board under a message saying it had been claimed.
         */
-        for (const table of dirties ?? []) cacheDropTable(table)
+        const forget = () => {
+          for (const table of dirties ?? []) cacheDropTable(table, undefined, false)
+        }
+        forget()
 
         /*
            Wait for the chain, and stop as soon as it has caught up.
@@ -187,6 +197,17 @@ export function useAction(): ActionState {
         const before = playerFigures()
         await confirmThen<T>(
           async () => {
+            /*
+               Forgotten again before every round, not just once.
+
+               These reads are cached for a minute, and the first round is
+               almost always "not yet" — so without this the answer that says
+               nothing has happened yet becomes the answer every later round
+               gets, and the wait can never end. It is why the loops this
+               replaced all passed `refresh: true`, and doing it here means no
+               caller has to remember to.
+            */
+            forget()
             const [fresh] = await Promise.all([
               after ? after() : Promise.resolve(undefined as T),
               refreshPlayer({ force: true }),
@@ -202,6 +223,16 @@ export function useAction(): ActionState {
           },
           { attempts, intervalMs },
         )
+
+        /*
+           Now the screens, and every screen — including ones that are not
+           this one, which is what the drop was for in the first place.
+           Announced whether or not the wait confirmed: the transaction was
+           accepted either way, so the data is stale either way, and a screen
+           that re-reads once more costs a request where showing the old
+           answer costs trust.
+        */
+        for (const table of dirties ?? []) announceTableDrop(table)
 
         await onSettled?.()
         if (!alive.current) return
