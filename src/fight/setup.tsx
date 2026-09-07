@@ -104,13 +104,21 @@ const CARD_VIEWS: [CardView, string][] = [
   ['ability', 'Ability'],
 ]
 
-/** The same three faces on a fighter, where the third is what it does. */
-export type PickView = 'stats' | 'res' | 'combat'
+/**
+ * The same faces on a fighter, plus the one a card does not have.
+ *
+ * Stats, resistances and abilities are the three a crew card turns over, and
+ * a fighter answers all three too. Combat is the fourth, because a fighter
+ * has a level and an age scaling those stats and a card does not — what it
+ * does is not readable off the roll the way a card's bonuses are.
+ */
+export type PickView = 'stats' | 'res' | 'combat' | 'ability'
 
 const PICK_VIEWS: [PickView, string][] = [
   ['stats', 'Stats'],
   ['res', 'Res'],
   ['combat', 'Combat'],
+  ['ability', 'Abilities'],
 ]
 
 /**
@@ -1525,6 +1533,7 @@ export function PickCard({
   /* The next change to the shared view takes every card back into step. */
   useEffect(() => setOverride(null), [view])
   const tab = override ?? view
+  const abilities = f.stats.abilities ?? []
 
   return (
     <div
@@ -1685,6 +1694,37 @@ export function PickCard({
             </div>
           </dl>
         )}
+
+        {/*
+          What distinguishes two fighters of the same class at the same level,
+          and the one thing the figures above cannot say. Named and explained,
+          the way a crew card's ability is — a fighter rolls its last ability
+          locked, so the padlock is on the name rather than left implied.
+        */}
+        {tab === 'ability' &&
+          (abilities.length === 0 ? (
+            <p className="faint nftcard__none">No abilities.</p>
+          ) : (
+            abilities.map((a, i) => (
+              <div className="nftability" key={`${a.ability}-${i}`}>
+                <span
+                  className={`nftability__name${a.locked ? ' nftability__name--locked' : ''}`}
+                  style={{ '--pip': abilityColor(a.displayname) } as React.CSSProperties}
+                >
+                  {!!a.locked && (
+                    <img
+                      src={asset('/assets/icons/lock.svg')}
+                      alt="Locked"
+                      width={10}
+                      height={10}
+                    />
+                  )}
+                  {abilityName(a.displayname)}
+                </span>
+                <p className="nftability__text">{resolveAbilityDescription(a)}</p>
+              </div>
+            ))
+          ))}
       </div>
 
       {/*

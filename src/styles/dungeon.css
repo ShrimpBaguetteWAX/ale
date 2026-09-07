@@ -311,24 +311,26 @@
 }
 
 /*
- * A little wider than it was, for the readout that replaced the pair.
+ * The width the crew and weapon cards use, because it is now the same card.
  *
- * 122px held "225 DMG · 343 HP" and nothing else. Five figures need two
- * columns of them, and 140 is what fits them without costing a phone its
- * second card per row — at 150 a 298px column took one, and a roster of a
- * hundred and forty at one to a row is a different screen.
+ * 122px held "225 DMG · 343 HP"; 140 held five named figures. Four tab
+ * labels want more than either — at 140 "Stats Res Combat Abilities" ran
+ * together into one grey word — and there is no reason for a fighter's tile
+ * to be narrower than the card it sits beside in the same picker.
  */
 .fightergrid {
   display: grid;
   gap: var(--sp-2);
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(178px, 1fr));
 }
 
 .fightercard {
   position: relative;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
-  background: rgb(0 0 0 / 30%);
+  /* The crew card's frame exactly — softer line, tighter corner, one shade
+     darker. Two cards in one picker should not be two designs. */
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-xs);
+  background: rgb(0 0 0 / 35%);
   transition:
     border-color var(--dur-fast) var(--ease),
     background var(--dur-fast) var(--ease);
@@ -360,9 +362,11 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 3px;
+  gap: 2px;
   width: 100%;
-  padding: var(--sp-2);
+  /* Tight at the bottom, so the tab bar reads as attached to the card rather
+     than floating under it — as on the crew cards. */
+  padding: var(--sp-2) var(--sp-2) var(--sp-1);
   background: none;
   border: 0;
   border-radius: inherit;
@@ -823,19 +827,9 @@
  * card at a time.
  */
 @media (max-width: 719px) {
-  .cardgrid--nft {
+  .cardgrid--nft,
+  .fightergrid {
     grid-template-columns: repeat(auto-fill, minmax(138px, 1fr));
-  }
-
-  .nftcard__tabs,
-.fightercard__tabs {
-    padding: 0 4px;
-  }
-
-  .nftcard__tab,
-.fightercard__tab {
-    padding: 3px 1px;
-    letter-spacing: 0;
   }
 }
 
@@ -853,13 +847,16 @@
  * time gives each group the whole width: a stat can be named rather than
  * left to its icon, and the ability can bring its description.
  */
-.nftcard__tabs {
+.nftcard__tabs,
+.fightercard__tabs {
   display: flex;
+  flex-wrap: wrap;
   gap: 2px;
   padding: 0 var(--sp-2);
 }
 
-.nftcard__tab {
+.nftcard__tab,
+.fightercard__tab {
   flex: 1 1 auto;
   min-width: 0;
   overflow: hidden;
@@ -885,6 +882,35 @@
   color: var(--white);
   border-bottom-color: var(--cyan);
   background: rgb(0 186 255 / 12%);
+}
+
+/*
+ * The phone's narrower tile, after the rules it is narrowing — a shorthand
+ * `flex` later in the file beats a longhand `flex-basis` earlier in it, and
+ * with these up beside the grid widths above the tightening never applied.
+ */
+@media (max-width: 719px) {
+  .nftcard__tabs,
+  .fightercard__tabs {
+    padding: 0 4px;
+  }
+
+  .nftcard__tab,
+  .fightercard__tab {
+    padding: 3px 1px;
+    letter-spacing: 0;
+  }
+
+  /*
+   * Two rows of two, on the fighter's four.
+   *
+   * Three labels fit a 138px card; "Abilities" is the fourth and does not.
+   * Squeezing all four in would cost every label its spacing to buy the
+   * fourth one room, and a tab has to be readable before it can be pressed.
+   */
+  .fightercard__tab {
+    flex-basis: 40%;
+  }
 }
 
 /*
@@ -946,7 +972,9 @@
   margin-top: var(--sp-2);
 }
 .nftability__name {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 4px;
   padding: 2px 6px;
   border-radius: var(--radius-xs);
   border-left: 3px solid var(--pip, #b79dff);
@@ -955,6 +983,17 @@
   font-size: 10px;
   font-weight: var(--fw-bold);
   color: var(--white);
+}
+/*
+ * Every fighter rolls with its last ability locked, so this is the common
+ * case rather than the exception — dimmed, not struck out: it is a real
+ * ability the fighter will have, just not yet.
+ */
+.nftability__name--locked {
+  color: var(--text-dim);
+}
+.nftability__name--locked img {
+  opacity: 0.7;
 }
 /*
  * Clamped rather than clipped.
@@ -975,6 +1014,19 @@
   display: -webkit-box;
   -webkit-line-clamp: 5;
   -webkit-box-orient: vertical;
+}
+
+/*
+ * Shorter lines on a fighter, because a fighter brings four.
+ *
+ * A crew card has one ability and a weapon has one, so five lines each costs
+ * the tile nothing. A fighter rolls up to four, and at five lines apiece the
+ * card stood 546px tall — and grid rows stretch, so one card turned to
+ * Abilities took its whole row with it. Two lines is the sentence's shape
+ * and its subject; the rest is behind `i`.
+ */
+.fightercard__panel .nftability__text {
+  -webkit-line-clamp: 2;
 }
 
 .nftcard__none {
