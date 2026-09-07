@@ -20,6 +20,8 @@ import { fetchCandleConfig } from '@/candle/queries'
 import { fetchFarmConfig, fetchStakeWeights } from '@/farming/queries'
 import { fetchBuildingCosts, fetchRarityDiscounts } from '@/lands/queries'
 import { fetchDungeonLbConfig } from '@/leaderboard/queries'
+import { fetchCpuConfig, fetchRewardLogConfig } from '@/account/queries'
+import { fetchPoolDescriptions, fetchUsersConfig } from '@/pools/queries'
 import { DEFAULT_CAPS, type StatCaps } from '@/dungeon/sim'
 import type { BattleConfig } from '@/dungeon/types'
 import type { NftValue } from '@/dungeon/nftFighter'
@@ -104,19 +106,23 @@ const EXTRAS = {
   avatars: fetchAvatars,
   buildingCosts: fetchBuildingCosts,
   candle: fetchCandleConfig,
+  cpu: fetchCpuConfig,
   difMods: fetchDifMods,
   dungeon: fetchDungeonConfig,
   dungeonLb: fetchDungeonLbConfig,
   farm: fetchFarmConfig,
   fightCost: fetchFightConfig,
   market: fetchMarketConfig,
+  poolNames: fetchPoolDescriptions,
   quest: fetchQuestConfig,
+  rewardLog: fetchRewardLogConfig,
   rarityDiscounts: fetchRarityDiscounts,
   shopItems: fetchShopItems,
   stakeWeights: fetchStakeWeights,
   tavern: fetchTavernConfig,
   tavernTemplates: fetchTavernTemplates,
   upgrades: fetchAllUpgrades,
+  users: fetchUsersConfig,
 } as const
 
 export type ExtraKey = keyof typeof EXTRAS

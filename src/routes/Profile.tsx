@@ -1,16 +1,13 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import {
-  fetchPoolDescriptions,
   fetchShardPools,
   fetchTlmPools,
   fetchToolTemplates,
-  fetchUsersConfig,
   type PoolDescription,
   type ShardPool,
   type TlmPool,
   type ToolTemplate,
-  type UsersConfig,
 } from '@/pools/queries'
 import {
   poolAmount,
@@ -32,21 +29,16 @@ import { landId } from '@/chain/landId'
 import { byQuality } from '@/dungeon/nftFighter'
 import { PlayerAvatar } from '@/components/PlayerAvatar'
 import { landThumbStyle } from '@/map/terrain'
-import { fetchAvatars } from '@/chain/queries'
 import { fetchMiningTools, type MiningTool } from '@/chain/atomic'
 import {
-  fetchCpuConfig,
   fetchCpuUsage,
   fetchAccountCpu,
   fetchRewardLog,
   fetchRewardLogCapacity,
-  fetchRewardLogConfig,
-  type CpuConfig,
   type AccountCpu,
+  type CpuConfig,
   type CpuUsage,
   type RewardLogEntry,
-  type RewardLogCapacity,
-  type RewardLogConfig,
 } from '@/account/queries'
 import {
   TAG_MAX,
@@ -90,6 +82,8 @@ import {
 } from '@/wharf/actions'
 import { randomHistoryId } from '@/dungeon/queries'
 import { useAction } from '@/wharf/useAction'
+import { useChainQuery } from '@/chain/useChainQuery'
+import { useLazyConfig } from '@/state/useConfig'
 import { DIRTIES } from '@/wharf/actions'
 import {
   MineCelebration,
@@ -226,6 +220,11 @@ export function statIconFor(key: string): string | undefined {
 /** The handful of stats worth showing above the full list. */
 /* ---------- the screen ---------- */
 
+const EMPTY_AVATARS: Avatar[] = []
+const EMPTY_POOL_NAMES: PoolDescription[] = []
+const EMPTY_TLM_POOLS: TlmPool[] = []
+const EMPTY_SHARD_POOLS: ShardPool[] = []
+
 export default function Profile({ section = 'account' }: { section?: Section }) {
   const player = useGame((s) => s.player)!
   const account = useGame((s) => s.account)
@@ -245,30 +244,50 @@ export default function Profile({ section = 'account' }: { section?: Section }) 
   useEffect(() => {
     setTab(SECTION_TABS[section][0][0])
   }, [section])
-  const { busy: busyKey, error, notice, run, setError } = useAction()
+  const { busy: busyKey, error, notice, run } = useAction()
   const busy = busyKey as Busy
   /* Which pool the running mine belongs to, so only its button spins. */
   const [minedRewards, setMinedRewards] = useState<MinedReward[]>([])
   const [minedPool, setMinedPool] = useState<string | null>(null)
 
-  const [avatars, setAvatars] = useState<Avatar[]>([])
-  const [cpuCfg, setCpuCfg] = useState<CpuConfig>()
-  const [cpuUse, setCpuUse] = useState<CpuUsage>()
-  const [accountCpu, setAccountCpu] = useState<AccountCpu>()
+  /*
+     Five of the ten reads this screen made were config — the avatar
+     definitions, the CPU rules, the reward-log rules, the pool names and the
+     trial modifier. They are the same for every player and come from the
+     store; what is left below is this wallet's own.
+  */
+  const avatars = useLazyConfig('avatars') ?? EMPTY_AVATARS
+  const cpuCfg = useLazyConfig('cpu')
+  const logCfg = useLazyConfig('rewardLog')
+  const poolNames = useLazyConfig('poolNames') ?? EMPTY_POOL_NAMES
+  const usersCfg = useLazyConfig('users')
+
+  const own = useChainQuery(
+    account && `profile:${account}`,
+    async () => {
+      const [u, ac, cap, tp, sp] = await Promise.all([
+        fetchCpuUsage(account!, true),
+        fetchAccountCpu(account!, true),
+        fetchRewardLogCapacity(account!, true),
+        fetchTlmPools(true),
+        fetchShardPools(true),
+      ])
+      return { cpuUse: u, accountCpu: ac, logCap: cap, tlmPools: tp, shardPools: sp }
+    },
+    /* Mining and claiming both move what the pools owe this wallet. */
+    { deps: ['rewardUsers'] },
+  )
+  const cpuUse = own.data?.cpuUse
+  const accountCpu = own.data?.accountCpu
+  const logCap = own.data?.logCap
+  const tlmPools = own.data?.tlmPools ?? EMPTY_TLM_POOLS
+  const shardPools = own.data?.shardPools ?? EMPTY_SHARD_POOLS
   /*
      The reward log is read one currency at a time, so it is cached per tab
      rather than fetched as one page — a mixed page would hide a quiet
      currency behind a noisy one.
    */
   const [logs, setLogs] = useState<Partial<Record<Currency, RewardLogEntry[]>>>({})
-  const [logCfg, setLogCfg] = useState<RewardLogConfig>()
-  const [logCap, setLogCap] = useState<RewardLogCapacity>()
-
-  /* The pools reward power is spent in, and the names the game gives them. */
-  const [tlmPools, setTlmPools] = useState<TlmPool[]>([])
-  const [shardPools, setShardPools] = useState<ShardPool[]>([])
-  const [poolNames, setPoolNames] = useState<PoolDescription[]>([])
-  const [usersCfg, setUsersCfg] = useState<UsersConfig>()
 
   const alive = useRef(true)
   useEffect(() => {
@@ -278,40 +297,8 @@ export default function Profile({ section = 'account' }: { section?: Section }) 
     }
   }, [])
 
-  const load = useCallback(async () => {
-    if (!account) return
-    try {
-      const [a, c, u, ac, lc, cap, tp, sp, pd, uc] = await Promise.all([
-        fetchAvatars(),
-        fetchCpuConfig(),
-        fetchCpuUsage(account, true),
-        fetchAccountCpu(account, true),
-        fetchRewardLogConfig(),
-        fetchRewardLogCapacity(account, true),
-        fetchTlmPools(true),
-        fetchShardPools(true),
-        fetchPoolDescriptions(),
-        fetchUsersConfig(),
-      ])
-      if (!alive.current) return
-      setAvatars(a)
-      setCpuCfg(c)
-      setCpuUse(u)
-      setAccountCpu(ac)
-      setLogCfg(lc)
-      setLogCap(cap)
-      setTlmPools(tp)
-      setShardPools(sp)
-      setPoolNames(pd)
-      setUsersCfg(uc)
-    } catch (err) {
-      if (alive.current) setError(readableError(err))
-    }
-  }, [account])
-
-  useEffect(() => {
-    void load()
-  }, [load])
+  /* What the actions re-read while they wait for the chain. */
+  const load = own.reload
 
   /* One currency's ledger, fetched the first time its tab is opened. */
   const currencyTab = (CURRENCIES as readonly string[]).includes(tab)
@@ -378,7 +365,9 @@ export default function Profile({ section = 'account' }: { section?: Section }) 
       </header>
 
       {notice && <div className="alert alert--ok">{notice}</div>}
-      {error && <div className="alert alert--error">{error}</div>}
+      {(error ?? own.error) && (
+        <div className="alert alert--error">{error ?? own.error}</div>
+      )}
 
       <div
         className="accounttabs"
