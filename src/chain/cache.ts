@@ -76,13 +76,32 @@ export function cacheSet<T>(key: string, data: T, ttl: number, persist = false):
 }
 
 export function cacheDrop(prefix: string): void {
+  cacheDropWhere((k) => k.startsWith(prefix))
+}
+
+/**
+ * Drop every entry the matcher claims, across both tiers.
+ *
+ * A prefix is not enough to name a table. A read's key is
+ * `rows:code|scope|table|…`, so the scope sits between the two parts that
+ * identify what was read — and dropping "this table, whichever scope it was
+ * read under" is exactly what an action needs. `fighters.ale/fighters` is
+ * read under one scope; `lands.ale/lands` is read under six, one per planet,
+ * and building on one of them dirties that planet's alone.
+ *
+ * The matcher is given the cache key without the storage prefix, so both
+ * tiers are matched by the same rule.
+ */
+export function cacheDropWhere(match: (key: string) => boolean): void {
   for (const k of [...memory.keys()]) {
-    if (k.startsWith(prefix)) memory.delete(k)
+    if (match(k)) memory.delete(k)
   }
   if (!canPersist) return
   for (let i = localStorage.length - 1; i >= 0; i--) {
     const k = localStorage.key(i)
-    if (k?.startsWith(STORE_PREFIX + prefix)) localStorage.removeItem(k)
+    if (k?.startsWith(STORE_PREFIX) && match(k.slice(STORE_PREFIX.length))) {
+      localStorage.removeItem(k)
+    }
   }
 }
 
