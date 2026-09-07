@@ -118,7 +118,7 @@ export function AppShell() {
 
   return (
     <div
-      className="shell"
+      className={isMap ? 'shell shell--flush' : 'shell'}
       style={{ '--shell-art': `url('${asset('/assets/background/bg-menu.jpeg')}')` } as React.CSSProperties}
     >
       <div className="shell__bg" aria-hidden="true" />

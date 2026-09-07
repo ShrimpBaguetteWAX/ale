@@ -32,6 +32,32 @@
   }
 }
 
+
+/*
+ * The map is the one screen that fills the frame instead of flowing down it.
+ *
+ * `min-height` above leaves the grid's own height automatic, and a `1fr` row
+ * in an auto-height grid sizes to its *content* rather than to what is left
+ * over. The map's content is a canvas that JS gives an inline pixel height,
+ * read back from the box that row is supposed to be sizing — so the canvas
+ * became the floor of its own container.
+ *
+ * That floor could only ever go up. Shrink the window and the row kept the
+ * height it had, the page grew a scrollbar, and on a phone the travel bar —
+ * which sits at the bottom of the map — was pushed below the fold. Widening
+ * past 1024 hid it, because the tab-bar row disappears there and the leftover
+ * space finally exceeded the stuck height.
+ *
+ * A definite height makes `1fr` mean what it reads as: whatever the top bar
+ * and the tab bar leave over. No calc against the viewport, so nothing drifts
+ * when their real heights differ from the tokens by a border or a safe-area
+ * inset. Only the map asks for it — every other screen is a document, and a
+ * document should grow and take the page with it.
+ */
+.shell--flush {
+  height: 100dvh;
+}
+
 /* One fixed backdrop for the whole game, so screens don't each repaint art. */
 .shell__bg {
   position: fixed;
