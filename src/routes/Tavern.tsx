@@ -12,11 +12,6 @@ import { landId } from '@/chain/landId'
 import { byQuality } from '@/dungeon/nftFighter'
 import { useGame } from '@/state/useGame'
 import {
-  fetchClassTemplate,
-  fetchTavernConfig,
-  fetchTavernTemplates,
-} from '@/tavern/queries'
-import {
   HIRE_BASE_AP,
   MAX_HIRE_CARDS,
   calculateHire,
@@ -26,7 +21,6 @@ import {
 import {
   SCHEMA_TABS,
   type OwnedTemplate,
-  type TavernConfig,
   type TavernTemplate,
 } from '@/tavern/types'
 import {
@@ -48,8 +42,9 @@ import {
   midpoint,
   type ClassTemplate,
 } from '@/tavern/fighterStats'
-import { fetchFightersConfig } from '@/fighters/queries'
 import { fetchRoster } from '@/dungeon/queries'
+import { useChainQuery } from '@/chain/useChainQuery'
+import { useConfig, useLazyConfig } from '@/state/useConfig'
 import { MARKERS, markerIcon } from '@/dungeon/filters'
 import { hireFighter, revealFighter, setFighterMarker } from '@/wharf/actions'
 import { readableError } from '@/wharf/errors'
@@ -341,9 +336,12 @@ export default function Tavern() {
   const session = useGame((s) => s.session)
   const refreshPlayer = useGame((s) => s.refreshPlayer)
 
-  const [config, setConfig] = useState<TavernConfig | null>(null)
-  const [templates, setTemplates] = useState<TavernTemplate[] | null>(null)
-  const [owned, setOwned] = useState<Map<number, number> | null>(null)
+  /*
+     The tavern's prices and the card catalogue are the same for everybody
+     and come from the store; what this wallet owns of them does not.
+  */
+  const config = useLazyConfig('tavern') ?? null
+  const templates = useLazyConfig('tavernTemplates') ?? null
   const [tab, setTab] = useState(SCHEMA_TABS[0].key)
   const [picked, setPicked] = useState<number[]>([])
   const [busy, setBusy] = useState<'reveal' | 'hire' | 'marker' | null>(null)
@@ -358,7 +356,8 @@ export default function Tavern() {
   const [marker, setMarker] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
-  const [classTemplate, setClassTemplate] = useState<ClassTemplate | undefined>()
+  const { classes, fighters: fightersConfig } = useConfig()
+  const classTemplate = classes.get(player.last_tavern_fighter?.classname ?? '')
   /*
      The ascension level that clears a locked ability.
 
@@ -368,7 +367,7 @@ export default function Tavern() {
      showing it exactly like the ones that work. The level itself lives on
      `fighters.ale` config, the same read My Fighters and the market make.
   */
-  const [unlockLevel, setUnlockLevel] = useState<number | undefined>()
+  const unlockLevel = fightersConfig?.asc_ability_unlock_lvl
 
   /*
      The tavern as it was when the hire started, held for as long as the hire
@@ -398,44 +397,12 @@ export default function Tavern() {
   const onTavernLand = !!tavern?.land_id && tavern.land_id === landId(player.x, player.y)
   const revealed = !!fighter && fighter.level > 0
 
-  useEffect(() => {
-    fetchTavernConfig()
-      .then((c) => setConfig(c ?? null))
-      .catch(() => {})
-    fetchTavernTemplates()
-      .then(setTemplates)
-      .catch((err) => setError(readableError(err)))
-    fetchFightersConfig()
-      .then((c) => setUnlockLevel(c?.asc_ability_unlock_lvl))
-      .catch(() => {})
-  }, [])
-
-  useEffect(() => {
-    if (!player.wallet) return
-    let cancelled = false
-    fetchOwnedTemplates(player.wallet)
-      .then((m) => !cancelled && setOwned(m))
-      .catch(() => !cancelled && setOwned(new Map()))
-    return () => {
-      cancelled = true
-    }
-  }, [player.wallet])
-
-  /**
-   * Stat bands for the class on offer, so the arrows can say whether this
-   * particular roll is good. Keyed by class name, cached hard.
-   */
-  useEffect(() => {
-    const cls = player.last_tavern_fighter?.classname
-    if (!cls) return
-    let cancelled = false
-    fetchClassTemplate(cls)
-      .then((t) => !cancelled && setClassTemplate(t))
-      .catch(() => {})
-    return () => {
-      cancelled = true
-    }
-  }, [player.last_tavern_fighter?.classname])
+  /* Which of those cards this wallet holds, and how many of each. */
+  const ownedQuery = useChainQuery(
+    player.wallet && `tavern-owned:${player.wallet}`,
+    () => fetchOwnedTemplates(player.wallet),
+  )
+  const owned = ownedQuery.data ?? null
 
   /** Whitelisted templates the player actually holds. */
   const inventory: OwnedTemplate[] = useMemo(() => {

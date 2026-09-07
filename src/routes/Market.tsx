@@ -27,6 +27,9 @@ import {
 } from '@/market/rules'
 import { fetchRoster } from '@/dungeon/queries'
 import { useConfig, useLazyConfig } from '@/state/useConfig'
+import { useChainQuery } from '@/chain/useChainQuery'
+import { useAction } from '@/wharf/useAction'
+import { DIRTIES } from '@/wharf/actions'
 import { fighterAvailable } from '@/dungeon/rules'
 import { ageBand, ageBonus, ageDays, ageNote, battleFactor } from '@/fighters/rules'
 import {
@@ -66,7 +69,6 @@ import {
   type StatGrade,
 } from '@/tavern/fighterStats'
 import { addAuction, bidAuction, buyOffer, cancelAuction } from '@/wharf/actions'
-import { readableError } from '@/wharf/errors'
 import { asset } from '@/assets'
 
 /**
@@ -132,11 +134,7 @@ type Dialog =
 export default function Market() {
   const player = useGame((s) => s.player)!
   const session = useGame((s) => s.session)
-  const refreshPlayer = useGame((s) => s.refreshPlayer)
 
-  const [auctions, setAuctions] = useState<Auction[] | null>(null)
-  const [offers, setOffers] = useState<InstantOffer[] | null>(null)
-  const [roster, setRoster] = useState<RosterFighter[] | null>(null)
 
   /*
      The class bands, the age curve and the level curve, from the store. A
@@ -164,9 +162,7 @@ export default function Market() {
   const [detail, setDetail] = useState<Detail>(null)
   const [dialog, setDialog] = useState<Dialog>(null)
 
-  const [busy, setBusy] = useState<string | null>(null)
-  const [error, setError] = useState<string | null>(null)
-  const [notice, setNotice] = useState<string | null>(null)
+  const { busy, error, notice, run } = useAction()
 
   /* A second hand, so the countdowns move without re-reading the chain. */
   const [now, setNow] = useState(() => Date.now())
@@ -175,27 +171,26 @@ export default function Market() {
     return () => clearInterval(id)
   }, [])
 
-  const load = useCallback(
-    async (refresh = false) => {
-      try {
-        const [a, o, r] = await Promise.all([
-          fetchAuctions(refresh),
-          fetchOffers(refresh),
-          fetchRoster(player.wallet, refresh),
-        ])
-        setAuctions(a)
-        setOffers(o)
-        setRoster(r)
-      } catch (err) {
-        setError(readableError(err))
-      }
+  /*
+     The board and this wallet's roster together: what is for sale, and which
+     of the player's own fighters could be. A listing moves between the two,
+     so reading them apart would show a fighter on both sides at once.
+  */
+  const listings = useChainQuery(
+    `market:${player.wallet}`,
+    async () => {
+      const [a, o, r] = await Promise.all([
+        fetchAuctions(),
+        fetchOffers(),
+        fetchRoster(player.wallet),
+      ])
+      return { auctions: a, offers: o, roster: r }
     },
-    [player.wallet],
+    { deps: ['auctions', 'offers', 'fighters'] },
   )
-
-  useEffect(() => {
-    void load()
-  }, [load])
+  const auctions = listings.data?.auctions ?? null
+  const offers = listings.data?.offers ?? null
+  const roster = listings.data?.roster ?? null
 
   /*
      Listings are filtered through the roster filter by wearing a roster
@@ -268,22 +263,13 @@ export default function Market() {
     sell: sellable.length,
   }
 
-  const run = async (key: string, fn: () => Promise<unknown>, done: string) => {
-    setBusy(key)
-    setError(null)
-    setNotice(null)
-    try {
-      await fn()
-      setNotice(done)
-      setDialog(null)
-      void refreshPlayer({ force: true })
-      await load(true)
-    } catch (err) {
-      setError(readableError(err))
-    } finally {
-      setBusy(null)
-    }
-  }
+  /* Closing the dialog is this screen's own business; everything else the
+     hook does. */
+  const opts = (action: keyof typeof DIRTIES) => ({
+    after: listings.reload,
+    onSettled: () => setDialog(null),
+    dirties: DIRTIES[action],
+  })
 
   const show = useCallback(
     (listing: Auction | InstantOffer) => {
@@ -464,6 +450,7 @@ export default function Market() {
                       keepAfterAuction: keep_,
                     }),
                   'Listed. It runs for the next two days.',
+                  opts('addAuction'),
                 )
               }
             />
@@ -489,6 +476,7 @@ export default function Market() {
                       auctionId: a.auction_id,
                     }),
                   'Auction withdrawn.',
+                  opts('cancelAuction'),
                 )
               }
             />
@@ -515,6 +503,7 @@ export default function Market() {
                   gems,
                 }),
               'Bid placed.',
+              opts('bidAuction'),
             )
           }
         />
@@ -537,6 +526,7 @@ export default function Market() {
                   gems: dialog.offer.gems,
                 }),
               'Bought. The fighter is on your roster.',
+              opts('buyOffer'),
             )
           }
         />
