@@ -26,7 +26,8 @@ import {
 } from '@/dungeon/standing'
 import type { Battlestats, FightRow } from '@/dungeon/types'
 import { fighterArt, fighterArtFallback, formatScaled } from '@/tavern/fighterStats'
-import { claimPoolRewards } from '@/wharf/actions'
+import { DIRTIES, claimPoolRewards } from '@/wharf/actions'
+import { settle } from '@/wharf/settle'
 import { readableError } from '@/wharf/errors'
 import { refreshChore } from '@/chores/signal'
 import {
@@ -1478,7 +1479,7 @@ function Result({
          a minute pointing at a screen with nothing left to do — and the
          player is looking straight at the proof that it is wrong.
       */
-      refreshChore('rewards')
+      settle(DIRTIES.claimPoolRewards)
 
       /*
          What it actually paid, from the contract’s record of this very

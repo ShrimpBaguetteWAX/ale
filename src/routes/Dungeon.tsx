@@ -71,7 +71,8 @@ import {
   type Detail,
   type Tab,
 } from '@/fight/setup'
-import { playDungeon } from '@/wharf/actions'
+import { DIRTIES, playDungeon } from '@/wharf/actions'
+import { settle } from '@/wharf/settle'
 import { readableError } from '@/wharf/errors'
 import { asset } from '@/assets'
 import { FighterStats } from '@/components/FighterPanel'
@@ -470,6 +471,13 @@ export default function Dungeon() {
         if (row) {
           rememberFight(row, 'dungeon')
           void refreshPlayer({ force: true })
+          /*
+             The fight is on chain: XP, cooldowns and quest progress all
+             moved. This screen waits on the fight row rather than through
+             `useAction`, so nothing was dropping what the run changed and no
+             indicator heard about it.
+          */
+          settle(DIRTIES.playDungeon)
           navigate(`/battle/${historyId}`)
           return
         }

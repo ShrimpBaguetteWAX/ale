@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useGame } from '@/state/useGame'
-import { refreshChore } from '@/chores/signal'
-import { choresFor, type ChoreKey } from '@/chores/checks'
+import { wakeChores } from '@/wharf/settle'
 import { readableError } from '@/wharf/errors'
 import { announceTableDrop, cacheDropTable, type TableKey } from '@/chain/tables'
 import { confirmThen, CONFIRM_ATTEMPTS, CONFIRM_INTERVAL_MS } from '@/chain/confirm'
@@ -246,14 +245,7 @@ export function useAction(): ActionState {
            board it already has and compares it against the fresh player. No
            request, and a dot that is right immediately.
         */
-        const seen = new Set<ChoreKey>()
-        for (const table of dirties ?? []) {
-          for (const chore of choresFor(table)) {
-            const force = table !== 'player'
-            if (force || !seen.has(chore.key)) refreshChore(chore.key, force)
-            seen.add(chore.key)
-          }
-        }
+        wakeChores(dirties ?? [])
 
         await onSettled?.()
         if (!alive.current) return

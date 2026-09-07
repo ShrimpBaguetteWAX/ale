@@ -5,12 +5,14 @@ import { GameLogo } from '@/components/GameLogo'
 import { SwitchWallet } from '@/components/SwitchWallet'
 import { readableError } from '@/wharf/errors'
 import {
+  DIRTIES,
   PLAYERTAG_MAX,
   PLAYERTAG_MIN,
   paySignupFee,
   signup,
   validatePlayertag,
 } from '@/wharf/actions'
+import { settle } from '@/wharf/settle'
 import { fetchSignupStat } from '@/chain/queries'
 import { NUM_LOCALE } from '@/format'
 import { asset } from '@/assets'
@@ -69,6 +71,7 @@ export default function Signup() {
         if (stat) break
       }
       await refreshPlayer({ force: true })
+      settle(DIRTIES.paySignupFee)
     } catch (err) {
       setError(readableError(err))
     } finally {
@@ -91,6 +94,7 @@ export default function Signup() {
         await refreshPlayer({ force: true })
         if (useGame.getState().player) break
       }
+      settle(DIRTIES.signup)
     } catch (err) {
       setError(readableError(err))
     } finally {

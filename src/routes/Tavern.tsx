@@ -46,7 +46,13 @@ import { fetchRoster } from '@/dungeon/queries'
 import { useChainQuery } from '@/chain/useChainQuery'
 import { useConfig, useLazyConfig } from '@/state/useConfig'
 import { MARKERS, markerIcon } from '@/dungeon/filters'
-import { hireFighter, revealFighter, setFighterMarker } from '@/wharf/actions'
+import {
+  DIRTIES,
+  hireFighter,
+  revealFighter,
+  setFighterMarker,
+} from '@/wharf/actions'
+import { settle } from '@/wharf/settle'
 import { readableError } from '@/wharf/errors'
 import { asset } from '@/assets'
 import { GameImg } from '@/components/GameImg'
@@ -487,6 +493,7 @@ export default function Tavern() {
         const f = useGame.getState().player?.last_tavern_fighter
         if (f && f.level > 0) break
       }
+      settle(DIRTIES.revealFighter)
       setNotice('A new recruit steps forward.')
     } catch (err) {
       setError(readableError(err))
@@ -550,6 +557,10 @@ export default function Tavern() {
         if (!useGame.getState().player?.last_tavern?.land_id) break
       }
 
+      /* The roster and the player row both moved, and this screen does its
+         own confirming rather than going through `useAction`. */
+      settle(DIRTIES.hireFighter)
+
       if (!marker || !before) {
         setNotice('Recruit hired. They have joined your roster.')
         return
@@ -577,6 +588,7 @@ export default function Tavern() {
         }
 
         await setFighterMarker(session, hired, marker)
+        settle(DIRTIES.setFighterMarker)
         setMarker('')
         setNotice(`Recruit hired and marked ${marker}.`)
       } catch (err) {

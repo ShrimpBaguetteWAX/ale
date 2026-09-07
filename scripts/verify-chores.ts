@@ -20,6 +20,7 @@ import {
   type ChoreKey,
 } from '../src/chores/checks'
 import { DIRTIES } from '../src/wharf/actions'
+import { readdirSync, readFileSync } from 'node:fs'
 import { cacheDrop } from '../src/chain/cache'
 import { onChoreRefresh, refreshChore } from '../src/chores/signal'
 import type { Player } from '../src/chain/types'
@@ -478,6 +479,40 @@ function signal() {
     (a) => !DIRTIES[a].some((t) => choresFor(t).some((c) => c.key === 'quests')),
   )
   check('the quest dot is woken from other sections', blind, [])
+
+  /*
+     And every screen that signs actually does the settling.
+
+     `useAction` does it for the screens that sign through it. Six do not:
+     a travel plays a wormhole over the top of its own confirmation, a
+     dungeon and an arena play a fight, and that choreography cannot be
+     timed by a generic hook. They kept their own loops -- and quietly kept
+     none of the bookkeeping, so `DIRTIES` named what a travel changed and
+     nothing read it. Walking somewhere completed a quest and the dot
+     stayed dark.
+
+     Checking the sources rather than the behaviour is deliberate: the
+     failure is a screen that signs and forgets, which no runtime test on
+     the screens that did remember would ever see.
+  */
+  const signing = readdirSync(new URL('../src/routes', import.meta.url))
+    .filter((f) => f.endsWith('.tsx'))
+    .map((f) => ['src/routes/' + f, readFileSync(new URL('../src/routes/' + f, import.meta.url), 'utf8')] as const)
+    .filter(([, src]) => src.includes("from '@/wharf/actions'"))
+    /* Only the ones that actually await something out of that import --
+       a file that takes just `DIRTIES` or a validator signs nothing. */
+    .filter(([, src]) => {
+      const named = src.match(/import \{([^}]*)\} from '@\/wharf\/actions'/s)?.[1] ?? ''
+      return named
+        .split(',')
+        .map((n) => n.trim())
+        .filter((n) => /^[a-z]/.test(n))
+        .some((n) => src.includes('await ' + n + '('))
+    })
+  const forgot = signing
+    .filter(([, src]) => !src.includes("from '@/wharf/useAction'") && !src.includes('settle('))
+    .map(([f]) => f)
+  check('every screen that signs settles what it changed', forgot, [])
 }
 
 async function main() {

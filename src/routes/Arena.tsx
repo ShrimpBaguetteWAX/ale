@@ -67,7 +67,8 @@ import {
   type Tab,
 } from '@/fight/setup'
 import { fieldedStats, levelFactor, ageFactor } from '@/fight/scaling'
-import { playArena } from '@/wharf/actions'
+import { DIRTIES, playArena } from '@/wharf/actions'
+import { settle } from '@/wharf/settle'
 import { readableError } from '@/wharf/errors'
 import { asset } from '@/assets'
 import { FighterStats } from '@/components/FighterPanel'
@@ -470,6 +471,9 @@ export default function Arena() {
         if (row) {
           rememberFight(row, 'arena')
           void refreshPlayer({ force: true })
+          /* As the dungeon: the fight is on chain, and this screen waits on
+             the fight row rather than through `useAction`. */
+          settle(DIRTIES.playArena)
           navigate(`/battle/${historyId}`)
           return
         }

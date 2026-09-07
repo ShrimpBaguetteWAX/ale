@@ -32,7 +32,8 @@ import { dungeonMaintained } from '@/dungeon/rules'
 import { arenaMaintained } from '@/arena/rules'
 import { fetchCapturedArenas, type CapturedArena } from '@/arena/queries'
 import { useGame } from '@/state/useGame'
-import { travelVia } from '@/wharf/actions'
+import { DIRTIES, travelVia } from '@/wharf/actions'
+import { settle } from '@/wharf/settle'
 import { PortalWarp, WARP_TOTAL_MS } from '@/map/PortalWarp'
 import { planetRoute } from '@/map/route'
 import { readableError } from '@/wharf/errors'
@@ -622,6 +623,20 @@ export default function MapView() {
           break
         }
       }
+
+      /*
+         The trip is on chain, so everything built on the player row is stale.
+
+         This screen does its own waiting — the wormhole has to be timed
+         against it — so it never went through `useAction` and none of this
+         happened. Quest progress is a lifetime counter on that row, so
+         finishing a quest by walking somewhere left the dot dark until the
+         chore's own three-minute timer came round.
+
+         Only the player row is dropped, which is all a travel changes, so
+         nothing here disturbs the trip that is still playing out below.
+      */
+      settle(DIRTIES.travelVia)
 
       if (gate && arrived) {
         setJump(gate)
