@@ -840,10 +840,63 @@
 .nftcard__rarity--legendary { color: #ffb800; }
 .nftcard__rarity--mythical { color: #d30e46; }
 
+/*
+ * Wider than the tavern's tiles, which is where `.cardgrid` gets its 96px.
+ *
+ * A card grants eleven numbers and an ability, and at 96px the tile could
+ * hold two of them. This is the width at which the five bonuses sit two-up
+ * and the ability's name fits on one line.
+ */
+.cardgrid--nft {
+  grid-template-columns: repeat(auto-fill, minmax(178px, 1fr));
+}
+
 .nftcard__stats {
   font-size: 10px;
   color: var(--text-dim);
   font-variant-numeric: tabular-nums;
+}
+
+/*
+ * What the card grants, two to a row.
+ *
+ * Icons rather than labels: the same five marks the roster and the market
+ * use for these stats, so nothing new has to be learnt to read a card, and
+ * "DMG"/"HP"/"CD" would cost more width than the figures do.
+ */
+.nftcard__figs,
+.nftcard__res {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px var(--sp-2);
+  width: 100%;
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-dim);
+}
+
+/* Six of them, so three across rather than two. */
+.nftcard__res {
+  grid-template-columns: repeat(3, 1fr);
+  margin-top: 2px;
+  padding-top: 3px;
+  border-top: 1px solid var(--line-soft);
+  color: var(--text-faint);
+}
+
+.nftcard__fig {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 3px;
+  min-width: 0;
+  line-height: 1.25;
+  white-space: nowrap;
+}
+.nftcard__fig img {
+  flex: none;
+  object-fit: contain;
+  opacity: 0.75;
 }
 
 .nftcard__element {
@@ -853,6 +906,27 @@
   font-size: 10px;
   text-transform: capitalize;
   color: var(--text-faint);
+}
+
+/*
+ * The ability by name, in its own rarity's colour — the same pip colour the
+ * roster and the tavern give it, so the card and the panel agree about what
+ * a Legendary looks like.
+ */
+.nftcard__ability {
+  display: block;
+  width: 100%;
+  padding: 2px 6px;
+  border-radius: var(--radius-xs);
+  border-left: 3px solid var(--pip, #b79dff);
+  background: rgb(255 255 255 / 5%);
+  font-size: 10px;
+  line-height: 1.25;
+  text-align: left;
+  color: var(--white);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .nftcard__abilities {

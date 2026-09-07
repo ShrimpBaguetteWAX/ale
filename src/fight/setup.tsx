@@ -44,6 +44,9 @@ import {
   fighterArt,
   fighterArtFallback,
   formatScaled,
+  abilityColor,
+  abilityName,
+  RESISTANCE_FIELDS,
   type ClassTemplate,
   type StatGrade,
 } from '@/tavern/fighterStats'
@@ -73,6 +76,22 @@ export const POLL_INTERVAL_MS = 700
 export type Tab = 'fighters' | 'crew' | 'weapon'
 
 export const mid = (min: number, max: number) => Math.round((min + max) / 2)
+
+/**
+ * What a crew or weapon card grants, in the roster's own order.
+ *
+ * Damage and health first because they are what a player compares, then the
+ * two timers and taunt. Every card carries all five — a card is a bundle of
+ * bonuses rather than a fighter, so there is no such thing as one it does not
+ * touch.
+ */
+const NFT_STATS: [string, string][] = [
+  ['damage', 'Damage'],
+  ['health', 'Health'],
+  ['attackspeed', 'Cooldown'],
+  ['initiative', 'Wind-up'],
+  ['taunt', 'Taunt'],
+]
 
 /** Element icons live alongside the resistance icons the panel already uses. */
 export const elementIcon = (element: string) =>
@@ -1793,7 +1812,7 @@ export function CardGrid({
       {shown.length === 0 ? (
         <p className="faint">No cards match those filters.</p>
       ) : (
-        <div className="cardgrid">
+        <div className="cardgrid cardgrid--nft">
           {shown.map((c) => {
             const v = values.get(c.template_id)!
             const abilities = v.ability?.length ?? 0
@@ -1821,10 +1840,49 @@ export function CardGrid({
                     {v.rarity}
                     {v.shine && v.shine !== 'stone' ? ` · ${v.shine}` : ''}
                   </span>
-                  <span className="nftcard__stats mono">
-                    +{formatScaled(v.stats.damage)} DMG · +{formatScaled(v.stats.health)} HP
+                  {/*
+                    Everything the card grants, not two of it.
+
+                    A crew or weapon card adds to five stats and six
+                    resistances, and the tile printed damage and health. Two
+                    cards that read "+15 DMG · +32 HP" here can differ by
+                    ninety points of cooldown, which decides how often the
+                    sixth fighter swings at all. Same icons and the same
+                    order the roster and the market use.
+                  */}
+                  <span className="nftcard__figs mono">
+                    {NFT_STATS.map(([field, label]) => (
+                      <span className="nftcard__fig" key={field} title={label}>
+                        <img src={statIcon(field)} alt="" width={12} height={12} />
+                        +{formatScaled(v.stats[field as keyof typeof v.stats] as number)}
+                      </span>
+                    ))}
                   </span>
-                  {v.element && (
+
+                  <span className="nftcard__res">
+                    {RESISTANCE_FIELDS.map((field) => {
+                      const el = field.slice(4)
+                      return (
+                        <span className="nftcard__fig" key={field} title={`${el} resistance`}>
+                          <img
+                            src={asset(`/assets/icons/elements/${el}.png`)}
+                            alt=""
+                            width={12}
+                            height={12}
+                          />
+                          +{formatScaled(v.stats[field as keyof typeof v.stats] as number)}%
+                        </span>
+                      )
+                    })}
+                  </span>
+
+                  {/*
+                    The element belongs to the weapon alone: it is what the
+                    sixth fighter's damage counts as, and `combineNftFighter`
+                    takes it from the weapon. On a crew card it was a fact
+                    about the card that changes nothing about the fight.
+                  */}
+                  {kind === 'weapon' && v.element && (
                     <span className="nftcard__element">
                       <img
                         src={asset(`/assets/icons/elements/${v.element}.png`)}
@@ -1835,10 +1893,26 @@ export function CardGrid({
                       {v.element}
                     </span>
                   )}
-                  {abilities > 0 && (
-                    <span className="nftcard__abilities">
-                      {abilities} {abilities === 1 ? 'ability' : 'abilities'}
+
+                  {/*
+                    The ability by name, rather than a count of them.
+
+                    "1 ability" is true of very nearly every card in the
+                    wallet, so it sorted nothing; the name is the whole of
+                    what distinguishes two cards of the same rarity.
+                  */}
+                  {v.ability?.slice(0, 2).map((a, i) => (
+                    <span
+                      className="nftcard__ability"
+                      key={`${a.displayname}-${i}`}
+                      style={{ '--pip': abilityColor(a.displayname) } as React.CSSProperties}
+                      title={abilityName(a.displayname)}
+                    >
+                      {abilityName(a.displayname)}
                     </span>
+                  ))}
+                  {abilities > 2 && (
+                    <span className="nftcard__abilities">+{abilities - 2} more</span>
                   )}
                   {c.owned > 1 && <span className="cardtile__count">×{c.owned}</span>}
                 </button>
