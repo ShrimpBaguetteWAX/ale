@@ -4,6 +4,7 @@ import { refreshChore } from '@/chores/signal'
 import type { ChoreKey } from '@/chores/checks'
 import { readableError } from '@/wharf/errors'
 import { cacheDropTable, type TableKey } from '@/chain/tables'
+import { confirmThen, CONFIRM_ATTEMPTS, CONFIRM_INTERVAL_MS } from '@/chain/confirm'
 
 /**
  * Signing something, and everything that has to happen around it.
@@ -66,14 +67,32 @@ export interface RunOptions<T> {
 }
 
 /**
- * Six of the seven screens waited five or six times at 900ms. The difference
- * was not a decision either of them made, so it is one number now — the
- * longer of the two, because the cost of waiting one beat too long is a
- * spinner and the cost of stopping one beat too early is a screen that says
- * the action did nothing.
+ * What the player's own numbers look like right now.
+ *
+ * The default answer to "has the chain caught up", and it needs no help from
+ * the caller: almost everything a player signs moves one of these. A payday
+ * spends credits, a dungeon spends energy, a claim adds to a balance, a
+ * travel spends action points.
+ *
+ * `action_point_update` is left out on purpose. It is the bookkeeping
+ * timestamp behind the points rather than a number anyone is shown, and
+ * watching it would mean confirming on a write that changed nothing the
+ * player asked for.
  */
-const ATTEMPTS = 6
-const INTERVAL_MS = 900
+function playerFigures(): string | null {
+  const s = useGame.getState().player?.activestats
+  if (!s) return null
+  return [
+    s.credits,
+    s.gems,
+    s.action_points,
+    s.unclaimed_gems,
+    s.unclaimed_credits,
+    s.unclaimed_shards,
+    s.unclaimed_tlm,
+    s.unclaimed_wax,
+  ].join('|')
+}
 
 export interface ActionState {
   /**
@@ -131,8 +150,8 @@ export function useAction(): ActionState {
         chore,
         dirties,
         onSettled,
-        attempts = ATTEMPTS,
-        intervalMs = INTERVAL_MS,
+        attempts = CONFIRM_ATTEMPTS,
+        intervalMs = CONFIRM_INTERVAL_MS,
       } = opts
 
       setBusy(key)
@@ -153,21 +172,36 @@ export function useAction(): ActionState {
         for (const table of dirties ?? []) cacheDropTable(table)
 
         /*
-           The chain is asked repeatedly rather than once.
+           Wait for the chain, and stop as soon as it has caught up.
 
-           `transact` resolving means the transaction was accepted, not that
-           the node being read has the block yet. An empty or unchanged answer
-           here is "not yet", never "gone" — which is why the loop keeps
-           going rather than showing what it read.
+           What counts as caught up is the caller's `settled` where it has
+           one — the quest board no longer holding the quest that was just
+           claimed is a better signal than any balance. Where it has none,
+           the player's own figures are the signal, and they need no help:
+           almost everything a player signs spends or gains something.
+
+           An action that moves neither — setting a marker, renaming an
+           avatar — has nothing to watch, so it waits out the full count
+           exactly as it did before. That is the floor, not the common case.
         */
-        for (let i = 0; i < attempts; i++) {
-          await new Promise((r) => setTimeout(r, intervalMs))
-          const [fresh] = await Promise.all([
-            after ? after() : Promise.resolve(undefined as T),
-            refreshPlayer({ force: true }),
-          ])
-          if (settled && after && settled(fresh as T)) break
-        }
+        const before = playerFigures()
+        await confirmThen<T>(
+          async () => {
+            const [fresh] = await Promise.all([
+              after ? after() : Promise.resolve(undefined as T),
+              refreshPlayer({ force: true }),
+            ])
+            return fresh as T
+          },
+          (fresh) => {
+            if (settled && after) return settled(fresh)
+            const now = playerFigures()
+            /* A read that came back without a player row is the node not
+               having answered properly, which is "not yet". */
+            return now !== null && now !== before
+          },
+          { attempts, intervalMs },
+        )
 
         await onSettled?.()
         if (!alive.current) return

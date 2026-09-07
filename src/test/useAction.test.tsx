@@ -121,6 +121,91 @@ describe('useAction', () => {
     expect(fetchCalls(), 'a failed action should leave the cache alone').toBe(seeded)
   })
 
+  it('stops the moment the player figures move', async () => {
+    /*
+       What the waiting used to cost, and what it costs now.
+
+       Six rounds regardless, whether the chain answered on the first or
+       never — a payday that landed immediately still left every button on
+       the screen dead for five more seconds. Here the balance moves on the
+       first re-read, and the wait ends there.
+    */
+    let credits = 100
+    useGame.setState({
+      player: { activestats: { credits } } as never,
+      refreshPlayer: async () => {
+        credits += 25
+        useGame.setState({ player: { activestats: { credits } } as never })
+      },
+    } as never)
+
+    let reads = 0
+    const { result } = renderHook(() => useAction())
+    await act(async () => {
+      await result.current.run('pay', async () => {}, 'Paid.', {
+        after: async () => {
+          reads++
+        },
+        intervalMs: 0,
+      })
+    })
+
+    expect(reads, 'one round, not six').toBe(1)
+  })
+
+  it('waits out the budget when nothing it can watch moves', async () => {
+    /*
+       Setting a marker spends nothing and gains nothing, so there is no
+       figure to watch and no honest way to stop early. It costs what it
+       always cost — the floor, not the common case.
+    */
+    useGame.setState({
+      player: { activestats: { credits: 100 } } as never,
+      refreshPlayer: async () => {},
+    } as never)
+
+    let reads = 0
+    const { result } = renderHook(() => useAction())
+    await act(async () => {
+      await result.current.run('mark', async () => {}, 'Marked.', {
+        after: async () => {
+          reads++
+        },
+        attempts: 4,
+        intervalMs: 0,
+      })
+    })
+
+    expect(reads).toBe(4)
+  })
+
+  it('does not blame the player for a read that failed after a good signature', async () => {
+    /*
+       The signature was accepted. A node that then fails to answer is not
+       the player's problem and must not be reported as one — before this,
+       a single failed re-read turned a successful action into an error
+       banner and no notice at all.
+    */
+    useGame.setState({
+      player: { activestats: { credits: 100 } } as never,
+      refreshPlayer: async () => {},
+    } as never)
+
+    const { result } = renderHook(() => useAction())
+    await act(async () => {
+      await result.current.run('claim', async () => {}, 'Claimed.', {
+        after: async () => {
+          throw new Error('HTTP 503')
+        },
+        attempts: 2,
+        intervalMs: 0,
+      })
+    })
+
+    expect(result.current.error).toBeNull()
+    expect(result.current.notice).toBe('Claimed.')
+  })
+
   it('reports the failure and puts the button back', async () => {
     const { result } = renderHook(() => useAction())
     await act(async () => {
