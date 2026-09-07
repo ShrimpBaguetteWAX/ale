@@ -94,6 +94,15 @@ const NFT_STATS: [string, string][] = [
   ['taunt', 'Taunt'],
 ]
 
+/** Which face of a card is showing. */
+type CardView = 'stats' | 'res' | 'ability'
+
+const CARD_VIEWS: [CardView, string][] = [
+  ['stats', 'Stats'],
+  ['res', 'Res'],
+  ['ability', 'Ability'],
+]
+
 /** Element icons live alongside the resistance icons the panel already uses. */
 export const elementIcon = (element: string) =>
   asset("/assets/icons/elements/") + (element || "neutral") + ".png"
@@ -1704,6 +1713,8 @@ export function CardGrid({
 }) {
   const [rarity, setRarity] = useState('')
   const [element, setElement] = useState('')
+  /* Which face every card shows, until one is turned over on its own. */
+  const [view, setView] = useState<CardView>('stats')
   /* Best cards first, which is the order a player looks for them in. */
   const [sort, setSort] = useState<'damage' | 'health' | 'rarity'>('rarity')
 
@@ -1793,6 +1804,30 @@ export function CardGrid({
             </select>
           </label>
 
+          {/*
+            One readout for every card at once, as on the roster.
+
+            Comparing thirty cards on cooldown is what this grid is for, and
+            per-card tabs make that thirty taps. A card can still be flipped
+            on its own; the next change here brings them all back into step.
+          */}
+          <div className="field field--tabs">
+            <span className="field__label">Show</span>
+            <div className="showtabs" role="group" aria-label="Readout">
+              {CARD_VIEWS.map(([key, label]) => (
+                <button
+                  type="button"
+                  key={key}
+                  className="showtabs__btn"
+                  aria-pressed={view === key}
+                  onClick={() => setView(key)}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+
           <label className="field field--grow">
             <span className="field__label">Name</span>
             <input
@@ -1821,6 +1856,7 @@ export function CardGrid({
               value={values.get(c.template_id)!}
               kind={kind}
               picked={selected?.template_id === c.template_id}
+              view={view}
               onPick={() => onPick(c)}
               onInspect={() => onInspect(c)}
             />
@@ -1845,6 +1881,7 @@ function NftCard({
   value: v,
   kind,
   picked,
+  view,
   onPick,
   onInspect,
 }: {
@@ -1852,10 +1889,15 @@ function NftCard({
   value: NftValue
   kind: 'crew' | 'weapon'
   picked: boolean
+  /** What the grid is showing; a card can be turned over on its own. */
+  view: CardView
   onPick: () => void
   onInspect: () => void
 }) {
-  const [tab, setTab] = useState<'stats' | 'res' | 'ability'>('stats')
+  const [override, setOverride] = useState<CardView | null>(null)
+  /* The next change to the shared view takes every card back into step. */
+  useEffect(() => setOverride(null), [view])
+  const tab = override ?? view
   const abilities = v.ability ?? []
 
   return (
@@ -1896,18 +1938,14 @@ function NftCard({
         mis-tap away from putting it in the fight.
       */}
       <div className="nftcard__tabs" role="tablist">
-        {([
-          ['stats', 'Stats'],
-          ['res', 'Res'],
-          ['ability', 'Ability'],
-        ] as const).map(([key, label]) => (
+        {CARD_VIEWS.map(([key, label]) => (
           <button
             type="button"
             key={key}
             role="tab"
             aria-selected={tab === key}
             className="nftcard__tab"
-            onClick={() => setTab(key)}
+            onClick={() => setOverride(key)}
           >
             {label}
           </button>
