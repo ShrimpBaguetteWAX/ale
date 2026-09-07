@@ -16,6 +16,7 @@ import {
   useLocation,
 } from 'react-router-dom'
 import { AppShell } from './components/layout/AppShell'
+import { Loading } from './components/Loading'
 import { useGame } from './state/useGame'
 import { Landing } from './routes/Landing'
 import { Connect } from './routes/Connect'
@@ -151,17 +152,8 @@ const Market = lazyScreen(() => import('./routes/Market'))
 const Battle = lazyScreen(() => import('./routes/Battle'))
 const ComingSoon = lazyScreen(() => import('./routes/ComingSoon'))
 
-function Loading({ label = 'Loading' }: { label?: string }) {
-  return (
-    <div
-      className="row"
-      style={{ justifyContent: 'center', padding: 'var(--sp-20)', gap: 'var(--sp-3)' }}
-    >
-      <span className="spinner" />
-      <span className="muted">{label}…</span>
-    </div>
-  )
-}
+/* Lives in its own module so a screen can hold it up past its own load. */
+
 
 /**
  * Gate for the in-game routes: a wallet must be connected and that wallet must

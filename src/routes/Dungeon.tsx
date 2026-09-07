@@ -60,6 +60,7 @@ import {
   type ClassTemplate,
 } from '@/tavern/fighterStats'
 import { useImagesReady } from '@/components/useImagesReady'
+import { Loading } from '@/components/Loading'
 import {
   CardGrid,
   CardSlot,
@@ -641,6 +642,23 @@ export default function Dungeon() {
     fighters: roster?.length ?? 0,
     crew: usableCrew.length,
     weapon: usableWeapons.length,
+  }
+
+  /*
+     Nothing is shown until there is something to show.
+
+     Everything this screen needs arrives in one `Promise.all`, but the frame
+     around it does not wait: the difficulty ladder, the empty slots, the
+     picker tabs reading "Fighters 0 · Crew 0 · Weapons 0" and both teams at
+     "0 DMG · 0 HP" were all on screen while the roster was still in flight.
+     That reads as a screen that has loaded wrongly rather than one still
+     loading. The spinner the route arrives behind simply stays up until the
+     data and the defenders' artwork are both in.
+
+     An error is its own answer and comes out from behind it.
+  */
+  if (!error && !(roster && cardsLoaded && enemyTeam && enemyArtReady)) {
+    return <Loading label="Entering the dungeon" />
   }
 
   return (

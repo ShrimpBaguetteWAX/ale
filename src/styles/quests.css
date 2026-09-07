@@ -235,12 +235,23 @@
 
 /* ---------- body ---------- */
 
+/*
+ * A column with the slack in the description, so the foot of every card
+ * lines up.
+ *
+ * The cards are already equal height — the grid stretches them — but the
+ * contents stacked from the top, so a one-line quest put its reward, its bar
+ * and its Claim button a line higher than the two-line quest beside it. The
+ * description is the only part whose height varies, so it is the part that
+ * absorbs the difference.
+ */
 .qcard__body {
-  display: grid;
-  align-content: start;
+  display: flex;
+  flex-direction: column;
   gap: var(--sp-2);
   padding: var(--sp-3) var(--sp-4) var(--sp-4);
 }
+
 
 .qcard__title {
   margin: 0;
@@ -253,6 +264,9 @@
 }
 
 .qcard__desc {
+  /* Takes the slack, so everything under it sits at the same height on
+     every card in the row. See `.qcard__body`. */
+  flex: 1 0 auto;
   margin: 0;
   font-size: var(--fs-md);
   line-height: 1.4;
