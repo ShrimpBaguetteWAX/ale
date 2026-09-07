@@ -4,6 +4,7 @@ import { fetchBattleConfig, fetchClassTemplates, fetchRoster } from '@/dungeon/q
 import { fetchFighterLevels, fetchFightersConfig } from '@/fighters/queries'
 import type { FighterLevel, FightersConfig } from '@/fighters/types'
 import { battleFactor } from '@/fighters/rules'
+import { levelFactor } from '@/fight/scaling'
 import { Cost, FighterCard } from './Fighters'
 import { PickCard, PickViewSwitch, type PickView } from '@/fight/setup'
 import type { RosterFighter } from '@/dungeon/types'
@@ -38,10 +39,6 @@ import {
 } from '@/wharf/actions'
 import { readableError } from '@/wharf/errors'
 import type { ClassTemplate } from '@/tavern/fighterStats'
-import {
-  fighterArtFallback,
-  fighterAvatar,
-} from '@/tavern/fighterStats'
 import { formatNumber } from '@/format'
 
 /**
@@ -187,6 +184,11 @@ export default function Ascension() {
     () => roster.filter((f) => canAscend(f, config).ok),
     [roster, config],
   )
+
+  /* The level every ascending fighter is at — `check(level == min_ascension
+     _level)` is equality, so it is the one level the odds table ever
+     describes. 10 while the config is still loading. */
+  const ascendLevel = Number(config?.min_ascension_level) || 10
 
   const target = useMemo(
     () => roster.find((f) => f.fighter_id === targetId) ?? null,
@@ -347,16 +349,21 @@ export default function Ascension() {
 
       {/*
         Quoted for the fighter on screen: the one mid-ascension if there is
-        one, otherwise the one picked to ascend. With neither, the ranges are
-        the bare stored values and say so by naming nobody.
+        one, otherwise the one picked to ascend.
+
+        With neither, the level cap rather than the bare stored values. Only
+        a fighter at the cap can be ascended at all, so every fighter this
+        table will ever apply to is at that level — quoting health and damage
+        at level 1 until somebody is picked showed a quarter of the real
+        figure, and showed it to exactly the player still deciding whether
+        the errand is worth doing.
       */}
       <OddsPanel
         odds={odds}
-        forFighter={pending ?? target ?? undefined}
         factor={
           pending ?? target
             ? battleFactor((pending ?? target)!, levelMod, ageDecay).total
-            : 1
+            : levelFactor(ascendLevel, levelMod)
         }
       />
     </div>
@@ -444,6 +451,10 @@ function Builder({
             label="Ascending"
             hint="A fighter at the level cap"
             fighter={target}
+            role="ascending"
+            view={view}
+            ageDecay={ageDecay}
+            levelMod={levelMod}
             active={tab === 'target'}
             onClick={() => onTab('target')}
           />
@@ -455,6 +466,10 @@ function Builder({
               fighter={
                 chosenFighters.find((f) => f.fighter_id === slots[r.key]) ?? null
               }
+              role="sacrifice"
+              view={view}
+              ageDecay={ageDecay}
+              levelMod={levelMod}
               active={tab === r.key}
               disabled={!target}
               onClick={() => target && onTab(r.key)}
@@ -591,10 +606,26 @@ function Builder({
 }
 
 /** One of the four things being chosen, filled or still waiting. */
+/**
+ * One of the four things being chosen, filled or still waiting.
+ *
+ * Filled, it is the picker's own card — the same one the grid below is being
+ * chosen from, so a fighter does not change shape between being considered
+ * and being committed, and the stats that made it the right choice are still
+ * on screen when the plan is reviewed.
+ *
+ * What the card cannot say on its own is which part it is playing. Three of
+ * these four are destroyed to improve the fourth, and that is not a
+ * distinction to leave to the small label above them.
+ */
 function AscSlot({
   label,
   hint,
   fighter,
+  role,
+  view,
+  ageDecay,
+  levelMod,
   active,
   disabled = false,
   onClick,
@@ -602,47 +633,61 @@ function AscSlot({
   label: string
   hint: string
   fighter: RosterFighter | null
+  /** Which end of the trade this slot is. */
+  role: 'ascending' | 'sacrifice'
+  view: PickView
+  ageDecay: number
+  levelMod: number
   active: boolean
   disabled?: boolean
   onClick: () => void
 }) {
   return (
-    <button
-      type="button"
+    <div
       className={
-        'ascslot' +
+        `ascslot ascslot--${role}` +
         (fighter ? ' ascslot--filled' : '') +
         (active ? ' ascslot--active' : '')
       }
-      disabled={disabled}
-      onClick={onClick}
-      title={hint}
     >
-      <span className="ascslot__label">{label}</span>
+      <span className="ascslot__label">
+        {label}
+        <em className="ascslot__role">
+          {role === 'ascending' ? 'keeps the upgrade' : 'destroyed'}
+        </em>
+      </span>
       {fighter ? (
-        <span className="ascslot__who">
-          <img
-            className="ascslot__art"
-            src={fighterAvatar(fighter)}
-            alt=""
-            loading="lazy"
-            onError={(e) => {
-              const img = e.currentTarget
-              if (img.dataset.fallback) return
-              img.dataset.fallback = '1'
-              img.src = fighterArtFallback()
-            }}
-          />
-          <span className="ascslot__name">
-            {fighter.racename} {fighter.classname}
-          </span>
-        </span>
+        <PickCard
+          fighter={fighter}
+          ageDecay={ageDecay}
+          levelMod={levelMod}
+          view={view}
+          picked={false}
+          variant={role}
+          banner={role === 'ascending' ? 'Improved' : 'Sacrificed'}
+          tick={role === 'ascending' ? 'Gains the upgrade' : 'Spent for good'}
+          hint={
+            role === 'ascending'
+              ? 'Choose a different fighter to ascend'
+              : 'Choose a different sacrifice'
+          }
+          onClick={onClick}
+        />
       ) : (
-        <span className="ascslot__empty">
-          {disabled ? 'Pick a fighter first' : 'Not chosen'}
-        </span>
+        <button
+          type="button"
+          className="ascslot__empty"
+          disabled={disabled}
+          onClick={onClick}
+          title={hint}
+        >
+          <span className="ascslot__plus" aria-hidden="true">
+            +
+          </span>
+          {disabled ? 'Pick a fighter first' : hint}
+        </button>
       )}
-    </button>
+    </div>
   )
 }
 
@@ -877,13 +922,10 @@ function OfferPanel({
 function OddsPanel({
   odds,
   factor,
-  forFighter,
 }: {
   odds: UpgradeOdds[]
   /** The fighter's level × age multiplier, applied to health and damage. */
   factor: number
-  /** Whose level the ranges are quoted at, for the line that says so. */
-  forFighter?: RosterFighter
 }) {
   const sorted = useMemo(
     () => [...odds].sort((a, b) => b.chance - a.chance),
@@ -907,13 +949,6 @@ function OddsPanel({
         What can be rolled
         <span className="oddspanel__count faint">{sorted.length} upgrades</span>
       </summary>
-      <p className="hint">
-        Every offer is drawn by weight: a category first, then an upgrade
-        inside it. Each of the three offers is rolled independently.
-        {forFighter
-          ? ` Ranges are what a roll would be worth to your level ${forFighter.stats.level} ${forFighter.classname}.`
-          : ''}
-      </p>
       <div className="oddslist">
         {sorted.map((u) => {
           const positive = !!u.positive_min_max

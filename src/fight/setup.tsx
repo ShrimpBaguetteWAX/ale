@@ -1511,6 +1511,8 @@ export function PickCard({
   blockedNote,
   tick,
   hint,
+  variant,
+  banner,
   view = 'combat',
   onClick,
   onInspect,
@@ -1534,6 +1536,15 @@ export function PickCard({
   /** What being picked means here — "In team", "Sacrifice", "Ascending". */
   tick?: string
   hint?: string
+  /**
+   * A part this card has already been cast in, rather than a candidate for
+   * one. A picked card in a grid is a choice that can be changed; a card
+   * standing in an ascension's slots is a fighter about to be improved or
+   * about to be destroyed, and the two must not look alike.
+   */
+  variant?: 'ascending' | 'sacrifice'
+  /** One word across the portrait, for those cards. */
+  banner?: string
   onClick: () => void
   onInspect?: () => void
 }) {
@@ -1560,7 +1571,8 @@ export function PickCard({
       className={
         'fightercard' +
         (picked ? ' fightercard--picked' : '') +
-        (blocked ? ' fightercard--off' : '')
+        (blocked ? ' fightercard--off' : '') +
+        (variant ? ` fightercard--${variant}` : '')
       }
     >
       <button
@@ -1570,7 +1582,12 @@ export function PickCard({
         disabled={blocked}
         title={hint}
       >
-        <Portrait element={f.element} classname={f.classname} racename={f.racename} />
+        <span className="fightercard__portrait">
+          <Portrait element={f.element} classname={f.classname} racename={f.racename} />
+          {/* Across the art, not under the name: what is about to happen to
+              this fighter has to be read before its stats are. */}
+          {banner && <span className="fightercard__banner">{banner}</span>}
+        </span>
         <span className="fightercard__name">{f.classname}</span>
         <span className="fightercard__meta">
           {f.racename}
