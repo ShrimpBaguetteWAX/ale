@@ -304,33 +304,87 @@ describe('useAction', () => {
     expect(heard).toEqual(['quests'])
   })
 
-  it('lights the dot the action belongs to, and no other', async () => {
+  it('lights the quest dot whatever the player happened to be doing', async () => {
     /*
-       The dot used to be named beside the action that had already said what
-       it dirtied — the same fact twice, and the pair drifted: Profile
-       refreshed the CPU dot after a mine and left the Rewards dot, the one
-       it had actually changed, to notice on its own timer.
+       Reported from the game: finish a quest and the indicator stays dark
+       unless you were standing in the section that finished it.
+
+       Quest progress is a lifetime counter on the player row, so almost
+       anything completes one -- a dungeon, an arena, a travel, a purchase, a
+       level-up, an ascension, a farm claim. The dot was only ever refreshed
+       by the section that acted, and no chore claims /dungeon or /arena, so
+       nothing marked it and it waited out its full three minutes.
+
+       Every action below is a different section of the game, which is the
+       whole point: the list is not the fix, the player row is.
     */
     useGame.setState({
       player: { activestats: { credits: 100 } } as never,
       refreshPlayer: async () => {},
     } as never)
 
-    const lit: string[] = []
-    const stop = onChoreRefresh((key) => lit.push(key))
+    const anywhere = [
+      'playDungeon',
+      'playArena',
+      'travel',
+      'buyShopItem',
+      'levelUpFighters',
+      'ascendFighter',
+      'claimFarming',
+      'claimLandRewards',
+    ] as const
+
+    for (const action of anywhere) {
+      const lit: string[] = []
+      const stop = onChoreRefresh((key) => lit.push(key))
+
+      const { result } = renderHook(() => useAction())
+      await act(async () => {
+        await result.current.run('go', async () => {}, 'Done.', {
+          dirties: DIRTIES[action],
+          attempts: 0,
+        })
+      })
+      stop()
+
+      expect(lit, action + ' should wake the quest dot').toContain('quests')
+    }
+  })
+
+  it('asks the chain again only for the dot whose own data it changed', async () => {
+    /*
+       The other half of it. Waking every dot the player row feeds would be
+       eight requests an action if each one went to the chain -- so only the
+       dot whose own table was dirtied is forced past the cache. The rest
+       re-read what they already hold and compare it against the player row
+       that was just refreshed, which is free.
+
+       Buying moves the shop's own cooldown rows, so Shop is forced. The
+       quest board has not moved, so Quests is woken without being forced --
+       it is asked because the purchase may have completed a quest, and the
+       player row it needs to see that has already been re-read.
+    */
+    useGame.setState({
+      player: { activestats: { credits: 100 } } as never,
+      refreshPlayer: async () => {},
+    } as never)
+
+    const lit: { key: string; force: boolean }[] = []
+    const stop = onChoreRefresh((key, force) => lit.push({ key, force }))
 
     const { result } = renderHook(() => useAction())
     await act(async () => {
-      await result.current.run('mine', async () => {}, 'Mined.', {
-        dirties: DIRTIES.mineRewardPool,
+      await result.current.run('buy', async () => {}, 'Bought.', {
+        dirties: DIRTIES.buyShopItem,
         attempts: 0,
       })
     })
     stop()
 
-    /* `player` is dirtied by almost everything and lights nothing — a table
-       with no dot is absent from the map rather than mapped to one. */
-    expect(lit).toEqual(['rewards'])
+    const forced = lit.filter((l) => l.force).map((l) => l.key)
+    expect(forced, 'only the section that was acted in').toEqual(['shop'])
+    expect(lit.map((l) => l.key), 'but the quest dot still gets asked')
+      .toContain('quests')
   })
 
   it('reports the failure and puts the button back', async () => {

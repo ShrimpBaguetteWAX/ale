@@ -67,6 +67,17 @@ export interface ChoreCheck {
   /** What the dot means, for the title attribute. */
   hint: string
   /**
+   * The tables this answer is built from.
+   *
+   * `player` is on nearly all of them and is the point: quest progress is a
+   * lifetime counter on the player row, so *any* action that advances one —
+   * a dungeon, an arena, a travel, a purchase, a level-up — can complete a
+   * quest. The dot never knew that. It was refreshed only by the section
+   * that acted, and nothing else, so finishing a quest by playing a dungeon
+   * left it dark for up to three minutes.
+   */
+  deps: readonly TableKey[]
+  /**
    * `force` bypasses the cache for the wallet-scoped reads.
    *
    * Set only when the player has just done something in this very section, so
@@ -88,6 +99,7 @@ export const CHORE_CHECKS: ChoreCheck[] = [
   */
   {
     key: 'shop',
+    deps: ['player', 'shopCooldowns'],
     to: '/shop',
     every: 3 * MIN,
     hint: 'Free energy is waiting',
@@ -118,6 +130,7 @@ export const CHORE_CHECKS: ChoreCheck[] = [
   */
   {
     key: 'fighters',
+    deps: ['player', 'fighters'],
     to: '/fighters',
     every: 3 * MIN,
     hint: 'A fighter is ready to level up',
@@ -137,6 +150,7 @@ export const CHORE_CHECKS: ChoreCheck[] = [
   */
   {
     key: 'quests',
+    deps: ['player', 'quests'],
     to: '/quests',
     every: 3 * MIN,
     hint: 'A quest is ready to claim',
@@ -152,6 +166,7 @@ export const CHORE_CHECKS: ChoreCheck[] = [
   */
   {
     key: 'candle',
+    deps: ['player', 'candleClaims'],
     to: '/candle',
     every: 10 * MIN,
     hint: 'You have winnings to claim',
@@ -171,6 +186,7 @@ export const CHORE_CHECKS: ChoreCheck[] = [
   */
   {
     key: 'lands',
+    deps: ['player', 'lands'],
     to: '/lands',
     every: 15 * MIN,
     hint: 'A building is running out of boost',
@@ -213,6 +229,7 @@ export const CHORE_CHECKS: ChoreCheck[] = [
   */
   {
     key: 'farming',
+    deps: ['player', 'farmUser'],
     to: '/farming',
     every: 10 * MIN,
     hint: 'A farming claim has hit its cap',
@@ -233,6 +250,7 @@ export const CHORE_CHECKS: ChoreCheck[] = [
   */
   {
     key: 'rewards',
+    deps: ['player'],
     to: '/rewards',
     every: MIN,
     hint: 'You can mine a reward pool',
@@ -255,6 +273,7 @@ export const CHORE_CHECKS: ChoreCheck[] = [
   */
   {
     key: 'account',
+    deps: ['player', 'cpuUsage'],
     to: '/profile',
     every: 5 * MIN,
     hint: 'Your free CPU allowance is running low',
@@ -270,26 +289,13 @@ export const CHORE_CHECKS: ChoreCheck[] = [
 ]
 
 /**
- * Which dot a table's staleness belongs to.
+ * Which dots a table's staleness could change.
  *
- * Every screen used to name its own dot beside the action — `chore: 'lands'`
- * next to an action that had already said it dirties `lands`. The same fact
- * twice, and the pair could drift: Profile's did, refreshing the CPU dot
- * after a mine and leaving the Rewards dot to notice on its own.
- *
- * So the dot is derived from what the action changed. Tables with no dot are
- * absent rather than mapped to nothing — `player` above all, which almost
- * every action touches and which would otherwise light every dot in the game.
+ * Read off the checks rather than listed again — a second list is a second
+ * place to forget, and this pairing has already drifted once: Profile used
+ * to refresh the CPU dot after a mine and leave the Rewards dot, the one it
+ * had actually changed, to notice on its own.
  */
-export const CHORE_FOR_TABLE = {
-  shopCooldowns: 'shop',
-  fighters: 'fighters',
-  quests: 'quests',
-  candleClaims: 'candle',
-  candleStakes: 'candle',
-  lands: 'lands',
-  farmUser: 'farming',
-  farmStaked: 'farming',
-  rewardUsers: 'rewards',
-  cpuUsage: 'account',
-} as const satisfies Partial<Record<TableKey, ChoreKey>>
+export function choresFor(table: TableKey): ChoreCheck[] {
+  return CHORE_CHECKS.filter((c) => c.deps.includes(table))
+}

@@ -20,13 +20,21 @@ import type { ChoreKey } from './checks'
  * seven routes to say one word would be worse than this.
  */
 
-type Listener = (key: ChoreKey) => void
+type Listener = (key: ChoreKey, force: boolean) => void
 
 const listeners = new Set<Listener>()
 
-/** Called by screens after an action that could change their own indicator. */
-export function refreshChore(key: ChoreKey): void {
-  for (const fn of listeners) fn(key)
+/**
+ * Check this dot again, now.
+ *
+ * `force` bypasses the cache, and is for when the action changed the dot's
+ * own data. Left off, the check re-reads what it already has and compares it
+ * against the player row the action has just refreshed — which is the common
+ * case and costs nothing: a dungeon moves quest progress without moving the
+ * quest board.
+ */
+export function refreshChore(key: ChoreKey, force = true): void {
+  for (const fn of listeners) fn(key, force)
 }
 
 /** Subscribed by `useChores`. Returns the unsubscribe. */

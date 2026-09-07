@@ -13,10 +13,15 @@
  * it promises: at most one request per tick, no matter how many checks are
  * overdue at once.
  */
-import { CHORE_CHECKS, LAND_BOOST_WARNING, type ChoreKey } from '../src/chores/checks'
+import {
+  CHORE_CHECKS,
+  choresFor,
+  LAND_BOOST_WARNING,
+  type ChoreKey,
+} from '../src/chores/checks'
+import { DIRTIES } from '../src/wharf/actions'
 import { cacheDrop } from '../src/chain/cache'
 import { onChoreRefresh, refreshChore } from '../src/chores/signal'
-import { readFileSync } from 'node:fs'
 import type { Player } from '../src/chain/types'
 
 let pass = 0
@@ -290,24 +295,48 @@ async function checks() {
     check('farming: nothing staked can never cap, dark', r.flag, false)
   }
 
-  /* --- account --- */
+  /* --- rewards --- */
   {
+    /*
+       These assertions used to be aimed at 'account', which ignores
+       reward_power entirely -- so the rewards dot went unverified while
+       account was certified free that it is not. Both are answered below.
+    */
     tables = {}
-    let r = await runCheck('account', player({ reward_power: [] }))
-    check('account: no banked power, dark', r.flag, false)
-    check('account: it makes no request at all', r.calls.length, 0)
+    let r = await runCheck('rewards', player({ reward_power: [] }))
+    check('rewards: no banked power, dark', r.flag, false)
+    check('rewards: it makes no request at all', r.calls.length, 0)
 
     r = await runCheck(
-      'account',
+      'rewards',
       player({ reward_power: [{ type: 'tlm', pool: 'tlmdungeon', power: 10_000 }] }),
     )
-    check('account: a full 10,000 on a threshold pool lights up', r.flag, true)
+    check('rewards: a full 10,000 on a threshold pool lights up', r.flag, true)
 
     r = await runCheck(
-      'account',
+      'rewards',
       player({ reward_power: [{ type: 'tlm', pool: 'tlmdungeon', power: 500 }] }),
     )
-    check('account: under the threshold on that pool, dark', r.flag, false)
+    check('rewards: under the threshold on that pool, dark', r.flag, false)
+  }
+
+  /* --- account --- */
+  {
+    /*
+       Not free: the weekly allowance is a config row and the usage is a
+       wallet row on the sixty-second TTL, so a five-minute check pays for
+       the second one every time. That is the cost the budget below counts.
+    */
+    tables = {}
+    tables['cpu.ale/config'] = [{ claims_per_week: 100, wax_per_claim: '0.1 WAX' }]
+    tables['cpu.ale/cpuusage'] = [{ wallet: 'me.wam', uses: 10, expiry_time: iso(86_400_000) }]
+    let r = await runCheck('account', player())
+    check('account: it costs two reads', r.calls.length, 2)
+    check('account: a tenth of the allowance spent, dark', r.flag, false)
+
+    tables['cpu.ale/cpuusage'] = [{ wallet: 'me.wam', uses: 80, expiry_time: iso(86_400_000) }]
+    r = await runCheck('account', player())
+    check('account: four fifths spent lights up', r.flag, true)
   }
 }
 
@@ -371,9 +400,11 @@ function budget() {
   const counts = new Map<ChoreKey, number>()
   for (const f of fired) counts.set(f.key, (counts.get(f.key) ?? 0) + 1)
 
-  /* `account` is free, so it does not count against the network. */
+  /* `rewards` is free -- it reads the player row the app already holds -- so
+     it does not count against the network. `account` is not free: its usage
+     row is on the sixty-second TTL and every five-minute check pays for it. */
   const requestsPerHour = [...counts.entries()]
-    .filter(([k]) => k !== 'account')
+    .filter(([k]) => k !== 'rewards')
     .reduce((n, [, c]) => n + c, 0)
 
   console.log('\n  per hour idling on one screen:')
@@ -381,7 +412,7 @@ function budget() {
     console.log(
       `    ${c.key.padEnd(9)} ${String(counts.get(c.key) ?? 0).padStart(3)} runs` +
         `  (every ${c.every / 60_000}m)` +
-        (c.key === 'account' ? '  — no request' : ''),
+        (c.key === 'rewards' ? '  — no request' : ''),
     )
   }
   console.log(`\n  network checks per hour: ${requestsPerHour}`)
@@ -421,30 +452,32 @@ function signal() {
   check('and stops once unsubscribed', heard.includes('quests'), false)
 
   /*
-     Every section that can act has to fire, or its dot goes stale after the
-     one action most likely to clear it. Checking the sources rather than the
-     behaviour is deliberate: the failure being guarded against is a screen
-     added later that forgets the call, which no runtime test would see.
-  */
-  const wired: [string, string][] = [
-    ['src/routes/Shop.tsx', 'shop'],
-    ['src/routes/Fighters.tsx', 'fighters'],
-    ['src/routes/Quests.tsx', 'quests'],
-    ['src/routes/Candle.tsx', 'candle'],
-    ['src/routes/Lands.tsx', 'lands'],
-    ['src/routes/Farming.tsx', 'farming'],
-    ['src/routes/Profile.tsx', 'account'],
-  ]
-  const missing = wired.filter(([file, key]) => {
-    const src = readFileSync(new URL('../' + file, import.meta.url), 'utf8')
-    return !src.includes(`refreshChore('${key}')`)
-  })
-  check('every acting screen fires its own key', missing.map(([f]) => f), [])
+     Every dot has to be reachable from something the player can actually do,
+     or it is left to its own timer -- which is the bug this replaced.
 
-  /* And the keys they fire are keys that exist. */
-  const known = new Set(CHORE_CHECKS.map((c) => c.key))
-  const unknown = wired.filter(([, k]) => !known.has(k as ChoreKey)).map(([, k]) => k)
-  check('and every fired key is a real check', unknown, [])
+     The screens used to fire their own key by hand and this checked their
+     sources for the call. They no longer do: `useAction` reads what the
+     action declared it dirtied and wakes every dot built on those tables, so
+     the thing worth pinning is that the declarations cover all eight.
+  */
+  const reachable = new Set<ChoreKey>()
+  for (const tables of Object.values(DIRTIES)) {
+    for (const table of tables) for (const c of choresFor(table)) reachable.add(c.key)
+  }
+  const stranded = CHORE_CHECKS.map((c) => c.key).filter((k) => !reachable.has(k))
+  check('every dot is reachable from some action', stranded, [])
+
+  /*
+     And the reported bug itself: quest progress is a lifetime counter on the
+     player row, so finishing a quest by playing a dungeon -- or travelling,
+     or buying something -- has to light the quest dot. Before this it only
+     lit for actions taken on /quests, and no chore claims /dungeon at all.
+  */
+  const elsewhere = ['playDungeon', 'playArena', 'travel', 'buyShopItem'] as const
+  const blind = elsewhere.filter(
+    (a) => !DIRTIES[a].some((t) => choresFor(t).some((c) => c.key === 'quests')),
+  )
+  check('the quest dot is woken from other sections', blind, [])
 }
 
 async function main() {

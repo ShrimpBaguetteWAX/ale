@@ -75,8 +75,8 @@ export function useChores(
   */
   useEffect(
     () =>
-      onChoreRefresh((key) => {
-        forced.current.add(key)
+      onChoreRefresh((key, force) => {
+        if (force) forced.current.add(key)
         due.current.set(key, 0)
       }),
     [],

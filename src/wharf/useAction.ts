@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useGame } from '@/state/useGame'
 import { refreshChore } from '@/chores/signal'
-import { CHORE_FOR_TABLE } from '@/chores/checks'
+import { choresFor, type ChoreKey } from '@/chores/checks'
 import { readableError } from '@/wharf/errors'
 import { announceTableDrop, cacheDropTable, type TableKey } from '@/chain/tables'
 import { confirmThen, CONFIRM_ATTEMPTS, CONFIRM_INTERVAL_MS } from '@/chain/confirm'
@@ -232,16 +232,27 @@ export function useAction(): ActionState {
         for (const table of dirties ?? []) announceTableDrop(table)
 
         /*
-           And the dots, derived from the same list rather than named again.
+           And every dot built on something this action changed.
 
-           A dot re-checks itself on its own timer — a minute for some, five
-           for others — so without this it can sit there for that long
-           pointing at a screen with nothing left to do, while the player is
-           looking straight at the proof that it is wrong.
+           Not just the dot for the section that acted, which is what this
+           used to be and why finishing a quest by playing a dungeon left the
+           quest dot dark for three minutes: progress is a lifetime counter
+           on the player row, so an action anywhere in the game can complete
+           a quest somewhere else.
+
+           Forced only where the action touched that dot's *own* data. A
+           dungeon dirties the player row, which the quest dot is built on —
+           but the quest board itself has not moved, so that check reads the
+           board it already has and compares it against the fresh player. No
+           request, and a dot that is right immediately.
         */
+        const seen = new Set<ChoreKey>()
         for (const table of dirties ?? []) {
-          const dot = CHORE_FOR_TABLE[table as keyof typeof CHORE_FOR_TABLE]
-          if (dot) refreshChore(dot)
+          for (const chore of choresFor(table)) {
+            const force = table !== 'player'
+            if (force || !seen.has(chore.key)) refreshChore(chore.key, force)
+            seen.add(chore.key)
+          }
         }
 
         await onSettled?.()
