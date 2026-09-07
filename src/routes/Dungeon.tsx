@@ -4,14 +4,9 @@ import { useGame } from '@/state/useGame'
 import { landId } from '@/chain/landId'
 import { resolveAssetIds, type CardTemplate } from '@/chain/atomic'
 import {
-  fetchBattleConfig,
-  fetchClassTemplates,
   fetchCrewCards,
-  fetchDifMods,
   fetchDungeon,
-  fetchDungeonConfig,
   fetchFight,
-  fetchNftValues,
   fetchRoster,
   randomHistoryId,
 } from '@/dungeon/queries'
@@ -33,7 +28,6 @@ import {
   NFT_FIGHTER_ART,
   combineNftFighter,
   nftAsPanel,
-  type NftValue,
 } from '@/dungeon/nftFighter'
 import { rememberFight } from '@/dungeon/fightStore'
 import {
@@ -47,7 +41,6 @@ import {
 import { ageFactor, levelFactor } from '@/fight/scaling'
 import { recallTeam, rememberTeam, restoreTeam } from '@/fight/lastTeam'
 import { applyWeather, fetchWeather, type Weather } from '@/fight/weather'
-import { DEFAULT_CAPS, type StatCaps } from '@/dungeon/sim'
 import { autoPickCards, autoPickFighters } from '@/fight/autopick'
 import { TEAM_SIZE, type BattleFighter, type RosterFighter } from '@/dungeon/types'
 import {
@@ -57,7 +50,6 @@ import {
   fighterArt,
   formatScaled,
   resolveAbilityDescription,
-  type ClassTemplate,
 } from '@/tavern/fighterStats'
 import { useImagesReady } from '@/components/useImagesReady'
 import { Loading } from '@/components/Loading'
@@ -84,6 +76,16 @@ import { readableError } from '@/wharf/errors'
 import { asset } from '@/assets'
 import { FighterStats } from '@/components/FighterPanel'
 import { usePhone } from '@/components/usePhone'
+import { useConfig, useLazyConfig } from '@/state/useConfig'
+
+/*
+   One empty map, not a new one each render.
+
+   `useLazyConfig` returns undefined until the table lands, and a fresh
+   `new Map()` as the fallback is a new identity every render — which would
+   re-run every `useMemo` that depends on it, on every keystroke.
+*/
+const EMPTY_DIFMODS = new Map<number, number>()
 
 export default function Dungeon() {
   const player = useGame((s) => s.player)!
@@ -97,18 +99,29 @@ export default function Dungeon() {
   const [roster, setRoster] = useState<RosterFighter[] | null>(null)
   const [crewCards, setCrewCards] = useState<CardTemplate[]>([])
   const [weaponCards, setWeaponCards] = useState<CardTemplate[]>([])
-  const [nftValues, setNftValues] = useState<Map<number, NftValue>>(new Map())
   /* Whether the card lists have been read at all, as against being empty. */
   const [cardsLoaded, setCardsLoaded] = useState(false)
-  const [classes, setClasses] = useState<Map<string, ClassTemplate>>(new Map())
   const [enemyTeam, setEnemyTeam] = useState<BattleFighter[] | null>(null)
-  const [difMods, setDifMods] = useState<Map<number, number>>(new Map())
-  const [energyCost, setEnergyCost] = useState(40)
-  const [xpPerDifficulty, setXpPerDifficulty] = useState(0)
-  const [nftMinDifficulty, setNftMinDifficulty] = useState(5)
-  const [ageDecay, setAgeDecay] = useState(0)
-  /* Weather is capped as it is applied, so the caps are part of the answer. */
-  const [caps, setCaps] = useState<StatCaps>(DEFAULT_CAPS)
+
+  /*
+     Everything this screen scales its numbers by, from the store rather than
+     from five of its own reads. `caps` is here because weather is capped as
+     it is applied, so the caps are part of that answer.
+  */
+  const {
+    classes,
+    nftValues,
+    levelMod,
+    ageDecay,
+    caps,
+    battle,
+    loaded: configLoaded,
+  } = useConfig()
+  const xpPerDifficulty = battle?.xp_per_dungeon_difficulty ?? 0
+  const nftMinDifficulty = battle?.dungeon_nft_fighter_min_difficulty ?? 5
+  /* One screen each, so both are fetched the first time somebody opens one. */
+  const difMods = useLazyConfig('difMods') ?? EMPTY_DIFMODS
+  const energyCost = useLazyConfig('dungeon')?.energy_cost ?? 40
 
   /*
      The land's weather, which this dungeon is fought in exactly as an arena
@@ -116,8 +129,6 @@ export default function Dungeon() {
      the row is already the one the fight will use.
   */
   const [weather, setWeather] = useState<Weather | null>(null)
-  /* Ranking a roster without it puts a level 1 fighter above a level 10 one. */
-  const [levelMod, setLevelMod] = useState(1)
 
   const [teamIds, setTeamIds] = useState<number[]>([])
   const [crew, setCrew] = useState<CardTemplate | null>(null)
@@ -148,30 +159,14 @@ export default function Dungeon() {
       fetchRoster(player.wallet),
       fetchCrewCards(player.wallet),
       fetchDungeon(planet, land),
-      fetchDifMods(),
-      fetchDungeonConfig(),
-      fetchBattleConfig(),
-      fetchNftValues(),
-      fetchClassTemplates(),
     ])
-      .then(([r, cards, dungeon, mods, dConfig, bConfig, nfts, temps]) => {
+      .then(([r, cards, dungeon]) => {
         if (!live) return
         setRoster(r)
         setCrewCards(cards.crew)
         setWeaponCards(cards.weapons)
         setEnemyTeam(withNumericIds(dungeon?.fighters ?? []))
-        setDifMods(mods)
-        setNftValues(nfts)
         setCardsLoaded(true)
-        setClasses(temps)
-        if (dConfig) setEnergyCost(dConfig.energy_cost)
-        if (bConfig) {
-          setXpPerDifficulty(bConfig.xp_per_dungeon_difficulty)
-          setNftMinDifficulty(bConfig.dungeon_nft_fighter_min_difficulty)
-          setAgeDecay(Number(bConfig.age_decay) || 0)
-          if (bConfig.battle_stat_caps) setCaps(bConfig.battle_stat_caps)
-          setLevelMod(Number(bConfig.level_mod) || 1)
-        }
       })
       .catch((err) => live && setError(readableError(err)))
     return () => {
@@ -659,7 +654,7 @@ export default function Dungeon() {
 
      An error is its own answer and comes out from behind it.
   */
-  if (!error && !(roster && cardsLoaded && enemyTeam && enemyArtReady)) {
+  if (!error && !(configLoaded && roster && cardsLoaded && enemyTeam && enemyArtReady)) {
     return <Loading label="Entering the dungeon" />
   }
 

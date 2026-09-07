@@ -9,6 +9,7 @@ import {
 } from '@/chain/queries'
 import type { GameConfig, Player } from '@/chain/types'
 import { hasStoredSession } from '@/wharf/errors'
+import { useConfigStore } from './useConfig'
 
 /**
  * WharfKit and its wallet plugins are ~190KB gzipped. Loading them behind a
@@ -67,7 +68,16 @@ export const useGame = create<GameState>((set, get) => ({
     }
 
     try {
-      const config = await fetchConfig()
+      /*
+         The game's config and the game's settings tables, together.
+
+         `fetchConfig` is the signup gate and has to succeed; the settings in
+         `useConfig` are what every screen scales its numbers by. Both are
+         `persist: true`, so a returning player pays for neither — and
+         loading them here rather than in six routes means a screen no longer
+         renders a fighter's damage before it knows what to multiply it by.
+      */
+      const [config] = await Promise.all([fetchConfig(), useConfigStore.getState().load()])
       set({ config: config ?? null })
     } catch (err) {
       set({ bootError: err instanceof Error ? err.message : String(err) })

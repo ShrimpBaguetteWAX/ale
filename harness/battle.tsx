@@ -24,6 +24,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import Battle from '../src/routes/Battle'
 import { rememberFight, type Venue } from '../src/dungeon/fightStore'
 import { useGame } from '../src/state/useGame'
+import { useConfigStore } from '../src/state/useConfig'
 import type { FightRow } from '../src/dungeon/types'
 import won from './fight-win.json'
 import lost from './fight-loss.json'
@@ -47,6 +48,8 @@ sessionStorage.clear()
 const remember = params.get('remember')
 if (remember === 'novenue') rememberFight(fight)
 else if (remember !== 'no') rememberFight(fight, venue)
+
+void useConfigStore.getState().load()
 
 useGame.setState({
   player: {

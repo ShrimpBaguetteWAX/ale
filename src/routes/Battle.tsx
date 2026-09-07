@@ -4,10 +4,10 @@ import { useGame } from '@/state/useGame'
 import { landId } from '@/chain/landId'
 import { fetchLiveArena } from '@/arena/queries'
 import { NFT_FIGHTER_ID } from '@/dungeon/rules'
-import { fetchBattleConfig, fetchFight, fetchFightConfig } from '@/dungeon/queries'
+import { fetchFight } from '@/dungeon/queries'
+import { useConfig, useLazyConfig } from '@/state/useConfig'
 import { recallFight, recallVenue, rememberFight, type Venue } from '@/dungeon/fightStore'
 import {
-  DEFAULT_CAPS,
   simulate,
   type EffectEvent,
   type FighterSnapshot,
@@ -135,8 +135,17 @@ export default function Battle() {
   */
   const venue: Venue = recallVenue(historyId) ?? 'dungeon'
   const known = recallVenue(historyId) !== undefined
-  const [tauntDeduction, setTauntDeduction] = useState<number | null>(null)
-  const [caps, setCaps] = useState(DEFAULT_CAPS)
+  /*
+     The two numbers the replay is simulated with, from the store.
+
+     The taunt deduction stays nullable on purpose: the simulation cannot
+     start without it, and null is what the memo below waits on. Falling back
+     to zero would run the fight with taunt doing nothing, which is a
+     different fight — and the old effect did exactly that on a failed read.
+  */
+  const { caps } = useConfig()
+  const fightCost = useLazyConfig('fightCost')
+  const tauntDeduction = fightCost ?? null
   const [error, setError] = useState<string | null>(null)
 
   /*
@@ -166,20 +175,6 @@ export default function Battle() {
       live = false
     }
   }, [historyId, row])
-
-  useEffect(() => {
-    let live = true
-    Promise.all([fetchFightConfig(), fetchBattleConfig()])
-      .then(([taunt, config]) => {
-        if (!live) return
-        setTauntDeduction(taunt)
-        if (config?.battle_stat_caps) setCaps(config.battle_stat_caps)
-      })
-      .catch(() => live && setTauntDeduction(0))
-    return () => {
-      live = false
-    }
-  }, [])
 
   const replay = useMemo<Replay | null>(() => {
     if (!row || tauntDeduction === null) return null

@@ -6,11 +6,8 @@ import { resolveAssetIds, type CardTemplate } from '@/chain/atomic'
 import { fetchPlanetLands } from '@/chain/queries'
 import type { Land } from '@/chain/types'
 import {
-  fetchBattleConfig,
-  fetchClassTemplates,
   fetchCrewCards,
   fetchFight,
-  fetchNftValues,
   fetchRoster,
   randomHistoryId,
 } from '@/dungeon/queries'
@@ -27,17 +24,14 @@ import {
 import { recallTeam, rememberTeam, restoreTeam } from '@/fight/lastTeam'
 import { autoPickCards, autoPickFighters } from '@/fight/autopick'
 import { applyWeather, fetchWeather, type Weather } from '@/fight/weather'
-import { DEFAULT_CAPS, type StatCaps } from '@/dungeon/sim'
 import {
   NFT_FIGHTER_ART,
   combineNftFighter,
   nftAsPanel,
-  type NftValue,
 } from '@/dungeon/nftFighter'
 import { rememberFight } from '@/dungeon/fightStore'
 import { TEAM_SIZE, type BattleFighter, type RosterFighter } from '@/dungeon/types'
 import {
-  fetchArenaConfig,
   fetchArenaPower,
   fetchLiveArena,
   type LiveArenaRow,
@@ -58,7 +52,6 @@ import {
   abilityName,
   formatScaled,
   resolveAbilityDescription,
-  type ClassTemplate,
 } from '@/tavern/fighterStats'
 import {
   CardGrid,
@@ -84,6 +77,8 @@ import { readableError } from '@/wharf/errors'
 import { asset } from '@/assets'
 import { FighterStats } from '@/components/FighterPanel'
 import { usePhone } from '@/components/usePhone'
+import { Loading } from '@/components/Loading'
+import { useConfig, useLazyConfig } from '@/state/useConfig'
 
 /**
  * Challenging an arena.
@@ -110,20 +105,30 @@ export default function Arena() {
   const [roster, setRoster] = useState<RosterFighter[] | null>(null)
   const [crewCards, setCrewCards] = useState<CardTemplate[]>([])
   const [weaponCards, setWeaponCards] = useState<CardTemplate[]>([])
-  const [nftValues, setNftValues] = useState<Map<number, NftValue>>(new Map())
   /* Whether the card lists have been read at all, as against being empty. */
   const [cardsLoaded, setCardsLoaded] = useState(false)
-  const [classes, setClasses] = useState<Map<string, ClassTemplate>>(new Map())
   const [arena, setArena] = useState<LiveArenaRow | undefined>(undefined)
   const [arenaLoaded, setArenaLoaded] = useState(false)
   const [arenaPower, setArenaPower] = useState(ARENA_POWER_FULL)
   const [tile, setTile] = useState<Land | undefined>(undefined)
-  const [energyCost, setEnergyCost] = useState(50)
-  const [xpPerWin, setXpPerWin] = useState(0)
-  const [ageDecay, setAgeDecay] = useState(0)
-  /* Weather is capped as it is applied, so the caps are part of the answer. */
-  const [caps, setCaps] = useState<StatCaps>(DEFAULT_CAPS)
-  const [levelMod, setLevelMod] = useState(1)
+
+  /*
+     What the fight is scaled by, from the store. The dungeon reads the same
+     five and used to fetch them separately — an arena and a dungeon are the
+     same fight with a different opponent, and they disagreed about nothing
+     except how many round trips it took to find out.
+  */
+  const {
+    classes,
+    nftValues,
+    levelMod,
+    ageDecay,
+    caps,
+    battle,
+    loaded: configLoaded,
+  } = useConfig()
+  const xpPerWin = Number(battle?.xp_per_arena_win ?? 0)
+  const energyCost = Number(useLazyConfig('arena')?.energy_cost ?? 50)
 
   const [teamIds, setTeamIds] = useState<number[]>([])
   const [crew, setCrew] = useState<CardTemplate | null>(null)
@@ -150,22 +155,16 @@ export default function Arena() {
       fetchCrewCards(player.wallet),
       fetchLiveArena(planet, land, true),
       fetchArenaPower(planet, land, true),
-      fetchArenaConfig(),
-      fetchBattleConfig(),
-      fetchNftValues(),
-      fetchClassTemplates(),
       fetchPlanetLands(planet),
     ])
-      .then(([r, cards, live_, power, aConfig, bConfig, nfts, temps, lands]) => {
+      .then(([r, cards, live_, power, lands]) => {
         if (!live) return
         setRoster(r)
         setCrewCards(cards.crew)
         setWeaponCards(cards.weapons)
         setArena(live_)
         setArenaLoaded(true)
-        setNftValues(nfts)
         setCardsLoaded(true)
-        setClasses(temps)
         setTile(lands.find((l) => l.land_id === land))
         /*
            `battle.cpp` reads the stored `arena_power` at the moment of the
@@ -174,13 +173,6 @@ export default function Arena() {
            and what belongs on screen.
         */
         if (power) setArenaPower(Number(power.arena_power))
-        if (aConfig) setEnergyCost(Number(aConfig.energy_cost))
-        if (bConfig) {
-          setXpPerWin(Number(bConfig.xp_per_arena_win ?? 0))
-          setAgeDecay(Number(bConfig.age_decay) || 0)
-          if (bConfig.battle_stat_caps) setCaps(bConfig.battle_stat_caps)
-          setLevelMod(Number(bConfig.level_mod) || 1)
-        }
       })
       .catch((err) => live && setError(readableError(err)))
     return () => {
@@ -651,6 +643,22 @@ export default function Arena() {
   }
 
   const maintained = arenaMaintained(tile)
+
+  /*
+     Not until the screen knows what it is scaling by.
+
+     The stats on this page are the roll multiplied by level and age, and
+     before the battle config lands that multiplier is 1 — a level 10 fighter
+     drawn at a quarter of its damage, for as long as it takes the config to
+     answer. The dungeon already waits for exactly this; an arena is the same
+     fight with a different opponent and should not behave differently.
+
+     An error is its own answer and comes out from behind it, as it does
+     there.
+  */
+  if (!error && !configLoaded) {
+    return <Loading label="Entering the arena" />
+  }
 
   return (
     <div className="dungeon arena">

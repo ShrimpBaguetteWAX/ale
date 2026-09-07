@@ -1,20 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useGame } from '@/state/useGame'
-import { fetchBattleConfig, fetchClassTemplates, fetchRoster } from '@/dungeon/queries'
-import { fetchFighterLevels, fetchFightersConfig } from '@/fighters/queries'
-import type { FighterLevel, FightersConfig } from '@/fighters/types'
+import { fetchRoster } from '@/dungeon/queries'
 import { battleFactor } from '@/fighters/rules'
 import { levelFactor } from '@/fight/scaling'
 import { Cost, FighterCard } from './Fighters'
 import { PickCard, PickViewSwitch, type PickView } from '@/fight/setup'
 import type { RosterFighter } from '@/dungeon/types'
-import {
-  fetchAllUpgrades,
-  fetchAscensionConfig,
-  type AscensionConfig,
-  type StatCaps,
-  type UpgradeOdds,
-} from '@/ascension/queries'
+import type { StatCaps, UpgradeOdds } from '@/ascension/queries'
+import type { FighterLevel, FightersConfig } from '@/fighters/types'
+import type { ClassTemplate } from '@/tavern/fighterStats'
 import {
   REQUIREMENTS,
   SACRIFICE_COUNT,
@@ -38,8 +32,8 @@ import {
   rerollAscension,
 } from '@/wharf/actions'
 import { readableError } from '@/wharf/errors'
-import type { ClassTemplate } from '@/tavern/fighterStats'
 import { formatNumber } from '@/format'
+import { useConfig, useLazyConfig } from '@/state/useConfig'
 
 /**
  * Ascension.
@@ -74,6 +68,10 @@ const TABS: { key: Tab; label: string }[] = [
   ...REQUIREMENTS.map((r) => ({ key: r.key as Tab, label: r.label })),
 ]
 
+/* One empty list, so the odds panel's sort is not redone every render while
+   the table is still on its way. */
+const EMPTY_ODDS: UpgradeOdds[] = []
+
 export default function Ascension() {
   const account = useGame((s) => s.account)
   const session = useGame((s) => s.session)
@@ -81,15 +79,24 @@ export default function Ascension() {
   const refreshPlayer = useGame((s) => s.refreshPlayer)
 
   const [roster, setRoster] = useState<RosterFighter[]>([])
-  const [config, setConfig] = useState<AscensionConfig>()
-  const [odds, setOdds] = useState<UpgradeOdds[]>([])
-  /* What the roster card needs to draw a fighter the way My Fighters does. */
-  const [levels, setLevels] = useState<FighterLevel[]>([])
-  const [fighterConfig, setFighterConfig] = useState<FightersConfig>()
-  const [templates, setTemplates] = useState<Map<string, ClassTemplate>>(new Map())
-  const [levelMod, setLevelMod] = useState(1.15)
-  const [ageDecay, setAgeDecay] = useState(1)
   const [loading, setLoading] = useState(true)
+
+  /*
+     What the roster card needs to draw a fighter the way My Fighters does,
+     from the same store My Fighters now reads. Both screens print the same
+     fighter and used to disagree about its damage while the config was in
+     flight — one fell back to a level multiplier of 1.15, the other to 1.
+  */
+  const {
+    levels,
+    fighters: fighterConfig,
+    classes: templates,
+    levelMod,
+    ageDecay,
+    loaded: configLoaded,
+  } = useConfig()
+  const config = useLazyConfig('ascension')
+  const odds = useLazyConfig('upgrades') ?? EMPTY_ODDS
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
   const [busy, setBusy] = useState<Busy>(null)
@@ -119,26 +126,9 @@ export default function Ascension() {
   const load = useCallback(async () => {
     if (!account) return
     try {
-      const [r, c, u, lv, fc, tpl, bc] = await Promise.all([
-        fetchRoster(account, true),
-        fetchAscensionConfig(),
-        fetchAllUpgrades(),
-        fetchFighterLevels(),
-        fetchFightersConfig(),
-        fetchClassTemplates(),
-        fetchBattleConfig(),
-      ])
+      const r = await fetchRoster(account, true)
       if (!alive.current) return
       setRoster(r)
-      setConfig(c)
-      setOdds(u)
-      setLevels(lv)
-      setFighterConfig(fc)
-      setTemplates(tpl)
-      if (bc) {
-        setLevelMod(Number(bc.level_mod) || 1.15)
-        setAgeDecay(Number(bc.age_decay) || 1)
-      }
     } catch (err) {
       if (alive.current) setError(readableError(err))
     } finally {
@@ -253,7 +243,7 @@ export default function Ascension() {
       return next
     })
 
-  if (loading) {
+  if (loading || !configLoaded) {
     return (
       <div className="ascension">
         <div className="panel">

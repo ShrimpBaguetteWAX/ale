@@ -3,7 +3,6 @@ import { useGame } from '@/state/useGame'
 import { NUM_LOCALE } from '@/format'
 import {
   fetchAuctions,
-  fetchMarketConfig,
   fetchOffers,
   type Auction,
   type InstantOffer,
@@ -26,8 +25,8 @@ import {
   timeLeftLabel,
   type MarketSort,
 } from '@/market/rules'
-import { fetchBattleConfig, fetchClassTemplates, fetchRoster } from '@/dungeon/queries'
-import { fetchFightersConfig } from '@/fighters/queries'
+import { fetchRoster } from '@/dungeon/queries'
+import { useConfig, useLazyConfig } from '@/state/useConfig'
 import { fighterAvailable } from '@/dungeon/rules'
 import { ageBand, ageBonus, ageDays, ageNote, battleFactor } from '@/fighters/rules'
 import {
@@ -137,12 +136,16 @@ export default function Market() {
 
   const [auctions, setAuctions] = useState<Auction[] | null>(null)
   const [offers, setOffers] = useState<InstantOffer[] | null>(null)
-  const [config, setConfig] = useState<MarketConfig | undefined>(undefined)
   const [roster, setRoster] = useState<RosterFighter[] | null>(null)
-  const [classes, setClasses] = useState<Map<string, ClassTemplate>>(new Map())
-  /* The age curve. Static config, so this costs one hard-cached read. */
-  const [ageDecay, setAgeDecay] = useState(0)
-  const [levelMod, setLevelMod] = useState(1)
+
+  /*
+     The class bands, the age curve and the level curve, from the store. A
+     listing is a fighter and is graded against the same bands the roster
+     grades against; reading them from anywhere else is how the same fighter
+     ends up with two different grades on two screens.
+  */
+  const { classes, levelMod, ageDecay, fighters: fightersConfig } = useConfig()
+  const config = useLazyConfig('market')
   /*
      The ascension level at which a fighter's locked ability starts working.
 
@@ -152,7 +155,7 @@ export default function Market() {
      ability exactly like a working one, which overstates every listed
      fighter by whatever its last ability is worth.
   */
-  const [unlockLevel, setUnlockLevel] = useState<number | undefined>(undefined)
+  const unlockLevel = fightersConfig?.asc_ability_unlock_lvl
 
   const [tab, setTab] = useState<Tab>('auctions')
   const [readout, setReadout] = useState<Readout>('stats')
@@ -175,25 +178,14 @@ export default function Market() {
   const load = useCallback(
     async (refresh = false) => {
       try {
-        const [a, o, c, r, t, b, fc] = await Promise.all([
+        const [a, o, r] = await Promise.all([
           fetchAuctions(refresh),
           fetchOffers(refresh),
-          fetchMarketConfig(),
           fetchRoster(player.wallet, refresh),
-          fetchClassTemplates(),
-          fetchBattleConfig(),
-          fetchFightersConfig(),
         ])
         setAuctions(a)
         setOffers(o)
-        setConfig(c)
         setRoster(r)
-        setClasses(t)
-        if (b) {
-          setAgeDecay(Number(b.age_decay) || 0)
-          setLevelMod(Number(b.level_mod) || 1)
-        }
-        setUnlockLevel(fc?.asc_ability_unlock_lvl)
       } catch (err) {
         setError(readableError(err))
       }

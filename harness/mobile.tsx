@@ -33,6 +33,7 @@ import Tavern from '../src/routes/Tavern'
 import { landId } from '../src/chain/landId'
 import { MineCelebration } from '../src/pools/MineCelebration'
 import { useGame } from '../src/state/useGame'
+import { useConfigStore } from '../src/state/useConfig'
 import { fetchConfig } from '../src/chain/queries'
 
 import '../src/styles/global.css'
@@ -141,6 +142,16 @@ useGame.setState({
 
 /* The real config, so travel costs are the ones the game charges. */
 void fetchConfig().then((config) => config && useGame.setState({ config }))
+
+/*
+ * And the settings tables, because the harness stands in for `boot()`.
+ *
+ * The app loads these there; nothing here calls `boot()`. Without this line
+ * every screen would read a level multiplier of 1 in the harness and the
+ * right one in the game — the harness would be verifying a fighter that does
+ * not exist.
+ */
+void useConfigStore.getState().load()
 
 /*
  * `?borrow=<wallet>` — take a real player's row for the parts no mock has.

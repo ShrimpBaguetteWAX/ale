@@ -1,11 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useGame } from '@/state/useGame'
 import { FighterPanel, type PanelFighter } from '@/components/FighterPanel'
-import {
-  fetchBattleConfig,
-  fetchClassTemplates,
-  fetchRoster,
-} from '@/dungeon/queries'
+import { fetchRoster } from '@/dungeon/queries'
 import type { RosterFighter, RosterStats } from '@/dungeon/types'
 import {
   ELEMENTS,
@@ -21,7 +17,7 @@ import {
   type RosterFilter,
   type Status,
 } from '@/dungeon/filters'
-import { fetchFighterLevels, fetchFightersConfig } from '@/fighters/queries'
+import { useConfig, useLazyConfig } from '@/state/useConfig'
 import type { FighterLevel, FightersConfig } from '@/fighters/types'
 import {
   ageBand,
@@ -49,7 +45,7 @@ import {
   sellFighters,
   setFighterMarker,
 } from '@/wharf/actions'
-import { fetchMarketConfig, type MarketConfig } from '@/market/queries'
+
 import { MAX_BULK_LISTINGS, bulkListPlan, listable } from '@/market/rules'
 import { refreshChore } from '@/chores/signal'
 import { readableError } from '@/wharf/errors'
@@ -154,13 +150,27 @@ interface RosterData {
 
 function useRoster(account: string | null): RosterData {
   const [roster, setRoster] = useState<RosterFighter[]>([])
-  const [levels, setLevels] = useState<FighterLevel[]>([])
-  const [config, setConfig] = useState<FightersConfig>()
-  const [templates, setTemplates] = useState<Map<string, ClassTemplate>>(new Map())
-  const [levelMod, setLevelMod] = useState(1.15)
-  const [ageDecay, setAgeDecay] = useState(1)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+
+  /*
+     The level table, the payday rules, the class art and the two scaling
+     floats are the same for every player and were four of the five reads
+     this screen used to make. They are loaded once at boot now.
+
+     `loaded` joins the screen's own loading flag rather than adding a second
+     gate: `levelMod` is 1 until the battle config lands, and 1 is not a
+     smaller version of the real multiplier — it is a level 10 fighter drawn
+     at a quarter of its damage. The screen waits for both or shows neither.
+  */
+  const {
+    levels,
+    fighters: config,
+    classes: templates,
+    levelMod,
+    ageDecay,
+    loaded,
+  } = useConfig()
 
   const alive = useRef(true)
   useEffect(() => {
@@ -175,22 +185,9 @@ function useRoster(account: string | null): RosterData {
       if (!account) return
       setError(null)
       try {
-        const [r, l, c, t, bc] = await Promise.all([
-          fetchRoster(account, refresh),
-          fetchFighterLevels(),
-          fetchFightersConfig(),
-          fetchClassTemplates(),
-          fetchBattleConfig(),
-        ])
+        const r = await fetchRoster(account, refresh)
         if (!alive.current) return
         setRoster(r)
-        setLevels(l)
-        setConfig(c)
-        setTemplates(t)
-        if (bc) {
-          setLevelMod(Number(bc.level_mod) || 1.15)
-          setAgeDecay(Number(bc.age_decay) || 1)
-        }
       } catch (err) {
         if (alive.current) setError(readableError(err))
       } finally {
@@ -217,7 +214,17 @@ function useRoster(account: string | null): RosterData {
 
   const reload = useCallback(() => load(true), [load])
 
-  return { roster, levels, config, templates, levelMod, ageDecay, loading, error, reload }
+  return {
+    roster,
+    levels,
+    config,
+    templates,
+    levelMod,
+    ageDecay,
+    loading: loading || !loaded,
+    error,
+    reload,
+  }
 }
 
 /* ---------- the screen ---------- */
@@ -260,10 +267,7 @@ export default function Fighters() {
      at — and quoting any of them from a constant is how a screen ends up
      disagreeing with the contract after a config change.
   */
-  const [marketConfig, setMarketConfig] = useState<MarketConfig | undefined>()
-  useEffect(() => {
-    void fetchMarketConfig().then(setMarketConfig)
-  }, [])
+  const marketConfig = useLazyConfig('market')
 
   /* The starting bid every fighter in the batch is listed at. */
   const [startPrice, setStartPrice] = useState(0)
