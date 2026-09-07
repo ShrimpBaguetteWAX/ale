@@ -1585,8 +1585,17 @@ export function PickCard({
         </span>
 
         <VersusBadges matchup={matchup} />
-        {tick && <span className="fightercard__tick">{tick}</span>}
-        {blockedNote && <span className="fightercard__block">{blockedNote}</span>}
+        {/*
+          Always here, empty or not. "In team" is a line of text that appears
+          on the cards that have it and on no others, and it was pushing
+          their tab bars a line lower than the rest of the row's — the picked
+          card, the one the eye is already on, sitting out of step with its
+          neighbours. The slot is kept whether or not anything fills it.
+        */}
+        <span className="fightercard__status">
+          {tick && <span className="fightercard__tick">{tick}</span>}
+          {blockedNote && <span className="fightercard__block">{blockedNote}</span>}
+        </span>
       </button>
 
       {/*

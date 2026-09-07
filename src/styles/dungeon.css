@@ -551,6 +551,22 @@
   text-transform: capitalize;
 }
 
+/*
+ * One line's worth of room under the badges, held open on every card.
+ *
+ * Only a picked card has an "In team" to put here, and only a blocked one
+ * has a reason; rendering the line conditionally moved those cards' tabs
+ * down a row while the rest of the grid kept theirs level.
+ */
+.fightercard__status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 14px;
+  line-height: 1.4;
+  text-align: center;
+}
+
 .fightercard__tick {
   font-size: 10px;
   letter-spacing: 0.08em;
