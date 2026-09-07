@@ -27,7 +27,7 @@ import {
   type ShopItem,
 } from '@/shop/types'
 import { buyShopItem, buyShopItemWithWax } from '@/wharf/actions'
-import { refreshChore } from '@/chores/signal'
+import { useAction } from '@/wharf/useAction'
 import { readableError } from '@/wharf/errors'
 import { asset } from '@/assets'
 
@@ -43,7 +43,6 @@ function Amount({ label, icon }: { label: string; icon?: string }) {
 export default function Shop() {
   const player = useGame((s) => s.player)!
   const session = useGame((s) => s.session)
-  const refreshPlayer = useGame((s) => s.refreshPlayer)
 
   const [items, setItems] = useState<ShopItem[] | null>(null)
   const [cooldowns, setCooldowns] = useState<ShopCooldown[]>([])
@@ -59,10 +58,8 @@ export default function Shop() {
     SHOP_CATEGORIES[0].key
   const setCategory = (key: string) =>
     setParams(key === SHOP_CATEGORIES[0].key ? {} : { c: key }, { replace: true })
-  const [busy, setBusy] = useState<string | null>(null)
   const [confirming, setConfirming] = useState<ShopItem | null>(null)
-  const [error, setError] = useState<string | null>(null)
-  const [notice, setNotice] = useState<string | null>(null)
+  const { busy, error, notice, run, setError } = useAction()
   // Ticks once a second so the cooldown countdowns stay honest.
   const [, setTick] = useState(0)
 
@@ -114,33 +111,25 @@ export default function Shop() {
     [items, category],
   )
 
-  const buy = async (item: ShopItem) => {
-    if (!session) return
+  const buy = (item: ShopItem) => {
     setConfirming(null)
-    setBusy(item.item)
-    setError(null)
-    setNotice(null)
-    try {
-      if (isWaxPriced(item)) {
-        await buyShopItemWithWax(session, item.item, item.cost_wax)
-      } else {
-        await buyShopItem(session, item.item)
-      }
-
-      // Balances and cooldowns both move; poll until the player row catches up.
-      for (let i = 0; i < 6; i++) {
-        await new Promise((r) => setTimeout(r, 700))
-        await refreshPlayer({ force: true })
-      }
-      await reloadPlayerState()
-      /* The daily flask may have just gone on cooldown. */
-      refreshChore('shop')
-      setNotice(`${item.title} purchased.`)
-    } catch (err) {
-      setError(readableError(err))
-    } finally {
-      setBusy(null)
-    }
+    return run(
+      item.item,
+      () =>
+        isWaxPriced(item)
+          ? buyShopItemWithWax(session!, item.item, item.cost_wax)
+          : buyShopItem(session!, item.item),
+      `${item.title} purchased.`,
+      {
+        // Balances move on the player row, which the hook refreshes itself.
+        intervalMs: 700,
+        /* Cooldowns move once and stay moved, so they are read after the
+           waiting rather than on every attempt. */
+        onSettled: reloadPlayerState,
+        /* The daily flask may have just gone on cooldown. */
+        chore: 'shop',
+      },
+    )
   }
 
   const active = SHOP_CATEGORIES.find((c) => c.key === category)
