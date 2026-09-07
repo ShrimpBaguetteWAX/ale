@@ -798,7 +798,7 @@
   display: grid;
   gap: 2px;
   width: 100%;
-  padding: var(--sp-2);
+  padding: var(--sp-2) var(--sp-2) var(--sp-1);
   background: none;
   border: 0;
   border-radius: inherit;
@@ -827,7 +827,13 @@
   min-height: calc(1.25em * 2);
 }
 
+/* Rarity, shine and — on a weapon — the element it attacks with, on one line. */
 .nftcard__rarity {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
   font-size: 10px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -858,45 +864,123 @@
 }
 
 /*
- * What the card grants, two to a row.
+ * Three tabs, because the card grants more than fits at once.
  *
- * Icons rather than labels: the same five marks the roster and the market
- * use for these stats, so nothing new has to be learnt to read a card, and
- * "DMG"/"HP"/"CD" would cost more width than the figures do.
+ * Eleven figures and an ability with a paragraph of text cannot share a tile
+ * side by side, and squeezing them in is what cost the labels. A tab at a
+ * time gives each group the whole width: a stat can be named rather than
+ * left to its icon, and the ability can bring its description.
  */
-.nftcard__figs,
-.nftcard__res {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1px var(--sp-2);
-  width: 100%;
-  font-size: 10px;
-  font-variant-numeric: tabular-nums;
-  color: var(--text-dim);
+.nftcard__tabs {
+  display: flex;
+  gap: 2px;
+  padding: 0 var(--sp-2);
 }
 
-/* Six of them, so three across rather than two. */
-.nftcard__res {
-  grid-template-columns: repeat(3, 1fr);
-  margin-top: 2px;
-  padding-top: 3px;
-  border-top: 1px solid var(--line-soft);
+.nftcard__tab {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 3px 2px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: rgb(255 255 255 / 4%);
   color: var(--text-faint);
+  font-family: var(--font-display);
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.nftcard__tab:hover {
+  color: var(--white);
+}
+.nftcard__tab[aria-selected='true'] {
+  color: var(--white);
+  border-bottom-color: var(--cyan);
+  background: rgb(0 186 255 / 12%);
 }
 
-.nftcard__fig {
+/*
+ * A fixed height, so every card in the row is the same one whichever tab it
+ * happens to be showing. Six resistances is the tallest of the three.
+ */
+.nftcard__panel {
+  min-height: 96px;
+  padding: var(--sp-2);
+  overflow: hidden;
+  text-align: left;
+}
+
+.nftstats {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+}
+
+.nftstats__row {
   display: flex;
   align-items: center;
-  justify-content: flex-start;
-  gap: 3px;
+  justify-content: space-between;
+  gap: var(--sp-2);
   min-width: 0;
-  line-height: 1.25;
+  font-size: 10px;
+  color: var(--text-faint);
+}
+.nftstats__row dt {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
-.nftcard__fig img {
+/* The element names come off the field name, so they arrive lower-case. The
+   stat labels are written out and must not be re-cased — `capitalize` on
+   both turns "Wind-up" into "Wind-Up". */
+.nftstats--res .nftstats__row dt {
+  text-transform: capitalize;
+}
+.nftstats__row dt img {
   flex: none;
   object-fit: contain;
   opacity: 0.75;
+}
+.nftstats__row dd {
+  margin: 0;
+  color: var(--white);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* The ability, named in its rarity's colour and then explained. */
+.nftability + .nftability {
+  margin-top: var(--sp-2);
+}
+.nftability__name {
+  display: block;
+  padding: 2px 6px;
+  border-radius: var(--radius-xs);
+  border-left: 3px solid var(--pip, #b79dff);
+  background: rgb(255 255 255 / 5%);
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: var(--fw-bold);
+  color: var(--white);
+}
+.nftability__text {
+  margin: 3px 0 0;
+  font-size: 10px;
+  line-height: 1.35;
+  color: var(--text-faint);
+}
+
+.nftcard__none {
+  margin: 0;
+  font-size: 10px;
 }
 
 .nftcard__element {

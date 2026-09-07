@@ -89,7 +89,13 @@ export function combineNftFighter(
     // decide it, and `neutral` is what the backdrop falls back to anyway.
     element: weapon?.element || 'neutral',
     target: crew?.stats.target || '',
-    level: 1,
+    /*
+       No level. The sixth fighter is not levelled — it is a crew card and a
+       weapon added together, and the figures below are already the ones it
+       fights with. "Level 1" beside them read as a fighter at the bottom of
+       a ladder it is not on, and invited the comparison with a level 10
+       roster fighter that the number does not support.
+     */
     health: { min: sum((s) => s.health) },
     damage: { min: sum((s) => s.damage) },
     taunt: { min: sum((s) => s.taunt) },

@@ -46,6 +46,7 @@ import {
   formatScaled,
   abilityColor,
   abilityName,
+  resolveAbilityDescription,
   RESISTANCE_FIELDS,
   type ClassTemplate,
   type StatGrade,
@@ -1813,123 +1814,174 @@ export function CardGrid({
         <p className="faint">No cards match those filters.</p>
       ) : (
         <div className="cardgrid cardgrid--nft">
-          {shown.map((c) => {
-            const v = values.get(c.template_id)!
-            const abilities = v.ability?.length ?? 0
-            return (
-              <div
-                className={`nftcard${selected?.template_id === c.template_id ? ' nftcard--picked' : ''}`}
-                key={c.template_id}
-              >
-                <button
-                  type="button"
-                  className="nftcard__hit"
-                  onClick={() => onPick(c)}
-                >
-                  <img
-                    className="nftcard__art"
-                    src={asset(`/assets/cards/${c.template_id}.webp`)}
-                    alt=""
-                    loading="lazy"
-                    onError={(e) => {
-                      e.currentTarget.src = asset('/assets/default-card.png')
-                    }}
-                  />
-                  <span className="nftcard__name">{c.name}</span>
-                  <span className={`nftcard__rarity nftcard__rarity--${v.rarity}`}>
-                    {v.rarity}
-                    {v.shine && v.shine !== 'stone' ? ` · ${v.shine}` : ''}
-                  </span>
-                  {/*
-                    Everything the card grants, not two of it.
-
-                    A crew or weapon card adds to five stats and six
-                    resistances, and the tile printed damage and health. Two
-                    cards that read "+15 DMG · +32 HP" here can differ by
-                    ninety points of cooldown, which decides how often the
-                    sixth fighter swings at all. Same icons and the same
-                    order the roster and the market use.
-                  */}
-                  <span className="nftcard__figs mono">
-                    {NFT_STATS.map(([field, label]) => (
-                      <span className="nftcard__fig" key={field} title={label}>
-                        <img src={statIcon(field)} alt="" width={12} height={12} />
-                        +{formatScaled(v.stats[field as keyof typeof v.stats] as number)}
-                      </span>
-                    ))}
-                  </span>
-
-                  <span className="nftcard__res">
-                    {RESISTANCE_FIELDS.map((field) => {
-                      const el = field.slice(4)
-                      return (
-                        <span className="nftcard__fig" key={field} title={`${el} resistance`}>
-                          <img
-                            src={asset(`/assets/icons/elements/${el}.png`)}
-                            alt=""
-                            width={12}
-                            height={12}
-                          />
-                          +{formatScaled(v.stats[field as keyof typeof v.stats] as number)}%
-                        </span>
-                      )
-                    })}
-                  </span>
-
-                  {/*
-                    The element belongs to the weapon alone: it is what the
-                    sixth fighter's damage counts as, and `combineNftFighter`
-                    takes it from the weapon. On a crew card it was a fact
-                    about the card that changes nothing about the fight.
-                  */}
-                  {kind === 'weapon' && v.element && (
-                    <span className="nftcard__element">
-                      <img
-                        src={asset(`/assets/icons/elements/${v.element}.png`)}
-                        alt=""
-                        width={14}
-                        height={14}
-                      />
-                      {v.element}
-                    </span>
-                  )}
-
-                  {/*
-                    The ability by name, rather than a count of them.
-
-                    "1 ability" is true of very nearly every card in the
-                    wallet, so it sorted nothing; the name is the whole of
-                    what distinguishes two cards of the same rarity.
-                  */}
-                  {v.ability?.slice(0, 2).map((a, i) => (
-                    <span
-                      className="nftcard__ability"
-                      key={`${a.displayname}-${i}`}
-                      style={{ '--pip': abilityColor(a.displayname) } as React.CSSProperties}
-                      title={abilityName(a.displayname)}
-                    >
-                      {abilityName(a.displayname)}
-                    </span>
-                  ))}
-                  {abilities > 2 && (
-                    <span className="nftcard__abilities">+{abilities - 2} more</span>
-                  )}
-                  {c.owned > 1 && <span className="cardtile__count">×{c.owned}</span>}
-                </button>
-                <button
-                  type="button"
-                  className="fightercard__info"
-                  onClick={() => onInspect(c)}
-                  aria-label={`Details for ${c.name}`}
-                >
-                  i
-                </button>
-              </div>
-            )
-          })}
+          {shown.map((c) => (
+            <NftCard
+              key={c.template_id}
+              card={c}
+              value={values.get(c.template_id)!}
+              kind={kind}
+              picked={selected?.template_id === c.template_id}
+              onPick={() => onPick(c)}
+              onInspect={() => onInspect(c)}
+            />
+          ))}
         </div>
       )}
     </>
+  )
+}
+
+/**
+ * One crew or weapon card.
+ *
+ * Everything the card grants is on it, but not all at once: eleven figures
+ * and an ability with a paragraph of text do not fit a tile side by side, and
+ * squeezing them in was what cost the labels. Three tabs give each group the
+ * whole width, so a stat can be named rather than left to its icon and the
+ * ability can bring its description.
+ */
+function NftCard({
+  card,
+  value: v,
+  kind,
+  picked,
+  onPick,
+  onInspect,
+}: {
+  card: CardTemplate
+  value: NftValue
+  kind: 'crew' | 'weapon'
+  picked: boolean
+  onPick: () => void
+  onInspect: () => void
+}) {
+  const [tab, setTab] = useState<'stats' | 'res' | 'ability'>('stats')
+  const abilities = v.ability ?? []
+
+  return (
+    <div className={`nftcard${picked ? ' nftcard--picked' : ''}`}>
+      <button type="button" className="nftcard__hit" onClick={onPick}>
+        <img
+          className="nftcard__art"
+          src={asset(`/assets/cards/${card.template_id}.webp`)}
+          alt=""
+          loading="lazy"
+          onError={(e) => {
+            e.currentTarget.src = asset('/assets/default-card.png')
+          }}
+        />
+        <span className="nftcard__name">{card.name}</span>
+        <span className={`nftcard__rarity nftcard__rarity--${v.rarity}`}>
+          {v.rarity}
+          {v.shine && v.shine !== 'stone' ? ` · ${v.shine}` : ''}
+          {/*
+            The element belongs to the weapon alone: it is what the sixth
+            fighter's damage counts as, and `combineNftFighter` takes it from
+            the weapon. On a crew card it was a fact about the card that
+            changes nothing about the fight.
+          */}
+          {kind === 'weapon' && v.element && (
+            <span className="nftcard__element">
+              <img src={elementIcon(v.element)} alt="" width={12} height={12} />
+              {v.element}
+            </span>
+          )}
+        </span>
+        {card.owned > 1 && <span className="cardtile__count">×{card.owned}</span>}
+      </button>
+
+      {/*
+        Outside the pick button, because a tab is a control of its own — nested
+        buttons are invalid, and reading a card's resistances should not be a
+        mis-tap away from putting it in the fight.
+      */}
+      <div className="nftcard__tabs" role="tablist">
+        {([
+          ['stats', 'Stats'],
+          ['res', 'Res'],
+          ['ability', 'Ability'],
+        ] as const).map(([key, label]) => (
+          <button
+            type="button"
+            key={key}
+            role="tab"
+            aria-selected={tab === key}
+            className="nftcard__tab"
+            onClick={() => setTab(key)}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      <div className="nftcard__panel">
+        {tab === 'stats' && (
+          <dl className="nftstats">
+            {NFT_STATS.map(([field, label]) => (
+              <div className="nftstats__row" key={field}>
+                <dt>
+                  <img src={statIcon(field)} alt="" width={13} height={13} />
+                  {label}
+                </dt>
+                <dd className="mono">
+                  +{formatScaled(v.stats[field as keyof typeof v.stats] as number)}
+                </dd>
+              </div>
+            ))}
+          </dl>
+        )}
+
+        {tab === 'res' && (
+          <dl className="nftstats nftstats--res">
+            {RESISTANCE_FIELDS.map((field) => {
+              const el = field.slice(4)
+              return (
+                <div className="nftstats__row" key={field}>
+                  <dt>
+                    <img src={elementIcon(el)} alt="" width={13} height={13} />
+                    {el}
+                  </dt>
+                  <dd className="mono">
+                    +{formatScaled(v.stats[field as keyof typeof v.stats] as number)}%
+                  </dd>
+                </div>
+              )
+            })}
+          </dl>
+        )}
+
+        {tab === 'ability' &&
+          (abilities.length === 0 ? (
+            <p className="faint nftcard__none">No ability.</p>
+          ) : (
+            abilities.map((a, i) => (
+              <div className="nftability" key={`${a.displayname}-${i}`}>
+                <span
+                  className="nftability__name"
+                  style={{ '--pip': abilityColor(a.displayname) } as React.CSSProperties}
+                >
+                  {abilityName(a.displayname)}
+                </span>
+                {/*
+                  The description with its placeholders filled in — the chain
+                  stores "deals [value] damage", and the number is what the
+                  player is choosing on.
+                */}
+                <p className="nftability__text">{resolveAbilityDescription(a)}</p>
+              </div>
+            ))
+          ))}
+      </div>
+
+      <button
+        type="button"
+        className="fightercard__info"
+        onClick={onInspect}
+        aria-label={`Details for ${card.name}`}
+      >
+        i
+      </button>
+    </div>
   )
 }
 
