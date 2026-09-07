@@ -664,7 +664,7 @@ function AscSlot({
           view={view}
           picked={false}
           variant={role}
-          banner={role === 'ascending' ? 'Improved' : 'Sacrificed'}
+          banner={role === 'ascending' ? 'Ascending' : 'Sacrificed'}
           tick={role === 'ascending' ? 'Gains the upgrade' : 'Spent for good'}
           hint={
             role === 'ascending'
