@@ -2857,7 +2857,6 @@
   inset: 0;
   display: block;
   pointer-events: none;
-  transform: skewX(var(--lean-back));
 }
 
 .combatcard__dormant {
