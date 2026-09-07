@@ -17,7 +17,7 @@ import { fetchTavernConfig, fetchTavernTemplates } from '@/tavern/queries'
 import { fetchQuestConfig } from '@/quests/queries'
 import { fetchShopItems } from '@/shop/queries'
 import { fetchCandleConfig } from '@/candle/queries'
-import { fetchFarmConfig } from '@/farming/queries'
+import { fetchFarmConfig, fetchStakeWeights } from '@/farming/queries'
 import { fetchBuildingCosts, fetchRarityDiscounts } from '@/lands/queries'
 import { fetchDungeonLbConfig } from '@/leaderboard/queries'
 import { DEFAULT_CAPS, type StatCaps } from '@/dungeon/sim'
@@ -113,6 +113,7 @@ const EXTRAS = {
   quest: fetchQuestConfig,
   rarityDiscounts: fetchRarityDiscounts,
   shopItems: fetchShopItems,
+  stakeWeights: fetchStakeWeights,
   tavern: fetchTavernConfig,
   tavernTemplates: fetchTavernTemplates,
   upgrades: fetchAllUpgrades,

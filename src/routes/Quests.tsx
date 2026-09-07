@@ -1,10 +1,6 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useGame } from '@/state/useGame'
-import {
-  fetchActiveQuests,
-  fetchQuestConfig,
-  fetchQuestScopes,
-} from '@/quests/queries'
+import { fetchActiveQuests, fetchQuestScopes } from '@/quests/queries'
 import type { ActiveQuests, Quest, QuestConfig, QuestScope } from '@/quests/types'
 import {
   boardOf,
@@ -20,8 +16,9 @@ import {
 } from '@/quests/rules'
 import { finishQuest, getQuests, rerollQuest } from '@/wharf/actions'
 import { useAction } from '@/wharf/useAction'
+import { useChainQuery } from '@/chain/useChainQuery'
+import { useLazyConfig } from '@/state/useConfig'
 import { DIRTIES } from '@/wharf/actions'
-import { readableError } from '@/wharf/errors'
 import type { Player } from '@/chain/types'
 import { NUM_LOCALE } from '@/format'
 import { asset } from '@/assets'
@@ -78,54 +75,37 @@ interface QuestData {
 }
 
 function useQuests(account: string | null): QuestData {
-  const [active, setActive] = useState<ActiveQuests>()
-  const [scopes, setScopes] = useState<QuestScope[]>([])
-  const [config, setConfig] = useState<QuestConfig>()
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  /* The quest settings are the same for every player and come from the
+     store; the board and the scope clocks are this wallet's. */
+  const config = useLazyConfig('quest')
 
-  const alive = useRef(true)
-  useEffect(() => {
-    alive.current = true
-    return () => {
-      alive.current = false
-    }
-  }, [])
-
-  const load = useCallback(
-    async (refresh: boolean): Promise<ActiveQuests | undefined> => {
-      if (!account) return undefined
-      setError(null)
-      try {
-        const [a, s, c] = await Promise.all([
-          fetchActiveQuests(account, refresh),
-          fetchQuestScopes(refresh),
-          fetchQuestConfig(),
-        ])
-        if (!alive.current) return undefined
-        setActive(a)
-        setScopes(s)
-        setConfig(c)
-        return a
-      } catch (err) {
-        if (alive.current) setError(readableError(err))
-        return undefined
-      } finally {
-        if (alive.current) setLoading(false)
-      }
+  const query = useChainQuery(
+    account && `quests:${account}`,
+    async () => {
+      const [a, s] = await Promise.all([
+        fetchActiveQuests(account!),
+        fetchQuestScopes(),
+      ])
+      return { active: a, scopes: s }
     },
-    [account],
+    /* Claiming refills the slot on chain and pays onto the player row, so
+       both make this board stale. */
+    { deps: ['quests', 'player'] },
   )
 
-  useEffect(() => {
-    setLoading(true)
-    void load(false)
-  }, [load])
-
-  const reload = useCallback(() => load(true), [load])
-
-  return { active, scopes, config, loading, error, reload }
+  return {
+    active: query.data?.active,
+    scopes: query.data?.scopes ?? EMPTY_SCOPES,
+    config,
+    loading: query.loading,
+    error: query.error,
+    /* The board, not just a promise: what an action waits on is whether the
+       quest it claimed has left the freshly read board. */
+    reload: async () => (await query.reload())?.active,
+  }
 }
+
+const EMPTY_SCOPES: QuestScope[] = []
 
 /* ---------- the screen ---------- */
 

@@ -31,8 +31,13 @@ export interface ChainQuery<T> {
   /** True until the first answer, and again whenever it is re-asked. */
   loading: boolean
   error: string | null
-  /** Ask again now, past the cache. For a pull-to-refresh or a retry. */
-  reload: () => Promise<void>
+  /**
+   * Ask again now, and hand back what came. The value matters because a
+   * caller waiting on a signed action needs to test the fresh answer —
+   * whether the quest it just claimed has left the board — and reaching for
+   * the state a render later is a race.
+   */
+  reload: () => Promise<T | undefined>
 }
 
 export interface QueryOptions {
@@ -84,16 +89,17 @@ export function useChainQuery<T>(
      the cache is the caller's `read` to decide — `fetchRoster(account, true)`
      says it plainly where a boolean threaded through here would not.
   */
-  const run = useCallback(async () => {
-    if (!key || !enabled) return
+  const run = useCallback(async (): Promise<T | undefined> => {
+    if (!key || !enabled) return undefined
     setLoading(true)
     setError(null)
     try {
       const value = await latest.current()
-      if (!alive.current) return
-      setData(value)
+      if (alive.current) setData(value)
+      return value
     } catch (err) {
       if (alive.current) setError(readableError(err))
+      return undefined
     } finally {
       if (alive.current) setLoading(false)
     }

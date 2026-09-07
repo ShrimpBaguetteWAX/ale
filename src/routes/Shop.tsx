@@ -1,11 +1,7 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useGame } from '@/state/useGame'
-import {
-  fetchShopCooldowns,
-  fetchShopItems,
-  fetchWaxBalance,
-} from '@/shop/queries'
+import { fetchShopCooldowns, fetchWaxBalance } from '@/shop/queries'
 import {
   canBuy,
   cooldownUntil,
@@ -28,8 +24,11 @@ import {
 } from '@/shop/types'
 import { buyShopItem, buyShopItemWithWax, DIRTIES } from '@/wharf/actions'
 import { useAction } from '@/wharf/useAction'
-import { readableError } from '@/wharf/errors'
+import { useChainQuery } from '@/chain/useChainQuery'
+import { useLazyConfig } from '@/state/useConfig'
 import { asset } from '@/assets'
+
+const EMPTY_COOLDOWNS: ShopCooldown[] = []
 
 function Amount({ label, icon }: { label: string; icon?: string }) {
   return (
@@ -44,9 +43,23 @@ export default function Shop() {
   const player = useGame((s) => s.player)!
   const session = useGame((s) => s.session)
 
-  const [items, setItems] = useState<ShopItem[] | null>(null)
-  const [cooldowns, setCooldowns] = useState<ShopCooldown[]>([])
-  const [wax, setWax] = useState<number>(0)
+  /* The catalogue is the same for everybody; the cooldowns and the WAX
+     balance are this wallet's. */
+  const items = useLazyConfig('shopItems') ?? null
+
+  const own = useChainQuery(
+    player.wallet && `shop:${player.wallet}`,
+    async () => {
+      const [cd, balance] = await Promise.all([
+        fetchShopCooldowns(player.wallet).catch(() => [] as ShopCooldown[]),
+        fetchWaxBalance(player.wallet).catch(() => undefined),
+      ])
+      return { cooldowns: cd, wax: parseFloat(balance ?? '0') || 0 }
+    },
+    { deps: ['shopCooldowns'] },
+  )
+  const cooldowns = own.data?.cooldowns ?? EMPTY_COOLDOWNS
+  const wax = own.data?.wax ?? 0
   /*
      Readable from the URL so other screens can send a player straight to the
      section they need — the CPU tab links here for a Legend pass. Anything
@@ -59,31 +72,12 @@ export default function Shop() {
   const setCategory = (key: string) =>
     setParams(key === SHOP_CATEGORIES[0].key ? {} : { c: key }, { replace: true })
   const [confirming, setConfirming] = useState<ShopItem | null>(null)
-  const { busy, error, notice, run, setError } = useAction()
+  const { busy, error, notice, run } = useAction()
   // Ticks once a second so the cooldown countdowns stay honest.
   const [, setTick] = useState(0)
 
   const legend = isLegend(player)
   const expiry = legendExpiry(player)
-
-  useEffect(() => {
-    fetchShopItems()
-      .then(setItems)
-      .catch((err) => setError(readableError(err)))
-  }, [])
-
-  const reloadPlayerState = useCallback(async () => {
-    const [cd, balance] = await Promise.all([
-      fetchShopCooldowns(player.wallet, true).catch(() => [] as ShopCooldown[]),
-      fetchWaxBalance(player.wallet).catch(() => undefined),
-    ])
-    setCooldowns(cd)
-    setWax(parseFloat(balance ?? '0') || 0)
-  }, [player.wallet])
-
-  useEffect(() => {
-    void reloadPlayerState()
-  }, [reloadPlayerState])
 
   // Only run the clock while something is actually counting down.
   const anyCooldown = useMemo(
@@ -125,7 +119,9 @@ export default function Shop() {
         intervalMs: 700,
         /* Cooldowns move once and stay moved, so they are read after the
            waiting rather than on every attempt. */
-        onSettled: reloadPlayerState,
+        onSettled: async () => {
+          await own.reload()
+        },
         /* The daily flask may have just gone on cooldown. */
         chore: 'shop',
         /* Balances on the player row, and the cooldown row the purchase just

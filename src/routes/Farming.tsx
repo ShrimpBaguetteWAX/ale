@@ -1,13 +1,11 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useGame } from '@/state/useGame'
 import { fetchFarmInventory } from '@/chain/atomic'
 import {
   FARM_SCHEMAS,
   SCHEMA_LABEL,
-  fetchFarmConfig,
   fetchFarmPools,
   fetchFarmUser,
-  fetchStakeWeights,
   fetchStakedCards,
   type FarmSchema,
 } from '@/farming/queries'
@@ -31,8 +29,9 @@ import {
 } from '@/farming/rules'
 import { claimFarming, stakeCards, unstakeCards } from '@/wharf/actions'
 import { useAction } from '@/wharf/useAction'
+import { useChainQuery } from '@/chain/useChainQuery'
+import { useLazyConfig } from '@/state/useConfig'
 import { DIRTIES } from '@/wharf/actions'
-import { readableError } from '@/wharf/errors'
 import { formatNumber } from '@/format'
 import { ActionBanner } from '@/components/ActionBanner'
 import { asset } from '@/assets'
@@ -74,7 +73,8 @@ interface FarmData {
   weights: StakeWeight[]
   user?: FarmUser
   staked: StakedCard[]
-  inventory: Map<string, FarmCard[]>
+  /** This schema's cards, not every schema's. */
+  inventory: FarmCard[]
   loading: boolean
   loadingInventory: boolean
   error: string | null
@@ -82,101 +82,60 @@ interface FarmData {
 }
 
 function useFarm(account: string | null, schema: FarmSchema): FarmData {
-  const [config, setConfig] = useState<FarmConfig>()
-  const [pools, setPools] = useState<FarmPool[]>([])
-  const [weights, setWeights] = useState<StakeWeight[]>([])
-  const [user, setUser] = useState<FarmUser>()
-  const [staked, setStaked] = useState<StakedCard[]>([])
-  const [inventory, setInventory] = useState<Map<string, FarmCard[]>>(new Map())
-  const [loading, setLoading] = useState(true)
-  const [loadingInventory, setLoadingInventory] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  /* The pool settings and the rarity weights are the same for everybody. */
+  const config = useLazyConfig('farm')
+  const weights = useLazyConfig('stakeWeights') ?? EMPTY_WEIGHTS
 
-  const alive = useRef(true)
-  useEffect(() => {
-    alive.current = true
-    return () => {
-      alive.current = false
-    }
-  }, [])
-
-  const load = useCallback(
-    async (refresh: boolean) => {
-      if (!account) return
-      setError(null)
-      try {
-        const [c, p, w, u, s] = await Promise.all([
-          fetchFarmConfig(),
-          fetchFarmPools(refresh),
-          fetchStakeWeights(),
-          fetchFarmUser(account, refresh),
-          fetchStakedCards(account, refresh),
-        ])
-        if (!alive.current) return
-        setConfig(c)
-        setPools(p)
-        setWeights(w)
-        setUser(u)
-        setStaked(s)
-      } catch (err) {
-        if (alive.current) setError(readableError(err))
-      } finally {
-        if (alive.current) setLoading(false)
-      }
+  const farm = useChainQuery(
+    account && `farm:${account}`,
+    async () => {
+      const [p, u, s] = await Promise.all([
+        fetchFarmPools(),
+        fetchFarmUser(account!),
+        fetchStakedCards(account!),
+      ])
+      return { pools: p, user: u, staked: s }
     },
-    [account],
+    /* Staking, unstaking and claiming all move the accrued power and the
+       cards behind it. */
+    { deps: ['farmUser', 'farmStaked'] },
   )
 
-  useEffect(() => {
-    setLoading(true)
-    void load(false)
-  }, [load])
-
   /*
-   * The wallet's own cards are fetched per schema, on demand.
-   *
-   * A real Alien Worlds wallet holds thousands across the three schemas, and
-   * only one is on screen at a time — loading all three up front would be
-   * three long paged crawls to show one.
-   */
-  useEffect(() => {
-    if (!account || inventory.has(schema)) return
-    let cancelled = false
-    setLoadingInventory(true)
-    fetchFarmInventory(account, schema)
-      .then((cards) => {
-        if (cancelled || !alive.current) return
-        setInventory((prev) => new Map(prev).set(schema, cards))
-      })
-      .catch((err) => {
-        if (!cancelled && alive.current) setError(readableError(err))
-      })
-      .finally(() => {
-        if (!cancelled && alive.current) setLoadingInventory(false)
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [account, schema, inventory])
+     The wallet's own cards, per schema and on demand.
 
-  const reload = useCallback(async () => {
-    setInventory(new Map())
-    await load(true)
-  }, [load])
+     A real Alien Worlds wallet holds thousands across the three schemas and
+     only one is on screen at a time, so loading all three up front would be
+     three long paged crawls to show one. The map that used to hold them all
+     is gone: switching back to a schema is a cache hit in the client, which
+     is what the map was reimplementing.
+  */
+  const inventory = useChainQuery(
+    account && `farm-inv:${account}:${schema}`,
+    () => fetchFarmInventory(account!, schema),
+    { deps: ['farmStaked'] },
+  )
 
   return {
     config,
-    pools,
+    pools: farm.data?.pools ?? EMPTY_POOLS,
     weights,
-    user,
-    staked,
-    inventory,
-    loading,
-    loadingInventory,
-    error,
-    reload,
+    user: farm.data?.user,
+    staked: farm.data?.staked ?? EMPTY_STAKED,
+    inventory: inventory.data ?? EMPTY_CARDS,
+    loading: farm.loading,
+    loadingInventory: inventory.loading,
+    error: farm.error ?? inventory.error,
+    reload: async () => {
+      await Promise.all([farm.reload(), inventory.reload()])
+    },
   }
 }
+
+const EMPTY_POOLS: FarmPool[] = []
+const EMPTY_WEIGHTS: StakeWeight[] = []
+const EMPTY_STAKED: StakedCard[] = []
+const EMPTY_CARDS: FarmCard[] = []
 
 /* ---------- the screen ---------- */
 
@@ -218,12 +177,12 @@ export default function Farming() {
    * and showing them greyed out buries the ones that matter.
    */
   const inventory = useMemo(() => {
-    const all = data.inventory.get(schema) ?? []
+    const all = data.inventory
     return all.filter((c) => stakeable(c, weights)).sort(byWeight(weights))
-  }, [data.inventory, schema, weights])
+  }, [data.inventory, weights])
 
   /* Held but unstakeable, so an empty grid can explain itself. */
-  const hiddenCount = (data.inventory.get(schema)?.length ?? 0) - inventory.length
+  const hiddenCount = data.inventory.length - inventory.length
 
   const stakedHere = useMemo(
     () => staked.filter((c) => c.schema === schema).sort(stakedByWeight),

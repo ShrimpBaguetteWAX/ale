@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useGame } from '@/state/useGame'
 import { fetchOwnedLands, type LandAsset } from '@/chain/atomic'
-import { fetchLandsConfig, fetchPlanetLands } from '@/chain/queries'
+import { fetchPlanetLands } from '@/chain/queries'
 import type { Building, Land, LandsConfig } from '@/chain/types'
 import type { Planet } from '@/chain/config'
 import {
@@ -13,12 +13,7 @@ import {
   liveBoostScore,
   rarityColor,
 } from '@/map/terrain'
-import {
-  BUILDINGS,
-  fetchBuildingCosts,
-  fetchRarityDiscounts,
-  type BuildingName,
-} from '@/lands/queries'
+import { BUILDINGS, type BuildingName } from '@/lands/queries'
 import type { BuildingCost, OwnedLand } from '@/lands/types'
 import {
   boostCost,
@@ -36,8 +31,9 @@ import {
   destroyBuilding,
 } from '@/wharf/actions'
 import { useAction } from '@/wharf/useAction'
+import { useChainQuery } from '@/chain/useChainQuery'
+import { useConfig, useLazyConfig } from '@/state/useConfig'
 import { DIRTIES } from '@/wharf/actions'
-import { readableError } from '@/wharf/errors'
 import { formatNumber, formatDecimals } from '@/format'
 import { ActionBanner } from '@/components/ActionBanner'
 import { asset } from '@/assets'
@@ -111,7 +107,7 @@ interface LandData {
   config?: LandsConfig
   loading: boolean
   error: string | null
-  reload: () => Promise<void>
+  reload: () => Promise<unknown>
 }
 
 /**
@@ -122,77 +118,63 @@ interface LandData {
  * a single request the map screen has very likely already cached.
  */
 function useLands(account: string | null): LandData {
-  const [lands, setLands] = useState<OwnedLand[]>([])
-  const [costs, setCosts] = useState<Map<string, BuildingCost[]>>(new Map())
-  const [discounts, setDiscounts] = useState<Map<string, number>>(new Map())
-  const [config, setConfig] = useState<LandsConfig>()
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  /*
+     Three of the four reads this used to make were config — the same build
+     costs, rarity discounts and land settings for every player. They come
+     from the store now, so what is left is the one read that is actually
+     about this wallet.
+  */
+  const { lands: config } = useConfig()
+  const costs = useLazyConfig('buildingCosts') ?? EMPTY_COSTS
+  const discounts = useLazyConfig('rarityDiscounts') ?? EMPTY_DISCOUNTS
 
-  const alive = useRef(true)
-  useEffect(() => {
-    alive.current = true
-    return () => {
-      alive.current = false
-    }
-  }, [])
+  const query = useChainQuery(
+    account && `lands:${account}`,
+    async () => {
+      const assets = await fetchOwnedLands(account!)
 
-  const load = useCallback(
-    async (refresh: boolean) => {
-      if (!account) return
-      setError(null)
-      try {
-        const [assets, c, d, cfg] = await Promise.all([
-          fetchOwnedLands(account),
-          fetchBuildingCosts(),
-          fetchRarityDiscounts(),
-          fetchLandsConfig(),
-        ])
+      /* Only the planets this wallet actually holds land on — usually one or
+         two of the six, and each is a read the map has very likely cached. */
+      const planets = [...new Set(assets.map((a) => a.planet))] as Planet[]
+      const rows = await Promise.all(planets.map((p) => fetchPlanetLands(p)))
+      const byPlanet = new Map<string, Map<string, Land>>()
+      planets.forEach((p, i) => {
+        byPlanet.set(p, new Map(rows[i].map((l) => [`${l.x}:${l.y}`, l])))
+      })
 
-        const planets = [...new Set(assets.map((a) => a.planet))] as Planet[]
-        const rows = await Promise.all(planets.map((p) => fetchPlanetLands(p, refresh)))
-        const byPlanet = new Map<string, Map<string, Land>>()
-        planets.forEach((p, i) => {
-          byPlanet.set(p, new Map(rows[i].map((l) => [`${l.x}:${l.y}`, l])))
-        })
-
-        const joined: OwnedLand[] = assets.map((a: LandAsset) => {
-          const row = byPlanet.get(a.planet)?.get(`${a.x}:${a.y}`)
-          return {
-            asset_id: a.asset_id,
-            name: a.name,
-            planet: a.planet as Planet,
-            x: a.x,
-            y: a.y,
-            rarity: a.rarity,
-            land: row,
-            buildings: row?.buildings ?? [],
-          }
-        })
-
-        if (!alive.current) return
-        setLands(joined)
-        setCosts(c)
-        setDiscounts(d)
-        setConfig(cfg)
-      } catch (err) {
-        if (alive.current) setError(readableError(err))
-      } finally {
-        if (alive.current) setLoading(false)
-      }
+      return assets.map((a: LandAsset) => {
+        const row = byPlanet.get(a.planet)?.get(`${a.x}:${a.y}`)
+        return {
+          asset_id: a.asset_id,
+          name: a.name,
+          planet: a.planet as Planet,
+          x: a.x,
+          y: a.y,
+          rarity: a.rarity,
+          land: row,
+          buildings: row?.buildings ?? [],
+        }
+      }) as OwnedLand[]
     },
-    [account],
+    /* Building, boosting and destroying all rewrite the land row this screen
+       is drawn from. */
+    { deps: ['lands'] },
   )
 
-  useEffect(() => {
-    setLoading(true)
-    void load(false)
-  }, [load])
-
-  const reload = useCallback(() => load(true), [load])
-
-  return { lands, costs, discounts, config, loading, error, reload }
+  return {
+    lands: query.data ?? EMPTY_LANDS,
+    costs,
+    discounts,
+    config,
+    loading: query.loading,
+    error: query.error,
+    reload: query.reload,
+  }
 }
+
+const EMPTY_LANDS: OwnedLand[] = []
+const EMPTY_COSTS = new Map<string, BuildingCost[]>()
+const EMPTY_DISCOUNTS = new Map<string, number>()
 
 /* ---------- the screen ---------- */
 

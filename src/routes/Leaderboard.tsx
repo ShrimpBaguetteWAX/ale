@@ -90,7 +90,7 @@ interface BoardData {
   arena: Map<string, ArenaRank[]>
   loading: boolean
   error: string | null
-  reload: () => Promise<void>
+  reload: () => Promise<unknown>
 }
 
 function useBoards(account: string | null): BoardData {
