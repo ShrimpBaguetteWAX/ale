@@ -26,6 +26,17 @@ interface GameState {
 
   session: Session | null
   account: string | null
+  /**
+   * Whether boot has finished deciding whether there is a wallet.
+   *
+   * `phase` cannot answer this. It goes to `ready` once the node pool and the
+   * config are in, which is before the wallet SDK has even been imported —
+   * and restoring a stored session takes a chunk load and a round trip after
+   * that. In that window a returning player has no `account` yet but is about
+   * to, which the gate read as "not connected" and bounced to the wallet
+   * picker. That is the flash between "Connecting to WAX" and the game.
+   */
+  sessionChecked: boolean
 
   config: GameConfig | null
 
@@ -46,6 +57,7 @@ export const useGame = create<GameState>((set, get) => ({
   bootError: null,
   session: null,
   account: null,
+  sessionChecked: false,
   config: null,
   player: null,
   playerLoaded: false,
@@ -63,7 +75,9 @@ export const useGame = create<GameState>((set, get) => ({
 
     const status = await endpointPool.probe()
     if (status.healthy.length === 0) {
-      set({ phase: 'offline', bootError: 'No WAX node responded.' })
+      /* There is nothing to restore a session against, so the gate must stop
+         waiting rather than hold a spinner over an error it could show. */
+      set({ phase: 'offline', bootError: 'No WAX node responded.', sessionChecked: true })
       return
     }
 
@@ -86,13 +100,32 @@ export const useGame = create<GameState>((set, get) => ({
     set({ phase: 'ready' })
 
     // Only pull in the wallet SDK if a session could actually be restored.
-    if (!hasStoredSession()) return
+    if (!hasStoredSession()) {
+      set({ sessionChecked: true })
+      return
+    }
 
-    const { restore } = await wharf()
-    const session = await restore()
-    if (session) {
-      set({ session, account: String(session.actor) })
-      await get().refreshPlayer()
+    try {
+      const { restore } = await wharf()
+      const session = await restore()
+      if (session) {
+        /*
+           The account lands in the same update as the flag, never after it.
+           Split across two, there would be one frame holding "boot has
+           decided" and "there is no wallet" at once — which is the exact
+           pair the gate turns into a redirect.
+        */
+        set({ session, account: String(session.actor), sessionChecked: true })
+        await get().refreshPlayer()
+      }
+    } finally {
+      /*
+         Whatever happened above — a chunk that would not load, a wallet that
+         refused, a stored session the SDK rejected — the gate has to stop
+         waiting. Without this a thrown restore leaves the spinner up for
+         good, which is worse than the flash it replaced.
+      */
+      if (!get().sessionChecked) set({ sessionChecked: true })
     }
   },
 

@@ -160,16 +160,32 @@ const ComingSoon = lazyScreen(() => import('./routes/ComingSoon'))
  * have a player row. Anyone missing a step is sent to the screen that fixes
  * it, carrying where they were headed so they land there afterwards.
  */
-function RequirePlayer() {
+export function RequirePlayer() {
   const phase = useGame((s) => s.phase)
   const account = useGame((s) => s.account)
   const player = useGame((s) => s.player)
   const playerLoaded = useGame((s) => s.playerLoaded)
+  const sessionChecked = useGame((s) => s.sessionChecked)
   const location = useLocation()
 
-  if (phase === 'idle' || phase === 'probing') return <Loading label="Connecting to WAX" />
+  /*
+     One spinner for the whole of boot, rather than three states in a row.
+
+     A refresh used to read as "Connecting to WAX", then a flash of the wallet
+     picker, then "Loading your commander", then the game. Only the last of
+     those was a real destination: the picker appeared because boot reaches
+     `ready` before the wallet SDK has been imported, so for a moment a
+     returning player looked like a visitor with no wallet.
+
+     `sessionChecked` is what closes that window, and the labels are gone
+     because naming each step only advertised how many there were. Nothing is
+     hidden that the player could act on — a wallet that genuinely is not
+     connected still lands on the picker, and a boot that fails still shows
+     its error.
+  */
+  if (phase === 'idle' || phase === 'probing' || !sessionChecked) return <Loading />
   if (!account) return <Navigate to="/connect" replace state={{ from: location.pathname }} />
-  if (!playerLoaded) return <Loading label="Loading your commander" />
+  if (!playerLoaded) return <Loading />
   if (!player) return <Navigate to="/signup" replace />
 
   return <Outlet />
