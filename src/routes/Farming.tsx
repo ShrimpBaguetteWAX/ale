@@ -31,6 +31,7 @@ import {
 } from '@/farming/rules'
 import { claimFarming, stakeCards, unstakeCards } from '@/wharf/actions'
 import { useAction } from '@/wharf/useAction'
+import { DIRTIES } from '@/wharf/actions'
 import { readableError } from '@/wharf/errors'
 import { formatNumber } from '@/format'
 import { ActionBanner } from '@/components/ActionBanner'
@@ -238,18 +239,19 @@ export default function Farming() {
 
   /* Whatever was staked or claimed is no longer a pending selection, and
      claiming resets the power that had capped. */
-  const opts = {
+  const opts = (action: keyof typeof DIRTIES) => ({
     after: data.reload,
     onSettled: () => setPicked([]),
     chore: 'farming' as const,
-  }
+    dirties: DIRTIES[action],
+  })
 
   const doStake = () =>
     run(
       'stake',
       () => stakeCards(session!, picked),
       `Staked ${picked.length} card${picked.length === 1 ? '' : 's'}.`,
-      opts,
+      opts('stakeCards'),
     )
 
   const doUnstake = () =>
@@ -257,11 +259,11 @@ export default function Farming() {
       'unstake',
       () => unstakeCards(session!, picked),
       `Unstaked ${picked.length} card${picked.length === 1 ? '' : 's'}, and claimed what they had earned.`,
-      opts,
+      opts('unstakeCards'),
     )
 
   const doClaim = () =>
-    run('claim', () => claimFarming(session!), 'Credits claimed.', opts)
+    run('claim', () => claimFarming(session!), 'Credits claimed.', opts('claimFarming'))
 
   const toggle = (id: string) =>
     setPicked((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]))

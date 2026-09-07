@@ -48,6 +48,7 @@ import {
 
 import { MAX_BULK_LISTINGS, bulkListPlan, listable } from '@/market/rules'
 import { useAction } from '@/wharf/useAction'
+import { DIRTIES } from '@/wharf/actions'
 import { readableError } from '@/wharf/errors'
 import type { ClassTemplate } from '@/tavern/fighterStats'
 import {
@@ -364,19 +365,27 @@ export default function Fighters() {
    * few times is the honest fix; the alternative — patching the local copy
    * optimistically — would show numbers the chain has not agreed to.
    */
-  /* A levelled fighter is no longer waiting. */
-  const opts = { after: data.reload, chore: 'fighters' as const }
+  /*
+     A levelled fighter is no longer waiting, and each action says for itself
+     what it left stale — listing one touches the market, marking one touches
+     nothing but the fighter row.
+  */
+  const opts = (action: keyof typeof DIRTIES) => ({
+    after: data.reload,
+    chore: 'fighters' as const,
+    dirties: DIRTIES[action],
+  })
 
   const doPayAll = () =>
     run(
       'pay-all',
       () => payFighters(session!, payAll.ids),
       `Paid ${payAll.ids.length} fighter${payAll.ids.length === 1 ? '' : 's'}.`,
-      opts,
+      opts('payFighters'),
     )
 
   const doPayOne = (f: RosterFighter) =>
-    run('pay-one', () => payFighters(session!, [f.fighter_id]), 'Fighter paid.', opts)
+    run('pay-one', () => payFighters(session!, [f.fighter_id]), 'Fighter paid.', opts('payFighters'))
 
   const doLevelAll = () =>
     run(
@@ -388,7 +397,7 @@ export default function Fighters() {
         }),
       `Gained ${levelAll.ids.length} level${levelAll.ids.length === 1 ? '' : 's'} ` +
         `across ${levelAll.fighters} fighter${levelAll.fighters === 1 ? '' : 's'}.`,
-      opts,
+      opts('levelUpFighters'),
     )
 
   const doLevelOne = (f: RosterFighter) => {
@@ -397,7 +406,7 @@ export default function Fighters() {
       'level-one',
       () => levelUpFighters(session!, [f.fighter_id], plan.cost),
       'Fighter levelled up.',
-      opts,
+      opts('levelUpFighters'),
     )
   }
 
@@ -407,7 +416,7 @@ export default function Fighters() {
       'sell',
       () => sellFighters(session!, checked),
       `Sold ${checked.length} fighter${checked.length === 1 ? '' : 's'} for ${sellValue.toLocaleString(NUM_LOCALE)} credits.`,
-      opts,
+      opts('sellFighters'),
     )
     setChecked([])
     setSelectedId(null)
@@ -425,7 +434,7 @@ export default function Fighters() {
         }),
       `Listed ${listPlan.ids.length} fighter${listPlan.ids.length === 1 ? '' : 's'} ` +
         `at ${startPrice} gems.`,
-      opts,
+      opts('addAuctions'),
     )
     setChecked([])
     setSelectedId(null)
@@ -436,7 +445,7 @@ export default function Fighters() {
       'marker',
       () => setFighterMarker(session!, f.fighter_id, marker),
       marker ? 'Marker set.' : 'Marker cleared.',
-      opts,
+      opts('setFighterMarker'),
     )
 
   const toggleChecked = useCallback(

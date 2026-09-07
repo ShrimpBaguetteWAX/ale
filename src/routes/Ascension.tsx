@@ -32,6 +32,7 @@ import {
   rerollAscension,
 } from '@/wharf/actions'
 import { useAction } from '@/wharf/useAction'
+import { DIRTIES } from '@/wharf/actions'
 import { readableError } from '@/wharf/errors'
 import { formatNumber } from '@/format'
 import { useConfig, useLazyConfig } from '@/state/useConfig'
@@ -143,7 +144,7 @@ export default function Ascension() {
 
   /* The fighter row is rewritten by an inline action, so the roster is
      re-read a few times rather than once. */
-  const opts = { after: load }
+  const opts = (action: keyof typeof DIRTIES) => ({ after: load, dirties: DIRTIES[action] })
 
   /* A fighter mid-ascension takes over the screen: it has offers waiting. */
   const pending = useMemo(
@@ -261,7 +262,7 @@ export default function Ascension() {
               'reroll',
               () => rerollAscension(session!, pending.fighter_id, rerollFee),
               'Offers re-rolled.',
-              opts,
+              opts('rerollAscension'),
             )
           }
           onClaim={(stat, value, positive) =>
@@ -276,7 +277,7 @@ export default function Ascension() {
                   positive,
                 ),
               'Ascension complete.',
-              opts,
+              opts('claimAscensionUpgrade'),
             )
           }
         />
@@ -315,7 +316,7 @@ export default function Ascension() {
                   fee,
                 ),
               'Ascended. Choose your upgrade.',
-              opts,
+              opts('ascendFighter'),
             )
           }
         />

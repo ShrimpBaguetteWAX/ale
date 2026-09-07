@@ -90,6 +90,7 @@ import {
 } from '@/wharf/actions'
 import { randomHistoryId } from '@/dungeon/queries'
 import { useAction } from '@/wharf/useAction'
+import { DIRTIES } from '@/wharf/actions'
 import {
   MineCelebration,
   readMinedRewards,
@@ -339,9 +340,12 @@ export default function Profile({ section = 'account' }: { section?: Section }) 
      refreshed the CPU dot and left the one it had actually changed to notice
      on its own. Naming it per action makes that impossible to get wrong.
   */
-  const opts = { after: load }
-  const mineOpts = { after: load, chore: 'rewards' as const }
-  const cpuOpts = { after: load, chore: 'account' as const }
+  const opts = (action: keyof typeof DIRTIES) => ({
+    after: load,
+    dirties: DIRTIES[action],
+  })
+  const mineOpts = { ...opts('mineRewardPool'), chore: 'rewards' as const }
+  const cpuOpts = { ...opts('claimCpu'), chore: 'account' as const }
 
   const board = useMemo(() => avatarBoard(avatars, player), [avatars, player])
 
@@ -402,13 +406,13 @@ export default function Profile({ section = 'account' }: { section?: Section }) 
           busy={busy}
           canAct={!!session}
           onTag={(tag) =>
-            void run('tag', () => setPlayertag(session!, tag), 'Gamertag saved.', opts)
+            void run('tag', () => setPlayertag(session!, tag), 'Gamertag saved.', opts('setPlayertag'))
           }
           onSelect={(id) =>
-            void run('avatar', () => setAvatarId(session!, id), 'Avatar selected !', opts)
+            void run('avatar', () => setAvatarId(session!, id), 'Avatar selected !', opts('setAvatarId'))
           }
           onUnlock={(ids) =>
-            void run('unlock', () => unlockAvatars(session!, ids), 'Avatar unlocked !', opts)
+            void run('unlock', () => unlockAvatars(session!, ids), 'Avatar unlocked !', opts('unlockAvatars'))
           }
         />
       )}
@@ -424,7 +428,7 @@ export default function Profile({ section = 'account' }: { section?: Section }) 
               'mining',
               () => setMiningNfts(session!, ids),
               'Mining settings saved !',
-              opts,
+              opts('setMiningNfts'),
             )
           }
           onShare={(share) =>
@@ -432,7 +436,7 @@ export default function Profile({ section = 'account' }: { section?: Section }) 
               'share',
               () => setLandownerShare(session!, share),
               'Mining settings saved !',
-              opts,
+              opts('setLandownerShare'),
             )
           }
         />
@@ -461,14 +465,14 @@ export default function Profile({ section = 'account' }: { section?: Section }) 
           busy={busy}
           canAct={!!session}
           onClaim={() =>
-            void run('claim', () => claimCurrencies(session!), 'Rewards claimed.', opts)
+            void run('claim', () => claimCurrencies(session!), 'Rewards claimed.', opts('claimCurrencies'))
           }
           onUnlock={(rows) =>
             void run(
               'rows',
               () => unlockRewardRows(session!, currencyTab, rows),
               'History unlocked.',
-              opts,
+              opts('unlockRewardRows'),
             )
           }
           board={poolBoard(

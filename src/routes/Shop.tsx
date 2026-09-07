@@ -26,7 +26,7 @@ import {
   type ShopCooldown,
   type ShopItem,
 } from '@/shop/types'
-import { buyShopItem, buyShopItemWithWax } from '@/wharf/actions'
+import { buyShopItem, buyShopItemWithWax, DIRTIES } from '@/wharf/actions'
 import { useAction } from '@/wharf/useAction'
 import { readableError } from '@/wharf/errors'
 import { asset } from '@/assets'
@@ -128,6 +128,9 @@ export default function Shop() {
         onSettled: reloadPlayerState,
         /* The daily flask may have just gone on cooldown. */
         chore: 'shop',
+        /* Balances on the player row, and the cooldown row the purchase just
+           wrote — both stale for every other screen the moment this returns. */
+        dirties: isWaxPriced(item) ? DIRTIES.buyShopItemWithWax : DIRTIES.buyShopItem,
       },
     )
   }

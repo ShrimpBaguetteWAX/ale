@@ -36,6 +36,7 @@ import {
   destroyBuilding,
 } from '@/wharf/actions'
 import { useAction } from '@/wharf/useAction'
+import { DIRTIES } from '@/wharf/actions'
 import { readableError } from '@/wharf/errors'
 import { formatNumber, formatDecimals } from '@/format'
 import { ActionBanner } from '@/components/ActionBanner'
@@ -222,14 +223,18 @@ export default function Lands() {
   )
 
   /* Boosting lifts a building back over the mark. */
-  const opts = { after: data.reload, chore: 'lands' as const }
+  const opts = (action: keyof typeof DIRTIES) => ({
+    after: data.reload,
+    chore: 'lands' as const,
+    dirties: DIRTIES[action],
+  })
 
   const doClaim = (land: OwnedLand) =>
     run(
       busyKey('claim', landKey(land)),
       () => claimLandRewards(session!, { planet: land.planet, x: land.x, y: land.y }),
       'Land rewards claimed.',
-      opts,
+      opts('claimLandRewards'),
     )
 
   /* The contract takes one land per action, so claiming everything is a run
@@ -247,7 +252,7 @@ export default function Lands() {
         }
       },
       `Claimed from ${claimable.length} land${claimable.length === 1 ? '' : 's'}.`,
-      opts,
+      opts('claimLandRewards'),
     )
 
   if (!player) return null
@@ -380,7 +385,7 @@ export default function Lands() {
                         costCredits: opt.credits,
                       }),
                     `${buildingLabel(opt.building, costs)} built.`,
-                    opts,
+                    opts('buildBuilding'),
                   )
                 }
                 onBoost={(building, target, cost) =>
@@ -396,7 +401,7 @@ export default function Lands() {
                         target,
                       }),
                     'Boost raised.',
-                    opts,
+                    opts('boostBuilding'),
                   )
                 }
                 onDestroy={(building) =>
@@ -411,7 +416,7 @@ export default function Lands() {
                         costGems: Number(config?.delete_building_gems_cost ?? 0),
                       }),
                     'Building destroyed successfully!',
-                    opts,
+                    opts('destroyBuilding'),
                   )
                 }
               />

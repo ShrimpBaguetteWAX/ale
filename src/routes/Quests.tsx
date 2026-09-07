@@ -20,6 +20,7 @@ import {
 } from '@/quests/rules'
 import { finishQuest, getQuests, rerollQuest } from '@/wharf/actions'
 import { useAction } from '@/wharf/useAction'
+import { DIRTIES } from '@/wharf/actions'
 import { readableError } from '@/wharf/errors'
 import type { Player } from '@/chain/types'
 import { NUM_LOCALE } from '@/format'
@@ -183,7 +184,11 @@ export default function Quests() {
      change rather than running a fixed six rounds — a reroll that landed on
      the first read used to leave every button dead for another five seconds.
   */
-  const opts = { after: data.reload, chore: 'quests' as const }
+  const opts = (action: keyof typeof DIRTIES) => ({
+    after: data.reload,
+    chore: 'quests' as const,
+    dirties: DIRTIES[action],
+  })
 
   /*
      Claiming and rerolling both replace the quest, and `questKey` folds in
@@ -200,7 +205,7 @@ export default function Quests() {
       () => getQuests(session!),
       'New quests issued, with their rewards set aside.',
       {
-        ...opts,
+        ...opts('getQuests'),
         /* A refill replaces whichever slots were empty or expired, so the
            test is that the board is no longer the one we started from. */
         settled: (fresh) =>
@@ -218,7 +223,7 @@ export default function Quests() {
       busyKey('claim', key),
       () => finishQuest(session!, quest),
       `Claimed ${r.label} ${r.symbol}. A new quest has taken its place.`,
-      { ...opts, settled: gone(key) },
+      { ...opts('finishQuest'), settled: gone(key) },
     )
   }
 
@@ -229,7 +234,7 @@ export default function Quests() {
       busyKey('reroll', key),
       () => rerollQuest(session!, quest),
       'Quest rerolled.',
-      { ...opts, settled: gone(key) },
+      { ...opts('rerollQuest'), settled: gone(key) },
     )
   }
 

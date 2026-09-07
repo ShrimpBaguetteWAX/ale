@@ -23,6 +23,7 @@ import {
 } from '@/candle/rules'
 import { claimCandle, contributeGems } from '@/wharf/actions'
 import { useAction } from '@/wharf/useAction'
+import { DIRTIES } from '@/wharf/actions'
 import { readableError } from '@/wharf/errors'
 import { formatNumber, formatDecimals } from '@/format'
 import type { Player } from '@/chain/types'
@@ -162,7 +163,11 @@ export default function Candle() {
   const upcoming = useMemo(() => upcomingOffers(offers, now), [offers, now])
 
   /* A claim empties the pot, so the dot stops waiting for its own timer. */
-  const opts = { after: data.reload, chore: 'candle' as const }
+  const opts = (action: keyof typeof DIRTIES) => ({
+    after: data.reload,
+    chore: 'candle' as const,
+    dirties: DIRTIES[action],
+  })
 
   if (!player) return null
 
@@ -175,12 +180,12 @@ export default function Candle() {
       'contribute',
       () => contributeGems(session!, offer!.offer_id, amount),
       'Contribution registered',
-      opts,
+      opts('contributeGems'),
     )
   }
 
   const doClaim = () =>
-    run('claim', () => claimCandle(session!), 'Rewards claimed successfully!', opts)
+    run('claim', () => claimCandle(session!), 'Rewards claimed successfully!', opts('claimCandle'))
 
   return (
     <div className="candle">

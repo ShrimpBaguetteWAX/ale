@@ -2,6 +2,7 @@ import { CONTRACTS } from '@/chain/config'
 import { transact, type ActionInput, type Session } from './session'
 import type { GameConfig } from '@/chain/types'
 import type { Quest } from '@/quests/types'
+import type { TableKey } from '@/chain/tables'
 
 /**
  * Step 1 of signup: send the WAX fee to `players.ale`.
@@ -1051,3 +1052,100 @@ export function claimAscensionUpgrade(
   }
   return transact(session, [action])
 }
+
+/* ---------- what each action changes ---------- */
+
+/**
+ * The tables an action leaves stale, by the name of the action.
+ *
+ * Declared beside the actions rather than at the screens that call them,
+ * because it is a fact about the contract and not about the screen: paying a
+ * fighter moves credits on the player row and the payday date on the fighter
+ * row whether it was done from the roster or from anywhere else. Two screens
+ * calling the same action cannot disagree about what it touched.
+ *
+ * Every entry names the *player's own* consequences. A dungeon run writes a
+ * fight row and a history row too, but nothing reads those from cache — they
+ * are fetched fresh by id or not at all.
+ *
+ * Scopes are deliberately not recorded. Dropping every scope of `lands`
+ * rather than the one planet that changed costs at most five extra cache
+ * entries, and dropping a cache entry is free — it is the *next read* that
+ * costs, and a screen only reads the planets it is showing.
+ */
+export const DIRTIES = {
+  /* Signup and identity. */
+  paySignupFee: ['player'],
+  signup: ['player'],
+  setPlayertag: ['player'],
+  setAvatar: ['player'],
+  setAvatarId: ['player'],
+  unlockAvatars: ['player'],
+
+  /* Moving. */
+  travel: ['player'],
+  travelVia: ['player'],
+
+  /* The tavern. `hire` empties the recruit on the player row and writes a
+     new fighter. */
+  revealFighter: ['player'],
+  hireFighter: ['player', 'fighters'],
+
+  /* The shop, where the daily items go on cooldown. */
+  buyShopItem: ['player', 'shopCooldowns'],
+  buyShopItemWithWax: ['player', 'shopCooldowns'],
+
+  /* Fighting. A dungeon spends the daily allowance; an arena rewrites who is
+     standing in it, including one of your own fighters if you win. */
+  playDungeon: ['player', 'fighters', 'dungeonCooldowns'],
+  playArena: ['player', 'fighters', 'arena'],
+
+  /* The market. A listed fighter leaves the roster's available set. */
+  addAuction: ['player', 'fighters', 'auctions'],
+  addAuctions: ['player', 'fighters', 'auctions'],
+  bidAuction: ['player', 'auctions'],
+  cancelAuction: ['fighters', 'auctions'],
+  buyOffer: ['player', 'fighters', 'offers'],
+
+  /* The roster. */
+  levelUpFighters: ['player', 'fighters'],
+  payFighters: ['player', 'fighters'],
+  sellFighters: ['player', 'fighters'],
+  setFighterMarker: ['fighters'],
+
+  /* Ascension: three fighters are destroyed and a fourth is rewritten. */
+  ascendFighter: ['player', 'fighters'],
+  rerollAscension: ['player', 'fighters'],
+  claimAscensionUpgrade: ['fighters'],
+
+  /* Quests. Claiming refills the slot on chain, so the board changes either
+     way, and the reward lands on the player row. */
+  getQuests: ['player', 'quests'],
+  finishQuest: ['player', 'quests'],
+  rerollQuest: ['player', 'quests'],
+
+  /* Land. */
+  buildBuilding: ['player', 'lands'],
+  boostBuilding: ['player', 'lands'],
+  destroyBuilding: ['player', 'lands'],
+  claimLandRewards: ['player', 'lands'],
+
+  /* Farming. Staking is a transfer the contract charges gems for. */
+  stakeCards: ['player', 'farmUser', 'farmStaked'],
+  unstakeCards: ['player', 'farmUser', 'farmStaked'],
+  claimFarming: ['player', 'farmUser'],
+
+  /* Rewards and pools. */
+  claimPoolRewards: ['player', 'rewardUsers'],
+  claimCurrencies: ['player', 'rewardUsers'],
+  mineRewardPool: ['player', 'rewardUsers'],
+  unlockRewardRows: ['player'],
+  setMiningNfts: ['player'],
+  setLandownerShare: ['player'],
+  claimCpu: ['player'],
+  claimLeaderboardReward: ['player', 'leaderboard'],
+
+  /* The Candle. */
+  contributeGems: ['player', 'candleStakes'],
+  claimCandle: ['player', 'candleClaims'],
+} as const satisfies Record<string, readonly TableKey[]>

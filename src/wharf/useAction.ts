@@ -3,6 +3,7 @@ import { useGame } from '@/state/useGame'
 import { refreshChore } from '@/chores/signal'
 import type { ChoreKey } from '@/chores/checks'
 import { readableError } from '@/wharf/errors'
+import { cacheDropTable, type TableKey } from '@/chain/tables'
 
 /**
  * Signing something, and everything that has to happen around it.
@@ -38,6 +39,17 @@ export interface RunOptions<T> {
    * "never".
    */
   settled?: (fresh: T) => boolean
+  /**
+   * What the action left stale, from `DIRTIES` in `wharf/actions.ts`.
+   *
+   * Dropped the moment the signature comes back, before anything is re-read.
+   * The screen that acted was already re-reading past the cache, so this is
+   * not for its benefit — it is for every other screen. Ascend a fighter and
+   * the market would go on serving the roster it read before, for as long as
+   * its TTL had left, with no way to tell it otherwise. `cacheDrop` has been
+   * in this codebase since the beginning and was called from nowhere.
+   */
+  dirties?: readonly TableKey[]
   /** The chore dot this action clears, if any. */
   chore?: ChoreKey
   /**
@@ -117,6 +129,7 @@ export function useAction(): ActionState {
         after,
         settled,
         chore,
+        dirties,
         onSettled,
         attempts = ATTEMPTS,
         intervalMs = INTERVAL_MS,
@@ -128,6 +141,16 @@ export function useAction(): ActionState {
 
       try {
         await act()
+
+        /*
+           Before anything is re-read, not after.
+
+           A drop that happens after the first re-read would be dropping the
+           entry that read just wrote — throwing away a fresh answer and
+           leaving the stale one nowhere. Order is the whole correctness
+           argument here, and it is one line apart from being wrong.
+        */
+        for (const table of dirties ?? []) cacheDropTable(table)
 
         /*
            The chain is asked repeatedly rather than once.
