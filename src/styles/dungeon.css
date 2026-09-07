@@ -442,60 +442,6 @@
 }
 
 /*
- * The four figures two-up, with the total across the foot.
- *
- * Two columns because the pairs belong together — what it deals beside what
- * it takes, then the two timers — and because five rows of one would be
- * taller than the portrait above them.
- */
-.fightercard__figs {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 2px 6px;
-  width: 100%;
-  margin-top: 1px;
-  font-size: 10px;
-  color: var(--text-dim);
-  font-variant-numeric: tabular-nums;
-}
-
-.fightercard__fig {
-  display: flex;
-  align-items: center;
-  gap: 3px;
-  min-width: 0;
-  line-height: 1.1;
-  white-space: nowrap;
-}
-
-.fightercard__fig img {
-  flex: none;
-  object-fit: contain;
-  opacity: 0.7;
-}
-
-/* The total, across both columns and away from the four it is made of. */
-.fightercard__fig--score {
-  grid-column: 1 / -1;
-  justify-content: space-between;
-  margin-top: 2px;
-  padding-top: 3px;
-  border-top: 1px solid var(--line-soft);
-  font-family: var(--font-display);
-  font-size: 9px;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-.fightercard__fig--score img {
-  opacity: 1;
-}
-.fightercard__fig--score b {
-  margin-left: auto;
-  font-size: 12px;
-  color: var(--gold);
-}
-
-/*
  * The matchup badges, on every roster card.
  *
  * Two numbers rather than one grade, because they pull apart: a fighter can
@@ -770,6 +716,16 @@
   font-size: var(--fs-xs);
 }
 
+/* The count and the readout switch share a line, as the card grid's do. */
+.picker__countrow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+  margin-bottom: var(--sp-2);
+}
+
 /* ---------- NFT cards ---------- */
 
 /*
@@ -871,11 +827,13 @@
     grid-template-columns: repeat(auto-fill, minmax(138px, 1fr));
   }
 
-  .nftcard__tabs {
+  .nftcard__tabs,
+.fightercard__tabs {
     padding: 0 4px;
   }
 
-  .nftcard__tab {
+  .nftcard__tab,
+.fightercard__tab {
     padding: 3px 1px;
     letter-spacing: 0;
   }
@@ -918,10 +876,12 @@
   text-transform: uppercase;
   cursor: pointer;
 }
-.nftcard__tab:hover {
+.nftcard__tab:hover,
+.fightercard__tab:hover {
   color: var(--white);
 }
-.nftcard__tab[aria-selected='true'] {
+.nftcard__tab[aria-selected='true'],
+.fightercard__tab[aria-selected='true'] {
   color: var(--white);
   border-bottom-color: var(--cyan);
   background: rgb(0 186 255 / 12%);
@@ -931,20 +891,21 @@
  * A fixed height, so every card in the row is the same one whichever tab it
  * happens to be showing. Six resistances is the tallest of the three.
  */
-.nftcard__panel {
+.nftcard__panel,
+.fightercard__panel {
   min-height: 96px;
   padding: var(--sp-2);
   overflow: hidden;
   text-align: left;
 }
 
-.nftstats {
+.cardstats {
   display: grid;
   gap: 2px;
   margin: 0;
 }
 
-.nftstats__row {
+.cardstats__row {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -953,7 +914,7 @@
   font-size: 10px;
   color: var(--text-faint);
 }
-.nftstats__row dt {
+.cardstats__row dt {
   display: flex;
   align-items: center;
   gap: 5px;
@@ -965,15 +926,15 @@
 /* The element names come off the field name, so they arrive lower-case. The
    stat labels are written out and must not be re-cased — `capitalize` on
    both turns "Wind-up" into "Wind-Up". */
-.nftstats--res .nftstats__row dt {
+.cardstats--res .cardstats__row dt {
   text-transform: capitalize;
 }
-.nftstats__row dt img {
+.cardstats__row dt img {
   flex: none;
   object-fit: contain;
   opacity: 0.75;
 }
-.nftstats__row dd {
+.cardstats__row dd {
   margin: 0;
   color: var(--white);
   font-variant-numeric: tabular-nums;

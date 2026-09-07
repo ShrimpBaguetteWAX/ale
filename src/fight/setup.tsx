@@ -44,6 +44,7 @@ import {
   fighterArt,
   fighterArtFallback,
   formatScaled,
+  statDisplay,
   abilityColor,
   abilityName,
   resolveAbilityDescription,
@@ -102,6 +103,36 @@ const CARD_VIEWS: [CardView, string][] = [
   ['res', 'Res'],
   ['ability', 'Ability'],
 ]
+
+/** The same three faces on a fighter, where the third is what it does. */
+export type PickView = 'stats' | 'res' | 'combat'
+
+const PICK_VIEWS: [PickView, string][] = [
+  ['stats', 'Stats'],
+  ['res', 'Res'],
+  ['combat', 'Combat'],
+]
+
+/**
+ * A fighter's rolled stats, and which of them level and age grow.
+ *
+ * `apply_weather_and_age` multiplies health and damage before the first blow
+ * and leaves the timers and taunt alone, so only two of the five carry the
+ * factor. The same split the roster's own Stats tab makes.
+ */
+const PICK_STATS: [string, string, boolean][] = [
+  ['damage', 'Damage', true],
+  ['health', 'Health', true],
+  ['attackspeed', 'Cooldown', false],
+  ['initiative', 'Wind-up', false],
+  ['taunt', 'Taunt', false],
+]
+
+/** A rolled stat at the size the card prints it: the midpoint, scaled. */
+function shownStat(f: RosterFighter, field: string, factor: number): number {
+  const s = f.stats as unknown as Record<string, number>
+  return statDisplay(s[`${field}_min`] * factor, s[`${field}_max`] * factor).value
+}
 
 /** Element icons live alongside the resistance icons the panel already uses. */
 export const elementIcon = (element: string) =>
@@ -1326,6 +1357,9 @@ export function FighterGrid({
   onToggle: (f: RosterFighter) => void
   onInspect: (f: RosterFighter) => void
 }) {
+  /* Which face every card shows, until one is turned over on its own. */
+  const [view, setView] = useState<PickView>('combat')
+
   const shown = useMemo(
     () =>
       roster
@@ -1365,9 +1399,29 @@ export function FighterGrid({
 
   return (
     <>
-      <p className="faint picker__count">
-        Showing {shown.length} of {roster.length}
-      </p>
+      {/*
+        One readout for every card at once, as on the roster and the card
+        tabs. Comparing forty fighters on fire resistance is what a grid is
+        for, and per-card tabs make that forty taps.
+      */}
+      <div className="picker__countrow">
+        <p className="faint picker__count">
+          Showing {shown.length} of {roster.length}
+        </p>
+        <div className="showtabs" role="group" aria-label="Readout">
+          {PICK_VIEWS.map(([key, label]) => (
+            <button
+              type="button"
+              key={key}
+              className="showtabs__btn"
+              aria-pressed={view === key}
+              onClick={() => setView(key)}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
       <div className="fightergrid">
         {shown.map((f) => {
           const state = fighterAvailable(f)
@@ -1381,6 +1435,7 @@ export function FighterGrid({
               atLevelOne={atLevelOne}
               matchup={matchups?.get(f.fighter_id)}
               picked={inTeam}
+              view={view}
               blocked={!state.available || (full && !inTeam)}
               blockedNote={state.available ? undefined : state.reason}
               tick={inTeam ? 'In team' : undefined}
@@ -1428,6 +1483,7 @@ export function PickCard({
   blockedNote,
   tick,
   hint,
+  view = 'combat',
   onClick,
   onInspect,
 }: {
@@ -1436,6 +1492,13 @@ export function PickCard({
   levelMod?: number
   atLevelOne?: boolean
   matchup?: Matchup
+  /**
+   * Which face the grid is showing; a card can be turned over on its own.
+   *
+   * Combat by default: what a fighter does is the question a picker asks,
+   * and the rolled stats it is made of are one tap away.
+   */
+  view?: PickView
   picked: boolean
   blocked?: boolean
   /** Why it cannot be picked, printed on the card. */
@@ -1457,6 +1520,11 @@ export function PickCard({
   const factor = levelFactor(atLevelOne ? 1 : f.stats.level, levelMod) * age
   const figures = combatFigures(f.stats as unknown as Record<string, number>, factor)
   const bonus = ageBonus(f, ageDecay)
+
+  const [override, setOverride] = useState<PickView | null>(null)
+  /* The next change to the shared view takes every card back into step. */
+  useEffect(() => setOverride(null), [view])
+  const tab = override ?? view
 
   return (
     <div
@@ -1507,48 +1575,117 @@ export function PickCard({
           )}
         </span>
 
-        {/*
-          What the fighter does, not what it is made of. The same five the
-          roster's Combat tab prints, from the same function, so a fighter
-          reads the same wherever it is being compared.
-        */}
-        <span
-          className="fightercard__figs mono"
-          title={`As fielded: level ${f.stats.level} and ${ageDays(f)} days of age already applied (×${factor.toFixed(3)} of the roll)`}
-        >
-          <span className="fightercard__fig">
-            <img src={statIcon('damage')} alt="" width={11} height={11} />
-            DPS {formatDecimals(figures.dps, 2)}
-          </span>
-          <span className="fightercard__fig">
-            <img src={statIcon('survival')} alt="" width={11} height={11} />
-            SUR {Math.round(figures.survival).toLocaleString(NUM_LOCALE)}
-          </span>
-          <span className="fightercard__fig">
-            <img src={statIcon('initiative')} alt="" width={11} height={11} />
-            WND {formatScaled(mid(f.stats.initiative_min, f.stats.initiative_max))}
-          </span>
-          <span className="fightercard__fig">
-            <img src={statIcon('taunt')} alt="" width={11} height={11} />
-            TNT {formatScaled(mid(f.stats.taunt_min, f.stats.taunt_max))}
-          </span>
-          {/* "Score", not "Combat score": the full name needs ten pixels the
-              row does not have at two cards to a phone, and the figure beside
-              it is the only gold one here. */}
-          <span
-            className="fightercard__fig fightercard__fig--score"
-            title="Combat score — survival times DPS"
-          >
-            <img src={statIcon('block')} alt="" width={11} height={11} />
-            Score
-            <b>{Math.round(figures.score).toLocaleString(NUM_LOCALE)}</b>
-          </span>
-        </span>
-
         <VersusBadges matchup={matchup} />
         {tick && <span className="fightercard__tick">{tick}</span>}
         {blockedNote && <span className="fightercard__block">{blockedNote}</span>}
       </button>
+
+      {/*
+        Outside the pick button, because a tab is a control of its own —
+        nested buttons are invalid, and reading a fighter's resistances
+        should not be a mis-tap away from putting it in the team.
+      */}
+      <div className="fightercard__tabs" role="tablist">
+        {PICK_VIEWS.map(([key, label]) => (
+          <button
+            type="button"
+            key={key}
+            role="tab"
+            aria-selected={tab === key}
+            className="fightercard__tab"
+            onClick={() => setOverride(key)}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      <div
+        className="fightercard__panel"
+        title={`As fielded: level ${f.stats.level} and ${ageDays(f)} days of age already applied (×${factor.toFixed(3)} of the roll)`}
+      >
+        {tab === 'stats' && (
+          <dl className="cardstats">
+            {PICK_STATS.map(([field, label, grow]) => (
+              <div className="cardstats__row" key={field}>
+                <dt>
+                  <img src={statIcon(field)} alt="" width={13} height={13} />
+                  {label}
+                </dt>
+                <dd className="mono">{shownStat(f, field, grow ? factor : 1)}</dd>
+              </div>
+            ))}
+          </dl>
+        )}
+
+        {tab === 'res' && (
+          <dl className="cardstats cardstats--res">
+            {RESISTANCE_FIELDS.map((field) => {
+              const el = field.slice(4)
+              return (
+                <div className="cardstats__row" key={field}>
+                  <dt>
+                    <img src={elementIcon(el)} alt="" width={13} height={13} />
+                    {el}
+                  </dt>
+                  <dd className="mono">
+                    {formatScaled((f.stats as unknown as Record<string, number>)[field])}%
+                  </dd>
+                </div>
+              )
+            })}
+          </dl>
+        )}
+
+        {/*
+          What the fighter does, rather than what it is made of. The same
+          figures the roster's Combat tab prints, from the same function, so
+          a fighter reads the same wherever it is being compared.
+        */}
+        {tab === 'combat' && (
+          <dl className="cardstats">
+            <div className="cardstats__row">
+              <dt>
+                <img src={statIcon('damage')} alt="" width={13} height={13} />
+                DPS
+              </dt>
+              <dd className="mono">{formatDecimals(figures.dps, 2)}</dd>
+            </div>
+            <div className="cardstats__row">
+              <dt>
+                <img src={statIcon('survival')} alt="" width={13} height={13} />
+                Survival
+              </dt>
+              <dd className="mono">
+                {Math.round(figures.survival).toLocaleString(NUM_LOCALE)}
+              </dd>
+            </div>
+            <div className="cardstats__row">
+              <dt>
+                <img src={statIcon('initiative')} alt="" width={13} height={13} />
+                Wind-up
+              </dt>
+              <dd className="mono">{shownStat(f, 'initiative', 1)}</dd>
+            </div>
+            <div className="cardstats__row">
+              <dt>
+                <img src={statIcon('taunt')} alt="" width={13} height={13} />
+                Taunt
+              </dt>
+              <dd className="mono">{shownStat(f, 'taunt', 1)}</dd>
+            </div>
+            <div className="cardstats__row cardstats__row--total">
+              <dt>
+                <img src={statIcon('block')} alt="" width={13} height={13} />
+                Score
+              </dt>
+              <dd className="mono">
+                {Math.round(figures.score).toLocaleString(NUM_LOCALE)}
+              </dd>
+            </div>
+          </dl>
+        )}
+      </div>
 
       {/*
          The marker a player put on this fighter.
@@ -1954,9 +2091,9 @@ function NftCard({
 
       <div className="nftcard__panel">
         {tab === 'stats' && (
-          <dl className="nftstats">
+          <dl className="cardstats">
             {NFT_STATS.map(([field, label]) => (
-              <div className="nftstats__row" key={field}>
+              <div className="cardstats__row" key={field}>
                 <dt>
                   <img src={statIcon(field)} alt="" width={13} height={13} />
                   {label}
@@ -1970,11 +2107,11 @@ function NftCard({
         )}
 
         {tab === 'res' && (
-          <dl className="nftstats nftstats--res">
+          <dl className="cardstats cardstats--res">
             {RESISTANCE_FIELDS.map((field) => {
               const el = field.slice(4)
               return (
-                <div className="nftstats__row" key={field}>
+                <div className="cardstats__row" key={field}>
                   <dt>
                     <img src={elementIcon(el)} alt="" width={13} height={13} />
                     {el}
