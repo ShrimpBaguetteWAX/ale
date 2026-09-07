@@ -650,12 +650,10 @@ function AscSlot({
         (active ? ' ascslot--active' : '')
       }
     >
-      <span className="ascslot__label">
-        {label}
-        <em className="ascslot__role">
-          {role === 'ascending' ? 'keeps the upgrade' : 'destroyed'}
-        </em>
-      </span>
+      {/* Just what the slot is for. What happens to the fighter in it is on
+          the card itself — banded across the art and printed under its
+          badges — and saying it twice made a caption of the label. */}
+      <span className="ascslot__label">{label}</span>
       {fighter ? (
         <PickCard
           fighter={fighter}
@@ -665,7 +663,7 @@ function AscSlot({
           picked={false}
           variant={role}
           banner={role === 'ascending' ? 'Ascending' : 'Sacrificed'}
-          tick={role === 'ascending' ? 'Gains the upgrade' : 'Spent for good'}
+          tick={role === 'ascending' ? 'Gains the upgrade' : 'You will lose this fighter'}
           hint={
             role === 'ascending'
               ? 'Choose a different fighter to ascend'

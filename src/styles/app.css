@@ -981,41 +981,33 @@
   color: var(--cyan);
 }
 
+/*
+ * Two lines of status held open on all four.
+ *
+ * "You will lose this fighter" wraps on a phone where "Gains the upgrade"
+ * does not, and the four cards stand side by side — one card's tabs sitting
+ * a line below its neighbours' is the same thing "In team" was doing in the
+ * dungeon picker.
+ */
+.ascslot .fightercard__status {
+  min-height: 28px;
+}
+
 .ascslot__label {
   display: flex;
   align-items: baseline;
   align-content: start;
   gap: 5px;
   flex-wrap: wrap;
-  /* Two lines held open: "Sacrifice ability destroyed" wraps where the other
-     three do not, and one slot's card would start a line below its
-     neighbours'. */
-  min-height: 2.8em;
+  /* Two lines held open, so a label that wraps where its neighbours do not
+     cannot start its card a line below theirs. */
+  min-height: 2.4em;
   line-height: 1.2;
   font-family: var(--font-display);
   font-size: 9px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--text-faint);
-}
-
-/*
- * What the slot does to the fighter in it, beside what the slot is for.
- *
- * "Same element" describes the requirement and says nothing about the price
- * of meeting it. Three of these four fighters are destroyed, and the label
- * is the first thing read on each card.
- */
-.ascslot__role {
-  font-style: normal;
-  font-size: 8px;
-  letter-spacing: 0.06em;
-}
-.ascslot--ascending .ascslot__role {
-  color: var(--gold);
-}
-.ascslot--sacrifice .ascslot__role {
-  color: var(--red);
 }
 
 /* Still somewhere to put something: dashed, and the height of the card that
