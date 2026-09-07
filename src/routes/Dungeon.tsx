@@ -53,10 +53,13 @@ import { TEAM_SIZE, type BattleFighter, type RosterFighter } from '@/dungeon/typ
 import {
   abilityColor,
   abilityName,
+  elementBackground,
+  fighterArt,
   formatScaled,
   resolveAbilityDescription,
   type ClassTemplate,
 } from '@/tavern/fighterStats'
+import { useImagesReady } from '@/components/useImagesReady'
 import {
   CardGrid,
   CardSlot,
@@ -121,6 +124,8 @@ export default function Dungeon() {
   const [difficulty, setDifficulty] = useState(1)
 
   const [tab, setTab] = useState<Tab>('fighters')
+  /* Scrolled to from the empty sixth slot, which is two panels above it. */
+  const loadout = useRef<HTMLElement>(null)
   const [filter, setFilter] = useState<RosterFilter>(EMPTY_FILTER)
   /* A lens on the roster rather than a filter: it hides nothing, and Clear
      restores `EMPTY_FILTER`, which this is deliberately not part of. */
@@ -214,6 +219,28 @@ export default function Dungeon() {
       difMods,
     )
   }, [enemyTeam, difficulty, difMods, weather, caps])
+
+  /*
+     The artwork the defending line will paint, so the skeleton can wait for
+     it rather than handing over to a row of empty cards.
+
+     Portrait and elemental backdrop for each: the two that cover the card,
+     and the two the player watched arrive a second after the loading
+     animation had already said it was done. The element mark beside them is
+     a 22px icon out of the same six files on every screen, so it is in cache
+     by the time this screen opens.
+  */
+  const enemyArt = useMemo(
+    () =>
+      (enemyTeam ?? []).flatMap((f) => [
+        f.fighter_id === NFT_FIGHTER_ID
+          ? NFT_FIGHTER_ART
+          : fighterArt({ classname: f.classname, racename: f.racename }),
+        elementBackground(f.element),
+      ]),
+    [enemyTeam],
+  )
+  const enemyArtReady = useImagesReady(enemyArt)
 
   /*
      Who is actually in the fight at this difficulty.
@@ -717,7 +744,14 @@ export default function Dungeon() {
             </header>
 
             <div className="versus__row">
-              {enemyLine.map((f, i) => (
+              {/*
+                The skeleton stands until the artwork is decoded, not until
+                the row arrives. Handing over on the data put six empty cards
+                on the screen and painted the portraits into them a second
+                later, so the screen finished twice.
+              */}
+              {enemyArtReady &&
+                enemyLine.map((f, i) => (
                 <CombatCard
                   key={`${f.fighter_id}-${i}`}
                   element={f.element}
@@ -754,11 +788,11 @@ export default function Dungeon() {
                   onOpen={() => showEnemy(f)}
                 />
               ))}
-              {!enemyTeam &&
+              {(!enemyTeam || !enemyArtReady) &&
                 Array.from({ length: 5 }, (_, i) => (
                   <div className="skeleton combatcard combatcard--loading" key={i} />
                 ))}
-              {enemyTeam?.length === 0 && (
+              {enemyTeam?.length === 0 && enemyArtReady && (
                 <p className="faint">This dungeon has no team standing.</p>
               )}
             </div>
@@ -857,7 +891,24 @@ export default function Dungeon() {
                   }}
                 />
               ) : (
-                <div className="combatcard combatcard--empty combatcard--nft">
+                /*
+                   The empty sixth slot takes you to where it gets filled.
+
+                   Crew and weapon are chosen two panels down, and the slot
+                   that wants them is up here — so a player who presses the
+                   only thing on screen labelled "crew + weapon" was pressing
+                   nothing. It opens the crew tab and scrolls the loadout up,
+                   which puts the slots and the cards that fill them together.
+                */
+                <button
+                  type="button"
+                  className="combatcard combatcard--empty combatcard--nft"
+                  onClick={() => {
+                    setTab('crew')
+                    loadout.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                  }}
+                  title="Pick a crew card and a weapon card"
+                >
                   <span className="combatcard__plus" aria-hidden="true">
                     +
                   </span>
@@ -865,7 +916,7 @@ export default function Dungeon() {
                     NFT Fighter
                     <em>crew + weapon</em>
                   </span>
-                </div>
+                </button>
               )}
             </div>
 
@@ -880,7 +931,7 @@ export default function Dungeon() {
           chosen once, not combatants being compared, and keeping them in the
           line-up crowded the cards the screen is actually about.
         */}
-        <section className="panel loadout">
+        <section className="panel loadout" ref={loadout}>
           <div className="panel__title">
             Loadout
             <span className="faint dungeon__tally">

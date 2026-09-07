@@ -1450,6 +1450,21 @@
   border-color: rgb(145 54 188 / 55%);
 }
 
+/*
+ * The sixth slot is a button, so it needs a button's defaults undone —
+ * `.combatcard` already paints it and the UA face would otherwise replace
+ * the display font inside it.
+ */
+button.combatcard--empty {
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+button.combatcard--empty:hover {
+  border-color: var(--purple);
+  background: rgb(145 54 188 / 14%);
+}
+
 .combatcard__plus {
   font-size: 26px;
   line-height: 1;
