@@ -11,11 +11,18 @@ import { onChoreRefresh } from './signal'
  * avoid. Instead there is one clock, and on each tick **at most one** check
  * runs — whichever is furthest past its own due time.
  *
- * That gives a hard ceiling on the request rate that does not depend on how
- * many checks there are: one every `TICK`, no matter what. Adding an eighth
- * indicator later costs nothing extra at the network, it only lengthens the
- * queue. The per-check `every` still decides how fresh each answer is; the
- * scheduler only decides when it is that check's turn.
+ * That gives a ceiling on the request rate that does not depend on how many
+ * checks there are: one every `TICK`. Adding an eighth indicator later costs
+ * nothing extra at the network, it only lengthens the queue. The per-check
+ * `every` still decides how fresh each answer is; the scheduler only decides
+ * when it is that check's turn.
+ *
+ * The exception is a queue an action caused, which drains on `SIGNAL_TICK`
+ * with the dot the action changed at its head. Idling is what the four-second
+ * ceiling is for; the seconds after a signature are not idling, and at one
+ * per four seconds a claimed quest kept its dot for twelve of them. It is
+ * still one request at a time, still finite — eight checks at most, most of
+ * them answering from cache — and it returns to the idle pace by itself.
  *
  * Nothing runs while the tab is hidden, and everything is due on the first
  * tick after it comes back — so a player returning to a backgrounded tab gets
@@ -27,6 +34,19 @@ const TICK = 4_000
 
 /** A first pass shortly after login, rather than waiting out a whole tick. */
 const FIRST_TICK = 800
+
+/**
+ * The floor while draining the batch one action woke.
+ *
+ * The idle ceiling is about being a good neighbour to public nodes over an
+ * hour. It is the wrong number for the seconds after a player signs
+ * something: an action wakes every dot built on the player row — eight of
+ * them — and at one per four seconds the quest dot was the third in line, so
+ * claiming a quest left it lit for eight to twelve seconds while the player
+ * watched. The queue this drains exists only because somebody just acted, it
+ * is bounded by the number of checks, and most of it answers from cache.
+ */
+const SIGNAL_TICK = 700
 
 export type ChoreState = Partial<Record<ChoreKey, boolean>>
 
@@ -46,6 +66,16 @@ export function useChores(
   const running = useRef(false)
   /** Keys whose next run must bypass the cache. See the effect below. */
   const forced = useRef<Set<ChoreKey>>(new Set())
+  /**
+   * Keys an action woke, as against ones that simply came due.
+   *
+   * They go first and they drain on `SIGNAL_TICK`, because a player is
+   * watching the result of something they just did. Emptied as they run, so
+   * the queue returns to its idle pace on its own.
+   */
+  const signalled = useRef<Set<ChoreKey>>(new Set())
+  /** Lets the signal wake the scheduler instead of waiting for its interval. */
+  const kick = useRef<() => void>(() => {})
   const wallet = player?.wallet
 
   /* A new wallet invalidates every answer. */
@@ -77,7 +107,12 @@ export function useChores(
     () =>
       onChoreRefresh((key, force) => {
         if (force) forced.current.add(key)
+        signalled.current.add(key)
         due.current.set(key, 0)
+        /* Not on the next interval tick, which could be a full four seconds
+           away: the action has already landed, so the answer is available
+           now. */
+        kick.current()
       }),
     [],
   )
@@ -96,7 +131,9 @@ export function useChores(
     const here = CHORE_CHECKS.find((c) => c.to === pathname)
     if (!here) return
     forced.current.add(here.key)
+    signalled.current.add(here.key)
     due.current.set(here.key, 0)
+    kick.current()
   }, [purse, pathname])
 
   /*
@@ -110,6 +147,7 @@ export function useChores(
   useEffect(() => {
     if (!wallet) return
     let live = true
+    let soon: ReturnType<typeof setTimeout> | undefined
 
     const step = async () => {
       const now = Date.now()
@@ -118,16 +156,33 @@ export function useChores(
       if (typeof document !== 'undefined' && document.hidden) return
       if (running.current) return
 
-      /* The most overdue check, or nothing if none are due. */
-      let pick: (typeof CHORE_CHECKS)[number] | null = null
-      let worst = 0
-      for (const check of CHORE_CHECKS) {
-        const at = due.current.get(check.key) ?? 0
-        if (at > now) continue
-        const overdue = now - at
-        if (!pick || overdue > worst) {
-          pick = check
-          worst = overdue
+      const ready = CHORE_CHECKS.filter((c) => (due.current.get(c.key) ?? 0) <= now)
+
+      /*
+         What the player is owed an answer about first.
+
+         A dot whose own table the action changed leads: that is the section
+         they acted in and the one they are most likely looking at. Then the
+         rest of the batch that action woke. Only with none of those left does
+         this fall back to the idle rule, which is the most overdue check.
+
+         Before this the pick was the idle rule alone, and every woken dot
+         arrived at whatever place declaration order put it in — quests was
+         third, so a claimed quest stayed lit for three ticks.
+      */
+      let pick =
+        ready.find((c) => forced.current.has(c.key)) ??
+        ready.find((c) => signalled.current.has(c.key)) ??
+        null
+
+      if (!pick) {
+        let worst = 0
+        for (const check of ready) {
+          const overdue = now - (due.current.get(check.key) ?? 0)
+          if (!pick || overdue > worst) {
+            pick = check
+            worst = overdue
+          }
         }
       }
       if (!pick) return
@@ -142,6 +197,7 @@ export function useChores(
 
       /* `delete` reports whether it was there, which is exactly the question. */
       const force = forced.current.delete(pick.key)
+      signalled.current.delete(pick.key)
 
       try {
         const flag = await pick.run(current, force)
@@ -153,7 +209,27 @@ export function useChores(
            for it would be louder than the thing it is reporting. */
       } finally {
         running.current = false
+        /*
+           Straight on to the rest of the batch, at the faster pace. The queue
+           is finite and was caused by something the player just did; once it
+           is empty this stops scheduling and the idle interval takes over.
+        */
+        if (live && signalled.current.size > 0) {
+          clearTimeout(soon)
+          soon = setTimeout(() => void step(), SIGNAL_TICK)
+        }
       }
+    }
+
+    /*
+       A signal runs the scheduler now rather than on its next interval tick,
+       which could be a full four seconds away. Still through the `running`
+       guard and still one at a time — this changes when the queue is looked
+       at, not how many requests may be in flight.
+    */
+    kick.current = () => {
+      clearTimeout(soon)
+      soon = setTimeout(() => void step(), 0)
     }
 
     const first = setTimeout(() => void step(), FIRST_TICK)
@@ -167,6 +243,8 @@ export function useChores(
 
     return () => {
       live = false
+      kick.current = () => {}
+      clearTimeout(soon)
       clearTimeout(first)
       clearInterval(timer)
       document.removeEventListener('visibilitychange', onVisible)
