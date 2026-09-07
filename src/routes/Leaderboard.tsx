@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useGame } from '@/state/useGame'
 import {
   fetchArenaRanks,
@@ -26,8 +26,9 @@ import {
   seasonPot,
   seasonTiming,
 } from '@/leaderboard/rules'
-import { claimLeaderboardReward } from '@/wharf/actions'
-import { readableError } from '@/wharf/errors'
+import { claimLeaderboardReward, DIRTIES } from '@/wharf/actions'
+import { useAction } from '@/wharf/useAction'
+import { useChainQuery } from '@/chain/useChainQuery'
 import { formatNumber, formatDecimals } from '@/format'
 import { fighterArt, fighterArtFallback } from '@/tavern/fighterStats'
 import { ActionBanner } from '@/components/ActionBanner'
@@ -93,81 +94,75 @@ interface BoardData {
 }
 
 function useBoards(account: string | null): BoardData {
-  const [ranks, setRanks] = useState<DungeonRank[]>([])
-  const [config, setConfig] = useState<DungeonConfigLb>()
-  const [pool, setPool] = useState<TlmPool>()
-  const [cooldown, setCooldown] = useState<ClaimCooldown>()
-  const [seasons, setSeasons] = useState<ArenaSeason[]>([])
-  const [arena, setArena] = useState<Map<string, ArenaRank[]>>(new Map())
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  /*
+     One query, because the reads are not independent: the pool is named by
+     the config, and which arena scopes exist is named by the seasons. Two of
+     the four steps here cannot start until an earlier one has answered, so
+     splitting them into separate hooks would only make the sequence harder
+     to read without making it any faster.
 
-  const alive = useRef(true)
-  useEffect(() => {
-    alive.current = true
-    return () => {
-      alive.current = false
-    }
-  }, [])
+     `deps` is what re-reads it: a claim moves the standings, and this screen
+     is the one looking at them.
+  */
+  const query = useChainQuery(
+    account && `boards:${account}`,
+    async () => {
+      const cfg = await fetchDungeonLbConfig()
+      const poolName = cfg?.lb_tlmpools?.[0]?.first ?? 'tlmdunglb'
 
-  const load = useCallback(
-    async (refresh: boolean) => {
-      if (!account) return
-      setError(null)
-      try {
-        const cfg = await fetchDungeonLbConfig()
-        const poolName = cfg?.lb_tlmpools?.[0]?.first ?? 'tlmdunglb'
+      const [r, p, cd, s] = await Promise.all([
+        /* A hundred, not the top twenty that are paid: the board is also
+           how a player sees where they stand and how far there is to climb,
+           and twenty-five rows answered neither for most people. */
+        fetchDungeonRanks(100),
+        fetchTlmPool(poolName),
+        fetchClaimCooldown(account!),
+        fetchArenaSeasons(),
+      ])
 
-        const [r, p, cd, s] = await Promise.all([
-          /* A hundred, not the top twenty that are paid: the board is also
-             how a player sees where they stand and how far there is to climb,
-             and twenty-five rows answered neither for most people. */
-          fetchDungeonRanks(100, refresh),
-          fetchTlmPool(poolName, refresh),
-          fetchClaimCooldown(account, refresh),
-          fetchArenaSeasons(refresh),
-        ])
+      /*
+         Each season's board is its own scope, so they are read together —
+         and so is each season's settled one.
 
-        /*
-           Each season's board is its own scope, so they are read together —
-           and so is each season's settled one.
+         `finishlb` copies the paying places into the scope named by
+         `winner_scope` when a season rolls over, ranks and payouts filled
+         in, and leaves them there until the next rollover. That snapshot is
+         the only record of who won the last one: the live board is wiped
+         and starts again from nothing.
+      */
+      const scopes = s.flatMap((season) => [season.scope, season.winner_scope])
+      const boards = await Promise.all(scopes.map((scope) => fetchArenaRanks(scope)))
 
-           `finishlb` copies the paying places into the scope named by
-           `winner_scope` when a season rolls over, ranks and payouts filled
-           in, and leaves them there until the next rollover. That snapshot is
-           the only record of who won the last one: the live board is wiped
-           and starts again from nothing.
-        */
-        const scopes = s.flatMap((season) => [season.scope, season.winner_scope])
-        const boards = await Promise.all(
-          scopes.map((scope) => fetchArenaRanks(scope, refresh)),
-        )
-
-        if (!alive.current) return
-        setConfig(cfg)
-        setRanks(r)
-        setPool(p)
-        setCooldown(cd)
-        setSeasons(s)
-        setArena(new Map(scopes.map((scope, i) => [scope, boards[i]])))
-      } catch (err) {
-        if (alive.current) setError(readableError(err))
-      } finally {
-        if (alive.current) setLoading(false)
+      return {
+        config: cfg,
+        ranks: r,
+        pool: p,
+        cooldown: cd,
+        seasons: s,
+        arena: new Map(scopes.map((scope, i) => [scope, boards[i]])),
       }
     },
-    [account],
+    { deps: ['leaderboard', 'player'] },
   )
 
-  useEffect(() => {
-    setLoading(true)
-    void load(false)
-  }, [load])
-
-  const reload = useCallback(() => load(true), [load])
-
-  return { ranks, config, pool, cooldown, seasons, arena, loading, error, reload }
+  return {
+    ranks: query.data?.ranks ?? EMPTY_RANKS,
+    config: query.data?.config,
+    pool: query.data?.pool,
+    cooldown: query.data?.cooldown,
+    seasons: query.data?.seasons ?? EMPTY_SEASONS,
+    arena: query.data?.arena ?? EMPTY_ARENA,
+    loading: query.loading,
+    error: query.error,
+    reload: query.reload,
+  }
 }
+
+/* Stable empties, so a screen with no data yet does not hand every `useMemo`
+   below a new array on each render. */
+const EMPTY_RANKS: DungeonRank[] = []
+const EMPTY_SEASONS: ArenaSeason[] = []
+const EMPTY_ARENA = new Map<string, ArenaRank[]>()
 
 /* ---------- the screen ---------- */
 
@@ -177,15 +172,14 @@ export default function Leaderboard() {
   const account = useGame((s) => s.account)
   const player = useGame((s) => s.player)
   const session = useGame((s) => s.session)
-  const refreshPlayer = useGame((s) => s.refreshPlayer)
 
   const data = useBoards(account)
   const { ranks, config, pool, cooldown, seasons, arena } = data
 
   const [tab, setTab] = useState<Tab>('dungeons')
-  const [busy, setBusy] = useState(false)
-  const [notice, setNotice] = useState<string | null>(null)
-  const [error, setError] = useState<string | null>(null)
+  /* A boolean here: this screen has one button. */
+  const { busy: busyKey, error, notice, run } = useAction()
+  const busy = busyKey !== null
 
   const [now, setNow] = useState(() => Date.now())
   useEffect(() => {
@@ -214,24 +208,13 @@ export default function Leaderboard() {
   const myRank = ranks.findIndex((r) => r.wallet === player?.wallet) + 1
   const canClaim = myRank >= 1 && paidPlaces >= 1 && myRank <= paidPlaces
 
-  const doClaim = async () => {
-    if (!session) return
-    setBusy(true)
-    setError(null)
-    setNotice(null)
-    try {
-      await claimLeaderboardReward(session)
-      for (let i = 0; i < 6; i++) {
-        await new Promise((r) => setTimeout(r, 900))
-        await Promise.all([data.reload(), refreshPlayer({ force: true })])
-      }
-      setNotice('Daily leaderboard reward claimed.')
-    } catch (err) {
-      setError(readableError(err))
-    } finally {
-      setBusy(false)
-    }
-  }
+  const doClaim = () =>
+    run(
+      'claim',
+      () => claimLeaderboardReward(session!),
+      'Daily leaderboard reward claimed.',
+      { after: data.reload, dirties: DIRTIES.claimLeaderboardReward },
+    )
 
   if (!player) return null
 

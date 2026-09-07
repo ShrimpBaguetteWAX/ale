@@ -1,6 +1,19 @@
 import '@testing-library/jest-dom/vitest'
-import { beforeEach, vi } from 'vitest'
+import { afterEach, beforeEach, vi } from 'vitest'
+import { cleanup } from '@testing-library/react'
 import tables from './fixtures/tables.json'
+
+/*
+ * Unmount between tests, explicitly.
+ *
+ * Testing Library registers this itself when the framework's globals are
+ * injected, and this project runs without them — so without this line every
+ * component a test renders stays mounted for the rest of the file. That is
+ * not merely untidy: a mounted query hook is still subscribed to cache
+ * drops, so one test's invalidation reaches every screen an earlier test
+ * left behind. It cost a real hour to find, in a test that was right.
+ */
+afterEach(cleanup)
 
 /**
  * The chain, answered from disk.

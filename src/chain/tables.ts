@@ -70,4 +70,30 @@ export function cacheDropTable(key: TableKey, scope?: string): void {
     if (parts[0] !== code || parts[2] !== table) return false
     return scope === undefined || parts[1] === scope
   })
+
+  for (const fn of watchers) fn(key)
+}
+
+/*
+   Who wants to know a table was forgotten.
+
+   Dropping the entry is only half of invalidation. The other half is the
+   screen looking at that data right now, which has no reason to ask again
+   unless it is told — and telling it by table rather than by cache key is
+   what lets a screen say what it depends on in the same words an action
+   says what it changed.
+
+   A module-level set rather than React context: the cache is module-level
+   itself, and threading a provider through the app to announce something
+   the cache already knows would be ceremony.
+*/
+type Watcher = (key: TableKey) => void
+const watchers = new Set<Watcher>()
+
+/** Subscribe to table drops. Returns the unsubscribe. */
+export function onTableDrop(fn: Watcher): () => void {
+  watchers.add(fn)
+  return () => {
+    watchers.delete(fn)
+  }
 }
