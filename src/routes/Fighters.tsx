@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useGame } from '@/state/useGame'
 import { FighterPanel, type PanelFighter } from '@/components/FighterPanel'
 import { fetchRoster } from '@/dungeon/queries'
@@ -48,8 +48,8 @@ import {
 
 import { MAX_BULK_LISTINGS, bulkListPlan, listable } from '@/market/rules'
 import { useAction } from '@/wharf/useAction'
+import { useChainQuery } from '@/chain/useChainQuery'
 import { DIRTIES } from '@/wharf/actions'
-import { readableError } from '@/wharf/errors'
 import type { ClassTemplate } from '@/tavern/fighterStats'
 import {
   abilityColor,
@@ -148,13 +148,10 @@ interface RosterData {
   ageDecay: number
   loading: boolean
   error: string | null
-  reload: () => Promise<void>
+  reload: () => Promise<unknown>
 }
 
 function useRoster(account: string | null): RosterData {
-  const [roster, setRoster] = useState<RosterFighter[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
 
   /*
      The level table, the payday rules, the class art and the two scaling
@@ -175,31 +172,6 @@ function useRoster(account: string | null): RosterData {
     loaded,
   } = useConfig()
 
-  const alive = useRef(true)
-  useEffect(() => {
-    alive.current = true
-    return () => {
-      alive.current = false
-    }
-  }, [])
-
-  const load = useCallback(
-    async (refresh: boolean) => {
-      if (!account) return
-      setError(null)
-      try {
-        const r = await fetchRoster(account, refresh)
-        if (!alive.current) return
-        setRoster(r)
-      } catch (err) {
-        if (alive.current) setError(readableError(err))
-      } finally {
-        if (alive.current) setLoading(false)
-      }
-    },
-    [account],
-  )
-
   /*
      Opening the screen asks the chain, rather than reading the cache.
 
@@ -209,26 +181,31 @@ function useRoster(account: string | null): RosterData {
      looks like a fighter without, and the only way to find out was to
      reload the page. One extra read on a screen the player has just
      deliberately opened is the right trade.
-  */
-  useEffect(() => {
-    setLoading(true)
-    void load(true)
-  }, [load])
 
-  const reload = useCallback(() => load(true), [load])
+     Kept forced even though a fight now drops `fighters` on the way out: the
+     drop only covers fights this browser watched, and the reason this line
+     exists is the fighter that levelled somewhere this screen never saw.
+  */
+  const query = useChainQuery(
+    account && `roster:${account}`,
+    () => fetchRoster(account!, true),
+    { deps: ['fighters'] },
+  )
 
   return {
-    roster,
+    roster: query.data ?? EMPTY_ROSTER,
     levels,
     config,
     templates,
     levelMod,
     ageDecay,
-    loading: loading || !loaded,
-    error,
-    reload,
+    loading: query.loading || !loaded,
+    error: query.error,
+    reload: query.reload,
   }
 }
+
+const EMPTY_ROSTER: RosterFighter[] = []
 
 /* ---------- the screen ---------- */
 

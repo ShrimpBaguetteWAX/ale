@@ -40,7 +40,7 @@ import {
 } from '@/fight/matchup'
 import { ageFactor, levelFactor } from '@/fight/scaling'
 import { recallTeam, rememberTeam, restoreTeam } from '@/fight/lastTeam'
-import { applyWeather, fetchWeather, type Weather } from '@/fight/weather'
+import { applyWeather, fetchWeather } from '@/fight/weather'
 import { autoPickCards, autoPickFighters } from '@/fight/autopick'
 import { TEAM_SIZE, type BattleFighter, type RosterFighter } from '@/dungeon/types'
 import {
@@ -77,6 +77,7 @@ import { asset } from '@/assets'
 import { FighterStats } from '@/components/FighterPanel'
 import { usePhone } from '@/components/usePhone'
 import { useConfig, useLazyConfig } from '@/state/useConfig'
+import { useChainQuery } from '@/chain/useChainQuery'
 
 /*
    One empty map, not a new one each render.
@@ -86,6 +87,7 @@ import { useConfig, useLazyConfig } from '@/state/useConfig'
    re-run every `useMemo` that depends on it, on every keystroke.
 */
 const EMPTY_DIFMODS = new Map<number, number>()
+const EMPTY_CARDS: CardTemplate[] = []
 
 export default function Dungeon() {
   const player = useGame((s) => s.player)!
@@ -96,12 +98,35 @@ export default function Dungeon() {
   const land = landId(player.x, player.y)
   const planet = player.planet
 
-  const [roster, setRoster] = useState<RosterFighter[] | null>(null)
-  const [crewCards, setCrewCards] = useState<CardTemplate[]>([])
-  const [weaponCards, setWeaponCards] = useState<CardTemplate[]>([])
+  /*
+     Everything the fight is set up from, in one read: this wallet's roster,
+     the crew and weapon cards it could bring, and the team standing in the
+     dungeon. Together because the screen cannot draw a line-up without all
+     three, so three loading states only meant three ways to be half-ready.
+  */
+  const setup = useChainQuery(
+    `dungeon:${player.wallet}:${planet}:${land}`,
+    async () => {
+      const [r, cards, dungeon] = await Promise.all([
+        fetchRoster(player.wallet),
+        fetchCrewCards(player.wallet),
+        fetchDungeon(planet, land),
+      ])
+      return {
+        roster: r,
+        crewCards: cards.crew,
+        weaponCards: cards.weapons,
+        enemyTeam: withNumericIds(dungeon?.fighters ?? []),
+      }
+    },
+    { deps: ['fighters'] },
+  )
+  const roster = setup.data?.roster ?? null
+  const crewCards = setup.data?.crewCards ?? EMPTY_CARDS
+  const weaponCards = setup.data?.weaponCards ?? EMPTY_CARDS
   /* Whether the card lists have been read at all, as against being empty. */
-  const [cardsLoaded, setCardsLoaded] = useState(false)
-  const [enemyTeam, setEnemyTeam] = useState<BattleFighter[] | null>(null)
+  const cardsLoaded = !!setup.data
+  const enemyTeam = setup.data?.enemyTeam ?? null
 
   /*
      Everything this screen scales its numbers by, from the store rather than
@@ -128,7 +153,11 @@ export default function Dungeon() {
      is. `rndweather` re-rolls on travel and the player is standing here, so
      the row is already the one the fight will use.
   */
-  const [weather, setWeather] = useState<Weather | null>(null)
+  const weatherQuery = useChainQuery(`weather:${planet}:${land}`, () =>
+    fetchWeather(planet, land),
+  )
+  /* Weather is context, not a blocker: a failed read leaves it off. */
+  const weather = weatherQuery.data ?? null
 
   const [teamIds, setTeamIds] = useState<number[]>([])
   const [crew, setCrew] = useState<CardTemplate | null>(null)
@@ -153,27 +182,6 @@ export default function Dungeon() {
 
   const alreadyPlayed = playedHere(player, planet, land)
 
-  useEffect(() => {
-    let live = true
-    Promise.all([
-      fetchRoster(player.wallet),
-      fetchCrewCards(player.wallet),
-      fetchDungeon(planet, land),
-    ])
-      .then(([r, cards, dungeon]) => {
-        if (!live) return
-        setRoster(r)
-        setCrewCards(cards.crew)
-        setWeaponCards(cards.weapons)
-        setEnemyTeam(withNumericIds(dungeon?.fighters ?? []))
-        setCardsLoaded(true)
-      })
-      .catch((err) => live && setError(readableError(err)))
-    return () => {
-      live = false
-    }
-  }, [player.wallet, planet, land])
-
   /*
    * A card the player owns but that has no `nftvalues` row cannot be used:
    * `getFighterFromNFT` does a `require_find` on that table, so offering it
@@ -189,17 +197,6 @@ export default function Dungeon() {
     () => weaponCards.filter((c) => nftValues.has(c.template_id)),
     [weaponCards, nftValues],
   )
-
-  useEffect(() => {
-    let live = true
-    fetchWeather(planet, land)
-      .then((w) => live && setWeather(w ?? null))
-      /* Weather is context, not a blocker: a failed read leaves it off. */
-      .catch(() => live && setWeather(null))
-    return () => {
-      live = false
-    }
-  }, [planet, land])
 
   /*
      The whole defending team, including the NFT fighter that has not
@@ -654,7 +651,11 @@ export default function Dungeon() {
 
      An error is its own answer and comes out from behind it.
   */
-  if (!error && !(configLoaded && roster && cardsLoaded && enemyTeam && enemyArtReady)) {
+  /* The setup read's own failure counts: without it the gate below would
+     wait for a roster that is never coming. */
+  const fault = error ?? setup.error
+
+  if (!fault && !(configLoaded && roster && cardsLoaded && enemyTeam && enemyArtReady)) {
     return <Loading label="Entering the dungeon" />
   }
 
@@ -709,7 +710,7 @@ export default function Dungeon() {
           </div>
         </header>
 
-        {error && <div className="alert alert--error">{error}</div>}
+        {fault && <div className="alert alert--error">{fault}</div>}
         {restoreNote && (
           <div className="alert alert--note" role="status">
             {restoreNote}

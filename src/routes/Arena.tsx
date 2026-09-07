@@ -4,7 +4,6 @@ import { useGame } from '@/state/useGame'
 import { landId } from '@/chain/landId'
 import { resolveAssetIds, type CardTemplate } from '@/chain/atomic'
 import { fetchPlanetLands } from '@/chain/queries'
-import type { Land } from '@/chain/types'
 import {
   fetchCrewCards,
   fetchFight,
@@ -23,7 +22,7 @@ import {
 } from '@/fight/matchup'
 import { recallTeam, rememberTeam, restoreTeam } from '@/fight/lastTeam'
 import { autoPickCards, autoPickFighters } from '@/fight/autopick'
-import { applyWeather, fetchWeather, type Weather } from '@/fight/weather'
+import { applyWeather, fetchWeather } from '@/fight/weather'
 import {
   NFT_FIGHTER_ART,
   combineNftFighter,
@@ -31,11 +30,7 @@ import {
 } from '@/dungeon/nftFighter'
 import { rememberFight } from '@/dungeon/fightStore'
 import { TEAM_SIZE, type BattleFighter, type RosterFighter } from '@/dungeon/types'
-import {
-  fetchArenaPower,
-  fetchLiveArena,
-  type LiveArenaRow,
-} from '@/arena/queries'
+import { fetchArenaPower, fetchLiveArena } from '@/arena/queries'
 import {
   ARENA_POWER_FULL,
   NFT_FIGHTER_ID,
@@ -79,6 +74,7 @@ import { FighterStats } from '@/components/FighterPanel'
 import { usePhone } from '@/components/usePhone'
 import { Loading } from '@/components/Loading'
 import { useConfig, useLazyConfig } from '@/state/useConfig'
+import { useChainQuery } from '@/chain/useChainQuery'
 
 /**
  * Challenging an arena.
@@ -93,6 +89,8 @@ import { useConfig, useLazyConfig } from '@/state/useConfig'
  * commit: you cannot challenge an arena you already hold a place in, and
  * winning leaves one of your five behind to defend it.
  */
+const EMPTY_CARDS: CardTemplate[] = []
+
 export default function Arena() {
   const player = useGame((s) => s.player)!
   const session = useGame((s) => s.session)
@@ -102,15 +100,49 @@ export default function Arena() {
   const land = landId(player.x, player.y)
   const planet = player.planet
 
-  const [roster, setRoster] = useState<RosterFighter[] | null>(null)
-  const [crewCards, setCrewCards] = useState<CardTemplate[]>([])
-  const [weaponCards, setWeaponCards] = useState<CardTemplate[]>([])
+  /*
+     One read for the whole setup: this wallet's roster and cards, who is
+     standing in the arena, how far its power has decayed, and the tile the
+     arena sits on. The five were fetched together already — they are now
+     answered together as well, so there is one loading state rather than
+     three flags that could disagree.
+  */
+  const setup = useChainQuery(
+    `arena:${player.wallet}:${planet}:${land}`,
+    async () => {
+      const [r, cards, live, power, lands] = await Promise.all([
+        fetchRoster(player.wallet),
+        fetchCrewCards(player.wallet),
+        fetchLiveArena(planet, land, true),
+        fetchArenaPower(planet, land, true),
+        fetchPlanetLands(planet),
+      ])
+      return {
+        roster: r,
+        crewCards: cards.crew,
+        weaponCards: cards.weapons,
+        arena: live,
+        /*
+           `battle.cpp` reads the stored `arena_power` at the moment of the
+           fight — it does not age it forward first. A cron decays every arena
+           every few minutes, so the stored value is what the fight will use
+           and what belongs on screen.
+        */
+        arenaPower: power ? Number(power.arena_power) : ARENA_POWER_FULL,
+        tile: lands.find((l) => l.land_id === land),
+      }
+    },
+    { deps: ['fighters', 'arena'] },
+  )
+  const roster = setup.data?.roster ?? null
+  const crewCards = setup.data?.crewCards ?? EMPTY_CARDS
+  const weaponCards = setup.data?.weaponCards ?? EMPTY_CARDS
   /* Whether the card lists have been read at all, as against being empty. */
-  const [cardsLoaded, setCardsLoaded] = useState(false)
-  const [arena, setArena] = useState<LiveArenaRow | undefined>(undefined)
-  const [arenaLoaded, setArenaLoaded] = useState(false)
-  const [arenaPower, setArenaPower] = useState(ARENA_POWER_FULL)
-  const [tile, setTile] = useState<Land | undefined>(undefined)
+  const cardsLoaded = !!setup.data
+  const arena = setup.data?.arena
+  const arenaLoaded = !!setup.data
+  const arenaPower = setup.data?.arenaPower ?? ARENA_POWER_FULL
+  const tile = setup.data?.tile
 
   /*
      What the fight is scaled by, from the store. The dungeon reads the same
@@ -148,38 +180,6 @@ export default function Arena() {
   const [status, setStatus] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    let live = true
-    Promise.all([
-      fetchRoster(player.wallet),
-      fetchCrewCards(player.wallet),
-      fetchLiveArena(planet, land, true),
-      fetchArenaPower(planet, land, true),
-      fetchPlanetLands(planet),
-    ])
-      .then(([r, cards, live_, power, lands]) => {
-        if (!live) return
-        setRoster(r)
-        setCrewCards(cards.crew)
-        setWeaponCards(cards.weapons)
-        setArena(live_)
-        setArenaLoaded(true)
-        setCardsLoaded(true)
-        setTile(lands.find((l) => l.land_id === land))
-        /*
-           `battle.cpp` reads the stored `arena_power` at the moment of the
-           fight — it does not age it forward first. A cron decays every arena
-           every few minutes, so the stored value is what the fight will use
-           and what belongs on screen.
-        */
-        if (power) setArenaPower(Number(power.arena_power))
-      })
-      .catch((err) => live && setError(readableError(err)))
-    return () => {
-      live = false
-    }
-  }, [player.wallet, planet, land])
-
   /*
      The land's weather, which every fight here is fought in.
 
@@ -187,18 +187,11 @@ export default function Arena() {
      travel, and the player is standing on this land, so the row is already
      the one the fight will use.
   */
-  const [weather, setWeather] = useState<Weather | null>(null)
-
-  useEffect(() => {
-    let live = true
-    fetchWeather(planet, land)
-      .then((w) => live && setWeather(w ?? null))
-      /* Weather is context, not a blocker: a failed read leaves it off. */
-      .catch(() => live && setWeather(null))
-    return () => {
-      live = false
-    }
-  }, [planet, land])
+  const weatherQuery = useChainQuery(`weather:${planet}:${land}`, () =>
+    fetchWeather(planet, land),
+  )
+  /* Weather is context, not a blocker: a failed read leaves it off. */
+  const weather = weatherQuery.data ?? null
 
   const usableCrew = useMemo(
     () => crewCards.filter((c) => nftValues.has(c.template_id)),
@@ -656,7 +649,11 @@ export default function Arena() {
      An error is its own answer and comes out from behind it, as it does
      there.
   */
-  if (!error && !configLoaded) {
+  /* The setup read's own failure counts too, or a screen that cannot read
+     the arena waits on a spinner with nothing to say. */
+  const fault = error ?? setup.error
+
+  if (!fault && !configLoaded) {
     return <Loading label="Entering the arena" />
   }
 
@@ -715,7 +712,7 @@ export default function Arena() {
           </div>
         </header>
 
-        {error && <div className="alert alert--error">{error}</div>}
+        {fault && <div className="alert alert--error">{fault}</div>}
 
         {/*
           The two refusals the contract makes are stated before the player
