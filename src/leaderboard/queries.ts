@@ -82,6 +82,17 @@ export async function fetchArenaRanks(
     { code: CONTRACTS.arena, scope, table: 'leaderboard' },
     { ttl: TTL.short, refresh },
   )
+
+  /*
+     A settled board carries its own places and comes back in table order,
+     not rank order — the same read returned rank 5 first and rank 2 fourth.
+     Ranking by rating would give the same sequence here, since that is how
+     `finishlb` assigned them, but ordering a list of ranks by anything other
+     than the ranks is asking for the day the two disagree.
+  */
+  if (rows.some((r) => r.rank > 0)) {
+    return [...rows].sort((a, b) => a.rank - b.rank)
+  }
   return [...rows].sort((a, b) => b.rating - a.rating)
 }
 

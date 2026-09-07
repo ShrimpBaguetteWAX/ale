@@ -126,9 +126,19 @@ function useBoards(account: string | null): BoardData {
           fetchArenaSeasons(refresh),
         ])
 
-        /* Each season's board is its own scope, so they are read together. */
+        /*
+           Each season's board is its own scope, so they are read together —
+           and so is each season's settled one.
+
+           `finishlb` copies the paying places into the scope named by
+           `winner_scope` when a season rolls over, ranks and payouts filled
+           in, and leaves them there until the next rollover. That snapshot is
+           the only record of who won the last one: the live board is wiped
+           and starts again from nothing.
+        */
+        const scopes = s.flatMap((season) => [season.scope, season.winner_scope])
         const boards = await Promise.all(
-          s.map((season) => fetchArenaRanks(season.scope, refresh)),
+          scopes.map((scope) => fetchArenaRanks(scope, refresh)),
         )
 
         if (!alive.current) return
@@ -137,7 +147,7 @@ function useBoards(account: string | null): BoardData {
         setPool(p)
         setCooldown(cd)
         setSeasons(s)
-        setArena(new Map(s.map((season, i) => [season.scope, boards[i]])))
+        setArena(new Map(scopes.map((scope, i) => [scope, boards[i]])))
       } catch (err) {
         if (alive.current) setError(readableError(err))
       } finally {
@@ -458,6 +468,13 @@ export function ArenaBoards({
    */
   const opening = defaultSeason(seasons, now)?.scope
   const [scope, setScope] = useState<string | undefined>(opening)
+  /*
+     Which board of the chosen season is being read: the one being played, or
+     the last one that paid out. Kept per screen rather than per season — a
+     player looking at last month's winners wants the other season's winners
+     too, not to be put back on a running board when they switch.
+  */
+  const [settled, setSettled] = useState(false)
 
   /* Follow the opening choice until the player picks for themselves. */
   const touched = useRef(false)
@@ -503,7 +520,11 @@ export function ArenaBoards({
 
       {shown.map((season) => {
         const timing = seasonTiming(season, now)
-        const rows = boards.get(season.scope) ?? []
+        const finished = boards.get(season.winner_scope) ?? []
+        /* Offered only when there is a settled season to look at. */
+        const canSwitch = finished.length > 0
+        const showing = settled && canSwitch
+        const rows = showing ? finished : boards.get(season.scope) ?? []
         const pot = seasonPot(season)
 
         return (
@@ -512,21 +533,62 @@ export function ArenaBoards({
               <div>
                 <h2 className="season__name">{season.displayname}</h2>
                 <p className="season__meta">
-                  Top {formatNumber(season.winners)} share{' '}
-                  {formatDecimals(pot, 4)} TLM
+                  {showing
+                    ? `${formatNumber(finished.length)} paid, ${formatDecimals(
+                        finished.reduce((sum, r) => sum + r.earned_tlm, 0) / 10_000,
+                        4,
+                      )} TLM between them`
+                    : `Top ${formatNumber(season.winners)} share ${formatDecimals(pot, 4)} TLM`}
                 </p>
               </div>
+
+              {/*
+                Only where there is something to switch to. A season that has
+                never rolled over has no settled board, and a control that
+                shows an empty list is worse than no control.
+              */}
+              {canSwitch && (
+                <div className="showtabs seasonview" role="group" aria-label="Which board">
+                  <button
+                    type="button"
+                    className="showtabs__btn"
+                    aria-pressed={!settled}
+                    onClick={() => setSettled(false)}
+                  >
+                    Current
+                  </button>
+                  <button
+                    type="button"
+                    className="showtabs__btn"
+                    aria-pressed={settled}
+                    onClick={() => setSettled(true)}
+                    title="Where the last season finished, and what each place was paid"
+                  >
+                    Last results
+                  </button>
+                </div>
+              )}
+
               <div className="season__clock">
-                <span className="season__phase">
-                  {timing.phase === 'upcoming'
-                    ? 'Starting In'
-                    : timing.phase === 'ended'
-                      ? 'Ended'
-                      : 'Remaining Time'}
-                </span>
-                <strong>
-                  {timing.phase === 'ended' ? '—' : countdown(timing.msLeft)}
-                </strong>
+                {showing ? (
+                  <>
+                    <span className="season__phase">Settled</span>
+                    <strong>Final</strong>
+                  </>
+                ) : (
+                  <>
+                    <span className="season__phase">
+                      {timing.phase === 'upcoming'
+                        ? 'Starting In'
+                        : timing.phase === 'ended'
+                          ? 'Ended'
+                          : 'Remaining Time'}
+                    </span>
+                    <strong>
+                      {timing.phase === 'ended' ? '—' : countdown(timing.msLeft)}
+                    </strong>
+                  </>
+                )}
               </div>
             </header>
 
@@ -544,7 +606,8 @@ export function ArenaBoards({
                 </div>
 
                 {rows.map((row, i) => {
-                  const rank = i + 1
+                  /* A settled board carries the place it actually paid. */
+                  const rank = showing ? row.rank : i + 1
                   return (
                     <div key={row.wallet}>
                       <article
@@ -585,7 +648,8 @@ export function ArenaBoards({
                         </span>
                       </article>
 
-                      {rank === season.winners && rows.length > season.winners && (
+                      {/* Nothing to qualify for on a board that has paid. */}
+                      {!showing && rank === season.winners && rows.length > season.winners && (
                         <div className="lbthreshold">
                           <span>REWARD THRESHOLD</span>
                           <span>Score higher to qualify for rewards</span>

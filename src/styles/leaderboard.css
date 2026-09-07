@@ -316,6 +316,21 @@
 }
 
 /* The clock, because in a season nothing else matters until it stops. */
+/*
+ * The switch between the running board and the last settled one.
+ *
+ * Pushed to the right of the name and pulled off the clock's `margin-left:
+ * auto`, so the two sit together at the end of the row rather than the clock
+ * taking the whole gap and leaving this against the title.
+ */
+.seasonview {
+  margin-left: auto;
+  align-self: center;
+}
+.seasonview + .season__clock {
+  margin-left: 0;
+}
+
 .season__clock {
   display: grid;
   justify-items: end;
