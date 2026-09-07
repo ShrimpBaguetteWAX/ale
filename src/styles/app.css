@@ -1112,15 +1112,30 @@
 
 /* ---------- one fighter ---------- */
 
-/* The team picker's own track, because it now holds the team picker's card. */
+/*
+ * The team picker's own track, because it holds the team picker's card —
+ * including its width. The card carries four tabs and its labels want the
+ * room; at 140 the grid was printing the dungeon's card two columns narrower
+ * than the dungeon prints it.
+ */
 .ascgrid {
   display: grid;
   gap: var(--sp-2);
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(178px, 1fr));
   margin-top: var(--sp-3);
 }
 
+/* Nothing to say on the left here — the tabs above already carry the count,
+   and the eligibility rule is spelled out in the hint. */
+.picker__countrow--end {
+  justify-content: flex-end;
+}
+
 @media (max-width: 719px) {
+  .ascgrid {
+    grid-template-columns: repeat(auto-fill, minmax(138px, 1fr));
+  }
+
   /*
      Two rows of two rather than four across.
 

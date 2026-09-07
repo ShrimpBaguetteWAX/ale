@@ -136,6 +136,38 @@ const PICK_STATS: [string, string, boolean][] = [
   ['taunt', 'Taunt', false],
 ]
 
+/**
+ * The one control that turns every card in a grid to the same face.
+ *
+ * Shared rather than repeated, because a picker is a picker: the grid on the
+ * dungeon screen and the grid on the ascension screen are choosing between
+ * the same fighters and should offer the same four readouts in the same
+ * order under the same labels.
+ */
+export function PickViewSwitch({
+  view,
+  onChange,
+}: {
+  view: PickView
+  onChange: (view: PickView) => void
+}) {
+  return (
+    <div className="showtabs" role="group" aria-label="Readout">
+      {PICK_VIEWS.map(([key, label]) => (
+        <button
+          type="button"
+          key={key}
+          className="showtabs__btn"
+          aria-pressed={view === key}
+          onClick={() => onChange(key)}
+        >
+          {label}
+        </button>
+      ))}
+    </div>
+  )
+}
+
 /** A rolled stat at the size the card prints it: the midpoint, scaled. */
 function shownStat(f: RosterFighter, field: string, factor: number): number {
   const s = f.stats as unknown as Record<string, number>
@@ -1416,19 +1448,7 @@ export function FighterGrid({
         <p className="faint picker__count">
           Showing {shown.length} of {roster.length}
         </p>
-        <div className="showtabs" role="group" aria-label="Readout">
-          {PICK_VIEWS.map(([key, label]) => (
-            <button
-              type="button"
-              key={key}
-              className="showtabs__btn"
-              aria-pressed={view === key}
-              onClick={() => setView(key)}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
+        <PickViewSwitch view={view} onChange={setView} />
       </div>
       <div className="fightergrid">
         {shown.map((f) => {

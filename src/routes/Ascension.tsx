@@ -5,7 +5,7 @@ import { fetchFighterLevels, fetchFightersConfig } from '@/fighters/queries'
 import type { FighterLevel, FightersConfig } from '@/fighters/types'
 import { battleFactor } from '@/fighters/rules'
 import { Cost, FighterCard } from './Fighters'
-import { PickCard } from '@/fight/setup'
+import { PickCard, PickViewSwitch, type PickView } from '@/fight/setup'
 import type { RosterFighter } from '@/dungeon/types'
 import {
   fetchAllUpgrades,
@@ -416,6 +416,12 @@ function Builder({
   const short = credits < fee
   const complete = chosenFighters.length === SACRIFICE_COUNT && !!check?.ok
 
+  /* Which face the cards show, for the whole grid at once — the same control
+     and the same default as the dungeon and arena pickers. Held across the
+     requirement tabs, because comparing candidates for one slot against the
+     ones for the next is the whole errand. */
+  const [view, setView] = useState<PickView>('combat')
+
   const count = (t: Tab) =>
     t === 'target' ? ready.length : byRequirement[t].length
 
@@ -513,6 +519,10 @@ function Builder({
                 No fighter is ready. They have to be at the level cap first.
               </p>
             ) : (
+              <>
+              <div className="picker__countrow picker__countrow--end">
+                <PickViewSwitch view={view} onChange={setView} />
+              </div>
               <div className="ascgrid">
                 {ready.map((f) => (
                   <PickCard
@@ -520,6 +530,7 @@ function Builder({
                     fighter={f}
                     ageDecay={ageDecay}
                     levelMod={levelMod}
+                    view={view}
                     picked={target?.fighter_id === f.fighter_id}
                     tick={target?.fighter_id === f.fighter_id ? 'Ascending' : undefined}
                     hint="Ascend this fighter"
@@ -527,6 +538,7 @@ function Builder({
                     />
                 ))}
               </div>
+              </>
             )}
           </>
         ) : (
@@ -543,6 +555,10 @@ function Builder({
                 another {target?.classname} that is not already mid-ascension.
               </p>
             ) : (
+              <>
+              <div className="picker__countrow picker__countrow--end">
+                <PickViewSwitch view={view} onChange={setView} />
+              </div>
               <div className="ascgrid">
                 {list.map((f) => {
                   /* Already standing in for one of the other two. */
@@ -555,6 +571,7 @@ function Builder({
                       fighter={f}
                       ageDecay={ageDecay}
                       levelMod={levelMod}
+                      view={view}
                       picked={slots[tab as Requirement] === f.fighter_id}
                       tick={slots[tab as Requirement] === f.fighter_id ? 'Sacrifice' : undefined}
                       blockedNote={usedElsewhere ? 'Covering another' : undefined}
@@ -564,6 +581,7 @@ function Builder({
                   )
                 })}
               </div>
+              </>
             )}
           </>
         )}
