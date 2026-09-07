@@ -739,60 +739,6 @@ export default function Arena() {
 
 
         <section className="versus">
-          <div className="versus__side versus__side--enemy">
-            <header
-              className="versus__head"
-              style={{ ['--share' as string]: `${(1 - myShare) * 100}%` }}
-            >
-              <span className="versus__team">The defenders</span>
-              <span className="versus__totals mono">
-                {formatScaled(outlook.theirs.damage)} DMG ·{' '}
-                {formatScaled(outlook.theirs.health)} HP
-                <Elemental side={outlook.theirs} against={outlook.mine.bonuses} who="They" />
-              </span>
-            </header>
-
-            <div className="versus__row">
-              {enemies.map((f, i) => (
-                <CombatCard
-                  key={`${f.fighter_id}-${i}`}
-                  element={f.element}
-                  classname={f.classname}
-                  racename={f.racename}
-                  /*
-                     No level on the NFT fighter. It is a fused crew and
-                     weapon rather than a levelled fighter, and the badge and
-                     the level share the same corner — so passing both put an
-                     L5 over the tag that says what the card is. Your own side
-                     never passed one; the defenders’ side did.
-                  */
-                  level={f.fighter_id === NFT_FIGHTER_ID ? undefined : f.level}
-                  health={f.health}
-                  damage={f.damage}
-                  side="enemy"
-                  badge={f.fighter_id === NFT_FIGHTER_ID ? 'NFT' : undefined}
-                  art={f.fighter_id === NFT_FIGHTER_ID ? NFT_FIGHTER_ART : undefined}
-                  owner={f.gamertag || f.owner}
-                  abilities={picked.length ? enemySlots[i] : undefined}
-                  onOpen={() => showEnemy(f)}
-                />
-              ))}
-              {!arenaLoaded &&
-                Array.from({ length: 6 }, (_, i) => (
-                  <div className="skeleton combatcard combatcard--loading" key={i} />
-                ))}
-              {arenaLoaded && enemies.length === 0 && (
-                <p className="faint">This arena has no team standing.</p>
-              )}
-            </div>
-          </div>
-
-          <div className="versus__divider">
-            <span className="versus__vs" aria-hidden="true">
-              VS
-            </span>
-          </div>
-
           <div className="versus__side versus__side--mine">
             <header
               className="versus__head"
@@ -885,7 +831,61 @@ export default function Arena() {
 
             {phone && autoPickButton}
           </div>
-        </section>
+        <div className="versus__divider">
+            <span className="versus__vs" aria-hidden="true">
+              VS
+            </span>
+          </div>
+
+          <div className="versus__side versus__side--enemy">
+            <header
+              className="versus__head"
+              style={{ ['--share' as string]: `${(1 - myShare) * 100}%` }}
+            >
+              <span className="versus__team">The defenders</span>
+              <span className="versus__totals mono">
+                {formatScaled(outlook.theirs.damage)} DMG ·{' '}
+                {formatScaled(outlook.theirs.health)} HP
+                <Elemental side={outlook.theirs} against={outlook.mine.bonuses} who="They" />
+              </span>
+            </header>
+
+            <div className="versus__row">
+              {enemies.map((f, i) => (
+                <CombatCard
+                  key={`${f.fighter_id}-${i}`}
+                  element={f.element}
+                  classname={f.classname}
+                  racename={f.racename}
+                  /*
+                     No level on the NFT fighter. It is a fused crew and
+                     weapon rather than a levelled fighter, and the badge and
+                     the level share the same corner — so passing both put an
+                     L5 over the tag that says what the card is. Your own side
+                     never passed one; the defenders’ side did.
+                  */
+                  level={f.fighter_id === NFT_FIGHTER_ID ? undefined : f.level}
+                  health={f.health}
+                  damage={f.damage}
+                  side="enemy"
+                  badge={f.fighter_id === NFT_FIGHTER_ID ? 'NFT' : undefined}
+                  art={f.fighter_id === NFT_FIGHTER_ID ? NFT_FIGHTER_ART : undefined}
+                  owner={f.gamertag || f.owner}
+                  abilities={picked.length ? enemySlots[i] : undefined}
+                  onOpen={() => showEnemy(f)}
+                />
+              ))}
+              {!arenaLoaded &&
+                Array.from({ length: 6 }, (_, i) => (
+                  <div className="skeleton combatcard combatcard--loading" key={i} />
+                ))}
+              {arenaLoaded && enemies.length === 0 && (
+                <p className="faint">This arena has no team standing.</p>
+              )}
+            </div>
+          </div>
+
+          </section>
 
         {/*
           What a win costs, stated where the team is chosen rather than in the

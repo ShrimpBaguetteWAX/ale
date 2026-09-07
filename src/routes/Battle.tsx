@@ -547,9 +547,9 @@ function Arena({
         <div className="stage">
           <div className="rosters">
             <RosterStrip
-              label="The dungeon"
-              side="enemy"
-              fighters={team2}
+              label="Your team"
+              side="mine"
+              fighters={team1}
               state={state}
               activeUids={[duel?.attackerUid, duel?.defenderUid]}
               nextUp={nextUp}
@@ -558,9 +558,9 @@ function Arena({
               standing={standing}
             />
             <RosterStrip
-              label="Your team"
-              side="mine"
-              fighters={team1}
+              label="The dungeon"
+              side="enemy"
+              fighters={team2}
               state={state}
               activeUids={[duel?.attackerUid, duel?.defenderUid]}
               nextUp={nextUp}
@@ -574,6 +574,46 @@ function Arena({
 
           {duel && (
             <div className="duel">
+              <Duelist
+                key={duel.mine.uid}
+                fighter={duel.mine}
+                state={state.get(duel.mine.uid)}
+                standing={standing.get(duel.mine.uid)}
+                role={
+                  !current
+                    ? null
+                    : duel.attackerUid === duel.mine.uid
+                      ? 'attacker'
+                      : 'defender'
+                }
+                side="mine"
+                turn={step}
+                attack={current?.damage ?? 0}
+                blocked={current?.blocked ?? 0}
+                killed={!!current?.killed}
+                abilityDelta={abilityDelta.get(duel.mine.uid) ?? 0}
+                owner={duel.mine.gamertag || playertag || 'You'}
+              />
+            <div className="duel__centre">
+                <span className="duel__turn mono">
+                  {current ? `Attack ${step}` : 'Ready'}
+                </span>
+                {current && (
+                  <span
+                    className={`duel__element duel__element--${current.element}`}
+                    key={`el-${step}`}
+                  >
+                    <img
+                      src={asset(`/assets/icons/elements/${current.element}.png`)}
+                      alt=""
+                      width={22}
+                      height={22}
+                    />
+                    {current.effectiveness}%
+                  </span>
+                )}
+              </div>
+
               <Duelist
                 key={duel.theirs.uid}
                 fighter={duel.theirs}
@@ -595,47 +635,7 @@ function Arena({
                 owner={duel.theirs.gamertag || duel.theirs.owner || 'AI'}
               />
 
-              <div className="duel__centre">
-                <span className="duel__turn mono">
-                  {current ? `Attack ${step}` : 'Ready'}
-                </span>
-                {current && (
-                  <span
-                    className={`duel__element duel__element--${current.element}`}
-                    key={`el-${step}`}
-                  >
-                    <img
-                      src={asset(`/assets/icons/elements/${current.element}.png`)}
-                      alt=""
-                      width={22}
-                      height={22}
-                    />
-                    {current.effectiveness}%
-                  </span>
-                )}
               </div>
-
-              <Duelist
-                key={duel.mine.uid}
-                fighter={duel.mine}
-                state={state.get(duel.mine.uid)}
-                standing={standing.get(duel.mine.uid)}
-                role={
-                  !current
-                    ? null
-                    : duel.attackerUid === duel.mine.uid
-                      ? 'attacker'
-                      : 'defender'
-                }
-                side="mine"
-                turn={step}
-                attack={current?.damage ?? 0}
-                blocked={current?.blocked ?? 0}
-                killed={!!current?.killed}
-                abilityDelta={abilityDelta.get(duel.mine.uid) ?? 0}
-                owner={duel.mine.gamertag || playertag || 'You'}
-              />
-            </div>
           )}
         </div>
 

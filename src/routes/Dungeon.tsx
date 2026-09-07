@@ -742,86 +742,6 @@ export default function Dungeon() {
           convention every fighting game uses and costs nothing to honour.
         */}
         <section className="versus">
-          <div className="versus__side versus__side--enemy">
-            {/*
-              The header is the balance bar. Each side's share of the matchup
-              is drawn as an underline beneath its own name and totals, which
-              says the same thing a separate bar did while costing no height
-              and leaving no doubt about which side a length belongs to.
-            */}
-            <header
-              className="versus__head"
-              style={{ ['--share' as string]: `${(1 - myShare) * 100}%` }}
-            >
-              <span className="versus__team">The dungeon</span>
-              <span className="versus__totals mono">
-                {formatScaled(outlook.theirs.damage)} DMG ·{' '}
-                {formatScaled(outlook.theirs.health)} HP
-                <Elemental side={outlook.theirs} against={outlook.mine.bonuses} who="They" />
-              </span>
-            </header>
-
-            <div className="versus__row">
-              {/*
-                The skeleton stands until the artwork is decoded, not until
-                the row arrives. Handing over on the data put six empty cards
-                on the screen and painted the portraits into them a second
-                later, so the screen finished twice.
-              */}
-              {enemyArtReady &&
-                enemyLine.map((f, i) => (
-                <CombatCard
-                  key={`${f.fighter_id}-${i}`}
-                  element={f.element}
-                  /* The dungeon's sixth is the same fused card fighter yours
-                     is, and arrives just as nameless. Label it the same way
-                     rather than leaving a blank card in their line. */
-                  classname={f.fighter_id === NFT_FIGHTER_ID ? 'NFT Fighter' : f.classname}
-                  racename={f.fighter_id === NFT_FIGHTER_ID ? '' : f.racename}
-                  art={f.fighter_id === NFT_FIGHTER_ID ? NFT_FIGHTER_ART : undefined}
-                  badge={f.fighter_id === NFT_FIGHTER_ID ? 'NFT' : undefined}
-                  /*
-                     No level on the NFT fighter. It is a fused crew and
-                     weapon rather than a levelled fighter, and the badge and
-                     the level share the same corner — so passing both put an
-                     L5 over the tag that says what the card is. Your own side
-                     never passed one; the defenders’ side did.
-                  */
-                  level={f.fighter_id === NFT_FIGHTER_ID ? undefined : f.level}
-                  health={f.health}
-                  damage={f.damage}
-                  side="enemy"
-                  /*
-                     `enemySlots` is index-aligned with the fighting line,
-                     and the dormant one is always last — so an index past
-                     the end simply has no counts, which is what it should
-                     have: it is not in this fight to have a matchup with.
-                  */
-                  abilities={picked.length ? enemySlots[i] : undefined}
-                  dormant={
-                    f.fighter_id === NFT_FIGHTER_ID && difficulty < nftMinDifficulty
-                      ? `Joins at difficulty ${nftMinDifficulty}`
-                      : undefined
-                  }
-                  onOpen={() => showEnemy(f)}
-                />
-              ))}
-              {(!enemyTeam || !enemyArtReady) &&
-                Array.from({ length: 5 }, (_, i) => (
-                  <div className="skeleton combatcard combatcard--loading" key={i} />
-                ))}
-              {enemyTeam?.length === 0 && enemyArtReady && (
-                <p className="faint">This dungeon has no team standing.</p>
-              )}
-            </div>
-          </div>
-
-          <div className="versus__divider">
-            <span className="versus__vs" aria-hidden="true">
-              VS
-            </span>
-          </div>
-
           <div className="versus__side versus__side--mine">
             <header
               className="versus__head"
@@ -942,7 +862,87 @@ export default function Dungeon() {
 
           </div>
 
-        </section>
+        <div className="versus__divider">
+            <span className="versus__vs" aria-hidden="true">
+              VS
+            </span>
+          </div>
+
+          <div className="versus__side versus__side--enemy">
+            {/*
+              The header is the balance bar. Each side's share of the matchup
+              is drawn as an underline beneath its own name and totals, which
+              says the same thing a separate bar did while costing no height
+              and leaving no doubt about which side a length belongs to.
+            */}
+            <header
+              className="versus__head"
+              style={{ ['--share' as string]: `${(1 - myShare) * 100}%` }}
+            >
+              <span className="versus__team">The dungeon</span>
+              <span className="versus__totals mono">
+                {formatScaled(outlook.theirs.damage)} DMG ·{' '}
+                {formatScaled(outlook.theirs.health)} HP
+                <Elemental side={outlook.theirs} against={outlook.mine.bonuses} who="They" />
+              </span>
+            </header>
+
+            <div className="versus__row">
+              {/*
+                The skeleton stands until the artwork is decoded, not until
+                the row arrives. Handing over on the data put six empty cards
+                on the screen and painted the portraits into them a second
+                later, so the screen finished twice.
+              */}
+              {enemyArtReady &&
+                enemyLine.map((f, i) => (
+                <CombatCard
+                  key={`${f.fighter_id}-${i}`}
+                  element={f.element}
+                  /* The dungeon's sixth is the same fused card fighter yours
+                     is, and arrives just as nameless. Label it the same way
+                     rather than leaving a blank card in their line. */
+                  classname={f.fighter_id === NFT_FIGHTER_ID ? 'NFT Fighter' : f.classname}
+                  racename={f.fighter_id === NFT_FIGHTER_ID ? '' : f.racename}
+                  art={f.fighter_id === NFT_FIGHTER_ID ? NFT_FIGHTER_ART : undefined}
+                  badge={f.fighter_id === NFT_FIGHTER_ID ? 'NFT' : undefined}
+                  /*
+                     No level on the NFT fighter. It is a fused crew and
+                     weapon rather than a levelled fighter, and the badge and
+                     the level share the same corner — so passing both put an
+                     L5 over the tag that says what the card is. Your own side
+                     never passed one; the defenders’ side did.
+                  */
+                  level={f.fighter_id === NFT_FIGHTER_ID ? undefined : f.level}
+                  health={f.health}
+                  damage={f.damage}
+                  side="enemy"
+                  /*
+                     `enemySlots` is index-aligned with the fighting line,
+                     and the dormant one is always last — so an index past
+                     the end simply has no counts, which is what it should
+                     have: it is not in this fight to have a matchup with.
+                  */
+                  abilities={picked.length ? enemySlots[i] : undefined}
+                  dormant={
+                    f.fighter_id === NFT_FIGHTER_ID && difficulty < nftMinDifficulty
+                      ? `Joins at difficulty ${nftMinDifficulty}`
+                      : undefined
+                  }
+                  onOpen={() => showEnemy(f)}
+                />
+              ))}
+              {(!enemyTeam || !enemyArtReady) &&
+                Array.from({ length: 5 }, (_, i) => (
+                  <div className="skeleton combatcard combatcard--loading" key={i} />
+                ))}
+              {enemyTeam?.length === 0 && enemyArtReady && (
+                <p className="faint">This dungeon has no team standing.</p>
+              )}
+            </div>
+          </div>
+
+          </section>
 
         {/*
           Crew and weapon sit outside the versus panel. They are equipment

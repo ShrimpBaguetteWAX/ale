@@ -181,11 +181,11 @@
 
 .roster--enemy .roster__head {
   border-bottom-color: rgb(224 52 79 / 45%);
+  /* The far side reads right to left, mirroring where it sits on the stage. */
+  flex-direction: row-reverse;
 }
 .roster--mine .roster__head {
   border-bottom-color: rgb(0 186 255 / 45%);
-  /* Your side reads right to left, mirroring where it sits on the stage. */
-  flex-direction: row-reverse;
 }
 
 .roster__name {
@@ -207,7 +207,7 @@
   color: var(--text-faint);
   margin-left: auto;
 }
-.roster--mine .roster__alive {
+.roster--enemy .roster__alive {
   margin-left: 0;
   margin-right: auto;
 }
@@ -217,11 +217,11 @@
   grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 5px;
 }
-/* Your team fills from the stage outward, so both strips meet in the middle. */
-.roster--mine .roster__row {
+/* The far team fills from the stage outward, so both strips meet in the middle. */
+.roster--enemy .roster__row {
   direction: rtl;
 }
-.roster--mine .rtile {
+.roster--enemy .rtile {
   direction: ltr;
 }
 
@@ -423,10 +423,10 @@
 }
 
 /* Direction is per side: each fighter leans toward the other. */
-.duelist--enemy {
+.duelist--mine {
   --toward: 26px;
 }
-.duelist--mine {
+.duelist--enemy {
   --toward: -26px;
 }
 
@@ -449,8 +449,9 @@
   transition: filter var(--dur-fast) var(--ease);
 }
 
-/* The dungeon's fighter faces the player's. */
-.duelist--enemy .duelist__art {
+/* Each fighter faces the other; yours stands on the left, so yours is
+   the one drawn against the art's own direction. */
+.duelist--mine .duelist__art {
   transform: scaleX(-1);
 }
 
@@ -1941,11 +1942,11 @@
   }
 }
 
-.duelist--enemy {
+.duelist--mine {
   animation-name: duelist-in-left;
 }
 
-.duelist--mine {
+.duelist--enemy {
   animation-name: duelist-in-right;
 }
 

@@ -948,12 +948,13 @@
   background: linear-gradient(90deg, #0ed4a8, #00baff);
 }
 
-/* Your own bar grows from the divider outward, mirroring the line-up. */
+/* Each bar grows from the divider outward, mirroring the line-up: yours
+   sits on the left, so yours is the one anchored to its right edge. */
 @media (min-width: 1080px) {
-  .versus__side--enemy .versus__head::after {
+  .versus__side--mine .versus__head::after {
     left: auto;
     right: 0;
-    background: linear-gradient(270deg, #96162f, #e0344f);
+    background: linear-gradient(270deg, #0ed4a8, #00baff);
   }
 }
 
@@ -1271,10 +1272,11 @@
 }
 
 /*
- * The dungeon's fighters face your team. Mirroring one side is what makes a
- * row of portraits read as two sides of a fight rather than one long queue.
+ * The two lines face each other. Mirroring one side is what makes a row of
+ * portraits read as two sides of a fight rather than one long queue; yours
+ * stands on the left, so yours is the side drawn against the art.
  */
-.combatcard--enemy .combatcard__fighter {
+.combatcard--mine .combatcard__fighter {
   transform: scaleX(-1);
 }
 
@@ -2294,11 +2296,11 @@ button.combatcard--empty:hover {
     display: contents;
   }
 
-  .versus__side--enemy .versus__head {
+  .versus__side--mine .versus__head {
     grid-area: 1 / 1 / 2 / 2;
   }
 
-  .versus__side--enemy .versus__row {
+  .versus__side--mine .versus__row {
     grid-area: 2 / 1 / 3 / 2;
     align-self: start;
   }
@@ -2309,11 +2311,11 @@ button.combatcard--empty:hover {
     align-self: center;
   }
 
-  .versus__side--mine .versus__head {
+  .versus__side--enemy .versus__head {
     grid-area: 1 / 3 / 2 / 4;
   }
 
-  .versus__side--mine .versus__row {
+  .versus__side--enemy .versus__row {
     grid-area: 2 / 3 / 3 / 4;
     align-self: start;
   }
