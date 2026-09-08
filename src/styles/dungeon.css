@@ -120,16 +120,81 @@
  * to fill a wide screen exactly as before — the row is unchanged where it
  * already fitted — and refuses to shrink below the tap target anywhere else.
  */
+/* The arrows and the strip between them. */
+.difficulty__scroller {
+  display: flex;
+  align-items: stretch;
+  gap: var(--sp-2);
+  margin-top: var(--sp-3);
+}
+
 .difficulty__row {
   display: flex;
   gap: var(--sp-2);
   flex-wrap: nowrap;
   overflow-x: auto;
   overscroll-behavior-x: contain;
-  scrollbar-width: thin;
-  /* Room under the steps for the scrollbar, so it never sits on top of them. */
-  padding-bottom: var(--sp-1);
-  margin-top: var(--sp-3);
+  scroll-behavior: smooth;
+  flex: 1;
+  min-width: 0;
+  /*
+     No scrollbar. It is a control with its own arrows, and a scrollbar under
+     twenty buttons reads as a browser artefact rather than as part of the
+     panel — which is exactly what it looked like.
+  */
+  scrollbar-width: none;
+}
+
+.difficulty__row::-webkit-scrollbar {
+  display: none;
+}
+
+/*
+ * The arrows, and only when there is somewhere to go.
+ *
+ * Rendered out entirely when all twenty fit, rather than disabled: on a wide
+ * screen there is nothing off-screen and a permanent pair of dead controls
+ * either side of the ladder is furniture. At the ends they are disabled
+ * rather than removed, so the row does not resize as you page along it.
+ *
+ * Out of the tab order on purpose. The steps are a radiogroup and arrow keys
+ * already move through it; these are a pointer convenience for what the
+ * keyboard can already reach, and tabbing through them twice would be worse
+ * than not having them.
+ */
+.difficulty__arrow {
+  flex: none;
+  width: 28px;
+  min-height: 44px;
+  display: grid;
+  place-items: center;
+  font-family: var(--font-display);
+  font-size: var(--fs-lg);
+  line-height: 1;
+  color: var(--text-dim);
+  background: rgb(0 0 0 / 35%);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+  transition:
+    color var(--dur-fast) var(--ease),
+    border-color var(--dur-fast) var(--ease);
+}
+
+.difficulty__arrow:hover:not(:disabled) {
+  color: var(--white);
+  border-color: var(--purple);
+}
+
+.difficulty__arrow:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .difficulty__row {
+    scroll-behavior: auto;
+  }
 }
 
 .difficulty__step {

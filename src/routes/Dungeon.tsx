@@ -12,6 +12,7 @@ import {
 } from '@/dungeon/queries'
 import {
   DIFFICULTIES,
+  MAX_DIFFICULTY,
   NFT_FIGHTER_ID,
   withNumericIds,
   canRun,
@@ -329,7 +330,8 @@ export default function Dungeon() {
     restored.current = true
 
     const usable = new Map(roster.map((f) => [f.fighter_id, fighterAvailable(f)]))
-    const back = restoreTeam(recallTeam('dungeon', player.wallet), {
+    const remembered = recallTeam('dungeon', player.wallet)
+    const back = restoreTeam(remembered, {
       teamSize: TEAM_SIZE,
       usable,
       crewCards: usableCrew,
@@ -343,11 +345,26 @@ export default function Dungeon() {
        not resolve a card wrote null over it, which is how a weapon left
        the stored team for good rather than just for this visit.
     */
-    if (back.fighterIds.length || back.crew || back.weapon) skipSave.current = true
+    if (
+      back.fighterIds.length ||
+      back.crew ||
+      back.weapon ||
+      remembered?.difficulty
+    ) {
+      skipSave.current = true
+    }
 
     if (back.fighterIds.length) setTeamIds(back.fighterIds)
     if (back.crew) setCrew(back.crew)
     if (back.weapon) setWeapon(back.weapon)
+    /*
+       The rung last fought on. Clamped to what this screen offers rather
+       than trusted: the range is a presented one, not a contract limit, and
+       a stored 20 must not survive the day the ladder is shortened.
+    */
+    if (remembered?.difficulty) {
+      setDifficulty(Math.min(remembered.difficulty, MAX_DIFFICULTY))
+    }
 
     if (back.dropped.length) {
       const named = back.dropped.map((d) => {
@@ -372,8 +389,9 @@ export default function Dungeon() {
       fighterIds: teamIds,
       crew: crew?.template_id ?? null,
       weapon: weapon?.template_id ?? null,
+      difficulty,
     })
-  }, [teamIds, crew, weapon, player.wallet])
+  }, [teamIds, crew, weapon, difficulty, player.wallet])
 
   const toggleFighter = useCallback((f: RosterFighter) => {
     setTeamIds((ids) => {
@@ -1322,6 +1340,81 @@ function DifficultyPicker({
   nftMinDifficulty: number
 }) {
   const phone = usePhone()
+  const row = useRef<HTMLDivElement | null>(null)
+  /*
+     Whether the ladder runs past its box, and which end it is resting on.
+     The arrows are drawn from this: none at all when all twenty fit, and a
+     dead one at each end rather than a live one that does nothing.
+  */
+  const [reach, setReach] = useState({ over: false, start: true, end: false })
+
+  const readReach = useCallback(() => {
+    const el = row.current
+    if (!el) return
+    const slack = el.scrollWidth - el.clientWidth
+    setReach({
+      over: slack > 1,
+      start: el.scrollLeft <= 1,
+      end: el.scrollLeft >= slack - 1,
+    })
+  }, [])
+
+  useEffect(() => {
+    const el = row.current
+    if (!el) return
+    readReach()
+    const ro = new ResizeObserver(readReach)
+    ro.observe(el)
+    el.addEventListener('scroll', readReach, { passive: true })
+    return () => {
+      ro.disconnect()
+      el.removeEventListener('scroll', readReach)
+    }
+  }, [readReach, phone])
+
+  /*
+     Keep the chosen rung in sight.
+
+     It matters most on arrival: the difficulty is restored from the last run,
+     and a remembered 17 would otherwise open scrolled to 1 with the selection
+     off the right-hand end. Only moved when it is actually out of view, so a
+     click near the edge does not yank the strip.
+  */
+  useEffect(() => {
+    const el = row.current
+    if (!el) return
+    const step = el.children[value - 1] as HTMLElement | undefined
+    if (!step) return
+    const pad = 8
+
+    /*
+       Instantly, not smoothly — the same lesson `DifficultyWheel` records
+       above. A smooth scroll is animated on a frame timer and does nothing
+       at all where frames are not being served, and this runs on arrival,
+       which is exactly when the tab may not have been painted yet. The
+       arrows keep the smooth scroll; they are only ever pressed by somebody
+       watching.
+    */
+    const smooth = el.style.scrollBehavior
+    el.style.scrollBehavior = 'auto'
+    if (step.offsetLeft < el.scrollLeft) {
+      el.scrollLeft = step.offsetLeft - pad
+    } else if (
+      step.offsetLeft + step.offsetWidth >
+      el.scrollLeft + el.clientWidth
+    ) {
+      el.scrollLeft = step.offsetLeft + step.offsetWidth - el.clientWidth + pad
+    }
+    el.style.scrollBehavior = smooth
+  }, [value, phone])
+
+  /* Most of a box at a time, so the step you were reading stays on screen. */
+  const page = (dir: -1 | 1) => {
+    const el = row.current
+    if (!el) return
+    el.scrollLeft += dir * Math.max(120, el.clientWidth * 0.8)
+    readReach()
+  }
 
   return (
     <section className="panel difficulty">
@@ -1335,19 +1428,50 @@ function DifficultyPicker({
       {phone ? (
         <DifficultyWheel value={value} onChange={onChange} />
       ) : (
-        <div className="difficulty__row" role="radiogroup" aria-label="Difficulty">
-          {DIFFICULTIES.map((d) => (
+        <div className="difficulty__scroller">
+          {reach.over && (
             <button
               type="button"
-              key={d}
-              role="radio"
-              aria-checked={d === value}
-              className="difficulty__step"
-              onClick={() => onChange(d)}
+              className="difficulty__arrow"
+              onClick={() => page(-1)}
+              disabled={reach.start}
+              aria-label="Show lower difficulties"
+              tabIndex={-1}
             >
-              {d}
+              ‹
             </button>
-          ))}
+          )}
+          <div
+            className="difficulty__row"
+            role="radiogroup"
+            aria-label="Difficulty"
+            ref={row}
+          >
+            {DIFFICULTIES.map((d) => (
+              <button
+                type="button"
+                key={d}
+                role="radio"
+                aria-checked={d === value}
+                className="difficulty__step"
+                onClick={() => onChange(d)}
+              >
+                {d}
+              </button>
+            ))}
+          </div>
+          {reach.over && (
+            <button
+              type="button"
+              className="difficulty__arrow"
+              onClick={() => page(1)}
+              disabled={reach.end}
+              aria-label="Show higher difficulties"
+              tabIndex={-1}
+            >
+              ›
+            </button>
+          )}
         </div>
       )}
       {value >= nftMinDifficulty && (

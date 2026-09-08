@@ -25,6 +25,16 @@ export interface RememberedTeam {
   fighterIds: number[]
   crew: number | null
   weapon: number | null
+  /**
+   * The rung of the ladder last fought on, dungeons only.
+   *
+   * It belongs with the team for the same reason the team is here: it is part
+   * of the same decision, it is the same answer nearly every run, and an
+   * arena has no ladder to remember. Absent on a record written before this
+   * existed, and on every arena record, which is why it is optional rather
+   * than defaulted — the screen's own opening value decides that.
+   */
+  difficulty?: number
 }
 
 const key = (kind: FightKind, wallet: string) => `al.lastteam.${kind}.${wallet}`
@@ -53,6 +63,14 @@ export function recallTeam(kind: FightKind, wallet: string): RememberedTeam | nu
         : [],
       crew: typeof parsed.crew === 'number' ? parsed.crew : null,
       weapon: typeof parsed.weapon === 'number' ? parsed.weapon : null,
+      /* Only a real rung comes back. A stored 0, a NaN or a string would
+         otherwise be handed to the screen as the difficulty to open on. */
+      difficulty:
+        typeof parsed.difficulty === 'number' &&
+        Number.isFinite(parsed.difficulty) &&
+        parsed.difficulty >= 1
+          ? Math.floor(parsed.difficulty)
+          : undefined,
     }
   } catch {
     return null
