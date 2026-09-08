@@ -1389,15 +1389,17 @@
   margin-top: var(--sp-2);
   grid-template-rows: 6px 14px 30px;
   /*
-     Inset to the strip the plate above covers at every height.
-     `skewX(-6deg)` shears the plate about its middle, so its bottom edge —
-     the one these sit under and are read against — is about eight pixels
-     left of the card's own box, and its top edge eight to the right. Square
-     on the card box, this block hangs over the plate's bottom-right corner
-     and reaches toward the next fighter. Ten each side clears the lean at
-     any plate height and leaves the bar plainly part of the card under it.
+     Lined up under the plate's bottom edge, not the card's box.
+     `skewX(-6deg)` shears the plate about its middle, so the edge these sit
+     directly beneath is displaced left by `tan(6deg) x height / 2` — about
+     eight pixels at the plate's 157. Inset alone was not enough: it made the
+     block symmetric about the *card*, which against the displaced plate
+     meant flush on the left and eighteen adrift on the right. The shift puts
+     it back under the edge it is read against, and the inset then reads as
+     ten on both sides rather than nought and twenty.
   */
   margin-inline: 10px;
+  translate: -8px 0;
 }
 
 /* Fills its track exactly, so the row height cannot depend on the button. */
