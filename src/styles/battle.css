@@ -1388,6 +1388,16 @@
   gap: var(--sp-1);
   margin-top: var(--sp-2);
   grid-template-rows: 6px 14px 30px;
+  /*
+     Inset to the strip the plate above covers at every height.
+     `skewX(-6deg)` shears the plate about its middle, so its bottom edge —
+     the one these sit under and are read against — is about eight pixels
+     left of the card's own box, and its top edge eight to the right. Square
+     on the card box, this block hangs over the plate's bottom-right corner
+     and reaches toward the next fighter. Ten each side clears the lean at
+     any plate height and leaves the bar plainly part of the card under it.
+  */
+  margin-inline: 10px;
 }
 
 /* Fills its track exactly, so the row height cannot depend on the button. */
@@ -1419,6 +1429,14 @@
   gap: var(--sp-2);
   font-size: 10px;
   color: var(--text-dim);
+}
+
+/* The level, said once and kept out of the numbers' way. */
+.xpbar__lv {
+  flex: none;
+  font-family: var(--font-display);
+  font-weight: var(--fw-bold);
+  color: var(--text-heading);
 }
 
 .xpbar__count {

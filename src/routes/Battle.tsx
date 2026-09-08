@@ -1752,9 +1752,12 @@ function Result({
                         />
                       </span>
                       <span className="xpbar__line">
+                        {/* The level the bar is filling towards the end of,
+                            which the numbers beside it never said. */}
+                        <span className="xpbar__lv">L{live.stats.level}</span>
                         <span className="xpbar__count mono">
                           {plan.atMax
-                            ? `Level ${live.stats.level}`
+                            ? 'Max level'
                             : `${live.stats.experience.toLocaleString(NUM_LOCALE)} / ${need.toLocaleString(NUM_LOCALE)} XP`}
                         </span>
                         {!plan.atMax && gain > 0 && (
