@@ -67,6 +67,36 @@
   grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
 }
 
+/*
+ * Two to a row on a phone.
+ *
+ * At a 210px minimum a 390px screen fits one, so the shop was a single
+ * column of cards the width of the page — one offer visible at a time on the
+ * screen whose job is comparing them. Two fixed columns rather than a
+ * smaller minimum, because "two per row" is the requirement: an auto-fill
+ * track would quietly fall back to one on the narrowest phones.
+ */
+@media (max-width: 719px) {
+  .packgrid {
+    gap: var(--sp-2);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  /* The card is half the width it was, so its insides come down with it. */
+  .pack__body {
+    padding: var(--sp-2);
+    gap: var(--sp-1);
+  }
+
+  .pack__title {
+    font-size: var(--fs-xs);
+  }
+
+  .pack__offer {
+    font-size: var(--fs-md);
+  }
+}
+
 .pack {
   display: flex;
   flex-direction: column;
