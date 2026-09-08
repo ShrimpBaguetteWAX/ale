@@ -6,7 +6,13 @@ import { fetchLiveArena } from '@/arena/queries'
 import { NFT_FIGHTER_ID } from '@/dungeon/rules'
 import { fetchFight, fetchRoster } from '@/dungeon/queries'
 import { useConfig, useLazyConfig } from '@/state/useConfig'
-import { recallFight, recallVenue, rememberFight, type Venue } from '@/dungeon/fightStore'
+import {
+  recallFight,
+  recallVenue,
+  recallXpBefore,
+  rememberFight,
+  type Venue,
+} from '@/dungeon/fightStore'
 import {
   simulate,
   type EffectEvent,
@@ -1275,14 +1281,22 @@ function Result({
     if (!roster || !fresh) return
     setGained((prev) => {
       if (prev.size > 0) return prev
+      /*
+         From what the picker recorded, not from the chain row.
+
+         The row carries `experience` on every fighter and the contract writes
+         zero into it, so subtracting it reported each fighter's whole
+         lifetime total as one run's earnings — on a defeat, which pays
+         nothing at all. Absent for a replay reached by a link, and then
+         nothing is claimed.
+      */
+      const before = recallXpBefore(row.history_id)
+      if (!before) return prev
       const next = new Map<number, number>()
-      /* The raw snapshot, not the simulated line-up: `experience` is on the
-         chain row and the simulation has no use for it. */
-      for (const f of row.team1_fighters ?? []) {
-        const live = byId.get(Number(f.fighter_id))
-        const before = Number(f.experience)
-        if (!live || !Number.isFinite(before)) continue
-        next.set(Number(f.fighter_id), Math.max(0, live.stats.experience - before))
+      for (const [id, was] of Object.entries(before)) {
+        const live = byId.get(Number(id))
+        if (!live || !Number.isFinite(was)) continue
+        next.set(Number(id), Math.max(0, live.stats.experience - Number(was)))
       }
       return next.size > 0 ? next : prev
     })

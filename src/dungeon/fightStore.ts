@@ -26,6 +26,9 @@ const KEEP = 12
  */
 export type Venue = 'dungeon' | 'arena'
 
+/** Each fighter's experience as it stood when the fight was started. */
+export type XpBefore = Record<number, number>
+
 interface Kept {
   row: FightRow
   /*
@@ -35,6 +38,23 @@ interface Kept {
      to the dungeon screen.
   */
   venue?: Venue
+  /*
+     What the team had banked before the run, so the result can say what the
+     run paid.
+
+     Kept here because the chain does not answer it. The fight row carries
+     `experience` and `required_experience` fields on every fighter and writes
+     zero into both, so subtracting the row from the live roster reports the
+     fighter's whole lifetime total as though one run had earned it — which is
+     what it did, on a defeat, which pays nothing at all.
+
+     Deriving it instead would mean re-deriving the contract's own sum:
+     `xp_per_dungeon_difficulty x difficulty`, or `xp_per_arena_win`, run
+     through every fighter's `eofeffect`. Recording the before is exact and
+     needs none of that. Absent for a replay reached by a link, the same as
+     the venue, and the result screen then says nothing rather than guessing.
+  */
+  xpBefore?: XpBefore
 }
 
 type Store = Record<string, Kept>
@@ -71,11 +91,15 @@ function write(store: Store): void {
 /** Kept alongside the serialised copy so a quota failure is survivable. */
 const memory = new Map<string, Kept>()
 
-export function rememberFight(row: FightRow, venue?: Venue): void {
-  memory.set(row.history_id, { row, venue })
+export function rememberFight(
+  row: FightRow,
+  venue?: Venue,
+  xpBefore?: XpBefore,
+): void {
+  memory.set(row.history_id, { row, venue, xpBefore })
 
   const store = read()
-  store[row.history_id] = { row, venue }
+  store[row.history_id] = { row, venue, xpBefore }
 
   const ids = Object.keys(store)
   if (ids.length > KEEP) {
@@ -106,4 +130,14 @@ export function recallFight(historyId: string): FightRow | undefined {
  */
 export function recallVenue(historyId: string): Venue | undefined {
   return (memory.get(historyId) ?? read()[historyId])?.venue
+}
+
+/**
+ * What the team had banked before this fight, if this browser started it.
+ *
+ * Undefined for a replay reached by a link, in which case the result screen
+ * shows the bars without claiming what the run was worth.
+ */
+export function recallXpBefore(historyId: string): XpBefore | undefined {
+  return (memory.get(historyId) ?? read()[historyId])?.xpBefore
 }

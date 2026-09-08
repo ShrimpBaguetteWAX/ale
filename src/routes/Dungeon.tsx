@@ -467,6 +467,13 @@ export default function Dungeon() {
     setError(null)
     setStatus('Finding your cards…')
 
+    /* What the five have banked right now. The result screen subtracts this
+       from the live roster to say what the run paid: the chain row carries
+       experience fields on every fighter but writes zero into them, so there
+       is no before on chain to subtract from. */
+    const xpBefore = Object.fromEntries(
+      picked.map((f) => [f.fighter_id, f.stats.experience]),
+    )
     const historyId = randomHistoryId()
     try {
       const assets = await resolveAssetIds(player.wallet, [
@@ -499,7 +506,10 @@ export default function Dungeon() {
         await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS))
         const row = await fetchFight(historyId).catch(() => undefined)
         if (row) {
-          rememberFight(row, 'dungeon')
+          /* With what the team had banked going in: the chain row's own
+             experience fields are written as zero, so this is the only
+             record of the before. */
+          rememberFight(row, 'dungeon', xpBefore)
           void refreshPlayer({ force: true })
           /*
              The fight is on chain: XP, cooldowns and quest progress all
