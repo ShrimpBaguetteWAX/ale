@@ -34,6 +34,22 @@ export interface BattleFighter {
   target: string
   specialAbility: BattleAbility[]
   level: number
+  /**
+   * The fighter's experience as it stood when the fight began.
+   *
+   * `addhistory` snapshots the line-up before `gainxp` runs, so these are the
+   * before figures — which is what makes "what this fight paid" answerable by
+   * subtraction rather than by re-deriving it. The contract computes the
+   * award as `xp_per_dungeon_difficulty * difficulty` (or `xp_per_arena_win`)
+   * and then runs it through every fighter's `eofeffect`, so a client working
+   * it out from the difficulty alone would be wrong for any team carrying an
+   * XP ability.
+   *
+   * Optional because a row written before the contract carried these has
+   * neither, and a replay reached by link can be one of those.
+   */
+  experience?: number
+  required_experience?: number
   battlestats: Battlestats
 }
 

@@ -1366,6 +1366,63 @@
   filter: drop-shadow(0 10px 16px rgb(0 0 0 / 65%));
 }
 
+/*
+ * What the fight was worth, under the fighter it was worth it to.
+ *
+ * Outside the plate rather than in it: the plate is skewed to match the card
+ * and a progress bar drawn on a slant reads as a mistake. This sits square
+ * under it, which is also where the eye goes after the stats.
+ */
+.rescard__xp {
+  display: grid;
+  gap: var(--sp-1);
+  margin-top: var(--sp-2);
+}
+
+.xpbar {
+  display: block;
+  height: 6px;
+  overflow: hidden;
+  background: rgb(0 0 0 / 45%);
+  border: 1px solid var(--line-soft);
+  border-radius: 999px;
+}
+
+.xpbar__fill {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, var(--cyan), var(--purple));
+  transition: width var(--dur-slow) var(--ease);
+}
+
+.xpbar__line {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+  font-size: 10px;
+  color: var(--text-dim);
+}
+
+.xpbar__count {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* What this fight added, in the colour the game uses for a gain. */
+.xpbar__gain {
+  margin-left: auto;
+  color: var(--green, #6ee7a8);
+  font-weight: var(--fw-bold);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .xpbar__fill {
+    transition: none;
+  }
+}
+
 .rescard__plate {
   position: relative;
   overflow: hidden;

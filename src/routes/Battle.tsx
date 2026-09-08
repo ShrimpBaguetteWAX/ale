@@ -4,7 +4,7 @@ import { useGame } from '@/state/useGame'
 import { landId } from '@/chain/landId'
 import { fetchLiveArena } from '@/arena/queries'
 import { NFT_FIGHTER_ID } from '@/dungeon/rules'
-import { fetchFight } from '@/dungeon/queries'
+import { fetchFight, fetchRoster } from '@/dungeon/queries'
 import { useConfig, useLazyConfig } from '@/state/useConfig'
 import { recallFight, recallVenue, rememberFight, type Venue } from '@/dungeon/fightStore'
 import {
@@ -24,9 +24,13 @@ import {
   type QueuedTurn,
   type Standing,
 } from '@/dungeon/standing'
-import type { Battlestats, FightRow } from '@/dungeon/types'
+import type { Battlestats, FightRow, RosterFighter } from '@/dungeon/types'
 import { fighterArt, fighterArtFallback, formatScaled } from '@/tavern/fighterStats'
-import { DIRTIES, claimPoolRewards } from '@/wharf/actions'
+import { DIRTIES, claimPoolRewards, levelUpFighters } from '@/wharf/actions'
+import { useAction } from '@/wharf/useAction'
+import { useChainQuery } from '@/chain/useChainQuery'
+import { levelUpOf } from '@/fighters/rules'
+import { ActionBanner } from '@/components/ActionBanner'
 import { settle } from '@/wharf/settle'
 import { readableError } from '@/wharf/errors'
 import { refreshChore } from '@/chores/signal'
@@ -1220,6 +1224,82 @@ function Result({
   const won = replay.winner === 1
   const mine = replay.fighters.filter((f) => f.team === 1)
 
+  /*
+     What the five look like now, which is not what they looked like in the
+     fight. The snapshot on the replay is the line-up as it went in; levelling
+     is decided by the row on chain, and the fight has just changed it.
+
+     The dungeon and the arena drop `fighters` on their way here, so this is a
+     fresh read rather than the cache, and it re-reads itself if the player
+     levels one up below.
+  */
+  const { levels } = useConfig()
+  const rosterQuery = useChainQuery(
+    `roster:${player.wallet}`,
+    () => fetchRoster(player.wallet),
+    { deps: ['fighters'] },
+  )
+  const byId = useMemo(
+    () => new Map((rosterQuery.data ?? []).map((f) => [Number(f.fighter_id), f])),
+    [rosterQuery.data],
+  )
+
+  /*
+     What this fight paid, frozen at the first read.
+
+     Held rather than recomputed because levelling a fighter here spends the
+     experience the figure is derived from: the difference against the
+     snapshot would read as nothing gained the moment the player pressed the
+     button, on the screen whose job is to say what the fight was worth.
+  */
+  /*
+     Only a fight that has just happened can be measured this way.
+
+     The difference against the snapshot is this fight's award while the
+     snapshot is this fight's opening line-up — and nothing else. A replay
+     opened later, or a captured row replayed from the harness, differs from
+     the live roster by every fight since, which would be reported as one
+     run's XP. The chain drops fight rows after about a minute, so anything
+     old enough to fail this is old enough to be a curiosity rather than a
+     result.
+  */
+  const fresh = useMemo(() => {
+    const at = Date.parse(`${row.timestamp}Z`)
+    return Number.isFinite(at) && Date.now() - at < 10 * 60_000
+  }, [row.timestamp])
+
+  const [gained, setGained] = useState<Map<number, number>>(() => new Map())
+  useEffect(() => {
+    const roster = rosterQuery.data
+    if (!roster || !fresh) return
+    setGained((prev) => {
+      if (prev.size > 0) return prev
+      const next = new Map<number, number>()
+      /* The raw snapshot, not the simulated line-up: `experience` is on the
+         chain row and the simulation has no use for it. */
+      for (const f of row.team1_fighters ?? []) {
+        const live = byId.get(Number(f.fighter_id))
+        const before = Number(f.experience)
+        if (!live || !Number.isFinite(before)) continue
+        next.set(Number(f.fighter_id), Math.max(0, live.stats.experience - before))
+      }
+      return next.size > 0 ? next : prev
+    })
+  }, [rosterQuery.data, byId, row, fresh])
+
+  /*
+     Levelling from here, which is where the player finds out they can. The
+     dot and every other screen hear about it through `dirties`.
+  */
+  const { busy: levelBusy, error: levelError, notice: levelNotice, run } = useAction()
+  const doLevelUp = (f: RosterFighter) =>
+    run(
+      `level-${f.fighter_id}`,
+      () => levelUpFighters(session!, [f.fighter_id], levelUpOf(f, levels).cost),
+      `${f.classname} reached level ${f.stats.level + 1}.`,
+      { dirties: DIRTIES.levelUpFighters },
+    )
+
   /**
    * Which of the five is staying behind to hold the arena.
    *
@@ -1638,10 +1718,83 @@ function Result({
                     </dl>
                   </div>
                 </div>
+
+                {/*
+                  What the fight was worth to this fighter, and what to do
+                  about it.
+
+                  A dungeon run's whole progression is experience, and it was
+                  the one thing the result screen did not mention — the player
+                  had to go to My Fighters to find out whether the run had
+                  taken anyone to a level. The bar is the live row, the gain
+                  is measured against the line-up that went in, and the button
+                  is only here when there is a level to take.
+                */}
+                {(() => {
+                  const live = byId.get(Number(f.fighter_id))
+                  if (!live) return null
+                  const plan = levelUpOf(live, levels)
+                  const gain = gained.get(Number(f.fighter_id)) ?? 0
+                  const need = live.stats.required_experience
+                  return (
+                    <div className="rescard__xp">
+                      {/* Full and unlabelled at the cap: a bar measuring
+                          progress towards a level that does not exist, and a
+                          gain of experience nothing can spend, would both be
+                          saying something untrue. */}
+                      <span className="xpbar" aria-hidden="true">
+                        <span
+                          className="xpbar__fill"
+                          style={{ width: `${plan.atMax ? 100 : plan.xpPercent}%` }}
+                        />
+                      </span>
+                      <span className="xpbar__line">
+                        <span className="xpbar__count mono">
+                          {plan.atMax
+                            ? `Level ${live.stats.level}`
+                            : `${live.stats.experience.toLocaleString(NUM_LOCALE)} / ${need.toLocaleString(NUM_LOCALE)} XP`}
+                        </span>
+                        {!plan.atMax && gain > 0 && (
+                          <span className="xpbar__gain mono">
+                            +{gain.toLocaleString(NUM_LOCALE)}
+                          </span>
+                        )}
+                      </span>
+
+                      {plan.atMax ? (
+                        <button
+                          type="button"
+                          className="btn btn--sm btn--block"
+                          disabled
+                          title="This fighter is at the highest level there is."
+                        >
+                          Already at max
+                        </button>
+                      ) : (
+                        plan.ready && (
+                          <button
+                            type="button"
+                            className="btn btn--primary btn--sm btn--block"
+                            disabled={!session || levelBusy !== null}
+                            onClick={() => void doLevelUp(live)}
+                            title={`Costs ${plan.cost.credits.toLocaleString(NUM_LOCALE)} credits`}
+                          >
+                            {levelBusy === `level-${f.fighter_id}` && (
+                              <span className="spinner" />
+                            )}
+                            Level up
+                          </button>
+                        )
+                      )}
+                    </div>
+                  )
+                })()}
               </article>
             )
           })}
         </div>
+
+        <ActionBanner notice={levelNotice} error={levelError} />
       </div>
 
       {/*
