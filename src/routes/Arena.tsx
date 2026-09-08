@@ -874,7 +874,6 @@ export default function Arena() {
               )}
             </div>
 
-            {phone && autoPickButton}
           </div>
         <div className="versus__divider">
             <span className="versus__vs" aria-hidden="true">
@@ -929,6 +928,18 @@ export default function Arena() {
               )}
             </div>
           </div>
+
+          {/*
+            On a phone, under both line-ups rather than under one of them.
+
+            It overwrites your five, so it sat under your five. On a phone
+            the two sides stack, which put a full-width button through the
+            middle of the confrontation and pushed the defenders it picks
+            against below it. At the foot of the panel it is still inside
+            the matchup, and the two rows meet without a control between
+            them.
+          */}
+          {phone && autoPickButton}
 
           </section>
 
