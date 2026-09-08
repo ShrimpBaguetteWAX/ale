@@ -1169,8 +1169,13 @@ export function RosterFilters({
        screens already put it. `.filters select.input` sets a full width that
        out-specifies the rule sizing these two selects, so nested they came
        out stacked one per line.
+
+       Folded with the rest, though — it is one of the filters, and being a
+       sibling for a styling reason is not a reason to leave it on screen
+       when they are all put away. Hidden by not rendering rather than by
+       the fold's CSS, which can only reach children of `.filters`.
     */}
-    <QualityFilters filter={filter} onChange={onChange} />
+    {!folded && <QualityFilters filter={filter} onChange={onChange} />}
     </>
   )
 }

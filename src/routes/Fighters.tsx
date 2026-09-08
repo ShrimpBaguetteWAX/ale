@@ -717,18 +717,6 @@ export default function Fighters() {
         onAtLevelOne={setAtLevelOne}
       />
 
-      {/*
-         The market’s roll-quality filter, on the roster it belongs to.
-
-         It was written for the market and left there, which is the wrong way
-         round: it answers "which of these rolled well", and the screen where
-         that question is asked most is the one showing the fighters you
-         already own — deciding who to ascend, who to field, and which of
-         forty to sell. This bar is above the grid in both modes, so the sell
-         list is filtered by it too.
-      */}
-      <QualityFilters filter={filter} onChange={setFilter} />
-
       {data.loading ? (
         <div className="rostergrid">
           {Array.from({ length: 6 }, (_, i) => (
@@ -1167,7 +1155,8 @@ function RosterFilters({
   const active = countActiveFilters(filter)
 
   return (
-    <div className={`filters${open ? '' : ' filters--folded'}`}>
+    <>
+      <div className={`filters${open ? '' : ' filters--folded'}`}>
       {/*
          The markers stay out of the fold, and are lifted clear of the facet
          row to do it: a player who has labelled a fighter is looking for that
@@ -1388,7 +1377,20 @@ function RosterFilters({
           </button>
         )}
       </div>
-    </div>
+      </div>
+
+      {/*
+         The roll-quality filter, folded with the rest of them.
+
+         It answers "which of these rolled well", which is the question this
+         screen exists for — deciding who to ascend, who to field, and which
+         of forty to sell. It sits beside `.filters` rather than inside
+         because `.filters select.input` sets a full width that would stack
+         its two selects one per line, and it is rendered here rather than by
+         the screen so that it folds with the controls it belongs to.
+      */}
+      {open && <QualityFilters filter={filter} onChange={onChange} />}
+    </>
   )
 }
 

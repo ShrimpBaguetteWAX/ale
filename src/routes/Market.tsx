@@ -44,7 +44,6 @@ import type { RosterFighter } from '@/dungeon/types'
 import {
   DetailSheet,
   Portrait,
-  QualityFilters,
   RosterFilters,
   rosterPanel,
   type Detail,
@@ -1323,8 +1322,10 @@ export function SellTab({
         </p>
       ) : (
         <>
+          {/* The roll-quality rules come with `RosterFilters`, which renders
+              them itself — a second one here was a duplicate of the same two
+              selects, and would now be the copy that did not fold away. */}
           <RosterFilters filter={filter} onChange={setFilter} roster={sellable} />
-          <QualityFilters filter={filter} onChange={setFilter} />
 
           {shown.length === 0 ? (
             <p className="faint">No fighter you can sell matches these filters.</p>
