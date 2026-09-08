@@ -1474,7 +1474,13 @@ function DifficultyPicker({
           )}
         </div>
       )}
-      {value >= nftMinDifficulty && (
+      {/*
+         Desktop only. On a phone the panel is the ladder and the line above
+         it, and a two-line footnote about a threshold you have already
+         crossed is the largest thing in it. Removed rather than hidden, so
+         it is out of the reading order too and not just out of sight.
+      */}
+      {!phone && value >= nftMinDifficulty && (
         <p className="hint">
           From difficulty {nftMinDifficulty} the dungeon fields its own NFT fighter
           as well.

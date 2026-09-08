@@ -3030,8 +3030,51 @@ button.combatcard--empty:hover {
  * resistance cells lose the padding that suits a full-width panel.
  */
 @media (max-width: 719px) {
-  .loadout .panel__title .dungeon__tally {
+  /*
+     The Loadout's subtitle goes while the panel is open — the slots are
+     labelled Crew and Weapon and the result sits beside them, which is the
+     same sentence in no space at all.
+
+     Folded, the very same element is not a subtitle but the contents: the
+     crew and weapon the player chose, which is the only sign of them while
+     the slots are put away. Hiding that would make the fold a panel that
+     says nothing about what is inside it.
+  */
+  .loadout:not(.panel--folded) .panel__title .dungeon__tally {
     display: none;
+  }
+
+  /*
+     Difficulty's heading and its figures on one line.
+
+     The title rule above wraps, which put "Enemy ×0.63 · Rewards ×1.07 · 42
+     XP" on a second row and made a two-line heading out of a panel whose
+     whole body is one row of buttons. The figures are what the ladder is
+     read by, so they shrink to fit rather than moving or being dropped.
+  */
+  .difficulty .panel__title {
+    flex-wrap: nowrap;
+    gap: var(--sp-1);
+    /*
+       The heading gives up width too. At full size it takes 113 of the 298
+       a 390px phone has, and the figures need 211 — which does not fit
+       however small the figures get, so the tracking that makes a panel
+       title look like one is spent here instead.
+    */
+    font-size: 10px;
+    letter-spacing: 0.04em;
+  }
+
+  .difficulty .panel__title .dungeon__tally {
+    min-width: 0;
+    /*
+       Scaled to the screen rather than pinned, because the width this has to
+       fit into is. A fixed size chosen on a 390px phone clipped on a 360px
+       one; the ceiling keeps it from growing past the heading beside it on
+       the way up to the breakpoint.
+    */
+    font-size: clamp(8px, 2.4vw, 10px);
+    white-space: nowrap;
   }
 
   .cardslot {
