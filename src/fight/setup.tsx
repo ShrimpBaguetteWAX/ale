@@ -1699,15 +1699,16 @@ export function PickCard({
         >
           <span className="fightercard__portrait">
             <Portrait element={f.element} classname={f.classname} racename={f.racename} />
-            {f.marker && (
-              <img
+            {/* The same chip the full card draws, so one marker is one
+                component rather than two that drift. */}
+            {!!f.marker && (
+              <span
                 className="fightercard__marker"
-                src={markerIcon(f.marker)}
-                alt={f.marker}
-                title={f.marker}
-                width={18}
-                height={18}
-              />
+                title={`Marked ${f.marker}`}
+                aria-label={`Marked ${f.marker}`}
+              >
+                <img src={markerIcon(f.marker)} alt="" width={16} height={16} />
+              </span>
             )}
             {banner && <span className="fightercard__banner">{banner}</span>}
             {/* Picked and blocked both have to survive the shrink: they are

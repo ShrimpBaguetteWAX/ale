@@ -486,20 +486,6 @@
   position: relative;
 }
 
-/*
- * The label the player chose, top-left of the art.
- *
- * It appears on no other card and is the whole reason this size works: with
- * the name gone, a marker is the fastest way to find one fighter among sixty.
- */
-.fightercard__marker {
-  position: absolute;
-  top: 3px;
-  left: 3px;
-  z-index: 1;
-  filter: drop-shadow(0 1px 2px rgb(0 0 0 / 70%));
-}
-
 .fightercard--compact .fightercard__age {
   justify-self: center;
   font-size: 11px;
@@ -526,6 +512,26 @@
 
   .fightercard--compact .fightercard__age {
     font-size: 10px;
+  }
+
+  /*
+     Half size, on the compact card only.
+
+     The chip is 22px, which is right on a full card and a quarter of the art
+     on a compact one — the card is 53px wide on a phone against 86 on a
+     desktop. The icon inside is sized with it, or it would overflow the chip
+     it is centred in.
+  */
+  .fightercard--compact .fightercard__marker {
+    top: 2px;
+    left: 2px;
+    width: 11px;
+    height: 11px;
+  }
+
+  .fightercard--compact .fightercard__marker img {
+    width: 8px;
+    height: 8px;
   }
 }
 
