@@ -1912,8 +1912,16 @@ function Result({
                It is the mining tools equipped on the account that decide
                this, not the cards in the line-up. The old line credited
                crew and weapon cards, which is not what the contract reads.
+
+               Both halves link to where they are changed. This is the screen
+               where a player finds out their run banked less than they hoped,
+               and it named two things they could do about it without saying
+               where either was done. Rewards opens on Mining, which is the
+               tab the tools are equipped on; the shop link is the same one
+               the account screen uses for Legend access.
             */}
-            Your equipped mining tools and account status decide how much
+            Your equipped <Link to="/rewards">mining tools</Link> and{' '}
+            <Link to="/shop?c=account">account status</Link> decide how much
             Reward Power a run banks.
           </p>
         </section>
