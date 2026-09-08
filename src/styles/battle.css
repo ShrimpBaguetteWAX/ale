@@ -1367,11 +1367,15 @@
 }
 
 /*
- * What the fight was worth, under the fighter it was worth it to.
+ * What the fight was worth, inside the panel it belongs to.
  *
- * Outside the plate rather than in it: the plate is skewed to match the card
- * and a progress bar drawn on a slant reads as a mistake. This sits square
- * under it, which is also where the eye goes after the stats.
+ * Beside the plate for three attempts, and wrong every time: the plate is a
+ * leaning parallelogram and this is a rectangle, so aligning it to either of
+ * the plate's edges puts it outside the other, and no inset makes a rectangle
+ * agree with a slant. Inside `plateInner` there is nothing to align — the
+ * counter-skew that keeps the stats upright keeps these upright too, the
+ * plate's own side padding lines them up with the rows above, and the plate
+ * clips its overflow, so growing out of the panel is not a thing this can do.
  */
 /*
  * Fixed tracks, and drawn on every card whether it has anything to put in
@@ -1388,19 +1392,8 @@
   gap: var(--sp-1);
   margin-top: var(--sp-2);
   grid-template-rows: 6px 14px 30px;
-  /*
-     Inside the plate at every height, not aligned to one edge of it.
-     The plate is a parallelogram: `skewX(-6deg)` leans it about its middle,
-     so its left edge runs from `cardL + 8` at the top to `cardL - 8` at the
-     bottom, and its right edge likewise. The only strip it covers the whole
-     way down is `cardL + 8` to `cardR - 8`.
-     Matching one edge is what the last two attempts did, and matching either
-     one puts the block outside the other: under the bottom edge it overhung
-     the top, and square on the card it overhung the bottom. Sixteen clears
-     the lean itself, so the bar and the button sit within the panel above
-     them wherever the eye reads across.
-  */
-  margin-inline: 16px;
+  /* No inset of its own: `plateInner`'s padding already holds it to the same
+     column as the stat rows above it. */
 }
 
 /* Fills its track exactly, so the row height cannot depend on the button. */

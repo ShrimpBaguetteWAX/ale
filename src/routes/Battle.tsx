@@ -1716,9 +1716,6 @@ function Result({
                         )
                       })}
                     </dl>
-                  </div>
-                </div>
-
                 {/*
                   What the fight was worth to this fighter, and what to do
                   about it.
@@ -1795,6 +1792,9 @@ function Result({
                     </div>
                   )
                 })()}
+                  </div>
+                </div>
+
               </article>
             )
           })}
