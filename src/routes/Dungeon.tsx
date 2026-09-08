@@ -56,6 +56,7 @@ import { Loading } from '@/components/Loading'
 import {
   CardGrid,
   CardSlot,
+  FoldingPanel,
   CombatCard,
   DetailSheet,
   Elemental,
@@ -66,6 +67,7 @@ import {
   RosterFilters,
   battlePanel,
   elementIcon,
+  loadoutSummary,
   mid,
   rosterPanel,
   type Detail,
@@ -176,6 +178,9 @@ export default function Dungeon() {
   const [atLevelOne, setAtLevelOne] = useState(false)
   const [cardQuery, setCardQuery] = useState('')
   const [detail, setDetail] = useState<Detail>(null)
+  /* Folded by default: the pair is usually already chosen, and the slots
+     pushed the fighter picker below the fold on every screen size. */
+  const [loadoutOpen, setLoadoutOpen] = useState(false)
 
   const [busy, setBusy] = useState(false)
   const [status, setStatus] = useState<string | null>(null)
@@ -864,6 +869,10 @@ export default function Dungeon() {
                   className="combatcard combatcard--empty combatcard--nft"
                   onClick={() => {
                     setTab('crew')
+                    /* Opened as well as scrolled to. The panel is folded by
+                       default, and landing on a shut one would answer the
+                       press with less than was there before it. */
+                    setLoadoutOpen(true)
                     loadout.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
                   }}
                   title="Pick a crew card and a weapon card"
@@ -970,13 +979,14 @@ export default function Dungeon() {
           chosen once, not combatants being compared, and keeping them in the
           line-up crowded the cards the screen is actually about.
         */}
-        <section className="panel loadout" ref={loadout}>
-          <div className="panel__title">
-            Loadout
-            <span className="faint dungeon__tally">
-              crew and weapon combine into your sixth fighter
-            </span>
-          </div>
+        <FoldingPanel
+          className="loadout"
+          panelRef={loadout}
+          title="Loadout"
+          summary={loadoutSummary(crew, weapon, loadoutOpen)}
+          open={loadoutOpen}
+          onToggle={() => setLoadoutOpen((v) => !v)}
+        >
           <div className="cardslots">
             <CardSlot
               label="Crew"
@@ -1099,7 +1109,7 @@ export default function Dungeon() {
               Auto-pick cards
             </button>
           </div>
-        </section>
+        </FoldingPanel>
 
         <section className="panel picker" ref={picker}>
           <div className="tabs" role="tablist">

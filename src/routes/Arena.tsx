@@ -51,6 +51,7 @@ import {
 import {
   CardGrid,
   CardSlot,
+  FoldingPanel,
   CombatCard,
   DetailSheet,
   Elemental,
@@ -61,6 +62,7 @@ import {
   RosterFilters,
   battlePanel,
   elementIcon,
+  loadoutSummary,
   mid,
   rosterPanel,
   type Detail,
@@ -176,6 +178,8 @@ export default function Arena() {
   const [atLevelOne, setAtLevelOne] = useState(false)
   const [cardQuery, setCardQuery] = useState('')
   const [detail, setDetail] = useState<Detail>(null)
+  /* Folded by default, as the dungeon's is. */
+  const [loadoutOpen, setLoadoutOpen] = useState(false)
 
   const [busy, setBusy] = useState(false)
   const [status, setStatus] = useState<string | null>(null)
@@ -923,13 +927,13 @@ export default function Arena() {
           knocks it out{xpPerWin ? `, and the win pays ${xpPerWin} XP` : ''}.
         </p>
 
-        <section className="panel loadout">
-          <div className="panel__title">
-            Loadout
-            <span className="faint dungeon__tally">
-              crew and weapon combine into your sixth fighter
-            </span>
-          </div>
+        <FoldingPanel
+          className="loadout"
+          title="Loadout"
+          summary={loadoutSummary(crew, weapon, loadoutOpen)}
+          open={loadoutOpen}
+          onToggle={() => setLoadoutOpen((v) => !v)}
+        >
           <div className="cardslots">
             <CardSlot
               label="Crew"
@@ -1039,7 +1043,7 @@ export default function Arena() {
               Auto-pick cards
             </button>
           </div>
-        </section>
+        </FoldingPanel>
 
         <section className="panel picker" ref={picker}>
           <div className="tabs" role="tablist">

@@ -108,15 +108,32 @@
 
 /* ---------- difficulty ---------- */
 
+/*
+ * One row, always — twenty steps that scroll rather than stack.
+ *
+ * Wrapping put the ladder on two lines from 1280px down, three by 600 and
+ * four on a phone, so the panel below it moved by a hundred pixels depending
+ * on the window. Shrinking them to fit is not the way out: twenty steps in a
+ * 268px row is a 10px button, well under the 44px a thumb needs.
+ *
+ * So they keep their size and the row scrolls sideways. `1 0 44px` grows them
+ * to fill a wide screen exactly as before — the row is unchanged where it
+ * already fitted — and refuses to shrink below the tap target anywhere else.
+ */
 .difficulty__row {
   display: flex;
   gap: var(--sp-2);
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: thin;
+  /* Room under the steps for the scrollbar, so it never sits on top of them. */
+  padding-bottom: var(--sp-1);
   margin-top: var(--sp-3);
 }
 
 .difficulty__step {
-  flex: 1 1 44px;
+  flex: 1 0 44px;
   min-width: 44px;
   min-height: 44px;
   font-family: var(--font-display);
@@ -166,6 +183,63 @@
 .loadout {
   display: grid;
   gap: var(--sp-3);
+}
+
+/*
+ * A panel heading that is also the switch that folds it.
+ *
+ * The whole heading rather than a chevron on its own: it is the widest target
+ * on the row and the one a thumb goes for anyway. Everything here is undoing
+ * what a browser does to a `button` — the typography comes from
+ * `.panel__title`, which this carries as well.
+ */
+.panel__fold {
+  width: 100%;
+  padding: 0;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  text-align: left;
+  /* Matches the flex title rule above, so the blurb keeps its baseline. */
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+}
+
+.panel__fold:hover .panel__chev,
+.panel__fold:hover {
+  color: var(--white);
+}
+
+.panel__fold:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: 3px;
+  border-radius: var(--radius-xs);
+}
+
+/* The state, drawn rather than written: pointing down when there is more
+   below, and turned when the panel is open. */
+.panel__chev {
+  flex: none;
+  align-self: center;
+  width: 9px;
+  height: 9px;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  rotate: 45deg;
+  translate: 0 -2px;
+  transition: rotate var(--dur-fast) var(--ease);
+}
+
+.panel__fold[aria-expanded='true'] .panel__chev {
+  rotate: 225deg;
+  translate: 0 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .panel__chev {
+    transition: none;
+  }
 }
 
 /*
@@ -2039,50 +2113,63 @@ button.combatcard--empty:hover {
  * filter that is still filtering leaves a short grid with nothing on screen
  * to say why.
  */
+/*
+ * Folded, at every width rather than only on a phone.
+ *
+ * The markers are the exception and stay out: a player who has labelled a
+ * fighter is looking for that fighter, and everything else here is a way of
+ * describing one they have not found yet. The panel keeps its ground and
+ * padding, because folded is no longer empty.
+ */
+.filters--folded > *:not(.filters__toggle):not(.filters__keep) {
+  display: none;
+}
+
+.filters__toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  justify-self: start;
+  min-height: 36px;
+  padding: 0 var(--sp-3);
+  color: var(--ink);
+  font: inherit;
+  font-size: var(--fs-xs);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background: rgb(0 0 0 / 28%);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.filters__toggle:hover {
+  border-color: var(--purple);
+  color: var(--white);
+}
+
+.filters__badge {
+  display: grid;
+  place-items: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  color: #0a0714;
+  font-size: 11px;
+  font-weight: 700;
+  background: var(--accent);
+  border-radius: 9px;
+}
+
+.filters__chev {
+  opacity: 0.7;
+}
+
 @media (max-width: 719px) {
+  /* Folded, the panel holds only the markers and the button, so it keeps the
+     tighter phone padding rather than the roomier one meant for nine rows. */
   .filters--folded {
-    padding: 0;
-    background: none;
-    border: 0;
-  }
-
-  .filters--folded > *:not(.filters__toggle) {
-    display: none;
-  }
-
-  .filters__toggle {
-    display: flex;
-    align-items: center;
-    gap: var(--sp-2);
-    justify-self: start;
-    min-height: 36px;
-    padding: 0 var(--sp-3);
-    color: var(--ink);
-    font: inherit;
-    font-size: var(--fs-xs);
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    background: rgb(0 0 0 / 28%);
-    border: 1px solid var(--line-soft);
-    border-radius: var(--radius-sm);
-    cursor: pointer;
-  }
-
-  .filters__badge {
-    display: grid;
-    place-items: center;
-    min-width: 18px;
-    height: 18px;
-    padding: 0 5px;
-    color: #0a0714;
-    font-size: 11px;
-    font-weight: 700;
-    background: var(--accent);
-    border-radius: 9px;
-  }
-
-  .filters__chev {
-    opacity: 0.7;
+    padding: var(--sp-2);
   }
 }
 

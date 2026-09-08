@@ -844,22 +844,24 @@ export function RosterFilters({
   const set = (patch: Partial<RosterFilter>) => onChange({ ...filter, ...patch })
 
   /*
-     On a phone the controls are folded away behind a button.
+     The controls are folded away behind a button, and the markers are not.
 
      Nine controls and a matchup read-out is a screenful and a half before a
      single fighter is visible, on the screen whose whole job is showing
-     fighters. They are worth that room on a desktop, where they sit beside
-     the grid rather than on top of it, so this is a phone-only fold and the
-     button does not exist at all above the breakpoint.
+     fighters. This used to be a phone-only fold on the grounds that a desktop
+     has the room — but room is not the same as use, and the row that is
+     actually reached for is the markers: a player who has labelled a fighter
+     is looking for that fighter, and everything else here is a way of
+     describing one they have not found yet.
 
-     The count of what is switched on rides on the button, because a hidden
-     filter that is still filtering leaves a short grid with nothing on screen
-     to explain it.
+     So the markers stay out, at every width, and the rest is behind "More
+     filters". The count of what is switched on rides on the button, because a
+     hidden filter that is still filtering leaves a short grid with nothing on
+     screen to explain it.
   */
-  const phone = usePhone()
   const [open, setOpen] = useState(false)
   const active = countActiveFilters(filter)
-  const folded = phone && !open
+  const folded = !open
 
   const toggleElement = (el: Element) =>
     set({
@@ -871,20 +873,6 @@ export function RosterFilters({
   return (
     <>
     <div className={`filters${folded ? ' filters--folded' : ''}`}>
-      {phone && (
-        <button
-          type="button"
-          className="filters__toggle"
-          aria-expanded={open}
-          onClick={() => setOpen((v) => !v)}
-        >
-          <span className="filters__togglelabel">Filters</span>
-          {active > 0 && <span className="filters__badge">{active}</span>}
-          <span className="filters__chev" aria-hidden="true">
-            {open ? '▴' : '▾'}
-          </span>
-        </button>
-      )}
 
       {/*
          Markers first, because a player who has labelled a fighter is
@@ -896,7 +884,11 @@ export function RosterFilters({
          row of switches that match nothing.
       */}
       {!omit.includes('markers') && usedMarkers.size > 0 && (
-        <div className="filters__markers" role="group" aria-label="Marker">
+        <div
+          className="filters__markers filters__keep"
+          role="group"
+          aria-label="Marker"
+        >
           {MARKERS.filter((m) => usedMarkers.has(m)).map((m) => (
             <button
               type="button"
@@ -918,6 +910,21 @@ export function RosterFilters({
           ))}
         </div>
       )}
+
+      <button
+        type="button"
+        className="filters__toggle"
+        aria-expanded={open}
+        onClick={() => setOpen((v) => !v)}
+      >
+        <span className="filters__togglelabel">
+          {open ? 'Fewer filters' : 'More filters'}
+        </span>
+        {active > 0 && <span className="filters__badge">{active}</span>}
+        <span className="filters__chev" aria-hidden="true">
+          {open ? '▴' : '▾'}
+        </span>
+      </button>
 
       <div className="filters__elements" role="group" aria-label="Element">
         {ELEMENTS.map((el) => (
@@ -1858,6 +1865,78 @@ function VersusBadges({ matchup }: { matchup?: Matchup }) {
 }
 
 /* ---------- crew and weapons ---------- */
+
+/**
+ * A panel whose body folds away, with the heading as the switch.
+ *
+ * Written once because the dungeon and the arena are the same screen with a
+ * different opponent, and their Loadout panels were identical markup.
+ *
+ * Controlled rather than holding its own `open`: the dungeon's empty sixth
+ * slot scrolls to this panel and expects to land on the card slots, so it has
+ * to be able to open it. A panel that owned its own state could only be
+ * scrolled to while shut.
+ *
+ * The summary is what keeps folding honest. A closed panel that hides a crew
+ * and a weapon the player already chose is a screen lying by omission, so
+ * what is inside is named in the heading whenever it is shut.
+ */
+export function FoldingPanel({
+  title,
+  summary,
+  className = '',
+  open,
+  onToggle,
+  panelRef,
+  children,
+}: {
+  title: string
+  /** Said in the heading — the blurb when open, what is inside when shut. */
+  summary?: React.ReactNode
+  className?: string
+  open: boolean
+  onToggle: () => void
+  panelRef?: React.Ref<HTMLElement>
+  children: React.ReactNode
+}) {
+  return (
+    <section
+      className={`panel ${className}${open ? '' : ' panel--folded'}`}
+      ref={panelRef}
+    >
+      <button
+        type="button"
+        className="panel__title panel__fold"
+        aria-expanded={open}
+        onClick={onToggle}
+      >
+        {title}
+        {summary && <span className="faint dungeon__tally">{summary}</span>}
+        <span className="spacer" />
+        <span className="panel__chev" aria-hidden="true" />
+      </button>
+      {open && children}
+    </section>
+  )
+}
+
+/**
+ * What the Loadout heading says, open or shut.
+ *
+ * Open, it is the blurb explaining what the pair is for. Shut, it has to be
+ * the pair itself — the panel is folded by default, so without this a player
+ * whose crew and weapon were restored from their last team would see no sign
+ * of either, and the sixth fighter would appear from nowhere.
+ */
+export function loadoutSummary(
+  crew: CardTemplate | null,
+  weapon: CardTemplate | null,
+  open: boolean,
+): string {
+  if (open) return 'crew and weapon combine into your sixth fighter'
+  if (!crew && !weapon) return 'no crew or weapon chosen'
+  return [crew?.name ?? 'no crew', weapon?.name ?? 'no weapon'].join(' · ')
+}
 
 export function CardSlot({
   label,

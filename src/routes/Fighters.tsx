@@ -10,6 +10,7 @@ import {
   SORTS,
   STATUSES,
   applyFilter,
+  countActiveFilters,
   facetsOf,
   isFilterActive,
   markerIcon,
@@ -1155,8 +1156,60 @@ function RosterFilters({
     return counts
   }, [roster])
 
+  /*
+     Folded to the markers by default, the rest behind the button.
+
+     The count of what is switched on rides on the button: a filter that is
+     still filtering while out of sight leaves a short roster with nothing on
+     screen to explain it.
+  */
+  const [open, setOpen] = useState(false)
+  const active = countActiveFilters(filter)
+
   return (
-    <div className="filters">
+    <div className={`filters${open ? '' : ' filters--folded'}`}>
+      {/*
+         The markers stay out of the fold, and are lifted clear of the facet
+         row to do it: a player who has labelled a fighter is looking for that
+         fighter, and every other control here is a way of describing one they
+         have not found yet.
+      */}
+      {used.size > 0 && (
+        <div className="facet facet--grow filters__keep">
+          <span className="field__label">Marker</span>
+          <div className="filters__markers" role="group" aria-label="Marker">
+            {MARKERS.filter((m) => m && used.has(m)).map((m) => (
+              <button
+                type="button"
+                key={m}
+                className="markbtn"
+                aria-pressed={filter.markers.includes(m)}
+                onClick={() => set({ markers: toggle(filter.markers, m) })}
+                title={`${m} (${used.get(m)})`}
+              >
+                <img src={markerIcon(m)} alt={m} />
+                <span className="markbtn__count">{used.get(m)}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <button
+        type="button"
+        className="filters__toggle"
+        aria-expanded={open}
+        onClick={() => setOpen((v) => !v)}
+      >
+        <span className="filters__togglelabel">
+          {open ? 'Fewer filters' : 'More filters'}
+        </span>
+        {active > 0 && <span className="filters__badge">{active}</span>}
+        <span className="filters__chev" aria-hidden="true">
+          {open ? '▴' : '▾'}
+        </span>
+      </button>
+
       <div className="filters__facets">
         <div className="facet">
           <span className="field__label">Element</span>
@@ -1176,26 +1229,6 @@ function RosterFilters({
           </div>
         </div>
 
-        {used.size > 0 && (
-          <div className="facet facet--grow">
-            <span className="field__label">Marker</span>
-            <div className="filters__markers" role="group" aria-label="Marker">
-              {MARKERS.filter((m) => m && used.has(m)).map((m) => (
-                <button
-                  type="button"
-                  key={m}
-                  className="markbtn"
-                  aria-pressed={filter.markers.includes(m)}
-                  onClick={() => set({ markers: toggle(filter.markers, m) })}
-                  title={`${m} (${used.get(m)})`}
-                >
-                  <img src={markerIcon(m)} alt={m} />
-                  <span className="markbtn__count">{used.get(m)}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
       </div>
 
       <div className="filters__row">
