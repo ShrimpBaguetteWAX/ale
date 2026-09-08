@@ -1732,7 +1732,10 @@ function Result({
                 */}
                 {(() => {
                   const live = byId.get(Number(f.fighter_id))
-                  if (!live) return null
+                  /* An empty slot rather than nothing: the sixth fighter is
+                     not on the roster, and a card that skipped these rows
+                     would stand lower than the five beside it. */
+                  if (!live) return <div className="rescard__xp" />
                   const plan = levelUpOf(live, levels)
                   const gain = gained.get(Number(f.fighter_id)) ?? 0
                   const need = live.stats.required_experience

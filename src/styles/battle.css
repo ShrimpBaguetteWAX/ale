@@ -1373,10 +1373,28 @@
  * and a progress bar drawn on a slant reads as a mistake. This sits square
  * under it, which is also where the eye goes after the stats.
  */
+/*
+ * Fixed tracks, and drawn on every card whether it has anything to put in
+ * them or not.
+ *
+ * The cards share a grid row and pack their contents to the bottom, so a card
+ * one row taller than its neighbour lifts its own plate out of line with
+ * theirs — which is what a level-up button did to two of five, and what the
+ * sixth fighter's missing block did to the last of them. Reserving the same
+ * three rows everywhere keeps every plate on the same line.
+ */
 .rescard__xp {
   display: grid;
   gap: var(--sp-1);
   margin-top: var(--sp-2);
+  grid-template-rows: 6px 14px 30px;
+}
+
+/* Fills its track exactly, so the row height cannot depend on the button. */
+.rescard__xp .btn {
+  height: 100%;
+  min-height: 0;
+  padding: 0 var(--sp-2);
 }
 
 .xpbar {
