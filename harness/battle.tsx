@@ -32,6 +32,7 @@ import lost from './fight-loss.json'
 import '../src/styles/global.css'
 import '../src/styles/app.css'
 import '../src/styles/dungeon.css'
+import '../src/styles/fighters.css'
 import '../src/styles/battle.css'
 
 const params = new URLSearchParams(location.search)
@@ -56,6 +57,17 @@ useGame.setState({
     wallet: String(fight.wallet),
     playertag: 'Harness',
     reward_power: [],
+    /*
+       The balances every screen reads straight off the player row. The stub
+       went without them until the result screen started pricing its level-up
+       button, and a missing `activestats` is not a harness quirk the app is
+       built to survive — it took the whole screen down.
+    */
+    activestats: {
+      credits: 1_200_000,
+      gems: 86_200,
+      action_points: 480,
+    },
   },
 } as never)
 

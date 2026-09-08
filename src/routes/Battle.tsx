@@ -30,6 +30,7 @@ import { DIRTIES, claimPoolRewards, levelUpFighters } from '@/wharf/actions'
 import { useAction } from '@/wharf/useAction'
 import { useChainQuery } from '@/chain/useChainQuery'
 import { levelUpOf } from '@/fighters/rules'
+import { Cost } from './Fighters'
 import { ActionBanner } from '@/components/ActionBanner'
 import { settle } from '@/wharf/settle'
 import { readableError } from '@/wharf/errors'
@@ -1786,6 +1787,22 @@ function Result({
                               <span className="spinner" />
                             )}
                             Level up
+                            {/* The price, on the button that charges it, in
+                                the same component the roster and the ascension
+                                screens price their buttons with — so it turns
+                                red here too when the balance will not cover
+                                it. Both are drawn; `Cost` renders nothing for
+                                a charge of zero. */}
+                            <Cost
+                              value={plan.cost.credits}
+                              icon="credits"
+                              short={player.activestats.credits}
+                            />
+                            <Cost
+                              value={plan.cost.gems}
+                              icon="gems"
+                              short={player.activestats.gems}
+                            />
                           </button>
                         )
                       )}
