@@ -443,6 +443,27 @@ export default function Arena() {
     setWeapon(pick.weapon)
   }, [enemies, usableCrew, usableWeapons, nftValues])
 
+  /*
+     One button, rendered in one of two places — like the fighters one.
+
+     It belongs beside the slots it fills, which is inside the Loadout
+     panel. That panel is shut by default, so on a phone the button was
+     behind a fold: to auto-pick the pair you first had to open the thing
+     that would have picked it for you. A phone gets it above the panel
+     instead, where it is on screen whether the fold is open or not.
+  */
+  const autoPickCardsButton = (
+    <button
+      type="button"
+      className="btn btn--ghost btn--sm cardslots__auto"
+      onClick={autoPickCardsOnly}
+      disabled={!usableCrew.length && !usableWeapons.length}
+      title="Choose the crew and weapon pair that suits this opponent"
+    >
+      Auto-pick cards
+    </button>
+  )
+
   const start = async () => {
     if (!session || !block.ready || !crew || !weapon) return
     setBusy(true)
@@ -874,6 +895,7 @@ export default function Arena() {
               )}
             </div>
 
+            {phone && autoPickButton}
           </div>
         <div className="versus__divider">
             <span className="versus__vs" aria-hidden="true">
@@ -929,18 +951,6 @@ export default function Arena() {
             </div>
           </div>
 
-          {/*
-            On a phone, under both line-ups rather than under one of them.
-
-            It overwrites your five, so it sat under your five. On a phone
-            the two sides stack, which put a full-width button through the
-            middle of the confrontation and pushed the defenders it picks
-            against below it. At the foot of the panel it is still inside
-            the matchup, and the two rows meet without a control between
-            them.
-          */}
-          {phone && autoPickButton}
-
           </section>
 
         {/*
@@ -954,6 +964,8 @@ export default function Arena() {
           arena along with your NFT fighter. It is marked in use until somebody
           knocks it out{xpPerWin ? `, and the win pays ${xpPerWin} XP` : ''}.
         </p>
+
+        {phone && <div className="loadoutauto">{autoPickCardsButton}</div>}
 
         <FoldingPanel
           className="loadout"
@@ -1061,15 +1073,7 @@ export default function Arena() {
             </div>
 
             {/* Beside the slots it fills, and only those. */}
-            <button
-              type="button"
-              className="btn btn--ghost btn--sm cardslots__auto"
-              onClick={autoPickCardsOnly}
-              disabled={!usableCrew.length && !usableWeapons.length}
-              title="Choose the crew and weapon pair that suits this opponent"
-            >
-              Auto-pick cards
-            </button>
+            {!phone && autoPickCardsButton}
           </div>
         </FoldingPanel>
 

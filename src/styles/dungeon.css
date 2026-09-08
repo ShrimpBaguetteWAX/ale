@@ -397,6 +397,23 @@
   white-space: nowrap;
 }
 
+/*
+ * The same button on a phone, lifted out of the fold it was inside.
+ *
+ * It belongs beside the slots it fills, and those live in the Loadout
+ * panel — which is shut by default, so reaching the control that fills the
+ * slots meant first opening the panel and filling them yourself. Above the
+ * panel it is on screen either way.
+ *
+ * Tucked up against the heading it belongs to rather than left floating
+ * midway between two panels: the column gap is 16px, and half of it here
+ * ties the button to the Loadout below rather than to the matchup above.
+ */
+.loadoutauto {
+  display: grid;
+  margin-bottom: calc(var(--sp-2) - var(--sp-4));
+}
+
 /* ---------- overlays ---------- */
 
 .sheet {
