@@ -146,6 +146,76 @@ const PICK_STATS: [string, string, boolean][] = [
  * the same fighters and should offer the same four readouts in the same
  * order under the same labels.
  */
+/**
+ * How much of each fighter the picker draws.
+ *
+ * `full` is the card this screen has always used — portrait, name, level,
+ * age, matchup and a readout you can tab through. `compact` is the portrait,
+ * the marker and the age bonus, and nothing else.
+ *
+ * Asked for by players, and the reason is the one the full card cannot
+ * answer: choosing five out of sixty is a scanning job, and a card that
+ * carries everything worth knowing about one fighter fits four to a row. The
+ * three things kept are the three a roster is actually scanned by — what it
+ * looks like, what you labelled it, and whether age has eaten it.
+ */
+export type PickDensity = 'full' | 'compact'
+
+const DENSITY_KEY = 'al.pickdensity'
+
+/**
+ * Remembered across visits, and across the two screens that offer it.
+ *
+ * It is a preference about reading rather than a choice about this fight, so
+ * re-asking every time the picker opens would make the switch a chore rather
+ * than a setting. Not keyed by wallet, for the same reason: it is about the
+ * person looking at the screen, not the account they are looking at.
+ */
+export function recallDensity(): PickDensity {
+  try {
+    return localStorage.getItem(DENSITY_KEY) === 'compact' ? 'compact' : 'full'
+  } catch {
+    return 'full'
+  }
+}
+
+function rememberDensity(density: PickDensity): void {
+  try {
+    localStorage.setItem(DENSITY_KEY, density)
+  } catch {
+    /* A blocked localStorage costs the setting, not the screen. */
+  }
+}
+
+export function PickDensitySwitch({
+  density,
+  onChange,
+}: {
+  density: PickDensity
+  onChange: (density: PickDensity) => void
+}) {
+  return (
+    <div className="showtabs" role="group" aria-label="Card size">
+      {(
+        [
+          ['full', 'Cards'],
+          ['compact', 'Compact'],
+        ] as [PickDensity, string][]
+      ).map(([key, label]) => (
+        <button
+          type="button"
+          key={key}
+          className="showtabs__btn"
+          aria-pressed={density === key}
+          onClick={() => onChange(key)}
+        >
+          {label}
+        </button>
+      ))}
+    </div>
+  )
+}
+
 export function PickViewSwitch({
   view,
   onChange,
@@ -1403,6 +1473,12 @@ export function FighterGrid({
 }) {
   /* Which face every card shows, until one is turned over on its own. */
   const [view, setView] = useState<PickView>('combat')
+  /* How much of each fighter to draw, remembered from last time. */
+  const [density, setDensity] = useState<PickDensity>(recallDensity)
+  const chooseDensity = (next: PickDensity) => {
+    setDensity(next)
+    rememberDensity(next)
+  }
 
   const shown = useMemo(
     () =>
@@ -1452,9 +1528,15 @@ export function FighterGrid({
         <p className="faint picker__count">
           Showing {shown.length} of {roster.length}
         </p>
-        <PickViewSwitch view={view} onChange={setView} />
+        {/* The readout switch is what the compact card does not have, so it
+            goes away with the thing it controls rather than sitting there
+            changing nothing. */}
+        {density === 'full' && <PickViewSwitch view={view} onChange={setView} />}
+        <PickDensitySwitch density={density} onChange={chooseDensity} />
       </div>
-      <div className="fightergrid">
+      <div
+        className={`fightergrid${density === 'compact' ? ' fightergrid--compact' : ''}`}
+      >
         {shown.map((f) => {
           const state = fighterAvailable(f)
           const inTeam = teamIds.includes(f.fighter_id)
@@ -1468,6 +1550,7 @@ export function FighterGrid({
               matchup={matchups?.get(f.fighter_id)}
               picked={inTeam}
               view={view}
+              density={density}
               blocked={!state.available || (full && !inTeam)}
               blockedNote={state.available ? undefined : state.reason}
               tick={inTeam ? 'In team' : undefined}
@@ -1518,6 +1601,7 @@ export function PickCard({
   variant,
   banner,
   view = 'combat',
+  density = 'full',
   onClick,
   onInspect,
 }: {
@@ -1533,6 +1617,8 @@ export function PickCard({
    * and the rolled stats it is made of are one tap away.
    */
   view?: PickView
+  /** How much of the fighter to draw. Full unless the grid says otherwise. */
+  density?: PickDensity
   picked: boolean
   blocked?: boolean
   /** Why it cannot be picked, printed on the card. */
@@ -1569,6 +1655,81 @@ export function PickCard({
   useEffect(() => setOverride(null), [view])
   const tab = override ?? view
   const abilities = f.stats.abilities ?? []
+
+  const ageChip = ageDecay > 0 && (
+    <span
+      className={`fightercard__age fightercard__age--${ageBand(bonus)}`}
+      title={ageNote(bonus, ageDays(f), age)}
+    >
+      {bonus > 0 ? '+' : ''}
+      {bonus.toFixed(0)}%
+    </span>
+  )
+
+  /*
+     The compact card: the portrait, the marker and the age bonus.
+
+     Everything else is deliberately absent rather than shrunk. A smaller
+     version of the full card would still be the full card's questions asked
+     in a font nobody can read; this answers the three a roster is scanned by
+     and sends the rest to the details button, which is kept for exactly that
+     reason. The marker earns its place here and appears on no other card —
+     it is the label the player chose themselves, so at this size it is the
+     fastest way to find a particular fighter.
+  */
+  if (density === 'compact') {
+    return (
+      <div
+        className={
+          'fightercard fightercard--compact' +
+          (picked ? ' fightercard--picked' : '') +
+          (blocked ? ' fightercard--off' : '') +
+          (variant ? ` fightercard--${variant}` : '')
+        }
+      >
+        <button
+          type="button"
+          className="fightercard__hit"
+          onClick={onClick}
+          disabled={blocked}
+          /* The card no longer says who this is, so the tooltip has to. */
+          title={`${f.classname} · ${f.racename} · L${f.stats.level}${
+            hint ? ` — ${hint}` : ''
+          }`}
+        >
+          <span className="fightercard__portrait">
+            <Portrait element={f.element} classname={f.classname} racename={f.racename} />
+            {f.marker && (
+              <img
+                className="fightercard__marker"
+                src={markerIcon(f.marker)}
+                alt={f.marker}
+                title={f.marker}
+                width={18}
+                height={18}
+              />
+            )}
+            {banner && <span className="fightercard__banner">{banner}</span>}
+            {/* Picked and blocked both have to survive the shrink: they are
+                why a card can or cannot be tapped. */}
+            {tick && <span className="fightercard__tick">{tick}</span>}
+          </span>
+          {ageChip}
+        </button>
+
+        {onInspect && (
+          <button
+            type="button"
+            className="fightercard__info"
+            onClick={onInspect}
+            aria-label={`Details for ${f.classname}`}
+          >
+            i
+          </button>
+        )}
+      </div>
+    )
+  }
 
   return (
     <div

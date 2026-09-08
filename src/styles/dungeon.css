@@ -463,6 +463,72 @@
   grid-template-columns: repeat(auto-fill, minmax(178px, 1fr));
 }
 
+/*
+ * The compact grid: the portrait, the marker and the age bonus.
+ *
+ * Asked for by players choosing five out of sixty, which is a scanning job
+ * the full card is the wrong shape for — it carries everything worth knowing
+ * about one fighter and fits four to a row. At this size a phone gets five
+ * across and a desktop a dozen, so a whole roster is one screen.
+ */
+.fightergrid.fightergrid--compact {
+  grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
+}
+
+.fightercard--compact .fightercard__hit {
+  display: grid;
+  gap: var(--sp-1);
+  padding: var(--sp-1);
+}
+
+/* The portrait carries the badges, so it is the positioning context. */
+.fightercard--compact .fightercard__portrait {
+  position: relative;
+}
+
+/*
+ * The label the player chose, top-left of the art.
+ *
+ * It appears on no other card and is the whole reason this size works: with
+ * the name gone, a marker is the fastest way to find one fighter among sixty.
+ */
+.fightercard__marker {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  z-index: 1;
+  filter: drop-shadow(0 1px 2px rgb(0 0 0 / 70%));
+}
+
+.fightercard--compact .fightercard__age {
+  justify-self: center;
+  font-size: 11px;
+}
+
+/* Small enough to sit on the art without covering the fighter. */
+.fightercard--compact .fightercard__tick {
+  position: absolute;
+  right: 3px;
+  bottom: 3px;
+  z-index: 1;
+  padding: 1px 4px;
+  font-size: 9px;
+  line-height: 1.3;
+  border-radius: var(--radius-xs);
+}
+
+@media (max-width: 719px) {
+  /* Five across a phone, which is what was asked for and what the three
+     things left on the card will take. */
+  .fightergrid.fightergrid--compact {
+    grid-template-columns: repeat(auto-fill, minmax(52px, 1fr));
+  }
+
+  .fightercard--compact .fightercard__age {
+    font-size: 10px;
+  }
+}
+
 .fightercard {
   position: relative;
   /* The crew card's frame exactly — softer line, tighter corner, one shade
