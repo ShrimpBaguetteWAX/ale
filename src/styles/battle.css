@@ -1389,17 +1389,18 @@
   margin-top: var(--sp-2);
   grid-template-rows: 6px 14px 30px;
   /*
-     Lined up under the plate's bottom edge, not the card's box.
-     `skewX(-6deg)` shears the plate about its middle, so the edge these sit
-     directly beneath is displaced left by `tan(6deg) x height / 2` — about
-     eight pixels at the plate's 157. Inset alone was not enough: it made the
-     block symmetric about the *card*, which against the displaced plate
-     meant flush on the left and eighteen adrift on the right. The shift puts
-     it back under the edge it is read against, and the inset then reads as
-     ten on both sides rather than nought and twenty.
+     Inside the plate at every height, not aligned to one edge of it.
+     The plate is a parallelogram: `skewX(-6deg)` leans it about its middle,
+     so its left edge runs from `cardL + 8` at the top to `cardL - 8` at the
+     bottom, and its right edge likewise. The only strip it covers the whole
+     way down is `cardL + 8` to `cardR - 8`.
+     Matching one edge is what the last two attempts did, and matching either
+     one puts the block outside the other: under the bottom edge it overhung
+     the top, and square on the card it overhung the bottom. Sixteen clears
+     the lean itself, so the bar and the button sit within the panel above
+     them wherever the eye reads across.
   */
-  margin-inline: 10px;
-  translate: -8px 0;
+  margin-inline: 16px;
 }
 
 /* Fills its track exactly, so the row height cannot depend on the button. */
