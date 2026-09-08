@@ -1,0 +1,1 @@
+const f=6,M=900,T=e=>new Promise(t=>setTimeout(t,e));async function u(e,t,{attempts:a=6,intervalMs:c=900,wait:i=T}={}){let n,r=0;for(let s=0;s<a;s++){await i(c),r++;try{const o=await e();if(n=o,t(o))return{value:n,confirmed:!0,rounds:r}}catch{}}return{value:n,confirmed:!1,rounds:r}}export{M as C,f as a,u as c};

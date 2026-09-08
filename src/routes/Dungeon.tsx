@@ -82,6 +82,7 @@ import { FighterStats } from '@/components/FighterPanel'
 import { usePhone } from '@/components/usePhone'
 import { useConfig, useLazyConfig } from '@/state/useConfig'
 import { useChainQuery } from '@/chain/useChainQuery'
+import { confirmThen } from '@/chain/confirm'
 
 /*
    One empty map, not a new one each render.
@@ -510,7 +511,28 @@ export default function Dungeon() {
              experience fields are written as zero, so this is the only
              record of the before. */
           rememberFight(row, 'dungeon', xpBefore)
-          void refreshPlayer({ force: true })
+          /*
+             The player row, re-read until it actually shows the run.
+
+             The map draws "played today" from `played_dungeons` on this row
+             and nothing else re-reads it — a table drop refreshes screens
+             built on `useChainQuery`, and the player lives in the store. So
+             one forced read was the only chance this had, taken at the
+             earliest possible moment, which is exactly when a node is most
+             likely to still be serving the row from before the transaction.
+             It usually won that race. When it lost, the dungeon stayed
+             unmarked on the map until something else happened to refresh.
+
+             Not awaited: the replay starts now, and this settles long before
+             the player has watched it and gone back.
+          */
+          void confirmThen(
+            async () => {
+              await refreshPlayer({ force: true })
+              return useGame.getState().player
+            },
+            (p) => !!p && playedHere(p, planet, land),
+          )
           /*
              The fight is on chain: XP, cooldowns and quest progress all
              moved. This screen waits on the fight row rather than through
