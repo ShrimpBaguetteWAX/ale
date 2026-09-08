@@ -179,6 +179,13 @@ export default function Dungeon() {
   const [atLevelOne, setAtLevelOne] = useState(false)
   const [cardQuery, setCardQuery] = useState('')
   const [detail, setDetail] = useState<Detail>(null)
+  /* Reported by the grid, shown by the filters that decide it. */
+  const [shownCount, setShownCount] = useState<{ shown: number; total: number } | null>(null)
+  const countFighters = useCallback(
+    (shown: number, total: number) =>
+      setShownCount((c) => (c && c.shown === shown && c.total === total ? c : { shown, total })),
+    [],
+  )
   /* Folded by default: the pair is usually already chosen, and the slots
      pushed the fighter picker below the fold on every screen size. */
   const [loadoutOpen, setLoadoutOpen] = useState(false)
@@ -1161,6 +1168,7 @@ export default function Dungeon() {
                 versus={enemies.length ? profile : undefined}
                 atLevelOne={atLevelOne}
                 onAtLevelOne={setAtLevelOne}
+                count={shownCount}
               />
               <FighterGrid
                 roster={roster}
@@ -1172,6 +1180,7 @@ export default function Dungeon() {
                 full={picked.length >= TEAM_SIZE}
                 matchups={enemies.length ? matchups : undefined}
                 onToggle={toggleFighter}
+                onCount={countFighters}
                 onInspect={showFighter}
               />
             </>

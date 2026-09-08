@@ -855,6 +855,7 @@ export function RosterFilters({
   filter,
   onChange,
   roster,
+  count,
   omit = [],
   versus,
   atLevelOne,
@@ -893,6 +894,15 @@ export function RosterFilters({
    * stamped "Market", so four of the five options match nothing and the fifth
    * matches everything — and `sort`, which it overrides with its own.
    */
+  /**
+   * How many fighters the filters are letting through, from the grid below.
+   *
+   * Beside the controls that decide it rather than above the grid it
+   * describes: a filter with nothing on screen to say what it did is the
+   * thing this number exists to prevent, and the controls are where a player
+   * looks when the grid is shorter than they expected.
+   */
+  count?: { shown: number; total: number } | null
   omit?: ('status' | 'sort' | 'markers')[]
 }) {
   const { classes, races } = useMemo(() => facetsOf(roster), [roster])
@@ -981,20 +991,27 @@ export function RosterFilters({
         </div>
       )}
 
-      <button
-        type="button"
-        className="filters__toggle"
-        aria-expanded={open}
-        onClick={() => setOpen((v) => !v)}
-      >
-        <span className="filters__togglelabel">
-          {open ? 'Fewer filters' : 'More filters'}
-        </span>
-        {active > 0 && <span className="filters__badge">{active}</span>}
-        <span className="filters__chev" aria-hidden="true">
-          {open ? '▴' : '▾'}
-        </span>
-      </button>
+      <div className="filters__foot filters__keep">
+        <button
+          type="button"
+          className="filters__toggle"
+          aria-expanded={open}
+          onClick={() => setOpen((v) => !v)}
+        >
+          <span className="filters__togglelabel">
+            {open ? 'Fewer filters' : 'More filters'}
+          </span>
+          {active > 0 && <span className="filters__badge">{active}</span>}
+          <span className="filters__chev" aria-hidden="true">
+            {open ? '▴' : '▾'}
+          </span>
+        </button>
+        {count && (
+          <p className="faint picker__count">
+            Showing {count.shown} of {count.total}
+          </p>
+        )}
+      </div>
 
       <div className="filters__elements" role="group" aria-label="Element">
         {ELEMENTS.map((el) => (
@@ -1439,6 +1456,7 @@ export function FighterGrid({
   ageDecay,
   teamIds,
   full,
+  onCount,
   levelMod = 1,
   atLevelOne = false,
   matchups,
@@ -1468,6 +1486,17 @@ export function FighterGrid({
   matchups?: Map<number, Matchup>
   teamIds: number[]
   full: boolean
+  /**
+   * How many fighters survived the filter, for whoever wants to say so.
+   *
+   * The count belongs beside the filters that decide it, and the filters are
+   * a sibling of this grid rather than its parent — so it is reported rather
+   * than rendered here. Only this component can answer it: the filtering
+   * needs the age curve, the level curve and the matchups, and a second
+   * caller working it out from `filter` alone would print a different number
+   * the moment an age or quality rule is on.
+   */
+  onCount?: (shown: number, total: number) => void
   onToggle: (f: RosterFighter) => void
   onInspect: (f: RosterFighter) => void
 }) {
@@ -1497,6 +1526,14 @@ export function FighterGrid({
     [roster, filter, ageDecay, matchups, levelMod, atLevelOne],
   )
 
+  /* Reported after render, never during one, so the filters redraw with the
+     new number rather than this grid re-entering its own render. */
+  const total = roster?.length ?? 0
+  const kept = shown.length
+  useEffect(() => {
+    onCount?.(kept, total)
+  }, [kept, total, onCount])
+
   if (!roster) {
     return (
       <div className="fightergrid">
@@ -1524,14 +1561,15 @@ export function FighterGrid({
         tabs. Comparing forty fighters on fire resistance is what a grid is
         for, and per-card tabs make that forty taps.
       */}
+      {/* The count used to sit here and now rides with the filters that
+          decide it, which leaves this row to the two switches: what the
+          cards show on the left, how big they are on the right. */}
       <div className="picker__countrow">
-        <p className="faint picker__count">
-          Showing {shown.length} of {roster.length}
-        </p>
         {/* The readout switch is what the compact card does not have, so it
             goes away with the thing it controls rather than sitting there
             changing nothing. */}
         {density === 'full' && <PickViewSwitch view={view} onChange={setView} />}
+        <span className="spacer" />
         <PickDensitySwitch density={density} onChange={chooseDensity} />
       </div>
       <div

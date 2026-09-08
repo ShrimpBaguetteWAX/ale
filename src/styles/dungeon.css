@@ -1027,14 +1027,28 @@
   font-size: var(--fs-xs);
 }
 
-/* The count and the readout switch share a line, as the card grid's do. */
+/*
+ * What the cards show on the left, how big they are on the right.
+ *
+ * The count used to open this row and now sits with the filters that decide
+ * it, which left the readout switch stranded in the middle of the line with
+ * empty space on both sides. A spacer between the two puts each against the
+ * edge it belongs to.
+ */
 .picker__countrow {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: var(--sp-3);
   flex-wrap: wrap;
   margin-bottom: var(--sp-2);
+}
+
+/* The filters' bottom line: the fold button, and what it is letting through. */
+.filters__foot {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
 }
 
 /* ---------- NFT cards ---------- */
