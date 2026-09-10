@@ -7,7 +7,7 @@ import { fetchOwnedLands } from '@/chain/atomic'
 import type { Planet } from '@/chain/config'
 import { liveBoostPercent } from '@/map/terrain'
 import { fetchShopCooldowns, fetchShopItems } from '@/shop/queries'
-import { cooldownUntil, isFree, isLegend } from '@/shop/rules'
+import { canBuy, isFree } from '@/shop/rules'
 import { fetchFighterLevels } from '@/fighters/queries'
 import { levelUpOf } from '@/fighters/rules'
 import { fetchRoster } from '@/dungeon/queries'
@@ -108,17 +108,25 @@ export const CHORE_CHECKS: ChoreCheck[] = [
         fetchShopItems(),
         fetchShopCooldowns(player.wallet, force),
       ])
-      /* The shop screen decides Legend status this way, and `canBuy` gates the
-         free flask on the same call — so the dot and the button agree. */
-      const legend = isLegend(player)
-      return items.some(
-        (i) =>
-          isFree(i) &&
-          !cooldownUntil(i, cooldowns) &&
-          /* The contract's anti-hoarding rule: a trial account over 1,999
-             energy cannot take a free flask, so offering it would be a lie. */
-          (legend || player.activestats.action_points <= 1999),
-      )
+      /*
+         Asked the way the buy button asks it, rather than re-derived here.
+
+         Two of the sixteen items are free, and only one of them is free to
+         everybody: the premium flask is Legend-only. A trial account can
+         never claim it, so it never gets a cooldown row — and a check that
+         looked at the price and the cooldown but not at who is allowed to
+         buy therefore found an unclaimed free offer every time it ran. The
+         dot stayed lit all day over a shop whose only free thing left said
+         "Legend only", and claiming the daily flask did nothing to it.
+
+         `canBuy` mirrors every check in `shop::buyshopitem` — the cooldown,
+         the Legend gate, and the anti-hoarding rule that stops a trial
+         account claiming above 1,999 energy. Going through it is what keeps
+         the dot and the button from disagreeing again. A free item is never
+         WAX-priced, so the balance is never consulted; 0 is a value it
+         cannot reach.
+      */
+      return items.some((i) => isFree(i) && canBuy(i, player, cooldowns, 0).canBuy)
     },
   },
 

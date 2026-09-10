@@ -105,7 +105,7 @@ async function checks() {
   {
     tables = {
       'shop.ale/shopitems': [
-        { item: 'flask', cost_wax: '0.00000000 WAX', cost_gem: 0, cost_dust: 0, cost_action_points: 0, cooldown_seconds: 86400 },
+        { item: 'flask', cost_wax: '0.00000000 WAX', cost_gem: 0, cost_dust: 0, cost_action_points: 0, cooldown_seconds: 86400, trial_availability: 1 },
       ],
       'shop.ale/cdclaimshp': [],
     }
@@ -131,6 +131,46 @@ async function checks() {
       }),
     )
     check('shop: Legend is exempt from that cap', r.flag, true)
+
+    /*
+       Free, and not for everybody.
+
+       Mainnet carries two free flasks: the daily one, and a bigger one for
+       Legend accounts. A trial account can never claim the second, so it
+       never gets a cooldown row for it — and a check that asked only about
+       price and cooldown therefore found an unclaimed free offer every
+       time it ran, and the dot could not go out until midnight. Fourteen
+       wallets were in exactly that state when this was found.
+    */
+    tables['shop.ale/shopitems'] = [
+      { item: 'flask', cost_wax: '0.00000000 WAX', cost_gem: 0, cost_dust: 0, cost_action_points: 0, cooldown_seconds: 86400, trial_availability: 1 },
+      { item: 'flaskleg', cost_wax: '0.00000000 WAX', cost_gem: 0, cost_dust: 0, cost_action_points: 0, cooldown_seconds: 86400, trial_availability: 0 },
+    ]
+    tables['shop.ale/cdclaimshp'] = [
+      { wallet: 'me.wam', item: 'flask', cooldown_expired: iso(3_600_000) },
+    ]
+    r = await runCheck('shop', player())
+    check('shop: a Legend-only flask is no chore for a trial account, dark', r.flag, false)
+
+    r = await runCheck(
+      'shop',
+      player({ legend_access_expiry: iso(86_400_000) }),
+    )
+    check('shop: the same row is a chore for a Legend', r.flag, true)
+
+    tables['shop.ale/cdclaimshp'] = [
+      { wallet: 'me.wam', item: 'flask', cooldown_expired: iso(3_600_000) },
+      { wallet: 'me.wam', item: 'flaskleg', cooldown_expired: iso(3_600_000) },
+    ]
+    r = await runCheck(
+      'shop',
+      player({ legend_access_expiry: iso(86_400_000) }),
+    )
+    check('shop: and goes dark once they have taken both', r.flag, false)
+
+    tables['shop.ale/shopitems'] = [
+      { item: 'flask', cost_wax: '0.00000000 WAX', cost_gem: 0, cost_dust: 0, cost_action_points: 0, cooldown_seconds: 86400, trial_availability: 1 },
+    ]
 
     /*
        The reported bug: the dot survived a purchase.
