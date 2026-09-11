@@ -183,10 +183,21 @@ export interface Avatar {
   permstats_requirement_min_value: number
 }
 
-/** `players.ale` / `pause`. */
-export interface PauseState {
-  config_id: number
+/**
+ * `admin.ale` / `maintenance` — whether the game is down, and what to say.
+ *
+ * `maintenance_updates` is a running list rather than one notice: `pausegame`
+ * posts the first, `newmessage` appends as an outage develops, `dellastmsg`
+ * takes the most recent back. So the screen is a feed, and the last entry is
+ * the current state of play.
+ *
+ * `players.ale/pause` carries the same flag and no messages. It follows this
+ * row, so watching both would be two reads answering one question.
+ */
+export interface Maintenance {
+  index: number
   game_paused: boolean | number
+  maintenance_updates: string[]
 }
 
 /** Turn the RPC's [{first, second}] map encoding into a plain object. */

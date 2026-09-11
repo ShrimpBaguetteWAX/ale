@@ -6,7 +6,7 @@ import type {
   GameConfig,
   Land,
   LandsConfig,
-  PauseState,
+  Maintenance,
   Player,
   SignupStat,
   WhitelistEntry,
@@ -23,10 +23,17 @@ export function fetchConfig(refresh = false): Promise<GameConfig | undefined> {
   )
 }
 
-export function fetchPauseState(): Promise<PauseState | undefined> {
-  return getRow<PauseState>(
-    { code: CONTRACTS.players, scope: CONTRACTS.players, table: 'pause', key: 0 },
-    { ttl: TTL.short },
+/**
+ * Whether the game is paused, and the notices posted with it.
+ *
+ * Read on a poll rather than cached into staleness — `refresh` is what the
+ * caller uses to insist, because a player sitting on the maintenance screen
+ * is waiting for this exact row to change.
+ */
+export function fetchMaintenance(refresh = false): Promise<Maintenance | undefined> {
+  return getRow<Maintenance>(
+    { code: CONTRACTS.admin, scope: CONTRACTS.admin, table: 'maintenance', key: 0 },
+    { ttl: TTL.short, refresh },
   )
 }
 

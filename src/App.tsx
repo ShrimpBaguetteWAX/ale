@@ -20,6 +20,8 @@ import { Loading } from './components/Loading'
 import { useGame } from './state/useGame'
 import { Landing } from './routes/Landing'
 import { Connect } from './routes/Connect'
+import { Maintenance } from './routes/Maintenance'
+import { useMaintenance } from './state/useMaintenance'
 
 /**
  * A lazily-loaded screen that survives a deploy.
@@ -191,6 +193,28 @@ export function RequirePlayer() {
   return <Outlet />
 }
 
+/**
+ * The whole app, or the maintenance screen.
+ *
+ * `admin.ale/pausegame` stops every contract at once, so while it is set
+ * there is no screen in the game that can do anything — every action is
+ * rejected and most reads describe a world nobody can act on. Swapping the
+ * app out entirely is the honest answer, and it is what the live site does.
+ *
+ * Above the wallet gate deliberately: a paused game must not first demand
+ * that you connect a wallet before it will admit it is down.
+ *
+ * `undefined` is not `false`. Until the first read lands the game renders
+ * as normal, so an unreachable node or a slow one never holds a working
+ * game behind this screen — the cost of being wrong that way round is far
+ * higher than a few seconds of a paused game looking open.
+ */
+export function MaintenanceGate({ children }: { children: ReactNode }) {
+  const { paused, updates } = useMaintenance()
+  if (paused) return <Maintenance updates={updates} />
+  return <>{children}</>
+}
+
 function Boot({ children }: { children: React.ReactNode }) {
   const boot = useGame((s) => s.boot)
   useEffect(() => {
@@ -207,6 +231,7 @@ export default function App() {
     <HashRouter>
       <Boot>
         <ScreenBoundary>
+          <MaintenanceGate>
           <Suspense fallback={<Loading />}>
           <Routes>
             <Route path="/" element={<Landing />} />
@@ -246,6 +271,7 @@ export default function App() {
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
           </Suspense>
+          </MaintenanceGate>
         </ScreenBoundary>
       </Boot>
     </HashRouter>

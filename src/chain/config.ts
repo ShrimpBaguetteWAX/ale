@@ -59,6 +59,14 @@ export const CONTRACTS = {
   /** Pays the CPU for player transactions. */
   cpu: 'cpu.ale',
   dungeons: 'dungeons.ale',
+  /**
+   * Pause and the notices that go with it.
+   *
+   * The other contracts carry their own `pause` rows, but they follow this
+   * one rather than lead it, and only this one holds the messages — so this
+   * is the single thing the app watches.
+   */
+  admin: 'admin.ale',
   /** Ascension: spend three fighters to push a maxed one past its cap. */
   ascension: 'ascend.ale',
   pools: 'pools.ale',

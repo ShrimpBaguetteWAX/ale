@@ -1,0 +1,180 @@
+/*
+ * The maintenance screen.
+ *
+ * Built on the `.auth` layout the connect and signup screens already use —
+ * full-bleed art, a scrim, one centred card — because it is the same kind of
+ * page: the whole window, one thing to read, nothing to do. Only what differs
+ * lives here.
+ */
+
+.maint__card {
+  /* Wider than a wallet prompt. This one holds paragraphs of notices rather
+     than two lines and a button, and 470px put four words on a line. */
+  max-width: 560px;
+  text-align: center;
+}
+
+/*
+ * The art is a lit clock in a vault, and the clock sits in the upper third.
+ * The default scrim is a flat wash that buries it, so this one is cut away in
+ * the middle: the card still reads against a dark ground, and the thing the
+ * picture is about survives above it.
+ */
+.maint .auth__scrim {
+  background: linear-gradient(
+    180deg,
+    rgb(5 16 30 / 62%) 0%,
+    rgb(5 16 30 / 72%) 38%,
+    rgb(5 16 30 / 94%) 100%
+  );
+}
+
+.maint__tag {
+  margin-bottom: var(--sp-4);
+  color: var(--gold);
+  border-color: color-mix(in srgb, var(--gold) 45%, transparent);
+  background: color-mix(in srgb, var(--gold) 12%, transparent);
+}
+
+/* A slow pulse, so the page reads as live rather than as a screenshot. */
+.maint__pulse {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--gold);
+  box-shadow: 0 0 0 0 rgb(246 168 0 / 45%);
+  animation: maint-pulse 2.4s ease-out infinite;
+}
+
+@keyframes maint-pulse {
+  70% {
+    box-shadow: 0 0 0 7px rgb(246 168 0 / 0%);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgb(246 168 0 / 0%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .maint__pulse {
+    animation: none;
+  }
+}
+
+/* ---------- the notice feed ---------- */
+
+.maint__feed {
+  position: relative;
+  margin-top: var(--sp-5);
+  padding-top: var(--sp-4);
+  border-top: 1px solid var(--line);
+  text-align: left;
+}
+
+/*
+ * A fade over the foot of the feed, so a cut-off notice reads as "there is
+ * more" rather than as a layout that broke.
+ *
+ * A long outage overflows the list, and the bottom entry is then sliced
+ * through the middle of a sentence with nothing to say why. The gradient is
+ * the scroll affordance; it is painted over the list rather than inside it so
+ * it cannot scroll away with the content, and it ignores the pointer so the
+ * last notice stays selectable underneath.
+ *
+ * Only present when the list really does overflow — the screen measures that
+ * and sets the modifier. A fade over a list that fits would dim the last
+ * notice for nothing, and the usual outage is one sentence long.
+ */
+.maint__feed--more::after {
+  content: '';
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  height: 34px;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgb(0 0 0 / 0%), var(--surface-1));
+}
+
+.maint__feedhead {
+  margin-bottom: var(--sp-3);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.maint__list {
+  display: grid;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  /*
+     An outage can run to a dozen notices. Past about four the card would grow
+     taller than the window and push its own heading off the top, so the feed
+     scrolls inside the card instead and the page never does.
+  */
+  max-height: 38vh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.maint__item {
+  position: relative;
+  padding: var(--sp-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: rgb(255 255 255 / 3%);
+}
+
+/*
+ * The newest notice, marked rather than merely first.
+ *
+ * It is on top because it is the current state of play, but "first in a list"
+ * is a weak signal for something that matters this much — a player coming
+ * back after twenty minutes needs to know which line is new at a glance.
+ */
+.maint__item--latest {
+  border-color: color-mix(in srgb, var(--gold) 40%, var(--line));
+  background: color-mix(in srgb, var(--gold) 7%, transparent);
+}
+
+.maint__latest {
+  display: inline-block;
+  margin-bottom: var(--sp-1);
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: var(--fw-medium);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+
+.maint__text {
+  margin: 0;
+  font-size: var(--fs-sm);
+  color: var(--text);
+  /* Notices are typed by hand into an action argument and arrive as one
+     string; honouring newlines costs nothing and beats one long run-on. */
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.maint__foot {
+  margin-top: var(--sp-5);
+  font-size: var(--fs-xs);
+  color: var(--text-faint);
+}
+
+@media (max-width: 719px) {
+  .maint__card {
+    /* The card is the page on a phone, so it uses the width it has. */
+    max-width: none;
+  }
+
+  .maint__list {
+    /* Less room to give away, and the foot must stay reachable. */
+    max-height: 34vh;
+  }
+}
