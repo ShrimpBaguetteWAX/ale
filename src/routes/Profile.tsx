@@ -153,7 +153,18 @@ type Busy =
   | 'mine'
   | null
 
+/*
+ * Stat keys that do not read as English once the underscores are gone.
+ *
+ * `alf` is the farming contract's own prefix — nothing in the game is called
+ * that, and "Alf credits earned" reads as a name rather than a section.
+ */
+const STAT_RENAMES: [RegExp, string][] = [[/^alf_credits/, 'Farming Credits']]
+
 function prettyStat(key: string): string {
+  for (const [pattern, name] of STAT_RENAMES) {
+    if (pattern.test(key)) return key.replace(pattern, name).replace(/_/g, ' ')
+  }
   return key.replace(/_/g, ' ').replace(/^./, (c) => c.toUpperCase())
 }
 
