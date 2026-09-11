@@ -229,6 +229,14 @@ if (borrow) {
             ...player,
             permstats: row.permstats ?? [],
             /*
+               And what they have collected. The avatar board is mostly a
+               question of which cards are earned and which are not, and a
+               stub with nothing unlocked renders ninety-six identical locked
+               cards — the one arrangement that cannot show the difference.
+            */
+            unlocked_avatars: row.unlocked_avatars ?? [],
+            avatar: row.avatar ?? player.avatar,
+            /*
                The recruit too, when that row has one revealed: its last
                ability arrives flagged `locked`, and no mock carries that.
             */

@@ -150,21 +150,61 @@
   text-align: center;
 }
 
+.avatarcard__frame {
+  position: relative;
+  width: 100%;
+}
+
 .avatarcard__art {
   width: 100%;
   aspect-ratio: 1 / 1;
   object-fit: cover;
   border-radius: var(--radius-xs);
+  display: block;
 }
 
 /*
- * Locked avatars are dimmed rather than hidden — the requirement is the point
- * of the collection, and a grid of things you cannot have yet is what makes
- * the ones you can worth having.
+ * Locked avatars are shown, and shown properly.
+ *
+ * They used to be greyed to 45% — which is the one treatment that argues
+ * against the collection it is meant to sell. The requirement is the point of
+ * the grid, and a row of grey silhouettes gives a player no reason to chase
+ * any particular one. So the art is left exactly as it is and the state is
+ * carried by everything around it: a cut border, a padlock over the corner,
+ * and a bar that says how close it is.
  */
-.avatarcard--locked .avatarcard__art {
-  filter: grayscale(100%);
-  opacity: 0.45;
+.avatarcard--locked {
+  border-style: dashed;
+  border-color: var(--line-bright);
+  background: rgb(0 0 0 / 45%);
+}
+
+/*
+ * The padlock, on its own plate.
+ *
+ * Over artwork that can be any colour, a bare glyph is legible on some cards
+ * and invisible on others. The plate is what makes it read the same on all of
+ * them, and the blur under it keeps the corner of the picture visible rather
+ * than blocking it out.
+ */
+.avatarcard__lock {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgb(6 10 24 / 78%);
+  border: 1px solid var(--line-bright);
+  backdrop-filter: blur(3px);
+}
+
+.avatarcard__lock img {
+  /* The icon ships dark; on a near-black plate it has to be light. */
+  filter: brightness(0) invert(1);
+  opacity: 0.85;
 }
 
 .avatarcard--active {
@@ -192,10 +232,35 @@
 }
 
 .avatarcard__need {
+  display: grid;
+  gap: 3px;
+  justify-items: center;
+  width: 100%;
   font-family: var(--font-display);
   font-size: 10px;
   font-variant-numeric: tabular-nums;
   color: var(--text-faint);
+}
+
+.avatarcard__bar {
+  width: 100%;
+  height: 4px;
+  border-radius: var(--radius-full);
+  background: rgb(255 255 255 / 10%);
+  overflow: hidden;
+}
+
+.avatarcard__fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--gold);
+  /*
+     A bar at 0% is a bar that looks broken rather than empty, and plenty of
+     these start there. The minimum is a visible sliver so the track always
+     reads as a progress bar with nothing in it.
+  */
+  min-width: 3px;
 }
 
 .avatarcard__badge {

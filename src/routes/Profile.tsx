@@ -622,18 +622,58 @@ export function AvatarTab({
       <div className="avatargrid">
         {board.map(({ avatar, state, have, need }) => (
           <article className={`avatarcard avatarcard--${state}`} key={avatar.avatar_id}>
-            <GameImg
-              className="avatarcard__art"
-              src={avatarArt(avatar.avatar_id)}
-              alt=""
-              loading="lazy"
-              fallback={asset('/assets/avatar/unknown.webp')}
-            />
+            {/*
+              The art keeps its own colours, locked or not — an avatar you are
+              working towards is the reason to work towards it, and a grid of
+              grey silhouettes sold none of them. What says "not yours yet" is
+              the padlock over the corner, the cut border, and the bar
+              underneath, none of which touch the picture.
+            */}
+            <div className="avatarcard__frame">
+              <GameImg
+                className="avatarcard__art"
+                src={avatarArt(avatar.avatar_id)}
+                alt=""
+                loading="lazy"
+                fallback={asset('/assets/avatar/unknown.webp')}
+              />
+              {state === 'locked' && (
+                <span className="avatarcard__lock" title="Not earned yet">
+                  <img
+                    src={asset('/assets/icons/lock.svg')}
+                    alt="Locked"
+                    width={12}
+                    height={12}
+                  />
+                </span>
+              )}
+            </div>
             <span className="avatarcard__cat">{avatar.avatar_category}</span>
             <span className="avatarcard__name">{avatar.avatar_name}</span>
 
             {state === 'locked' ? (
+              /*
+                 How far off it is, not just how far along. The numbers were
+                 already here; the bar is what makes "a third of the way" a
+                 glance rather than a division, and it is the same shape the
+                 quest board uses for the same question.
+              */
               <span className="avatarcard__need">
+                <span
+                  className="avatarcard__bar"
+                  role="progressbar"
+                  aria-valuemin={0}
+                  aria-valuemax={need}
+                  aria-valuenow={Math.min(have, need)}
+                  aria-label={`${avatar.avatar_name}: ${formatNumber(have)} of ${formatNumber(need)}`}
+                >
+                  <span
+                    className="avatarcard__fill"
+                    style={{
+                      width: `${need > 0 ? Math.min(100, (have / need) * 100) : 0}%`,
+                    }}
+                  />
+                </span>
                 {formatNumber(have)} / {formatNumber(need)}
               </span>
             ) : state === 'ready' ? (
