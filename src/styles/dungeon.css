@@ -276,6 +276,31 @@
   color: var(--white);
 }
 
+/*
+ * A heading carrying a control of its own.
+ *
+ * The two halves that toggle are buttons in their own right, so neither can
+ * stretch the way the single full-width heading does — the row owns the width
+ * instead and each part takes what it needs.
+ */
+.panel__foldrow {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-3);
+  width: 100%;
+}
+
+.panel__fold--named {
+  width: auto;
+  flex: none;
+}
+
+.panel__foldchev {
+  width: auto;
+  flex: none;
+  align-self: center;
+}
+
 .panel__fold:focus-visible {
   outline: 2px solid var(--cyan);
   outline-offset: 3px;

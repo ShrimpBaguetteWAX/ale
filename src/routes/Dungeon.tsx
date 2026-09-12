@@ -1066,6 +1066,13 @@ export default function Dungeon() {
           summary={loadoutSummary(crew, weapon, loadoutOpen)}
           open={loadoutOpen}
           onToggle={() => setLoadoutOpen((v) => !v)}
+          /*
+             On the heading, so a shut panel still offers it. A phone gets
+             the full-width one above the panel instead: this row is the
+             title, the pair of card names and a chevron already, and a
+             fourth thing on it there would wrap the heading in two.
+          */
+          aside={!phone ? autoPickCardsButton : undefined}
         >
           <div className="cardslots">
             <CardSlot
@@ -1178,8 +1185,7 @@ export default function Dungeon() {
               )}
             </div>
 
-            {/* Beside the slots it fills, and only those. */}
-            {!phone && autoPickCardsButton}
+
           </div>
         </FoldingPanel>
 

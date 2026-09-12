@@ -2093,6 +2093,7 @@ export function FoldingPanel({
   open,
   onToggle,
   panelRef,
+  aside,
   children,
 }: {
   title: string
@@ -2102,24 +2103,73 @@ export function FoldingPanel({
   open: boolean
   onToggle: () => void
   panelRef?: React.Ref<HTMLElement>
+  /**
+   * A control that belongs to the panel but has to outlive the fold.
+   *
+   * The heading is the only part of a shut panel on the screen, so anything
+   * worth reaching while it is shut has to live there.
+   */
+  aside?: React.ReactNode
   children: React.ReactNode
 }) {
+  const heading = (
+    <>
+      {title}
+      {summary && <span className="faint dungeon__tally">{summary}</span>}
+    </>
+  )
+
   return (
     <section
       className={`panel ${className}${open ? '' : ' panel--folded'}`}
       ref={panelRef}
     >
-      <button
-        type="button"
-        className="panel__title panel__fold"
-        aria-expanded={open}
-        onClick={onToggle}
-      >
-        {title}
-        {summary && <span className="faint dungeon__tally">{summary}</span>}
-        <span className="spacer" />
-        <span className="panel__chev" aria-hidden="true" />
-      </button>
+      {aside ? (
+        /*
+           The heading, split in three, because a button cannot contain
+           another one.
+
+           Normally the whole heading is the fold target — it is the widest
+           thing on the row and where a thumb goes anyway. A control sitting
+           in it has to be a sibling instead, so the row becomes: the part
+           that names the panel and toggles it, the control, then a chevron
+           that toggles it too. The bar's empty middle stops being a target,
+           which is the price of putting something usable in it — and both
+           ends of the row still are one.
+        */
+        <div className="panel__foldrow">
+          <button
+            type="button"
+            className="panel__title panel__fold panel__fold--named"
+            aria-expanded={open}
+            onClick={onToggle}
+          >
+            {heading}
+          </button>
+          {aside}
+          <span className="spacer" />
+          <button
+            type="button"
+            className="panel__fold panel__foldchev"
+            aria-expanded={open}
+            aria-label={`${open ? 'Collapse' : 'Expand'} ${title}`}
+            onClick={onToggle}
+          >
+            <span className="panel__chev" aria-hidden="true" />
+          </button>
+        </div>
+      ) : (
+        <button
+          type="button"
+          className="panel__title panel__fold"
+          aria-expanded={open}
+          onClick={onToggle}
+        >
+          {heading}
+          <span className="spacer" />
+          <span className="panel__chev" aria-hidden="true" />
+        </button>
+      )}
       {open && children}
     </section>
   )
