@@ -89,8 +89,6 @@ interface View {
 
 const MIN_SCALE = 8
 const MAX_SCALE = 72
-/** Below this the labels crowd into each other; see `showLabels`. */
-const LABEL_SCALE = 34
 
 /**
  * The breakpoint the map's own layout uses, asked at the moment it matters
@@ -392,19 +390,27 @@ export function MapCanvas({
     const showGrid = scale >= 22
     const showMarkers = scale >= 16
     /*
-       Labels need room; below LABEL_SCALE they overlap into noise.
+       Labels are always drawn.
 
-       Except that on a phone the player cannot zoom past the floor, and the
-       floor can sit under that threshold — which left the multipliers
-       invisible at the only zoom level a phone ever opens at. So there the
-       cut-off drops to the floor: whatever the furthest-out view is, it still
-       says what each building pays. A wide screen keeps the original
-       threshold, because it can zoom out far enough for the labels to
-       genuinely collide.
+       There used to be a 34px-per-tile threshold, on the grounds that below
+       it they crowd into each other — with an exemption for phones, where the
+       player cannot zoom past the floor and the floor sits under it.
+
+       The exemption was keyed on `max-width: 719px`, and the map opens at
+       `cover` on every device, so anything wider kept the hard threshold
+       while still opening below it. Labels were therefore missing from the
+       opening view of any window narrower than 1360px *and* shorter than
+       680px — most laptops once browser chrome is taken off, and a phone
+       turned to landscape, which at 844px wide stops being a phone by that
+       query and loses the very exemption written for it.
+
+       What a building pays is the reason to walk to it, and the map is where
+       that choice is made, so it is worth more than the tidiness: a
+       multiplier that is absent reads as a building with no boost rather than
+       as a label that was suppressed. Crowding only bites at the furthest
+       zoom out, where the map is a planet-wide overview rather than something
+       being read closely.
     */
-    const fill = onPhone()
-    const floor = floorScale(w, h, fill)
-    const showLabels = scale >= (fill ? Math.min(LABEL_SCALE, floor) : LABEL_SCALE)
 
     if (showGrid) {
       ctx.strokeStyle = 'rgba(255,255,255,0.10)'
@@ -482,49 +488,47 @@ export function MapCanvas({
               held,
             )
 
-            if (showLabels) {
-              const labelY = py + scale * 0.86
-              if (marker === 'portal') {
-                const dest = PORTAL_EFFECTS[land.special_effect]
-                if (dest) drawLabel(ctx, dest, px + scale / 2, labelY, scale, '#ff01ff')
-              } else if (current) {
-                drawLabel(ctx, 'Current', px + scale / 2, labelY, scale, '#0ed4a8')
-              } else if (held) {
-                /*
-                   In place of the multiplier, not beside it — there is one
-                   line under a marker. Which arenas you are defending is the
-                   thing you cannot work out from anywhere else on this
-                   screen, and the multiplier is still on the tile card.
-                 */
-                drawLabel(
-                  ctx,
-                  'Defending',
-                  px + scale / 2,
-                  labelY,
-                  scale,
-                  /* The marker's own gold, turned down with it. */
-                  'rgba(246,168,0,0.55)',
-                )
-              } else if (locked) {
-                drawLabel(ctx, 'Played', px + scale / 2, labelY, scale, '#7d879e')
-              } else if (marker !== 'tavern') {
-                /*
-                   Taverns carry no multiplier.
+            const labelY = py + scale * 0.86
+            if (marker === 'portal') {
+              const dest = PORTAL_EFFECTS[land.special_effect]
+              if (dest) drawLabel(ctx, dest, px + scale / 2, labelY, scale, '#ff01ff')
+            } else if (current) {
+              drawLabel(ctx, 'Current', px + scale / 2, labelY, scale, '#0ed4a8')
+            } else if (held) {
+              /*
+                 In place of the multiplier, not beside it — there is one
+                 line under a marker. Which arenas you are defending is the
+                 thing you cannot work out from anywhere else on this
+                 screen, and the multiplier is still on the tile card.
+               */
+              drawLabel(
+                ctx,
+                'Defending',
+                px + scale / 2,
+                labelY,
+                scale,
+                /* The marker's own gold, turned down with it. */
+                'rgba(246,168,0,0.55)',
+              )
+            } else if (locked) {
+              drawLabel(ctx, 'Played', px + scale / 2, labelY, scale, '#7d879e')
+            } else if (marker !== 'tavern') {
+              /*
+                 Taverns carry no multiplier.
 
-                   The boost score on a land scales what its building pays
-                   out, and a tavern pays nothing — it offers trainers, which
-                   the score has no bearing on. Printing one there was reading
-                   a number off the land that means nothing for what the
-                   player would actually get by walking in.
-                */
-                const b = land.buildings[0]
-                const mult = liveBoostPercent(
-                  Number(b.boost_score ?? 0),
-                  String(b.boost_score_update ?? ''),
-                  decayRef.current,
-                )
-                drawLabel(ctx, formatBoost(mult), px + scale / 2, labelY, scale, '#f6a800')
-              }
+                 The boost score on a land scales what its building pays
+                 out, and a tavern pays nothing — it offers trainers, which
+                 the score has no bearing on. Printing one there was reading
+                 a number off the land that means nothing for what the
+                 player would actually get by walking in.
+              */
+              const b = land.buildings[0]
+              const mult = liveBoostPercent(
+                Number(b.boost_score ?? 0),
+                String(b.boost_score_update ?? ''),
+                decayRef.current,
+              )
+              drawLabel(ctx, formatBoost(mult), px + scale / 2, labelY, scale, '#f6a800')
             }
           } else {
             // Zoomed out far enough that a 10px icon is mush; a coloured dot
