@@ -56,6 +56,7 @@ import { settle } from '@/wharf/settle'
 import { readableError } from '@/wharf/errors'
 import { asset } from '@/assets'
 import { GameImg } from '@/components/GameImg'
+import { usePhone } from '@/components/usePhone'
 
 /**
  * Card art, keyed by template id.
@@ -443,6 +444,7 @@ export default function Tavern() {
   )
 
   const canAfford = player.activestats.action_points >= breakdown.cost
+  const phone = usePhone()
   const revealCost = config?.cost_reveal_ap ?? 0
   const canAffordReveal = player.activestats.action_points >= revealCost
 
@@ -664,6 +666,59 @@ export default function Tavern() {
     }
   }
 
+  /*
+     The two controls the screen exists for, written once and rendered in one
+     of two places.
+
+     On a desktop they sit on the heading line, where the cost reads next to
+     the button that spends it. A phone puts them in a bar of their own that
+     follows the page down — see `.tavernbar`.
+  */
+  const hireControls = revealed && (
+    <div className="hire">
+      <div className="hire__cost">
+        <span className={`hire__value${canAfford ? '' : ' hire__value--short'}`}>
+          <img src={asset('/assets/icons/energy.png')} alt="" />
+          {breakdown.cost}
+        </span>
+        <span className="hire__detail">
+          {breakdown.saved > 0 ? (
+            <>
+              <s className="faint">{HIRE_BASE_AP}</s> saved {breakdown.saved}
+            </>
+          ) : (
+            <>from {HIRE_BASE_AP}</>
+          )}
+          {' · '}
+          {picked.length}/{MAX_HIRE_CARDS} cards
+        </span>
+      </div>
+
+      {/*
+        Beside Hire, because it is a decision about the fighter being hired
+        even though it cannot travel in the same transaction. Choosing it here
+        rather than hunting the new row down in My Fighters is the whole point.
+      */}
+      <MarkerPick value={marker} onChange={setMarker} disabled={busy !== null} />
+
+      <button
+        type="button"
+        className="btn btn--primary"
+        onClick={() => void doHire()}
+        disabled={busy !== null || !canAfford}
+      >
+        {(busy === 'hire' || busy === 'marker') && <span className="spinner" />}
+        {busy === 'hire' ? 'Hiring' : busy === 'marker' ? 'Marking' : 'Hire recruit'}
+      </button>
+    </div>
+  )
+
+  const leaveLink = (
+    <Link className="btn btn--ghost" to="/map">
+      Leave
+    </Link>
+  )
+
   return (
     <div className="tavern">
       <img className="tavern__art" src={asset("/assets/background/bg-tavern.png")} alt="" />
@@ -684,66 +739,30 @@ export default function Tavern() {
           <span className="spacer" />
 
           {/*
-            Hire lives up here with Leave rather than in a bar pinned to the
-            bottom: it is the same decision as leaving, and the cost belongs
-            next to the button that spends it.
+            On a desktop Hire lives up here with Leave rather than in a bar
+            pinned to the bottom: it is the same decision as leaving, and the
+            cost belongs next to the button that spends it.
           */}
-          {revealed && (
-            <div className="hire">
-              <div className="hire__cost">
-                <span
-                  className={`hire__value${canAfford ? '' : ' hire__value--short'}`}
-                >
-                  <img src={asset("/assets/icons/energy.png")} alt="" />
-                  {breakdown.cost}
-                </span>
-                <span className="hire__detail">
-                  {breakdown.saved > 0 ? (
-                    <>
-                      <s className="faint">{HIRE_BASE_AP}</s> saved {breakdown.saved}
-                    </>
-                  ) : (
-                    <>from {HIRE_BASE_AP}</>
-                  )}
-                  {' · '}
-                  {picked.length}/{MAX_HIRE_CARDS} cards
-                </span>
-              </div>
-
-              {/*
-                Beside Hire, because it is a decision about the fighter being
-                hired even though it cannot travel in the same transaction.
-                Choosing it here rather than hunting the new row down in My
-                Fighters is the whole point.
-              */}
-              <MarkerPick
-                value={marker}
-                onChange={setMarker}
-                disabled={busy !== null}
-              />
-
-              <button
-                type="button"
-                className="btn btn--primary"
-                onClick={() => void doHire()}
-                disabled={busy !== null || !canAfford}
-              >
-                {(busy === 'hire' || busy === 'marker') && (
-                  <span className="spinner" />
-                )}
-                {busy === 'hire'
-                  ? 'Hiring'
-                  : busy === 'marker'
-                    ? 'Marking'
-                    : 'Hire recruit'}
-              </button>
-            </div>
-          )}
-
-          <Link className="btn btn--ghost" to="/map">
-            Leave
-          </Link>
+          {!phone && hireControls}
+          {!phone && leaveLink}
         </header>
+
+        {/*
+           On a phone the pair follows the page down instead.
+
+           Hire and Leave are the only two things this screen is for, and a
+           tavern runs to several screens of recruit, cards and objectives — so
+           both were off the top by the time a player had read enough to
+           decide. The heading is not what sticks: at 390px it is 160px of an
+           844px screen, most of it the tavern's name and coordinates, which
+           are worth reading once and never again.
+        */}
+        {phone && (
+          <div className="tavernbar">
+            {hireControls}
+            {leaveLink}
+          </div>
+        )}
 
         {error && <div className="alert alert--error">{error}</div>}
         {notice && <div className="alert alert--ok">{notice}</div>}

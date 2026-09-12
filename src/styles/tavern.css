@@ -912,3 +912,59 @@
     padding: var(--sp-2);
   }
 }
+
+/*
+ * Hire and Leave, following the page down on a phone.
+ *
+ * They are the only two things this screen is for, and a tavern runs to
+ * several screens of recruit, cards and objectives — so by the time a player
+ * had read enough to decide, both were off the top. Sticking the heading
+ * instead would cost 160px of an 844px screen, most of it the tavern's name
+ * and coordinates: worth reading once, never again.
+ *
+ * Under the top bar rather than the window, since that one is sticky too;
+ * `--topbar-h` is the height the shell's grid reserves for it. Opaque,
+ * because the page now passes behind it.
+ */
+.tavernbar {
+  position: sticky;
+  top: var(--topbar-h);
+  /* Below the top bar, above the panels sliding under it. */
+  z-index: calc(var(--z-sticky) - 1);
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2);
+  background: rgb(8 14 30 / 96%);
+  backdrop-filter: blur(6px);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-sm);
+}
+
+/*
+ * Hire takes the room left over, so the pair reads as one control: the cost
+ * and the marker are as wide as their contents, Leave is as wide as its word,
+ * and the button that does the thing fills the rest rather than leaving a gap
+ * in the middle of the bar.
+ */
+.tavernbar .hire {
+  flex: 1;
+  min-width: 0;
+}
+
+/*
+ * Room for the words rather than a fixed share of the bar.
+ *
+ * `flex: 1` gave Hire 90px of a 390px screen and "Hire recruit" wrapped
+ * onto two lines inside it, which is what made the bar 63px tall. The
+ * buttons size to their text now, the cost and the marker keep the left of
+ * the row, and the tighter padding is what buys the space for all three.
+ */
+.tavernbar .btn {
+  white-space: nowrap;
+  padding-inline: var(--sp-3);
+}
+
+.tavernbar .hire .btn {
+  margin-left: auto;
+}
