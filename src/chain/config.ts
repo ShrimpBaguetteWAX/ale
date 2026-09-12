@@ -67,6 +67,15 @@ export const CONTRACTS = {
    * is the single thing the app watches.
    */
   admin: 'admin.ale',
+
+  /**
+   * The Alien Worlds Outpost, which is not ours.
+   *
+   * A separate economy: the shards spent there are Alien Worlds points,
+   * earned by mining in Alien Worlds, and no Alien Legends contract grants
+   * or spends them. The shop reads its offers and sends redemptions to it.
+   */
+  outpost: 'uspts.worlds',
   /** Ascension: spend three fighters to push a maxed one past its cap. */
   ascension: 'ascend.ale',
   pools: 'pools.ale',

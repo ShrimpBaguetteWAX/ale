@@ -1164,3 +1164,25 @@ export const DIRTIES = {
   contributeGems: ['player', 'candleStakes'],
   claimCandle: ['player', 'candleClaims'],
 } as const satisfies Record<string, readonly TableKey[]>
+
+/**
+ * Redeem an Alien Worlds Outpost offer, paying in Alien Worlds shards.
+ *
+ * `uspts.worlds::redeempntnft(user, offer_id)` — it reads the price off the
+ * offer row itself, so there is no amount to pass and none to get wrong. The
+ * NFT is minted to the wallet by the Outpost, not by anything of ours: this
+ * spends a currency the game never touches and delivers an asset the game
+ * never sees, which is why the shop says so twice before it is signed.
+ *
+ * Requires a `userpoints` row, which the contract will not create — a wallet
+ * that has never mined in Alien Worlds cannot redeem, and the screen checks
+ * for the row rather than letting the wallet pop up and fail.
+ */
+export function redeemOutpostOffer(session: Session, offerId: number) {
+  const action: ActionInput = {
+    account: CONTRACTS.outpost,
+    name: 'redeempntnft',
+    data: { user: String(session.actor), offer_id: offerId },
+  }
+  return transact(session, [action])
+}

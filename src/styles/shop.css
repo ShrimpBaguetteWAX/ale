@@ -397,3 +397,120 @@
   padding: 0 var(--sp-3);
   white-space: nowrap;
 }
+
+/* ---------- AW Outpost ---------- */
+
+/*
+ * The Alien Worlds Outpost tab.
+ *
+ * Reuses the shop's own `pack` and `packgrid`, because the cards answer the
+ * same question in the same shape — a picture, a name, a price, a button. What
+ * is new here is only the two things this tab has that the others do not: a
+ * currency that is not ours, and offers that have not opened yet.
+ */
+
+.outpost {
+  display: grid;
+  gap: var(--sp-4);
+}
+
+.outpost__bar {
+  margin: 0;
+}
+
+.outpost__note {
+  margin: 0;
+  max-width: 62ch;
+}
+
+/*
+ * Alien Worlds shards, never a bare number.
+ *
+ * Three of the four shop tabs spend something earned in this game, and the
+ * mining page pays out a currency the player also calls shards. The icon is
+ * what separates them at a glance; the label spells it out wherever there is
+ * room for words.
+ */
+.awshards {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+}
+
+.awshards img {
+  flex: none;
+}
+
+.outpost__heading {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-bold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-heading);
+}
+
+.outpost__count {
+  padding: 0 7px;
+  border-radius: var(--radius-full);
+  background: rgb(255 255 255 / 8%);
+  font-size: var(--fs-xs);
+  color: var(--text-dim);
+}
+
+.outpost__meta,
+.outpost__window {
+  font-size: var(--fs-xs);
+  line-height: 1.3;
+}
+
+.outpost__window {
+  /* Pushed to the foot so the button line stays level across a row whatever
+     the name above it wrapped to. */
+  margin-top: auto;
+  padding-top: 4px;
+}
+
+/*
+ * An upcoming offer shows its price where the button would be.
+ *
+ * `redeempntnft` checks the window, so a button here could only ever refuse —
+ * and the price is the useful part, because these are what a player saves
+ * shards for. Sized like the button it stands in for, so the grid still
+ * lines up.
+ */
+.outpost__soon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  border: 1px dashed var(--line-bright);
+  border-radius: var(--radius-sm);
+  background: rgb(255 255 255 / 3%);
+}
+
+/* No artwork: AtomicAssets is a separate service and can be down on its own. */
+.outpost__noart {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  font-family: var(--font-display);
+  font-size: var(--fs-xs);
+}
+
+.outpost__card .pack__body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* The line under each half of the confirmation's exchange. */
+.confirm__sub {
+  font-size: var(--fs-xs);
+}

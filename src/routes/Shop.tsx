@@ -28,6 +28,7 @@ import { useAction } from '@/wharf/useAction'
 import { useChainQuery } from '@/chain/useChainQuery'
 import { useLazyConfig } from '@/state/useConfig'
 import { asset } from '@/assets'
+import { OutpostTab } from '@/outpost/OutpostTab'
 
 const EMPTY_COOLDOWNS: ShopCooldown[] = []
 
@@ -192,7 +193,15 @@ export default function Shop() {
           </div>
         )}
 
-        {!items ? (
+        {/*
+          The Outpost is somebody else's shop and shares none of this
+          screen's data: different contract, different currency, and an NFT
+          rather than a balance. So it renders itself and the shop's own item
+          grid sits out.
+        */}
+        {category === 'outpost' ? (
+          <OutpostTab />
+        ) : !items ? (
           <div className="packgrid">
             {Array.from({ length: 4 }, (_, i) => (
               <div className="skeleton pack pack--loading" key={i} />

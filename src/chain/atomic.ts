@@ -596,3 +596,58 @@ export async function fetchMiningTools(owner: string): Promise<MiningTool[]> {
   cacheSet(key, out, TTL.short)
   return out
 }
+
+/**
+ * Immutable data for a named list of templates.
+ *
+ * The catalogue readers above fetch a whole schema, which is right when the
+ * caller wants "every crew card". The Outpost wants the forty-odd templates
+ * its open offers happen to name, drawn from more than one collection — so
+ * this asks for exactly those ids instead, in one request.
+ *
+ * Returned raw rather than shaped: what the fields mean belongs to whoever
+ * asked, and `alien.worlds` mining tools carry a different set from a card.
+ */
+export async function fetchTemplateData(
+  ids: number[],
+): Promise<Map<number, { name: string; data: Record<string, unknown> }>> {
+  const wanted = [...new Set(ids.filter((id) => Number.isFinite(id) && id > 0))]
+  if (wanted.length === 0) return new Map()
+
+  /* Sorted so the same set of offers hits the same cache entry whatever
+     order they arrived in. */
+  const key = `tpldata:${wanted.slice().sort((a, b) => a - b).join(',')}`
+  const hit = cacheGet<[number, { name: string; data: Record<string, unknown> }][]>(key, true)
+  if (hit) return new Map(hit)
+
+  interface Row {
+    template_id: string
+    name?: string
+    immutable_data?: Record<string, unknown>
+  }
+
+  const rows = await fullest<Row[]>(
+    async (base) => {
+      const res = await getFrom<{ data?: Row[] }>(
+        base,
+        /* `ids` takes a comma list and the endpoint caps a page at 1000, well
+           past the number of offers the Outpost ever has open. */
+        `/atomicassets/v1/templates?ids=${wanted.join(',')}&limit=1000`,
+      )
+      return res.data ?? []
+    },
+    (r) => r.length,
+  )
+
+  const out = new Map<number, { name: string; data: Record<string, unknown> }>()
+  for (const row of rows) {
+    const id = Number(row.template_id)
+    if (!id) continue
+    const data = row.immutable_data ?? {}
+    out.set(id, { name: String(row.name ?? data.name ?? ''), data })
+  }
+
+  /* Templates are immutable, so this is safe to keep across reloads. */
+  cacheSet(key, [...out.entries()], TTL.long, true)
+  return out
+}

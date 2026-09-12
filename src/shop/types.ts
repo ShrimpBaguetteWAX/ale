@@ -61,6 +61,20 @@ export const SHOP_CATEGORIES: { key: string; label: string; blurb: string }[] = 
     label: 'Legend',
     blurb: 'Bought with gems. Unlocks the benefits below.',
   },
+  /*
+     Last, and not part of the economy the other three describe.
+     `uspts.worlds` is the Alien Worlds Outpost: its offers are priced in
+     Alien Worlds shards, earned by mining in Alien Worlds, which nothing in
+     this game grants or spends. The blurb has to say that, because every
+     other tab here is paid for with something the player earned in Alien
+     Legends.
+  */
+  {
+    key: 'outpost',
+    label: 'AW Outpost',
+    blurb:
+      'Alien Worlds offers, paid for with Alien Worlds shards — not with anything earned here.',
+  },
 ]
 
 /**
