@@ -2213,10 +2213,33 @@
   background: rgb(255 255 255 / 5%);
 }
 
-/* A knockout is the one turn in a fight that changes what comes next. */
-.clog__turn--ko {
-  background: rgb(255 52 52 / 8%);
-  box-shadow: inset 2px 0 0 rgb(255 52 52 / 45%);
+/*
+ * A knockout is the one turn in a fight that changes what comes next — and
+ * which side it changed things for is the first thing to know about it.
+ *
+ * Both used to be red, which is the colour this sheet uses for the opposing
+ * team everywhere else, so a line reading "your Juggernaut is knocked out"
+ * was flagged in the enemy's colour. The band and the line now follow the
+ * name, the same way every other name on the row does.
+ */
+/*
+ * Doubled deliberately. `.clog__turn:nth-child(even)` is a class and a
+ * pseudo-class, so it outweighs a lone modifier and was painting its stripe
+ * straight over the knockout tint — on an even row the band vanished and only
+ * the left edge survived, which is why roughly half of them looked unmarked.
+ */
+.clog__turn.clog__turn--ko {
+  background: rgb(var(--ko-rgb) / 8%);
+  box-shadow: inset 2px 0 0 rgb(var(--ko-rgb) / 45%);
+}
+
+/* Only the colour differs, so only the colour is stated twice. */
+.clog__turn--ko-theirs {
+  --ko-rgb: 255 52 52;
+}
+
+.clog__turn--ko-mine {
+  --ko-rgb: 0 186 255;
 }
 
 .clog__turn--opening {
@@ -2330,7 +2353,15 @@
   font-size: var(--fs-xs);
   letter-spacing: 0.06em;
   text-transform: uppercase;
+}
+
+/* The same two colours the names on the row above are written in. */
+.clog__ko--theirs {
   color: #ff9aa6;
+}
+
+.clog__ko--mine {
+  color: var(--cyan);
 }
 
 /* A phone loses the gutter's width before it loses the numbers. */

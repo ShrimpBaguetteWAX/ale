@@ -183,7 +183,17 @@ export function CombatLogSheet({
 
           {shown.map(({ t, i }) => (
             <article
-              className={`clog__turn${t.killed ? ' clog__turn--ko' : ''}`}
+              className={
+                'clog__turn' +
+                /*
+                   A knockout is coloured by whose fighter went down, the same
+                   way every name in the sheet is. It was red for both sides,
+                   so losing one of your own was flagged in the colour the
+                   sheet uses to mean "theirs" — and in a log the point of
+                   which is to tell the two apart at a glance.
+                */
+                (t.killed ? ` clog__turn--ko clog__turn--ko-${sideOf(t.defenderUid)}` : '')
+              }
               key={i}
             >
               <span className="clog__n">{i + 1}</span>
@@ -264,7 +274,7 @@ export function CombatLogSheet({
                 ))}
 
                 {t.killed && (
-                  <p className="clog__ko">
+                  <p className={`clog__ko clog__ko--${sideOf(t.defenderUid)}`}>
                     {nameOf(t.defenderUid)} is knocked out
                   </p>
                 )}
