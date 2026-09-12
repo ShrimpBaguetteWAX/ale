@@ -1169,10 +1169,12 @@ export const DIRTIES = {
  * Redeem an Alien Worlds Outpost offer, paying in Alien Worlds shards.
  *
  * `uspts.worlds::redeempntnft(user, offer_id)` — it reads the price off the
- * offer row itself, so there is no amount to pass and none to get wrong. The
- * NFT is minted to the wallet by the Outpost, not by anything of ours: this
- * spends a currency the game never touches and delivers an asset the game
- * never sees, which is why the shop says so twice before it is signed.
+ * offer row itself, so there is no amount to pass and none to get wrong.
+ *
+ * The shards are the ones this game's reward pools pay out, held on Alien
+ * Worlds' own ledger. The NFT is minted to the wallet by the Outpost. So both
+ * sides of this sit outside the game and neither is ours to reverse, which is
+ * why the shop says so before it is signed.
  *
  * Requires a `userpoints` row, which the contract will not create — a wallet
  * that has never mined in Alien Worlds cannot redeem, and the screen checks

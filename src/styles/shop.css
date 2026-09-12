@@ -426,10 +426,10 @@
 /*
  * Alien Worlds shards, never a bare number.
  *
- * Three of the four shop tabs spend something earned in this game, and the
- * mining page pays out a currency the player also calls shards. The icon is
- * what separates them at a glance; the label spells it out wherever there is
- * room for words.
+ * The other tabs price things in gems, credits and WAX, each with its own
+ * coin. A price on this tab is in shards, so it carries the shard icon for
+ * the same reason — a figure with no unit beside it on a shop card invites
+ * the reader to supply the wrong one.
  */
 .awshards {
   display: inline-flex;

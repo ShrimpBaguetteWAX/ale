@@ -21,23 +21,22 @@ import type { OutpostOffer } from './types'
 /**
  * The Alien Worlds Outpost, inside our shop.
  *
- * Everything on this tab belongs to somebody else: the offers are
- * `uspts.worlds` rows, the price is in Alien Worlds shards earned by mining
- * in Alien Worlds, and the NFT is minted by the Outpost into the player's
- * wallet without any Alien Legends contract seeing it. Nothing here spends
- * gems, credits, energy or the game's own shards.
+ * The offers are `uspts.worlds` rows and the NFT is minted by the Outpost
+ * straight into the player's wallet, without any Alien Legends contract
+ * seeing it. The shards, though, are the ones this game's reward pools pay
+ * out: the same currency, held on Alien Worlds' own ledger, which is why a
+ * balance earned by mining here can be spent there.
  *
- * That is the whole design problem. Three of the four shop tabs spend a
- * currency the player earned in this game, and a player who has learnt that
- * "shards" means the thing the mining page pays out will read the price here
- * as the same word. So the currency is named in full on the balance, on every
- * price, and again in the confirmation — never shortened to "shards" on its
- * own where it could be mistaken for ours.
+ * So what the tab has to be clear about is not which shards these are — they
+ * are the player's own — but that this is the one tab where the money and the
+ * goods both sit outside the game. Nothing here spends gems, credits or
+ * energy, nothing arrives on the roster, and there is no step of it we could
+ * reverse.
  */
 
 const SHARD_ICON = asset('/assets/icons/aw-shard.svg')
 
-/** The AW shard, labelled. Never a bare number. */
+/** A shard figure with its icon, so a price is never a bare number. */
 function Shards({ raw, className }: { raw: number; className?: string }) {
   return (
     <span className={'awshards' + (className ? ' ' + className : '')}>
@@ -111,8 +110,10 @@ export function OutpostTab() {
       <ActionBanner notice={notice} error={null} />
 
       {/*
-        The balance, named in full. "Shards" alone is what the mining page
-        pays out, and that is a different currency that cannot be spent here.
+        The balance sits above the prices for the same reason the WAX balance
+        sits above the gem packs: it is what tells a player which rung they
+        can reach. Named in full because this figure is not on the player row
+        with the gems and credits — it is the Outpost's own ledger.
       */}
       <div className="waxbar outpost__bar">
         <span className="waxbar__label">Your Alien Worlds shards</span>
@@ -129,9 +130,9 @@ export function OutpostTab() {
 
       {!registered && !board.loading && (
         <p className="hint outpost__note">
-          Alien Worlds shards are earned by mining in Alien Worlds. This wallet
-          has none on record with the Outpost, so nothing here can be redeemed
-          yet.
+          The Outpost has no shard balance on record for this wallet, so
+          nothing here can be redeemed yet. Shards are earned by mining — in
+          Alien Worlds, and from this game's reward pools.
         </p>
       )}
 
@@ -171,14 +172,20 @@ export function OutpostTab() {
                       title={
                         gate.short !== undefined
                           ? `${formatShards(gate.short)} more Alien Worlds shards needed`
-                          : undefined
+                          : gate.reason
                       }
                     >
+                      {/*
+                        The price stays on the button even when it is out of
+                        reach. Replacing it with "Not enough shards" cost the
+                        player the one number they came to the card for — and
+                        told them something the greyed-out button and the
+                        balance at the top of the tab already say between them.
+                        The particular reason is on the button's title.
+                      */}
                       {busy === key && <span className="spinner" />}
                       {busy === key ? (
                         'Redeeming'
-                      ) : !gate.ok && gate.reason ? (
-                        gate.reason
                       ) : (
                         <Shards raw={entry.offer.required} />
                       )}
@@ -365,13 +372,16 @@ function ConfirmRedeem({
           </div>
           <p className="hint">
             {/*
-              The two things a player could get wrong, said plainly. Neither
-              is recoverable by us: we do not hold the shards and we never see
-              the NFT.
+              Alien Worlds shards are the same currency this game's reward
+              pools pay out — so the thing to be clear about is not *which*
+              shards, but that they are not gems or credits, and that neither
+              the payment nor the reward passes through anything of ours: the
+              Outpost holds the shards and mints the NFT straight to the
+              wallet, so there is nothing here we could reverse.
             */}
-            These are Alien Worlds shards from mining in Alien Worlds — not the
-            shards this game pays out, and not gems or credits. The NFT is sent
-            to your WAX wallet by the Outpost. It cannot be undone.
+            This spends Alien Worlds shards — the same ones your mining pays
+            out — not gems or credits. The Outpost sends the NFT to your WAX
+            wallet. It cannot be undone.
           </p>
         </div>
 

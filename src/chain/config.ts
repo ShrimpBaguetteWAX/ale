@@ -71,9 +71,10 @@ export const CONTRACTS = {
   /**
    * The Alien Worlds Outpost, which is not ours.
    *
-   * A separate economy: the shards spent there are Alien Worlds points,
-   * earned by mining in Alien Worlds, and no Alien Legends contract grants
-   * or spends them. The shop reads its offers and sends redemptions to it.
+   * It holds the shard ledger — the same shards this game's reward pools pay
+   * out, which is why a balance earned here can be spent there — along with
+   * the offers those shards buy. The shop reads both and sends redemptions
+   * to it; the NFT is minted by the Outpost, not by anything of ours.
    */
   outpost: 'uspts.worlds',
   /** Ascension: spend three fighters to push a maxed one past its cap. */

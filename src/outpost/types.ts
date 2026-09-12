@@ -1,10 +1,10 @@
 /**
  * `uspts.worlds` — the Alien Worlds Outpost.
  *
- * A separate economy from the game's own: the shards spent here are Alien
- * Worlds points, earned by mining in Alien Worlds, and nothing in Alien
- * Legends grants or spends them. The Outpost tab is a window onto somebody
- * else's shop, which is why every figure on it is labelled as theirs.
+ * Somebody else's shop, spending the player's own money. The shards are the
+ * ones this game's reward pools pay out, kept on Alien Worlds' ledger rather
+ * than on the player row — so a balance earned mining here is spendable
+ * there — while the offers, the prices and the NFTs are all Alien Worlds'.
  */
 
 /** `uspts.worlds` / `pointoffers` — a timed offer, priced in shards. */

@@ -62,18 +62,17 @@ export const SHOP_CATEGORIES: { key: string; label: string; blurb: string }[] = 
     blurb: 'Bought with gems. Unlocks the benefits below.',
   },
   /*
-     Last, and not part of the economy the other three describe.
-     `uspts.worlds` is the Alien Worlds Outpost: its offers are priced in
-     Alien Worlds shards, earned by mining in Alien Worlds, which nothing in
-     this game grants or spends. The blurb has to say that, because every
-     other tab here is paid for with something the player earned in Alien
-     Legends.
+     Last, and outside the ladder the other three describe. `uspts.worlds` is
+     the Alien Worlds Outpost: its offers are priced in Alien Worlds shards,
+     which is the currency this game's reward pools pay out — so the shards
+     are the player's own, but the shop, the price and the NFT all belong to
+     Alien Worlds rather than to us.
   */
   {
     key: 'outpost',
     label: 'AW Outpost',
     blurb:
-      'Alien Worlds offers, paid for with Alien Worlds shards — not with anything earned here.',
+      'Alien Worlds offers, paid for with the Alien Worlds shards your mining pays out.',
   },
 ]
 
