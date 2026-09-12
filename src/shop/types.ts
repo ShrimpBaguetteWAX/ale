@@ -71,8 +71,7 @@ export const SHOP_CATEGORIES: { key: string; label: string; blurb: string }[] = 
   {
     key: 'outpost',
     label: 'AW Outpost',
-    blurb:
-      'Alien Worlds offers, paid for with the Alien Worlds shards your mining pays out.',
+    blurb: 'Alien Worlds offers, paid for with the Alien Worlds shards',
   },
 ]
 
