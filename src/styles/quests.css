@@ -32,14 +32,6 @@
   color: var(--text-heading);
 }
 
-.quests__lede {
-  margin: var(--sp-1) 0 0;
-  max-width: 62ch;
-  font-size: var(--fs-sm);
-  line-height: 1.55;
-  color: var(--text-dim);
-}
-
 .quests__refill {
   margin-left: auto;
   min-height: 48px;

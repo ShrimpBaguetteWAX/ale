@@ -224,11 +224,6 @@ export default function Quests() {
       <header className="quests__head">
         <div>
           <h1 className="quests__title">Quests</h1>
-          <p className="quests__lede">
-            Three at a time in each cadence. Every reward is set aside the
-            moment its quest is issued, so the figure on a card is already
-            yours to finish for.
-          </p>
         </div>
 
         {refill && (
