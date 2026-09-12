@@ -466,11 +466,9 @@
  * no single rule turns all of them in. Only a direction recorded per piece of
  * art would, which is a table nobody has written.
  *
- * The picker's `.combatcard--mine` mirrors the other side on purpose: there a
- * row of portraits is read as a formation and the mirroring is only what
- * splits it into two sides, which works whichever line is flipped. Here a
- * fighter is life-size and on screen for a second at a time, and that is
- * where drawing yours as the artist drew it matters.
+ * `.combatcard__fighter` in the line-up follows the same rule for the same
+ * reason, and the two have to stay in step: a fighter mirrored on one screen
+ * and not the other changes hands on its way into the fight.
  */
 .duelist--enemy .duelist__art {
   transform: scaleX(-1);

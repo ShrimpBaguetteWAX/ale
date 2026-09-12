@@ -1858,16 +1858,19 @@
 
 /*
  * The two lines face each other. Mirroring one side is what makes a row of
- * portraits read as two sides of a fight rather than one long queue; yours
- * stands on the left, so yours is the side drawn against the art.
+ * portraits read as two sides of a fight rather than one long queue — and it
+ * is the opposing line that gets mirrored.
  *
- * Deliberately *not* the same side the battle stage mirrors. At this size the
- * row reads as a formation and the mirroring is what splits it in two, which
- * works whichever line is flipped; on the stage a fighter is life-size and
- * seen for a second at a time, and there it is your own — the one you know by
- * sight — that has to be drawn the way the artist drew it.
+ * Most of the art that has a direction at all is drawn facing right, so the
+ * line on the right is the one to turn: mirrored there it looks inward, and
+ * your own line, left alone, looks inward already. Mirroring yours instead
+ * pointed both rows outward, which is what it was doing.
+ *
+ * The same rule and the same reason as `.duelist__art` on the battle stage;
+ * the two have to agree, or a fighter changes hands between the line-up and
+ * the fight.
  */
-.combatcard--mine .combatcard__fighter {
+.combatcard--enemy .combatcard__fighter {
   transform: scaleX(-1);
 }
 
