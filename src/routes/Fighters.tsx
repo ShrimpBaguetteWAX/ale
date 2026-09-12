@@ -520,7 +520,26 @@ export default function Fighters() {
         </div>
       </header>
 
-      <div className="roster__bar">
+      {/*
+        Pinned only once there is something on it to press.
+
+        Its buttons act on fighters picked from a grid of a hundred and fifty,
+        so the card you tap is usually far below the bar that acts on it —
+        which meant scrolling back up for every single one. Sticky fixes that,
+        and `position: sticky` on an element already scrolled past pins it
+        immediately, so the bar arrives the moment you choose something.
+
+        Left unpinned while the selection is empty, because the cost is real:
+        on a phone this is 114px of a 844px screen, and paying it for the
+        whole time you are browsing — when every control on it is disabled
+        anyway — buys nothing.
+      */}
+      <div
+        className={
+          'roster__bar' +
+          (selected || checked.length > 0 ? ' roster__bar--pinned' : '')
+        }
+      >
         {mode === 'market' ? (
           <>
             {/*

@@ -83,15 +83,48 @@
 
 /* ---------- action bar ---------- */
 
+/*
+ * The bar follows the list down the page.
+ *
+ * Everything on it acts on something below it: Payday and Level up appear the
+ * moment a fighter is picked, and a fighter is picked by tapping a card that
+ * is usually well past the fold. Scrolling back up to reach the button for
+ * the thing you just chose is the whole of the interaction, and it is one
+ * nobody should have to do twice.
+ *
+ * Under the top bar rather than the window, since that one is sticky too —
+ * `--topbar-h` is the height the shell's grid reserves for it, so the two
+ * stack without either guessing at the other. The document is the scroller
+ * (`.main` sets no overflow), so this sticks against the viewport.
+ */
 .roster__bar {
   display: flex;
   align-items: center;
   gap: var(--sp-2);
   flex-wrap: wrap;
   padding: var(--sp-2) var(--sp-3);
-  background: rgb(0 0 0 / 28%);
+  /*
+     Opaque now that cards pass behind it. At 28% black over the page they
+     showed straight through, which reads as a rendering fault rather than as
+     a bar. The blur is for the edges the colour does not cover.
+  */
+  background: rgb(8 14 30 / 96%);
+  backdrop-filter: blur(6px);
   border: 1px solid var(--line-soft);
   border-radius: var(--radius-sm);
+}
+
+/*
+ * Under the top bar rather than the window, since that one is sticky too.
+ * `--topbar-h` is the height the shell's grid reserves for it, so the two
+ * stack without either guessing at the other, and the document is the
+ * scroller (`.main` sets no overflow) so this sticks against the viewport.
+ */
+.roster__bar--pinned {
+  position: sticky;
+  top: var(--topbar-h);
+  /* Below the top bar, above the cards sliding under it. */
+  z-index: calc(var(--z-sticky) - 1);
 }
 
 .roster__hint {
