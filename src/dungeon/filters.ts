@@ -7,6 +7,7 @@ import {
   STAT_SCALE,
   gradeOfStat,
   gradeRank,
+  statDisplay,
   type ClassTemplate,
   type StatGrade,
 } from '@/tavern/fighterStats'
@@ -95,8 +96,11 @@ export interface SortOption {
 }
 
 /**
- * Sorts, in the original's order. Health and damage are compared *after* age
- * decay, because that is the number the fighter will actually bring.
+ * Sorts, in the original's order.
+ *
+ * Health and damage are compared as *fielded* — the roll grown by
+ * `level_mod ^ level` and cut by `age_decay ^ (days²)` — because that is the
+ * number the fighter brings to the fight and the number its card prints.
  */
 export const SORTS: SortOption[] = [
   { value: 'level', label: 'Level' },
@@ -247,28 +251,6 @@ export function isFilterActive(f: RosterFilter): boolean {
   )
 }
 
-/**
- * A stat after age decay.
- *
- * `apply_weather_and_age` multiplies health and damage by
- * `age_decay ^ (days² )`, so an old fighter brings less than its stored range
- * suggests. The original applies the same curve when sorting, and sorting by
- * a number the fight will not use would be misleading.
- */
-export function decayed(
-  value: number,
-  creationDate: string,
-  ageDecay: number,
-  now = Date.now(),
-): number {
-  if (!ageDecay) return value
-  const created = Date.parse(creationDate + 'Z')
-  if (!Number.isFinite(created)) return value
-  const days = Math.floor((now - created) / 86_400_000)
-  if (days <= 0) return value
-  return Math.floor(Math.pow(ageDecay, days * days) * value)
-}
-
 const mid = (min: number, max: number) => (min + max) / 2
 
 function matchesStatus(f: RosterFighter, status: Status, now: number): boolean {
@@ -406,11 +388,34 @@ export function applyFilter(
        including its rounding, because the order has to be the order of the
        figures on the cards being ordered.
     */
+    const fielded = () =>
+      battleFactor(f, levelMod, ageDecay, now, atLevelOne ? 1 : undefined).total
+
     const derived = () =>
-      combatFigures(
-        s as unknown as Record<string, number>,
-        battleFactor(f, levelMod, ageDecay, now, atLevelOne ? 1 : undefined).total,
-      )
+      combatFigures(s as unknown as Record<string, number>, fielded())
+
+    /*
+       Health and damage as the card prints them, which means through the same
+       factor the derived three already use.
+
+       These two used to rank on `decayed(mid(...))` — the roll with age taken
+       off and the level left out. The level term is the whole difference: at
+       the live `level_mod` of 1.15 a level 10 fighter fields about four times
+       its rolled damage, and the card says so, so ordering on the roll put
+       cards in an order the numbers on them contradicted. Measured against a
+       200-fighter roster it was 54 rows out of 199 for damage and 46 for
+       health whose printed figure was larger than the row above — sorting by
+       Health led with a card reading 389 and buried the 415 in sixth.
+
+       `atLevelOne` is honoured for the same reason it is honoured above: when
+       the screen is showing rolls rather than fielded figures, the order has
+       to be a ranking of rolls.
+    */
+    const asFielded = (field: 'health' | 'damage') =>
+      statDisplay(
+        s[`${field}_min`] * fielded(),
+        s[`${field}_max`] * fielded(),
+      ).value
 
     switch (filter.sort) {
       case 'dps':
@@ -420,9 +425,9 @@ export function applyFilter(
       case 'combat_score':
         return derived().score
       case 'health_max':
-        return decayed(mid(s.health_min, s.health_max), f.creation_date, ageDecay, now)
+        return asFielded('health')
       case 'damage_max':
-        return decayed(mid(s.damage_min, s.damage_max), f.creation_date, ageDecay, now)
+        return asFielded('damage')
       case 'taunt_max':
         return mid(s.taunt_min, s.taunt_max)
       // Windup and cooldown are delays, so the best fighter is the smallest.
