@@ -665,7 +665,7 @@ export default function Fighters() {
 
                 <button
                   type="button"
-                  className="btn btn--ghost btn--sm"
+                  className="btn btn--ghost"
                   disabled={!session || !selectedPay || selectedPay.cost <= 1 || !!busy}
                   onClick={() => void doPayOne(selected)}
                 >
@@ -680,7 +680,7 @@ export default function Fighters() {
 
                 <button
                   type="button"
-                  className="btn btn--primary btn--sm"
+                  className="btn btn--primary"
                   disabled={
                     !session ||
                     !selectedLevel?.ready ||
@@ -710,7 +710,7 @@ export default function Fighters() {
 
                 <button
                   type="button"
-                  className="btn btn--ghost btn--sm"
+                  className="btn btn--ghost"
                   onClick={() => setSelectedId(null)}
                   aria-label="Clear selection"
                 >
