@@ -1860,6 +1860,12 @@
  * The two lines face each other. Mirroring one side is what makes a row of
  * portraits read as two sides of a fight rather than one long queue; yours
  * stands on the left, so yours is the side drawn against the art.
+ *
+ * Deliberately *not* the same side the battle stage mirrors. At this size the
+ * row reads as a formation and the mirroring is what splits it in two, which
+ * works whichever line is flipped; on the stage a fighter is life-size and
+ * seen for a second at a time, and there it is your own — the one you know by
+ * sight — that has to be drawn the way the artist drew it.
  */
 .combatcard--mine .combatcard__fighter {
   transform: scaleX(-1);

@@ -449,9 +449,30 @@
   transition: filter var(--dur-fast) var(--ease);
 }
 
-/* Each fighter faces the other; yours stands on the left, so yours is
-   the one drawn against the art's own direction. */
-.duelist--mine .duelist__art {
+/*
+ * One side is mirrored so the two read as facing each other, and it is the
+ * opposing side rather than yours.
+ *
+ * Two reasons, and they agree. Your own fighters are the ones you know by
+ * sight — the roster, the tavern, the detail panel and the market all draw
+ * them exactly as the artist did, so a mirrored copy of your Desperado on the
+ * one screen where you watch it fight reads as wrong whichever way it points.
+ * And the art itself leans this way: of the pieces with a direction at all,
+ * most face right, so mirroring the right-hand side is what turns more of
+ * them inward rather than fewer.
+ *
+ * It cannot be right for every pair. The set is genuinely mixed — some
+ * fighters are drawn facing left, plenty are drawn square to the viewer — and
+ * no single rule turns all of them in. Only a direction recorded per piece of
+ * art would, which is a table nobody has written.
+ *
+ * The picker's `.combatcard--mine` mirrors the other side on purpose: there a
+ * row of portraits is read as a formation and the mirroring is only what
+ * splits it into two sides, which works whichever line is flipped. Here a
+ * fighter is life-size and on screen for a second at a time, and that is
+ * where drawing yours as the artist drew it matters.
+ */
+.duelist--enemy .duelist__art {
   transform: scaleX(-1);
 }
 
