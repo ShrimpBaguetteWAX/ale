@@ -373,15 +373,15 @@ function ConfirmRedeem({
           <p className="hint">
             {/*
               Alien Worlds shards are the same currency this game's reward
-              pools pay out — so the thing to be clear about is not *which*
-              shards, but that they are not gems or credits, and that neither
-              the payment nor the reward passes through anything of ours: the
-              Outpost holds the shards and mints the NFT straight to the
-              wallet, so there is nothing here we could reverse.
+              pools pay out, so naming them is enough — the balance lines
+              above already show which figure is moving. What is left worth
+              saying is that neither side of this passes through anything of
+              ours: the Outpost holds the shards and mints the NFT straight to
+              the wallet, so there is no step of it we could reverse.
             */}
             This spends Alien Worlds shards — the same ones your mining pays
-            out — not gems or credits. The Outpost sends the NFT to your WAX
-            wallet. It cannot be undone.
+            out. The Outpost sends the NFT to your WAX wallet. It cannot be
+            undone.
           </p>
         </div>
 
