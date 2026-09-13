@@ -1752,6 +1752,22 @@ export function PickCard({
             {/* Picked and blocked both have to survive the shrink: they are
                 why a card can or cannot be tapped. */}
             {tick && <span className="fightercard__tick">{tick}</span>}
+            {/*
+              Level, in the one free corner — marker top left, details top
+              right. It stays on the compact card because it multiplies health
+              and damage before the first blow, so two identical portraits can
+              be very different picks.
+
+              After the tick on purpose: on a phone the tick wraps across the
+              whole foot of the portrait, and the stylesheet hides the level
+              on those cards with a sibling selector, which needs this order.
+            */}
+            {f.stats.level > 0 && (
+              <span className="fightercard__lvl">
+                <span className="fightercard__lvlL">L</span>
+                {f.stats.level}
+              </span>
+            )}
           </span>
           {ageChip}
         </button>
