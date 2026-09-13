@@ -252,10 +252,19 @@
 .cost img {
   object-fit: contain;
 }
-/* Cannot afford it: say why, rather than only greying the button out. */
+/*
+ * Cannot afford it: say why, rather than only greying the button out.
+ *
+ * Solid rather than tinted. A price the player cannot pay nearly always sits
+ * on a disabled button, and a disabled button is a light grey gradient — so
+ * the old light pink figure on an 18% red wash came out pink on pink, and the
+ * one number the chip exists to show was the hard thing to read. A dark red
+ * fill with white text holds up on that grey and on a dark enabled button
+ * alike: about 6.5:1, where the game's own red under white is only 3.4.
+ */
 .cost--short {
-  color: #ff8fa0;
-  background: rgb(255 52 52 / 18%);
+  color: #fff;
+  background: color-mix(in srgb, var(--red) 70%, #000);
 }
 
 .confirm__list {
