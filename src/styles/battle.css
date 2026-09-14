@@ -1947,7 +1947,8 @@
   border-radius: var(--radius-xs);
   /* Side is the only thing the border says: blue is yours, red is theirs. */
   border: 2px solid var(--turnq-line);
-  background: rgb(0 0 0 / 45%);
+  /* The avatar is a cut-out; the element backdrop fills in behind it. */
+  background: var(--turnq-bg, none) center / cover no-repeat, rgb(0 0 0 / 45%);
   overflow: hidden;
   /* Further down the queue is further off, so it recedes. */
   opacity: 0.6;

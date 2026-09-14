@@ -1147,6 +1147,8 @@ function TurnQueue({
               /* Keyed by attack number: entries keep their identity as the
                  strip advances, so only genuinely new ones animate in. */
               key={q.turn}
+              /* Same element backdrop as the roster tiles above it. */
+              style={{ ['--turnq-bg' as string]: `url('${elementBackground(f.element)}')` }}
               title={`${q.current ? 'Attacking now' : `Attack ${q.turn}`} — ${f.classname} (${owner})`}
             >
               <GameImg
