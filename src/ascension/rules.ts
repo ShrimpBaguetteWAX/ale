@@ -60,6 +60,15 @@ export function canAscend(
   if (fighter.ascension_in_progress) {
     return { ok: false, reason: 'Already has an ascension waiting to be claimed.' }
   }
+  /*
+     `check(itr_fighter->in_use == false, …)` — a fighter defending an arena
+     or listed on the market cannot be ascended. Offering it let a player
+     fill all three sacrifice slots and confirm, only for the transaction to
+     be refused.
+   */
+  if (fighter.in_use) {
+    return { ok: false, reason: 'Busy elsewhere — in an arena or on the market.' }
+  }
   return { ok: true }
 }
 
@@ -90,7 +99,10 @@ export function eligibleSacrifice(
   return (
     candidate.fighter_id !== target.fighter_id &&
     candidate.classname === target.classname &&
-    !candidate.ascension_in_progress
+    !candidate.ascension_in_progress &&
+    /* `check(itr_sacrifice->in_use == false, …)` — a fighter busy in an arena
+       or on the market cannot be spent, so it is not offered as a sacrifice. */
+    !candidate.in_use
   )
 }
 

@@ -125,6 +125,30 @@ function main() {
     false,
   )
 
+  /*
+     8. Busy fighters, in both roles.
+
+     `ascension.cpp` checks `in_use == false` on the ascending fighter (line
+     167) and on every sacrifice (line 184). A fighter defending an arena or
+     listed on the market used to be offered anyway, and the transaction was
+     refused only after the player had confirmed.
+  */
+  check(
+    'a busy fighter cannot be ascended',
+    canAscend(f({ in_use: 1, stats: { level: 10, abilities: [] } } as never), cfg).ok,
+    false,
+  )
+  check(
+    'a busy fighter is not an eligible sacrifice',
+    eligibleSacrifice(f({ in_use: true }), target),
+    false,
+  )
+  check(
+    'a free fighter of the same class still is',
+    eligibleSacrifice(f({ in_use: 0 }), target),
+    true,
+  )
+
   console.log(`\n${failures === 0 ? 'all cases passed' : `${failures} FAILED`}`)
 }
 main()
