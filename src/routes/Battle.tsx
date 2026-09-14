@@ -31,7 +31,7 @@ import {
   type Standing,
 } from '@/dungeon/standing'
 import type { Battlestats, FightRow, RosterFighter } from '@/dungeon/types'
-import { fighterArt, fighterArtFallback, formatScaled } from '@/tavern/fighterStats'
+import { elementBackground, fighterArt, fighterArtFallback, formatScaled } from '@/tavern/fighterStats'
 import { DIRTIES, claimPoolRewards, levelUpFighters } from '@/wharf/actions'
 import { useAction } from '@/wharf/useAction'
 import { useChainQuery } from '@/chain/useChainQuery'
@@ -776,6 +776,9 @@ function RosterStrip({
               }
               key={f.uid}
               title={`${f.classname} ${f.racename} — ${formatScaled(hp.health)}/${formatScaled(hp.max_health)}`}
+              /* The element backdrop every other portrait in the game sits on.
+                 The avatar is a cut-out, so without it the tile was black. */
+              style={{ ['--rtile-bg' as string]: `url('${elementBackground(f.element)}')` }}
             >
               <GameImg
                 className="rtile__art"

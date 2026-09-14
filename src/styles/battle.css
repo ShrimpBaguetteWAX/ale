@@ -239,12 +239,16 @@
     transform var(--dur-fast) var(--ease);
 }
 
+/*
+ * The fighter's element backdrop behind the cut-out avatar, as on every other
+ * portrait. The dark fallback shows only until the image arrives.
+ */
 .rtile__art {
   width: 100%;
   aspect-ratio: 1 / 1;
   object-fit: cover;
   border-radius: 2px;
-  background: rgb(0 0 0 / 40%);
+  background: var(--rtile-bg, none) center / cover no-repeat, rgb(0 0 0 / 40%);
 }
 
 .rtile__bar {
