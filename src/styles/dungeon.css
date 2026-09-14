@@ -3687,3 +3687,17 @@ button.combatcard--empty:hover {
     font-size: 10px;
   }
 }
+
+/*
+ * Grade arrows on the picker card's stat rows.
+ *
+ * The same icons My Fighters draws, a size down: these rows are 11px text in
+ * a column roughly a third as wide, and the 16px arrow the roster uses would
+ * set every row's height by the arrow rather than the figure.
+ */
+.cardstats__row .cardstats__grade {
+  width: 12px;
+  height: 12px;
+  margin-left: 4px;
+  vertical-align: -2px;
+}

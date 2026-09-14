@@ -50,12 +50,20 @@ import {
   resolveAbilityDescription,
   RESISTANCE_FIELDS,
   type ClassTemplate,
+  gradeStat,
   type StatGrade,
 } from '@/tavern/fighterStats'
 import { asset } from '@/assets'
 import { usePhone } from '@/components/usePhone'
 import { useModal } from '@/components/useModal'
-import { combatFigures } from '@/fighters/derived'
+import {
+  combatFigures,
+  gradeCombatScore,
+  gradeDamagePerSecond,
+  gradeSurvival,
+  meanResistance,
+} from '@/fighters/derived'
+import { useConfigStore } from '@/state/useConfig'
 import { formatDecimals, NUM_LOCALE } from '@/format'
 import { GameImg } from '@/components/GameImg'
 
@@ -244,6 +252,28 @@ export function PickViewSwitch({
 function shownStat(f: RosterFighter, field: string, factor: number): number {
   const s = f.stats as unknown as Record<string, number>
   return statDisplay(s[`${field}_min`] * factor, s[`${field}_max`] * factor).value
+}
+
+/**
+ * A grade arrow on a picker card's stat row.
+ *
+ * The same icons and the same grading My Fighters uses, so a fighter is marked
+ * the same wherever it is being compared. Renders nothing for an ungraded stat
+ * — taunt is a role, not a quality — so the caller does not have to know which
+ * those are.
+ */
+function PickGrade({ grade }: { grade: StatGrade | null | undefined }) {
+  if (!grade) return null
+  return (
+    <img
+      className="grade cardstats__grade"
+      src={GRADE_ICON[grade]}
+      alt={GRADE_LABEL[grade]}
+      title={GRADE_LABEL[grade]}
+      width={12}
+      height={12}
+    />
+  )
 }
 
 /** Element icons live alongside the resistance icons the panel already uses. */
@@ -1686,6 +1716,18 @@ export function PickCard({
      than a consequence of how far it has been taken. */
   const factor = levelFactor(atLevelOne ? 1 : f.stats.level, levelMod) * age
   const figures = combatFigures(f.stats as unknown as Record<string, number>, factor)
+
+  /*
+     Graded on the rolled numbers against the class band, exactly as My
+     Fighters grades them: the level and age factor lifts every fighter of a
+     level alike and says nothing about the roll. Read with a selector, so a
+     card re-renders only when its own class band arrives. Until it does the
+     arrows stay off rather than guessing at a grade.
+  */
+  const template = useConfigStore((s) => s.classes.get(f.classname))
+  const raw = f.stats as unknown as Record<string, number>
+  const rolled = (field: string) => (raw[`${field}_min`] + raw[`${field}_max`]) / 2
+  const meanRes = meanResistance(raw)
   const bonus = ageBonus(f, ageDecay)
 
   const [override, setOverride] = useState<PickView | null>(null)
@@ -1890,7 +1932,12 @@ export function PickCard({
                   <img src={statIcon(field)} alt="" width={13} height={13} />
                   {label}
                 </dt>
-                <dd className="mono">{shownStat(f, field, grow ? factor : 1)}</dd>
+                <dd className="mono">
+                  {shownStat(f, field, grow ? factor : 1)}
+                  {template && (
+                    <PickGrade grade={gradeStat(field, rolled(field), template)} />
+                  )}
+                </dd>
               </div>
             ))}
           </dl>
@@ -1908,6 +1955,7 @@ export function PickCard({
                   </dt>
                   <dd className="mono">
                     {formatScaled((f.stats as unknown as Record<string, number>)[field])}%
+                    {template && <PickGrade grade={gradeStat(field, raw[field], template)} />}
                   </dd>
                 </div>
               )
@@ -1927,7 +1975,14 @@ export function PickCard({
                 <img src={statIcon('damage')} alt="" width={13} height={13} />
                 DPS
               </dt>
-              <dd className="mono">{formatDecimals(figures.dps, 2)}</dd>
+              <dd className="mono">
+                {formatDecimals(figures.dps, 2)}
+                {template && (
+                  <PickGrade
+                    grade={gradeDamagePerSecond(rolled('damage'), rolled('attackspeed'), template)}
+                  />
+                )}
+              </dd>
             </div>
             <div className="cardstats__row">
               <dt>
@@ -1936,6 +1991,9 @@ export function PickCard({
               </dt>
               <dd className="mono">
                 {Math.round(figures.survival).toLocaleString(NUM_LOCALE)}
+                {template && (
+                  <PickGrade grade={gradeSurvival(rolled('health'), meanRes, template)} />
+                )}
               </dd>
             </div>
             <div className="cardstats__row">
@@ -1943,7 +2001,12 @@ export function PickCard({
                 <img src={statIcon('initiative')} alt="" width={13} height={13} />
                 Wind-up
               </dt>
-              <dd className="mono">{shownStat(f, 'initiative', 1)}</dd>
+              <dd className="mono">
+                {shownStat(f, 'initiative', 1)}
+                {template && (
+                  <PickGrade grade={gradeStat('initiative', rolled('initiative'), template)} />
+                )}
+              </dd>
             </div>
             <div className="cardstats__row">
               <dt>
@@ -1959,6 +2022,17 @@ export function PickCard({
               </dt>
               <dd className="mono">
                 {Math.round(figures.score).toLocaleString(NUM_LOCALE)}
+                {template && (
+                  <PickGrade
+                    grade={gradeCombatScore(
+                      rolled('health'),
+                      meanRes,
+                      rolled('damage'),
+                      rolled('attackspeed'),
+                      template,
+                    )}
+                  />
+                )}
               </dd>
             </div>
           </dl>
