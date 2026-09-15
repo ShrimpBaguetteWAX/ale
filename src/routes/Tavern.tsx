@@ -9,6 +9,7 @@ import {
 import { Link, Navigate } from 'react-router-dom'
 import { fetchOwnedTemplates, resolveAssetIds } from '@/chain/atomic'
 import { landId } from '@/chain/landId'
+import { unrevealedTavernHere } from '@/tavern/rules'
 import { byQuality } from '@/dungeon/nftFighter'
 import { useGame } from '@/state/useGame'
 import {
@@ -397,8 +398,13 @@ export default function Tavern() {
     fighter: typeof player.last_tavern_fighter
   } | null>(null)
 
-  const tavern = frozen?.tavern ?? player.last_tavern
-  const fighter = frozen?.fighter ?? player.last_tavern_fighter
+  /* A tavern a player without legend access has walked onto but not yet
+     revealed. It has no recruit of its own yet; `last_tavern_fighter`
+     belongs to whichever tavern was revealed before. */
+  const pendingTavern = unrevealedTavernHere(player)
+  const tavern = frozen?.tavern ?? pendingTavern ?? player.last_tavern
+  const fighter =
+    frozen?.fighter ?? (pendingTavern ? undefined : player.last_tavern_fighter)
   // The contract requires the player to still be standing on the tavern's
   // land, so the screen is only valid while that holds.
   const onTavernLand = !!tavern?.land_id && tavern.land_id === landId(player.x, player.y)
@@ -492,8 +498,11 @@ export default function Tavern() {
       for (let i = 0; i < 8; i++) {
         await new Promise((r) => setTimeout(r, 700))
         await refreshPlayer({ force: true })
-        const f = useGame.getState().player?.last_tavern_fighter
-        if (f && f.level > 0) break
+        /* The recruit has to belong to this land: a player without legend
+           access can still hold a revealed recruit from an earlier tavern. */
+        const p = useGame.getState().player
+        const f = p?.last_tavern_fighter
+        if (f && f.level > 0 && p.last_tavern?.land_id === landId(p.x, p.y)) break
       }
       settle(DIRTIES.revealFighter)
       setNotice('A new recruit steps forward.')

@@ -11,6 +11,7 @@ import {
   fetchPlayerTags,
 } from '@/chain/queries'
 import { landId, travelCost, travelDistance } from '@/chain/landId'
+import { unrevealedTavernHere } from '@/tavern/rules'
 import type { Land, LandsConfig } from '@/chain/types'
 import { MapCanvas } from '@/map/MapCanvas'
 import {
@@ -677,8 +678,11 @@ export default function MapView() {
    * player is on — so it is the honest test for whether the door is open.
    */
   const inTavern =
-    !!player.last_tavern?.land_id &&
-    player.last_tavern.land_id === landId(player.x, player.y)
+    (!!player.last_tavern?.land_id &&
+      player.last_tavern.land_id === landId(player.x, player.y)) ||
+    /* Without legend access travel does not reveal, so the tavern is still
+       in `active_taverns`; the player enters to pay for the reveal. */
+    !!unrevealedTavernHere(player)
 
   /**
    * Standing on a dungeon that is still worth entering.
