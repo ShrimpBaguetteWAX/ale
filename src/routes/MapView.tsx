@@ -717,7 +717,9 @@ export default function MapView() {
     const standing = arenasByPlanet[player.planet]?.find(
       (a) => a.land_id === here.land_id,
     )
-    if (!standing || standing.fighters.length === 0) return null
+    /* An empty arena stays enterable: a new arena starts with nobody in it,
+       and the first challenger wins it without a blow. */
+    if (!standing) return null
     if (standing.fighters.some((f) => f.owner === player.wallet)) return null
     return here
   }, [lands, planet, player.planet, player.x, player.y, player.wallet, arenasByPlanet])

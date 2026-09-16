@@ -153,9 +153,11 @@ async function main() {
       canChallenge([], false, false, playerOf(100), 50,
         arenaOf([fighter({ owner: 'me' })]), good).reason,
       'You already have a fighter in this arena')
-    check('an empty arena cannot be challenged',
-      canChallenge(five, true, true, playerOf(100), 50, arenaOf([]), good).reason,
-      'Nobody is holding this arena')
+    check('an empty arena can be challenged, as a new one is',
+      canChallenge(five, true, true, playerOf(100), 50, arenaOf([]), good).ready, true)
+    check('an arena with no row on chain cannot',
+      canChallenge(five, true, true, playerOf(100), 50, undefined, good).reason,
+      'This arena is not open yet')
     check('a short team is counted',
       canChallenge([...five.slice(0, 3), null, null], true, true, playerOf(100), 50, open, good).reason,
       'Pick 2 more fighters')

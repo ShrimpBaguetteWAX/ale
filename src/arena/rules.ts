@@ -111,8 +111,14 @@ export function canChallenge(
   if (!arenaMaintained(land)) {
     return { ready: false, reason: 'This arena is no longer maintained' }
   }
-  if (!arena || arena.fighters.length === 0) {
-    return { ready: false, reason: 'Nobody is holding this arena' }
+  /*
+     An empty arena is fought like any other. `battle.cpp` flags
+     `empty_arena`, the challenger wins without a blow and one of the team
+     stands in it — which is how every new arena gets its first holder. Only a
+     missing row is refused: `playarena` require_finds it.
+  */
+  if (!arena) {
+    return { ready: false, reason: 'This arena is not open yet' }
   }
   if (alreadyDefending(arena, player.wallet)) {
     return { ready: false, reason: 'You already have a fighter in this arena' }
