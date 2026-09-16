@@ -62,6 +62,17 @@ export function hasClaimable(income: LandIncome): boolean {
   return income.tlm > 0 || income.credits > 0 || income.gems > 0
 }
 
+/**
+ * The lands Claim All takes: only those holding TLM.
+ *
+ * `claimlndrwrd` always sends its TLM total through `alien.worlds`
+ * `transfer`, which refuses a zero quantity — so one land with gems or
+ * credits but no TLM would take the whole batched transaction down with it.
+ */
+export function claimAllTargets<T extends { buildings: Building[] }>(lands: T[]): T[] {
+  return lands.filter((l) => incomeOf(l.buildings).tlm > 0)
+}
+
 export function totalIncome(lands: OwnedLand[]): LandIncome {
   const out: LandIncome = { tlm: 0, credits: 0, gems: 0, shards: 0 }
   for (const l of lands) {

@@ -655,7 +655,30 @@ export function claimLandRewards(
   session: Session,
   params: { planet: string; x: number; y: number },
 ) {
-  const action: ActionInput = {
+  return transact(session, [claimLandAction(session, params)])
+}
+
+/**
+ * Claim several lands in one transaction, one `claimlndrwrd` per land.
+ *
+ * One signature instead of one per land, and all or nothing: if any claim
+ * is refused none of them go through, rather than stopping half way.
+ */
+export function claimAllLandRewards(
+  session: Session,
+  lands: { planet: string; x: number; y: number }[],
+) {
+  return transact(
+    session,
+    lands.map((l) => claimLandAction(session, l)),
+  )
+}
+
+function claimLandAction(
+  session: Session,
+  params: { planet: string; x: number; y: number },
+): ActionInput {
+  return {
     account: CONTRACTS.lands,
     name: 'claimlndrwrd',
     data: {
@@ -665,7 +688,6 @@ export function claimLandRewards(
       y: params.y,
     },
   }
-  return transact(session, [action])
 }
 
 /**

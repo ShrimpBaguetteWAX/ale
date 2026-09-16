@@ -1,1 +1,0 @@
-import{l as a}from"./landId-CCYevdeB.js";import{ao as i}from"./index-BH--qgs4.js";function o(n){if(i(n))return;const t=a(n.x,n.y);if(!(n.last_tavern?.land_id===t&&n.last_tavern.planet===n.planet))return(n.active_taverns??[]).find(e=>e.planet===n.planet&&e.land_id===t)}export{o as u};

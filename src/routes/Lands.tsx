@@ -19,6 +19,7 @@ import {
   boostCost,
   buildOptions,
   buildingLabel,
+  claimAllTargets,
   costPerPercent,
   hasClaimable,
   incomeOf,
@@ -27,6 +28,7 @@ import {
 import {
   boostBuilding,
   buildBuilding,
+  claimAllLandRewards,
   claimLandRewards,
   destroyBuilding,
 } from '@/wharf/actions'
@@ -199,10 +201,7 @@ export default function Lands() {
 
   const selected = lands.find((l) => landKey(l) === selectedKey) ?? null
   const totals = useMemo(() => totalIncome(lands), [lands])
-  const claimable = useMemo(
-    () => lands.filter((l) => hasClaimable(incomeOf(l.buildings))),
-    [lands],
-  )
+  const claimable = useMemo(() => claimAllTargets(lands), [lands])
 
   /* Boosting lifts a building back over the mark. */
   const opts = (action: keyof typeof DIRTIES) => ({
@@ -218,20 +217,16 @@ export default function Lands() {
       opts('claimLandRewards'),
     )
 
-  /* The contract takes one land per action, so claiming everything is a run
-     of actions rather than one batched call. */
+  /* One transaction with a claim per land that holds TLM — one signature,
+     and nothing half done if the wallet or the chain says no. */
   const doClaimAll = () =>
     run(
       'claim-all',
-      async () => {
-        for (const land of claimable) {
-          await claimLandRewards(session!, {
-            planet: land.planet,
-            x: land.x,
-            y: land.y,
-          })
-        }
-      },
+      () =>
+        claimAllLandRewards(
+          session!,
+          claimable.map((land) => ({ planet: land.planet, x: land.x, y: land.y })),
+        ),
       `Claimed from ${claimable.length} land${claimable.length === 1 ? '' : 's'}.`,
       opts('claimLandRewards'),
     )
