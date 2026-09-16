@@ -217,17 +217,46 @@ export default function Lands() {
       opts('claimLandRewards'),
     )
 
-  /* One transaction with a claim per land that holds TLM — one signature,
-     and nothing half done if the wallet or the chain says no. */
+  /*
+     One transaction with a claim per land that holds TLM — one signature,
+     and nothing half done if the wallet or the chain says no.
+
+     Which lands hold TLM is read again from the chain first, not taken from
+     the screen. The rows on screen are cached, and survive a reload: a land
+     claimed a moment ago — elsewhere, or by an earlier attempt that failed
+     part way, which never clears the cache — still shows its TLM there. One
+     such land in the batch sends a zero transfer, and `alien.worlds`
+     refuses the whole transaction with "must transfer positive quantity".
+  */
   const doClaimAll = () =>
     run(
       'claim-all',
-      () =>
-        claimAllLandRewards(
+      async () => {
+        const planets = [...new Set(lands.map((l) => l.planet))]
+        const fresh = await Promise.all(planets.map((p) => fetchPlanetLands(p, true)))
+        const rows = new Map<string, Land>()
+        planets.forEach((p, i) => {
+          for (const row of fresh[i]) rows.set(`${p}:${row.x}:${row.y}`, row)
+        })
+        /* The screen catches up with what was just read, claim or no claim. */
+        void data.reload()
+
+        /* A land missing from the fresh read is left out rather than guessed. */
+        const targets = claimAllTargets(
+          lands.flatMap((l) => {
+            const row = rows.get(landKey(l))
+            return row ? [{ ...l, buildings: row.buildings }] : []
+          }),
+        )
+        if (targets.length === 0) {
+          throw new Error('None of your lands has any TLM to claim right now.')
+        }
+        return claimAllLandRewards(
           session!,
-          claimable.map((land) => ({ planet: land.planet, x: land.x, y: land.y })),
-        ),
-      `Claimed from ${claimable.length} land${claimable.length === 1 ? '' : 's'}.`,
+          targets.map((land) => ({ planet: land.planet, x: land.x, y: land.y })),
+        )
+      },
+      'Land rewards claimed.',
       opts('claimLandRewards'),
     )
 
