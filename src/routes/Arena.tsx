@@ -147,6 +147,24 @@ export default function Arena() {
   const arena = setup.data?.arena
 
   /*
+     The defenders' stored health and damage, by fighter.
+
+     What the cards show is those figures put through the defender's own level
+     and age and then the arena's power, which is four times the stored number
+     on a level 10 fighter — so the grade arrows are given the stored one.
+  */
+  const enemyBase = useMemo(
+    () =>
+      new Map(
+        withNumericIds(arena?.fighters ?? []).map((f) => [
+          f.fighter_id,
+          { health: f.health, damage: f.damage },
+        ]),
+      ),
+    [arena],
+  )
+
+  /*
      The whole crew and weapon catalogue, to name the cards behind the
      opposing NFT fighter. The player's own cards are read through the same
      two catalogues, so this is a cache hit.
@@ -561,10 +579,10 @@ export default function Arena() {
     (f: BattleFighter) =>
       setDetail({
         kind: 'panel',
-        panel: battlePanel(f),
+        panel: battlePanel(f, enemyBase.get(f.fighter_id)),
         template: classes.get(f.classname),
       }),
-    [classes],
+    [classes, enemyBase],
   )
 
   const showCard = useCallback(
@@ -966,10 +984,13 @@ export default function Arena() {
                   preview={() =>
                     f.fighter_id === NFT_FIGHTER_ID
                       ? {
-                          panel: enemyNftPanel(f),
+                          panel: enemyNftPanel(f, enemyBase.get(f.fighter_id)),
                           cards: nftCards(arena?.template_ids ?? [], catalogue.data),
                         }
-                      : { panel: battlePanel(f), template: classes.get(f.classname) }
+                      : {
+                          panel: battlePanel(f, enemyBase.get(f.fighter_id)),
+                          template: classes.get(f.classname),
+                        }
                   }
                 />
               ))}

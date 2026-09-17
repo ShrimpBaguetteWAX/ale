@@ -138,6 +138,24 @@ export default function Dungeon() {
   const enemyTeam = setup.data?.enemyTeam ?? null
 
   /*
+     The defending team's stored health and damage, by fighter.
+
+     `enemyLine` below has the difficulty multiplier and the weather in it,
+     which is right for what the cards show and wrong for what the grade
+     arrows compare — so the figures the row actually holds are kept here.
+  */
+  const enemyBase = useMemo(
+    () =>
+      new Map(
+        (enemyTeam ?? []).map((f) => [
+          f.fighter_id,
+          { health: f.health, damage: f.damage },
+        ]),
+      ),
+    [enemyTeam],
+  )
+
+  /*
      The whole crew and weapon catalogue, to name the cards behind the
      opposing NFT fighter. The player's own cards are read through the same
      two catalogues, so this is a cache hit.
@@ -608,10 +626,10 @@ export default function Dungeon() {
     (f: BattleFighter) =>
       setDetail({
         kind: 'panel',
-        panel: battlePanel(f),
+        panel: battlePanel(f, enemyBase.get(f.fighter_id)),
         template: classes.get(f.classname),
       }),
-    [classes],
+    [classes, enemyBase],
   )
 
   const showCard = useCallback(
@@ -1067,10 +1085,13 @@ export default function Dungeon() {
                   preview={() =>
                     f.fighter_id === NFT_FIGHTER_ID
                       ? {
-                          panel: enemyNftPanel(f),
+                          panel: enemyNftPanel(f, enemyBase.get(f.fighter_id)),
                           cards: nftCards(setup.data?.enemyTemplates ?? [], catalogue.data),
                         }
-                      : { panel: battlePanel(f), template: classes.get(f.classname) }
+                      : {
+                          panel: battlePanel(f, enemyBase.get(f.fighter_id)),
+                          template: classes.get(f.classname),
+                        }
                   }
                 />
               ))}

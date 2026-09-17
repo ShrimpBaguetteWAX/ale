@@ -1085,12 +1085,55 @@
   margin-bottom: var(--sp-2);
 }
 
-/* The filters' bottom line: the fold button, and what it is letting through. */
+/* The filters' bottom line: the fold button, the sort, and what the two are
+   letting through. */
 .filters__foot {
   display: flex;
   align-items: center;
   gap: var(--sp-3);
   flex-wrap: wrap;
+}
+
+/*
+ * On this line the sort reads across rather than stacked, so the row stays
+ * one control tall whether or not the panel below it is open.
+ */
+.filters__foot .field--sort {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex: none;
+}
+
+.filters__foot .field--sort .field__label {
+  white-space: nowrap;
+}
+
+/* The select is the fold buttons twin on this line: same height, same
+   padding, same quiet ground, so the two read as one pair of controls. */
+.filters__foot .field--sort .input {
+  min-width: 190px;
+  min-height: 36px;
+  padding: 0 var(--sp-3);
+  font-size: var(--fs-xs);
+  background: rgb(0 0 0 / 28%);
+  border-color: var(--line-soft);
+}
+
+.filters__foot .field--sort .input:hover {
+  border-color: var(--purple);
+}
+
+/* A phone gives it the rest of the line rather than a fixed width. */
+@media (max-width: 719px) {
+  .filters__foot .field--sort {
+    flex: 1 1 100%;
+  }
+
+  .filters__foot .field--sort .input {
+    min-width: 0;
+    flex: 1;
+  }
 }
 
 /* ---------- NFT cards ---------- */

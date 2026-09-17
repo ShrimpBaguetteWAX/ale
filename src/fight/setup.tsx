@@ -360,24 +360,41 @@ export function nftCards(
  * On chain it carries neither class nor race, so the plain battle panel
  * titled it with nothing, and a level it does not climb.
  */
-export function enemyNftPanel(f: BattleFighter): PanelFighter {
+export function enemyNftPanel(f: BattleFighter, base?: BaseRoll): PanelFighter {
   return {
-    ...battlePanel(f),
+    ...battlePanel(f, base),
     level: undefined,
     title: 'NFT Fighter',
     subtitle: `crew + weapon · ${f.element}`,
   }
 }
 
-export function battlePanel(f: BattleFighter): PanelFighter {
+/**
+ * What an opponent's health and damage were before the fight scaled them.
+ *
+ * Straight off the row they were read from: a dungeon's standing team before
+ * the difficulty multiplier, an arena's defenders before their own level and
+ * age. The class bands describe a roll, so the roll is what the grade arrows
+ * have to be given — grading the fielded figure marked every opponent in
+ * every dungeon exceptional, because at difficulty 10 it is four times the
+ * number the band was drawn around.
+ */
+export interface BaseRoll {
+  health: number
+  damage: number
+}
+
+export function battlePanel(f: BattleFighter, base?: BaseRoll): PanelFighter {
   return {
     classname: f.classname,
     racename: f.racename,
     element: f.element,
     target: f.target,
     level: f.level,
-    health: { min: f.health },
-    damage: { min: f.damage },
+    /* Shown as fought with, graded as rolled — the same split the player's
+       own fighters have had all along (see `rosterPanel`). */
+    health: { min: f.health, grade: base?.health },
+    damage: { min: f.damage, grade: base?.damage },
     taunt: { min: f.taunt },
     attackspeed: { min: f.attackspeed },
     initiative: { min: f.initiative },
@@ -1160,6 +1177,40 @@ export function RosterFilters({
             {open ? '▴' : '▾'}
           </span>
         </button>
+        {/*
+           The sort stays out here rather than inside the panel.
+
+           Which order the grid is in is not a filter — it is how the player
+           reads what is left after filtering, and it is wanted as often with
+           the panel shut as open. Folded away it could only be reached by
+           opening the whole panel and shutting it again.
+        */}
+        {!omit.includes('sort') && (
+          <label className="field field--sort filters__keep">
+            <span className="field__label">Sort by</span>
+            <select
+              className="input"
+              value={filter.sort}
+              onChange={(e) => set({ sort: e.target.value })}
+            >
+              {versus && (
+                <optgroup label="Against this team">
+                  {VERSUS_SORTS.map((s) => (
+                    <option key={s.value} value={s.value}>
+                      {s.label}
+                    </option>
+                  ))}
+                </optgroup>
+              )}
+              {SORTS.map((s) => (
+                <option key={s.value} value={s.value}>
+                  {s.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
+
         {count && (
           <p className="faint picker__count">
             Showing {count.shown} of {count.total}
@@ -1226,32 +1277,6 @@ export function RosterFilters({
               {STATUSES.map((s) => (
                 <option key={s} value={s}>
                   {s}
-                </option>
-              ))}
-            </select>
-          </label>
-        )}
-
-        {!omit.includes('sort') && (
-          <label className="field">
-            <span className="field__label">Sort by</span>
-            <select
-              className="input"
-              value={filter.sort}
-              onChange={(e) => set({ sort: e.target.value })}
-            >
-              {versus && (
-                <optgroup label="Against this team">
-                  {VERSUS_SORTS.map((s) => (
-                    <option key={s.value} value={s.value}>
-                      {s.label}
-                    </option>
-                  ))}
-                </optgroup>
-              )}
-              {SORTS.map((s) => (
-                <option key={s.value} value={s.value}>
-                  {s.label}
                 </option>
               ))}
             </select>
