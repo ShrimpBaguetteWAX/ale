@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useGame } from '@/state/useGame'
 import { landId } from '@/chain/landId'
-import { resolveAssetIds, type CardTemplate } from '@/chain/atomic'
+import { fetchSchemaTemplates, resolveAssetIds, type CardTemplate } from '@/chain/atomic'
 import {
   fetchCrewCards,
   fetchDungeon,
@@ -60,6 +60,8 @@ import {
   FoldingPanel,
   CombatCard,
   DetailSheet,
+  enemyNftPanel,
+  nftCards,
   Elemental,
   FighterGrid,
   WeatherPanel,
@@ -122,6 +124,8 @@ export default function Dungeon() {
         crewCards: cards.crew,
         weaponCards: cards.weapons,
         enemyTeam: withNumericIds(dungeon?.fighters ?? []),
+        /* The crew and weapon the dungeon's own NFT fighter is made of. */
+        enemyTemplates: dungeon?.template_ids ?? [],
       }
     },
     { deps: ['fighters'] },
@@ -132,6 +136,19 @@ export default function Dungeon() {
   /* Whether the card lists have been read at all, as against being empty. */
   const cardsLoaded = !!setup.data
   const enemyTeam = setup.data?.enemyTeam ?? null
+
+  /*
+     The whole crew and weapon catalogue, to name the cards behind the
+     opposing NFT fighter. The player's own cards are read through the same
+     two catalogues, so this is a cache hit.
+  */
+  const catalogue = useChainQuery('card-catalogue', async () => {
+    const [crewTemplates, weaponTemplates] = await Promise.all([
+      fetchSchemaTemplates('crew.worlds'),
+      fetchSchemaTemplates('arms.worlds'),
+    ])
+    return new Map([...crewTemplates, ...weaponTemplates])
+  })
 
   /*
      Everything this screen scales its numbers by, from the store rather than
@@ -871,6 +888,11 @@ export default function Dungeon() {
                     side="mine"
                     abilities={enemies.length ? mySlots[i] : undefined}
                     onOpen={() => showFighter(f)}
+                    marker={f.marker}
+                    preview={() => ({
+                      panel: rosterPanel(f, levelMod, ageDecay),
+                      template: classes.get(f.classname),
+                    })}
                     onRemove={() => toggleFighter(f)}
                   />
                 ) : (
@@ -920,6 +942,10 @@ export default function Dungeon() {
                   art={NFT_FIGHTER_ART}
                   badge="NFT"
                   onOpen={() => setDetail({ kind: 'panel', panel: nftFighter })}
+                  preview={() => ({
+                    panel: nftFighter,
+                    cards: [crew, weapon].filter((c): c is CardTemplate => !!c),
+                  })}
                   /*
                      The sixth comes out the way it went in: it is not a
                      roster fighter, it is the crew and the weapon fused, so
@@ -1038,6 +1064,14 @@ export default function Dungeon() {
                       : undefined
                   }
                   onOpen={() => showEnemy(f)}
+                  preview={() =>
+                    f.fighter_id === NFT_FIGHTER_ID
+                      ? {
+                          panel: enemyNftPanel(f),
+                          cards: nftCards(setup.data?.enemyTemplates ?? [], catalogue.data),
+                        }
+                      : { panel: battlePanel(f), template: classes.get(f.classname) }
+                  }
                 />
               ))}
               {(!enemyTeam || !enemyArtReady) &&

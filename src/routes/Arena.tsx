@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useGame } from '@/state/useGame'
 import { landId } from '@/chain/landId'
-import { resolveAssetIds, type CardTemplate } from '@/chain/atomic'
+import { fetchSchemaTemplates, resolveAssetIds, type CardTemplate } from '@/chain/atomic'
 import { fetchPlanetLands } from '@/chain/queries'
 import {
   fetchCrewCards,
@@ -54,6 +54,8 @@ import {
   FoldingPanel,
   CombatCard,
   DetailSheet,
+  enemyNftPanel,
+  nftCards,
   Elemental,
   FighterGrid,
   WeatherPanel,
@@ -143,6 +145,19 @@ export default function Arena() {
   /* Whether the card lists have been read at all, as against being empty. */
   const cardsLoaded = !!setup.data
   const arena = setup.data?.arena
+
+  /*
+     The whole crew and weapon catalogue, to name the cards behind the
+     opposing NFT fighter. The player's own cards are read through the same
+     two catalogues, so this is a cache hit.
+  */
+  const catalogue = useChainQuery('card-catalogue', async () => {
+    const [crewTemplates, weaponTemplates] = await Promise.all([
+      fetchSchemaTemplates('crew.worlds'),
+      fetchSchemaTemplates('arms.worlds'),
+    ])
+    return new Map([...crewTemplates, ...weaponTemplates])
+  })
   const arenaLoaded = !!setup.data
   const arenaPower = setup.data?.arenaPower ?? ARENA_POWER_FULL
   const tile = setup.data?.tile
@@ -836,6 +851,11 @@ export default function Arena() {
                     side="mine"
                     abilities={enemies.length ? mySlots[i] : undefined}
                     onOpen={() => showFighter(f)}
+                    marker={f.marker}
+                    preview={() => ({
+                      panel: rosterPanel(f, levelMod, ageDecay),
+                      template: classes.get(f.classname),
+                    })}
                     onRemove={() => toggleFighter(f)}
                   />
                 ) : (
@@ -872,6 +892,10 @@ export default function Arena() {
                   art={NFT_FIGHTER_ART}
                   badge="NFT"
                   onOpen={() => setDetail({ kind: 'panel', panel: nftFighter })}
+                  preview={() => ({
+                    panel: nftFighter,
+                    cards: [crew, weapon].filter((c): c is CardTemplate => !!c),
+                  })}
                   /*
                      The sixth comes out the way it went in: it is not a
                      roster fighter, it is the crew and the weapon fused, so
@@ -939,6 +963,14 @@ export default function Arena() {
                   owner={f.gamertag || f.owner}
                   abilities={picked.length ? enemySlots[i] : undefined}
                   onOpen={() => showEnemy(f)}
+                  preview={() =>
+                    f.fighter_id === NFT_FIGHTER_ID
+                      ? {
+                          panel: enemyNftPanel(f),
+                          cards: nftCards(arena?.template_ids ?? [], catalogue.data),
+                        }
+                      : { panel: battlePanel(f), template: classes.get(f.classname) }
+                  }
                 />
               ))}
               {!arenaLoaded &&

@@ -22,7 +22,8 @@ import {
   type TurnEvent,
 } from '@/dungeon/sim'
 import { combatLogCsv } from '@/dungeon/combatLog'
-import { CombatLogSheet } from '@/dungeon/CombatLogSheet'
+import { CombatLogEntries, CombatLogSheet } from '@/dungeon/CombatLogSheet'
+import { usePhone } from '@/components/usePhone'
 import {
   standingAt,
   stateAt,
@@ -268,6 +269,19 @@ function Arena({
   const [speed] = useState<Speed>(1)
   const logRef = useRef<HTMLDivElement>(null)
 
+  /* Which way the fight is drawn: the battlefield unless this device has
+     asked for the classic stage. */
+  const [view, setView] = useState<BattleView>(readView)
+  const phone = usePhone()
+  const chooseView = useCallback((next: BattleView) => {
+    setView(next)
+    try {
+      localStorage.setItem(VIEW_KEY, next)
+    } catch {
+      /* Private mode: the choice lasts until the page is left. */
+    }
+  }, [])
+
   /*
    * Playback is a chain of timeouts rather than an interval: the delay has to
    * change with the speed control mid-fight, and a timeout that reschedules
@@ -502,6 +516,55 @@ function Arena({
     return f.team === 1 ? f.gamertag || playertag || 'You' : f.gamertag || 'AI'
   }
 
+  /* One log, drawn under the classic stage or beside the battlefield. */
+  const combatLog = (
+    <>
+        {/*
+          The running log, in the original's wording: one line per blow with
+          the abilities that fired underneath. Cumulative and self-scrolling,
+          so a player who looks away can catch up.
+        */}
+        {step > 0 && (
+          <div className="combatlog" ref={logRef}>
+            {/*
+              Abilities that fired before the first blow. The chain snapshots
+              the line-ups *before* `prepare_buff` runs, so these are changes
+              a player cannot otherwise see anywhere.
+            */}
+            {replay.openingEffects.length > 0 && (
+              <div className="combatlog__entry">
+                <p className="combatlog__line">
+                  <strong>Before the fight</strong>
+                </p>
+                {replay.openingEffects.map((e, j) => (
+                  <EffectLine key={j} effect={e} nameOf={nameOf} />
+                ))}
+              </div>
+            )}
+            {replay.turns.slice(0, step).map((t, i) => (
+              <div className="combatlog__entry" key={i}>
+                <p className="combatlog__line">
+                  <strong>{i + 1}. </strong>
+                  <strong>
+                    {nameOf(t.attackerUid)} ({ownerOf(t.attackerUid)})
+                  </strong>{' '}
+                  attacked{' '}
+                  <strong>
+                    {nameOf(t.defenderUid)} ({ownerOf(t.defenderUid)})
+                  </strong>{' '}
+                  for <strong>{formatScaled(t.damage)}</strong> damage.
+                  {t.killed && <em className="combatlog__ko"> Knocked out.</em>}
+                </p>
+                {t.effects.map((e, j) => (
+                  <EffectLine key={j} effect={e} nameOf={nameOf} />
+                ))}
+              </div>
+            ))}
+          </div>
+        )}
+    </>
+  )
+
   return (
     <div className="battle">
       <img className="battle__art" src={asset("/assets/background/bg-fight.png")} alt="" />
@@ -540,8 +603,23 @@ function Arena({
             </span>
           </div>
 
+          <div className="viewswitch" role="group" aria-label="Battle view">
+            {(['classic', 'field'] as const).map((v) => (
+              <button
+                type="button"
+                key={v}
+                className={`viewswitch__btn${view === v ? ' viewswitch__btn--on' : ''}`}
+                aria-pressed={view === v}
+                onClick={() => chooseView(v)}
+              >
+                {v === 'classic' ? 'Classic' : 'Battlefield'}
+              </button>
+            ))}
+          </div>
         </header>
 
+        {view === 'classic' ? (
+          <>
         {/*
           Rosters above, the clash below.
 
@@ -647,47 +725,67 @@ function Arena({
           )}
         </div>
 
-        {/*
-          The running log, in the original's wording: one line per blow with
-          the abilities that fired underneath. Cumulative and self-scrolling,
-          so a player who looks away can catch up.
-        */}
-        {step > 0 && (
-          <div className="combatlog" ref={logRef}>
+            {combatLog}
+          </>
+        ) : (
+          /*
+            The battlefield: both teams in formation, every blow played where
+            the fighters stand. The log takes the right-hand column where the
+            screen is wide enough, and sits underneath where it is not.
+          */
+          <div className="bfwrap">
+            <div className="bfmain">
+              {/* On a phone the order sits above the field; on a desktop it is
+                  part of the field, under the team names. */}
+              {phone && (
+                <TurnQueue replay={replay} step={step} speed={speed} playertag={playertag} />
+              )}
+              <Battlefield
+                wide={!phone}
+                queue={
+                  !phone && (
+                    <TurnQueue replay={replay} step={step} speed={speed} playertag={playertag} />
+                  )
+                }
+                team1={team1}
+                team2={team2}
+                state={state}
+                current={current}
+                turn={step}
+                abilityDelta={abilityDelta}
+                standing={standing}
+                nextUp={nextUp}
+                playertag={playertag}
+                enemyLabel={venue === 'arena' ? 'The defenders' : 'The dungeon'}
+              />
+            </div>
+
             {/*
-              Abilities that fired before the first blow. The chain snapshots
-              the line-ups *before* `prepare_buff` runs, so these are changes
-              a player cannot otherwise see anywhere.
+              The live log, in the combat log sheet's own layout, and there
+              from the first frame so the field does not shift when the first
+              blow lands.
             */}
-            {replay.openingEffects.length > 0 && (
-              <div className="combatlog__entry">
-                <p className="combatlog__line">
-                  <strong>Before the fight</strong>
-                </p>
-                {replay.openingEffects.map((e, j) => (
-                  <EffectLine key={j} effect={e} nameOf={nameOf} />
-                ))}
+            <section className="panel clog clog--live" aria-label="Combat log">
+              <header className="clog__head">
+                <div className="clog__heading">
+                  <span className="panel__title">Combat log</span>
+                  <p className="clog__sub">
+                    {step} of {total} blow{total === 1 ? '' : 's'}
+                  </p>
+                </div>
+              </header>
+              <div className="clog__body" ref={logRef}>
+                {step === 0 ? (
+                  <p className="muted clog__waiting">The fight is about to begin.</p>
+                ) : (
+                  <CombatLogEntries
+                    replay={replay}
+                    playertag={playertag}
+                    turns={Array.from({ length: step }, (_, i) => i)}
+                  />
+                )}
               </div>
-            )}
-            {replay.turns.slice(0, step).map((t, i) => (
-              <div className="combatlog__entry" key={i}>
-                <p className="combatlog__line">
-                  <strong>{i + 1}. </strong>
-                  <strong>
-                    {nameOf(t.attackerUid)} ({ownerOf(t.attackerUid)})
-                  </strong>{' '}
-                  attacked{' '}
-                  <strong>
-                    {nameOf(t.defenderUid)} ({ownerOf(t.defenderUid)})
-                  </strong>{' '}
-                  for <strong>{formatScaled(t.damage)}</strong> damage.
-                  {t.killed && <em className="combatlog__ko"> Knocked out.</em>}
-                </p>
-                {t.effects.map((e, j) => (
-                  <EffectLine key={j} effect={e} nameOf={nameOf} />
-                ))}
-              </div>
-            ))}
+            </section>
           </div>
         )}
       </div>
@@ -983,6 +1081,325 @@ function Duelist({
           </span>
           {!dead && <ThreatMark standing={standing} />}
         </div>
+      </div>
+    </div>
+  )
+}
+
+/* ---------- the battlefield view ---------- */
+
+type BattleView = 'classic' | 'field'
+const VIEW_KEY = 'al.battle.view'
+
+function readView(): BattleView {
+  /* The battlefield is the default; the classic stage is what a player
+     switches to, and that choice is what gets remembered. */
+  try {
+    return localStorage.getItem(VIEW_KEY) === 'classic' ? 'classic' : 'field'
+  } catch {
+    return 'field'
+  }
+}
+
+/**
+ * Where each fighter stands, as [x, y] percentages of the field.
+ *
+ * x is measured from the fighter's own edge, so one table serves both sides
+ * mirrored; y is the line the bottom of its plate sits on. Front rank on the
+ * even slots, back rank on the odd, staggered half a row so nobody stands
+ * directly behind anybody else.
+ */
+const FORMATION: [number, number][] = [
+  [36, 47],
+  [15, 35],
+  [36, 73],
+  [15, 61],
+  [36, 98],
+  [15, 87],
+]
+
+/**
+ * The desktop formation: two rows standing on the arena floor, three abreast.
+ *
+ * [x, y, depth]. The front row is on the even slots, the back row on the odd,
+ * and each back fighter stands in the gap between two front ones so no plate
+ * is hidden. Depth shrinks the back row a little, which is what puts the
+ * teams on the ground rather than stacked up the screen.
+ */
+const FORMATION_WIDE: [number, number, number][] = [
+  [15, 95, 1],
+  [8, 72, 0.86],
+  [29, 95, 1],
+  [22, 72, 0.86],
+  [43, 95, 1],
+  [36, 72, 0.86],
+]
+
+/** How far an attacker dashes toward its target, as a share of the gap. */
+const LUNGE_SHARE = 0.55
+
+function Battlefield({
+  team1,
+  team2,
+  state,
+  current,
+  turn,
+  abilityDelta,
+  standing,
+  nextUp,
+  playertag,
+  enemyLabel,
+  wide,
+  queue,
+}: {
+  team1: SimFighter[]
+  team2: SimFighter[]
+  state: Map<string, FighterSnapshot>
+  current: TurnEvent | null
+  turn: number
+  abilityDelta: Map<string, number>
+  standing: Map<string, Standing>
+  nextUp: string | null
+  playertag: string
+  enemyLabel: string
+  /** The desktop layout: fighters on the arena floor, the order inside. */
+  wide: boolean
+  /** The turn order, drawn inside the field. */
+  queue?: React.ReactNode
+}) {
+  const where = new Map<string, [number, number]>()
+  const depth = new Map<string, number>()
+  for (const team of [team1, team2]) {
+    team.forEach((f, i) => {
+      const [x, y, d] = wide
+        ? FORMATION_WIDE[i % FORMATION_WIDE.length]
+        : [...FORMATION[i % FORMATION.length], 1]
+      where.set(f.uid, [f.team === 1 ? x : 100 - x, y])
+      depth.set(f.uid, d)
+    })
+  }
+
+  const from = current ? where.get(current.attackerUid) : undefined
+  const to = current ? where.get(current.defenderUid) : undefined
+  const lunge =
+    from && to
+      ? { dx: (to[0] - from[0]) * LUNGE_SHARE, dy: (to[1] - from[1]) * LUNGE_SHARE }
+      : null
+
+  const alive = (team: SimFighter[]) =>
+    team.filter((f) => (state.get(f.uid)?.health ?? f.start_health) > 0).length
+
+  return (
+    <div
+      className={`bfield${wide ? ' bfield--wide' : ''}`}
+      style={
+        {
+          '--bf-bg': `url('${asset('/assets/background/bg-fight.png')}')`,
+        } as React.CSSProperties
+      }
+    >
+      <div className="bfield__labels">
+        <span className="bfield__label bfield__label--mine">
+          Your team{' '}
+          <span className="mono">
+            {alive(team1)}/{team1.length}
+          </span>
+        </span>
+        {current && (
+          <span className="bfield__attack" key={`atk-${turn}`}>
+            <span className="mono">Attack {turn}</span>
+            {current.element && (
+              <img
+                src={asset(`/assets/icons/elements/${current.element}.png`)}
+                alt={current.element}
+                width={16}
+                height={16}
+              />
+            )}
+            <span className="mono">{current.effectiveness}%</span>
+          </span>
+        )}
+        <span className="bfield__label bfield__label--enemy">
+          {enemyLabel}{' '}
+          <span className="mono">
+            {alive(team2)}/{team2.length}
+          </span>
+        </span>
+      </div>
+
+      {queue && <div className="bfield__queue">{queue}</div>}
+
+      {[...team1, ...team2].map((f) => {
+        const role: 'attacker' | 'defender' | null = !current
+          ? null
+          : current.attackerUid === f.uid
+            ? 'attacker'
+            : current.defenderUid === f.uid
+              ? 'defender'
+              : null
+        return (
+          <FieldUnit
+            key={f.uid}
+            fighter={f}
+            snap={state.get(f.uid)}
+            pos={where.get(f.uid)!}
+            depth={depth.get(f.uid) ?? 1}
+            role={role}
+            turn={turn}
+            attack={current?.damage ?? 0}
+            blocked={current?.blocked ?? 0}
+            killed={!!current?.killed}
+            abilityDelta={abilityDelta.get(f.uid) ?? 0}
+            standing={standing.get(f.uid)}
+            next={nextUp === f.uid}
+            lunge={role === 'attacker' ? lunge : null}
+            owner={
+              f.team === 1 ? f.gamertag || playertag || 'You' : f.gamertag || f.owner || 'AI'
+            }
+          />
+        )
+      })}
+    </div>
+  )
+}
+
+/** One fighter standing on the battlefield. */
+function FieldUnit({
+  fighter,
+  snap,
+  pos,
+  depth,
+  role,
+  turn,
+  attack,
+  blocked,
+  killed,
+  abilityDelta,
+  standing,
+  next,
+  lunge,
+  owner,
+}: {
+  fighter: SimFighter
+  snap: FighterSnapshot | undefined
+  pos: [number, number]
+  /** Smaller further back, so the rows read as standing on one floor. */
+  depth: number
+  role: 'attacker' | 'defender' | null
+  turn: number
+  attack: number
+  blocked: number
+  killed: boolean
+  abilityDelta: number
+  standing: Standing | undefined
+  next: boolean
+  lunge: { dx: number; dy: number } | null
+  owner: string
+}) {
+  const health = snap?.health ?? fighter.start_health
+  const maxHealth = snap?.max_health ?? fighter.max_health
+  const dead = health <= 0
+  const pct = maxHealth > 0 ? Math.max(0, (health / maxHealth) * 100) : 0
+  const band = pct > 50 ? 'high' : pct > 25 ? 'mid' : 'low'
+  const side = fighter.team === 1 ? 'mine' : 'enemy'
+  const nft = Number(fighter.fighter_id) === NFT_FIGHTER_ID
+  const name = nft ? 'NFT Fighter' : fighter.classname || fighter.racename || 'Fighter'
+
+  return (
+    <div
+      className={
+        `bunit bunit--${side}` +
+        (role ? ` bunit--${role}` : '') +
+        (dead ? ' bunit--dead' : '') +
+        (next && !dead ? ' bunit--next' : '')
+      }
+      style={
+        {
+          left: `${pos[0]}%`,
+          top: `${pos[1]}%`,
+          /* Nearer the bottom is nearer the viewer; the two fighters in the
+             blow go over everyone so the dash and the numbers are never
+             hidden behind a neighbour. */
+          zIndex: role === 'attacker' ? 300 : role === 'defender' ? 250 : Math.round(pos[1]),
+          '--depth': depth,
+          ...(lunge ? { '--dx': lunge.dx, '--dy': lunge.dy } : {}),
+        } as React.CSSProperties
+      }
+      title={`${name} (${owner}) — ${formatScaled(health)}/${formatScaled(maxHealth)}`}
+    >
+      <div className="bunit__figure">
+        <span className="bunit__platform" aria-hidden="true" />
+        {/* Keyed by the blow, so a fighter that swings twice in a row swings
+            twice on screen. */}
+        <span className="bunit__body" key={role ? `${role}-${turn}` : 'idle'}>
+          {dead ? (
+            <img
+              className="bunit__art bunit__art--dead"
+              src={asset('/assets/fighter/dead.png')}
+              alt="Defeated"
+            />
+          ) : (
+            <GameImg
+              className="bunit__art"
+              /* The NFT fighter's full body is the game's unknown fighter —
+                 the same hooded figure as its portrait, and the art the
+                 classic stage has always shown for it mid-fight. */
+              src={
+                nft
+                  ? fighterArtFallback()
+                  : fighterArt({ classname: fighter.classname, racename: fighter.racename })
+              }
+              alt={name}
+              fallback={fighterArtFallback()}
+            />
+          )}
+          {role === 'defender' && <span className="bunit__flash" />}
+        </span>
+
+        {role === 'defender' && attack > 0 && (
+          <span
+            className={`dmgnum dmgnum--${killed ? 'ko' : band === 'low' ? 'strong' : 'hit'}`}
+            key={`dmg-${turn}`}
+          >
+            {formatScaled(attack)}
+          </span>
+        )}
+        {role === 'defender' && blocked > 0 && (
+          <span className="blocknum" key={`blk-${turn}`}>
+            −{formatScaled(blocked)} blocked
+          </span>
+        )}
+        {abilityDelta !== 0 && (
+          <span
+            className={`effectpill effectpill--${abilityDelta > 0 ? 'heal' : 'damage'}`}
+            key={`fx-${turn}`}
+          >
+            {abilityDelta > 0 ? '+' : ''}
+            {formatScaled(abilityDelta)}
+          </span>
+        )}
+        {killed && role === 'defender' && (
+          <span className="duelist__ko" key={`ko-${turn}`}>
+            K.O.
+          </span>
+        )}
+      </div>
+
+      <span className="hpbar bunit__hp" data-band={band}>
+        <span className="hpbar__trail" style={{ width: `${pct}%` }} />
+        <span className="hpbar__fill" style={{ width: `${pct}%` }} />
+      </span>
+
+      <div className="bunit__plate">
+        {fighter.element && (
+          <img
+            className="bunit__element"
+            src={asset(`/assets/icons/elements/${fighter.element}.png`)}
+            alt={fighter.element}
+          />
+        )}
+        <span className="bunit__lv">{nft ? 'NFT' : `Lv.${fighter.level}`}</span>
+        {!dead && <ThreatMark standing={standing} />}
       </div>
     </div>
   )

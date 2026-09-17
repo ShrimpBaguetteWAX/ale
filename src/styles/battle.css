@@ -2434,3 +2434,512 @@
 .clog__name {
   text-transform: capitalize;
 }
+
+/* ---------- view switch ---------- */
+
+/* Classic or Battlefield, at the end of the fight bar. */
+.viewswitch {
+  display: inline-flex;
+  padding: 2px;
+  background: rgb(0 0 0 / 40%);
+  border: 1px solid var(--line-soft);
+  border-radius: 999px;
+}
+
+.viewswitch__btn {
+  padding: 4px 12px;
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-bold);
+  color: var(--text-dim);
+  background: none;
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.viewswitch__btn--on {
+  color: var(--white);
+  background: rgb(145 54 188 / 75%);
+}
+
+/* ---------- battlefield view ---------- */
+
+/*
+ * Both teams in formation on one field, every blow played where the fighters
+ * stand. The field is a size container: fighters, platforms and numbers are
+ * all sized in container units, so the same formation holds from a phone to
+ * a wide desktop without a second layout.
+ */
+.bfwrap {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+.bfmain {
+  display: grid;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+/* The live log: the combat log sheet's layout, as a panel rather than a
+   dialog. Under the field it keeps to a readable height. */
+.clog.clog--live {
+  width: auto;
+  max-height: 340px;
+  align-content: start;
+}
+
+.clog__waiting {
+  margin: 0;
+  padding: var(--sp-2);
+  font-size: var(--fs-sm);
+}
+
+/* A wide desktop has the room for the log beside the field rather than
+   under it. Zero height and a full minimum lets the field decide the row's
+   height, and the log scrolls within it. */
+@media (min-width: 1280px) {
+  .bfwrap {
+    grid-template-columns: minmax(0, 1fr) 360px;
+    align-items: stretch;
+  }
+
+  .bfwrap > .clog--live {
+    height: 0;
+    min-height: 100%;
+    max-height: none;
+  }
+}
+
+.bfield {
+  /* The same three beats as the classic stage, so the numbers and bars
+     land together. Keep --impact equal to IMPACT_MS in Battle.tsx. */
+  --callout: calc(400ms * var(--beat));
+  --impact: calc(580ms * var(--beat));
+  /* Field height over width, for turning a vertical distance into cqw. */
+  --ratio: 0.7;
+  --unit: 10.5cqw;
+
+  position: relative;
+  /* The field is the container its fighters are sized against, so capping
+     its width below keeps everything in proportion. */
+  container-type: inline-size;
+  aspect-ratio: 1 / 0.7;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background:
+    radial-gradient(70% 55% at 50% 64%, rgb(70 44 110 / 42%), rgb(4 8 20 / 0%) 72%),
+    linear-gradient(180deg, rgb(6 10 24 / 55%), rgb(3 6 16 / 82%));
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+/* The line down the middle the two sides face each other across. */
+.bfield::before {
+  content: '';
+  position: absolute;
+  top: 12%;
+  bottom: 4%;
+  left: 50%;
+  width: 1px;
+  background: linear-gradient(
+    180deg,
+    transparent,
+    rgb(255 255 255 / 10%) 30%,
+    rgb(255 255 255 / 10%) 70%,
+    transparent
+  );
+  pointer-events: none;
+}
+
+.bfield__labels {
+  position: absolute;
+  top: 10px;
+  left: 14px;
+  right: 14px;
+  z-index: 400;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  pointer-events: none;
+}
+
+.bfield__label {
+  font-family: var(--font-display);
+  font-size: var(--fs-sm);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.bfield__label .mono {
+  margin-left: 4px;
+  color: var(--text-dim);
+  letter-spacing: 0;
+}
+.bfield__label--mine {
+  color: var(--cyan);
+}
+.bfield__label--enemy {
+  color: var(--red);
+}
+
+.bfield__attack {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  font-size: var(--fs-xs);
+  color: var(--white);
+  background: rgb(0 0 0 / 55%);
+  border: 1px solid var(--line-soft);
+  border-radius: 999px;
+  animation: bfield-attack-in calc(300ms * var(--beat)) ease-out both;
+}
+@keyframes bfield-attack-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ---------- one fighter ---------- */
+
+.bunit {
+  --plat-core: rgb(150 90 255 / 55%);
+  --plat-ring: rgb(169 112 255 / 90%);
+  --kick: -9px;
+
+  position: absolute;
+  width: var(--unit);
+  translate: -50% -100%;
+  /* Scaled about its feet, so a fighter further back shrinks where it stands. */
+  transform-origin: 50% 100%;
+  scale: var(--depth, 1);
+  display: grid;
+  justify-items: center;
+  gap: 3px;
+}
+
+.bunit--enemy {
+  --plat-core: rgb(255 190 40 / 50%);
+  --plat-ring: rgb(246 168 0 / 95%);
+  --kick: 9px;
+}
+
+.bunit__figure {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 357 / 512;
+}
+
+/* The disc the fighter stands on, in its team's colour. */
+.bunit__platform {
+  position: absolute;
+  left: 50%;
+  bottom: -5%;
+  width: 112%;
+  height: 15%;
+  translate: -50% 0;
+  border: 2px solid var(--plat-ring);
+  border-radius: 50%;
+  background: radial-gradient(closest-side, var(--plat-core), rgb(0 0 0 / 0%));
+  box-shadow: 0 0 14px rgb(0 0 0 / 55%);
+  transition:
+    box-shadow calc(300ms * var(--beat)),
+    border-color calc(300ms * var(--beat));
+}
+
+.bunit__body {
+  position: absolute;
+  inset: 0;
+  display: block;
+}
+
+.bunit__art {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: bottom;
+  filter: drop-shadow(0 6px 8px rgb(0 0 0 / 60%));
+}
+
+/* The defenders face the other way, towards the player's side. */
+.bunit--enemy .bunit__art {
+  transform: scaleX(-1);
+}
+
+.bunit__art--dead {
+  inset: auto 14% 4% 14%;
+  width: 72%;
+  height: auto;
+  opacity: 0.85;
+}
+.bunit--enemy .bunit__art--dead {
+  transform: none;
+}
+
+.bunit--dead .bunit__platform {
+  opacity: 0.35;
+  filter: grayscale(1);
+}
+.bunit--dead .bunit__hp,
+.bunit--dead .bunit__plate {
+  opacity: 0.45;
+}
+
+/* Who swings next: its disc breathes. */
+.bunit--next .bunit__platform {
+  animation: bunit-next 1.1s ease-in-out infinite;
+}
+@keyframes bunit-next {
+  50% {
+    box-shadow:
+      0 0 14px rgb(0 0 0 / 55%),
+      0 0 16px var(--plat-ring);
+  }
+}
+
+/* The two in the blow: warm for the swing, hot red for the one taking it. */
+.bunit--attacker .bunit__platform {
+  border-color: rgb(255 196 90);
+  box-shadow: 0 0 22px rgb(255 150 30 / 70%);
+}
+.bunit--defender .bunit__platform {
+  border-color: rgb(255 90 110);
+  box-shadow: 0 0 22px rgb(255 50 70 / 65%);
+}
+
+.bunit--attacker .bunit__art {
+  filter: drop-shadow(0 6px 8px rgb(0 0 0 / 60%)) drop-shadow(0 0 6px rgb(255 190 90 / 70%));
+}
+
+/*
+ * The dash. --dx and --dy are the share of the gap to the target, in percent
+ * of the field's width and height; height turns into width units through
+ * --ratio, so the attacker heads for where its target actually stands.
+ */
+.bunit--attacker .bunit__body {
+  animation: bunit-lunge calc(560ms * var(--beat)) cubic-bezier(0.34, 1.2, 0.5, 1)
+    var(--callout) both;
+}
+@keyframes bunit-lunge {
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+  22% {
+    transform: translate(
+        calc(var(--dx, 0) * -0.12cqw),
+        calc(var(--dy, 0) * var(--ratio) * -0.12cqw)
+      )
+      scale(0.97);
+  }
+  46% {
+    transform: translate(
+        calc(var(--dx, 0) * 1cqw),
+        calc(var(--dy, 0) * var(--ratio) * 1cqw)
+      )
+      scale(1.08);
+  }
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+}
+
+/* Knocked back, away from the middle, on contact. */
+.bunit--defender .bunit__body {
+  animation: bunit-recoil calc(520ms * var(--beat)) cubic-bezier(0.2, 0.9, 0.3, 1)
+    var(--impact) both;
+}
+@keyframes bunit-recoil {
+  0% {
+    transform: translateX(0) rotate(0deg) scale(1);
+  }
+  16% {
+    transform: translateX(var(--kick)) rotate(3deg) scale(0.94);
+  }
+  40% {
+    transform: translateX(calc(var(--kick) * -0.3)) rotate(-2deg) scale(0.98);
+  }
+  100% {
+    transform: translateX(0) rotate(0deg) scale(1);
+  }
+}
+
+.bunit__flash {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    50% 40% at 50% 55%,
+    rgb(255 255 255 / 90%),
+    rgb(255 255 255 / 0%) 70%
+  );
+  animation: flash calc(320ms * var(--beat)) ease-out var(--impact) both;
+}
+
+/* ---------- health and plate ---------- */
+
+.bunit__hp.hpbar {
+  width: 94%;
+  height: clamp(5px, 0.7cqw, 8px);
+  margin-top: 4px;
+}
+
+.bunit__plate {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px 2px 2px;
+  font-size: clamp(10px, 1.25cqw, 14px);
+  white-space: nowrap;
+  background: rgb(10 14 26 / 85%);
+  border: 1px solid rgb(255 255 255 / 12%);
+  border-radius: 999px;
+}
+
+.bunit__element {
+  width: clamp(13px, 1.8cqw, 22px);
+  height: clamp(13px, 1.8cqw, 22px);
+  padding: 2px;
+  object-fit: contain;
+  background: rgb(0 0 0 / 55%);
+  border-radius: 50%;
+}
+
+.bunit__lv {
+  font-family: var(--font-display);
+  font-weight: var(--fw-bold);
+  color: var(--white);
+}
+
+.bunit__plate .threat {
+  position: static;
+  width: clamp(12px, 1.5cqw, 16px);
+  height: clamp(12px, 1.5cqw, 16px);
+}
+
+/* ---------- numbers, sized to the fighter ---------- */
+
+.bunit .dmgnum {
+  top: -4%;
+  font-size: clamp(18px, 3.4cqw, 42px);
+}
+.bunit .dmgnum--strong {
+  font-size: clamp(20px, 3.8cqw, 46px);
+}
+.bunit .dmgnum--ko {
+  font-size: clamp(22px, 4.4cqw, 52px);
+}
+
+.bunit .blocknum {
+  top: 24%;
+  font-size: clamp(10px, 1.1cqw, 12px);
+}
+
+.bunit .effectpill {
+  top: -14%;
+  padding: 2px 8px;
+  font-size: clamp(10px, 1.1cqw, 13px);
+}
+
+.bunit .duelist__ko {
+  top: 48%;
+  padding: 3px 8px;
+  font-size: clamp(12px, 2cqw, 22px);
+}
+
+/* ---------- phone ---------- */
+
+/* Taller than wide on a phone, so the ranks have room to breathe and the
+   fighters are not reduced to thumbnails. */
+@media (max-width: 719px) {
+  .bfield {
+    --ratio: 1.2;
+    --unit: 13cqw;
+    aspect-ratio: 1 / 1.2;
+  }
+
+  .bfield__labels {
+    top: 8px;
+    left: 8px;
+    right: 8px;
+  }
+
+  .bfield__label {
+    font-size: 10px;
+  }
+
+  .bfield__attack {
+    padding: 2px 6px;
+    font-size: 10px;
+  }
+}
+
+:root[data-fx='low'] .bunit__flash {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bunit__body,
+  .bunit--next .bunit__platform {
+    animation: none !important;
+  }
+}
+
+/* ---------- battlefield, desktop ---------- */
+
+/*
+ * On a desktop the field is the arena itself: the fight artwork behind it,
+ * and both teams standing on its floor in two rows instead of spread up the
+ * whole height of the frame. The turn order hangs under the team names,
+ * inside the frame.
+ */
+.bfield--wide {
+  --ratio: 0.5625;
+  --unit: 9.5cqw;
+
+  justify-self: center;
+  width: min(100%, calc((100dvh - 150px) * 16 / 9));
+  aspect-ratio: 16 / 9;
+  background:
+    linear-gradient(
+      180deg,
+      rgb(4 8 20 / 72%) 0%,
+      rgb(4 8 20 / 30%) 24%,
+      rgb(4 8 20 / 0%) 50%,
+      rgb(4 8 20 / 0%) 80%,
+      rgb(4 8 20 / 35%) 100%
+    ),
+    var(--bf-bg) center 60% / cover no-repeat;
+}
+
+/* The centre line belonged to the empty field; on the floor it is a scratch. */
+.bfield--wide::before {
+  display: none;
+}
+
+:root[data-fx='low'] .bfield--wide {
+  background: linear-gradient(180deg, rgb(6 10 24 / 55%), rgb(3 6 16 / 82%));
+}
+
+.bfield__queue {
+  position: absolute;
+  top: 38px;
+  left: 0;
+  right: 0;
+  z-index: 390;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.bfield__queue .turnq {
+  margin: 0;
+}

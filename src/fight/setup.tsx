@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { CardTemplate } from '@/chain/atomic'
-import { FighterPanel, type PanelFighter } from '@/components/FighterPanel'
+import { FighterHoverCard, FighterPanel, type PanelFighter } from '@/components/FighterPanel'
+import { HoverPopover, canFineHover } from '@/components/HoverPopover'
 import { fighterAvailable } from '@/dungeon/rules'
 import { ageBand, ageBonus, ageDays, ageNote } from '@/fighters/rules'
 import { ageFactor, levelFactor } from '@/fight/scaling'
@@ -335,6 +336,39 @@ export function rosterPanel(
   }
 }
 
+/**
+ * The crew and weapon templates behind an NFT fighter, crew first.
+ *
+ * A dungeon or arena row keeps them in `template_ids`; the catalogue names
+ * them. Anything the catalogue does not know is left out rather than shown
+ * as a bare number.
+ */
+export function nftCards(
+  ids: readonly (number | string)[],
+  catalogue: Map<number, CardTemplate> | undefined,
+): CardTemplate[] {
+  if (!catalogue) return []
+  return ids
+    .map((id) => catalogue.get(Number(id)))
+    .filter((c): c is CardTemplate => !!c)
+    .sort((a, b) => Number(b.schema === 'crew.worlds') - Number(a.schema === 'crew.worlds'))
+}
+
+/**
+ * A standing NFT fighter, read the way your own is: named, and with no level.
+ *
+ * On chain it carries neither class nor race, so the plain battle panel
+ * titled it with nothing, and a level it does not climb.
+ */
+export function enemyNftPanel(f: BattleFighter): PanelFighter {
+  return {
+    ...battlePanel(f),
+    level: undefined,
+    title: 'NFT Fighter',
+    subtitle: `crew + weapon · ${f.element}`,
+  }
+}
+
 export function battlePanel(f: BattleFighter): PanelFighter {
   return {
     classname: f.classname,
@@ -583,6 +617,9 @@ export function Elemental({
   )
 }
 
+/** How long the pointer rests on a card before its stats open beside it. */
+const HOVER_DELAY_MS = 150
+
 /**
  * One fighter on the versus screen.
  *
@@ -607,6 +644,8 @@ export function CombatCard({
   onOpen,
   onRemove,
   dormant,
+  preview,
+  marker,
 }: {
   element: string
   classname: string
@@ -657,6 +696,21 @@ export function CombatCard({
    * greyed with the reason on it instead.
    */
   dormant?: string
+  /**
+   * The fighter's full read, shown beside the card while it is hovered.
+   *
+   * A function so it is only built when a pointer actually rests on the
+   * card. Desktop with a mouse only; the click still opens the sheet.
+   */
+  preview?: () => { panel: PanelFighter; template?: ClassTemplate; cards?: CardTemplate[] }
+  /**
+   * The player's own marker on this fighter, beside the element mark.
+   *
+   * Only ever passed for the player's side — an opponent's markers are their
+   * private labels — and only drawn on a desktop, where the card has the
+   * width for a second badge in that corner.
+   */
+  marker?: string
 }) {
   /*
      On a phone the ability counts move out from under the card and sit
@@ -710,8 +764,63 @@ export function CombatCard({
     </span>
   )
 
+  /*
+     The hover read. Opens after a short rest so sweeping the pointer along
+     the line-up does not flicker through six popovers, and closes the moment
+     the pointer leaves the card — or the page scrolls out from under it.
+  */
+  const slot = useRef<HTMLDivElement>(null)
+  const hoverTimer = useRef<number | undefined>(undefined)
+  const [hover, setHover] = useState<{
+    rect: DOMRect
+    panel: PanelFighter
+    template?: ClassTemplate
+    cards?: CardTemplate[]
+  } | null>(null)
+  const hoverable = !!preview && !phone
+
+  const closeHover = () => {
+    window.clearTimeout(hoverTimer.current)
+    setHover(null)
+  }
+  const openHover = () => {
+    if (!hoverable || !canFineHover()) return
+    window.clearTimeout(hoverTimer.current)
+    hoverTimer.current = window.setTimeout(() => {
+      const el = slot.current
+      if (!el || !preview) return
+      setHover({ rect: el.getBoundingClientRect(), ...preview() })
+    }, HOVER_DELAY_MS)
+  }
+
+  useEffect(() => {
+    if (!hover) return
+    const close = () => setHover(null)
+    window.addEventListener('scroll', close, true)
+    window.addEventListener('resize', close)
+    return () => {
+      window.removeEventListener('scroll', close, true)
+      window.removeEventListener('resize', close)
+    }
+  }, [hover])
+  useEffect(() => () => window.clearTimeout(hoverTimer.current), [])
+
   return (
-    <div className="combatslot">
+    <div
+      className="combatslot"
+      ref={slot}
+      onMouseEnter={openHover}
+      onMouseLeave={closeHover}
+    >
+      {hover && (
+        <HoverPopover anchor={hover.rect}>
+          <FighterHoverCard
+            fighter={hover.panel}
+            template={hover.template}
+            cards={hover.cards}
+          />
+        </HoverPopover>
+      )}
       {/*
         The elemental backdrop sits on the skewed card itself, not on the
         content inside it. The content is counter-skewed to keep the art
@@ -726,8 +835,13 @@ export function CombatCard({
       <button
         type="button"
         className="combatcard__hit"
-        onClick={onOpen}
-        title={`${classname} — details`}
+        onClick={() => {
+          closeHover()
+          onOpen()
+        }}
+        /* The native tooltip would sit on top of the hover read. */
+        title={hoverable ? undefined : `${classname} — details`}
+        aria-label={`${classname} — details`}
       >
         <span className="combatcard__art">
           <GameImg
@@ -745,6 +859,16 @@ export function CombatCard({
               title={element}
               width={20}
               height={20}
+            />
+          )}
+          {!!marker && !phone && (
+            <img
+              className="combatcard__marker"
+              src={markerIcon(marker)}
+              alt={`Marked ${marker}`}
+              title={`Marked ${marker}`}
+              width={18}
+              height={18}
             />
           )}
           {badge && <span className="combatcard__badge">{badge}</span>}

@@ -3701,3 +3701,137 @@ button.combatcard--empty:hover {
   margin-left: 4px;
   vertical-align: -2px;
 }
+
+/* ---------- hover read ---------- */
+
+/*
+ * A fighter's stats beside its card on the versus screen, on hover.
+ *
+ * Wide and short on purpose: main stats and resistances side by side, the
+ * abilities in two columns under them, and no portrait — the card being
+ * hovered is the portrait. Never a pointer target, so it cannot steal the
+ * hover from the card and close itself.
+ */
+.hoverpop {
+  position: fixed;
+  z-index: var(--z-modal);
+  pointer-events: none;
+}
+
+.fhover {
+  width: min(600px, calc(100vw - 32px));
+  padding: var(--sp-3) var(--sp-4);
+  background: linear-gradient(180deg, rgb(20 20 35 / 97%), rgb(9 12 26 / 98%));
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 12px 32px rgb(0 0 0 / 60%);
+}
+
+.fhover__head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding-bottom: var(--sp-2);
+  border-bottom: 1px solid var(--line-soft);
+}
+.fhover__name {
+  font-family: var(--font-display);
+  font-size: var(--fs-md);
+  font-weight: var(--fw-bold);
+  color: var(--white);
+  text-transform: capitalize;
+}
+.fhover__meta {
+  font-size: var(--fs-sm);
+  color: var(--text-dim);
+  text-transform: capitalize;
+}
+.fhover__age {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+  padding: 3px var(--sp-2);
+  border-radius: var(--radius-sm);
+  background: rgb(255 255 255 / 6%);
+  white-space: nowrap;
+}
+
+.fhover__cols {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: var(--sp-5);
+}
+.fhover .statline {
+  padding: 5px 0;
+}
+
+.fhover .abilities {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-1) var(--sp-2);
+  margin-top: var(--sp-2);
+}
+.fhover .ability {
+  padding: 4px var(--sp-2);
+}
+.fhover .ability__desc {
+  font-size: var(--fs-xs);
+}
+
+/* An NFT fighter's two cards, under its name: what it is made of. */
+.fhover__cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-2);
+  margin-top: var(--sp-2);
+}
+.fhover__card {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+  padding: 4px var(--sp-2) 4px 4px;
+  background: rgb(0 0 0 / 35%);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-xs);
+}
+.fhover__card img {
+  flex: none;
+  width: 34px;
+  height: 48px;
+  object-fit: cover;
+  border-radius: 3px;
+}
+.fhover__cardText {
+  display: grid;
+  min-width: 0;
+}
+.fhover__cardName {
+  overflow: hidden;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-bold);
+  color: var(--white);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.fhover__cardMeta {
+  font-size: var(--fs-xs);
+  color: var(--text-dim);
+  text-transform: capitalize;
+}
+
+/*
+ * The player's marker on their own line-up card, just right of the element
+ * mark and drawn the same way: same size, same dark disc, same top edge.
+ * Desktop only — the component does not render it on a phone.
+ */
+.combatcard__marker {
+  position: absolute;
+  top: 6px;
+  left: calc(20% + 24px);
+  width: 18px;
+  height: 18px;
+  padding: 2px;
+  object-fit: contain;
+  background: rgb(5 16 30 / 80%);
+  border-radius: 50%;
+}

@@ -57,20 +57,22 @@ function Effect({
   )
 }
 
-export function CombatLogSheet({
+/**
+ * The blows of a fight, written out the way the combat log sheet reads.
+ *
+ * Shared by the sheet at the end of a fight and the live log beside the
+ * battlefield, so the two can never drift into saying the same thing two
+ * different ways. `turns` is which blows to write, by index.
+ */
+export function CombatLogEntries({
   replay,
   playertag,
-  onClose,
-  onDownload,
+  turns,
 }: {
   replay: Replay
   playertag?: string
-  onClose: () => void
-  onDownload: () => void
+  turns: number[]
 }) {
-  /* Escape closes it, like every other overlay in the game. */
-  const panel = useModal(onClose)
-
   const byUid = useMemo(
     () => new Map(replay.fighters.map((f) => [f.uid, f])),
     [replay],
@@ -96,72 +98,8 @@ export function CombatLogSheet({
     return f.team === 1 ? f.gamertag || playertag || 'You' : f.gamertag || 'AI'
   }
 
-  /*
-     Blows only, or blows that did something besides damage.
-
-     A long fight is a hundred lines of "hit for 41", and the turns worth
-     re-reading are almost always the ones where an ability fired or somebody
-     went down. This is the one control the sheet needs.
-  */
-  const [notableOnly, setNotableOnly] = useState(false)
-  const notable = (i: number) =>
-    replay.turns[i].effects.length > 0 || replay.turns[i].killed
-
-  const shown = replay.turns
-    .map((t, i) => ({ t, i }))
-    .filter(({ i }) => !notableOnly || notable(i))
-
   return (
-    <div
-      className="sheet"
-      role="dialog"
-      aria-modal="true"
-      aria-label="Combat log"
-      onClick={onClose}
-    >
-      <div
-        className="sheet__panel panel clog"
-        ref={panel}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <header className="clog__head">
-          <div className="clog__heading">
-            <span className="panel__title">Combat log</span>
-            <p className="clog__sub">
-              {replay.turns.length} blow{replay.turns.length === 1 ? '' : 's'}
-              {replay.winner === 1
-                ? ' · you won'
-                : replay.winner === 2
-                  ? ' · you lost'
-                  : ' · a draw'}
-            </p>
-          </div>
-
-          <div className="clog__tools">
-            <button
-              type="button"
-              className={`btn btn--sm ${notableOnly ? 'btn--primary' : 'btn--ghost'}`}
-              aria-pressed={notableOnly}
-              onClick={() => setNotableOnly((v) => !v)}
-              title="Only the blows where an ability fired or a fighter went down"
-            >
-              Key moments
-            </button>
-            <button
-              type="button"
-              className="btn btn--ghost btn--sm"
-              onClick={onDownload}
-              title="The raw per-turn figures, as the original exports them"
-            >
-              Download CSV
-            </button>
-            <button type="button" className="btn btn--ghost btn--sm" onClick={onClose}>
-              Close
-            </button>
-          </div>
-        </header>
-
-        <div className="clog__body">
+    <>
           {/*
             Abilities that fired before anybody swung. The chain snapshots the
             line-ups before `prepare_buff` runs, so these changes are visible
@@ -181,7 +119,7 @@ export function CombatLogSheet({
             </article>
           )}
 
-          {shown.map(({ t, i }) => (
+          {turns.map((i) => ({ t: replay.turns[i], i })).map(({ t, i }) => (
             <article
               className={
                 'clog__turn' +
@@ -281,6 +219,96 @@ export function CombatLogSheet({
               </div>
             </article>
           ))}
+
+    </>
+  )
+}
+
+export function CombatLogSheet({
+  replay,
+  playertag,
+  onClose,
+  onDownload,
+}: {
+  replay: Replay
+  playertag?: string
+  onClose: () => void
+  onDownload: () => void
+}) {
+  /* Escape closes it, like every other overlay in the game. */
+  const panel = useModal(onClose)
+
+  /*
+     Blows only, or blows that did something besides damage.
+
+     A long fight is a hundred lines of "hit for 41", and the turns worth
+     re-reading are almost always the ones where an ability fired or somebody
+     went down. This is the one control the sheet needs.
+  */
+  const [notableOnly, setNotableOnly] = useState(false)
+  const notable = (i: number) =>
+    replay.turns[i].effects.length > 0 || replay.turns[i].killed
+
+  const shown = replay.turns
+    .map((t, i) => ({ t, i }))
+    .filter(({ i }) => !notableOnly || notable(i))
+
+  return (
+    <div
+      className="sheet"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Combat log"
+      onClick={onClose}
+    >
+      <div
+        className="sheet__panel panel clog"
+        ref={panel}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <header className="clog__head">
+          <div className="clog__heading">
+            <span className="panel__title">Combat log</span>
+            <p className="clog__sub">
+              {replay.turns.length} blow{replay.turns.length === 1 ? '' : 's'}
+              {replay.winner === 1
+                ? ' · you won'
+                : replay.winner === 2
+                  ? ' · you lost'
+                  : ' · a draw'}
+            </p>
+          </div>
+
+          <div className="clog__tools">
+            <button
+              type="button"
+              className={`btn btn--sm ${notableOnly ? 'btn--primary' : 'btn--ghost'}`}
+              aria-pressed={notableOnly}
+              onClick={() => setNotableOnly((v) => !v)}
+              title="Only the blows where an ability fired or a fighter went down"
+            >
+              Key moments
+            </button>
+            <button
+              type="button"
+              className="btn btn--ghost btn--sm"
+              onClick={onDownload}
+              title="The raw per-turn figures, as the original exports them"
+            >
+              Download CSV
+            </button>
+            <button type="button" className="btn btn--ghost btn--sm" onClick={onClose}>
+              Close
+            </button>
+          </div>
+        </header>
+
+        <div className="clog__body">
+          <CombatLogEntries
+            replay={replay}
+            playertag={playertag}
+            turns={shown.map(({ i }) => i)}
+          />
 
           {shown.length === 0 && (
             <p className="muted">

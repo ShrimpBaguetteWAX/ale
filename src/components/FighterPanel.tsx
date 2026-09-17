@@ -1,4 +1,5 @@
 import type { BattleAbility } from '@/dungeon/types'
+import type { CardTemplate } from '@/chain/atomic'
 import type { ClassTemplate } from '@/tavern/fighterStats'
 import {
   GRADE_ICON,
@@ -317,44 +318,146 @@ export function FighterPanel({
       <FighterStats fighter={fighter} template={template} resistances={!compact} />
 
       {!compact && fighter.abilities.length > 0 && (
-        <div className="abilities">
-          {fighter.abilities.map((a, i) => {
-            const rarity = abilityRarity(a.displayname)
-            /*
-             * A locked ability does nothing in a fight. Every fighter rolls
-             * with its last one locked until ascension, so showing it
-             * alongside the working ones with no distinction overstates what
-             * the fighter can currently do — and it is exactly the row a
-             * player would otherwise pick a team on.
-             */
-            const locked = !!a.locked
+        <FighterAbilities
+          abilities={fighter.abilities}
+          abilityUnlockLevel={abilityUnlockLevel}
+        />
+      )}
+    </div>
+  )
+}
+
+/** A fighter's abilities in their rarity colours, locked ones marked. */
+export function FighterAbilities({
+  abilities,
+  abilityUnlockLevel,
+}: {
+  abilities: BattleAbility[]
+  abilityUnlockLevel?: number
+}) {
+  return (
+    <div className="abilities">
+      {abilities.map((a, i) => {
+        const rarity = abilityRarity(a.displayname)
+        /*
+         * A locked ability does nothing in a fight. Every fighter rolls
+         * with its last one locked until ascension, so showing it
+         * alongside the working ones with no distinction overstates what
+         * the fighter can currently do — and it is exactly the row a
+         * player would otherwise pick a team on.
+         */
+        const locked = !!a.locked
+        return (
+          <div
+            className={`ability${locked ? ' ability--locked' : ''}`}
+            key={`${a.ability}-${i}`}
+            style={{ borderLeftColor: abilityColor(a.displayname) }}
+          >
+            <div
+              className="ability__name"
+              style={{ color: abilityColor(a.displayname) }}
+            >
+              {abilityName(a.displayname)}
+              {rarity && <span className="ability__rarity">{rarity}</span>}
+              {locked && (
+                <span className="ability__locked">
+                  <img src={asset("/assets/icons/lock.svg")} alt="" width={11} height={11} />
+                  {abilityUnlockLevel
+                    ? `Unlocks at ascension ${abilityUnlockLevel}`
+                    : 'Unlocks on ascension'}
+                </span>
+              )}
+            </div>
+            <div className="ability__desc">{resolveAbilityDescription(a)}</div>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+/**
+ * The same read as `FighterPanel`, laid out for a hover.
+ *
+ * Wide rather than tall, and without the portrait — the card being hovered
+ * is already showing the art. Main stats on the left, the six resistances
+ * in the same rows on the right, abilities across the bottom.
+ */
+export function FighterHoverCard({
+  fighter,
+  template,
+  cards,
+}: {
+  fighter: PanelFighter
+  template?: ClassTemplate
+  /** For an NFT fighter: the crew and weapon templates it is made of. */
+  cards?: CardTemplate[]
+}) {
+  return (
+    <div className="fhover">
+      <div className="fhover__head">
+        <span className="fhover__name">{fighter.title ?? fighter.classname}</span>
+        <span className="fhover__meta">
+          {fighter.subtitle ?? `${fighter.racename} · ${fighter.element}`}
+        </span>
+        <span className="spacer" />
+        {fighter.level !== undefined && fighter.level > 0 && (
+          <span className="tag">Level {fighter.level}</span>
+        )}
+        {fighter.age && (
+          <span className={`fhover__age fpanel__age--${ageBand(fighter.age.bonus)}`}>
+            <span className="fpanel__ageValue mono">
+              {fighter.age.bonus > 0 ? '+' : ''}
+              {fighter.age.bonus.toFixed(0)}%
+            </span>
+            <span className="fpanel__ageNote">age · ×{fighter.age.factor.toFixed(2)}</span>
+          </span>
+        )}
+      </div>
+
+      {cards && cards.length > 0 && (
+        <div className="fhover__cards">
+          {cards.map((c) => (
+            <div className="fhover__card" key={c.template_id}>
+              <img src={asset(`/assets/cards/${c.template_id}.webp`)} alt="" />
+              <span className="fhover__cardText">
+                <span className="fhover__cardName">{c.name}</span>
+                <span className="fhover__cardMeta">
+                  {c.schema === 'crew.worlds' ? 'Crew' : 'Weapon'} · {c.rarity}
+                  {c.shine && c.shine.toLowerCase() !== 'stone' ? ` · ${c.shine}` : ''}
+                </span>
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div className="fhover__cols">
+        <FighterStats fighter={fighter} template={template} resistances={false} />
+        <div className="fhover__res">
+          {RESISTANCES.map(([key, label]) => {
+            const raw = (fighter as unknown as Record<string, number>)[key]
             return (
-              <div
-                className={`ability${locked ? ' ability--locked' : ''}`}
-                key={`${a.ability}-${i}`}
-                style={{ borderLeftColor: abilityColor(a.displayname) }}
-              >
-                <div
-                  className="ability__name"
-                  style={{ color: abilityColor(a.displayname) }}
-                >
-                  {abilityName(a.displayname)}
-                  {rarity && <span className="ability__rarity">{rarity}</span>}
-                  {locked && (
-                    <span className="ability__locked">
-                      <img src={asset("/assets/icons/lock.svg")} alt="" width={11} height={11} />
-                      {abilityUnlockLevel
-                        ? `Unlocks at ascension ${abilityUnlockLevel}`
-                        : 'Unlocks on ascension'}
-                    </span>
-                  )}
-                </div>
-                <div className="ability__desc">{resolveAbilityDescription(a)}</div>
+              <div className="statline" key={key}>
+                <span className="statline__k">
+                  <img
+                    className="statline__icon"
+                    src={asset(`/assets/icons/elements/${label.toLowerCase()}.png`)}
+                    alt=""
+                  />
+                  {label}
+                </span>
+                <span className="statline__v mono">
+                  {formatResistance(raw)}
+                  <Grade field={key} raw={raw} template={template} />
+                </span>
               </div>
             )
           })}
         </div>
-      )}
+      </div>
+
+      {fighter.abilities.length > 0 && <FighterAbilities abilities={fighter.abilities} />}
     </div>
   )
 }
