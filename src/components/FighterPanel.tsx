@@ -406,11 +406,12 @@ export function FighterHoverCard({
         )}
         {fighter.age && (
           <span className={`fhover__age fpanel__age--${ageBand(fighter.age.bonus)}`}>
+            {/* The percentage alone. The factor beside it said the same thing
+                a second way, on a card read at a glance. */}
             <span className="fpanel__ageValue mono">
               {fighter.age.bonus > 0 ? '+' : ''}
               {fighter.age.bonus.toFixed(0)}%
             </span>
-            <span className="fpanel__ageNote">age · ×{fighter.age.factor.toFixed(2)}</span>
           </span>
         )}
       </div>

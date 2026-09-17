@@ -3799,18 +3799,37 @@ button.combatcard--empty:hover {
   white-space: nowrap;
 }
 
+/*
+ * The two lists need air between them: run together, a resistance reads as
+ * the value of the stat on its left. The rule between them sits in the
+ * middle of that gap rather than against one column, so both columns keep
+ * the same width — and so the abilities below line up with them.
+ */
 .fhover__cols {
+  position: relative;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  column-gap: var(--sp-5);
+  column-gap: var(--sp-7, 32px);
+}
+
+.fhover__cols::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 1px;
+  background: var(--line-soft);
 }
 .fhover .statline {
   padding: 5px 0;
 }
 
+/* Two columns on the same lines the stats and resistances use, so the
+   abilities under each list start where that list does. */
 .fhover .abilities {
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--sp-1) var(--sp-2);
+  gap: var(--sp-1) var(--sp-7, 32px);
   margin-top: var(--sp-2);
 }
 .fhover .ability {

@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 
 /** Gap between the hovered element and the popover, and from the screen edge. */
@@ -75,4 +75,59 @@ export function HoverPopover({ anchor, children }: { anchor: DOMRect; children: 
     </div>,
     document.body,
   )
+}
+
+/** How long the pointer rests on something before its card opens. */
+const HOVER_DELAY_MS = 150
+
+/**
+ * Open a hover card beside whatever the pointer is resting on.
+ *
+ * Returns the ref to put on the element, the handlers to spread onto it, and
+ * what to draw when it is hovered — `make` is only called once the pointer
+ * has actually settled, so a grid of a hundred cards builds nothing until one
+ * of them is read.
+ *
+ * Closes on leaving, on a click, and on a scroll, which would otherwise leave
+ * the card floating beside where its element used to be.
+ */
+export function useHoverCard<T>(make: (() => T) | undefined, enabled: boolean) {
+  const ref = useRef<HTMLDivElement>(null)
+  const timer = useRef<number | undefined>(undefined)
+  const [shown, setShown] = useState<{ rect: DOMRect; value: T } | null>(null)
+
+  const close = useCallback(() => {
+    window.clearTimeout(timer.current)
+    setShown(null)
+  }, [])
+
+  const open = useCallback(() => {
+    if (!enabled || !make || !canFineHover()) return
+    window.clearTimeout(timer.current)
+    timer.current = window.setTimeout(() => {
+      const el = ref.current
+      if (!el) return
+      setShown({ rect: el.getBoundingClientRect(), value: make() })
+    }, HOVER_DELAY_MS)
+  }, [enabled, make])
+
+  useEffect(() => {
+    if (!shown) return
+    const off = () => setShown(null)
+    window.addEventListener('scroll', off, true)
+    window.addEventListener('resize', off)
+    return () => {
+      window.removeEventListener('scroll', off, true)
+      window.removeEventListener('resize', off)
+    }
+  }, [shown])
+
+  useEffect(() => () => window.clearTimeout(timer.current), [])
+
+  return {
+    ref,
+    shown,
+    close,
+    handlers: { onMouseEnter: open, onMouseLeave: close },
+  }
 }

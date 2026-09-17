@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { CardTemplate } from '@/chain/atomic'
 import { FighterHoverCard, FighterPanel, type PanelFighter } from '@/components/FighterPanel'
-import { HoverPopover, canFineHover } from '@/components/HoverPopover'
+import { HoverPopover, useHoverCard } from '@/components/HoverPopover'
 import { fighterAvailable } from '@/dungeon/rules'
 import { ageBand, ageBonus, ageDays, ageNote } from '@/fighters/rules'
 import { ageFactor, levelFactor } from '@/fight/scaling'
@@ -634,9 +634,6 @@ export function Elemental({
   )
 }
 
-/** How long the pointer rests on a card before its stats open beside it. */
-const HOVER_DELAY_MS = 150
-
 /**
  * One fighter on the versus screen.
  *
@@ -786,55 +783,20 @@ export function CombatCard({
      the line-up does not flicker through six popovers, and closes the moment
      the pointer leaves the card — or the page scrolls out from under it.
   */
-  const slot = useRef<HTMLDivElement>(null)
-  const hoverTimer = useRef<number | undefined>(undefined)
-  const [hover, setHover] = useState<{
-    rect: DOMRect
-    panel: PanelFighter
-    template?: ClassTemplate
-    cards?: CardTemplate[]
-  } | null>(null)
   const hoverable = !!preview && !phone
-
-  const closeHover = () => {
-    window.clearTimeout(hoverTimer.current)
-    setHover(null)
-  }
-  const openHover = () => {
-    if (!hoverable || !canFineHover()) return
-    window.clearTimeout(hoverTimer.current)
-    hoverTimer.current = window.setTimeout(() => {
-      const el = slot.current
-      if (!el || !preview) return
-      setHover({ rect: el.getBoundingClientRect(), ...preview() })
-    }, HOVER_DELAY_MS)
-  }
-
-  useEffect(() => {
-    if (!hover) return
-    const close = () => setHover(null)
-    window.addEventListener('scroll', close, true)
-    window.addEventListener('resize', close)
-    return () => {
-      window.removeEventListener('scroll', close, true)
-      window.removeEventListener('resize', close)
-    }
-  }, [hover])
-  useEffect(() => () => window.clearTimeout(hoverTimer.current), [])
+  const { ref: slot, shown: hover, close: closeHover, handlers } = useHoverCard(
+    preview,
+    hoverable,
+  )
 
   return (
-    <div
-      className="combatslot"
-      ref={slot}
-      onMouseEnter={openHover}
-      onMouseLeave={closeHover}
-    >
+    <div className="combatslot" ref={slot} {...handlers}>
       {hover && (
         <HoverPopover anchor={hover.rect}>
           <FighterHoverCard
-            fighter={hover.panel}
-            template={hover.template}
-            cards={hover.cards}
+            fighter={hover.value.panel}
+            template={hover.value.template}
+            cards={hover.value.cards}
           />
         </HoverPopover>
       )}
@@ -1681,6 +1643,8 @@ export function FighterGrid({
 }) {
   /* Which face every card shows, until one is turned over on its own. */
   const [view, setView] = useState<PickView>('combat')
+  /* Read once here rather than in every card: a grid is 150 of them. */
+  const phone = usePhone()
   /* How much of each fighter to draw, remembered from last time. */
   const [density, setDensity] = useState<PickDensity>(recallDensity)
   const chooseDensity = (next: PickDensity) => {
@@ -1780,6 +1744,7 @@ export function FighterGrid({
                       : 'Add to team'
                   : state.reason
               }
+              hoverStats={!phone}
               onClick={() => onToggle(f)}
               onInspect={() => onInspect(f)}
             />
@@ -1819,6 +1784,7 @@ export function PickCard({
   banner,
   view = 'combat',
   density = 'full',
+  hoverStats,
   onClick,
   onInspect,
 }: {
@@ -1852,6 +1818,15 @@ export function PickCard({
   variant?: 'ascending' | 'sacrifice'
   /** One word across the portrait, for those cards. */
   banner?: string
+  /**
+   * Open the fighter's full read on hover, for the compact card.
+   *
+   * The compact card says class, race and level and nothing else, so on a
+   * desktop resting on one answers what it left out rather than making the
+   * player open the details sheet for every candidate. Passed down rather
+   * than read here: the grid asks the media query once for all of its cards.
+   */
+  hoverStats?: boolean
   onClick: () => void
   onInspect?: () => void
 }) {
@@ -1885,6 +1860,21 @@ export function PickCard({
   const tab = override ?? view
   const abilities = f.stats.abilities ?? []
 
+  /*
+     The same read the line-up cards show, built only once the pointer has
+     settled on this card.
+  */
+  const hoverPreview = useCallback(
+    () => ({ panel: rosterPanel(f, levelMod, ageDecay), template }),
+    [f, levelMod, ageDecay, template],
+  )
+  const {
+    ref: hoverRef,
+    shown: hovered,
+    close: closeHover,
+    handlers: hoverHandlers,
+  } = useHoverCard(hoverPreview, !!hoverStats && density === 'compact')
+
   const ageChip = ageDecay > 0 && (
     <span
       className={`fightercard__age fightercard__age--${ageBand(bonus)}`}
@@ -1915,16 +1905,33 @@ export function PickCard({
           (blocked ? ' fightercard--off' : '') +
           (variant ? ` fightercard--${variant}` : '')
         }
+        ref={hoverRef}
+        {...hoverHandlers}
       >
+        {hovered && (
+          <HoverPopover anchor={hovered.rect}>
+            <FighterHoverCard fighter={hovered.value.panel} template={hovered.value.template} />
+          </HoverPopover>
+        )}
         <button
           type="button"
           className="fightercard__hit"
-          onClick={onClick}
+          onClick={() => {
+            closeHover()
+            onClick()
+          }}
           disabled={blocked}
-          /* The card no longer says who this is, so the tooltip has to. */
-          title={`${f.classname} · ${f.racename} · L${f.stats.level}${
-            hint ? ` — ${hint}` : ''
-          }`}
+          /* The card no longer says who this is, so the tooltip has to — and
+             on a desktop the hover read says it at length, where a native
+             tooltip would sit on top of it. */
+          title={
+            hoverStats
+              ? undefined
+              : `${f.classname} · ${f.racename} · L${f.stats.level}${
+                  hint ? ` — ${hint}` : ''
+                }`
+          }
+          aria-label={`${f.classname} · ${f.racename} · L${f.stats.level}`}
         >
           <span className="fightercard__portrait">
             <Portrait element={f.element} classname={f.classname} racename={f.racename} />
