@@ -54,7 +54,7 @@ import {
   gradeStat,
   type StatGrade,
 } from '@/tavern/fighterStats'
-import { asset } from '@/assets'
+import { asset, ipfsImage } from '@/assets'
 import { usePhone } from '@/components/usePhone'
 import { useModal } from '@/components/useModal'
 import {
@@ -2465,7 +2465,10 @@ export function CardSlot({
               alt=""
               loading="lazy"
               onError={(e) => {
-                e.currentTarget.src = asset('/assets/default-card.png')
+                const img = e.currentTarget
+                const next = img.dataset.tried ? undefined : ipfsImage(card.img)
+                img.dataset.tried = '1'
+                img.src = next ?? asset('/assets/default-card.png')
               }}
             />
             <span className="cardslot__name">{card.name}</span>
@@ -2706,8 +2709,13 @@ function NftCard({
           src={asset(`/assets/cards/${card.template_id}.webp`)}
           alt=""
           loading="lazy"
+          /* Ours, then the card's own picture on IPFS for a template minted
+             since this build, then the blank back. */
           onError={(e) => {
-            e.currentTarget.src = asset('/assets/default-card.png')
+            const img = e.currentTarget
+            const next = img.dataset.tried ? undefined : ipfsImage(card.img)
+            img.dataset.tried = '1'
+            img.src = next ?? asset('/assets/default-card.png')
           }}
         />
         <span className="nftcard__name">{card.name}</span>

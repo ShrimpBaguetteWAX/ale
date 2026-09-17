@@ -42,6 +42,8 @@ function check(name: string, got: unknown, want: unknown) {
 type Rows = Record<string, unknown>[]
 let calls: string[] = []
 let tables: Record<string, Rows> = {}
+/** What `get_account` reports for the wallet's own CPU. */
+let accountCpu: Record<string, number> | null = { used: 0, available: 400_000, max: 400_000, current_used: 0 }
 
 const realFetch = globalThis.fetch
 
@@ -56,6 +58,10 @@ function stubChain() {
       return new Response(
         JSON.stringify({ rows: tables[id] ?? [], more: false, next_key: '' }),
       )
+    }
+    if (url.includes('/v1/chain/get_account')) {
+      calls.push('chain/get_account')
+      return new Response(JSON.stringify(accountCpu ? { cpu_limit: accountCpu } : {}))
     }
     if (url.includes('atomicassets')) {
       calls.push('atomic/assets')
@@ -369,15 +375,34 @@ async function checks() {
        the second one every time. That is the cost the budget below counts.
     */
     tables = {}
+    accountCpu = { used: 0, available: 400_000, max: 400_000, current_used: 0 }
     tables['cpu.ale/config'] = [{ claims_per_week: 100, wax_per_claim: '0.1 WAX' }]
     tables['cpu.ale/cpuusage'] = [{ wallet: 'me.wam', uses: 10, expiry_time: iso(86_400_000) }]
     let r = await runCheck('account', player())
-    check('account: it costs two reads', r.calls.length, 2)
+    check('account: it costs three reads', r.calls.length, 3)
     check('account: a tenth of the allowance spent, dark', r.flag, false)
 
     tables['cpu.ale/cpuusage'] = [{ wallet: 'me.wam', uses: 80, expiry_time: iso(86_400_000) }]
     r = await runCheck('account', player())
     check('account: four fifths spent lights up', r.flag, true)
+
+    /*
+       The wallet's own CPU, which the allowance says nothing about. 35ms is
+       the line: a player under it is a few actions from a transaction that
+       cannot be broadcast, whatever their claims look like.
+    */
+    tables['cpu.ale/cpuusage'] = [{ wallet: 'me.wam', uses: 10, expiry_time: iso(86_400_000) }]
+    accountCpu = { used: 0, available: 34_000, max: 400_000, current_used: 366_000 }
+    r = await runCheck('account', player())
+    check('account: under 35ms of CPU lights up, allowance or no', r.flag, true)
+
+    accountCpu = { used: 0, available: 35_000, max: 400_000, current_used: 365_000 }
+    r = await runCheck('account', player())
+    check('account: exactly 35ms is not yet low, dark', r.flag, false)
+
+    accountCpu = null
+    r = await runCheck('account', player())
+    check('account: a node that will not say, dark rather than alarming', r.flag, false)
   }
 }
 

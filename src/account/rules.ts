@@ -133,6 +133,21 @@ export function cpuStatus(
   }
 }
 
+/**
+ * How little CPU is too little, in microseconds.
+ *
+ * A game transaction costs a few hundred microseconds to a millisecond or
+ * two, and WAX bills against a decaying window — so a wallet down to 35ms is
+ * a handful of actions from transactions that fail to broadcast. That is
+ * worth a dot in the menu before it happens rather than a red error after.
+ */
+export const CPU_LOW_MICROS = 35_000
+
+/** Whether the wallet's own CPU is down to where actions start failing. */
+export function cpuLow(cpu: { available: number } | undefined): boolean {
+  return !!cpu && cpu.available < CPU_LOW_MICROS
+}
+
 /* ---------- currencies ---------- */
 
 /** The three tokens the account screen keeps a ledger for. */

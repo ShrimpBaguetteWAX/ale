@@ -21,7 +21,7 @@ import {
   STAT_LABEL,
 } from '@/tavern/fighterStats'
 import { ageBand, ageNote } from '@/fighters/rules'
-import { asset } from '@/assets'
+import { asset, ipfsImage } from '@/assets'
 import { GameImg } from '@/components/GameImg'
 
 /**
@@ -420,7 +420,15 @@ export function FighterHoverCard({
         <div className="fhover__cards">
           {cards.map((c) => (
             <div className="fhover__card" key={c.template_id}>
-              <img src={asset(`/assets/cards/${c.template_id}.webp`)} alt="" />
+              <GameImg
+                src={asset(`/assets/cards/${c.template_id}.webp`)}
+                alt=""
+                /* A template minted since this build has no file of ours;
+                   its own picture on IPFS is the next thing to try. */
+                fallback={[ipfsImage(c.img), asset('/assets/default-card.png')].filter(
+                  (u): u is string => !!u,
+                )}
+              />
               <span className="fhover__cardText">
                 <span className="fhover__cardName">{c.name}</span>
                 <span className="fhover__cardMeta">

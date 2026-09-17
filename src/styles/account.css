@@ -94,6 +94,7 @@
 }
 
 .accounttab {
+  position: relative;
   padding: var(--sp-2) var(--sp-5);
   min-height: 44px;
   background: rgb(0 0 0 / 35%);
@@ -1170,4 +1171,17 @@
     justify-self: start;
     text-align: left;
   }
+}
+
+/* The menu's chore dot, on the tab that explains it. */
+.accounttab__dot {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--gold);
+  box-shadow: 0 0 8px rgb(246 168 0 / 90%);
+  animation: chore-pulse 2.4s ease-in-out infinite;
 }

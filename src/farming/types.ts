@@ -80,4 +80,6 @@ export interface FarmCard {
   schema: string
   rarity: string
   shine: string
+  /** The asset's own artwork on IPFS, where the build ships no file for it. */
+  img?: string
 }

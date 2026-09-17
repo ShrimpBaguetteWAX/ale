@@ -18,12 +18,19 @@ import type {
   StakedCard,
 } from '@/farming/types'
 import {
+  clampCount,
+  inventoryStacks,
+  selectedIds,
+  stakedStacks,
+  totalPicked,
+  type CardStack,
+} from '@/farming/stacks'
+import {
   byWeight,
   farmBoard,
   formatToCap,
   stakeable,
   stakedByWeight,
-  weightOf,
   weightPerDay,
   type PoolStatus,
 } from '@/farming/rules'
@@ -34,7 +41,7 @@ import { useLazyConfig } from '@/state/useConfig'
 import { DIRTIES } from '@/wharf/actions'
 import { formatNumber } from '@/format'
 import { ActionBanner } from '@/components/ActionBanner'
-import { asset } from '@/assets'
+import { asset, ipfsImage } from '@/assets'
 import { GameImg } from '@/components/GameImg'
 
 /**
@@ -146,7 +153,15 @@ export default function Farming() {
 
   const [tab, setTab] = useState<Tab>('tool.worlds')
   const [mode, setMode] = useState<Mode>('inventory')
-  const [picked, setPicked] = useState<string[]>([])
+  /*
+     How many of each stack the player is taking, by stack key.
+
+     Amounts rather than a list of asset ids: every copy of a design is worth
+     the same, so which copies go is not a choice worth making a player make.
+     `selectedIds` turns the amounts back into the ids the chain wants at the
+     moment of signing.
+  */
+  const [counts, setCounts] = useState<Record<string, number>>({})
   /* Narrowed where it enters the screen, so every comparison below still has
      to name one of this screen's three buttons. */
   const { busy: busyKey, error, notice, run } = useAction()
@@ -181,6 +196,9 @@ export default function Farming() {
     return all.filter((c) => stakeable(c, weights)).sort(byWeight(weights))
   }, [data.inventory, weights])
 
+  /* One tile per design, with what the player holds of it. */
+  const invStacks = useMemo(() => inventoryStacks(inventory, weights), [inventory, weights])
+
   /* Held but unstakeable, so an empty grid can explain itself. */
   const hiddenCount = data.inventory.length - inventory.length
 
@@ -189,18 +207,34 @@ export default function Farming() {
     [staked, schema],
   )
 
+  const outStacks = useMemo(() => stakedStacks(stakedHere), [stakedHere])
+
+  /* Whichever side is on screen is the side the amounts belong to. */
+  const stacks = mode === 'inventory' ? invStacks : outStacks
+  const picked = useMemo(() => selectedIds(stacks, counts), [stacks, counts])
+  const pickedCount = useMemo(() => totalPicked(stacks, counts), [stacks, counts])
+
   /* Leaving a tab drops a selection that no longer has anything to act on. */
-  useEffect(() => setPicked([]), [tab, mode])
+  useEffect(() => setCounts({}), [tab, mode])
+
+  const setCount = (key: string, value: number, max: number) =>
+    setCounts((prev) => ({ ...prev, [key]: clampCount(value, max) }))
+
+  /* Every card on this side, or none of them — the two amounts a player
+     picking a whole pool actually wants. */
+  const takeAll = () =>
+    setCounts(Object.fromEntries(stacks.map((s) => [s.key, s.ids.length])))
+  const takeNone = () => setCounts({})
 
   const gemFee = Number(config?.gem_fee ?? 0)
   const gems = player?.activestats.gems ?? 0
-  const stakeCost = picked.length * gemFee
+  const stakeCost = pickedCount * gemFee
 
   /* Whatever was staked or claimed is no longer a pending selection, and
      claiming resets the power that had capped. */
   const opts = (action: keyof typeof DIRTIES) => ({
     after: data.reload,
-    onSettled: () => setPicked([]),
+    onSettled: () => setCounts({}),
     dirties: DIRTIES[action],
   })
 
@@ -208,7 +242,7 @@ export default function Farming() {
     run(
       'stake',
       () => stakeCards(session!, picked),
-      `Staked ${picked.length} card${picked.length === 1 ? '' : 's'}.`,
+      `Staked ${pickedCount} card${pickedCount === 1 ? '' : 's'}.`,
       opts('stakeCards'),
     )
 
@@ -216,15 +250,12 @@ export default function Farming() {
     run(
       'unstake',
       () => unstakeCards(session!, picked),
-      `Unstaked ${picked.length} card${picked.length === 1 ? '' : 's'}, and claimed what they had earned.`,
+      `Unstaked ${pickedCount} card${pickedCount === 1 ? '' : 's'}, and claimed what they had earned.`,
       opts('unstakeCards'),
     )
 
   const doClaim = () =>
     run('claim', () => claimFarming(session!), 'Credits claimed.', opts('claimFarming'))
-
-  const toggle = (id: string) =>
-    setPicked((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]))
 
   if (!player) return null
 
@@ -245,7 +276,7 @@ export default function Farming() {
             <button
               type="button"
               className="btn btn--ghost"
-              disabled={!session || busy !== null || picked.length === 0 || stakeCost > gems}
+              disabled={!session || busy !== null || pickedCount === 0 || stakeCost > gems}
               onClick={() => void doStake()}
               title={
                 stakeCost > gems
@@ -254,10 +285,10 @@ export default function Farming() {
               }
             >
               {busy === 'stake' && <span className="spinner" />}
-              Stake {picked.length || ''}
+              Stake {pickedCount || ''}
               {stakeCost > 0 && (
                 <span className={`cost${stakeCost > gems ? ' cost--short' : ''}`}>
-                  −{formatNumber(stakeCost)}
+                  {formatNumber(stakeCost)}
                   <img src={asset("/assets/icons/gems.png")} alt="gems" width={16} height={16} />
                 </span>
               )}
@@ -266,12 +297,12 @@ export default function Farming() {
             <button
               type="button"
               className="btn btn--ghost"
-              disabled={!session || busy !== null || picked.length === 0}
+              disabled={!session || busy !== null || pickedCount === 0}
               onClick={() => void doUnstake()}
               title="Returns the cards and claims what they have earned"
             >
               {busy === 'unstake' && <span className="spinner" />}
-              Unstake {picked.length || ''}
+              Unstake {pickedCount || ''}
             </button>
           )}
 
@@ -373,42 +404,52 @@ export default function Farming() {
                   : `No ${SCHEMA_LABEL[schema].toLowerCase()} in your wallet.`}
               </p>
             ) : (
-              <div className="cardgridf">
-                {inventory.map((card) => (
-                  <CardTile
-                    key={card.asset_id}
-                    templateId={card.template_id}
-                    name={card.name}
-                    rarity={card.rarity}
-                    shine={card.shine}
-                    weight={weightOf(card, weights)}
-                    picked={picked.includes(card.asset_id)}
-                    disabled={busy !== null}
-                    onClick={() => toggle(card.asset_id)}
-                  />
-                ))}
-              </div>
+              <>
+                <StackBar
+                  held={inventory.length}
+                  picked={pickedCount}
+                  disabled={busy !== null}
+                  onAll={takeAll}
+                  onNone={takeNone}
+                />
+                <div className="cardgridf">
+                  {invStacks.map((stack) => (
+                    <StackTile
+                      key={stack.key}
+                      stack={stack}
+                      count={counts[stack.key] ?? 0}
+                      disabled={busy !== null}
+                      onChange={(n) => setCount(stack.key, n, stack.ids.length)}
+                    />
+                  ))}
+                </div>
+              </>
             )
           ) : stakedHere.length === 0 ? (
             <p className="farming__empty">
               Nothing staked in this pool yet.
             </p>
           ) : (
-            <div className="cardgridf">
-              {stakedHere.map((card) => (
-                <CardTile
-                  key={card.asset_id}
-                  templateId={card.template_id}
-                  name={`#${card.template_id}`}
-                  rarity={card.rarity}
-                  shine={card.shine}
-                  weight={card.weight}
-                  picked={picked.includes(card.asset_id)}
-                  disabled={busy !== null}
-                  onClick={() => toggle(card.asset_id)}
-                />
-              ))}
-            </div>
+            <>
+              <StackBar
+                held={stakedHere.length}
+                picked={pickedCount}
+                disabled={busy !== null}
+                onAll={takeAll}
+                onNone={takeNone}
+              />
+              <div className="cardgridf">
+                {outStacks.map((stack) => (
+                  <StackTile
+                    key={stack.key}
+                    stack={stack}
+                    count={counts[stack.key] ?? 0}
+                    disabled={busy !== null}
+                    onChange={(n) => setCount(stack.key, n, stack.ids.length)}
+                  />
+                ))}
+              </div>
+            </>
           )}
         </>
       )}
@@ -428,47 +469,135 @@ function CardSkeletons() {
   )
 }
 
-function CardTile({
-  templateId,
-  name,
-  rarity,
-  shine,
-  weight,
+/** What is held on this side, and the two amounts worth one click. */
+function StackBar({
+  held,
   picked,
   disabled,
-  onClick,
+  onAll,
+  onNone,
 }: {
-  templateId: number
-  name: string
-  rarity: string
-  shine: string
-  weight: number
-  picked: boolean
+  held: number
+  picked: number
   disabled: boolean
-  onClick: () => void
+  onAll: () => void
+  onNone: () => void
 }) {
   return (
-    <button
-      type="button"
-      className={`cardtile${picked ? ' cardtile--picked' : ''}`}
-      aria-pressed={picked}
-      disabled={disabled}
-      onClick={onClick}
-      title={`${rarity} · ${shine} · weight ${formatNumber(weight)}`}
-    >
-      <GameImg
-        className="cardtile__art"
-        src={asset(`/assets/cards/${templateId}.webp`)}
-        alt=""
-        loading="lazy"
-        fallback={asset('/assets/default-card.png')}
-      />
-      <span className="cardtile__name">{name}</span>
-      <span className={`cardtile__rarity r-${rarity.toLowerCase()}`}>
-        {shine === 'Stone' ? rarity : `${rarity} · ${shine}`}
-      </span>
-      <span className="cardtile__weight">{formatNumber(weight)}</span>
-    </button>
+    <div className="stackbar">
+      <p className="faint stackbar__count">
+        {formatNumber(picked)} of {formatNumber(held)} selected
+      </p>
+      <span className="spacer" />
+      <button
+        type="button"
+        className="btn btn--ghost btn--sm"
+        disabled={disabled || picked >= held}
+        onClick={onAll}
+      >
+        Select all
+      </button>
+      <button
+        type="button"
+        className="btn btn--ghost btn--sm"
+        disabled={disabled || picked === 0}
+        onClick={onNone}
+      >
+        Clear
+      </button>
+    </div>
+  )
+}
+
+/**
+ * One design, with how many of it to use.
+ *
+ * The art is a button of its own: clicking it takes the whole stack, and
+ * clicking it again puts it back — which is what a player who holds forty of
+ * one card almost always wants. The stepper beside it is for the times they
+ * want eleven.
+ */
+function StackTile({
+  stack,
+  count,
+  disabled,
+  onChange,
+}: {
+  stack: CardStack
+  count: number
+  disabled: boolean
+  onChange: (next: number) => void
+}) {
+  const max = stack.ids.length
+  const rarity = (stack.rarity || '').toLowerCase()
+
+  return (
+    <div className={`cardtile cardtile--stack${count > 0 ? ' cardtile--picked' : ''}`}>
+      <button
+        type="button"
+        className="cardtile__hit"
+        disabled={disabled}
+        onClick={() => onChange(count > 0 ? 0 : max)}
+        title={
+          count > 0
+            ? 'Take none of these'
+            : `Take all ${max} — ${stack.rarity} · ${stack.shine}, weight ${formatNumber(stack.weight)} each`
+        }
+      >
+        <span className="cardtile__frame">
+          <GameImg
+            className="cardtile__art"
+            src={asset(`/assets/cards/${stack.template_id}.webp`)}
+            alt=""
+            loading="lazy"
+            /* Ours, then the card's own on IPFS, then the blank back. */
+            fallback={[ipfsImage(stack.img), asset('/assets/default-card.png')].filter(
+              (s): s is string => !!s,
+            )}
+          />
+          <span className="cardtile__owned mono">×{formatNumber(max)}</span>
+        </span>
+        <span className="cardtile__name">{stack.name}</span>
+        <span className={`cardtile__rarity r-${rarity}`}>
+          {stack.shine === 'Stone' ? stack.rarity : `${stack.rarity} · ${stack.shine}`}
+        </span>
+        <span className="cardtile__weight">{formatNumber(stack.weight)}</span>
+      </button>
+
+      <div className="stepper">
+        <button
+          type="button"
+          className="stepper__btn"
+          disabled={disabled || count <= 0}
+          onClick={() => onChange(count - 1)}
+          aria-label={`One fewer ${stack.name}`}
+        >
+          −
+        </button>
+        <input
+          className="stepper__n mono"
+          type="number"
+          inputMode="numeric"
+          min={0}
+          max={max}
+          step={1}
+          value={count}
+          disabled={disabled}
+          onChange={(e) => onChange(clampCount(Number(e.target.value), max))}
+          onFocus={(e) => e.currentTarget.select()}
+          aria-label={`How many ${stack.name} to use, up to ${max}`}
+        />
+        <button
+          type="button"
+          className="stepper__btn"
+          disabled={disabled || count >= max}
+          onClick={() => onChange(count + 1)}
+          aria-label={`One more ${stack.name}`}
+        >
+          +
+        </button>
+      </div>
+    </div>
   )
 }
 
@@ -595,4 +724,4 @@ function Rewards({
   )
 }
 
-export { CardTile, Rewards }
+export { StackTile, Rewards }

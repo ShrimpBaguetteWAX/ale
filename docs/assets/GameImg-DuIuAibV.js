@@ -1,0 +1,1 @@
+import{j as o}from"./react-BnBjmWcX.js";function m({fallback:r,...e}){const s=Array.isArray(r)?r:[r];return o.jsx("img",{...e,onError:a=>{const t=a.currentTarget,n=Number(t.dataset.fallback??0);n>=s.length||(t.dataset.fallback=String(n+1),t.src=s[n])}})}export{m as G};

@@ -1,7 +1,7 @@
 import type { TableKey } from '@/chain/tables'
 import type { Player } from '@/chain/types'
-import { fetchCpuConfig, fetchCpuUsage } from '@/account/queries'
-import { cpuStatus } from '@/account/rules'
+import { fetchAccountCpu, fetchCpuConfig, fetchCpuUsage } from '@/account/queries'
+import { cpuLow, cpuStatus } from '@/account/rules'
 import { fetchLandsConfig, fetchPlanetLands } from '@/chain/queries'
 import { fetchOwnedLands } from '@/chain/atomic'
 import type { Planet } from '@/chain/config'
@@ -284,12 +284,17 @@ export const CHORE_CHECKS: ChoreCheck[] = [
     deps: ['player', 'cpuUsage'],
     to: '/profile',
     every: 5 * MIN,
-    hint: 'Your free CPU allowance is running low',
+    hint: 'Your CPU is running low',
     async run(player, force) {
-      const [config, usage] = await Promise.all([
+      const [config, usage, wallet] = await Promise.all([
         fetchCpuConfig(),
         fetchCpuUsage(player.wallet, force),
+        /* The wallet's own CPU, not the game's allowance: a player with
+           claims left and no CPU is the one whose next action fails. */
+        fetchAccountCpu(player.wallet, force),
       ])
+      if (cpuLow(wallet)) return true
+
       const { used, allowance } = cpuStatus(config, usage)
       return allowance > 0 && used / allowance >= CPU_WARNING
     },

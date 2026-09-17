@@ -16,15 +16,25 @@ import type { ImgHTMLAttributes } from 'react'
 export function GameImg({
   fallback,
   ...props
-}: ImgHTMLAttributes<HTMLImageElement> & { fallback: string }) {
+}: ImgHTMLAttributes<HTMLImageElement> & { fallback: string | string[] }) {
+  /*
+     A list is tried in order.
+
+     Card art ships with the build, one file per template — so a template
+     minted after the build has none, and the tile fell straight through to
+     the blank card back. The asset's own IPFS image is the next thing to
+     try, and the blank back is what is left when even that is missing.
+  */
+  const chain = Array.isArray(fallback) ? fallback : [fallback]
   return (
     <img
       {...props}
       onError={(e) => {
         const img = e.currentTarget
-        if (img.dataset.fallback) return
-        img.dataset.fallback = '1'
-        img.src = fallback
+        const step = Number(img.dataset.fallback ?? 0)
+        if (step >= chain.length) return
+        img.dataset.fallback = String(step + 1)
+        img.src = chain[step]
       }}
     />
   )

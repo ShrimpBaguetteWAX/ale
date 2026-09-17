@@ -294,6 +294,8 @@ export interface CardTemplate {
   defense: number
   /** How many copies the player holds, once paired with their inventory. */
   owned: number
+  /** The IPFS hash of the card's own artwork, for templates we ship no file for. */
+  img?: string
 }
 
 /**
@@ -309,7 +311,8 @@ export async function fetchSchemaTemplates(
   collection = 'alien.worlds',
 ): Promise<Map<number, CardTemplate>> {
   /* Bumped: caches written from a lagging node hold a short catalogue. */
-  const key = `templates:v2:${collection}:${schema}`
+  /* v3: the rows now carry the IPFS image hash as well. */
+  const key = `templates:v3:${collection}:${schema}`
   const hit = cacheGet<[number, CardTemplate][]>(key, true)
   if (hit) return new Map(hit)
 
@@ -345,6 +348,7 @@ export async function fetchSchemaTemplates(
       attack: Number(d.attack ?? 0),
       defense: Number(d.defense ?? 0),
       owned: 0,
+      img: d.img ? String(d.img) : undefined,
     })
   }
 
@@ -464,9 +468,11 @@ export async function fetchFarmInventory(
     schema: string
     rarity: string
     shine: string
+    img?: string
   }[]
 > {
-  const key = `farminv:${owner}:${schema}`
+  /* v2: the rows now carry the IPFS image hash as well. */
+  const key = `farminv:v2:${owner}:${schema}`
   const hit = cacheGet<
     {
       asset_id: string
@@ -475,6 +481,7 @@ export async function fetchFarmInventory(
       schema: string
       rarity: string
       shine: string
+      img?: string
     }[]
   >(key)
   if (hit) return hit
@@ -486,6 +493,7 @@ export async function fetchFarmInventory(
     schema: string
     rarity: string
     shine: string
+    img?: string
   }[] = []
 
   const PAGE = 200
@@ -515,6 +523,7 @@ export async function fetchFarmInventory(
         schema: String(row.schema?.schema_name ?? schema),
         rarity: String(d.rarity ?? ''),
         shine: String(d.shine ?? 'Stone'),
+        img: d.img ? String(d.img) : undefined,
       })
     }
 

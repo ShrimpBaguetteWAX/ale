@@ -47,6 +47,7 @@ import {
   avatarArt,
   avatarBoard,
   claimableAvatars,
+  cpuLow,
   cpuStatus,
   formatCpuTime,
   hasLegendAccess,
@@ -398,6 +399,14 @@ export default function Profile({ section = 'account' }: { section?: Section }) 
             onClick={() => setTab(key)}
           >
             {label}
+            {/* The same dot the menu shows, on the tab that answers it. */}
+            {key === 'cpu' && cpuLow(accountCpu) && (
+              <span
+                className="accounttab__dot"
+                title="Your CPU is running low"
+                aria-label="Your CPU is running low"
+              />
+            )}
           </button>
         ))}
       </div>
