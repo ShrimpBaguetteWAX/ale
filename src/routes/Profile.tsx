@@ -114,6 +114,9 @@ import { GameImg } from '@/components/GameImg'
 
 type Tab = 'avatar' | 'mining' | 'cpu' | 'stats' | Currency
 
+/** How many spare tools the Rewards screen draws at a time. */
+const TOOL_BATCH = 240
+
 /**
  * Which half of the old account screen this is.
  *
@@ -725,6 +728,17 @@ export function MiningTab({
   const [tools, setTools] = useState<MiningTool[]>([])
   const [templates, setTemplates] = useState<ToolTemplate[]>([])
   const [loading, setLoading] = useState(true)
+  /* How many tools have arrived so far, for a wallet big enough to wait on. */
+  const [loadedSoFar, setLoadedSoFar] = useState(0)
+  /*
+     How many spare tools are drawn.
+
+     Every tool loads now — one player had 15,000 — but drawing 15,000 cards
+     with their art at once freezes the page. The list is already sorted best
+     first, so the first screenfuls are the ones a player picks from, and the
+     rest are a button away.
+  */
+  const [spareShown, setSpareShown] = useState(TOOL_BATCH)
   const [picked, setPicked] = useState<string[]>(
     () => (player.mine_nfts ?? []).map(String),
   )
@@ -736,7 +750,13 @@ export function MiningTab({
     let cancelled = false
     if (!account) return
     setLoading(true)
-    Promise.all([fetchMiningTools(account), fetchToolTemplates()])
+    setLoadedSoFar(0)
+    Promise.all([
+      fetchMiningTools(account, (n) => {
+        if (!cancelled) setLoadedSoFar(n)
+      }),
+      fetchToolTemplates(),
+    ])
       .then(([rows, temps]) => {
         if (cancelled) return
         setTools(rows)
@@ -948,16 +968,25 @@ export function MiningTab({
           <PowerSortButtons value={sort} onChange={setSort} />
         </div>
         {loading ? (
-          <div className="toolgrid toolgrid--fill">
-            {Array.from({ length: 6 }, (_, i) => (
-              <div className="toolcard toolcard--loading" key={i} />
-            ))}
-          </div>
+          <>
+            {/* A few hundred tools arrive in one page; past that the wait is
+                long enough to deserve a number. */}
+            {loadedSoFar >= 1000 && (
+              <p className="muted">
+                Loading your tools… {formatNumber(loadedSoFar)} so far.
+              </p>
+            )}
+            <div className="toolgrid toolgrid--fill">
+              {Array.from({ length: 6 }, (_, i) => (
+                <div className="toolcard toolcard--loading" key={i} />
+              ))}
+            </div>
+          </>
         ) : spare.length === 0 ? (
           <p className="muted">No other Alien Worlds tools in this wallet.</p>
         ) : (
           <div className="toolgrid toolgrid--fill">
-            {spare.map((t) => (
+            {spare.slice(0, spareShown).map((t) => (
               <ToolCard
                 key={t.asset_id}
                 tool={t}
@@ -968,6 +997,18 @@ export function MiningTab({
                 onClick={() => toggle(t.asset_id)}
               />
             ))}
+          </div>
+        )}
+        {!loading && spare.length > spareShown && (
+          <div className="toolmore">
+            <button
+              type="button"
+              className="btn btn--ghost btn--sm"
+              onClick={() => setSpareShown((n) => n + TOOL_BATCH)}
+            >
+              Show {formatNumber(Math.min(TOOL_BATCH, spare.length - spareShown))} more ·{' '}
+              {formatNumber(spare.length - spareShown)} not shown
+            </button>
           </div>
         )}
       </section>

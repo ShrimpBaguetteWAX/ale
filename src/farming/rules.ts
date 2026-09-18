@@ -1,5 +1,4 @@
 import type {
-  FarmCard,
   FarmConfig,
   FarmPool,
   FarmUser,
@@ -51,7 +50,10 @@ export function weightOf(
   return hit?.weight ?? 0
 }
 
-export function stakeable(card: FarmCard, weights: StakeWeight[]): boolean {
+export function stakeable(
+  card: { rarity: string; shine: string },
+  weights: StakeWeight[],
+): boolean {
   return weightOf(card, weights) > 0
 }
 
@@ -178,13 +180,6 @@ export function formatToCap(ms: number): string {
 /* ---------- sorting ---------- */
 
 /** Heaviest first: the cards worth staking are the ones worth seeing first. */
-export function byWeight(weights: StakeWeight[]) {
-  return (a: FarmCard, b: FarmCard) =>
-    weightOf(b, weights) - weightOf(a, weights) ||
-    a.name.localeCompare(b.name) ||
-    a.asset_id.localeCompare(b.asset_id)
-}
-
 export function stakedByWeight(a: StakedCard, b: StakedCard): number {
   return b.weight - a.weight || a.asset_id.localeCompare(b.asset_id)
 }

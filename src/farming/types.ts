@@ -72,14 +72,19 @@ export interface StakedCard {
   stake_date: string
 }
 
-/** An unstaked card in the player's wallet, from AtomicAssets. */
-export interface FarmCard {
-  asset_id: string
-  name: string
+/**
+ * One design in the player's wallet, and how many copies of it.
+ *
+ * From the account summary, not the asset list: a wallet of 15,000 tools is
+ * one request counted this way and fifteen listed.
+ */
+export interface OwnedCard {
   template_id: number
-  schema: string
+  name: string
   rarity: string
   shine: string
-  /** The asset's own artwork on IPFS, where the build ships no file for it. */
+  /** The card's own artwork on IPFS, where the build ships no file for it. */
   img?: string
+  count: number
 }
+

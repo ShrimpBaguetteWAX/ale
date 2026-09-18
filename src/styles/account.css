@@ -1185,3 +1185,10 @@
   box-shadow: 0 0 8px rgb(246 168 0 / 90%);
   animation: chore-pulse 2.4s ease-in-out infinite;
 }
+
+/* The next batch of spare tools, under the grid it extends. */
+.toolmore {
+  display: flex;
+  justify-content: center;
+  margin-top: var(--sp-3);
+}

@@ -1,5 +1,5 @@
 import { ATOMIC_ENDPOINTS } from './config'
-import { cacheGet, cacheSet, TTL } from './cache'
+import { cacheDrop, cacheGet, cacheSet, TTL } from './cache'
 
 /**
  * AtomicAssets client.
@@ -69,6 +69,86 @@ async function pagesFrom<T>(base: string, path: string, limit = 1000): Promise<T
     const rows = res.data ?? []
     out.push(...rows)
     if (rows.length < limit) break
+  }
+  return out
+}
+
+/** Rows per page of an asset listing: the API's own maximum. */
+const ASSET_PAGE = 1000
+/** The pause between pages, so a large wallet's crawl never bursts the API. */
+const PAGE_PAUSE_MS = 350
+/** Designs asked for in one request at most, to keep the URL a sane length. */
+const MAX_SHARED = 100
+/** A wallet with more pages than this is not a wallet, it is a runaway loop. */
+const MAX_PAGES = 200
+
+const pause = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
+
+/**
+ * Every page of an asset listing, fast but never in a burst.
+ *
+ * There is no cap on what a wallet holds: one player had 16,000 tools, and a
+ * fixed page count showed them the newest 1,800 and nothing to say the rest
+ * existed. So this asks until a page comes back short.
+ *
+ * A rate limit is per endpoint, and there are three of them. So one worker
+ * runs per healthy endpoint, each taking the next unclaimed page and pausing
+ * between its own requests: no endpoint ever sees more than one request at a
+ * time, and the crawl goes three times as fast as asking one node in turn.
+ * Pages are put back in order afterwards and de-duplicated by asset id, in
+ * case two nodes disagree about where a page boundary falls.
+ *
+ * A page that fails is asked again once after a longer wait, of whichever
+ * node is next — a rate limit clears in a second or two, and giving up half
+ * way would show a partial list as if it were the whole one.
+ */
+async function pacedPages<T extends { asset_id: string }>(
+  path: string,
+  { stopAt, onPage }: { stopAt?: number; onPage?: (sofar: number) => void } = {},
+): Promise<T[]> {
+  const pages = new Map<number, T[]>()
+  let next = 1
+  /* The first page known to be short, which is the last page there is. */
+  let last = Infinity
+  let total = 0
+
+  const worker = async (base: string) => {
+    let first = true
+    for (;;) {
+      if (next > last || next > MAX_PAGES) return
+      if (stopAt !== undefined && total >= stopAt) return
+      const page = next++
+      if (!first) await pause(PAGE_PAUSE_MS)
+      first = false
+
+      const url = `${path}&page=${page}&limit=${ASSET_PAGE}`
+      let res: { data?: T[] }
+      try {
+        res = await getFrom<{ data?: T[] }>(base, url)
+      } catch {
+        await pause(2_000)
+        res = await get<{ data?: T[] }>(url)
+      }
+
+      const rows = res.data ?? []
+      pages.set(page, rows)
+      total += rows.length
+      onPage?.(total)
+      if (rows.length < ASSET_PAGE) last = Math.min(last, page)
+    }
+  }
+
+  await Promise.all(endpointsInOrder().map(worker))
+
+  const out: T[] = []
+  const seen = new Set<string>()
+  for (const page of [...pages.keys()].sort((a, b) => a - b)) {
+    if (page > last) continue
+    for (const row of pages.get(page)!) {
+      if (seen.has(row.asset_id)) continue
+      seen.add(row.asset_id)
+      out.push(row)
+    }
   }
   return out
 }
@@ -449,89 +529,139 @@ export async function fetchOwnedLands(owner: string): Promise<LandAsset[]> {
 }
 
 /**
- * Every Alien Worlds card in one schema that a wallet holds.
+ * Asset ids for a number of copies of each template, looked up on demand.
  *
- * Unlike `fetchOwnedCards`, this returns individual assets rather than
- * aggregated designs, because staking signs a transfer of specific asset ids.
- * A big wallet holds thousands, so it pages — and stops at the contract's own
- * `max_nfts` ceiling, past which nothing more can be staked anyway.
+ * Farming counts cards from the account summary rather than listing every
+ * asset — a wallet of 15,000 tools is one request that way instead of
+ * fifteen — so the ids the transfer needs are found here, only for the
+ * designs being staked and only as many as were asked for.
+ *
+ * Because the counts are known, so is every request that has to be made.
+ * Designs the wallet holds few of share one: the API takes a list of
+ * template ids, and when everything held of a group adds up to a page, one
+ * request returns every copy of each. A design held more than a page's
+ * worth is read on its own, in exactly the pages its amount needs. All of
+ * it goes into one queue that a worker per endpoint drains, paced as
+ * `pacedPages` is. Asked design by design and page by speculative page
+ * instead, staking 55 cards of 27 designs took 81 requests and 25 seconds
+ * before the wallet even opened; this is one.
+ *
+ * Throws rather than returning short: a node that has fallen behind can
+ * list fewer copies than the summary counted, and staking three when the
+ * button said five is worse than a clear error.
  */
-export async function fetchFarmInventory(
+export async function fetchAssetIdsForTemplates(
   owner: string,
-  schema: string,
-  limit = 1000,
-): Promise<
-  {
-    asset_id: string
-    name: string
-    template_id: number
-    schema: string
-    rarity: string
-    shine: string
-    img?: string
-  }[]
-> {
-  /* v2: the rows now carry the IPFS image hash as well. */
-  const key = `farminv:v2:${owner}:${schema}`
-  const hit = cacheGet<
-    {
-      asset_id: string
-      name: string
-      template_id: number
-      schema: string
-      rarity: string
-      shine: string
-      img?: string
-    }[]
-  >(key)
-  if (hit) return hit
+  /** `held` is how many the wallet owns; without it a design pages alone. */
+  wants: { template_id: number; count: number; held?: number; name?: string }[],
+  collection = 'alien.worlds',
+): Promise<string[]> {
+  const asked = wants.filter((w) => w.count > 0)
 
-  const out: {
-    asset_id: string
-    name: string
-    template_id: number
-    schema: string
-    rarity: string
-    shine: string
-    img?: string
-  }[] = []
+  /*
+     Every request the lookup needs, known before the first one is made.
 
-  const PAGE = 200
-  for (let page = 1; out.length < limit; page++) {
-    const res = await get<{
-      data?: {
-        asset_id: string
-        name?: string
-        template?: { template_id?: string } | null
-        schema?: { schema_name?: string }
-        data?: Record<string, unknown>
-      }[]
-    }>(
-      `/atomicassets/v1/assets?collection_name=alien.worlds` +
-        `&schema_name=${encodeURIComponent(schema)}` +
-        `&owner=${encodeURIComponent(owner)}` +
-        `&page=${page}&limit=${PAGE}&order=desc&sort=asset_id`,
-    )
+     Small designs are packed into shared requests until what is held of
+     them fills a page; a design held more than a page's worth, or whose
+     holding is not known, is read on its own.
+  */
+  type Task =
+    | { kind: 'shared'; members: number[]; size: number }
+    | { kind: 'alone'; index: number; page: number; size: number }
+  const tasks: Task[] = []
 
-    const rows = res.data ?? []
-    for (const row of rows) {
-      const d = row.data ?? {}
-      out.push({
-        asset_id: String(row.asset_id),
-        name: String(row.name ?? d.name ?? ''),
-        template_id: Number(row.template?.template_id ?? 0),
-        schema: String(row.schema?.schema_name ?? schema),
-        rarity: String(d.rarity ?? ''),
-        shine: String(d.shine ?? 'Stone'),
-        img: d.img ? String(d.img) : undefined,
-      })
+  let group: number[] = []
+  let groupHeld = 0
+  const flush = () => {
+    if (group.length) tasks.push({ kind: 'shared', members: group, size: groupHeld })
+    group = []
+    groupHeld = 0
+  }
+  asked.forEach((want, index) => {
+    const held = want.held
+    if (held === undefined || held > ASSET_PAGE) {
+      const size = Math.min(want.count, ASSET_PAGE)
+      const pages = Math.ceil(want.count / size)
+      for (let page = 1; page <= pages; page++) tasks.push({ kind: 'alone', index, page, size })
+      return
     }
+    if (groupHeld + held > ASSET_PAGE || group.length >= MAX_SHARED) flush()
+    group.push(index)
+    groupHeld += held
+  })
+  flush()
 
-    if (rows.length < PAGE) break
+  const found = asked.map(() => new Map<number, string[]>())
+  let cursor = 0
+
+  const worker = async (base: string) => {
+    let first = true
+    while (cursor < tasks.length) {
+      const task = tasks[cursor++]
+      if (!first) await pause(PAGE_PAUSE_MS)
+      first = false
+
+      const templates =
+        task.kind === 'shared'
+          ? task.members.map((i) => asked[i].template_id).join(',')
+          : String(asked[task.index].template_id)
+      const page = task.kind === 'shared' ? 1 : task.page
+      const url =
+        `/atomicassets/v1/assets?collection_name=${collection}` +
+        `&owner=${encodeURIComponent(owner)}&template_id=${templates}` +
+        `&order=asc&sort=asset_id&page=${page}&limit=${task.size}`
+      let res: { data?: { asset_id: string; template?: { template_id?: string } | null }[] }
+      try {
+        res = await getFrom<typeof res>(base, url)
+      } catch {
+        await pause(2_000)
+        res = await get<typeof res>(url)
+      }
+      const rows = res.data ?? []
+
+      if (task.kind === 'alone') {
+        found[task.index].set(task.page, rows.map((r) => String(r.asset_id)))
+      } else {
+        /* One answer for the whole group, handed back to each design. */
+        for (const i of task.members) {
+          const id = String(asked[i].template_id)
+          found[i].set(
+            1,
+            rows.filter((r) => String(r.template?.template_id) === id).map((r) => String(r.asset_id)),
+          )
+        }
+      }
+    }
   }
 
-  cacheSet(key, out, TTL.short)
-  return out
+  await Promise.all(endpointsInOrder().map(worker))
+
+  const ids: string[] = []
+  asked.forEach((want, index) => {
+    const seen = new Set<string>()
+    const pages = [...found[index].keys()].sort((a, b) => a - b)
+    for (const page of pages) {
+      for (const id of found[index].get(page)!) seen.add(id)
+    }
+    if (seen.size < want.count) {
+      throw new Error(
+        `Could only find ${seen.size} of the ${want.count} ${want.name || `#${want.template_id}`} ` +
+          'in your wallet. Refresh and try again.',
+      )
+    }
+    ids.push(...[...seen].slice(0, want.count))
+  })
+  return ids
+}
+
+/**
+ * Forget a wallet's per-template counts, after something moved its cards.
+ *
+ * The counts are cached for a few minutes, which is right for browsing and
+ * wrong the moment a stake or unstake has just changed them.
+ */
+export function forgetOwnedTemplates(owner: string, collection = 'alien.worlds'): void {
+  cacheDrop(`owned:${collection}:${owner}`)
 }
 
 /** An Alien Worlds mining tool, with the attributes that decide a mine. */
@@ -556,51 +686,46 @@ export interface MiningTool {
 /**
  * The mining tools a wallet holds.
  *
- * Same call as `fetchFarmInventory` but keeping the attributes staking has no
- * use for and mining turns on — a bag is chosen on delay, ease and luck
+ * Every tool in the wallet, with the attributes mining turns on — a bag is chosen on delay, ease and luck
  * together, so a picker that shows only rarity is asking the player to guess.
  */
-export async function fetchMiningTools(owner: string): Promise<MiningTool[]> {
-  const key = `miningtools:${owner}`
+export async function fetchMiningTools(
+  owner: string,
+  onProgress?: (loaded: number) => void,
+): Promise<MiningTool[]> {
+  /* v2: the list used to stop at 1,800 tools, and a cached short list must
+     not outlive the fix. */
+  const key = `miningtools:v2:${owner}`
   const hit = cacheGet<MiningTool[]>(key)
   if (hit) return hit
 
-  const out: MiningTool[] = []
-  const PAGE = 200
+  const rows = await pacedPages<{
+    asset_id: string
+    name?: string
+    template?: { template_id?: string } | null
+    data?: Record<string, unknown>
+  }>(
+    `/atomicassets/v1/assets?collection_name=alien.worlds` +
+      `&schema_name=tool.worlds&owner=${encodeURIComponent(owner)}` +
+      `&order=desc&sort=asset_id`,
+    { onPage: onProgress },
+  )
 
-  for (let page = 1; page < 10; page++) {
-    const res = await get<{
-      data?: {
-        asset_id: string
-        name?: string
-        template?: { template_id?: string } | null
-        data?: Record<string, unknown>
-      }[]
-    }>(
-      `/atomicassets/v1/assets?collection_name=alien.worlds` +
-        `&schema_name=tool.worlds&owner=${encodeURIComponent(owner)}` +
-        `&page=${page}&limit=${PAGE}&order=desc&sort=asset_id`,
-    )
-
-    const rows = res.data ?? []
-    for (const row of rows) {
-      const d = row.data ?? {}
-      out.push({
-        asset_id: String(row.asset_id),
-        name: String(row.name ?? d.name ?? ''),
-        template_id: Number(row.template?.template_id ?? 0),
-        rarity: String(d.rarity ?? ''),
-        shine: String(d.shine ?? 'Stone'),
-        type: String(d.type ?? ''),
-        ease: Number(d.ease ?? 0),
-        luck: Number(d.luck ?? 0),
-        delay: Number(d.delay ?? 0),
-        difficulty: Number(d.difficulty ?? 0),
-      })
+  const out: MiningTool[] = rows.map((row) => {
+    const d = row.data ?? {}
+    return {
+      asset_id: String(row.asset_id),
+      name: String(row.name ?? d.name ?? ''),
+      template_id: Number(row.template?.template_id ?? 0),
+      rarity: String(d.rarity ?? ''),
+      shine: String(d.shine ?? 'Stone'),
+      type: String(d.type ?? ''),
+      ease: Number(d.ease ?? 0),
+      luck: Number(d.luck ?? 0),
+      delay: Number(d.delay ?? 0),
+      difficulty: Number(d.difficulty ?? 0),
     }
-
-    if (rows.length < PAGE) break
-  }
+  })
 
   cacheSet(key, out, TTL.short)
   return out

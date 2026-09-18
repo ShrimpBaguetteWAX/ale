@@ -1,4 +1,4 @@
-import type { StakeWeight } from './types'
+import type { OwnedCard, StakeWeight } from './types'
 import { weightOf } from './rules'
 
 /**
@@ -10,9 +10,11 @@ import { weightOf } from './rules'
  * asset was a grid of duplicates, and picking forty shovels meant forty
  * clicks on forty tiles that could not be told apart.
  *
- * The stack is the design; the amount is what the player chooses. The asset
- * ids stay on it, because the chain still wants ids — `selectedIds` turns an
- * amount back into the ids to put in the transaction.
+ * The stack is the design; the amount is what the player chooses. Staked
+ * cards come off the chain with their asset ids, so those stacks carry them
+ * and `selectedIds` hands them straight back. A wallet's cards are counted
+ * from the account summary instead, and only the ones being staked are
+ * looked up — `selectedTemplates` says which, and how many of each.
  */
 export interface CardStack {
   /** template, rarity and shine — what decides both art and weight. */
@@ -23,7 +25,12 @@ export interface CardStack {
   shine: string
   /** Weight of one card, so a stack's worth is this times the amount. */
   weight: number
-  /** Every copy the player holds, in the order the chain returned them. */
+  /** How many copies the player holds — the most that can be picked. */
+  count: number
+  /**
+   * Their asset ids, where already known, in the order the chain gave them.
+   * Staked cards come with theirs; a wallet's are empty until staking.
+   */
   ids: string[]
   /** The card's own artwork on IPFS, for designs the build ships no file for. */
   img?: string
@@ -69,12 +76,18 @@ export function stackCards<T extends Groupable>(
       rarity: card.rarity,
       shine: card.shine,
       weight: weightFor(card),
+      count: 0,
       ids: [card.asset_id],
       img: card.img,
     })
   }
 
-  return [...stacks.values()].sort(
+  for (const stack of stacks.values()) stack.count = stack.ids.length
+  return heaviestFirst([...stacks.values()])
+}
+
+function heaviestFirst(list: CardStack[]): CardStack[] {
+  return list.sort(
     (a, b) =>
       b.weight - a.weight ||
       a.name.localeCompare(b.name) ||
@@ -82,15 +95,28 @@ export function stackCards<T extends Groupable>(
   )
 }
 
-/** Stacks of the cards in a wallet, weighted from `stakeweight`. */
-export function inventoryStacks<T extends Groupable & { name: string }>(
-  cards: T[],
-  weights: StakeWeight[],
-): CardStack[] {
-  return stackCards(
-    cards,
-    (c) => c.name,
-    (c) => weightOf(c, weights),
+/**
+ * Stacks of the designs in a wallet, from their counts.
+ *
+ * No asset ids: those are looked up when the player stakes, for the designs
+ * and amounts they chose. Rarity and shine are properties of the template in
+ * Alien Worlds, so one template is exactly one stack.
+ */
+export function ownedStacks(cards: OwnedCard[], weights: StakeWeight[]): CardStack[] {
+  return heaviestFirst(
+    cards
+      .filter((c) => c.count > 0)
+      .map((c) => ({
+        key: `${c.template_id}|${(c.rarity ?? '').toLowerCase()}|${(c.shine ?? '').toLowerCase()}`,
+        template_id: c.template_id,
+        name: c.name,
+        rarity: c.rarity,
+        shine: c.shine,
+        weight: weightOf(c, weights),
+        count: c.count,
+        ids: [],
+        img: c.img,
+      })),
   )
 }
 
@@ -122,7 +148,7 @@ export function totalPicked(
   counts: Record<string, number>,
 ): number {
   return stacks.reduce(
-    (sum, stack) => sum + clampCount(counts[stack.key] ?? 0, stack.ids.length),
+    (sum, stack) => sum + clampCount(counts[stack.key] ?? 0, stack.count),
     0,
   )
 }
@@ -141,8 +167,25 @@ export function selectedIds(
 ): string[] {
   const out: string[] = []
   for (const stack of stacks) {
-    const n = clampCount(counts[stack.key] ?? 0, stack.ids.length)
+    const n = clampCount(counts[stack.key] ?? 0, Math.min(stack.count, stack.ids.length))
     if (n > 0) out.push(...stack.ids.slice(0, n))
+  }
+  return out
+}
+
+/**
+ * Which designs the amounts ask for, and how many of each — for the stacks
+ * whose ids are not known yet, to be looked up at the moment of signing.
+ */
+export function selectedTemplates(
+  stacks: CardStack[],
+  counts: Record<string, number>,
+): { template_id: number; count: number; held: number; name: string }[] {
+  const out: { template_id: number; count: number; held: number; name: string }[] = []
+  for (const stack of stacks) {
+    const n = clampCount(counts[stack.key] ?? 0, stack.count)
+    /* `held` lets the lookup put small designs into one shared request. */
+    if (n > 0) out.push({ template_id: stack.template_id, count: n, held: stack.count, name: stack.name })
   }
   return out
 }

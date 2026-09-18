@@ -1,6 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useGame } from '@/state/useGame'
-import { fetchFarmInventory } from '@/chain/atomic'
+import {
+  fetchAssetIdsForTemplates,
+  fetchOwnedTemplates,
+  fetchSchemaTemplates,
+  forgetOwnedTemplates,
+} from '@/chain/atomic'
 import {
   FARM_SCHEMAS,
   SCHEMA_LABEL,
@@ -10,7 +15,7 @@ import {
   type FarmSchema,
 } from '@/farming/queries'
 import type {
-  FarmCard,
+  OwnedCard,
   FarmConfig,
   FarmPool,
   FarmUser,
@@ -19,14 +24,14 @@ import type {
 } from '@/farming/types'
 import {
   clampCount,
-  inventoryStacks,
+  ownedStacks,
   selectedIds,
+  selectedTemplates,
   stakedStacks,
   totalPicked,
   type CardStack,
 } from '@/farming/stacks'
 import {
-  byWeight,
   farmBoard,
   formatToCap,
   stakeable,
@@ -80,8 +85,8 @@ interface FarmData {
   weights: StakeWeight[]
   user?: FarmUser
   staked: StakedCard[]
-  /** This schema's cards, not every schema's. */
-  inventory: FarmCard[]
+  /** This schema's designs and how many of each, not every schema's. */
+  inventory: OwnedCard[]
   loading: boolean
   loadingInventory: boolean
   error: string | null
@@ -109,17 +114,37 @@ function useFarm(account: string | null, schema: FarmSchema): FarmData {
   )
 
   /*
-     The wallet's own cards, per schema and on demand.
+     The wallet's own cards, counted rather than listed.
 
-     A real Alien Worlds wallet holds thousands across the three schemas and
-     only one is on screen at a time, so loading all three up front would be
-     three long paged crawls to show one. The map that used to hold them all
-     is gone: switching back to a schema is a cache hit in the client, which
-     is what the map was reimplementing.
+     This used to page through every asset and stopped at a thousand — a
+     wallet of 15,000 tools saw its newest thousand and nothing to say there
+     were more. The account summary counts every template in one request,
+     whatever the wallet holds, and the design catalogue (the same one the
+     fight pickers read, cached for hours) says which of those belong to this
+     tab and what they are. Asset ids are only looked up for what is staked.
   */
   const inventory = useChainQuery(
     account && `farm-inv:${account}:${schema}`,
-    () => fetchFarmInventory(account!, schema),
+    async () => {
+      const [owned, catalogue] = await Promise.all([
+        fetchOwnedTemplates(account!),
+        fetchSchemaTemplates(schema),
+      ])
+      const rows: OwnedCard[] = []
+      for (const [templateId, count] of owned) {
+        const t = catalogue.get(templateId)
+        if (!t || count <= 0) continue
+        rows.push({
+          template_id: templateId,
+          name: t.name,
+          rarity: t.rarity,
+          shine: t.shine || 'Stone',
+          img: t.img,
+          count,
+        })
+      }
+      return rows
+    },
     { deps: ['farmStaked'] },
   )
 
@@ -142,7 +167,7 @@ function useFarm(account: string | null, schema: FarmSchema): FarmData {
 const EMPTY_POOLS: FarmPool[] = []
 const EMPTY_WEIGHTS: StakeWeight[] = []
 const EMPTY_STAKED: StakedCard[] = []
-const EMPTY_CARDS: FarmCard[] = []
+const EMPTY_CARDS: OwnedCard[] = []
 
 /* ---------- the screen ---------- */
 
@@ -191,16 +216,18 @@ export default function Farming() {
    * wallet holds hundreds of Abundant shovels for every card worth staking,
    * and showing them greyed out buries the ones that matter.
    */
-  const inventory = useMemo(() => {
-    const all = data.inventory
-    return all.filter((c) => stakeable(c, weights)).sort(byWeight(weights))
-  }, [data.inventory, weights])
+  const inventory = useMemo(
+    () => data.inventory.filter((c) => stakeable(c, weights)),
+    [data.inventory, weights],
+  )
 
   /* One tile per design, with what the player holds of it. */
-  const invStacks = useMemo(() => inventoryStacks(inventory, weights), [inventory, weights])
+  const invStacks = useMemo(() => ownedStacks(inventory, weights), [inventory, weights])
 
+  const held = (cards: OwnedCard[]) => cards.reduce((n, c) => n + c.count, 0)
+  const heldHere = held(inventory)
   /* Held but unstakeable, so an empty grid can explain itself. */
-  const hiddenCount = data.inventory.length - inventory.length
+  const hiddenCount = held(data.inventory) - heldHere
 
   const stakedHere = useMemo(
     () => staked.filter((c) => c.schema === schema).sort(stakedByWeight),
@@ -209,9 +236,11 @@ export default function Farming() {
 
   const outStacks = useMemo(() => stakedStacks(stakedHere), [stakedHere])
 
-  /* Whichever side is on screen is the side the amounts belong to. */
+  /* Whichever side is on screen is the side the amounts belong to. Only
+     staked cards have their ids to hand; the wallet's are looked up when
+     the stake is signed. */
   const stacks = mode === 'inventory' ? invStacks : outStacks
-  const picked = useMemo(() => selectedIds(stacks, counts), [stacks, counts])
+  const picked = useMemo(() => selectedIds(outStacks, counts), [outStacks, counts])
   const pickedCount = useMemo(() => totalPicked(stacks, counts), [stacks, counts])
 
   /* Leaving a tab drops a selection that no longer has anything to act on. */
@@ -223,7 +252,7 @@ export default function Farming() {
   /* Every card on this side, or none of them — the two amounts a player
      picking a whole pool actually wants. */
   const takeAll = () =>
-    setCounts(Object.fromEntries(stacks.map((s) => [s.key, s.ids.length])))
+    setCounts(Object.fromEntries(stacks.map((s) => [s.key, s.count])))
   const takeNone = () => setCounts({})
 
   const gemFee = Number(config?.gem_fee ?? 0)
@@ -233,7 +262,12 @@ export default function Farming() {
   /* Whatever was staked or claimed is no longer a pending selection, and
      claiming resets the power that had capped. */
   const opts = (action: keyof typeof DIRTIES) => ({
-    after: data.reload,
+    /* The wallet's counts are cached; a stake or unstake has just changed
+       them, so they are read again rather than remembered. */
+    after: async () => {
+      if (account) forgetOwnedTemplates(account)
+      await data.reload()
+    },
     onSettled: () => setCounts({}),
     dirties: DIRTIES[action],
   })
@@ -241,7 +275,12 @@ export default function Farming() {
   const doStake = () =>
     run(
       'stake',
-      () => stakeCards(session!, picked),
+      /* The ids are found now, for exactly the designs and amounts chosen. */
+      async () =>
+        stakeCards(
+          session!,
+          await fetchAssetIdsForTemplates(account!, selectedTemplates(invStacks, counts)),
+        ),
       `Staked ${pickedCount} card${pickedCount === 1 ? '' : 's'}.`,
       opts('stakeCards'),
     )
@@ -406,7 +445,7 @@ export default function Farming() {
             ) : (
               <>
                 <StackBar
-                  held={inventory.length}
+                  held={heldHere}
                   picked={pickedCount}
                   disabled={busy !== null}
                   onAll={takeAll}
@@ -419,7 +458,7 @@ export default function Farming() {
                       stack={stack}
                       count={counts[stack.key] ?? 0}
                       disabled={busy !== null}
-                      onChange={(n) => setCount(stack.key, n, stack.ids.length)}
+                      onChange={(n) => setCount(stack.key, n, stack.count)}
                     />
                   ))}
                 </div>
@@ -445,7 +484,7 @@ export default function Farming() {
                     stack={stack}
                     count={counts[stack.key] ?? 0}
                     disabled={busy !== null}
-                    onChange={(n) => setCount(stack.key, n, stack.ids.length)}
+                    onChange={(n) => setCount(stack.key, n, stack.count)}
                   />
                 ))}
               </div>
@@ -528,7 +567,7 @@ function StackTile({
   disabled: boolean
   onChange: (next: number) => void
 }) {
-  const max = stack.ids.length
+  const max = stack.count
   const rarity = (stack.rarity || '').toLowerCase()
 
   return (
