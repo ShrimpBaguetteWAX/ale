@@ -599,10 +599,18 @@
   height: 0;
   pointer-events: none;
   --pin-size: 26px;
+  /*
+   * Sized off the tile, with floors. The dot and the halo shrink with the map
+   * only so far — a marker that shrinks with the tiles at a planet-wide zoom
+   * is exactly the marker nobody can find.
+   */
+  --pin-dot: clamp(20px, calc(var(--pin-size) * 0.8), 28px);
+  --pin-halo: clamp(44px, calc(var(--pin-size) * 1.9), 80px);
 }
 
 .playerpin__core,
-.playerpin__pulse {
+.playerpin__pulse,
+.playerpin__ping {
   position: absolute;
   left: 0;
   top: 0;
@@ -611,45 +619,111 @@
   translate: -50% -50%;
 }
 
+/*
+ * The dot: the "you are here" of every maps app.
+ *
+ * It was 13px of red with a thin white collar, and red was the only thing
+ * saying "you" — with red-green colour blindness, the most common kind, it
+ * turns olive and sinks into this map's sand and forest. The red stays, but
+ * brightness now carries the marker: a thick white rim inside a dark edge,
+ * which holds against light sand and dark water alike, whatever colours a
+ * player can tell apart.
+ */
 .playerpin__core {
-  width: calc(var(--pin-size) * 0.44);
-  height: calc(var(--pin-size) * 0.44);
+  width: var(--pin-dot);
+  height: var(--pin-dot);
   background: var(--red);
-  /* White collar first, dark rim outside it: keeps contrast on both bright
-     sand and dark rock without relying on the glow. */
-  border: 2px solid #ffffff;
+  border: 4px solid #ffffff;
   box-shadow:
-    0 0 0 1px rgb(5 16 30 / 90%),
-    0 0 12px 2px rgb(255 52 52 / 65%);
+    0 0 0 2px rgb(5 16 30),
+    0 2px 6px rgb(0 0 0 / 60%);
 }
 
+/*
+ * The halo: a disc of light around the dot, as the maps apps draw their
+ * accuracy circle. A large bright area rather than a thin ring, so the eye
+ * finds it first at any zoom. It holds still; the motion is the sweep.
+ */
 .playerpin__pulse {
-  width: var(--pin-size);
-  height: var(--pin-size);
-  border: 2px solid var(--red);
-  opacity: 0.9;
-  animation: pin-pulse 2s ease-out infinite;
+  width: var(--pin-halo);
+  height: var(--pin-halo);
+  background: rgb(255 255 255 / 26%);
+  border: 1.5px solid rgb(255 255 255 / 85%);
+  box-shadow: 0 0 0 1px rgb(5 16 30 / 35%);
 }
 
-@keyframes pin-pulse {
+/*
+ * The energy ping: every four seconds one thin ring of light leaves the halo
+ * and fades, and then nothing moves until the next.
+ *
+ * Just enough to catch the eye of a player looking for themselves, and quiet
+ * enough to ignore for one who is not. Symmetric, so it reads as the marker
+ * giving off energy rather than as something spinning; and white, so it is
+ * brightness that moves — which every kind of vision catches.
+ */
+.playerpin__ping {
+  width: var(--pin-halo);
+  height: var(--pin-halo);
+  border: 1.5px solid rgb(255 255 255 / 90%);
+  box-shadow: 0 0 6px rgb(255 255 255 / 50%);
+  opacity: 0;
+  animation: pin-ping 4s cubic-bezier(0.2, 0.7, 0.3, 1) infinite;
+}
+
+@keyframes pin-ping {
   0% {
-    scale: 0.55;
+    scale: 1;
+    opacity: 0;
+  }
+  6% {
     opacity: 0.9;
   }
-  70% {
+  45% {
+    scale: 1.55;
     opacity: 0;
   }
   100% {
-    scale: 1.35;
+    scale: 1.55;
     opacity: 0;
   }
+}
+
+/*
+ * A word over the dot, as venue maps label "You are here". Dark on white,
+ * the one colour pair every kind of vision reads.
+ *
+ * Above rather than below: the map writes a building's label — its
+ * multiplier, "Current" on your tavern — under the tile, and a player is
+ * often standing on exactly such a tile.
+ */
+.playerpin__tag {
+  position: absolute;
+  left: 0;
+  top: calc(var(--pin-dot) / -2 - 5px);
+  translate: -50% -100%;
+  padding: 1px 7px;
+  font-family: var(--font-display);
+  font-size: 9px;
+  font-weight: var(--fw-bold);
+  line-height: 1.35;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: rgb(5 16 30);
+  background: #ffffff;
+  border: 1.5px solid rgb(5 16 30);
+  border-radius: 999px;
+  box-shadow: 0 2px 4px rgb(0 0 0 / 45%);
 }
 
 /* Reduced effects keeps the marker, drops the animation and the glow. */
 :root[data-fx='low'] .playerpin__pulse {
   animation: none;
-  opacity: 0.85;
+  opacity: 1;
   scale: 1;
+}
+:root[data-fx='low'] .playerpin__ping {
+  display: none;
 }
 :root[data-fx='low'] .playerpin__core {
   box-shadow: none;
@@ -657,16 +731,23 @@
 @media (prefers-reduced-motion: reduce) {
   .playerpin__pulse {
     animation: none;
-    opacity: 0.85;
+    opacity: 1;
     scale: 1;
+  }
+  .playerpin__ping {
+    display: none;
   }
 }
 
 /* Legend swatch for the player marker, matching the pin. */
 .legend__dot--you {
+  width: 14px;
+  height: 14px;
   background: var(--red);
-  border: 2px solid #ffffff;
-  box-shadow: 0 0 0 1px rgb(5 16 30 / 90%);
+  border: 3px solid #ffffff;
+  box-shadow:
+    0 0 0 1.5px rgb(5 16 30),
+    0 0 0 5px rgb(255 255 255 / 30%);
 }
 
 /*
@@ -797,8 +878,8 @@
   20% {
     scale: 1.3;
     box-shadow:
-      0 0 0 1px rgb(5 16 30 / 90%),
-      0 0 22px 6px rgb(255 90 90 / 90%);
+      0 0 0 2px rgb(5 16 30),
+      0 0 22px 6px rgb(255 255 255 / 80%);
   }
   100% {
     scale: 1;
@@ -809,6 +890,12 @@
 .playerpin.is-warping .playerpin__pulse {
   animation: none;
   opacity: 0;
+}
+
+.playerpin.is-warping .playerpin__tag,
+.playerpin.is-warping .playerpin__ping {
+  opacity: 0;
+  animation: none;
 }
 
 /* Arrival: one hard ring, thrown outward and gone. */
@@ -823,7 +910,7 @@
     border-width: 3px;
   }
   100% {
-    scale: 2.6;
+    scale: 1.6;
     opacity: 0;
     border-width: 1px;
   }

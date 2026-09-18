@@ -1018,10 +1018,14 @@ export function MapCanvas({
       {/* "You are here". Animated in CSS so the canvas stays idle. */}
       <div ref={pinRef} className="playerpin" aria-hidden="true">
         <span className="playerpin__pulse" />
+        {/* A thin ring of energy that leaves the halo now and then. */}
+        <span className="playerpin__ping" />
         {/* The dash of light along the direction of travel. Idle it is
             invisible; the warp class is what gives it a life. */}
         <span className="playerpin__streak" />
         <span className="playerpin__core" />
+        {/* A word as well as a mark, so nothing depends on seeing colour. */}
+        <span className="playerpin__tag">You</span>
       </div>
       {children}
       <div className="mapstage__zoom">
