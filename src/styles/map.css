@@ -898,14 +898,29 @@
   animation: none;
 }
 
-/* Arrival: one hard ring, thrown outward and gone. */
-.playerpin.is-landing .playerpin__pulse {
+/*
+ * Arrival, in three parts on one short clock.
+ *
+ * A ring of energy thrown outward — the same ring the idle ping sends, so
+ * arriving and standing read as one marker. Underneath it the halo grows back
+ * in from the dot, where it used to be the thing thrown and then snap back at
+ * full strength once the throw was over. And the tag settles in last.
+ */
+.playerpin.is-landing .playerpin__ping {
   animation: pin-land 560ms cubic-bezier(0.12, 0.75, 0.2, 1);
+}
+
+.playerpin.is-landing .playerpin__pulse {
+  animation: pin-halo-in 520ms cubic-bezier(0.2, 0.9, 0.3, 1) both;
+}
+
+.playerpin.is-landing .playerpin__tag {
+  animation: pin-tag-in 340ms ease-out 180ms both;
 }
 
 @keyframes pin-land {
   0% {
-    scale: 0.25;
+    scale: 0.4;
     opacity: 1;
     border-width: 3px;
   }
@@ -916,19 +931,47 @@
   }
 }
 
+@keyframes pin-halo-in {
+  from {
+    scale: 0.3;
+    opacity: 0;
+  }
+  to {
+    scale: 1;
+    opacity: 1;
+  }
+}
+
+@keyframes pin-tag-in {
+  from {
+    opacity: 0;
+    translate: -50% calc(-100% + 4px);
+  }
+  to {
+    opacity: 1;
+    translate: -50% -100%;
+  }
+}
+
 /* Both opt-outs already keep the marker and drop the motion; the flight is
    never started for either, so this only has to silence the dressing. */
 :root[data-fx='low'] .playerpin__streak,
 :root[data-fx='low'] .playerpin.is-warping .playerpin__core,
-:root[data-fx='low'] .playerpin.is-landing .playerpin__pulse {
+:root[data-fx='low'] .playerpin.is-landing .playerpin__ping {
   animation: none;
   opacity: 0;
+}
+:root[data-fx='low'] .playerpin.is-landing .playerpin__pulse,
+:root[data-fx='low'] .playerpin.is-landing .playerpin__tag {
+  animation: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
   .playerpin__streak,
   .playerpin.is-warping .playerpin__core,
-  .playerpin.is-landing .playerpin__pulse {
+  .playerpin.is-landing .playerpin__ping,
+  .playerpin.is-landing .playerpin__pulse,
+  .playerpin.is-landing .playerpin__tag {
     animation: none;
   }
   .playerpin__streak {
