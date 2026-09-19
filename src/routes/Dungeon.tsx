@@ -43,6 +43,7 @@ import { ageFactor, levelFactor } from '@/fight/scaling'
 import { recallTeam, rememberTeam, restoreTeam } from '@/fight/lastTeam'
 import { applyWeather, fetchWeather } from '@/fight/weather'
 import { autoPickCards, autoPickFighters } from '@/fight/autopick'
+import { AutoPickSplit } from '@/fight/AutoPickSplit'
 import { TEAM_SIZE, type BattleFighter, type RosterFighter } from '@/dungeon/types'
 import {
   abilityColor,
@@ -464,26 +465,20 @@ export default function Dungeon() {
   */
   const phone = usePhone()
 
-  const autoPickTeamOnly = useCallback(() => {
-    if (!roster) return
-    setTeamIds(autoPickFighters(roster, matchups, TEAM_SIZE))
-  }, [roster, matchups])
+  /*
+     Auto-pick with a choice of pool: Suggested, Leveling, or by marker. The
+     ranking is unchanged — the fighters that suit this opponent best, among
+     the ones the mode allows.
+  */
   const autoPickButton = (
-    <button
-      type="button"
-      className="btn btn--ghost btn--sm teamauto"
-      onClick={autoPickTeamOnly}
-      disabled={!roster}
-      title="Choose the five fighters that suit this opponent"
-    >
-      {/*
-         The word the header does not need. On the "Your team" line there
-         is nothing else it could be picking, and the full label is what
-         made that header wrap onto a second line — which dropped the
-         whole team a row below the defenders.
-      */}
-      Auto-pick<span className="teamauto__what"> fighters</span>
-    </button>
+    <AutoPickSplit
+      roster={roster}
+      onPick={(eligible) => {
+        const ids = autoPickFighters(eligible, matchups, TEAM_SIZE)
+        setTeamIds(ids)
+        return ids.length
+      }}
+    />
   )
 
   const autoPickCardsOnly = useCallback(() => {

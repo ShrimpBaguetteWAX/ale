@@ -3897,3 +3897,200 @@ button.combatcard--empty:hover {
   background: rgb(5 16 30 / 80%);
   border-radius: 50%;
 }
+
+/* ---------- auto-pick, split ---------- */
+
+/*
+ * Auto-pick and what it picks from, as one control in two halves: the left
+ * picks, the right shows the mode and opens the menu that changes it.
+ */
+.autosplit {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-self: start;
+}
+
+.autosplit__go {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.autosplit__mode {
+  gap: 6px;
+  color: var(--text-dim);
+  border-left-width: 0;
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+.autosplit__mode::before {
+  content: '';
+  width: 1px;
+  height: 16px;
+  margin-right: 2px;
+  background: rgb(255 255 255 / 18%);
+}
+
+.autosplit__mode[aria-expanded='true'] {
+  color: var(--white);
+  background: var(--surface-3);
+}
+
+.autosplit__icon {
+  display: inline-grid;
+  place-items: center;
+  width: 14px;
+  height: 14px;
+}
+.autosplit__icon svg {
+  width: 14px;
+  height: 14px;
+}
+
+.autosplit__caret {
+  font-size: 9px;
+  opacity: 0.8;
+}
+
+/* The chosen markers, on the button, overlapping like a hand of chips. */
+.autosplit__marks {
+  display: inline-flex;
+  align-items: center;
+}
+.autosplit__marks img {
+  width: 15px;
+  height: 15px;
+  margin-left: -3px;
+  border-radius: 50%;
+  background: #000000;
+  box-shadow: 0 0 0 1.5px rgb(11 18 32);
+}
+.autosplit__marks img:first-child {
+  margin-left: 0;
+}
+.autosplit__more {
+  margin-left: 4px;
+  font-size: 10px;
+}
+
+/* Said out loud when the pool is smaller than a team, then gone. */
+.autosplit__note {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 5;
+  font-size: var(--fs-xs);
+  color: var(--gold);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.autosplit__menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: var(--z-dropdown);
+  width: 310px;
+  padding: 6px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  box-shadow: 0 14px 30px rgb(0 0 0 / 55%);
+}
+
+.autosplit__opt {
+  display: grid;
+  grid-template-columns: 22px 1fr auto;
+  gap: 10px;
+  align-items: start;
+  width: 100%;
+  padding: 9px 10px;
+  color: var(--white);
+  font: inherit;
+  text-align: left;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.autosplit__opt:hover {
+  background: rgb(255 255 255 / 5%);
+}
+.autosplit__opt[aria-checked='true'] {
+  background: var(--surface-3);
+  border-color: var(--line);
+}
+
+.autosplit__opticon {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  color: var(--gold);
+}
+.autosplit__opticon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.autosplit__optname {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: var(--fw-bold);
+  letter-spacing: 0.04em;
+}
+.autosplit__optdesc {
+  display: block;
+  margin-top: 2px;
+  font-size: 12.5px;
+  line-height: 1.35;
+  color: var(--text-dim);
+}
+.autosplit__optcount {
+  padding-top: 1px;
+  font-size: 12px;
+  color: var(--text-faint);
+  white-space: nowrap;
+}
+
+.autosplit__markers {
+  padding: 4px 10px 10px 42px;
+}
+.autosplit__hint {
+  margin: 0 0 7px;
+  font-size: 12px;
+  color: var(--text-faint);
+}
+.autosplit__grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.autosplit__foot {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+/* On the team line it matches the header's compact controls. */
+.versus__head .autosplit .btn {
+  min-height: 26px;
+  padding: 0 10px;
+  font-size: var(--fs-xs);
+}
+
+/* A phone gives it the full width under the team, and the menu with it. */
+@media (max-width: 719px) {
+  .autosplit {
+    display: flex;
+    width: 100%;
+  }
+  .autosplit__go {
+    flex: 1;
+  }
+  .autosplit__menu {
+    width: 100%;
+  }
+}
