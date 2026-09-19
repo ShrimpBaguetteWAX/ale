@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import {
   fetchShardPools,
   fetchTlmPools,
@@ -250,8 +250,17 @@ export default function Profile({ section = 'account' }: { section?: Section }) 
   const disconnect = useGame((s) => s.disconnect)
   const navigate = useNavigate()
 
-  /* The first tab of whichever half this is. */
-  const [tab, setTab] = useState<Tab>(() => SECTION_TABS[section][0][0])
+  /*
+     The first tab of whichever half this is — unless the link asked for a
+     particular one (`?tab=cpu`), which is how the briefing sends a player
+     straight to the thing it is talking about.
+  */
+  const [params] = useSearchParams()
+  const askedTab = () => {
+    const asked = params.get('tab')
+    return SECTION_TABS[section].find(([key]) => key === asked)?.[0] ?? SECTION_TABS[section][0][0]
+  }
+  const [tab, setTab] = useState<Tab>(askedTab)
 
   /*
      Both halves are the same component, so moving between them in the menu
@@ -260,8 +269,9 @@ export default function Profile({ section = 'account' }: { section?: Section }) 
      two would render nothing at all.
   */
   useEffect(() => {
-    setTab(SECTION_TABS[section][0][0])
-  }, [section])
+    setTab(askedTab())
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [section, params])
   const { busy: busyKey, error, notice, run } = useAction()
   const busy = busyKey as Busy
   /* Which pool the running mine belongs to, so only its button spins. */

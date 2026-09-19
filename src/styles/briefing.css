@@ -1,0 +1,515 @@
+/*
+ * The briefing.
+ *
+ * A reading page rather than a control panel: a greeting, then what is
+ * waiting, then what today holds, then the long game. Each suggestion is one
+ * row — a picture, a sentence of why, one way in — and the tone runs down
+ * the left edge so a glance tells "take this" from "play this" from "build
+ * towards this" without reading a word.
+ */
+
+.brief {
+  display: grid;
+  gap: var(--sp-6);
+  align-content: start;
+  max-width: 1080px;
+  padding-bottom: var(--sp-10);
+}
+
+/* ---------- greeting ---------- */
+
+.brief__hero {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--sp-5);
+  align-items: center;
+  padding: var(--sp-6);
+  background:
+    radial-gradient(120% 140% at 0% 0%, rgb(0 186 255 / 16%), transparent 55%),
+    linear-gradient(180deg, var(--surface-3), var(--surface-1));
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow);
+}
+
+.brief__avatar {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--cyan);
+  box-shadow: 0 0 0 4px rgb(0 186 255 / 14%);
+  background: var(--black);
+}
+
+.brief__who {
+  display: grid;
+  gap: var(--sp-1);
+  min-width: 0;
+}
+
+.brief__kicker {
+  font-family: var(--font-display);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-bold);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--cyan);
+}
+
+.brief__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-4xl);
+  font-weight: var(--fw-bold);
+  letter-spacing: 0.03em;
+  color: var(--text-heading);
+  overflow-wrap: anywhere;
+}
+
+.brief__lead {
+  margin: 0;
+  color: var(--text-dim);
+  font-size: var(--fs-md);
+}
+
+.brief__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin-top: var(--sp-2);
+}
+
+.brief__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 30px;
+  padding: 0 12px;
+  font-size: var(--fs-sm);
+  color: var(--text);
+  text-decoration: none;
+  background: rgb(255 255 255 / 5%);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-full);
+}
+.brief__chip img {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+}
+a.brief__chip:hover {
+  border-color: var(--line-bright);
+}
+.brief__chip--legend {
+  color: var(--gold);
+  border-color: rgb(246 168 0 / 50%);
+}
+.brief__chip--busy {
+  color: var(--text-faint);
+}
+.brief__chip--busy .spinner {
+  width: 12px;
+  height: 12px;
+}
+
+/* ---------- first steps ---------- */
+
+.brief__steps {
+  padding: var(--sp-5) var(--sp-6);
+  background: rgb(0 186 255 / 6%);
+  border: 1px solid rgb(0 186 255 / 35%);
+  border-radius: var(--radius-md);
+}
+
+.brief__stepshead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-3);
+}
+
+.brief__steplist {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.brief__steplist li {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: 8px 10px;
+  font-size: var(--fs-sm);
+  color: var(--text);
+  background: rgb(0 0 0 / 25%);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-sm);
+}
+.brief__steplist li.is-done {
+  color: var(--text-faint);
+}
+.brief__stepnum {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 22px;
+  height: 22px;
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: var(--fw-bold);
+  color: var(--cyan);
+  border: 1.5px solid var(--cyan);
+  border-radius: 50%;
+}
+.is-done .brief__stepnum {
+  color: var(--navy);
+  background: var(--teal);
+  border-color: var(--teal);
+}
+
+/* ---------- groups ---------- */
+
+.brief__group {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+.brief__grouphead {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--sp-1) var(--sp-3);
+}
+
+.brief__h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-md);
+  font-weight: var(--fw-bold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--white);
+}
+
+.brief__grouphint {
+  font-size: var(--fs-sm);
+  color: var(--text-faint);
+}
+
+.brief__morelink {
+  margin-left: auto;
+  font-size: var(--fs-sm);
+  color: var(--cyan);
+}
+
+.brief__clear {
+  margin: 0;
+  padding: var(--sp-4) var(--sp-5);
+  color: var(--text-dim);
+  background: rgb(14 212 168 / 6%);
+  border: 1px dashed rgb(14 212 168 / 40%);
+  border-radius: var(--radius-md);
+}
+
+.brief__list {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+/* ---------- one suggestion ---------- */
+
+.bcard {
+  --tone: var(--cyan);
+  --tone-soft: rgb(0 186 255 / 10%);
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr) auto;
+  gap: var(--sp-4);
+  align-items: center;
+  padding: var(--sp-4) var(--sp-5);
+  background: linear-gradient(90deg, var(--tone-soft), transparent 45%), var(--surface-1);
+  border: 1px solid var(--line-soft);
+  border-left: 3px solid var(--tone);
+  border-radius: var(--radius-md);
+}
+
+.bcard--claim {
+  --tone: var(--gold);
+  --tone-soft: rgb(246 168 0 / 12%);
+}
+.bcard--warn {
+  --tone: var(--magenta);
+  --tone-soft: rgb(255 1 255 / 10%);
+}
+.bcard--grow {
+  --tone: var(--purple);
+  --tone-soft: rgb(145 54 188 / 14%);
+}
+
+.bcard__icon {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  background: rgb(0 0 0 / 35%);
+  border: 1px solid var(--line-soft);
+  border-radius: 12px;
+}
+.bcard__icon img {
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+}
+
+.bcard__text {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.bcard__top {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4px var(--sp-3);
+}
+
+.bcard__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: var(--fw-bold);
+  letter-spacing: 0.02em;
+  color: var(--white);
+}
+
+.bcard__figure {
+  font-family: var(--font-display);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-bold);
+  letter-spacing: 0.04em;
+  color: var(--tone);
+  white-space: nowrap;
+}
+
+.bcard__body {
+  margin: 0;
+  max-width: 72ch;
+  font-size: var(--fs-sm);
+  line-height: 1.5;
+  color: var(--text-dim);
+}
+
+.bcard__actions {
+  display: grid;
+  gap: 6px;
+  justify-items: stretch;
+  text-align: center;
+}
+.bcard__actions .btn {
+  min-width: 150px;
+  white-space: nowrap;
+}
+
+.bcard__more {
+  font-size: var(--fs-xs);
+  color: var(--text-dim);
+}
+.bcard__more:hover {
+  color: var(--white);
+}
+
+/* ---------- pool bars ---------- */
+
+.bcard__meters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--sp-2) var(--sp-4);
+  max-width: 640px;
+  margin-top: var(--sp-2);
+}
+
+.bmeter {
+  --fill: linear-gradient(90deg, var(--cyan-deep), var(--cyan));
+  display: grid;
+  grid-template-columns: 22px 1fr;
+  gap: var(--sp-2);
+  align-items: start;
+  padding: 8px 10px;
+  background: rgb(0 0 0 / 28%);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-sm);
+}
+.bmeter--ready {
+  --fill: var(--grad-gold);
+  border-color: rgb(246 168 0 / 45%);
+}
+
+.bmeter__icon {
+  width: 22px;
+  height: 22px;
+  margin-top: 1px;
+  object-fit: contain;
+}
+
+.bmeter__main {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+
+.bmeter__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-2);
+}
+
+.bmeter__name {
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: var(--fw-bold);
+  letter-spacing: 0.08em;
+  color: var(--text-dim);
+}
+
+.bmeter__pct {
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: var(--fw-bold);
+  color: var(--white);
+}
+.bmeter--ready .bmeter__pct {
+  color: var(--gold);
+}
+
+.bmeter__bar {
+  height: 8px;
+  overflow: hidden;
+  background: rgb(255 255 255 / 8%);
+  border-radius: var(--radius-full);
+}
+.bmeter__bar span {
+  display: block;
+  height: 100%;
+  background: var(--fill);
+  border-radius: inherit;
+  box-shadow: 0 0 8px rgb(0 186 255 / 45%);
+}
+.bmeter--ready .bmeter__bar span {
+  box-shadow: 0 0 8px rgb(246 168 0 / 55%);
+}
+
+.bmeter__foot {
+  flex-wrap: wrap;
+  font-size: var(--fs-xs);
+  color: var(--text-faint);
+}
+.bmeter__foot strong {
+  color: var(--white);
+  font-weight: var(--fw-medium);
+}
+.bmeter__wins {
+  color: var(--cyan);
+  white-space: nowrap;
+}
+
+/* ---------- the road so far ---------- */
+
+.brief__journey {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: var(--sp-2);
+}
+
+.brief__stat {
+  display: grid;
+  grid-template-columns: 22px 1fr;
+  grid-template-rows: auto auto;
+  column-gap: var(--sp-2);
+  align-items: center;
+  padding: 10px 12px;
+  background: var(--surface-1);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-sm);
+}
+.brief__stat img {
+  grid-row: span 2;
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+}
+.brief__stat strong {
+  font-size: var(--fs-md);
+  color: var(--white);
+}
+.brief__stat span {
+  font-size: var(--fs-xs);
+  color: var(--text-faint);
+}
+
+/* ---------- phone ---------- */
+
+@media (max-width: 719px) {
+  .brief {
+    gap: var(--sp-5);
+  }
+
+  .brief__hero {
+    grid-template-columns: 1fr;
+    justify-items: start;
+    gap: var(--sp-3);
+    padding: var(--sp-4);
+  }
+  .brief__avatar {
+    width: 56px;
+    height: 56px;
+  }
+  .brief__title {
+    font-size: var(--fs-xl);
+  }
+
+  .brief__steps {
+    padding: var(--sp-4);
+  }
+  .brief__steplist {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  /* Icon beside the words, the button across the full width beneath. */
+  .bcard {
+    grid-template-columns: 40px minmax(0, 1fr);
+    gap: var(--sp-3);
+    align-items: start;
+    padding: var(--sp-4);
+  }
+  .bcard__icon {
+    width: 40px;
+    height: 40px;
+  }
+  .bcard__icon img {
+    width: 24px;
+    height: 24px;
+  }
+  .bcard__actions {
+    grid-column: 1 / -1;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+  }
+  .bcard__actions .btn {
+    min-width: 0;
+  }
+  .bcard__actions .bcard__more {
+    padding: 0 var(--sp-2);
+  }
+  .bcard__actions:not(:has(.bcard__more)) {
+    grid-template-columns: 1fr;
+  }
+
+  .brief__journey {
+    grid-template-columns: 1fr 1fr;
+  }
+}

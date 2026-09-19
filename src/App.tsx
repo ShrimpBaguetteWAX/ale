@@ -138,6 +138,7 @@ class ScreenBoundary extends Component<{ children: ReactNode }, { failed: boolea
 // page never downloads the game screens or the wallet SDK.
 const Signup = lazyScreen(() => import('./routes/Signup'))
 const MapView = lazyScreen(() => import('./routes/MapView'))
+const Briefing = lazyScreen(() => import('./routes/Briefing'))
 const Profile = lazyScreen(() => import('./routes/Profile'))
 const Tavern = lazyScreen(() => import('./routes/Tavern'))
 const Fighters = lazyScreen(() => import('./routes/Fighters'))
@@ -241,6 +242,7 @@ export default function App() {
             <Route element={<RequirePlayer />}>
               <Route element={<AppShell />}>
                 <Route path="/map" element={<MapView />} />
+                <Route path="/briefing" element={<Briefing />} />
                 <Route path="/profile" element={<Profile section="account" />} />
                 <Route path="/rewards" element={<Profile section="rewards" />} />
                 <Route path="/tavern" element={<Tavern />} />

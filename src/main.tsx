@@ -18,6 +18,7 @@ import './styles/account.css'
 import './styles/dungeon.css'
 import './styles/battle.css'
 import './styles/maintenance.css'
+import './styles/briefing.css'
 
 /**
  * Decide once, before first paint, whether to run the cheap visual path.

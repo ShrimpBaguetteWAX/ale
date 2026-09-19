@@ -32,6 +32,8 @@ import Candle from '../src/routes/Candle'
 import Tavern from '../src/routes/Tavern'
 import Lands from '../src/routes/Lands'
 import Farming from '../src/routes/Farming'
+import Briefing from '../src/routes/Briefing'
+import BriefingAll from './BriefingAll'
 import { landId } from '../src/chain/landId'
 import { MineCelebration } from '../src/pools/MineCelebration'
 import { useGame } from '../src/state/useGame'
@@ -54,6 +56,7 @@ import '../src/styles/candle.css'
 import '../src/styles/account.css'
 import '../src/styles/dungeon.css'
 import '../src/styles/battle.css'
+import '../src/styles/briefing.css'
 
 document.documentElement.dataset.fx = 'low'
 
@@ -266,12 +269,42 @@ if (borrow) {
     })
 }
 
-createRoot(document.getElementById('root')!).render(
+/*
+ * `?as=<wallet>` — see the game as another player sees it.
+ *
+ * The whole `players.ale` row replaces the mock, and the account becomes
+ * that wallet, so every screen reads their roster, quests, lands and pools
+ * off the chain. Read-only by construction: there is no session, so nothing
+ * can be signed. The app is mounted only once the row is in, so no screen
+ * starts reading as the stand-in wallet first.
+ */
+const as = params.get('as')
+async function lookAs(): Promise<void> {
+  if (!as) return
+  try {
+    const r = await fetch('https://wax.greymass.com/v1/chain/get_table_rows', {
+      method: 'POST',
+      body: JSON.stringify({
+        json: true, code: 'players.ale', scope: 'players.ale', table: 'players',
+        lower_bound: as, upper_bound: as, limit: 1,
+      }),
+    })
+    const row = (await r.json()).rows?.[0]
+    if (row) useGame.setState({ account: as, session: null, player: row } as never)
+    else document.title = 'No player row for ' + as
+  } catch {
+    /* Falls back to the stand-in wallet. */
+  }
+}
+
+void lookAs().then(() => createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <MemoryRouter initialEntries={[route]}>
       <Routes>
         <Route element={<AppShell />}>
           <Route path="/map" element={<MapView />} />
+          <Route path="/briefing" element={<Briefing />} />
+          <Route path="/briefing-all" element={<BriefingAll />} />
           <Route path="/fighters" element={<Fighters />} />
           <Route path="/quests" element={<Quests />} />
           <Route path="/shop" element={<Shop />} />
@@ -320,4 +353,4 @@ createRoot(document.getElementById('root')!).render(
       </Routes>
     </MemoryRouter>
   </StrictMode>,
-)
+))

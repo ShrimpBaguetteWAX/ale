@@ -82,6 +82,6 @@ export const SHOP_CATEGORIES: { key: string; label: string; blurb: string }[] = 
 export const LEGEND_BENEFITS = [
   'Auto-reveal fighters instantly and for free whenever you visit a tavern',
   'Claim full rewards instead of the 10% limit on trial accounts',
-  'Every day, stake a significant amount of CPU for you if needed',
+  'Boost your CPU for 24 hours, up to 25 times a week',
   'A larger free daily energy flask',
 ]

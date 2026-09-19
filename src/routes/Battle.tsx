@@ -48,6 +48,7 @@ import {
   type MinedReward,
 } from '@/pools/MineCelebration'
 import { NUM_LOCALE } from '@/format'
+import { rememberWinPower } from '@/briefing/winPower'
 import { GameImg } from '@/components/GameImg'
 import { asset } from '@/assets'
 import {
@@ -1820,6 +1821,16 @@ function Result({
       cancelled = true
     }
   }, [won, refreshPlayer])
+
+  /*
+     What this win banked, filed for the briefing's "about N more wins".
+     Only a replay whose venue is known counts: a row pulled off the chain
+     does not say whether it was a dungeon or an arena.
+  */
+  useEffect(() => {
+    if (!won || !row.history_id || !recallVenue(String(row.history_id))) return
+    rememberWinPower(String(row.history_id), venue, row.reward_power_added ?? [])
+  }, [won, row, venue])
 
   /* What the chain would have written for the outcome this replay reached. */
   const expectedLog =
