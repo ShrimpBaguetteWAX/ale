@@ -7,7 +7,7 @@ import { fetchRoster, fetchDungeonConfig } from '@/dungeon/queries'
 import { dungeonMaintained, fighterAvailable } from '@/dungeon/rules'
 import { playedDungeonsToday } from '@/map/planetStatus'
 import { fetchFighterLevels } from '@/fighters/queries'
-import { levelUpOf } from '@/fighters/rules'
+import { levelUpOf, msUntilDeletion, wantsPayday } from '@/fighters/rules'
 import { fetchAscensionConfig } from '@/ascension/queries'
 import { canAscend, SACRIFICE_COUNT } from '@/ascension/rules'
 import { fetchActiveQuests, fetchQuestScopes } from '@/quests/queries'
@@ -55,6 +55,7 @@ const LOADERS: Record<string, (player: Player) => Promise<Parts>> = {
     /* Listed on the market is sold in all but signature — not part of the team. */
     const owned = roster.filter((f) => !(f.in_use && /market/i.test(String(f.use_type ?? ''))))
     const available = owned.filter((f) => fighterAvailable(f).available)
+    const overdue = owned.filter((f) => wantsPayday(f))
     const ascendable =
       Number(ascension?.min_ascension_level ?? 0) > 0 && owned.length > SACRIFICE_COUNT
         ? owned.filter((f) => canAscend(f, ascension).ok).length
@@ -67,6 +68,8 @@ const LOADERS: Record<string, (player: Player) => Promise<Parts>> = {
         levelUps: owned.filter((f) => levelUpOf(f, levels).ready).length,
         ascendable,
         ascensionWaiting: owned.filter((f) => !!f.ascension_in_progress).length,
+        overdue: overdue.length,
+        soonestDeletionMs: overdue.length ? Math.min(...overdue.map((f) => msUntilDeletion(f))) : undefined,
       },
     }
   },

@@ -9,7 +9,7 @@ import { liveBoostPercent } from '@/map/terrain'
 import { fetchShopCooldowns, fetchShopItems } from '@/shop/queries'
 import { canBuy, isFree } from '@/shop/rules'
 import { fetchFighterLevels } from '@/fighters/queries'
-import { levelUpOf } from '@/fighters/rules'
+import { levelUpOf, wantsPayday } from '@/fighters/rules'
 import { fetchRoster } from '@/dungeon/queries'
 import { fetchActiveQuests } from '@/quests/queries'
 import { progressOf } from '@/quests/rules'
@@ -135,19 +135,28 @@ export const CHORE_CHECKS: ChoreCheck[] = [
      another section — so five minutes catches it while it still feels prompt.
      The roster is shared with the dungeon, arena and market screens, so this
      is usually a cache hit.
+
+     Also lit by a fighter whose payday has passed. The contract refuses to
+     field it until it is paid, and `final_deletion_date` starts counting —
+     but nothing said so until a picker greyed it out. Only once it is actually
+     overdue, not ahead of time: a dot that is lit for something not yet due
+     is a dot people learn to ignore. A fighter listed on the market is left
+     out; it is on its way to someone else.
   */
   {
     key: 'fighters',
     deps: ['player', 'fighters'],
     to: '/fighters',
     every: 3 * MIN,
-    hint: 'A fighter is ready to level up',
+    hint: 'A fighter can level up or needs a payday',
     async run(player, force) {
       const [roster, levels] = await Promise.all([
         fetchRoster(player.wallet, force),
         fetchFighterLevels(),
       ])
-      return roster.some((f) => levelUpOf(f, levels).ready)
+      return roster.some(
+        (f) => levelUpOf(f, levels).ready || (wantsPayday(f) && !onMarket(f)),
+      )
     },
   },
 
@@ -300,6 +309,11 @@ export const CHORE_CHECKS: ChoreCheck[] = [
     },
   },
 ]
+
+/** Listed for sale: `in_use` with the market as the reason. */
+function onMarket(f: { in_use?: unknown; use_type?: unknown }): boolean {
+  return !!f.in_use && /market/i.test(String(f.use_type ?? ''))
+}
 
 /**
  * Which dots a table's staleness could change.

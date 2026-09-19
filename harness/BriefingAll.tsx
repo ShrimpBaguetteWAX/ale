@@ -35,6 +35,7 @@ const WHEN: Record<string, string> = {
   'farm-cap': 'Farming power has reached its cap.',
   avatars: 'Lifetime stats have unlocked an avatar not claimed yet.',
   cpu: 'The wallet has less than 35 ms CPU left.',
+  payday: "A fighter's payday has passed (not before). Fighters listed on the market don't count.",
   boost: "A building's boost is below 7%.",
   'legend-ending': 'Legend pass ends within 5 days.',
   dungeons: 'Team ready, and maintained dungeons remain unplayed today.',
@@ -111,7 +112,16 @@ const winPower = {
   arena: new Map([['shrdarena', 1_500]]),
 }
 
-const roster = { total: 12, available: 12, belowTen: 6, levelUps: 2, ascendable: 1, ascensionWaiting: 1 }
+const roster = {
+  total: 12,
+  available: 12,
+  belowTen: 6,
+  levelUps: 2,
+  ascendable: 1,
+  ascensionWaiting: 1,
+  overdue: 3,
+  soonestDeletionMs: 86 * day,
+}
 
 const SCENARIOS: BriefingInput[] = [
   /* A trial account with a bit of everything going on. */

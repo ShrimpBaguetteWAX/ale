@@ -145,6 +145,14 @@ describe('briefing', () => {
     expect(spent.cta.label).toBe('Check CPU')
   })
 
+  it('warns about fighters past their payday, and only those', () => {
+    const p = run({ roster: roster({ overdue: 2, soonestDeletionMs: 86 * day }) }).find((i) => i.id === 'payday')!
+    expect(p.title).toBe("2 fighters won't fight until they're paid")
+    expect(p.figure).toBe('deleted in 86 days')
+    expect(p.tone).toBe('warn')
+    expect(ids({ roster: roster({ overdue: 0 }) })).not.toContain('payday')
+  })
+
   it('asks for tools only when none are equipped', () => {
     expect(ids({ player: player({ mine_nfts: [] }) })).toContain('tools')
     expect(ids()).not.toContain('tools')

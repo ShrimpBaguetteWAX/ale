@@ -78,6 +78,10 @@ export interface RosterSummary {
   ascendable: number
   /** An ascension rolled and waiting for its pick. */
   ascensionWaiting: number
+  /** Past their payday: benched until paid. */
+  overdue?: number
+  /** Milliseconds until the first overdue fighter is deleted. */
+  soonestDeletionMs?: number
 }
 
 export interface CandleSummary {
@@ -394,6 +398,26 @@ export function buildBriefing(input: BriefingInput): BriefItem[] {
       title: 'Candle winnings to claim',
       body: 'A Candle mission you put gems into has paid out your share.',
       cta: { label: 'Claim at the Candle', to: '/candle' },
+    })
+  }
+
+  if (roster?.overdue) {
+    const n = roster.overdue
+    add({
+      id: 'payday',
+      group: 'now',
+      rank: 0,
+      tone: 'warn',
+      icon: ICON.fighters,
+      title: n === 1 ? "A fighter won't fight until it's paid" : `${n} fighters won't fight until they're paid`,
+      figure:
+        roster.soonestDeletionMs !== undefined && Number.isFinite(roster.soonestDeletionMs)
+          ? `deleted in ${spanLabel(Math.max(0, roster.soonestDeletionMs))}`
+          : undefined,
+      body:
+        `${n === 1 ? 'Its' : 'Their'} payday has passed, so the game benches ${n === 1 ? 'it' : 'them'} from every fight. ` +
+        `An unpaid fighter is also on a countdown: 90 days after the missed payday it is deleted for good. Paying costs credits and restarts the clock.`,
+      cta: { label: 'Pay on My Fighters', to: '/fighters' },
     })
   }
 

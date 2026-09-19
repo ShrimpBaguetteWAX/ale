@@ -231,6 +231,24 @@ async function checks() {
     tables['fighters.ale/levels'] = [{ level: 1 }, { level: 2 }]
     r = await runCheck('fighters', player())
     check('fighters: maxed out with nowhere to go, dark', r.flag, false)
+
+    /* A payday: lit once it has passed, not before, and not for a sale. */
+    const due = (fromNow: number, over: Record<string, unknown> = {}) => ({
+      ...roster(0, 100, 1),
+      next_payday: iso(fromNow),
+      ...over,
+    })
+    tables['fighters.ale/fighters'] = [due(-60_000)]
+    r = await runCheck('fighters', player())
+    check('fighters: a payday gone by lights up', r.flag, true)
+
+    tables['fighters.ale/fighters'] = [due(3_600_000)]
+    r = await runCheck('fighters', player())
+    check('fighters: a payday an hour off stays dark', r.flag, false)
+
+    tables['fighters.ale/fighters'] = [due(-60_000, { in_use: 1, use_type: 'Market' })]
+    r = await runCheck('fighters', player())
+    check('fighters: overdue but listed for sale, dark', r.flag, false)
   }
 
   /* --- quests --- */
