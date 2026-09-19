@@ -188,7 +188,7 @@ export function recallDensity(): PickDensity {
   }
 }
 
-function rememberDensity(density: PickDensity): void {
+export function rememberDensity(density: PickDensity): void {
   try {
     localStorage.setItem(DENSITY_KEY, density)
   } catch {

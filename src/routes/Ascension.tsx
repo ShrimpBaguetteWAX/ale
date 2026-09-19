@@ -4,7 +4,16 @@ import { fetchRoster } from '@/dungeon/queries'
 import { battleFactor } from '@/fighters/rules'
 import { levelFactor } from '@/fight/scaling'
 import { Cost, FighterCard } from './Fighters'
-import { PickCard, PickViewSwitch, type PickView } from '@/fight/setup'
+import {
+  PickCard,
+  PickDensitySwitch,
+  PickViewSwitch,
+  recallDensity,
+  rememberDensity,
+  type PickDensity,
+  type PickView,
+} from '@/fight/setup'
+import { usePhone } from '@/components/usePhone'
 import type { RosterFighter } from '@/dungeon/types'
 import type { StatCaps, UpgradeOdds } from '@/ascension/queries'
 import type { FighterLevel, FightersConfig } from '@/fighters/types'
@@ -403,6 +412,17 @@ function Builder({
      requirement tabs, because comparing candidates for one slot against the
      ones for the next is the whole errand. */
   const [view, setView] = useState<PickView>('combat')
+  /*
+     Cards or compact, the same setting the dungeon and arena pickers keep —
+     it is about how the person reads a grid, so one choice serves all three.
+     Compact cards open the full read on hover on a desktop.
+  */
+  const [density, setDensity] = useState<PickDensity>(recallDensity)
+  const chooseDensity = (next: PickDensity) => {
+    setDensity(next)
+    rememberDensity(next)
+  }
+  const phone = usePhone()
 
   const count = (t: Tab) =>
     t === 'target' ? ready.length : byRequirement[t].length
@@ -510,10 +530,13 @@ function Builder({
               </p>
             ) : (
               <>
-              <div className="picker__countrow picker__countrow--end">
-                <PickViewSwitch view={view} onChange={setView} />
+              <div className="picker__countrow">
+                {/* The readout switch goes with the full card it controls. */}
+                {density === 'full' && <PickViewSwitch view={view} onChange={setView} />}
+                <span className="spacer" />
+                <PickDensitySwitch density={density} onChange={chooseDensity} />
               </div>
-              <div className="ascgrid">
+              <div className={`ascgrid${density === 'compact' ? ' ascgrid--compact' : ''}`}>
                 {ready.map((f) => (
                   <PickCard
                     key={f.fighter_id}
@@ -521,6 +544,8 @@ function Builder({
                     ageDecay={ageDecay}
                     levelMod={levelMod}
                     view={view}
+                    density={density}
+                    hoverStats={!phone}
                     picked={target?.fighter_id === f.fighter_id}
                     tick={target?.fighter_id === f.fighter_id ? 'Ascending' : undefined}
                     hint="Ascend this fighter"
@@ -546,10 +571,13 @@ function Builder({
               </p>
             ) : (
               <>
-              <div className="picker__countrow picker__countrow--end">
-                <PickViewSwitch view={view} onChange={setView} />
+              <div className="picker__countrow">
+                {/* The readout switch goes with the full card it controls. */}
+                {density === 'full' && <PickViewSwitch view={view} onChange={setView} />}
+                <span className="spacer" />
+                <PickDensitySwitch density={density} onChange={chooseDensity} />
               </div>
-              <div className="ascgrid">
+              <div className={`ascgrid${density === 'compact' ? ' ascgrid--compact' : ''}`}>
                 {list.map((f) => {
                   /* Already standing in for one of the other two. */
                   const usedElsewhere = REQUIREMENTS.some(
@@ -562,6 +590,8 @@ function Builder({
                       ageDecay={ageDecay}
                       levelMod={levelMod}
                       view={view}
+                      density={density}
+                      hoverStats={!phone}
                       picked={slots[tab as Requirement] === f.fighter_id}
                       tick={slots[tab as Requirement] === f.fighter_id ? 'Sacrifice' : undefined}
                       blockedNote={usedElsewhere ? 'Covering another' : undefined}

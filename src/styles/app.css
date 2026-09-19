@@ -1600,3 +1600,14 @@ a.res {
   text-decoration: none;
   cursor: pointer;
 }
+
+/* Ascension's grids in compact, at the fight pickers' size. */
+.ascgrid.ascgrid--compact {
+  grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
+}
+
+@media (max-width: 719px) {
+  .ascgrid.ascgrid--compact {
+    grid-template-columns: repeat(auto-fill, minmax(52px, 1fr));
+  }
+}
