@@ -55,7 +55,8 @@ describe('the fill and replace switch', () => {
     expect(go()).toHaveTextContent('Fill 3 empty slots')
     fireEvent.click(go())
     expect(onPick).toHaveBeenCalledWith(expect.anything(), team)
-    expect(screen.getByRole('status')).toHaveTextContent('Filled 3.')
+    /* Nothing is announced: the slots themselves show what happened. */
+    expect(screen.queryByRole('status')).toBeNull()
   })
 
   it('replaces the whole team on the other side of the switch', () => {
@@ -100,10 +101,12 @@ describe('the fill and replace switch', () => {
     render(
       <AutoPickSplit roster={roster} teamIds={before} teamSize={5} onPick={() => 3} onRestore={onRestore} />,
     )
+    expect(screen.getByRole('button', { name: /undo/i })).toBeDisabled()
     fireEvent.click(go())
-    fireEvent.click(screen.getByRole('button', { name: 'Undo' }))
+    fireEvent.click(screen.getByRole('button', { name: /undo/i }))
     expect(onRestore).toHaveBeenCalledWith(before)
-    expect(screen.queryByRole('status')).toBeNull()
+    /* It stays in its place, with nothing left to undo. */
+    expect(screen.getByRole('button', { name: /undo/i })).toBeDisabled()
   })
 
   it('remembers which side the switch is on', () => {
@@ -117,23 +120,42 @@ describe('the fill and replace switch', () => {
   })
 })
 
-describe('what it says it did', () => {
-  it('tells a replacement from a first pick', () => {
-    const team = [roster[0].fighter_id]
-    const { unmount } = render(<AutoPickSplit roster={roster} teamIds={team} teamSize={5} onPick={() => 5} />)
-    fireEvent.click(screen.getByTitle(/replace all 5 fighters/i))
-    fireEvent.click(go())
-    expect(screen.getByRole('status')).toHaveTextContent('Replaced 5.')
-    unmount()
-
+describe('what it says', () => {
+  it('says nothing at all when the team came out full', () => {
     render(<AutoPickSplit roster={roster} teamIds={[]} teamSize={5} onPick={() => 5} />)
     fireEvent.click(go())
-    expect(screen.getByRole('status')).toHaveTextContent('Picked 5.')
+    expect(screen.queryByRole('status')).toBeNull()
   })
 
   it('says so when the pool was too small to finish the team', () => {
     render(<AutoPickSplit roster={roster} teamIds={[]} teamSize={5} onPick={() => 2} />)
     fireEvent.click(go())
     expect(screen.getByRole('status')).toHaveTextContent('Only 2 matched')
+  })
+})
+
+describe('how long Undo stands', () => {
+  it('goes as soon as the team is changed by hand', () => {
+    const team = [roster[0].fighter_id]
+    const after = [roster[0].fighter_id, roster[1].fighter_id, roster[2].fighter_id, roster[3].fighter_id, roster[4].fighter_id]
+    const { rerender } = render(
+      <AutoPickSplit roster={roster} teamIds={team} teamSize={5} onPick={() => 4} onRestore={() => {}} />,
+    )
+    fireEvent.click(go())
+    /* The screen has set the team the press produced. */
+    rerender(<AutoPickSplit roster={roster} teamIds={after} teamSize={5} onPick={() => 4} onRestore={() => {}} />)
+    expect(screen.getByRole('button', { name: /undo/i })).toBeEnabled()
+
+    /* A fighter swapped by hand: putting the old team back would be a surprise, not a correction. */
+    rerender(
+      <AutoPickSplit
+        roster={roster}
+        teamIds={[...after.slice(0, 4), roster[5].fighter_id]}
+        teamSize={5}
+        onPick={() => 4}
+        onRestore={() => {}}
+      />,
+    )
+    expect(screen.getByRole('button', { name: /undo/i })).toBeDisabled()
   })
 })

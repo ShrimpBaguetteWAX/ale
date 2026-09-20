@@ -61,6 +61,13 @@ const REPLACE_ICON = (
   </svg>
 )
 
+const UNDO_ICON = (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M3 8h11a5 5 0 0 1 0 10H8" />
+    <path d="m7 4-4 4 4 4" />
+  </svg>
+)
+
 const DESCRIPTION: Record<AutoPickMode, string> = {
   suggested: "Suggested for this opponent's line-up, from all your available fighters.",
   leveling: 'Only fighters in the level range you choose.',
@@ -105,7 +112,7 @@ export function AutoPickSplit({
 }) {
   const [prefs, setPrefs] = useState<AutoPickPrefs>(readAutoPickPrefs)
   const [open, setOpen] = useState(false)
-  const [done, setDone] = useState<{ said: string; before: number[] } | null>(null)
+  const [done, setDone] = useState<{ before: number[]; after: number[] | null; short: string | null } | null>(null)
   const box = useRef<HTMLDivElement>(null)
 
   const update = (next: AutoPickPrefs) => {
@@ -151,10 +158,24 @@ export function AutoPickSplit({
     }
   }, [open])
 
-  /* What it did fades out on its own — slowly enough to undo it first. */
+  /*
+   * Undo stands until it is used, or until the team is changed by something
+   * other than that press — a fighter swapped by hand makes putting the old
+   * team back a surprise rather than a correction.
+   */
   useEffect(() => {
     if (!done) return
-    const id = window.setTimeout(() => setDone(null), 9000)
+    const now = teamIds.join()
+    /* The team the press produced is only known once the screen has set it. */
+    if (done.after === null) {
+      if (now !== done.before.join()) setDone((d) => (d ? { ...d, after: teamIds } : d))
+    } else if (now !== done.after.join()) setDone(null)
+  }, [teamIds, done])
+
+  /* The word about a pool too short for the team says itself and goes. */
+  useEffect(() => {
+    if (!done?.short) return
+    const id = window.setTimeout(() => setDone((d) => (d ? { ...d, short: null } : d)), 6000)
     return () => window.clearTimeout(id)
   }, [done])
 
@@ -164,19 +185,15 @@ export function AutoPickSplit({
     const keep = filling ? kept : []
     const before = teamIds
     const placed = onPick(eligibleFighters(roster, { ...prefs, markers: chosen, levels }), keep)
-    const team = keep.length + placed
     setDone({
       before,
-      said:
-        team < teamSize
+      after: null,
+      short:
+        keep.length + placed < teamSize
           ? placed === 0
             ? 'No available fighter matches.'
             : `Only ${placed} matched — the rest is yours to fill.`
-          : keep.length
-            ? `Filled ${placed}.`
-            : before.length
-              ? `Replaced ${placed}.`
-              : `Picked ${placed}.`,
+          : null,
     })
   }
 
@@ -273,15 +290,23 @@ export function AutoPickSplit({
           ▾
         </span>
       </button>
+      {onRestore && (
+        <button
+          type="button"
+          className="btn btn--ghost btn--sm autosplit__undo"
+          onClick={undo}
+          /* Always in its place, so the group never changes width under the hand. */
+          disabled={!done}
+          title={done ? 'Undo — put the team back as it was' : 'Nothing to undo'}
+          aria-label={done ? 'Undo — put the team back as it was' : 'Undo — nothing to undo'}
+        >
+          {UNDO_ICON}
+        </button>
+      )}
 
-      {done && (
+      {done?.short && (
         <span className="autosplit__note" role="status">
-          {done.said}
-          {onRestore && (
-            <button type="button" className="autosplit__undo" onClick={undo}>
-              Undo
-            </button>
-          )}
+          {done.short}
         </span>
       )}
 

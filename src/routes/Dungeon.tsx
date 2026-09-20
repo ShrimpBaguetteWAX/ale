@@ -880,20 +880,20 @@ export default function Dungeon() {
                   {picked.length}/{TEAM_SIZE}
                 </span>
               </span>
-              {/*
-                 In the header on a desktop, where there is a gap between the
-                 team name and the totals doing nothing, and the button is on
-                 the line that names what it replaces. A phone has no such gap
-                 — the header is already two lines there — so it goes under
-                 the row instead.
-              */}
-              {!phone && autoPickButton}
               <span className="versus__totals mono">
                 {formatScaled(outlook.mine.damage)} DMG ·{' '}
                 {formatScaled(outlook.mine.health)} HP
                 <Elemental side={outlook.mine} against={outlook.theirs.bonuses} who="You" />
               </span>
             </header>
+
+            {/*
+               Under the header on a desktop: the header names the team and
+               totals it, and the control that changes the line-up sits on its
+               own line between that and the fighters it fills. A phone puts it
+               under the row instead, where the thumb is.
+            */}
+            {!phone && <div className="versus__pick">{autoPickButton}</div>}
 
             <div className="versus__row">
               {team.map((f, i) =>
