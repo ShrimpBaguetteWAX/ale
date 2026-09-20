@@ -109,7 +109,8 @@
 .lbtable__head {
   display: grid;
   gap: var(--sp-3);
-  padding: 0 var(--sp-3);
+  /* The rows carry a 1px border the heading does not, so its columns need that pixel back. */
+  padding: 0 calc(var(--sp-3) + 1px);
   font-family: var(--font-display);
   font-size: 10px;
   letter-spacing: 0.1em;
@@ -125,6 +126,11 @@
 .lbtable__head--arena,
 .lbrow--arena {
   grid-template-columns: 52px minmax(0, 2fr) 110px 140px;
+}
+
+/* The figures are right-aligned in the rows; their headings follow them there. */
+.lbtable__head span:nth-last-child(-n + 2) {
+  text-align: right;
 }
 
 .lbrow {
