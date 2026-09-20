@@ -39,9 +39,29 @@ export interface AutoPickPrefs {
   markers: string[]
   /** The levels Levels mode picks from, both ends included. */
   levels: LevelRange
+  /**
+   * What it does with a team that already has fighters in it: fill what is
+   * empty and leave those alone, or replace the lot. Filling is the default
+   * — it is the one that cannot throw away a choice already made.
+   */
+  fill: boolean
 }
 
-export const DEFAULT_PREFS: AutoPickPrefs = { mode: 'suggested', markers: [], levels: DEFAULT_LEVELS }
+export const DEFAULT_PREFS: AutoPickPrefs = { mode: 'suggested', markers: [], levels: DEFAULT_LEVELS, fill: true }
+
+/**
+ * The fighters already in the team that auto-pick should leave where they
+ * are: the ones that can still fight. One that has gone to the market, an
+ * arena or a payday since it was chosen leaves an empty slot behind, because
+ * fielding it is not possible and fielding four was never the intention.
+ */
+export function keptFighters(roster: RosterFighter[], teamIds: number[]): number[] {
+  const byId = new Map(roster.map((f) => [f.fighter_id, f]))
+  return teamIds.filter((id) => {
+    const f = byId.get(id)
+    return !!f && fighterAvailable(f).available
+  })
+}
 
 const levelOf = (f: RosterFighter) => Number(f.stats?.level ?? 0)
 
@@ -137,6 +157,8 @@ export function readAutoPickPrefs(): AutoPickPrefs {
       markers: Array.isArray(raw.markers) ? raw.markers.filter((m: unknown) => typeof m === 'string') : [],
       /* Saved before the range existed: the levels it used to mean. */
       levels: clampRange(raw.levels),
+      /* Saved before the switch existed: the behaviour it had, which was to replace. */
+      fill: typeof raw.fill === 'boolean' ? raw.fill : DEFAULT_PREFS.fill,
     }
   } catch {
     return DEFAULT_PREFS

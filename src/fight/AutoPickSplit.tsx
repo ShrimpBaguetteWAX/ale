@@ -7,6 +7,7 @@ import {
   AUTO_PICK_MODES,
   clampRange,
   eligibleFighters,
+  keptFighters,
   levelPool,
   markerPool,
   MAX_LEVEL,
@@ -44,6 +45,22 @@ const NAME: Record<AutoPickMode, string> = {
   marker: 'Marker',
 }
 
+/* The two sides of the switch: add to the team, or start it over. */
+const FILL_ICON = (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" aria-hidden="true">
+    <path d="M12 5v14M5 12h14" />
+  </svg>
+)
+
+const REPLACE_ICON = (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M3 12a9 9 0 0 1 15-6.7L21 8" />
+    <path d="M21 3v5h-5" />
+    <path d="M21 12a9 9 0 0 1-15 6.7L3 16" />
+    <path d="M3 21v-5h5" />
+  </svg>
+)
+
 const DESCRIPTION: Record<AutoPickMode, string> = {
   suggested: "Suggested for this opponent's line-up, from all your available fighters.",
   leveling: 'Only fighters in the level range you choose.',
@@ -59,22 +76,36 @@ const DESCRIPTION: Record<AutoPickMode, string> = {
  * remembered on this device and shared by the dungeon and the arena, so most
  * of the time the menu is never opened.
  *
+ * A switch on that left half decides what happens to a team that already
+ * has fighters in it: fill what is empty and keep them, or replace the lot.
+ * The label says which of the two it will be before it is pressed, and what
+ * it did can be undone.
+ *
  * The ranking is the screen's own: `onPick` receives the fighters the mode
- * allows and returns how many it placed, which is how a pool smaller than a
- * team gets said out loud rather than leaving slots empty without a word.
+ * allows and the ones to keep, and returns how many it placed, which is how a
+ * pool smaller than a team gets said out loud rather than leaving slots empty
+ * without a word.
  */
 export function AutoPickSplit({
   roster,
+  teamIds = [],
+  teamSize = 5,
   disabled,
   onPick,
+  onRestore,
 }: {
   roster: RosterFighter[] | null
+  /** The team as it stands, so the button can say what it will do to it. */
+  teamIds?: number[]
+  teamSize?: number
   disabled?: boolean
-  onPick: (eligible: RosterFighter[]) => number
+  onPick: (eligible: RosterFighter[], keep: number[]) => number
+  /** Puts the team back as it was, for Undo. */
+  onRestore?: (ids: number[]) => void
 }) {
   const [prefs, setPrefs] = useState<AutoPickPrefs>(readAutoPickPrefs)
   const [open, setOpen] = useState(false)
-  const [shortfall, setShortfall] = useState<string | null>(null)
+  const [done, setDone] = useState<{ said: string; before: number[] } | null>(null)
   const box = useRef<HTMLDivElement>(null)
 
   const update = (next: AutoPickPrefs) => {
@@ -90,6 +121,14 @@ export function AutoPickSplit({
       : prefs.mode === 'leveling'
         ? levelPool(counts, levels)
         : markerPool(counts, prefs.markers)
+
+  /* The fighters in the team that can still fight; whatever is left of it is empty slots. */
+  const kept = useMemo(() => keptFighters(roster ?? [], teamIds), [roster, teamIds])
+  const empty = Math.max(0, teamSize - kept.length)
+  /* With nothing to keep, the two sides do the same thing, so the switch is put away. */
+  const switchable = kept.length > 0
+  const filling = prefs.fill && switchable
+  const nothingToFill = filling && empty === 0
 
   /* A marker chosen before that no fighter carries any more is not a choice. */
   const chosen = prefs.markers.filter((m) => counts.markers.some((c) => c.marker === m))
@@ -112,24 +151,40 @@ export function AutoPickSplit({
     }
   }, [open])
 
-  /* The note about a short pool fades out on its own. */
+  /* What it did fades out on its own — slowly enough to undo it first. */
   useEffect(() => {
-    if (!shortfall) return
-    const id = window.setTimeout(() => setShortfall(null), 5000)
+    if (!done) return
+    const id = window.setTimeout(() => setDone(null), 9000)
     return () => window.clearTimeout(id)
-  }, [shortfall])
+  }, [done])
 
   const pick = () => {
     if (!roster) return
     setOpen(false)
-    const placed = onPick(eligibleFighters(roster, { ...prefs, markers: chosen, levels }))
-    setShortfall(
-      placed < 5
-        ? placed === 0
-          ? 'No available fighter matches.'
-          : `Only ${placed} matched — the rest is yours to fill.`
-        : null,
-    )
+    const keep = filling ? kept : []
+    const before = teamIds
+    const placed = onPick(eligibleFighters(roster, { ...prefs, markers: chosen, levels }), keep)
+    const team = keep.length + placed
+    setDone({
+      before,
+      said:
+        team < teamSize
+          ? placed === 0
+            ? 'No available fighter matches.'
+            : `Only ${placed} matched — the rest is yours to fill.`
+          : keep.length
+            ? `Filled ${placed}.`
+            : before.length
+              ? `Replaced ${placed}.`
+              : `Picked ${placed}.`,
+    })
+  }
+
+  /* Undo puts back the exact team that was there before the press. */
+  const undo = () => {
+    if (!done) return
+    onRestore?.(done.before)
+    setDone(null)
   }
 
   const modeLabel =
@@ -149,23 +204,60 @@ export function AutoPickSplit({
 
   return (
     <div className="autosplit" ref={box}>
+      {switchable && (
+        <span className="autosplit__switch" role="group" aria-label="What auto-pick does with the team">
+          {[
+            { fill: true, icon: FILL_ICON, title: 'Fill the empty slots, keeping the fighters already chosen' },
+            { fill: false, icon: REPLACE_ICON, title: `Replace all ${teamSize} fighters` },
+          ].map((side) => (
+            <button
+              key={String(side.fill)}
+              type="button"
+              aria-pressed={prefs.fill === side.fill}
+              onClick={() => update({ ...prefs, fill: side.fill })}
+              disabled={disabled || !roster}
+              title={side.title}
+            >
+              {side.icon}
+            </button>
+          ))}
+        </span>
+      )}
       <button
         type="button"
         className="btn btn--ghost btn--sm autosplit__go"
         onClick={pick}
-        disabled={disabled || !roster || noMarkers}
+        disabled={disabled || !roster || noMarkers || nothingToFill}
         title={
-          noMarkers
-            ? 'Choose at least one marker'
-            : `Choose five fighters for this opponent — ${(prefs.mode === 'leveling'
-                ? rangeLabel(levels)
-                : NAME[prefs.mode]
-              ).toLowerCase()}, from ${pool} available`
+          nothingToFill
+            ? 'No empty slots to fill — switch to replacing the team'
+            : noMarkers
+              ? 'Choose at least one marker'
+              : `${
+                  filling ? `Fill ${empty} empty slot${empty === 1 ? '' : 's'}` : `Choose ${teamSize} fighters`
+                } for this opponent — ${(prefs.mode === 'leveling'
+                  ? rangeLabel(levels)
+                  : NAME[prefs.mode]
+                ).toLowerCase()}, from ${pool} available`
         }
       >
         <span className="autosplit__icon">{ICON.suggested}</span>
         {/* The word the header does not need, as before. */}
-        Auto-pick<span className="teamauto__what"> fighters</span>
+        {nothingToFill ? (
+          'No empty slots'
+        ) : filling ? (
+          <>
+            Fill {empty} empty<span className="teamauto__what"> slot{empty === 1 ? '' : 's'}</span>
+          </>
+        ) : switchable ? (
+          <>
+            Replace all<span className="teamauto__what"> {teamSize}</span>
+          </>
+        ) : (
+          <>
+            Auto-pick<span className="teamauto__what"> fighters</span>
+          </>
+        )}
       </button>
       <button
         type="button"
@@ -182,9 +274,14 @@ export function AutoPickSplit({
         </span>
       </button>
 
-      {shortfall && (
+      {done && (
         <span className="autosplit__note" role="status">
-          {shortfall}
+          {done.said}
+          {onRestore && (
+            <button type="button" className="autosplit__undo" onClick={undo}>
+              Undo
+            </button>
+          )}
         </span>
       )}
 

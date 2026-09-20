@@ -445,16 +445,24 @@ export default function Arena() {
   const phone = usePhone()
 
   /*
-     Auto-pick with a choice of pool: Suggested, Leveling, or by marker. The
+     Auto-pick with a choice of pool: Suggested, Levels, or by marker, and a
+     switch for what happens to a team that already has fighters in it. The
      ranking is unchanged — the fighters that suit this opponent best, among
-     the ones the mode allows.
+     the ones the mode allows. `keep` are the ones to leave where they are:
+     they are taken out of the pool so none is placed twice, and the picks
+     fill the slots left over.
   */
   const autoPickButton = (
     <AutoPickSplit
       roster={roster}
-      onPick={(eligible) => {
-        const ids = autoPickFighters(eligible, matchups, TEAM_SIZE)
-        setTeamIds(ids)
+      teamIds={teamIds}
+      teamSize={TEAM_SIZE}
+      onRestore={setTeamIds}
+      onPick={(eligible, keep) => {
+        const held = new Set(keep)
+        const pool = eligible.filter((f) => !held.has(f.fighter_id))
+        const ids = autoPickFighters(pool, matchups, TEAM_SIZE - keep.length)
+        setTeamIds([...keep, ...ids])
         return ids.length
       }}
     />

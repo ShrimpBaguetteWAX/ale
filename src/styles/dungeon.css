@@ -4192,3 +4192,68 @@ button.combatcard--empty:hover {
   font-size: 10px;
   color: var(--text-faint);
 }
+
+/*
+ * The switch on the picking half: fill the empty slots, or replace the team.
+ * It only appears once there is a team to do either to.
+ */
+.autosplit__switch {
+  display: inline-flex;
+  align-items: stretch;
+  background: rgb(71 23 172 / 35%);
+  border: 1px solid var(--line);
+  border-right: 0;
+  border-radius: 8px 0 0 8px;
+  overflow: hidden;
+}
+.autosplit__switch button {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  padding: 0;
+  color: var(--text-faint);
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+.autosplit__switch button svg {
+  width: 14px;
+  height: 14px;
+}
+.autosplit__switch button:hover:not(:disabled) {
+  color: var(--white);
+}
+.autosplit__switch button[aria-pressed='true'] {
+  color: var(--navy);
+  background: var(--gold);
+}
+.autosplit__switch button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+/* With the switch beside it, the picking half no longer starts the group. */
+.autosplit__switch + .autosplit__go {
+  border-radius: 0;
+}
+
+.autosplit__undo {
+  margin-left: 8px;
+  padding: 0;
+  font: inherit;
+  font-weight: 600;
+  color: var(--cyan);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+.autosplit__undo:hover {
+  color: var(--white);
+}
+
+@media (max-width: 719px) {
+  .autosplit__switch button {
+    width: 26px;
+  }
+}

@@ -40,6 +40,7 @@ const prefs = (over: Partial<AutoPickPrefs> = {}): AutoPickPrefs => ({
   mode: 'suggested',
   markers: [],
   levels: DEFAULT_LEVELS,
+  fill: true,
   ...over,
 })
 
