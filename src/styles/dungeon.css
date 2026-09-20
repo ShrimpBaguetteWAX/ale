@@ -4094,3 +4094,53 @@ button.combatcard--empty:hover {
     width: 100%;
   }
 }
+
+/* The level range: two ends, and the ladder of levels they cover. */
+.autosplit__range {
+  display: flex;
+  gap: 10px;
+}
+.autosplit__range label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+.autosplit__range select {
+  min-height: 28px;
+  padding: 0 6px;
+  font: inherit;
+  font-size: 12px;
+  color: var(--white);
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+.autosplit__ladder {
+  display: flex;
+  gap: 3px;
+  margin-top: 8px;
+}
+.autosplit__rung {
+  display: grid;
+  gap: 1px;
+  justify-items: center;
+  min-width: 22px;
+  padding: 3px 2px;
+  font-size: 10px;
+  line-height: 1.2;
+  color: var(--text-faint);
+  background: var(--surface-3);
+  border: 1px solid var(--line);
+  border-radius: 5px;
+}
+.autosplit__rung b {
+  font-size: 11px;
+  font-weight: 700;
+}
+.autosplit__rung.is-on {
+  color: var(--white);
+  border-color: var(--gold);
+  background: color-mix(in srgb, var(--gold) 16%, transparent);
+}

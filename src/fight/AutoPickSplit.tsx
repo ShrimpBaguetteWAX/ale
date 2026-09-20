@@ -4,9 +4,14 @@ import { markerIcon } from '@/dungeon/filters'
 import { formatNumber } from '@/format'
 import {
   AUTO_PICK_MODES,
+  clampRange,
   eligibleFighters,
+  levelPool,
   markerPool,
+  MAX_LEVEL,
+  MIN_LEVEL,
   poolCounts,
+  rangeLabel,
   readAutoPickPrefs,
   saveAutoPickPrefs,
   type AutoPickMode,
@@ -35,13 +40,15 @@ const ICON: Record<AutoPickMode, JSX.Element> = {
 
 const NAME: Record<AutoPickMode, string> = {
   suggested: 'Suggested',
-  leveling: 'Leveling',
+  leveling: 'Levels',
   marker: 'Marker',
 }
 
+const LEVELS = Array.from({ length: MAX_LEVEL - MIN_LEVEL + 1 }, (_, i) => MIN_LEVEL + i)
+
 const DESCRIPTION: Record<AutoPickMode, string> = {
   suggested: "Suggested for this opponent's line-up, from all your available fighters.",
-  leveling: 'Only fighters that have not reached level 10 yet.',
+  leveling: 'Only fighters in the level range you choose.',
   marker: 'Only fighters carrying the markers you choose.',
 }
 
@@ -78,11 +85,12 @@ export function AutoPickSplit({
   }
 
   const counts = useMemo(() => poolCounts(roster ?? []), [roster])
+  const levels = clampRange(prefs.levels)
   const pool =
     prefs.mode === 'suggested'
       ? counts.all
       : prefs.mode === 'leveling'
-        ? counts.leveling
+        ? levelPool(counts, levels)
         : markerPool(counts, prefs.markers)
 
   /* A marker chosen before that no fighter carries any more is not a choice. */
@@ -116,7 +124,7 @@ export function AutoPickSplit({
   const pick = () => {
     if (!roster) return
     setOpen(false)
-    const placed = onPick(eligibleFighters(roster, { ...prefs, markers: chosen }))
+    const placed = onPick(eligibleFighters(roster, { ...prefs, markers: chosen, levels }))
     setShortfall(
       placed < 5
         ? placed === 0
@@ -137,7 +145,7 @@ export function AutoPickSplit({
     ) : (
       <>
         <span className="autosplit__icon">{ICON[prefs.mode]}</span>
-        {NAME[prefs.mode]}
+        {prefs.mode === 'leveling' ? rangeLabel(levels) : NAME[prefs.mode]}
       </>
     )
 
@@ -151,7 +159,10 @@ export function AutoPickSplit({
         title={
           noMarkers
             ? 'Choose at least one marker'
-            : `Choose five fighters for this opponent — ${NAME[prefs.mode].toLowerCase()}, from ${pool} available`
+            : `Choose five fighters for this opponent — ${(prefs.mode === 'leveling'
+                ? rangeLabel(levels)
+                : NAME[prefs.mode]
+              ).toLowerCase()}, from ${pool} available`
         }
       >
         <span className="autosplit__icon">{ICON.suggested}</span>
@@ -190,8 +201,8 @@ export function AutoPickSplit({
                 className="autosplit__opt"
                 onClick={() => {
                   update({ ...prefs, mode })
-                  /* Marker mode stays open: the markers are chosen next. */
-                  if (mode !== 'marker') setOpen(false)
+                  /* Marker and Levels stay open: what they pick from is chosen next. */
+                  if (mode === 'suggested') setOpen(false)
                 }}
               >
                 <span className="autosplit__opticon">{ICON[mode]}</span>
@@ -203,10 +214,61 @@ export function AutoPickSplit({
                   {mode === 'suggested'
                     ? `${formatNumber(counts.all)} fighters`
                     : mode === 'leveling'
-                      ? `${formatNumber(counts.leveling)} fighters`
+                      ? `${formatNumber(levelPool(counts, levels))} fighters`
                       : ''}
                 </span>
               </button>
+
+              {mode === 'leveling' && prefs.mode === 'leveling' && (
+                <div className="autosplit__markers">
+                  <p className="autosplit__hint">Both ends count. Level {MAX_LEVEL} is Ascension.</p>
+                  <div className="autosplit__range">
+                    <label>
+                      From
+                      <select
+                        value={levels.min}
+                        onChange={(e) => update({ ...prefs, levels: clampRange({ ...levels, min: Number(e.target.value) }) })}
+                      >
+                        {LEVELS.map((l) => (
+                          <option key={l} value={l}>
+                            Level {l}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label>
+                      To
+                      <select
+                        value={levels.max}
+                        onChange={(e) => update({ ...prefs, levels: clampRange({ ...levels, max: Number(e.target.value) }) })}
+                      >
+                        {LEVELS.map((l) => (
+                          <option key={l} value={l}>
+                            Level {l}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  </div>
+                  <div className="autosplit__ladder" aria-hidden="true">
+                    {LEVELS.map((l) => (
+                      <span
+                        key={l}
+                        className={`autosplit__rung${l >= levels.min && l <= levels.max ? ' is-on' : ''}`}
+                        title={`Level ${l} — ${counts.levels[l] ?? 0} available`}
+                      >
+                        <b>{l}</b>
+                        {formatNumber(counts.levels[l] ?? 0)}
+                      </span>
+                    ))}
+                  </div>
+                  <p className="autosplit__foot">
+                    {pool
+                      ? `${formatNumber(pool)} fighter${pool === 1 ? '' : 's'} in ${rangeLabel(levels).toLowerCase()}`
+                      : `No available fighter is in ${rangeLabel(levels).toLowerCase()}`}
+                  </p>
+                </div>
+              )}
 
               {mode === 'marker' && prefs.mode === 'marker' && (
                 <div className="autosplit__markers">
