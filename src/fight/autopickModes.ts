@@ -41,13 +41,14 @@ export interface AutoPickPrefs {
   levels: LevelRange
   /**
    * What it does with a team that already has fighters in it: fill what is
-   * empty and leave those alone, or replace the lot. Filling is the default
-   * — it is the one that cannot throw away a choice already made.
+   * empty and leave those alone, or replace the lot. Replacing is the
+   * default, which is what the button has always done.
    */
   fill: boolean
 }
 
-export const DEFAULT_PREFS: AutoPickPrefs = { mode: 'suggested', markers: [], levels: DEFAULT_LEVELS, fill: true }
+/** Suggested for this opponent, replacing the team — what auto-pick has always done. */
+export const DEFAULT_PREFS: AutoPickPrefs = { mode: 'suggested', markers: [], levels: DEFAULT_LEVELS, fill: false }
 
 /**
  * The fighters already in the team that auto-pick should leave where they

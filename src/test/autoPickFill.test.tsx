@@ -41,6 +41,16 @@ describe('keptFighters', () => {
 })
 
 describe('the fill and replace switch', () => {
+  it('starts on replace, for what the button has always done', () => {
+    const onPick = vi.fn().mockReturnValue(5)
+    const team = [roster[0].fighter_id, roster[1].fighter_id]
+    render(<AutoPickSplit roster={roster} teamIds={team} teamSize={5} onPick={onPick} />)
+
+    expect(go()).toHaveTextContent('Replace all 5')
+    fireEvent.click(go())
+    expect(onPick).toHaveBeenCalledWith(expect.anything(), [])
+  })
+
   it('is put away while there is nothing to keep', () => {
     render(<AutoPickSplit roster={roster} teamIds={[]} teamSize={5} onPick={() => 5} />)
     expect(go()).toHaveTextContent(/auto-pick/i)
@@ -52,6 +62,7 @@ describe('the fill and replace switch', () => {
     const team = [roster[0].fighter_id, roster[1].fighter_id]
     render(<AutoPickSplit roster={roster} teamIds={team} teamSize={5} onPick={onPick} />)
 
+    fireEvent.click(screen.getByTitle(/fill the empty slots/i))
     expect(go()).toHaveTextContent('Fill 3 empty slots')
     fireEvent.click(go())
     expect(onPick).toHaveBeenCalledWith(expect.anything(), team)
@@ -76,6 +87,7 @@ describe('the fill and replace switch', () => {
     render(
       <AutoPickSplit roster={roster} teamIds={roster.slice(0, 5).map((f) => f.fighter_id)} teamSize={5} onPick={onPick} />,
     )
+    fireEvent.click(screen.getByTitle(/fill the empty slots/i))
     expect(go()).toHaveTextContent('No empty slots')
     expect(go()).toBeDisabled()
 
@@ -90,6 +102,7 @@ describe('the fill and replace switch', () => {
     const team = [roster[0].fighter_id, onMarket.fighter_id]
     render(<AutoPickSplit roster={[...roster, onMarket]} teamIds={team} teamSize={5} onPick={onPick} />)
 
+    fireEvent.click(screen.getByTitle(/fill the empty slots/i))
     expect(go()).toHaveTextContent('Fill 4 empty slots')
     fireEvent.click(go())
     expect(onPick).toHaveBeenCalledWith(expect.anything(), [roster[0].fighter_id])
