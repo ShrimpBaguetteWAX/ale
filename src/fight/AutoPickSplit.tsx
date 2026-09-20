@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import type { RosterFighter } from '@/dungeon/types'
 import { markerIcon } from '@/dungeon/filters'
 import { formatNumber } from '@/format'
+import { LevelRange } from './LevelRange'
 import {
   AUTO_PICK_MODES,
   clampRange,
@@ -9,7 +10,6 @@ import {
   levelPool,
   markerPool,
   MAX_LEVEL,
-  MIN_LEVEL,
   poolCounts,
   rangeLabel,
   readAutoPickPrefs,
@@ -43,8 +43,6 @@ const NAME: Record<AutoPickMode, string> = {
   leveling: 'Levels',
   marker: 'Marker',
 }
-
-const LEVELS = Array.from({ length: MAX_LEVEL - MIN_LEVEL + 1 }, (_, i) => MIN_LEVEL + i)
 
 const DESCRIPTION: Record<AutoPickMode, string> = {
   suggested: "Suggested for this opponent's line-up, from all your available fighters.",
@@ -221,47 +219,10 @@ export function AutoPickSplit({
 
               {mode === 'leveling' && prefs.mode === 'leveling' && (
                 <div className="autosplit__markers">
-                  <p className="autosplit__hint">Both ends count. Level {MAX_LEVEL} is Ascension.</p>
-                  <div className="autosplit__range">
-                    <label>
-                      From
-                      <select
-                        value={levels.min}
-                        onChange={(e) => update({ ...prefs, levels: clampRange({ ...levels, min: Number(e.target.value) }) })}
-                      >
-                        {LEVELS.map((l) => (
-                          <option key={l} value={l}>
-                            Level {l}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                    <label>
-                      To
-                      <select
-                        value={levels.max}
-                        onChange={(e) => update({ ...prefs, levels: clampRange({ ...levels, max: Number(e.target.value) }) })}
-                      >
-                        {LEVELS.map((l) => (
-                          <option key={l} value={l}>
-                            Level {l}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                  </div>
-                  <div className="autosplit__ladder" aria-hidden="true">
-                    {LEVELS.map((l) => (
-                      <span
-                        key={l}
-                        className={`autosplit__rung${l >= levels.min && l <= levels.max ? ' is-on' : ''}`}
-                        title={`Level ${l} — ${counts.levels[l] ?? 0} available`}
-                      >
-                        <b>{l}</b>
-                        {formatNumber(counts.levels[l] ?? 0)}
-                      </span>
-                    ))}
-                  </div>
+                  <p className="autosplit__hint">
+                    Drag either end. Both count, and level {MAX_LEVEL} is Ascension.
+                  </p>
+                  <LevelRange value={levels} onChange={(next) => update({ ...prefs, levels: next })} />
                   <p className="autosplit__foot">
                     {pool
                       ? `${formatNumber(pool)} fighter${pool === 1 ? '' : 's'} in ${rangeLabel(levels).toLowerCase()}`
