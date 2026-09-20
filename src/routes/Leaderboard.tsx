@@ -22,6 +22,7 @@ import {
   displayName,
   dungeonReward,
   rankClass,
+  arenaReward,
   rewardCount,
   seasonPot,
   seasonTiming,
@@ -579,7 +580,9 @@ export function ArenaBoards({
                   <span>Rank</span>
                   <span>Player</span>
                   <span>Rating</span>
-                  <span>Earned</span>
+                  <span title={showing ? undefined : 'What the place pays when the season settles'}>
+                    {showing ? 'Earned' : 'Place pays'}
+                  </span>
                 </div>
 
                 {rows.map((row, i) => {
@@ -605,11 +608,24 @@ export function ArenaBoards({
                         </span>
                         <span className="lbrow__pays">
                           {/*
-                            `earned_*` only fills in once a season is settled,
-                            so during a run this is honestly blank rather than
-                            a guess at a share nobody has been awarded.
+                            `earned_*` only fills in once a season is settled.
+                            While one runs, what the place pays is still known
+                            — the pot is fixed when the season starts and the
+                            split never varies — so the board shows that
+                            instead of a column of dashes. What nobody knows
+                            yet is who will be standing here at the end.
                           */}
-                          {row.earned_tlm > 0 ? (
+                          {!showing && rank <= season.winners ? (
+                            <>
+                              <img
+                                src={asset('/assets/icons/tlm.svg')}
+                                alt="TLM"
+                                width={14}
+                                height={14}
+                              />
+                              {formatNumber(Math.floor(arenaReward(rank, season)))}
+                            </>
+                          ) : row.earned_tlm > 0 ? (
                             <>
                               <img
                                 src={asset("/assets/icons/tlm.svg")}

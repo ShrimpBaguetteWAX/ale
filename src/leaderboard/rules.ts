@@ -105,6 +105,43 @@ export function seasonPot(season: ArenaSeason): number {
   return Number(season.available_tlm ?? 0) / 10_000
 }
 
+/**
+ * What a place on an arena board takes of the pot.
+ *
+ * The contract pays nothing per place until a season settles, so the board
+ * had a column of dashes for the fortnight a season runs. The split is not a
+ * secret, though — it is the same every time, and reading the last two
+ * settled seasons off the chain gives it exactly:
+ *
+ *   * Each place's weight is `1 / rank` **cut** to three decimals, so rank
+ *     six weighs 0.166 rather than 0.1667 and rank seven 0.142.
+ *   * Rank one takes the pot divided by the sum of those weights, cut down to
+ *     a tenth of a TLM. Every other place is that figure times its weight.
+ *
+ * Reproduced to the last decimal of all twenty places of both the Domination
+ * and the Weekend boards, with the few TLM the cutting leaves over staying
+ * behind. The pot is fixed when the season starts, so this is what the place
+ * pays, not a guess at it — what nobody knows yet is who will hold the place.
+ */
+export function arenaWeight(rank: number): number {
+  if (rank < 1) return 0
+  return Math.floor((1 / rank) * 1000) / 1000
+}
+
+export function arenaReward(rank: number, season: ArenaSeason | undefined): number {
+  if (!season || rank < 1) return 0
+  const winners = Number(season.winners ?? 0)
+  if (rank > winners) return 0
+
+  let weights = 0
+  for (let r = 1; r <= winners; r++) weights += arenaWeight(r)
+  if (weights <= 0) return 0
+
+  /* The tenth of a TLM the contract works in, kept in whole units to stay off floating point. */
+  const first = Math.floor((seasonPot(season) / weights) * 10) / 10
+  return first * arenaWeight(rank)
+}
+
 /* ---------- shared ---------- */
 
 /** "6d 04h", "04h 12m", "12m 30s" — a countdown at the right resolution. */
