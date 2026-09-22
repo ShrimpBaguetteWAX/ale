@@ -276,7 +276,13 @@ export function poolBoard(
     order.push(key)
     seen.add(key)
   }
-  for (const pool of banked.keys()) if (!seen.has(pool)) order.push(pool)
+  /*
+     Leaderboard pools are left out. `dungeons.ale::lbclaim` banks the power
+     and mines it in the same action, so all it leaves behind is a row at
+     zero — a card with nothing to mine, for a reward the leaderboard's own
+     Claim button pays.
+   */
+  for (const pool of banked.keys()) if (!seen.has(pool) && poolHasMinimum(pool)) order.push(pool)
 
   const board: PoolEntry[] = []
 
