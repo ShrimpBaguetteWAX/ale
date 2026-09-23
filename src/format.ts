@@ -68,3 +68,25 @@ export function formatStat(key: string, raw: number): string {
     maximumFractionDigits: decimals,
   })
 }
+
+/**
+ * An asset string shortened for reading: `583.04025064 WAX` → `583.0 WAX`.
+ *
+ * WAX carries eight decimal places on chain, and printed in full they turn a
+ * column of payments into a wall of digits with the part a player cares
+ * about buried at the front. The tail is cut rather than rounded, so a row
+ * never claims a fraction the payment did not include, and the symbol is
+ * kept exactly as the chain wrote it.
+ */
+export function formatAsset(asset: string, places: number): string {
+  const [amount, ...rest] = String(asset ?? '').trim().split(' ')
+  const value = Number(amount)
+  if (!amount || Number.isNaN(value)) return String(asset ?? '')
+  const [whole, fraction = ''] = amount.split('.')
+  const cut = places > 0 ? `${whole}.${fraction.padEnd(places, '0').slice(0, places)}` : whole
+  const grouped = Number(cut).toLocaleString(NUM_LOCALE, {
+    minimumFractionDigits: places,
+    maximumFractionDigits: places,
+  })
+  return [grouped, ...rest].join(' ')
+}

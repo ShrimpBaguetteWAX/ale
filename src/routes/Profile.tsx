@@ -95,7 +95,7 @@ import {
   type MinedReward,
 } from '@/pools/MineCelebration'
 import { readableError } from '@/wharf/errors'
-import { formatNumber, formatDecimals, formatStat } from '@/format'
+import { formatAsset, formatNumber, formatDecimals, formatStat } from '@/format'
 import { asset } from '@/assets'
 import { GameImg } from '@/components/GameImg'
 
@@ -1527,7 +1527,13 @@ export function CurrencyTab({
                   <span className="ledger__when">
                     {new Date(Date.parse(r.timestamp + 'Z')).toLocaleString()}
                   </span>
-                  <span className="ledger__amount">{r.reward}</span>
+                  {/*
+                    WAX is the one currency the chain keeps to eight places,
+                    which is more tail than a payment row can use.
+                  */}
+                  <span className="ledger__amount">
+                    {currency === 'wax' ? formatAsset(r.reward, 1) : r.reward}
+                  </span>
                 </div>
               ))}
             </div>
