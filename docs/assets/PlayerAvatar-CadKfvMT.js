@@ -1,0 +1,1 @@
+import{j as n}from"./react-BnBjmWcX.js";import{a as e,ak as m}from"./index-DJ2sPg1B.js";import{G as l}from"./GameImg-DuIuAibV.js";function u({id:a,name:o,className:s="lbrow__avatar",size:t=34}){const r=e("/assets/avatar/unknown.webp");return n.jsx(l,{className:s,src:a?m(a):r,alt:"",title:o,loading:"lazy",width:t,height:t,fallback:r})}export{u as P};

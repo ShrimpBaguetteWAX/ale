@@ -1386,6 +1386,16 @@ export function CurrencyTab({
   const total = rows.reduce((sum, r) => sum + assetValue(r.reward), 0)
   const pays = claimPays(currency)
 
+  /*
+     WAX is kept to eight places on chain, which reads as a wall of digits
+     wherever it is printed in full — so this screen shows one, matching the
+     payment rows. Cut rather than rounded, so a figure never claims a
+     fraction the account has not got.
+   */
+  const shown = currency === 'wax' ? 1 : places
+  const amount = (value: number) =>
+    formatDecimals(Math.trunc(value * 10 ** shown) / 10 ** shown, shown)
+
   return (
     <div className="stack">
       <section className="panel">
@@ -1396,7 +1406,7 @@ export function CurrencyTab({
             <p className="hint">
               {rows.length === 0
                 ? 'No payments on record.'
-                : `${formatDecimals(total, places)} across the ${
+                : `${amount(total)} across the ${
                     rows.length === 1 ? 'one payment' : `${rows.length} payments`
                   } below.`}
             </p>
@@ -1404,7 +1414,7 @@ export function CurrencyTab({
           <span className="spacer" />
           <div className="pending">
             <span>Waiting</span>
-            <strong>{formatDecimals(pending, places)}</strong>
+            <strong>{amount(pending)}</strong>
           </div>
           {pays && (
             <button
@@ -1427,6 +1437,10 @@ export function CurrencyTab({
         */}
         {!pays && pending > 0 && (
           <p className="hint hint--error">
+            {/*
+              In full here, unlike the headline: this names a balance that is
+              stuck, and a truncated tail could print it as 0.0.
+            */}
             The game holds {formatDecimals(pending, places)}{' '}
             {CURRENCY_LABEL[currency]} against your account, but the claim
             action clears this figure without paying it out. Nothing here can
