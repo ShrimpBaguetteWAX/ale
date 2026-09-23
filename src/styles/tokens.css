@@ -55,7 +55,14 @@
   /* ---- Text ---- */
   --text: #ffffff;
   --text-dim: #b9c2d6;
-  --text-faint: #7d879e;
+  /*
+     Faint, not unreadable. At #7d879e this sat at 4.6:1 against the panel
+     surface — inside the standard by a hair, and on a dim or glossy screen
+     the difficulty line and the footnotes under it were genuinely hard to
+     read. Lifted to 6.2:1, which is still a clear step below --text-dim
+     (9.3:1) and reads as secondary at a glance.
+   */
+  --text-faint: #949eb5;
   --text-heading: var(--yellow);
 
   /* ---- Rarity ---- */
