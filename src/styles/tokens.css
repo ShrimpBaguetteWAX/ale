@@ -59,10 +59,11 @@
      Faint, not unreadable. At #7d879e this sat at 4.6:1 against the panel
      surface — inside the standard by a hair, and on a dim or glossy screen
      the difficulty line and the footnotes under it were genuinely hard to
-     read. Lifted to 7.2:1, which is still a clear step below --text-dim
-     (9.3:1) and reads as secondary at a glance.
+     read. Lifted to 7.8:1, which is still a step below --text-dim (9.3:1)
+     and reads as secondary at a glance. Going much further would close that
+     gap and flatten the two tones into one.
    */
-  --text-faint: #a1abc0;
+  --text-faint: #a8b2c6;
   --text-heading: var(--yellow);
 
   /* ---- Rarity ---- */
