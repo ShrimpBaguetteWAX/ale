@@ -12,9 +12,19 @@
  * `BASE_URL` is whatever `base` in `vite.config.ts` says, with a trailing
  * slash, and it is `/` in dev — so this is a no-op locally and correct
  * wherever the build is hosted.
+ *
+ * It is then resolved against the document, because `base` is now relative
+ * (`./`) and a relative URL is only as good as whatever it is read against.
+ * A path handed to a CSS custom property is read against the *stylesheet*
+ * that substitutes it, and the stylesheet lives in `/assets/` — so the menu
+ * backdrop went looking for `/assets/assets/background/bg-menu.jpeg` and
+ * 404'd. Resolving here settles it once, for every caller.
  */
 export function asset(path: string): string {
-  return import.meta.env.BASE_URL + path.replace(/^\/+/, '')
+  const url = import.meta.env.BASE_URL + path.replace(/^\/+/, '')
+  /* No document while the SSR preview harness renders a screen. */
+  if (typeof document === 'undefined') return url
+  return new URL(url, document.baseURI).href
 }
 
 /**
