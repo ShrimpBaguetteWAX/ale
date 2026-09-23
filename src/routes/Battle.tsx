@@ -32,7 +32,15 @@ import {
   type Standing,
 } from '@/dungeon/standing'
 import type { Battlestats, FightRow, RosterFighter } from '@/dungeon/types'
-import { elementBackground, fighterArt, fighterArtFallback, formatScaled } from '@/tavern/fighterStats'
+import {
+  elementBackground,
+  fighterArt,
+  fighterArtFallback,
+  fighterFace,
+  fighterName,
+  formatScaled,
+  isNftFighter,
+} from '@/tavern/fighterStats'
 import { DIRTIES, claimPoolRewards, levelUpFighters } from '@/wharf/actions'
 import { useAction } from '@/wharf/useAction'
 import { useChainQuery } from '@/chain/useChainQuery'
@@ -509,8 +517,10 @@ function Arena({
     URL.revokeObjectURL(url)
   }, [replay, row.history_id])
 
-  const nameOf = (uid: string) =>
-    replay.fighters.find((f) => f.uid === uid)?.classname || 'Unknown'
+  const nameOf = (uid: string) => {
+    const f = replay.fighters.find((x) => x.uid === uid)
+    return f ? fighterName(f) : 'Unknown'
+  }
   const ownerOf = (uid: string) => {
     const f = replay.fighters.find((x) => x.uid === uid)
     if (!f) return 'Unknown'
@@ -809,9 +819,6 @@ function Arena({
 
 /* ---------- the roster strips ---------- */
 
-const avatarArt = (classname: string, racename: string) =>
-  asset(`/assets/fighters/${classname}_${racename}_avatar.webp`)
-
 /**
  * A team, at a glance.
  *
@@ -874,15 +881,15 @@ function RosterStrip({
                 (nextUp === f.uid ? ' rtile--next' : '')
               }
               key={f.uid}
-              title={`${f.classname} ${f.racename} — ${formatScaled(hp.health)}/${formatScaled(hp.max_health)}`}
+              title={`${fighterName(f)} — ${formatScaled(hp.health)}/${formatScaled(hp.max_health)}`}
               /* The element backdrop every other portrait in the game sits on.
                  The avatar is a cut-out, so without it the tile was black. */
               style={{ ['--rtile-bg' as string]: `url('${elementBackground(f.element)}')` }}
             >
               <GameImg
                 className="rtile__art"
-                src={avatarArt(f.classname, f.racename)}
-                alt={f.classname}
+                src={fighterFace(f)}
+                alt={fighterName(f)}
                 loading="lazy"
                 fallback={fighterArtFallback()}
               />
@@ -1012,11 +1019,14 @@ function Duelist({
           ) : (
             <GameImg
               className="duelist__art"
-              src={fighterArt({
-                classname: fighter.classname,
-                racename: fighter.racename,
-              })}
-              alt={`${fighter.classname} ${fighter.racename}`}
+              /* The NFT fighter has no class art; the hooded unknown is what
+                 it is drawn as everywhere else on this screen. */
+              src={
+                isNftFighter(fighter.fighter_id)
+                  ? fighterArtFallback()
+                  : fighterArt({ classname: fighter.classname, racename: fighter.racename })
+              }
+              alt={fighterName(fighter)}
               fallback={fighterArtFallback()}
             />
           )}
@@ -1567,11 +1577,11 @@ function TurnQueue({
               key={q.turn}
               /* Same element backdrop as the roster tiles above it. */
               style={{ ['--turnq-bg' as string]: `url('${elementBackground(f.element)}')` }}
-              title={`${q.current ? 'Attacking now' : `Attack ${q.turn}`} — ${f.classname} (${owner})`}
+              title={`${q.current ? 'Attacking now' : `Attack ${q.turn}`} — ${fighterName(f)} (${owner})`}
             >
               <GameImg
-                src={avatarArt(f.classname, f.racename)}
-                alt={f.classname}
+                src={fighterFace(f)}
+                alt={fighterName(f)}
                 loading="lazy"
                 fallback={fighterArtFallback()}
               />

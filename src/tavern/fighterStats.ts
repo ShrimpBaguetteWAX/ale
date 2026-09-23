@@ -1,6 +1,8 @@
 import type { TavernFighter } from '@/chain/types'
 import { NUM_LOCALE, formatDecimals } from '@/format'
 import { asset } from '@/assets'
+import { NFT_FIGHTER_ID } from '@/dungeon/rules'
+import { NFT_FIGHTER_ART } from '@/dungeon/nftFighter'
 
 /**
  * `creation.ale` / `classtemps` — the per-class stat bands every roll falls
@@ -305,6 +307,39 @@ export function fighterAvatar(fighter: {
 
 export function fighterArtFallback(): string {
   return asset('/assets/fighters/unknown_unknown.webp')
+}
+
+/**
+ * The sixth fighter in a run has neither a class nor a race.
+ *
+ * It is built out of a crew card and a weapon (`battle::getFighterFromNFT`)
+ * and carries id 99999999999, and no crew row on chain names a class — so
+ * asking for its portrait by class and race requests `__avatar.webp`, which
+ * is not a file. It has art of its own, and the combat log has always called
+ * it the NFT Fighter.
+ */
+
+/** Coerced: the id is over 2^32, so the chain sends it as a string. */
+export function isNftFighter(id: number | string): boolean {
+  return Number(id) === NFT_FIGHTER_ID
+}
+
+interface NamedFighter {
+  fighter_id: number | string
+  classname: string
+  racename: string
+}
+
+/** The small portrait, whichever kind of fighter it is. */
+export function fighterFace(fighter: NamedFighter): string {
+  if (isNftFighter(fighter.fighter_id)) return NFT_FIGHTER_ART
+  return fighterAvatar(fighter)
+}
+
+/** What to call a fighter on screen. */
+export function fighterName(fighter: NamedFighter): string {
+  if (isNftFighter(fighter.fighter_id)) return 'NFT Fighter'
+  return `${fighter.classname} ${fighter.racename}`.trim() || 'Fighter'
 }
 
 /** Elemental backdrop behind the portrait. */
