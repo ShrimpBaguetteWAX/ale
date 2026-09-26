@@ -5,7 +5,6 @@ import {
   buildBriefing,
   firstSteps,
   poolProgressLine,
-  winsToMine,
   type BriefingInput,
   type RosterSummary,
 } from '@/briefing/rules'
@@ -66,19 +65,18 @@ describe('briefing', () => {
     expect(items.some((i) => i.id === 'dungeons')).toBe(false)
   })
 
-  it('counts the dungeons left today and estimates the wins to a mine', () => {
+  it('counts the dungeons left today and what a full mine would pay', () => {
     const items = run({
       roster: roster(),
       dungeons: { open: 23, total: 30 },
       pools: { tlm: [pool({ power: 6_000, progress: 0.6 })], shards: [] },
-      winPower: { dungeon: new Map([['tlmdung', 1_000]]), arena: new Map() },
     })
     const d = items.find((i) => i.id === 'dungeons')!
     expect(d.title).toBe("23 dungeons you haven't played today")
     expect(d.body).toContain('60% (TLM)')
-    expect(d.body).toContain('About 4 more wins')
     /* A full mine is 1% of the pool. */
     expect(d.body).toContain('~10,000 TLM')
+    expect(d.body).not.toContain('more win')
   })
 
   it('makes the first dungeon the next step for a team with no win yet', () => {
@@ -93,11 +91,15 @@ describe('briefing', () => {
     expect(items.some((i) => i.id === 'dungeons')).toBe(false)
   })
 
-  it('says nothing about wins left without a history to go on', () => {
-    const line = poolProgressLine('Dungeon Wins', [pool({ power: 5_000, progress: 0.5 })], undefined)
-    expect(line).not.toContain('more win')
-    expect(winsToMine(pool({ power: 5_000 }), undefined)).toBeUndefined()
-    expect(winsToMine(pool({ power: 9_999 }), 50)).toBe(1)
+  it('says where the bars stand and what a mine pays, and not how many wins', () => {
+    /*
+       How many wins are left is not a fact the game can state: what a win
+       banks moves with the tools, the boost, the difficulty and the account.
+    */
+    const line = poolProgressLine('Dungeon Wins', [pool({ power: 5_000, progress: 0.5 })])
+    expect(line).toContain('50% (TLM)')
+    expect(line).toContain('Once one is full')
+    expect(line).not.toContain('win')
   })
 
   it('offers a ready pool as a claim', () => {

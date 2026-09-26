@@ -60,8 +60,6 @@ export interface BriefMeter {
   ready: boolean
   /** What one mine would pay: now if ready, at full power if not. */
   pays: string
-  /** Wins still needed, where recent wins give a basis. */
-  winsLeft?: number
 }
 
 /* ---------- inputs ---------- */
@@ -198,16 +196,6 @@ function payoutNow(entry: PoolEntry): string {
 
 const SYMBOL: Record<string, string> = { tlm: 'TLM', shards: 'Shards' }
 
-/**
- * Wins still needed before a pool can be mined, from what recent wins banked.
- * Undefined without a history to go on.
- */
-export function winsToMine(entry: PoolEntry, perWin: number | undefined): number | undefined {
-  if (entry.ready) return 0
-  if (!perWin || perWin <= 0) return undefined
-  return Math.max(1, Math.ceil((MINE_POWER - entry.power) / perWin))
-}
-
 /** The Dungeon Wins pair (or Arena Wins), TLM first. */
 function venuePools(
   pools: BriefingInput['pools'],
@@ -222,14 +210,16 @@ function venuePools(
 }
 
 /**
- * "Your Dungeon Wins bars stand at 61% (TLM) and 88% (Shards) — about 3 more
- * wins and a mine pays ~142 TLM or ~1,203 Shards at today's pool size."
+ * "Your Dungeon Wins bars stand at 61% (TLM) and 88% (Shards). Once one is
+ * full, a mine pays ~142 TLM or ~1,203 Shards at today's pool size."
+ *
+ * Where the bars stand and what a mine is worth are both facts. How many
+ * wins it takes to fill them is not: the power a win banks moves with the
+ * tools equipped, the building's boost, the difficulty and the account, so
+ * any figure here is an average of the last few fights wearing the clothes
+ * of a countdown.
  */
-export function poolProgressLine(
-  label: string,
-  entries: PoolEntry[],
-  perWin: Map<string, number> | undefined,
-): string {
+export function poolProgressLine(label: string, entries: PoolEntry[]): string {
   const waiting = entries.filter((e) => !e.ready)
   if (entries.length === 0) return ''
   if (waiting.length === 0) {
@@ -239,20 +229,13 @@ export function poolProgressLine(
   const bars = waiting
     .map((e) => `${Math.floor(e.progress * 100)}% (${SYMBOL[e.type] ?? e.type})`)
     .join(' and ')
-  const wins = waiting
-    .map((e) => winsToMine(e, perWin?.get(e.pool)))
-    .filter((n): n is number => n !== undefined)
-  const soonest = wins.length ? Math.min(...wins) : undefined
   const pays = waiting.map((e) => `~${fullMine(e)} ${SYMBOL[e.type] ?? e.type}`).join(' or ')
 
-  const lead = `Your ${label} bars stand at ${bars}.`
-  return soonest !== undefined
-    ? `${lead} About ${plural(soonest, 'more win')} and a mine pays ${pays} at today's pool size.`
-    : `${lead} Once one is full, a mine pays ${pays} at today's pool size.`
+  return `Your ${label} bars stand at ${bars}. Once one is full, a mine pays ${pays} at today's pool size.`
 }
 
 /** The bars for a venue's pools, in the order the words name them. */
-export function metersFor(entries: PoolEntry[], perWin: Map<string, number> | undefined): BriefMeter[] {
+export function metersFor(entries: PoolEntry[]): BriefMeter[] {
   return entries.map((e) => ({
     pool: e.pool,
     symbol: SYMBOL[e.type] ?? e.type,
@@ -260,7 +243,6 @@ export function metersFor(entries: PoolEntry[], perWin: Map<string, number> | un
     progress: e.ready ? 1 : e.progress,
     ready: e.ready,
     pays: e.ready ? payoutNow(e) : fullMine(e),
-    winsLeft: winsToMine(e, perWin?.get(e.pool)),
   }))
 }
 
@@ -329,7 +311,7 @@ export function buildBriefing(input: BriefingInput): BriefItem[] {
         `Your wins have filled ${readyPools.length === 1 ? 'a pool' : 'these pools'} — mining turns the Reward Power into tokens. ${parts.join(' · ')}. ` +
         `Each mine takes a share of a pool every player draws from, so it pays most while the pool is full.`,
       cta: { label: 'Mine in Rewards', to: '/rewards' },
-      meters: metersFor(readyPools, undefined),
+      meters: metersFor(readyPools),
     })
   }
 
@@ -514,7 +496,7 @@ export function buildBriefing(input: BriefingInput): BriefItem[] {
     const { open, total, energyCost } = input.dungeons
     const energy = Number(player.activestats?.action_points ?? 0)
     const short = energyCost !== undefined && energy < energyCost
-    const progress = poolProgressLine('Dungeon Wins', dungeonPools, input.winPower?.dungeon)
+    const progress = poolProgressLine('Dungeon Wins', dungeonPools)
     /*
        A team and no win yet: the first dungeon is the next milestone, not one
        option among many, so it moves up to "Start here" and says how.
@@ -542,7 +524,7 @@ export function buildBriefing(input: BriefingInput): BriefItem[] {
           (short ? ` You have ${formatNumber(energy)} energy and a run costs ${formatNumber(energyCost!)}.` : ''),
         cta: { label: 'Find a dungeon', to: '/map' },
         more: short ? { label: 'Get energy', to: '/shop?c=flasks' } : undefined,
-        meters: metersFor(dungeonPools, input.winPower?.dungeon),
+        meters: metersFor(dungeonPools),
       })
     } else if (total > 0) {
       add({
@@ -554,7 +536,7 @@ export function buildBriefing(input: BriefingInput): BriefItem[] {
         title: "You've run every dungeon today",
         body: `All ${formatNumber(total)} are done — they open again at 00:00 UTC. ${progress}`,
         cta: { label: 'World Map', to: '/map' },
-        meters: metersFor(dungeonPools, input.winPower?.dungeon),
+        meters: metersFor(dungeonPools),
       })
     }
   }
@@ -587,7 +569,7 @@ export function buildBriefing(input: BriefingInput): BriefItem[] {
         figure: `${spanLabel(offer.msLeft)} left`,
         body:
           `Put gems in before it closes and take a share of ${offer.reward}. ` +
-          'The pot is split by how many gems everyone contributed, so the earlier you know your share, the better you can judge it.',
+          'The pot is split by how many gems everyone contributed.',
         cta: { label: 'Join the mission', to: '/candle' },
       })
     } else {
@@ -639,9 +621,9 @@ export function buildBriefing(input: BriefingInput): BriefItem[] {
           ? "Arenas are held by other players' fighters. Beat the defenders and your fighters take their place — "
           : 'Arena wins fill pools of their own, separate from the dungeons, and ') +
         'holding arenas earns Arena Domination rewards on top. ' +
-        poolProgressLine('Arena Wins', arenaPools, input.winPower?.arena),
+        poolProgressLine('Arena Wins', arenaPools),
       cta: { label: 'Find an arena', to: '/map' },
-      meters: metersFor(arenaPools, input.winPower?.arena),
+      meters: metersFor(arenaPools),
     })
   }
 

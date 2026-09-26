@@ -200,11 +200,6 @@ function Meter({ m }: { m: BriefMeter }) {
           <span>
             {m.ready ? 'Mine now' : 'A full mine'} ≈ <strong>{m.pays}</strong> {m.symbol}
           </span>
-          {!m.ready && m.winsLeft !== undefined && (
-            <span className="bmeter__wins">
-              ~{m.winsLeft} win{m.winsLeft === 1 ? '' : 's'} to go
-            </span>
-          )}
         </div>
       </div>
     </div>

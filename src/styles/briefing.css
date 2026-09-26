@@ -428,10 +428,6 @@ a.brief__chip:hover {
   color: var(--white);
   font-weight: var(--fw-medium);
 }
-.bmeter__wins {
-  color: var(--cyan);
-  white-space: nowrap;
-}
 
 /* ---------- the road so far ---------- */
 
