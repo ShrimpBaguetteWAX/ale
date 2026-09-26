@@ -491,7 +491,8 @@ export default function Arena() {
      — no opponent yet, or the fight config still loading.
   */
   const autoPickCardsOnly = useCallback(() => {
-    const raw = nftFighterLast(withNumericIds(arena?.fighters ?? []))
+    /* Stored order, as the simulated fight needs it — see the bar below. */
+    const raw = withNumericIds(arena?.fighters ?? [])
     const pick =
       tauntDeduction !== undefined && raw.length
         ? autoPickCardsByOdds({
@@ -769,7 +770,17 @@ export default function Arena() {
       nft: nftFlat,
       /* The defenders as stored: levelling, weather and the arena's own
          power all belong after the buffs, which is where teamOdds puts them. */
-      enemies: nftFighterLast(withNumericIds(arena?.fighters ?? [])),
+      /*
+         Stored order, not the display order.
+
+         `nftFighterLast` moves the crew fighter to the end so the row reads
+         as a team; the chain keeps it where the winner left it, fifth of six
+         in every live arena. Team order is not cosmetic to a fight — it
+         breaks ties on initiative and decides which fighter "lowest health"
+         or "highest damage" finds first — so the simulated fight has to take
+         the line in the order the contract will.
+      */
+      enemies: withNumericIds(arena?.fighters ?? []),
       scaling: { venue: 'arena', power: arenaPower, fullPower: ARENA_POWER_FULL },
       tauntDeduction,
       fielding: { weather, caps, levelMod, ageDecay },

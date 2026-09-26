@@ -168,12 +168,17 @@ describe('team odds', () => {
  * the other way round walks in hundreds of health light.
  */
 describe('the contract order', () => {
-  it('multiplies a flat buff by the level curve, as the chain does', () => {
+  it('adds a flat buff after the level curve, as the chain does', () => {
     /*
        Read straight off the opening snapshot rather than off a win or a
-       loss, because only the snapshot can tell the two orders apart.
-       A fighter on 1,000 health with a flat +1,000 buff, scaled ×2:
-       buffed first it opens on 4,000, scaled first it would open on 3,000.
+       loss, because only the snapshot can tell the two orders apart. A
+       fighter on 1,000 health with a flat +1,000 buff, scaled ×2: scaled
+       first it opens on 3,000, buffed first it would open on 4,000.
+
+       The chain says 3,000. Three arena fights reconstructed stat by stat
+       had every fighter exactly 122 x (level factor - 1) high on health —
+       a flat +122 group buff going through the curve instead of being
+       added after it — and reading it this way round lands all thirty.
     */
     const selfBuff = {
       on_fight_start: 1,
@@ -205,7 +210,7 @@ describe('the contract order', () => {
         },
       },
     )
-    expect(replay.opening[0].health).toBe(4000)
+    expect(replay.opening[0].health).toBe(3000)
   })
 
   it('takes the difficulty percentage off the far side last', () => {

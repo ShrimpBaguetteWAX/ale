@@ -800,11 +800,25 @@ export function simulate(row: FightRow, options: SimOptions): Replay {
   const all = [...team1, ...team2]
 
   /*
-     The opening buffs, in the contract's order: allies for both sides first,
-     then enemies for both. The stored line-ups are snapshotted *before* this
-     runs, so replaying it is what puts the fighters into the state the combat
-     loop actually began from.
+     Scaling first, then the opening buffs.
+
+     The contract source reads the other way round — `prepare_buff` above
+     `apply_weather_and_age`, under a comment saying "APPLY BUFFS BEFORE
+     WEATHER" — but the chain does not. Three arena fights reconstructed
+     stat by stat put every one of a team's five fighters exactly
+     122 x (level factor - 1) high on health, which is a flat +122
+     `ally_group` buff being multiplied by the level curve when it should be
+     added after it. Read the other way, all thirty stats land.
+
+     It matters: a flat buff on a level 10 fighter is worth four times as
+     much through the curve as beside it, and a bar built the wrong way round
+     flatters every team carrying one.
+
+     A replay passes no `prepare`, so for stored rows this is the same
+     sequence it always was.
    */
+  options.prepare?.(team1, team2)
+
   const opened: EffectEvent[] = []
   applyStartBuffs(team1, team2, 'buff', building, caps, opened)
   applyStartBuffs(team2, team1, 'buff', building, caps, opened)
@@ -812,10 +826,6 @@ export function simulate(row: FightRow, options: SimOptions): Replay {
   applyStartBuffs(team2, team1, 'debuff', building, caps, opened)
   removeUsedAbilities(team1)
   removeUsedAbilities(team2)
-
-  /* Weather, age, level and the difficulty percentage — the contract's next
-     step, and the caller's to describe because only it knows the venue. */
-  options.prepare?.(team1, team2)
 
   const living1 = [...team1]
   const living2 = [...team2]
