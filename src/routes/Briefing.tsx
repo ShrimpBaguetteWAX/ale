@@ -27,7 +27,7 @@ const GROUP_HINT: Record<BriefGroup, string> = {
   start: 'The one thing that unlocks everything else.',
   now: 'Waiting to be claimed or looked after.',
   play: 'Where the Reward Power and XP come from.',
-  grow: 'Slower wins that make every day after this one pay more.',
+  grow: 'Slower wins that will help for the days to come.',
 }
 
 /**
