@@ -153,6 +153,8 @@ describe('briefing', () => {
     expect(p.figure).toBe('deleted in 86 days')
     expect(p.tone).toBe('warn')
     expect(ids({ roster: roster({ overdue: 0 }) })).not.toContain('payday')
+    /* The card is about the benched ones, so its button arrives set to them. */
+    expect(p.cta.to).toBe('/fighters?pay=unwilling')
   })
 
   it('asks for tools only when none are equipped', () => {

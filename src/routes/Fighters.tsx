@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useGame } from '@/state/useGame'
 import { FighterPanel, type PanelFighter } from '@/components/FighterPanel'
 import { fetchRoster } from '@/dungeon/queries'
@@ -325,7 +326,24 @@ export default function Fighters() {
      bill to settle for the handful the contract is actually refusing, so
      the button can be narrowed to those — and remembers which it was.
   */
-  const [payScope, setPayScope] = useState<PaydayScope>(() => recallPayScope())
+  const [params, setParams] = useSearchParams()
+  const [payScope, setPayScope] = useState<PaydayScope>(() =>
+    params.get('pay') === 'unwilling' ? 'overdue' : recallPayScope(),
+  )
+  /*
+     The briefing links here as ?pay=unwilling when it is talking about the
+     benched fighters, so the button already offers what that card offered.
+     Read on the first render rather than in an effect, so the button never
+     flashes the wrong scope, and then dropped from the URL: arriving that
+     way is one errand, not a change of habit, so it neither overwrites the
+     remembered choice nor survives a reload.
+  */
+  useEffect(() => {
+    if (!params.has('pay')) return
+    const next = new URLSearchParams(params)
+    next.delete('pay')
+    setParams(next, { replace: true })
+  }, [params, setParams])
   const payAll = useMemo(
     () => paydayAllPlan(roster, config, now, payScope),
     [roster, config, now, payScope],

@@ -401,7 +401,7 @@ export function buildBriefing(input: BriefingInput): BriefItem[] {
       body:
         `${n === 1 ? 'Its' : 'Their'} payday has passed, so the game benches ${n === 1 ? 'it' : 'them'} from every fight. ` +
         `An unpaid fighter is also on a countdown: 90 days after the missed payday it is deleted for good. Paying costs credits and restarts the clock.`,
-      cta: { label: 'Pay on My Fighters', to: '/fighters' },
+      cta: { label: 'Pay on My Fighters', to: '/fighters?pay=unwilling' },
     })
   }
 
