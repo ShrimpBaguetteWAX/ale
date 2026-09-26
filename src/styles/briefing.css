@@ -12,7 +12,16 @@
   display: grid;
   gap: var(--sp-6);
   align-content: start;
+  /*
+     Narrower than the shell's own cap, because these rows are sentences and
+     1,428px of them is a long way for an eye to travel back. Centred with
+     it, though: left alone, the page kept its 1,080 at the left edge and
+     dropped the whole 348px of slack on the right, which reads as the
+     screen having been pushed aside rather than measured.
+  */
   max-width: 1080px;
+  margin-inline: auto;
+  width: 100%;
   padding-bottom: var(--sp-10);
 }
 
