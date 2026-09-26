@@ -68,6 +68,11 @@ const LOADERS: Record<string, (player: Player) => Promise<Parts>> = {
         levelUps: owned.filter((f) => levelUpOf(f, levels).ready).length,
         ascendable,
         ascensionWaiting: owned.filter((f) => !!f.ascension_in_progress).length,
+        /* The contract writes "Arena" into `use_type` while a fighter is
+           standing on one — the same field that says "Market" for a listing. */
+        defending: owned.filter(
+          (f) => f.in_use && /arena/i.test(String(f.use_type ?? '')),
+        ).length,
         overdue: overdue.length,
         soonestDeletionMs: overdue.length ? Math.min(...overdue.map((f) => msUntilDeletion(f))) : undefined,
       },

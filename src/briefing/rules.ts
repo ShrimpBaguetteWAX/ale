@@ -76,6 +76,8 @@ export interface RosterSummary {
   ascendable: number
   /** An ascension rolled and waiting for its pick. */
   ascensionWaiting: number
+  /** Holding an arena for you: `in_use`, with "Arena" as the use type. */
+  defending?: number
   /** Past their payday: benched until paid. */
   overdue?: number
   /** Milliseconds until the first overdue fighter is deleted. */
@@ -517,8 +519,8 @@ export function buildBriefing(input: BriefingInput): BriefItem[] {
         figure: first ? `${formatNumber(open)} open today` : `${formatNumber(open)} / ${formatNumber(total)}`,
         body:
           (first
-            ? 'Your team is ready. Travel to a dungeon on the World Map, pick five fighters plus a crew card and a weapon card, and fight the team the landowner left there. ' +
-              'A win banks Reward Power towards TLM and Shards and gives your five XP — each dungeon once a day. '
+            ? 'Your team is ready. Travel to a dungeon on the World Map, pick five fighters plus a crew card and a weapon card, and fight the team you will find there. ' +
+              'A win banks Reward Power towards TLM and Shards and grants XP to your fighters. You can win each dungeon once per day. '
             : `Each dungeon can be run once a day, and every win banks Reward Power and gives your team XP. `) +
           progress +
           (short ? ` You have ${formatNumber(energy)} energy and a run costs ${formatNumber(energyCost!)}.` : ''),

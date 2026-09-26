@@ -90,10 +90,18 @@ export default function Briefing() {
                 {formatNumber(roster.total)} fighter{roster.total === 1 ? '' : 's'}
               </Link>
             )}
-            <span className="brief__chip">
-              <img src={asset('/assets/icons/energy.png')} alt="" />
-              {formatNumber(Number(player.activestats?.action_points ?? 0))} energy
-            </span>
+            {/*
+              Energy used to sit here, which the top bar already carries on
+              every screen. What it has instead is the one part of the roster
+              that is off doing something: fighters holding arenas, which
+              earn while they stand there and cannot be picked for a fight.
+            */}
+            {!!roster?.defending && (
+              <Link className="brief__chip" to="/fighters">
+                <img src={asset('/assets/icons/arena.svg')} alt="" />
+                {formatNumber(roster.defending)} defending
+              </Link>
+            )}
             {pending > 0 && (
               <span className="brief__chip brief__chip--busy" role="status">
                 <span className="spinner" /> Checking {pending} more
