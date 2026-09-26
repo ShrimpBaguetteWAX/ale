@@ -134,6 +134,49 @@
   max-width: 60ch;
 }
 
+/*
+ * Payday, and who it pays.
+ *
+ * One button with its scope hung off the side, in the manner of the
+ * auto-pick control on the fight screens: the thing you press stays the
+ * thing you press, and the choice that changes what it does sits beside it
+ * rather than in a menu two taps away.
+ */
+.paysplit {
+  position: relative;
+  display: inline-flex;
+  align-items: stretch;
+}
+
+.paysplit__go {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.paysplit__mode {
+  gap: 6px;
+  font-size: var(--fs-xs);
+  letter-spacing: 0.06em;
+  color: var(--text-dim);
+  border-left-width: 0;
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+.paysplit__mode::before {
+  content: ;
+  width: 1px;
+  height: 16px;
+  margin-right: 2px;
+  background: rgb(255 255 255 / 18%);
+}
+
+/* Narrowed to the benched ones: worth seeing without reading the label. */
+.paysplit__mode[aria-pressed=true] {
+  color: var(--white);
+  background: var(--surface-3);
+}
+
 /* ---------- listing on the market ---------- */
 
 /*

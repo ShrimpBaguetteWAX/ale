@@ -34,6 +34,7 @@ import {
   levelUpOf,
   msUntilDeletion,
   paydayAllPlan,
+  type PaydayScope,
   paydayOf,
   sellable,
   useLabel,
@@ -83,6 +84,7 @@ import { formatDecimals, NUM_LOCALE } from '@/format'
 import { QualityFilters } from '@/fight/setup'
 import { ActionBanner } from '@/components/ActionBanner'
 import { asset } from '@/assets'
+import { recallPayScope, rememberPayScope } from '@/fighters/payScope'
 import { GameImg } from '@/components/GameImg'
 
 /**
@@ -302,6 +304,9 @@ export default function Fighters() {
     [roster, now],
   )
 
+  /* Benched until paid: the ones the contract will not let into a fight. */
+  const overdue = useMemo(() => roster.filter((f) => wantsPayday(f, now)).length, [roster, now])
+
   /*
      How many fighters have a level waiting, for the filter to put on itself.
 
@@ -315,7 +320,16 @@ export default function Fighters() {
   )
 
   const levelAll = useMemo(() => levelAllPlan(roster, levels), [roster, levels])
-  const payAll = useMemo(() => paydayAllPlan(roster, config, now), [roster, config, now])
+  /*
+     Who the blanket payday pays. A hundred and fifty fighters is a large
+     bill to settle for the handful the contract is actually refusing, so
+     the button can be narrowed to those — and remembers which it was.
+  */
+  const [payScope, setPayScope] = useState<PaydayScope>(() => recallPayScope())
+  const payAll = useMemo(
+    () => paydayAllPlan(roster, config, now, payScope),
+    [roster, config, now, payScope],
+  )
 
   const checkedFighters = useMemo(
     () => roster.filter((f) => checked.includes(f.fighter_id)),
@@ -616,17 +630,41 @@ export default function Fighters() {
           </>
         ) : (
           <>
-            <button
-              type="button"
-              className="btn btn--ghost"
-              disabled={!session || payAll.ids.length === 0 || !!busy}
-              onClick={() => void doPayAll()}
-              title="Upkeep for every fighter with time on the clock"
-            >
-              {busy === 'pay-all' && <span className="spinner" />}
-              Payday all ({payAll.ids.length})
-              <Cost value={payAll.credits} icon="credits" short={credits} />
-            </button>
+            <span className="paysplit">
+              <button
+                type="button"
+                className="btn btn--ghost paysplit__go"
+                disabled={!session || payAll.ids.length === 0 || !!busy}
+                onClick={() => void doPayAll()}
+                title={
+                  payScope === 'overdue'
+                    ? 'Upkeep for the fighters that are benched until they are paid'
+                    : 'Upkeep for every fighter with time on the clock'
+                }
+              >
+                {busy === 'pay-all' && <span className="spinner" />}
+                Payday {payScope === 'overdue' ? 'unwilling' : 'all'} ({payAll.ids.length})
+                <Cost value={payAll.credits} icon="credits" short={credits} />
+              </button>
+              <button
+                type="button"
+                className="btn btn--ghost paysplit__mode"
+                aria-pressed={payScope === 'overdue'}
+                disabled={!!busy}
+                onClick={() => {
+                  const next = payScope === 'overdue' ? 'all' : 'overdue'
+                  setPayScope(next)
+                  rememberPayScope(next)
+                }}
+                title={
+                  payScope === 'overdue'
+                    ? `Paying only the ${overdue} unwilling to fight. Switch to the whole roster.`
+                    : `Paying all ${payAll.ids.length}. Switch to the ${overdue} unwilling to fight.`
+                }
+              >
+                {payScope === 'overdue' ? 'Unwilling' : 'All'}
+              </button>
+            </span>
 
             <button
               type="button"

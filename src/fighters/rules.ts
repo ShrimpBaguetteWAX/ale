@@ -241,16 +241,30 @@ export function levelAllPlan(
   return { ids, credits, gems, skipped, fighters }
 }
 
-/** Every fighter worth paying, with the running total. */
+/**
+ * Who a blanket payday covers.
+ *
+ * `all` is every fighter with time on the clock, which keeps the whole
+ * roster off the bench but charges for fighters that were in no danger of
+ * missing a fight. `overdue` is the ones the contract is already refusing —
+ * the bill that has to be paid before they can be picked again, and nothing
+ * else. On a roster of a hundred and fifty that is the difference between a
+ * housekeeping habit and a large, mostly pointless spend.
+ */
+export type PaydayScope = 'all' | 'overdue'
+
+/** Every fighter worth paying in scope, with the running total. */
 export function paydayAllPlan(
   roster: RosterFighter[],
   config: FightersConfig | undefined,
   now = Date.now(),
+  scope: PaydayScope = 'all',
 ): { ids: number[]; credits: number } {
   let credits = 0
   const ids: number[] = []
 
   for (const f of roster) {
+    if (scope === 'overdue' && !wantsPayday(f, now)) continue
     const p = paydayOf(f, config, now)
     if (!paydayWorthwhile(p)) continue
     ids.push(f.fighter_id)
