@@ -118,12 +118,41 @@ export function boostCost(
   return Math.floor(base + first * (term(target) - term(current)))
 }
 
-/** What the next whole percentage point costs from here — the marginal rate. */
-export function costPerPercent(current: number, config: LandsConfig | undefined): number {
-  const next = Math.min(BOOST_MAX, current + 10_000)
-  if (next <= current) return 0
+/** What one 0.1x step costs from `from` — the marginal rate at that score. */
+export function costPerPercent(from: number, config: LandsConfig | undefined): number {
+  const next = Math.min(BOOST_MAX, from + 10_000)
+  if (next <= from) return 0
   // Subtracting the flat base twice would double-count it.
-  return boostCost(current, next, config) - Number(config?.boost_base_cost ?? 0)
+  return boostCost(from, next, config) - Number(config?.boost_base_cost ?? 0)
+}
+
+/**
+ * What the steps between here and there cost: cheapest, dearest, and the
+ * average of the ones being bought.
+ *
+ * The rate is not one number. `mod` is 1.03, so every 0.1x costs three
+ * percent more than the one below it — on the live config a step from 1.2x
+ * is about 1,470 credits and a step from 2.4x about 2,090. Quoting only the
+ * first step, as this panel did, gave a figure that never moved however far
+ * the slider was dragged and understated the rest of the climb.
+ */
+export function stepCosts(
+  current: number,
+  target: number,
+  config: LandsConfig | undefined,
+): { first: number; last: number; average: number; steps: number } {
+  const span = target - current
+  if (!config || span <= 0) return { first: 0, last: 0, average: 0, steps: 0 }
+
+  const steps = Math.max(1, Math.round(span / 10_000))
+  const base = Number(config.boost_base_cost ?? 0)
+  return {
+    first: costPerPercent(current, config),
+    last: costPerPercent(Math.max(current, target - 10_000), config),
+    /* Against the total the panel shows, so the two reconcile. */
+    average: Math.round((boostCost(current, target, config) - base) / steps),
+    steps,
+  }
 }
 
 /**

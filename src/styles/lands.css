@@ -411,6 +411,18 @@
   min-height: 44px;
 }
 
+/*
+   Except when the button is the panel's own child rather than a section's.
+   `width: 100%` measures the grid area, which does not subtract the item's
+   own margins — so Destroy Building came out a full gutter wider than the
+   card above it and hung over the right edge. A grid item stretches to its
+   area by default, margins included, so the width just has to get out of
+   the way.
+*/
+.landpanel > .landpanel__action {
+  width: auto;
+}
+
 .panel__title img {
   vertical-align: -4px;
   margin-right: 6px;

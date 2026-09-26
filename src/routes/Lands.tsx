@@ -20,7 +20,7 @@ import {
   buildOptions,
   buildingLabel,
   claimAllTargets,
-  costPerPercent,
+  stepCosts,
   hasClaimable,
   incomeOf,
   totalIncome,
@@ -743,7 +743,7 @@ function BuildingPanel({
   }, [floor])
 
   const cost = boostCost(current, target, config)
-  const perPoint = costPerPercent(current, config)
+  const steps = stepCosts(current, target, config)
   const income = incomeOf(land.buildings)
   const destroyCost = Number(config?.delete_building_gems_cost ?? 0)
   const [confirmDestroy, setConfirmDestroy] = useState(false)
@@ -832,10 +832,21 @@ function BuildingPanel({
               <img src={asset("/assets/icons/credits.png")} alt="Credits" width={14} height={14} />
             </dd>
           </div>
-          <div>
-            <dt>Cost per 0.1x</dt>
+          {/*
+            The rate for what is actually being bought, not for the first
+            step of it: each 0.1x costs three percent more than the one
+            below, so a long drag averages well above where it starts.
+          */}
+          <div
+            title={
+              steps.steps > 1
+                ? `The first 0.1x costs ${credits(steps.first)} and the last ${credits(steps.last)} — each step is dearer than the one below it.`
+                : undefined
+            }
+          >
+            <dt>{steps.steps > 1 ? `Average of ${steps.steps} steps` : 'Cost per 0.1x'}</dt>
             <dd>
-              {credits(perPoint)}
+              {credits(steps.average)}
               <img src={asset("/assets/icons/credits.png")} alt="Credits" width={14} height={14} />
             </dd>
           </div>
