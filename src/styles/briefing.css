@@ -342,7 +342,14 @@ a.brief__chip:hover {
 
 .bcard__meters {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  /*
+     `min(220px, 100%)`, not a bare 220px: a bare minimum is a floor the
+     track cannot go under, so on a phone the two bars laid out at their
+     full 220 each — 456px of them inside a 245px column — and took the
+     whole page sideways with them. With the min() the pair drops to one
+     column as soon as two will not fit.
+  */
+  grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
   gap: var(--sp-2) var(--sp-4);
   max-width: 640px;
   margin-top: var(--sp-2);
