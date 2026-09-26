@@ -42,6 +42,7 @@ import {
 } from '@/fight/matchup'
 import { ageFactor, levelFactor } from '@/fight/scaling'
 import { oddsTitle, teamOdds } from '@/fight/odds'
+import { OddsCentre } from '@/fight/OddsCentre'
 import { recallTeam, rememberTeam, restoreTeam } from '@/fight/lastTeam'
 import { applyWeather, fetchWeather } from '@/fight/weather'
 import { autoPickCards, autoPickFighters } from '@/fight/autopick'
@@ -1066,9 +1067,7 @@ export default function Dungeon() {
           </div>
 
         <div className="versus__divider">
-            <span className="versus__vs" aria-hidden="true">
-              VS
-            </span>
+            <OddsCentre odds={odds} />
           </div>
 
           <div className="versus__side versus__side--enemy">

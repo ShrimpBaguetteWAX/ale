@@ -74,6 +74,7 @@ import {
 } from '@/fight/setup'
 import { fieldedStats, levelFactor, ageFactor } from '@/fight/scaling'
 import { oddsTitle, teamOdds } from '@/fight/odds'
+import { OddsCentre } from '@/fight/OddsCentre'
 import { DIRTIES, playArena } from '@/wharf/actions'
 import { settle } from '@/wharf/settle'
 import { readableError } from '@/wharf/errors'
@@ -986,9 +987,7 @@ export default function Arena() {
             {phone && autoPickButton}
           </div>
         <div className="versus__divider">
-            <span className="versus__vs" aria-hidden="true">
-              VS
-            </span>
+            <OddsCentre odds={odds} />
           </div>
 
           <div className="versus__side versus__side--enemy">

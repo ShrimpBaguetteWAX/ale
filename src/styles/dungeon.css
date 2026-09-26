@@ -1756,6 +1756,73 @@
   box-shadow: 0 0 16px rgb(216 50 79 / 45%);
 }
 
+/*
+ * The odds, where the VS badge used to stand.
+ *
+ * No plate and no frame: the two rows of fighters are busy enough, and a
+ * badge around a number that already means something would be decoration
+ * competing with the thing it decorates. The colour is the verdict, the
+ * caption is what the number is, and the glow is the only ornament — just
+ * enough to hold the middle of a dark screen.
+ */
+.oddscentre {
+  display: grid;
+  gap: 1px;
+  justify-items: center;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: default;
+}
+
+.oddscentre__pct {
+  font-family: var(--font-display);
+  font-size: 34px;
+  font-weight: var(--fw-bold);
+  letter-spacing: 0.01em;
+  color: var(--tone, var(--cyan));
+  text-shadow: 0 0 18px var(--glow, rgb(0 186 255 / 45%));
+}
+
+.oddscentre__pct i {
+  font-style: normal;
+  font-size: 0.5em;
+  opacity: 0.7;
+  margin-left: 1px;
+}
+
+.oddscentre__cap {
+  font-size: 9px;
+  font-weight: var(--fw-medium);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.oddscentre--good {
+  --tone: var(--cyan);
+  --glow: rgb(0 186 255 / 45%);
+}
+.oddscentre--even {
+  --tone: var(--gold);
+  --glow: rgb(246 168 0 / 40%);
+}
+.oddscentre--poor {
+  --tone: #e0344f;
+  --glow: rgb(224 52 79 / 40%);
+}
+
+/* Stacked, it sits on the rule with the columns above and below it. */
+@media (max-width: 1079px) {
+  .oddscentre {
+    position: relative;
+    padding: 0 var(--sp-3);
+    background: var(--bg);
+  }
+  .oddscentre__pct {
+    font-size: 26px;
+  }
+}
+
 /* Stacked, the badge sits on a rule across the full width. */
 @media (max-width: 1079px) {
   .versus__divider {
