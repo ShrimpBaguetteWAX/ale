@@ -48,12 +48,16 @@ import { ageFactor, levelFactor } from './scaling'
 /**
  * Fights per reading.
  *
- * A fight is 12 to 20 blows and runs in about 0.15ms, so this costs a few
- * milliseconds and is recomputed only when the line-up changes. Enough
- * samples that the figure does not jump by ten points when a fighter is
- * swapped and back; few enough that a phone does not notice.
+ * A fight is 12 to 20 blows and runs in about 0.15ms, so a hundred of them
+ * cost around 20ms and are recomputed only when the line-up changes.
+ *
+ * The figure is steady rather than merely stable: the sampler is seeded from
+ * the fighters on both sides, so the same team against the same line reads
+ * the same today, after a loss, and on the next visit to the screen. What
+ * moves it is the matchup moving — a fighter swapped, the difficulty
+ * changed, the dungeon refreshed, or a day of age decay.
  */
-export const ODDS_RUNS = 49
+export const ODDS_RUNS = 100
 
 /** A deterministic stream, so the same team always reads the same. */
 function stream(seed: number): () => number {
