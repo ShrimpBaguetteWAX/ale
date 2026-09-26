@@ -45,7 +45,7 @@ import { oddsTitle, teamOdds } from '@/fight/odds'
 import { OddsCentre } from '@/fight/OddsCentre'
 import { recallTeam, rememberTeam, restoreTeam } from '@/fight/lastTeam'
 import { applyWeather, fetchWeather } from '@/fight/weather'
-import { autoPickCards, autoPickFighters } from '@/fight/autopick'
+import { autoPickCards, autoPickCardsByOdds, autoPickFighters } from '@/fight/autopick'
 import { AutoPickSplit } from '@/fight/AutoPickSplit'
 import { TEAM_SIZE, type BattleFighter, type RosterFighter } from '@/dungeon/types'
 import {
@@ -504,16 +504,42 @@ export default function Dungeon() {
     />
   )
 
+  /*
+     The pair is chosen by fighting with it, the same measure the bar in the
+     middle reports. Ranking the fused fighter on its own reads well and
+     picks badly: against a real line-up it gave 76% where the best pair gave
+     86%. Falls back to that ranking only when there is no fight to simulate
+     — no opponent yet, or the fight config still loading.
+  */
   const autoPickCardsOnly = useCallback(() => {
-    const pick = autoPickCards({
-      enemies,
-      crewCards: usableCrew,
-      weaponCards: usableWeapons,
-      values: nftValues,
-    })
+    const raw = enemyTeam ? enemiesAt(enemyTeam, difficulty, nftMinDifficulty) : []
+    const pick =
+      tauntDeduction !== undefined && !!enemyTeam && raw.length
+        ? autoPickCardsByOdds({
+            enemies: raw,
+            crewCards: usableCrew,
+            weaponCards: usableWeapons,
+            values: nftValues,
+            rate: (crewValue, weaponValue, runs) =>
+              teamOdds({
+                picked,
+                nft: combineNftFlat(crewValue, weaponValue),
+                enemies: raw,
+                scaling: { venue: 'dungeon', difficulty, percentPower: difMods.get(difficulty) ?? 100 },
+                tauntDeduction: tauntDeduction!,
+                fielding: { weather, caps, levelMod, ageDecay },
+                runs,
+              })?.winRate ?? 0,
+          })
+        : autoPickCards({
+            enemies,
+            crewCards: usableCrew,
+            weaponCards: usableWeapons,
+            values: nftValues,
+          })
     setCrew(pick.crew)
     setWeapon(pick.weapon)
-  }, [enemies, usableCrew, usableWeapons, nftValues])
+  }, [enemies, usableCrew, usableWeapons, nftValues, picked, enemyTeam, difficulty, nftMinDifficulty, difMods, tauntDeduction, weather, caps, levelMod, ageDecay])
 
   /*
      One button, rendered in one of two places — like the fighters one.

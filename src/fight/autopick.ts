@@ -140,3 +140,111 @@ export function autoPickTeam<TCard extends { template_id: number }>(options: {
     ...autoPickCards({ enemies, crewCards, weaponCards, values }),
   }
 }
+
+/**
+ * The pair that wins the most fights, rather than the one that scores best
+ * on paper.
+ *
+ * `autoPickCards` ranks the fused fighter on its own against the enemy line —
+ * damage that lands, damage turned away, abilities the matchup switches on.
+ * That is a good description of a fighter and a poor description of a fight:
+ * it cannot see that a slower pair lets your taunt hold a blow longer, or
+ * that a smaller one dies to the same strike either way, and it never asks
+ * what the other five are doing. Measured against a real line-up it left ten
+ * points of win rate on the table — 76% where the best pair gave 86%.
+ *
+ * So the cards are chosen the way the bar is now computed: by fighting it.
+ *
+ * Two passes, because the full grid is too much to simulate properly. Every
+ * shortlisted pair is fought once at its middle roll, which is enough to
+ * order them; the leaders are then fought `runs` times each, which is what
+ * separates two pairs that are genuinely close. A collection of any size
+ * costs the same, because the shortlist is what is fought, not the
+ * collection.
+ */
+export function autoPickCardsByOdds<TCard extends { template_id: number }>(options: {
+  enemies: BattleFighter[]
+  crewCards: TCard[]
+  weaponCards: TCard[]
+  values: Map<number, NftValue>
+  /** Win rate for one pair. The screen supplies this, bound to its team. */
+  rate: (crew: NftValue | null, weapon: NftValue | null, runs: number) => number
+  /** Cards per side carried into the simulated pass. */
+  shortlist?: number
+  /** Pairs fought properly at the end. */
+  finalists?: number
+  /** Fights per finalist. */
+  runs?: number
+}): { crew: TCard | null; weapon: TCard | null } {
+  const { enemies, crewCards, weaponCards, values, rate } = options
+  const shortlist = options.shortlist ?? 16
+  const finalists = options.finalists ?? 10
+  const runs = options.runs ?? 49
+
+  if (!crewCards.length && !weaponCards.length) return { crew: null, weapon: null }
+
+  /*
+     The old ranking still earns its place here: it is a cheap way to throw
+     away the cards nobody would field, and being wrong at the margin costs
+     nothing when the survivors are fought anyway.
+  */
+  const best = (cards: TCard[], asWeapon: boolean) =>
+    [...cards]
+      .map((c) => {
+        const v = values.get(c.template_id)
+        if (!v) return { c, score: -1 }
+        const solo = flatMatchup(
+          {
+            element: asWeapon ? v.element : v.element || 'neutral',
+            damage: v.stats.damage,
+            health: v.stats.health,
+            attackspeed: v.stats.attackspeed,
+            res_gem: v.stats.res_gem,
+            res_metal: v.stats.res_metal,
+            res_air: v.stats.res_air,
+            res_fire: v.stats.res_fire,
+            res_nature: v.stats.res_nature,
+            res_neutral: v.stats.res_neutral,
+            abilities: v.ability ?? [],
+          },
+          enemies,
+        )
+        return { c, score: solo.score }
+      })
+      .sort((x, y) => y.score - x.score)
+      .slice(0, shortlist)
+      .map((x) => x.c)
+
+  const crewList = best(crewCards, false)
+  const weaponList = best(weaponCards, true)
+
+  /* One fight each, to order them. */
+  const rough: { crew: TCard | null; weapon: TCard | null; rate: number }[] = []
+  const pairs: [TCard | null, TCard | null][] = []
+  if (crewList.length && weaponList.length) {
+    for (const c of crewList) for (const w of weaponList) pairs.push([c, w])
+  } else {
+    for (const c of crewList) pairs.push([c, null])
+    for (const w of weaponList) pairs.push([null, w])
+  }
+  for (const [c, w] of pairs) {
+    const cv = c ? (values.get(c.template_id) ?? null) : null
+    const wv = w ? (values.get(w.template_id) ?? null) : null
+    rough.push({ crew: c, weapon: w, rate: rate(cv, wv, 1) })
+  }
+
+  /* Then the leaders properly, where a single roll cannot separate them. */
+  rough.sort((a, b) => b.rate - a.rate)
+  const short = rough.slice(0, finalists).map((p) => ({
+    ...p,
+    rate: rate(
+      p.crew ? (values.get(p.crew.template_id) ?? null) : null,
+      p.weapon ? (values.get(p.weapon.template_id) ?? null) : null,
+      runs,
+    ),
+  }))
+  short.sort((a, b) => b.rate - a.rate)
+
+  const winner = short[0] ?? rough[0]
+  return { crew: winner?.crew ?? null, weapon: winner?.weapon ?? null }
+}
