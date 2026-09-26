@@ -72,7 +72,14 @@
   font-size: var(--fs-4xl);
   font-weight: var(--fw-bold);
   letter-spacing: 0.03em;
-  color: var(--text-heading);
+  /*
+     Not the heading yellow, which every other screen uses to shout a
+     section at you. This one says your name and asks nothing: the page it
+     opens is a list of quiet suggestions, and a wall of #faff00 above them
+     set a pitch the rest of the screen never meets. Cooler than white so it
+     sits with the cyan kicker rather than glaring past it.
+  */
+  color: #dce6f5;
   overflow-wrap: anywhere;
 }
 
