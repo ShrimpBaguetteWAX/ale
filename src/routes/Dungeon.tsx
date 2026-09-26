@@ -28,6 +28,7 @@ import { EMPTY_FILTER, type RosterFilter } from '@/dungeon/filters'
 import {
   NFT_FIGHTER_ART,
   combineNftFighter,
+  combineNftFlat,
   nftAsPanel,
 } from '@/dungeon/nftFighter'
 import { rememberFight } from '@/dungeon/fightStore'
@@ -40,6 +41,7 @@ import {
   type FlatFighter,
 } from '@/fight/matchup'
 import { ageFactor, levelFactor } from '@/fight/scaling'
+import { oddsTitle, teamOdds } from '@/fight/odds'
 import { recallTeam, rememberTeam, restoreTeam } from '@/fight/lastTeam'
 import { applyWeather, fetchWeather } from '@/fight/weather'
 import { autoPickCards, autoPickFighters } from '@/fight/autopick'
@@ -188,6 +190,8 @@ export default function Dungeon() {
   /* One screen each, so both are fetched the first time somebody opens one. */
   const difMods = useLazyConfig('difMods') ?? EMPTY_DIFMODS
   const energyCost = useLazyConfig('dungeon')?.energy_cost ?? 40
+  /* Taunt lost per blow taken: the one knob the simulated fight needs. */
+  const tauntDeduction = useLazyConfig('fightCost')
 
   /*
      The land's weather, which this dungeon is fought in exactly as an arena
@@ -336,6 +340,16 @@ export default function Dungeon() {
   }, [picked])
 
   /** The sixth fighter the two cards combine into. */
+  /* The same two cards unscaled, for the simulated fight. */
+  const nftFlat = useMemo(
+    () =>
+      combineNftFlat(
+        crew ? (nftValues.get(crew.template_id) ?? null) : null,
+        weapon ? (nftValues.get(weapon.template_id) ?? null) : null,
+      ),
+    [crew, weapon, nftValues],
+  )
+
   const nftFighter = useMemo(
     () =>
       combineNftFighter(
@@ -759,7 +773,40 @@ export default function Dungeon() {
     [enemyFlat, myFlat],
   )
 
-  const myShare = outlook.share
+  /*
+     The balance bar: how often this team actually wins this fight.
+
+     `teamOdds` fights it forty-nine times, rolling the stats each time the
+     way the contract does, and counts the wins. The sixth fighter comes
+     from `myFlat`, which is where the screen assembled it — the same object
+     the totals above the bar are adding up, so the two cannot disagree.
+
+     `outlook.share` stays as the fallback for the moment before the fight
+     config lands, and for a read that fails outright. It is the old
+     estimate, drawn in the same bar, rather than an empty one.
+  */
+  const odds = useMemo(() => {
+    if (tauntDeduction === undefined || !enemyTeam) return null
+    return teamOdds({
+      picked,
+      /* The sixth fighter, unscaled: `teamOdds` levels it itself. */
+      nft: nftFlat,
+      /* The line as stored, because the scaling belongs after the buffs. */
+      enemies: enemiesAt(enemyTeam, difficulty, nftMinDifficulty),
+      scaling: {
+        venue: 'dungeon',
+        difficulty,
+        percentPower: difMods.get(difficulty) ?? 100,
+      },
+      tauntDeduction,
+      fielding: { weather, caps, levelMod, ageDecay },
+    })
+  }, [
+    picked, nftFlat, enemyTeam, difficulty, nftMinDifficulty, difMods,
+    tauntDeduction, weather, caps, levelMod, ageDecay,
+  ])
+
+  const myShare = odds ? odds.winRate : outlook.share
 
   const counts: Record<Tab, number> = {
     fighters: roster?.length ?? 0,
@@ -873,6 +920,7 @@ export default function Dungeon() {
             <header
               className="versus__head"
               style={{ ['--share' as string]: `${myShare * 100}%` }}
+              title={oddsTitle(odds, 'mine')}
             >
               <span className="versus__team">
                 Your team
@@ -1033,6 +1081,7 @@ export default function Dungeon() {
             <header
               className="versus__head"
               style={{ ['--share' as string]: `${(1 - myShare) * 100}%` }}
+              title={oddsTitle(odds, 'theirs')}
             >
               <span className="versus__team">The dungeon</span>
               <span className="versus__totals mono">

@@ -623,9 +623,11 @@ function performBuff(
  * changes the result whenever a percentage is involved.
  *
  * Worth knowing when reading a stored fight: the line-ups the chain saves are
- * snapshotted *before* this runs, so the numbers on a `fights` row are the
- * unbuffed ones and this has to be replayed to reach the state the combat
- * loop actually started from.
+ * snapshotted *after* this has run and after the scaling that follows it, so
+ * a `fights` row already holds the buffed, weathered, levelled numbers the
+ * loop began from. Replaying the buffs on top changes nothing, because
+ * `remove_used_abilities` erases every ability carrying effects before the
+ * snapshot is taken — which is why a replay matches the chain at all.
  */
 function applyStartBuffs(
   buffingTeam: SimFighter[],
@@ -760,6 +762,21 @@ export interface SimOptions {
   caps?: StatCaps
   /** Which building hosts the fight, for `building` ability conditions. */
   building?: string
+  /**
+   * Scale both sides after the opening buffs, before the first blow.
+   *
+   * `fight()` runs `prepare_buff` on the *rolled* stats and only then calls
+   * `apply_weather_and_age` and `apply_dungdif` — the comment above the call
+   * says so in as many words: "APPLY BUFFS BEFORE WEATHER". A flat buff of
+   * +400 health therefore goes through the level curve with everything else
+   * and reaches the ring as +1,200 on a difficulty 8 line.
+   *
+   * A replay has no use for this: the line-ups on a `fights` row were
+   * snapshotted after both steps. It is here for a fight that has not
+   * happened yet, where the caller starts from stored stats and has to walk
+   * the same path the contract does.
+   */
+  prepare?: (team1: SimFighter[], team2: SimFighter[]) => void
 }
 
 /**
@@ -789,6 +806,10 @@ export function simulate(row: FightRow, options: SimOptions): Replay {
   applyStartBuffs(team2, team1, 'debuff', building, caps, opened)
   removeUsedAbilities(team1)
   removeUsedAbilities(team2)
+
+  /* Weather, age, level and the difficulty percentage — the contract's next
+     step, and the caller's to describe because only it knows the venue. */
+  options.prepare?.(team1, team2)
 
   const living1 = [...team1]
   const living2 = [...team2]

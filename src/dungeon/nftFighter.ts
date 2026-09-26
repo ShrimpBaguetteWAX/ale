@@ -1,5 +1,6 @@
 import type { PanelFighter } from '@/components/FighterPanel'
 import type { BattleAbility } from './types'
+import type { FlatFighter } from '@/fight/matchup'
 import { asset } from '@/assets'
 
 /**
@@ -111,6 +112,39 @@ export function combineNftFighter(
         : crew
           ? 'crew only — pick a weapon'
           : 'weapon only — pick a crew',
+  }
+}
+
+/**
+ * The same two cards as a combatant, for anything that fights it.
+ *
+ * `combineNftFighter` shapes them for a card, where every stat is a band of
+ * one. A simulated fight wants plain numbers and nothing applied yet: it
+ * levels and weathers the whole line-up itself, at the point the contract
+ * does.
+ */
+export function combineNftFlat(crew: NftValue | null, weapon: NftValue | null): FlatFighter | null {
+  if (!crew && !weapon) return null
+
+  const sum = (pick: (s: NftStats) => number) =>
+    (crew ? pick(crew.stats) : 0) + (weapon ? pick(weapon.stats) : 0)
+
+  const resistances = Object.fromEntries(RES_KEYS.map((k) => [k, sum((s) => s[k])])) as Record<
+    (typeof RES_KEYS)[number],
+    number
+  >
+
+  return {
+    classname: crew?.classname || '',
+    racename: crew?.racename || '',
+    element: weapon?.element || 'neutral',
+    health: sum((s) => s.health),
+    damage: sum((s) => s.damage),
+    taunt: sum((s) => s.taunt),
+    initiative: sum((s) => s.initiative),
+    attackspeed: sum((s) => s.attackspeed),
+    ...resistances,
+    abilities: [...(crew?.ability ?? []), ...(weapon?.ability ?? [])],
   }
 }
 
