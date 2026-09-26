@@ -372,12 +372,18 @@ function checkCondition(
 }
 
 /**
- * `buff_condition`: the per-member filter for group targets.
+ * `buff_condition` as the *in-fight* loops behave: everyone passes unless a
+ * bare `condition_group` filters them.
  *
- * Two of the three cases pass everyone. `check_condition` means the gate was
- * already evaluated once by `checkCondition`, which returns 0 and skips the
- * loop when it fails; and an ability with no `condition_group` carries no
- * condition for a member to fail. Only a bare `condition_group` filters.
+ * `check_condition` means the gate was already evaluated once by
+ * `checkCondition`, which returns 0 and skips the loop when it fails; and an
+ * ability with no `condition_group` carries no condition for a member to
+ * fail.
+ *
+ * Both halves are checked against the chain. Forcing the opposite breaks
+ * three recorded replays in four; and a stored line-up whose crew carried an
+ * `ally_group` windup shows initiatives *below* their own roster floor,
+ * which a roll on its own cannot produce.
  */
 function buffCondition(f: SimFighter, a: BattleAbility): boolean {
   if (a.check_condition || !a.condition_group) return true

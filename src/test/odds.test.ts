@@ -236,3 +236,41 @@ describe('the contract order', () => {
     expect(weak.winRate).toBeGreaterThan(strong.winRate)
   })
 })
+
+/**
+ * The roll space, which is not the one uniform sampling imagines.
+ *
+ * `getFighterPI` walks a 64-bit LCG from the player's stored battle seed,
+ * and the contract reads that seed as `% 100` — so a fight has exactly a
+ * hundred possible rolls, each fixing all five stats of all five fighters
+ * together. Drawing each stat independently explores combinations the game
+ * cannot deal: on a real matchup it read 18% where the hundred rolls give
+ * 10, and the player lost twenty-two in a row saying so.
+ */
+describe('the hundred rolls', () => {
+  it('fights every roll the game has, and no others', () => {
+    const odds = teamOdds(input([roster(1, [200, 2000], 300)], [enemy(2, 1000, 300)]))!
+    expect(odds.runs).toBe(100)
+  })
+
+  it('walks the same space in even strides on a smaller budget', () => {
+    /*
+       The card search sizes up hundreds of pairs at one roll each. That roll
+       should be a fair sample of the hundred, not seed zero every time.
+    */
+    const mine = [roster(1, [200, 2000], 300)]
+    const theirs = [enemy(2, 1000, 300)]
+    const few = teamOdds({ ...input(mine, theirs), runs: 10 })!
+    expect(few.runs).toBe(10)
+    /* Ten strides across a hundred seeds bracket the full answer. */
+    const all = teamOdds(input(mine, theirs))!
+    expect(Math.abs(few.winRate - all.winRate)).toBeLessThan(0.25)
+  })
+
+  it('reads the same for the same matchup, fight after fight', () => {
+    const mine = [roster(1, [200, 2000], 300)]
+    const theirs = [enemy(2, 1000, 300)]
+    /* The seeds are the game's own, so there is nothing left to drift. */
+    expect(teamOdds(input(mine, theirs))!.winRate).toBe(teamOdds(input(mine, theirs))!.winRate)
+  })
+})

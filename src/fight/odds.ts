@@ -59,37 +59,44 @@ import { ageFactor, levelFactor } from './scaling'
  */
 export const ODDS_RUNS = 100
 
-/** A deterministic stream, so the same team always reads the same. */
-function stream(seed: number): () => number {
-  let s = seed >>> 0 || 1
-  return () => {
-    /* xorshift32 — small, fast, and good enough to sample a band. */
-    s ^= s << 13
-    s ^= s >>> 17
-    s ^= s << 5
-    s >>>= 0
-    return s / 0x1_0000_0000
-  }
+/**
+ * The roll the contract can actually deal.
+ *
+ * `getFighterPI` draws a fighter's five stats from a 64-bit LCG whose
+ * starting position is the player's stored battle seed — and that seed is
+ * read as `% 100`, so there are exactly a hundred rolls a fight can have.
+ * Each fighter starts ten steps further along than the one before it, by
+ * value, so the whole team follows from the one number.
+ *
+ * Sampling each stat independently instead looked equivalent and was not:
+ * on one real matchup it read 18% where the hundred rolls give 10, because
+ * the reachable rolls are correlated and this line-up's are worse than
+ * chance. Enumerating them costs the same and is exact.
+ */
+const LCG_MUL = 6364136223846793005n
+const LCG_ADD = 1442695040888963407n
+const U64 = (1n << 64n) - 1n
+
+/** One draw, and the position it leaves behind. */
+function draw(min: number, max: number, position: bigint): [number, bigint] {
+  const next = (position * LCG_MUL + LCG_ADD) & U64
+  const mixed = next ^ (next >> 32n)
+  const span = BigInt(Number(max) - Number(min) + 1)
+  return [Number(min) + Number(mixed % span), next]
 }
 
-/** Every fighter on the two sides, mixed into one number. */
-function seedOf(mine: RosterFighter[], theirs: BattleFighter[]): number {
-  let h = 2166136261
-  const mix = (n: number) => {
-    h ^= n >>> 0
-    h = Math.imul(h, 16777619)
-  }
-  for (const f of mine) mix(f.fighter_id)
-  for (const f of theirs) {
-    mix(Number(f.fighter_id))
-    mix(f.health)
-    mix(f.damage)
-  }
-  return h >>> 0
+/**
+ * Which seeds to fight, for a given budget.
+ *
+ * A hundred runs is every roll the game has, which is the whole point. A
+ * smaller budget — the card search, sizing up hundreds of pairs — walks the
+ * same space in even strides rather than clustering at the start.
+ */
+function seedsFor(runs: number): number[] {
+  if (runs >= 100) return Array.from({ length: 100 }, (_, i) => i)
+  const step = 100 / runs
+  return Array.from({ length: runs }, (_, i) => Math.floor(i * step + step / 2) % 100)
 }
-
-const between = (min: number, max: number, t: number) =>
-  Math.trunc(Number(min) + (Number(max) - Number(min)) * t)
 
 /** The level the contract fights a side at. Zero means "its own". */
 const battleLevel = (own: number, difficulty: number) => (difficulty === 0 ? own : difficulty)
@@ -113,19 +120,27 @@ export type EnemyScaling =
   | { venue: 'arena'; power: number; fullPower: number }
 
 /** One roster fighter as the roll leaves it — no scaling, no weather yet. */
-function rollFighter(f: RosterFighter, roll: () => number): BattleFighter {
+function rollFighter(f: RosterFighter, seed: number, slot: number): BattleFighter {
   const s = f.stats
+  /*  is passed by value per fighter and advanced by ten between
+     them, so slot four's draws do not depend on slot three's. */
+  let p = BigInt(seed + 10 * slot)
+  const roll = (min: number, max: number) => {
+    const [value, next] = draw(min, max, p)
+    p = next + 2n
+    return value
+  }
   return asCombatant({
     fighter_id: f.fighter_id,
     creation_date: f.creation_date,
     element: s.element,
     classname: s.classname,
     racename: s.racename,
-    health: between(s.health_min, s.health_max, roll()),
-    damage: between(s.damage_min, s.damage_max, roll()),
-    taunt: between(s.taunt_min, s.taunt_max, roll()),
-    initiative: between(s.initiative_min, s.initiative_max, roll()),
-    attackspeed: between(s.attackspeed_min, s.attackspeed_max, roll()),
+    health: roll(s.health_min, s.health_max),
+    damage: roll(s.damage_min, s.damage_max),
+    taunt: roll(s.taunt_min, s.taunt_max),
+    initiative: roll(s.initiative_min, s.initiative_max),
+    attackspeed: roll(s.attackspeed_min, s.attackspeed_max),
     res_gem: s.res_gem,
     res_metal: s.res_metal,
     res_air: s.res_air,
@@ -272,7 +287,6 @@ export function teamOdds(input: OddsInput): Odds | null {
 
   const runs = input.runs ?? ODDS_RUNS
   const now = input.now ?? Date.now()
-  const roll = stream(seedOf(picked, enemies))
   const sixth = nft ? nftAsFighter(nft, now) : null
   const theirDifficulty = scaling.venue === 'dungeon' ? scaling.difficulty : 0
 
@@ -301,8 +315,9 @@ export function teamOdds(input: OddsInput): Odds | null {
   }
 
   let wins = 0
-  for (let i = 0; i < runs; i++) {
-    const team = picked.map((f) => rollFighter(f, roll))
+  const seeds = seedsFor(runs)
+  for (const seed of seeds) {
+    const team = picked.map((f, slot) => rollFighter(f, seed, slot))
     if (sixth) team.push(sixth)
 
     const row: FightRow = {
@@ -330,7 +345,7 @@ export function teamOdds(input: OddsInput): Odds | null {
     if (replay.winner === 1) wins++
   }
 
-  return { winRate: wins / runs, runs }
+  return { winRate: wins / seeds.length, runs: seeds.length }
 }
 
 /**
