@@ -50,6 +50,14 @@ export interface NavItem {
  * enough to be worth chasing.
  */
 export const NAV_ITEMS: NavItem[] = [
+  /*
+     First, because it is the answer to "what now" and every other entry is
+     a place to go once that is answered. It used to open from the logo,
+     which is a fine place for a way home and a poor one for a screen: a
+     player who has not been told does not click a wordmark to find out what
+     is waiting for them.
+  */
+  { to: '/briefing', label: 'Briefing', icon: asset('/assets/icons/menu/briefing.png') },
   { to: '/map', label: 'World Map', icon: asset('/assets/icons/menu/world.png'), primary: true },
   { to: '/shop', label: 'Shop', icon: asset('/assets/icons/menu/coin.png'), primary: true },
   {
