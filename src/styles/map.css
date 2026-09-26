@@ -304,7 +304,8 @@
 .legendbtn {
   position: absolute;
   right: var(--sp-3);
-  top: var(--sp-3);
+  /* Under the eye, which heads this column at every width. */
+  top: calc(var(--sp-3) + 46px);
   z-index: 3;
   display: inline-flex;
   align-items: center;
@@ -328,7 +329,8 @@
 
 .legendpop {
   right: var(--sp-3);
-  top: calc(var(--sp-3) + 42px);
+  /* Hangs off the Legend button, which the eye pushed down. */
+  top: calc(var(--sp-3) + 88px);
   padding: var(--sp-3);
   width: 220px;
 }
@@ -1756,48 +1758,66 @@
 /*
  * The control that puts the map's furniture away, and the state it produces.
  *
- * Phone only. A wide screen has room for the controls and the terrain at the
- * same time; 390 by 640 does not, and the three occupied corners are most of
- * what a player sees when they are trying to read where to go next.
+ * It began as a phone control, on the grounds that 390 by 640 has no room
+ * for both the controls and the terrain. A wide screen has the room and
+ * still wants the option: the map is the one screen people look *at* rather
+ * than read, and a planet with its corners clear is worth seeing.
+ *
+ * Same corner at every width, and the column below it moves down to make
+ * room — so the button a player reaches for to bring the furniture back is
+ * where it was when they sent it away.
  */
 .mapbare {
+  position: absolute;
+  right: var(--sp-3);
+  top: var(--sp-3);
+  z-index: 4;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  color: var(--text-dim);
+  background: linear-gradient(180deg, #16203a, #0a1222);
+  border: 1px solid var(--line-bright);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow);
+  cursor: pointer;
+}
+
+.mapbare svg {
+  width: 20px;
+  height: 20px;
+}
+
+.mapbare[aria-pressed='true'] {
+  color: var(--white);
+  border-color: var(--cyan);
+}
+
+/*
+   Cleared. The tile card stays — it is the action, not the furniture — and
+   so does the prompt to enter whatever is under your feet.
+
+   The action bar is not furniture either and does not clear with the rest.
+   It is docked out of the map's way and the pan slack accounts for it, so
+   there is nothing to gain by hiding the one thing a player is there to
+   press.
+*/
+.mapview--bare .planetbar,
+.mapview--bare .legendbtn,
+.mapview--bare .legendpop,
+.mapview--bare .findme,
+.mapview--bare .mapstage__zoom {
   display: none;
 }
 
 @media (max-width: 719px) {
-  .mapbare {
-    position: absolute;
-    right: var(--sp-3);
-    top: var(--sp-3);
-    z-index: 4;
-    display: grid;
-    place-items: center;
-    width: 40px;
-    height: 40px;
-    padding: 0;
-    color: var(--text-dim);
-    background: linear-gradient(180deg, #16203a, #0a1222);
-    border: 1px solid var(--line-bright);
-    border-radius: var(--radius-sm);
-    box-shadow: var(--shadow);
-    cursor: pointer;
-  }
-
-  .mapbare svg {
-    width: 20px;
-    height: 20px;
-  }
-
-  .mapbare[aria-pressed='true'] {
-    color: var(--white);
-    border-color: var(--cyan);
-  }
-
-  /* The rest of the column moves down to make room for it. */
-  .legendbtn {
-    top: calc(var(--sp-3) + 46px);
-  }
-
+  /*
+     On a phone the whole column stacks from the top, so these two follow the
+     Legend button down. On a wide screen they sit at the bottom of the same
+     edge and the eye never reaches them.
+  */
   .findme {
     top: calc(var(--sp-3) + 92px);
   }
@@ -1805,28 +1825,6 @@
   .mapstage__zoom {
     top: calc(var(--sp-3) + 138px);
   }
-
-  .legendpop {
-    top: calc(var(--sp-3) + 88px);
-  }
-
-  /*
-     Cleared. The tile card stays — it is the action, not the furniture — and
-     so does the prompt to enter whatever is under your feet.
-  */
-  .mapview--bare .planetbar,
-  .mapview--bare .legendbtn,
-  .mapview--bare .legendpop,
-  .mapview--bare .findme,
-  .mapview--bare .mapstage__zoom {
-    display: none;
-  }
-
-  /*
-     The action bar is not furniture and does not clear with the rest. It is
-     docked out of the map's way and the pan slack accounts for it, so there
-     is nothing to gain by hiding the one thing a player is there to press.
-  */
 }
 
 /*
