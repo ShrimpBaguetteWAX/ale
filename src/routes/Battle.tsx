@@ -1740,13 +1740,39 @@ function Result({
      dot and every other screen hear about it through `dirties`.
   */
   const { busy: levelBusy, error: levelError, notice: levelNotice, run } = useAction()
-  const doLevelUp = (f: RosterFighter) =>
-    run(
+  const doLevelUp = (f: RosterFighter) => {
+    const id = Number(f.fighter_id)
+    const was = f.stats.level
+    return run(
       `level-${f.fighter_id}`,
       () => levelUpFighters(session!, [f.fighter_id], levelUpOf(f, levels).cost),
-      `${f.classname} reached level ${f.stats.level + 1}.`,
-      { dirties: DIRTIES.levelUpFighters },
+      `${f.classname} reached level ${was + 1}.`,
+      {
+        dirties: DIRTIES.levelUpFighters,
+        /*
+           The fighter's own row is what says this worked, so it is what the
+           wait watches.
+
+           Without a `settled`, the wait falls back to the player's figures
+           and stops as soon as the credits leave — which they do on whichever
+           node answered that read. The roster read that follows can go to
+           another node in the pool that is a block behind, and its answer is
+           cached for a minute on a screen that re-reads on nothing. The card
+           then kept the old level, the old XP and the button, and pressing it
+           again sent the same cost at a fighter whose experience the chain had
+           already spent: "fighters::levelup - Your fighter does not have
+           enough experience".
+
+           Forced, so the read cannot be the cache the drop just emptied, and
+           so the answer that ends the wait is the one left behind for the
+           screen's own re-read.
+        */
+        after: () => fetchRoster(player.wallet, true),
+        settled: (roster) =>
+          (roster.find((r) => Number(r.fighter_id) === id)?.stats.level ?? 0) > was,
+      },
     )
+  }
 
   /**
    * Which of the five is staying behind to hold the arena.
