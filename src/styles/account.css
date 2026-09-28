@@ -85,6 +85,75 @@
 
 /* ---------- tabs ---------- */
 
+/*
+   The tab row, and whatever else belongs on its line.
+
+   One flex row rather than the tabs alone, so a control that is not a tab —
+   leaving — can sit at the far end of it without being mistaken for one.
+*/
+.accounthead {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+}
+
+.accounthead__leave {
+  /* The far end, always: it is the one thing here you cannot undo. */
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.accounthead__icon {
+  width: 18px;
+  height: 18px;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/*
+   On a phone the row holds: three tabs that share what is left, and a
+   square way out. The words come off the button rather than the button
+   coming off the row — dropping to a second line is what made it hard to
+   find in the first place.
+*/
+@media (max-width: 700px) {
+  .accounthead {
+    flex-wrap: nowrap;
+    gap: var(--sp-2);
+  }
+
+  .accounthead .accounttabs {
+    flex: 1 1 auto;
+    width: auto;
+    min-width: 0;
+  }
+
+  .accounthead .accounttab {
+    flex: 1 1 0;
+    min-width: 0;
+    padding-inline: var(--sp-2);
+  }
+
+  .accounthead__leave {
+    flex: none;
+    width: 44px;
+    min-width: 44px;
+    padding: 0;
+    justify-content: center;
+  }
+
+  .accounthead__word {
+    display: none;
+  }
+}
+
 .accounttabs {
   display: flex;
   border: 1px solid var(--line);

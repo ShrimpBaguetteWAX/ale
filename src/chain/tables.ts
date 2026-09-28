@@ -43,6 +43,17 @@ export const TABLES = {
   dungeonCooldowns: { code: CONTRACTS.dungeons, table: 'cdclaim' },
   /** Settled and running leaderboard standings. */
   leaderboard: { code: CONTRACTS.arena, table: 'leaderboard' },
+  /**
+   * The tournament: where each running one has got to, and who is in it.
+   *
+   * Two keys rather than one because the two rows live under different
+   * scopes — `curstage` under the contract, `signups` under the tournament —
+   * and an entry moves both: the field grows by one and the count on the
+   * stage row grows with it.
+   */
+  tournament: { code: CONTRACTS.tournament, table: 'curstage' },
+  tournamentSignups: { code: CONTRACTS.tournament, table: 'signups' },
+
   /** How much of the weekly free-CPU allowance a wallet has spent. */
   cpuUsage: { code: CONTRACTS.cpu, table: 'cpuusage' },
 } as const

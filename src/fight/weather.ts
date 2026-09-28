@@ -62,14 +62,24 @@ export async function fetchWeather(
   )
   if (!tracking?.weather_id) return undefined
 
+  return fetchWeatherRow(planet, tracking.weather_id)
+}
+
+/**
+ * One roll, by name.
+ *
+ * Separate from the land lookup because not everything that fights under
+ * weather stands on a land: the tournament rolls one per planet up front and
+ * keeps the pair `(planet, weather_id)` on its own row, with no
+ * `landtracking` in between. Cached hard — a weather row never changes, only
+ * which one something points at does.
+ */
+export function fetchWeatherRow(
+  planet: string,
+  weatherId: string,
+): Promise<Weather | undefined> {
   return getRow<Weather>(
-    {
-      code: CONTRACTS.battle,
-      scope: planet,
-      table: 'weather',
-      key: tracking.weather_id,
-    },
-    /* A weather row never changes; only which one a land points at does. */
+    { code: CONTRACTS.battle, scope: planet, table: 'weather', key: weatherId },
     { ttl: TTL.long, persist: true },
   )
 }

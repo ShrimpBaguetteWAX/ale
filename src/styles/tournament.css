@@ -1,0 +1,2069 @@
+/*
+   The Tournament.
+
+   A reporting screen with one decision in the middle of it. The day's steps
+   run left to right along a strip, the panel under it is whichever one the
+   contract asked for, and the field is a list rather than a bracket — the
+   contract draws pairings one round at a time, so a full bracket drawn here
+   would be a picture of something nobody has committed to yet.
+
+   Borrowed rather than reinvented: the picker below the entry panel is the
+   dungeon's, so `.tabs`, `.loadout`, `.cardslots` and the grids are styled in
+   dungeon.css and only the frame around them lives here.
+*/
+
+.tour {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 18px 16px 48px;
+  /*
+     The game's own content width rather than a narrower reading column.
+     The gates are the point of this screen and they want the room; every
+     other panel here is a grid that fills whatever it is given, the same as
+     the arena and the dungeon.
+  */
+  max-width: var(--maxw);
+  margin-inline: auto;
+}
+
+.tour__loading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 40px 0;
+  color: var(--text-muted);
+}
+
+/* A group for the phone layout; on anything wider it is not there at all. */
+.tour__top {
+  display: contents;
+}
+
+.tour__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.tour__title {
+  margin: 0;
+  font-size: 1.7rem;
+  letter-spacing: 0.04em;
+  color: #ffdb7d;
+}
+
+.tour__lede {
+  margin: 4px 0 0;
+  max-width: 62ch;
+  color: var(--text-muted);
+}
+
+.tour__badges {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.tour__phase {
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border: 1px solid transparent;
+}
+
+/* Entry open is the only one that asks for anything, so it is the loud one. */
+.tour__phase--signup {
+  background: rgba(34, 211, 238, 0.14);
+  border-color: rgba(34, 211, 238, 0.5);
+  color: #7ee7fb;
+}
+.tour__phase--battle {
+  background: rgba(244, 114, 182, 0.12);
+  border-color: rgba(244, 114, 182, 0.45);
+  color: #f9a8d4;
+}
+.tour__phase--preparing,
+.tour__phase--creation {
+  background: rgba(148, 163, 184, 0.12);
+  border-color: rgba(148, 163, 184, 0.35);
+  color: var(--text-muted);
+}
+.tour__phase--finish {
+  background: rgba(250, 204, 21, 0.12);
+  border-color: rgba(250, 204, 21, 0.45);
+  color: #fde68a;
+}
+.tour__phase--none {
+  background: rgba(148, 163, 184, 0.08);
+  border-color: rgba(148, 163, 184, 0.25);
+  color: var(--text-faint);
+}
+
+.tour__when {
+  color: var(--text-faint);
+  font-size: 0.9rem;
+}
+
+/* ——— The pot ——— */
+
+/*
+   The prize, at the size of the reason it is.
+
+   It used to be a 12px label and a figure in a metadata strip, which is how
+   you write something nobody is supposed to read. Eighteen thousand Trilium
+   is the whole argument for spending the energy, so it is set like a
+   headline and the gold is the game's own.
+*/
+.pot {
+  /*
+     One line: what is on the table, and the weather it is fought in.
+
+     Stacked — label over figure over rolls — this was a hundred and sixty
+     pixels of banner above the thing the screen is actually for. Across, it
+     is seventy and says exactly as much. The figure is still the biggest
+     type on the screen, which is the part that matters.
+  */
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 22px;
+  padding: 12px 18px;
+  border-radius: 14px;
+  text-align: left;
+  background: #0a1220;
+  border: 1px solid rgb(148 163 184 / 20%);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 6%);
+}
+
+.pot__label {
+  font-size: 0.7rem;
+  letter-spacing: 0.34em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.pot__figures {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 26px;
+  flex-wrap: wrap;
+}
+
+.pot__figure {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: clamp(1.7rem, 2.8vw, 2.2rem);
+  line-height: 1.05;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  /* One flat gold rather than struck metal: the gradient and its glow were
+     written for a screen where the pot was the headline, and here it sits
+     above a field that outranks it. */
+  color: #ffdb7d;
+}
+
+/* The mark stays gold; only the number is clipped to the gradient. */
+.pot__figure img {
+  width: 24px;
+  height: 24px;
+  filter: drop-shadow(0 0 10px rgba(246, 168, 0, 0.45));
+}
+
+.pot__figure small {
+  font-size: 0.42em;
+  letter-spacing: 0.16em;
+  align-self: center;
+  color: var(--text-faint);
+}
+
+.pot__figure--wax {
+  background: linear-gradient(180deg, #e8f4ff, #7ee7fb 55%, #0187b1);
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+.pot__empty {
+  margin: 0;
+  font-size: 1.1rem;
+  color: var(--text-faint);
+}
+
+.pot__weather {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px 10px;
+  margin-top: 0;
+  /* Pushed to the far end of the band: the pot is what the panel is for,
+     and the weather is the condition attached to it. */
+  margin-left: auto;
+}
+
+.pot__weather .weather .weather__name {
+  color: var(--text-dim);
+  font-weight: 400;
+}
+
+.pot__weather .weather {
+  margin-top: 0;
+  background: #111c2e;
+  color: var(--text-dim);
+
+  /* The violet lean belongs to screens where weather is the subject. Here
+     it is a footnote on the pot, and three of them in a row at full
+     strength outshouted the prize beside them. */
+  --lean-colour: rgb(148 163 184 / 45%);
+  background: rgb(2 7 14 / 60%);
+  border-color: rgb(148 163 184 / 20%);
+}
+
+/* A button, but only a phone ever needs it to look like one. */
+.pot__roll {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: default;
+  min-width: 0;
+}
+
+/*
+   A phone gets one line for the money and one for the weather.
+
+   Stacked and centred this was a hundred and seventy pixels of banner above
+   a screen whose whole job is a countdown and a team. The label and the
+   figure share a row; the rolls run under them on a line that scrolls
+   rather than wrapping onto three. Every word is still there — the text is
+   the information, and an icon with a tooltip is no information at all on a
+   touch screen.
+*/
+@media (max-width: 720px) {
+  /*
+     The pot rides on the title's line, and the weather takes the next one.
+
+     No panel around either: a bordered band for one figure and three chips
+     was most of the space above the fold, and the rolls can be long enough
+     to overflow it anyway. `display: contents` on both the group and the pot
+     puts the title, the figure and the weather into one grid, so the figure
+     lands beside the heading and the rolls span the full width under it.
+  */
+  .tour__top {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    align-items: center;
+    column-gap: 12px;
+    row-gap: 6px;
+  }
+
+  .pot {
+    display: contents;
+  }
+
+  /* "18,400 TLM" beside the word Tournament needs no caption. */
+  .pot__label {
+    display: none;
+  }
+
+  .pot__figures {
+    grid-column: 2;
+    justify-content: flex-end;
+    gap: 14px;
+  }
+
+  .pot__figure {
+    font-size: 1.5rem;
+    gap: 6px;
+  }
+
+  .pot__figure img {
+    width: 20px;
+    height: 20px;
+  }
+
+  .pot__empty {
+    grid-column: 2;
+    justify-self: end;
+    font-size: 0.86rem;
+  }
+
+  .pot__weather {
+    grid-column: 1 / -1;
+    margin-left: 0;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    gap: 6px;
+  }
+
+  /*
+     One line, three rolls, one of them readable.
+
+     Equal thirds by default, each cut off where it runs out of room. Press
+     one and it takes the space it needs while the other two drop back to
+     their stat icons — so nothing leaves the screen and the row never wraps
+     or scrolls.
+  */
+  .pot__roll {
+    flex: 1 1 0;
+    cursor: pointer;
+  }
+
+  .pot__roll--open {
+    flex: 1 1 auto;
+  }
+
+  .pot__roll--mini {
+    flex: 0 0 auto;
+  }
+
+  .pot__roll--mini .weather__name {
+    display: none;
+  }
+
+  .pot__weather .weather {
+    display: flex;
+    width: 100%;
+    margin-top: 0;
+    flex-wrap: nowrap;
+    gap: 6px;
+    padding: 4px 8px 4px 6px;
+    font-size: 0.74rem;
+  }
+
+  .pot__weather .weather__name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .pot__roll--open .weather__name {
+    overflow: visible;
+  }
+
+  .pot__weather .weather__stat {
+    width: 14px;
+    height: 14px;
+  }
+}
+
+/* ——— The day ——— */
+
+/*
+   The day, and the one thing you can do about it, on one line.
+*/
+.tour__band {
+  display: flex;
+  align-items: stretch;
+  /* Enough air that the button reads as its own thing rather than as an
+     eighth step of the day. */
+  gap: 20px;
+}
+
+.tour__strip {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: grid;
+  grid-auto-flow: column;
+  /* Tighter than it was: seven steps are a reference, not a headline, and
+     the room they gave back is what the button is standing in. */
+  grid-auto-columns: minmax(84px, 1fr);
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-radius: 10px;
+  border: 1px solid rgb(148 163 184 / 16%);
+  background: #0a1220;
+  /* Never a scrollbar: `stripWindow` drops steps until the rest fit, so
+     anything overflowing here would be a bug rather than a feature. */
+  overflow: hidden;
+}
+
+.tour__step {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 8px 11px;
+  background: #0a1220;
+  border: 0;
+  border-right: 1px solid rgb(148 163 184 / 12%);
+}
+
+.tour__step:last-child {
+  border-right: 0;
+}
+
+.tour__stepname {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.74rem;
+  color: var(--text-faint);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tour__steptime,
+.tour__steptask {
+  font-size: 0.72rem;
+  color: var(--text-faint);
+}
+
+/*
+   Done, and saying so.
+
+   It used to be the same tile at 55% opacity, which reads as "unimportant"
+   rather than as "finished" — the two look identical at a glance and only
+   one of them is true. A tick and a green edge say it outright, and the tile
+   keeps enough contrast to still be read.
+*/
+/* Done is said by the tick, not by tinting the whole tile teal. */
+.tour__step--done {
+  background: #0a1220;
+}
+
+.tour__step--done .tour__stepname {
+  color: var(--text-dim);
+}
+
+.tour__tick {
+  width: 12px;
+  height: 12px;
+  flex: none;
+  fill: none;
+  stroke: rgb(14 212 168 / 70%);
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.tour__step--running {
+  position: relative;
+  padding-bottom: 12px;
+  background: #0e2740;
+}
+
+.tour__step--running .tour__stepname {
+  color: var(--white);
+}
+
+.tour__step--running .tour__steptime {
+  color: #7ee7fb;
+}
+
+/*
+   The active step's own window, running out along the bottom of its tile.
+
+   The same figure as the countdown beside it, in the shape people already
+   read progress in — and only ever on the step that is running, because a
+   bar under a step that has not started is a promise nobody made.
+*/
+.tour__stepbar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  border-radius: 0;
+  background: rgba(148, 163, 184, 0.22);
+  overflow: hidden;
+}
+
+.tour__stepbar i {
+  display: block;
+  height: 100%;
+  background: var(--cyan);
+  transition: width 900ms linear;
+}
+
+.tour__step--waiting {
+  opacity: 0.72;
+}
+
+/* ——— The gates ——— */
+
+/*
+   Two slabs, a seam of light, and the roster waiting in front of them.
+
+   The whole thing is driven by one custom property: `--p`, zero a day out
+   and one when the doors open. It moves the slabs apart, widens the seam and
+   brightens everything the light touches, so the countdown is not just
+   printed on the picture — it *is* the picture.
+*/
+.gates {
+  --p: 0;
+  /* A hand's width at most: any more and a shut gate reads as a broken one. */
+  --gap: calc(var(--p) * 7px);
+  /*
+     Where the ground is.
+
+     The seam stops here, the fighters stand on it and the floor covers
+     everything below — so the light between the doors does not run past
+     their feet and out of the bottom of the screen.
+  */
+  --floor: 14%;
+  /*
+     Behind everything, to every edge.
+
+     The same layer `.shell__bg` uses for the game's own backdrop: fixed, so
+     it does not scroll with the list of buttons in front of it, and behind
+     the content rather than around it. The top is inset by the bar and, on a
+     desktop, the left by the rail — otherwise the seam is centred on the
+     window while the countdown in front of it is centred on the content, and
+     the two would sit a hundred pixels apart.
+  */
+  position: fixed;
+  inset: var(--topbar-h) 0 0 0;
+  z-index: -1;
+  overflow: hidden;
+  background: #04070f;
+}
+
+@media (min-width: 1024px) {
+  .gates {
+    left: var(--rail-w);
+  }
+}
+
+.gates__door {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  /* Exactly half. See the note above `--gap`: anything wider and the two
+     slabs overlap, which puts the join off-centre from the seam on top. */
+  width: 50%;
+  background:
+    /* The seams between the plates. */
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.035) 0 1px, transparent 1px 34px),
+    /* The slabs darken all the way down to the floor and no further, so the
+       shadow at the foot of the doors begins exactly where the ground does
+       rather than somewhere above it. */
+    linear-gradient(180deg, #1f2c4c, #0a1020 calc(100% - var(--floor)));
+  border-top: 3px solid rgba(148, 163, 184, 0.25);
+  transition: transform 900ms ease;
+}
+
+/* The inset panel, so a door reads as built rather than as a fill. */
+.gates__door::after {
+  content: '';
+  position: absolute;
+  top: 12%;
+  bottom: 12%;
+  width: 56%;
+  left: 22%;
+  border: 2px solid rgba(148, 163, 184, 0.14);
+  border-radius: 6px;
+}
+
+.gates__door--l {
+  left: 0;
+  box-shadow: inset -34px 0 60px rgba(0, 0, 0, 0.75);
+  transform: translateX(calc(var(--gap) * -1));
+}
+
+.gates__door--r {
+  right: 0;
+  box-shadow: inset 34px 0 60px rgba(0, 0, 0, 0.75);
+  transform: translateX(var(--gap));
+}
+
+/* What is behind them, getting out. */
+.gates__seam {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: var(--floor);
+  z-index: 2;
+  width: calc(8px + var(--gap));
+  transform: translateX(-50%);
+  background: linear-gradient(
+    180deg,
+    transparent,
+    var(--cyan) 16%,
+    #fff 50%,
+    var(--cyan) 84%,
+    transparent
+  );
+  box-shadow:
+    0 0 30px 6px rgb(0 186 255 / calc(40% + var(--p) * 35%)),
+    0 0 90px 24px rgb(0 186 255 / calc(16% + var(--p) * 22%));
+  transition:
+    width 900ms ease,
+    box-shadow 900ms ease;
+}
+
+/* The light on the floor in front of the seam. */
+.gates__spill {
+  position: absolute;
+  left: 50%;
+  /*
+     Runs to the bottom of the screen and is hidden by the floor, rather
+     than ending at the floor itself. Its own box edge cut the glow off in a
+     straight horizontal line across the widest, brightest part of it — the
+     faint step you could see over on the left.
+  */
+  bottom: 0;
+  z-index: 3;
+  width: 70%;
+  height: calc(40% + var(--floor));
+  transform: translateX(-50%);
+  background: radial-gradient(
+    ellipse at 50% 100%,
+    rgb(0 186 255 / calc(18% + var(--p) * 22%)),
+    transparent 68%
+  );
+  pointer-events: none;
+}
+
+/*
+   The ground.
+
+   Drawn over the doors and the seam so the gap between the slabs ends at
+   the floor rather than running to the bottom of the window — a door has a
+   threshold, and without one the light read as a crack in the screen.
+*/
+.gates__floor {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: var(--floor);
+  z-index: 4;
+  overflow: hidden;
+  background: linear-gradient(180deg, #0b1322 0%, #060c17 70%);
+  border-top: 0;
+  box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.55);
+}
+
+/*
+   Ground, going away from you.
+
+   Lines laid flat with a perspective rotation: they converge toward the
+   doors, which is the whole trick — without it the floor is a dark stripe
+   and the fighters are stickers on a wall. Masked out as it recedes so the
+   grid fades into the threshold rather than ending in a hard edge.
+*/
+/* The lit edge of the threshold, fading out towards the walls. */
+.gates__floor {
+  border-image: linear-gradient(
+      90deg,
+      transparent,
+      rgb(0 186 255 / calc(22% + var(--p) * 26%)) 25%,
+      rgb(126 231 251 / calc(30% + var(--p) * 30%)) 50%,
+      rgb(0 186 255 / calc(22% + var(--p) * 26%)) 75%,
+      transparent
+    )
+    1;
+  border-top-width: 1px;
+  border-top-style: solid;
+}
+
+.gates__floor::before {
+  content: '';
+  position: absolute;
+  left: -30%;
+  right: -30%;
+  top: 0;
+  bottom: -40%;
+  background:
+    repeating-linear-gradient(
+      90deg,
+      rgb(0 186 255 / 10%) 0 1px,
+      transparent 1px 90px
+    ),
+    repeating-linear-gradient(
+      0deg,
+      rgb(0 186 255 / 7%) 0 1px,
+      transparent 1px 34px
+    );
+  transform: perspective(240px) rotateX(62deg);
+  transform-origin: 50% 0%;
+  mask-image: linear-gradient(180deg, transparent, #000 35%, #000);
+}
+
+/*
+   The light out of the gap, lying on the floor.
+
+   A wedge from the seam widening toward the viewer — the one cue that says
+   the doors are in front of a room with a light in it, and that the ground
+   is catching what escapes.
+*/
+.gates__floor::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: 70%;
+  height: 100%;
+  transform: translateX(-50%);
+  background: conic-gradient(
+    from 180deg at 50% 0%,
+    transparent 166deg,
+    rgb(0 186 255 / calc(10% + var(--p) * 14%)) 175deg,
+    rgb(126 231 251 / calc(18% + var(--p) * 22%)) 180deg,
+    rgb(0 186 255 / calc(10% + var(--p) * 14%)) 185deg,
+    transparent 194deg
+  );
+  mask-image: linear-gradient(180deg, #000, transparent 85%);
+}
+
+.gates__crowd {
+  position: absolute;
+  left: 0;
+  right: 0;
+  z-index: 5;
+  /*
+     Standing on a floor, not on the bottom edge of the window.
+
+     Flush with the edge their feet were the last row of pixels on the
+     screen, which reads as a crop rather than as a room. Lifted to about
+     where the door panels end, so there is ground under them and somewhere
+     for the light to pool.
+  */
+  /*
+     A touch below the line, not on it.
+
+     The artwork carries empty space under the feet — it is a full-body
+     render, not a cut-out — so a band that ends exactly on the floor leaves
+     them hovering above it. The crowd sits above the floor in the stack, so
+     overlapping it slightly is what puts them *on* the ground.
+  */
+  bottom: calc(var(--floor) - 2.5%);
+  height: 30%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 4;
+}
+
+/*
+   The light gathering around them.
+
+   A pseudo-element rather than another node, and it animates opacity and a
+   scale only — the same compositor-only cost as the seam. It sits behind
+   the figures, so what pulses is the air around them rather than the
+   silhouettes themselves.
+*/
+.gates__crowd::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: -6%;
+  width: 78%;
+  height: 150%;
+  transform: translateX(-50%);
+  background: radial-gradient(
+    ellipse at 50% 85%,
+    rgb(0 186 255 / calc(16% + var(--p) * 18%)),
+    transparent 62%
+  );
+  pointer-events: none;
+}
+
+/*
+   Contact shadow.
+
+   A single soft ellipse along the line their feet stand on — the cheapest
+   thing in graphics that turns a cut-out into an object with weight.
+*/
+.gates__crowd::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: -10px;
+  width: 64%;
+  height: 34px;
+  transform: translateX(-50%);
+  background: radial-gradient(ellipse at 50% 50%, rgba(0, 0, 0, 0.6), transparent 70%);
+  pointer-events: none;
+}
+
+/*
+   Backlit, not lit: the only light in the room is coming through the seam
+   behind them, so a fighter is a shape rather than a portrait. Which is the
+   point — you know who is waiting without being shown their stats again.
+*/
+.gates__figure {
+  --scale: 1;
+  position: relative;
+  transform-origin: 50% 100%;
+  height: 100%;
+  width: auto;
+  object-fit: contain;
+  margin: 0 -1.6%;
+  filter: brightness(0) saturate(0) invert(4%) sepia(10%) saturate(1500%) hue-rotate(185deg);
+  /*
+     Solid.
+
+     At 0.94 nothing showed through against a door panel, but the figure in
+     the middle stands right in front of the seam — and there the missing 6%
+     let the gap between the doors run straight down through them. A person
+     in front of a light blocks it.
+  */
+  opacity: 1;
+}
+
+/*
+   Arriving, rather than appearing.
+
+   The roster is a chain read, so however early it starts there is a moment
+   with doors and no fighters. Half a second of fade turns the switch into
+   something that reads as the crowd walking up.
+*/
+.gates__figure {
+  animation: gatesarrive 420ms ease both;
+}
+
+@keyframes gatesarrive {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(var(--scale));
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(var(--scale));
+  }
+}
+
+/*
+   The middle figure is the tall one, and in front of the rest.
+
+   It is the one standing in the light between the doors, so it is the one
+   the picture is about. `z-index` because the two on its right are later
+   siblings and would otherwise be painted over it.
+*/
+.gates__figure:nth-child(3) {
+  --scale: 1.5;
+  z-index: 1;
+}
+
+/*
+   Staggered from the middle out.
+
+   Left to right reads as a queue shuffling along; from the centre out reads
+   as a crowd gathering at the doors, which is the picture. The middle
+   figure is the one standing in the seam, so it is also the one the eye is
+   already on.
+*/
+.gates__figure:nth-child(2),
+.gates__figure:nth-child(4) {
+  animation-delay: 90ms;
+}
+
+.gates__figure:nth-child(1),
+.gates__figure:nth-child(5) {
+  animation-delay: 180ms;
+}
+
+:root[data-fx='low'] .gates__figure {
+  animation: none;
+  transform: scale(var(--scale));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gates__figure {
+    animation: none;
+    transform: scale(var(--scale));
+  }
+}
+
+/* The two nearest the seam catch its edge. */
+.gates__figure:nth-child(3),
+.gates__figure:nth-child(4),
+.gates__figure:nth-child(5) {
+  filter: brightness(0) saturate(0) invert(4%) sepia(10%) saturate(1500%) hue-rotate(185deg)
+    drop-shadow(0 0 10px rgb(0 186 255 / calc(28% + var(--p) * 30%)));
+}
+
+/*
+   The clock is a board hung over the floor.
+
+   A panel floating in the middle of a doorway is a dialog; a board slung
+   from two cables is a fixture of the building, which is where a crowd
+   expects to read a time. It also gets the countdown up out of the picture
+   — the figures keep the floor and the doors keep the middle.
+*/
+.gates__rig {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  /*
+     Sized against the picture, not against the text.
+
+     The board looked right at 620px on a 580px-tall mock and small on the
+     real screen, which is the whole window high — the same sign has far
+     more room around it here, so it has to be bigger to read as a fixture
+     of the building rather than a card floating in a doorway.
+  */
+  /*
+     A gutter at every width, not only on a phone.
+
+     `.tour__panel--wait` pulls out past the page gutter so the doors reach
+     both edges of the screen. Anything inside it that is merely `width:
+     100%` goes with them — and between 720px and 840px the board did
+     exactly that, touching both edges with its corners cut off, which is a
+     band across the screen rather than a sign hung in a room.
+  */
+  width: min(840px, 100% - 72px);
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* What holds it up. Two lines, fading as they go, and nothing else. */
+.gates__cables {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0 14%;
+}
+
+.gates__cables i {
+  display: block;
+  width: 2px;
+  height: 60px;
+  background: linear-gradient(180deg, rgba(148, 163, 184, 0.55), rgba(148, 163, 184, 0.12));
+}
+
+.gates__board {
+  position: relative;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 24px 34px 26px;
+  text-align: center;
+  border-radius: 10px;
+  background: linear-gradient(180deg, #0a1220, #060b15);
+  border: 2px solid rgba(148, 163, 184, 0.35);
+  box-shadow:
+    0 20px 50px rgba(0, 0, 0, 0.65),
+    inset 0 0 40px rgba(0, 0, 0, 0.6);
+}
+
+/*
+   The lamps.
+
+   One repeating radial gradient laid over the whole face, so the digits
+   are made of dots rather than drawn with them — no per-character work,
+   and it costs one paint. It is what separates a board from a box with
+   orange text in it.
+*/
+.gates__board::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 8px;
+  pointer-events: none;
+  opacity: 0.7;
+  background: radial-gradient(circle, rgba(0, 0, 0, 0.55) 1px, transparent 1.4px);
+  background-size: 4px 4px;
+}
+
+.gates__label {
+  font-size: 0.66rem;
+  letter-spacing: 0.42em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+
+.gates__clock {
+  font-size: clamp(2.2rem, 7.4vw, 5.8rem);
+  line-height: 1.02;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #ffdb7d;
+  text-shadow:
+    0 0 10px rgba(246, 168, 0, 0.9),
+    0 0 38px rgba(246, 168, 0, 0.55);
+}
+
+/*
+   Two equal halves, so the gap between them lands on the seam.
+
+   Sized by the grid rather than by their labels: "Previous Tournament" is
+   half again as wide as "Hall of Fame", and a centred pair of unequal
+   buttons puts the space between them off to one side of the doors — which
+   is the one line on this screen the eye checks against, because the light
+   is coming through it.
+*/
+.gates__links {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  width: min(520px, 100% - 72px);
+  margin: 18px auto 0;
+}
+
+/*
+   A door that is not open yet still has to look like part of the game.
+
+   The shared disabled style washes a button out to pale grey, which on this
+   screen reads as a bug rather than as "not yet" — so these keep the dark
+   ghost shape and simply sit back.
+*/
+.gates__links .btn[disabled] {
+  /* Lit from the same bulb as the board above them. */
+  background: rgba(6, 12, 22, 0.9);
+  border-color: rgba(246, 168, 0, 0.35);
+  color: #ffdb7d;
+  opacity: 1;
+  filter: none;
+}
+
+/*
+   A phone keeps the gate and loses the room.
+
+   Taller than 16/9 so the doors still read as doors at 375px, and the crowd
+   thins to the five that fit — eight silhouettes at that width overlap into
+   one dark mass.
+*/
+@media (max-width: 720px) {
+  /*
+     No height here.
+
+     This rule is from when the gates were a block in the page and needed a
+     size of their own. They are a fixed backdrop now — `inset` already puts
+     them against all four edges — and the 560px cap it left behind stopped
+     the doors two thirds of the way down a phone with the game's own
+     wallpaper showing under them.
+  */
+
+  .tour__panel--wait {
+    margin-inline: -12px;
+  }
+
+  /*
+     All five, smaller and tucked closer.
+
+     Dropping to three lost the thing that makes the picture work — a line
+     of people at a door — so instead the band is shallower, which shrinks
+     every figure, and they overlap more so five fit across 375px without
+     merging into one dark mass.
+  */
+  .gates__crowd {
+    height: 22%;
+  }
+
+  .gates__figure {
+    margin: 0 -3.4%;
+  }
+
+  /* The buttons stretch on a phone, so they need the gutter the board
+     already has. */
+  .gates__links {
+    width: auto;
+    margin-inline: 16px;
+  }
+
+  /* The cables shorten and the board loses its side padding; the crowd
+     below it has the floor either way. */
+  .gates__cables i {
+    height: 26px;
+  }
+
+  .gates__board {
+    padding: 12px 16px 14px;
+  }
+
+  .gates__label {
+    letter-spacing: 0.26em;
+    font-size: 0.6rem;
+  }
+
+  /* Stacked, and still the same width as each other. */
+  .gates__links {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/*
+   No box around the gates.
+
+   Every other panel on this screen is a card because it is a block of
+   figures that needs an edge. This one is a place — a rectangle drawn around
+   it would be a frame around a doorway.
+*/
+.tour__panel--wait {
+  background: none;
+  border: 0;
+  padding: 4px 0 34px;
+  /* Out to the edges of the column: the page's gutter is for reading, and
+     this is a picture. */
+  margin-inline: -16px;
+}
+
+/*
+   The light behind the doors, breathing.
+
+   Two properties on two elements — opacity and a vertical scale — which the
+   compositor handles without touching layout or paint. No particles, no
+   shimmer sweep: the cost of this has to be nothing, because it runs for as
+   long as a player leaves the screen open.
+
+   The periods are 7s and 11s so they drift in and out of phase instead of
+   pulsing together, which is what makes a two-element loop stop looking
+   like a two-element loop.
+*/
+@keyframes gateseam {
+  0%,
+  100% {
+    opacity: 0.6;
+    transform: translateX(-50%) scaleX(0.9);
+  }
+  50% {
+    opacity: 1;
+    transform: translateX(-50%) scaleX(1.45);
+  }
+}
+
+@keyframes gatespill {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: translateX(-50%) scaleY(0.94);
+  }
+  50% {
+    opacity: 1;
+    transform: translateX(-50%) scaleY(1.1);
+  }
+}
+
+@keyframes gatehalo {
+  0%,
+  100% {
+    opacity: 0.5;
+    transform: translateX(-50%) scale(0.96);
+  }
+  50% {
+    opacity: 1;
+    transform: translateX(-50%) scale(1.06);
+  }
+}
+
+.gates__seam {
+  animation: gateseam 5s ease-in-out infinite;
+}
+
+.gates__spill {
+  transform-origin: 50% 100%;
+  animation: gatespill 8s ease-in-out infinite;
+}
+
+.gates__crowd::before {
+  transform-origin: 50% 90%;
+  animation: gatehalo 6.5s ease-in-out infinite;
+}
+
+/* Phones and anything asking for calm keep the still picture. */
+:root[data-fx='low'] .gates__seam,
+:root[data-fx='low'] .gates__spill,
+:root[data-fx='low'] .gates__crowd::before {
+  animation: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gates__door,
+  .gates__seam {
+    transition: none;
+  }
+
+  .gates__seam,
+  .gates__spill,
+  .gates__crowd::before {
+    animation: none;
+  }
+}
+
+/* ——— Entry ——— */
+
+.tour__row {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  /* Every place the same size, filled or not — so the row does not change
+     shape as a team is picked. */
+  grid-auto-rows: 1fr;
+  gap: 8px;
+  margin: 12px 0;
+}
+
+/*
+   A picked fighter, and the two things a player can do with them.
+
+   The card face is one button and it opens the fighter's panel, so there
+   was nowhere for a removal to go that was not a badge small enough to
+   miss. Resting on the place instead dims the art and offers both: the
+   read on the top half, taking them back out on the bottom. Nothing hides
+   behind a twenty pixel target, and the art is untouched until a player
+   reaches for it.
+*/
+.tour__slot {
+  position: relative;
+  min-width: 0;
+}
+
+/* The lift the card does for itself elsewhere. The scrim takes its hover,
+   so the row would otherwise go flat the moment this screen got it. */
+.tour__slot:hover .combatcard {
+  transform: translateY(-3px);
+  border-color: var(--purple);
+}
+
+:root[data-fx='low'] .tour__slot:hover .combatcard {
+  transform: none;
+}
+
+.tour__slotacts {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: grid;
+  grid-template-rows: 1fr 1fr;
+  border-radius: var(--radius-xs);
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--dur-fast) var(--ease);
+}
+
+/*
+   Focus counts as a reach.
+
+   The two stay in the tab order at zero opacity. Hiding them with
+   'visibility' would take them out of it, and then the only way to drop a
+   fighter would be a mouse.
+*/
+.tour__slot:hover .tour__slotacts,
+.tour__slot:focus-within .tour__slotacts,
+.tour__slot--open .tour__slotacts {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.tour__slotacts button {
+  border: 0;
+  background: rgb(6 13 26 / 88%);
+  color: #cdd9ea;
+  font: inherit;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition:
+    background var(--dur-fast) var(--ease),
+    color var(--dur-fast) var(--ease);
+}
+
+.tour__slotacts button + button {
+  border-top: 1px solid rgb(148 163 184 / 22%);
+}
+
+.tour__slotsee:hover,
+.tour__slotsee:focus-visible {
+  background: rgb(0 186 255 / 22%);
+  color: var(--white);
+}
+
+.tour__slotout:hover,
+.tour__slotout:focus-visible {
+  background: rgb(224 52 79 / 32%);
+  color: var(--white);
+}
+
+/*
+   A phone has no rest, so the first tap is the reach.
+
+   The catcher lies over the card and opens the pair. It is drawn only
+   while they are shut, so it is never what a finger hits when it is aiming
+   at one of them.
+*/
+.tour__slottap {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-xs);
+  background: transparent;
+  cursor: pointer;
+}
+
+/*
+   A phone shows the whole team at once.
+
+   Two columns of full combat cards ran the line-up past six hundred pixels,
+   so picking the fifth meant scrolling away from the first four. Three
+   across on a shorter crop keeps all six in one glance — the art still says
+   who it is, which is all the row is for; the stats are a tap away in the
+   card itself.
+*/
+@media (max-width: 560px) {
+  .tour__row {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+
+  .tour__row .combatcard__art {
+    aspect-ratio: 3 / 4;
+    min-height: 0;
+  }
+
+  /*
+     The phone crops the artwork to 3/4 instead of 5/8, so an empty place
+     has to follow it down or the row grows on the first pick here too.
+     124% of 4/3 is 1.653.
+  */
+  /* Scoped through the row so it outranks the base rule, which sits later
+     in this file and would otherwise win on order alone. */
+  .tour__row .tour__empty,
+  .tour__row .tour__nftempty {
+    aspect-ratio: 125 / 207;
+  }
+
+  .tour__empty {
+    font-size: 0.78rem;
+  }
+
+  /* The pair shrinks with the card it sits on. */
+  .tour__nftcard--empty {
+    font-size: 0.5rem;
+    letter-spacing: 0.02em;
+  }
+
+  .tour__nftdrop {
+    width: 15px;
+    height: 15px;
+    font-size: 11px;
+  }
+}
+
+/*
+   The sixth fighter, and the two cards it is made of.
+
+   The card is the game's own combat card with the unknown portrait — the
+   same face the NFT fighter wears in a dungeon, an arena and a result
+   screen — so the line-up is six fighters rather than five and a shelf. The
+   crew and the weapon sit in its bottom corner: where they came from, and
+   where they come off.
+*/
+.tour__nft {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  /*
+     The pair is sized and placed against the card, not the window.
+
+     A viewport breakpoint cannot answer this: six cards across a 1400px
+     page are 220 wide and six across a 700px one are 105, and the pair has
+     to fit both. Two fixed thumbs that looked right on a desktop hung off
+     the corner of a card half that size. The card is the thing that knows.
+  */
+  container-type: inline-size;
+}
+
+/*
+   Where the sixth fighter will stand, before it exists.
+
+   The same dashed slot as an unfilled fighter place, because that is what
+   it is — and the two cards sit in the middle of it rather than in the
+   corner, since there is no artwork yet for them to be a corner of.
+*/
+.tour__nftempty {
+  flex: 1;
+  aspect-ratio: 125 / 248;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+  border-radius: 12px;
+  border: 1px dashed rgba(148, 163, 184, 0.35);
+  background: rgba(148, 163, 184, 0.05);
+}
+
+.tour__nftlabel {
+  position: absolute;
+  top: 10px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+/* Centred while the slot is empty; in the corner once there is art. */
+.tour__nft:not(.tour__nft--ready) .tour__nftcards {
+  position: absolute;
+  inset: 0;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.tour__nftcards {
+  position: absolute;
+  right: 6px;
+  bottom: 6px;
+  display: flex;
+  gap: 4px;
+  z-index: 3;
+}
+
+/*
+   On a card too narrow for the pair and the name to share the bottom line,
+   the pair steps up and centres instead of hanging off the corner.
+*/
+@container (max-width: 190px) {
+  .tour__nft--ready .tour__nftcards {
+    right: 50%;
+    bottom: 58px;
+    transform: translateX(50%);
+    gap: 4px;
+  }
+}
+
+.tour__nftcard {
+  position: relative;
+  /* A third of the card each, and never bigger than they were. */
+  width: clamp(22px, 30cqw, 38px);
+  height: calc(clamp(22px, 30cqw, 38px) * 1.37);
+  border-radius: 5px;
+  overflow: visible;
+}
+
+.tour__nftcardart {
+  display: block;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 1px solid rgba(0, 186, 255, 0.55);
+  border-radius: 5px;
+  overflow: hidden;
+  background: #060d1a;
+  cursor: pointer;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.6);
+}
+
+.tour__nftcardart img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Small, and out of the artwork's way until it is wanted. */
+.tour__nftdrop {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 17px;
+  height: 17px;
+  padding: 0;
+  line-height: 1;
+  font-size: 13px;
+  border-radius: 50%;
+  color: #fff;
+  background: rgba(255, 52, 52, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 160ms ease;
+}
+
+.tour__nft:hover .tour__nftdrop,
+.tour__nftdrop:focus-visible {
+  opacity: 1;
+}
+
+/* A phone has no hover, so the remove is simply always there. */
+@media (hover: none) {
+  .tour__nftdrop {
+    opacity: 1;
+  }
+}
+
+.tour__nftcard--empty {
+  display: grid;
+  place-items: center;
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  background: rgba(6, 13, 26, 0.82);
+  border: 1px dashed rgba(148, 163, 184, 0.5);
+  cursor: pointer;
+}
+
+.tour__nftcard--empty:hover {
+  color: #7ee7fb;
+  border-color: rgba(0, 186, 255, 0.6);
+}
+
+/*
+   An empty place, exactly the size of a full one.
+
+   Not 5/8, which is the obvious answer and the wrong one. A combat card's
+   artwork is 5/8 of *its own* width but is drawn at 124% of the card — the
+   overhang is what covers the wedges the card's lean leaves — so the card
+   itself stands `width x 1.24 x 1.6` tall. Built to 5/8 the empty slot was
+   a fifth short, and the whole row grew the moment a fighter was picked.
+
+   Width is pinned too: with only a height to go on, `aspect-ratio` sized
+   these buttons from the row instead of the column and they spilled over
+   their neighbours.
+*/
+.tour__empty {
+  width: 100%;
+  aspect-ratio: 125 / 248;
+  border-radius: 12px;
+  border: 1px dashed rgba(148, 163, 184, 0.35);
+  background: rgba(148, 163, 184, 0.05);
+  color: var(--text-faint);
+  cursor: pointer;
+}
+
+.tour__empty:hover {
+  border-color: rgba(34, 211, 238, 0.5);
+  color: #7ee7fb;
+}
+
+.tour__actions {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 0;
+  margin: 0;
+}
+
+.tour__actions .btn {
+  white-space: nowrap;
+}
+
+.tour__score {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  line-height: 1.15;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  white-space: nowrap;
+}
+
+.tour__score b {
+  font-size: 1.3rem;
+  color: #7ee7fb;
+}
+
+.tour__cost {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 8px;
+  opacity: 0.85;
+}
+
+.tour__picker {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(148, 163, 184, 0.14);
+}
+
+/* ——— Your entry ——— */
+
+.tour__minehead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+/* A portrait, not an icon: this is the one picture of the opponent. */
+.tour__avatar {
+  width: 60px;
+  height: 60px;
+  border-radius: 13px;
+  flex: none;
+}
+
+.tour__minestats {
+  display: flex;
+  gap: 18px;
+  margin: 0 0 0 auto;
+}
+
+.tour__minestats div {
+  text-align: right;
+}
+
+.tour__minestats dt {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-faint);
+}
+
+.tour__minestats dd {
+  margin: 2px 0 0;
+  font-size: 1.05rem;
+}
+
+.tour__pass {
+  margin: 12px 0 0;
+  color: #86efac;
+}
+
+/* ——— Pairings ——— */
+
+.tour__pairs {
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.tour__pair {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: 10px;
+  background: rgba(148, 163, 184, 0.07);
+}
+
+.tour__pairside {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Pulled in against the "vs" so the two names read as one line rather than
+   sitting at opposite ends of the row with the word stranded between. */
+.tour__pair > .tour__pairside:first-child {
+  text-align: right;
+}
+
+.tour__vs {
+  color: var(--text-faint);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+}
+
+.tour__pairres {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.tour__pairres--won {
+  color: #86efac;
+}
+
+/* ——— The field ——— */
+
+.tour__fieldhead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+/* A label over the list rather than a second page title. */
+.tour__fieldhead .tour__h2 {
+  font-size: 1rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgb(255 219 125 / 80%);
+}
+
+.tour__list {
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/*
+ * An entrant is a card, not a line of a table.
+ *
+ * A flat tint with a divider reads as a spreadsheet however big the
+ * portrait on it is. Each one gets its own edge and its own light —
+ * brighter on the left, falling away to the right — so a field reads as a
+ * stack of opponents you could pick up.
+ */
+.tour__entry {
+  border-radius: 12px;
+  overflow: hidden;
+  background: linear-gradient(90deg, #16233a, #0a1220 62%);
+  border: 1px solid rgb(148 163 184 / 16%);
+  transition: border-color 0.15s ease;
+}
+
+.tour__entry:hover {
+  border-color: rgb(0 186 255 / 35%);
+}
+
+/*
+   The whole row opens the line-up.
+
+   A button rather than a click handler on the list item: it is a control,
+   it wants a keyboard and a focus ring, and an entry that expands ought to
+   say so before it is pressed.
+*/
+.tour__entryrow {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  /* Room to be a row of the game rather than a line of a spreadsheet — and
+     a target a thumb can hit, since the whole row is the control. */
+  padding: 12px 14px;
+  min-height: 84px;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.tour__entryrow:hover {
+  background: rgba(148, 163, 184, 0.08);
+}
+
+.tour__chev {
+  width: 14px;
+  height: 14px;
+  flex: none;
+  fill: none;
+  stroke: var(--text-faint);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform 180ms ease;
+}
+
+.tour__chev--open {
+  transform: rotate(180deg);
+}
+
+/* A ticket, which is what a free pass is. */
+.tour__ticket {
+  width: 22px;
+  height: 15px;
+  flex: none;
+  fill: rgba(250, 204, 21, 0.16);
+  stroke: var(--gold);
+  stroke-width: 1.4;
+  stroke-linejoin: round;
+}
+
+.tour__ticketrip {
+  stroke-dasharray: 2 2;
+}
+
+/*
+   An entry, opened.
+
+   A roster reveal rather than a table row: the strip is recessed into the
+   list like a drawer pulled out of it, lit along the top edge where it
+   meets the row that opened it, and the six cards inside are the same ones
+   the dungeon and the arena field — hover and all. The point of opening a
+   rival's entry is to size them up, and a line of small round portraits
+   was a contact list.
+*/
+.tour__lineup {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 12px 12px 14px 34px;
+  background:
+    repeating-linear-gradient(
+      115deg,
+      rgba(255, 255, 255, 0.022) 0 2px,
+      transparent 2px 10px
+    ),
+    linear-gradient(180deg, rgba(0, 186, 255, 0.09), rgba(3, 8, 15, 0.55) 60%);
+  border-top: 1px solid rgba(0, 186, 255, 0.45);
+  box-shadow: inset 0 12px 24px rgba(0, 0, 0, 0.45);
+}
+
+.tour__lineup--wait {
+  align-items: center;
+  gap: 8px;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+/* Small enough that six fit under a row, large enough to read. */
+.tour__lineup .combatcard {
+  width: 96px;
+  flex: none;
+}
+
+.tour__lcard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  width: 96px;
+  text-align: center;
+}
+
+/*
+   The crew and the weapon, as cards rather than as thumbnails: same width
+   as the fighters beside them, and the gold edge says these two are the
+   pair that becomes the sixth.
+*/
+.tour__lcardart {
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  border-radius: 6px;
+  object-fit: cover;
+  border: 1px solid rgba(246, 168, 0, 0.5);
+  background: #0b1220;
+  box-shadow: 0 0 14px rgba(246, 168, 0, 0.18);
+}
+
+.tour__lcardart--none {
+  display: block;
+  border-style: dashed;
+  border-color: rgba(148, 163, 184, 0.4);
+  box-shadow: none;
+}
+
+.tour__lname {
+  font-family: var(--font-display);
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.tour__lmeta {
+  font-size: 0.66rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+
+@media (max-width: 560px) {
+  .tour__lineup {
+    padding: 10px 10px 12px;
+    gap: 6px;
+  }
+
+  /* Three across a phone rather than six squeezed into a scroll. */
+  .tour__lineup .combatcard,
+  .tour__lcard {
+    width: calc(33.333% - 4px);
+  }
+}
+
+/* Yours is lit from the left, the way the player's own things are. */
+.tour__entry--me {
+  background: linear-gradient(90deg, #0b3d5c, #0a1220 62%);
+  border: 1px solid rgb(0 186 255 / 45%);
+}
+
+.tour__seed {
+  width: 2.2em;
+  color: var(--text-faint);
+  font-size: 0.95rem;
+}
+
+/*
+   Titles, beside the name.
+
+   Gold, small and struck rather than outlined: on a list row the eye should
+   read "this one has won before" without stopping to count.
+*/
+.tour__crowns {
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+  flex: none;
+  color: var(--gold);
+}
+
+.tour__star {
+  width: 13px;
+  height: 13px;
+  fill: currentColor;
+  filter: drop-shadow(0 0 4px rgba(246, 168, 0, 0.5));
+}
+
+.tour__crowns b {
+  margin-left: 2px;
+  font-size: 0.82rem;
+  color: var(--gold);
+}
+
+/*
+   Past five it stops being a count and starts being a reputation, so the
+   one star left carries the game's own mythical colour — the rarity a
+   player already reads as "there are almost none of these".
+*/
+.tour__crowns--many,
+.tour__crowns--many b {
+  color: var(--r-mythical);
+}
+
+.tour__crowns--many .tour__star {
+  filter: drop-shadow(0 0 5px rgb(255 52 52 / 60%));
+}
+
+@media (max-width: 560px) {
+  .tour__star {
+    width: 11px;
+    height: 11px;
+  }
+}
+
+/* The name and its badges, taking the middle of the row together. */
+.tour__who {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tour__tag {
+  flex: 0 1 auto;
+  font-size: 1.12rem;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tour__wins {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.tour__escore {
+  min-width: 3.5em;
+  text-align: right;
+  font-size: 1.5rem;
+  color: var(--white);
+}
+
+/*
+   The crew, stacked along the row.
+
+   Overlapped rather than spaced: five separate portraits read as five more
+   columns, whereas a stack reads as one thing belonging to the name beside
+   it. The ring is the row's own background, so they cut out of it.
+*/
+.tour__crew {
+  display: flex;
+  flex: none;
+  margin-left: auto;
+  padding-right: 4px;
+}
+
+.tour__crew img {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-left: -9px;
+  border: 2px solid #0d1626;
+  background: #0d1626;
+}
+
+.tour__crew img:first-child {
+  margin-left: 0;
+}
+
+@media (max-width: 720px) {
+  /* Three is enough to tell two crews apart on a phone. */
+  .tour__crew img:nth-child(n + 4) {
+    display: none;
+  }
+
+  .tour__avatar {
+    width: 46px;
+    height: 46px;
+    border-radius: 11px;
+  }
+
+  .tour__entryrow {
+    min-height: 68px;
+    gap: 10px;
+  }
+}
+
+.tour__tailspace {
+  height: 24px;
+}
+
+@media (max-width: 720px) {
+  .tour {
+    padding: 14px 12px 40px;
+    gap: 14px;
+  }
+
+  .tour__title {
+    font-size: 1.4rem;
+  }
+
+  .tour__band {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .tour__actions {
+    justify-content: space-between;
+  }
+
+  .tour__strip {
+    grid-auto-columns: minmax(96px, 1fr);
+  }
+
+  .tour__minestats {
+    width: 100%;
+    margin-left: 0;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .tour__minestats div {
+    text-align: left;
+  }
+
+  .tour__pair {
+    grid-template-columns: 1fr auto 1fr;
+  }
+
+  .tour__pairres {
+    grid-column: 1 / -1;
+  }
+}

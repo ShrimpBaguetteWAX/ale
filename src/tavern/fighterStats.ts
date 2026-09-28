@@ -310,6 +310,23 @@ export function fighterArtFallback(): string {
 }
 
 /**
+ * The same character as an outline, for anywhere it is drawn as a shape.
+ *
+ * Written by scripts/make-silhouettes.mjs: identical pixel dimensions to the
+ * portrait with the colour flattened to black. The gates' filter begins with
+ * `brightness(0)`, so the portrait's colour was being decoded and then
+ * multiplied by nothing — this is the same image on screen for a third of
+ * the bytes.
+ */
+export function fighterSilhouette(fighter: Pick<TavernFighter, 'classname' | 'racename'>): string {
+  return asset(`/assets/silhouettes/${fighter.classname}_${fighter.racename}.webp`)
+}
+
+export function fighterSilhouetteFallback(): string {
+  return asset('/assets/silhouettes/unknown_unknown.webp')
+}
+
+/**
  * The sixth fighter in a run has neither a class nor a race.
  *
  * It is built out of a crew card and a weapon (`battle::getFighterFromNFT`)

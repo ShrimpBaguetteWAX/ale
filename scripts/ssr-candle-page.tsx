@@ -37,10 +37,42 @@ const player = {
   wallet: 'previewer.wam',
   playertag: 'Previewer',
   activestats: { gems: 4_200, credits: 0, action_points: 0 },
-  permstats: [{ first: 'tavern_energy_saved', second: 7_400 }],
+  /* Enough taverns to clear that gate, not enough portals to clear the
+     other — so the page shows a mission this player is in, one they are
+     short of, and both sides of the "coming up" readout. */
+  permstats: [
+    { first: 'tavern_energy_saved', second: 7_400 },
+    { first: 'portals_used', second: 12 },
+  ],
 } as unknown as Player
 
 const claim = { wallet: 'previewer.wam', gems: 0, total_gems: 0, tlm: 92_400, wax: 6_500, expiry_date: iso(5 * 86_400_000) }
+
+/*
+   The panel with its lid up.
+
+   `Mission` keeps its own folded flag and starts shut, which a static
+   render has no way to click — so the expanded half of the screen, the
+   whole of the contributing, was not in this preview at all. Whether it is
+   folded is nothing but a class, so the harness takes it off: the markup is
+   identical to what the component draws once a player opens one.
+*/
+const opened = renderToStaticMarkup(
+  <Mission
+    offer={offer}
+    player={player}
+    mine={900}
+    contributors={37}
+    now={NOW}
+    balance={4_200}
+    gems={''}
+    amount={0}
+    busy={null}
+    canAct
+    onGems={() => {}}
+    onContribute={() => {}}
+  />,
+).replace('class="mach mach--shut"', 'class="mach"')
 
 const body = renderToStaticMarkup(
   <div className="candle">
@@ -53,6 +85,7 @@ const body = renderToStaticMarkup(
           them put up.
         </p>
       </div>
+      <Winnings claim={claim} busy={null} canAct onClaim={() => {}} />
     </header>
     <div className="candle__cols">
       <div>
@@ -70,6 +103,39 @@ const body = renderToStaticMarkup(
           onGems={() => {}}
           onContribute={() => {}}
         />
+        {/*
+          One the player cannot enter.
+
+          A mission whose gate is unmet renders a line the qualified one
+          never shows, and it is the state a live screen is least likely to
+          be in when somebody looks — `permstats` carries no `portals_used`
+          row for this player, so the gate reads 40 short of 40.
+        */}
+        <Mission
+          offer={{
+            ...offer,
+            offer_id: 'ddd',
+            requirements: 'Portals used',
+            requirement_type: 'portals_used',
+            requirement_amount: 40,
+            total_gems: 6_200,
+            reward_type: 'shards',
+            reward_amount: 880,
+          }}
+          player={player}
+          mine={0}
+          contributors={12}
+          now={NOW}
+          balance={4_200}
+          gems={''}
+          amount={0}
+          busy={null}
+          canAct
+          onGems={() => {}}
+          onContribute={() => {}}
+        />
+        {/* Swapped for the unfolded panel below; see `opened`. */}
+        <div id="opened-slot" />
         <UpNext
           offers={[
             {
@@ -88,22 +154,21 @@ const body = renderToStaticMarkup(
               offer_id: 'ccc',
               offer_start: iso(30 * 3_600_000),
               offer_end: iso(45 * 3_600_000),
-              requirements: 'Levelups on Fighters',
-              requirement_type: 'fighter_levelups',
-              requirement_amount: 300,
+              /* One the player is already through, for the cleared mark. */
+              requirements: 'Energy saved in Taverns',
+              requirement_type: 'tavern_energy_saved',
+              requirement_amount: 5_000,
               reward_type: 'shards',
               reward_amount: 87_452,
             },
           ]}
+          player={player}
           now={NOW}
         />
       </div>
-      <aside className="candle__side">
-        <Winnings claim={claim} busy={null} canAct onClaim={() => {}} />
-      </aside>
     </div>
   </div>,
-)
+).replace('<div id="opened-slot"></div>', opened)
 
 const html = `<!doctype html>
 <meta charset="utf-8">

@@ -45,17 +45,28 @@
 .candle__head {
   display: flex;
   align-items: flex-start;
+  justify-content: space-between;
   gap: var(--sp-5);
   flex-wrap: wrap;
 }
 
+/*
+ * The title belongs to this screen's palette, not to the app's default.
+ *
+ * The app's default heading colour is a neon yellow. It sat fine on the
+ * old panel, where a gold sign and a bright band of gems were shouting
+ * anyway — but with those two calmed down it became the loudest thing left,
+ * and the brightest colour on a screen should be the figure the screen is
+ * about rather than the word at the top of it. This pale gold is the one
+ * already on the sign, the tray and the claim strip.
+ */
 .candle__title {
   margin: 0;
   font-family: var(--font-display);
   font-size: var(--fs-4xl);
   font-weight: var(--fw-bold);
   letter-spacing: 0.04em;
-  color: var(--text-heading);
+  color: #ffdb7d;
 }
 
 .candle__lede {
@@ -73,25 +84,11 @@
   color: var(--text-dim);
 }
 
+/* One column: the missions have the page to themselves. */
 .candle__cols {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 380px;
   gap: var(--sp-4);
   align-items: start;
-}
-
-.candle__side {
-  position: sticky;
-  top: var(--sp-4);
-}
-
-@media (max-width: 1000px) {
-  .candle__cols {
-    grid-template-columns: 1fr;
-  }
-  .candle__side {
-    position: static;
-  }
 }
 
 /* ---------- the mission ---------- */
@@ -392,58 +389,86 @@
   white-space: nowrap;
 }
 
-/* ---------- winnings ---------- */
+/* ---------- what is waiting to be claimed ---------- */
 
-.winnings {
-  background:
-    linear-gradient(180deg, rgb(255 255 255 / 5%), rgb(255 255 255 / 0%) 30%),
-    linear-gradient(180deg, rgb(20 30 54 / 92%), rgb(8 16 30 / 94%));
-  box-shadow: inset 0 1px 0 rgb(255 255 255 / 8%);
-  display: grid;
-  gap: var(--sp-3);
-  padding: var(--sp-4);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
-  background: linear-gradient(180deg, rgb(14 20 38 / 92%), rgb(6 10 24 / 96%));
-}
-
-.winnings__rows {
-  display: grid;
-  gap: var(--sp-2);
-}
-
-.winnings__row {
-  display: grid;
-  grid-template-columns: 20px auto minmax(0, 1fr);
+/*
+ * A strip on the title's line, not a panel in a column.
+ *
+ * Two figures and a button do not need a third of the page. It keeps the
+ * cabinet's materials so it reads as part of the same machine room: a slab
+ * with a lit top edge, and the tokens sunk into it.
+ */
+.claimbar {
+  display: flex;
   align-items: center;
-  gap: var(--sp-2);
-  padding: var(--sp-2) var(--sp-3);
-  border: 1px solid var(--line-soft);
-  border-radius: var(--radius-xs);
-  background: rgb(0 0 0 / 30%);
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: linear-gradient(180deg, #2b3a5c, #16203a 22%, #101829 75%, #0a1120);
+  border: 1px solid rgb(148 163 184 / 30%);
+  box-shadow:
+    0 18px 40px rgb(0 0 0 / 45%),
+    inset 0 2px 0 rgb(255 255 255 / 14%);
 }
-.winnings__row img {
+
+.claimbar__label {
+  font-family: var(--font-display);
+  font-size: 10px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  padding-left: 4px;
+}
+
+.claimbar__amt {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 12px;
+  border-radius: 9px;
+  border: 1px solid rgb(148 163 184 / 20%);
+  background: linear-gradient(180deg, #0a1220, #05090f);
+  box-shadow: inset 0 8px 14px rgb(0 0 0 / 55%);
+}
+
+.claimbar__amt img {
+  flex: none;
   object-fit: contain;
 }
-.winnings__row strong {
+
+.claimbar__amt b {
   font-family: var(--font-display);
-  font-size: var(--fs-lg);
   font-variant-numeric: tabular-nums;
-  color: var(--white);
-  text-align: right;
+  font-size: var(--fs-md);
+  color: #ffdb7d;
 }
-.winnings__row span {
+
+.claimbar__amt span {
   font-size: var(--fs-xs);
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--text-faint);
 }
 
-.winnings__claim {
-  width: 100%;
-  min-height: 44px;
+/* Nothing waiting is not a payout, so it is not gold. */
+.claimbar--nil .claimbar__amt b {
+  color: var(--text-faint);
 }
 
+.claimbar__go {
+  margin-left: var(--sp-1);
+}
+
+@media (max-width: 720px) {
+  .claimbar {
+    width: 100%;
+  }
+
+  .claimbar__go {
+    margin-left: auto;
+  }
+}
 
 /* ---------- the mission clock ---------- */
 
@@ -568,14 +593,31 @@
  * Each one leads with what it pays, because that — not the requirement — is
  * what decides whether to hold gems back for it.
  */
+/* The queue, in the same cabinet as everything else on the screen. */
 .upnext {
-  margin-top: var(--sp-4);
-  padding: var(--sp-3);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
-  background:
-    linear-gradient(180deg, rgb(255 255 255 / 4%), rgb(255 255 255 / 0%) 40%),
-    rgb(0 0 0 / 26%);
+  margin-top: var(--sp-8);
+  padding: 14px;
+  border-radius: 18px;
+  background: linear-gradient(180deg, #2b3a5c, #16203a 18%, #101829 70%, #0a1120);
+  border: 1px solid rgb(148 163 184 / 30%);
+  box-shadow:
+    0 24px 50px rgb(0 0 0 / 50%),
+    inset 0 2px 0 rgb(255 255 255 / 14%);
+}
+
+/*
+ * Section headings on this screen are labels, not headlines.
+ *
+ * The app's default heading colour is a neon yellow, which on a panel whose
+ * own labels are faint grey caps made 'COMING UP' louder than the prize
+ * under it. The same pale gold as the page title, one step down in weight
+ * of colour, keeps the screen to one warm accent.
+ */
+.upnext .panel__title,
+.candleboard__panel .panel__title {
+  margin: 0;
+  padding: 0 4px;
+  color: rgb(255 219 125 / 72%);
 }
 
 .upnext__rows {
@@ -584,20 +626,21 @@
   margin-top: var(--sp-3);
 }
 
+/* Each one a slot in the wall: sunk, lit from above, waiting its turn. */
 .upnext__row {
   display: flex;
   align-items: center;
   gap: var(--sp-3);
-  padding: var(--sp-2) var(--sp-3);
-  border: 1px solid rgb(255 255 255 / 7%);
-  border-radius: var(--radius-xs);
-  background: rgb(0 0 0 / 28%);
+  padding: 11px 14px;
+  border: 1px solid rgb(148 163 184 / 18%);
+  border-radius: 10px;
+  background: linear-gradient(180deg, #0a1220, #05090f);
+  box-shadow: inset 0 8px 16px rgb(0 0 0 / 55%);
 }
 
 .upnext__icon {
   display: inline-block;
   flex: none;
-  opacity: 0.9;
 }
 
 .upnext__what {
@@ -607,19 +650,50 @@
   flex: 1;
 }
 
-.upnext__what strong {
-  font-family: var(--font-display);
-  font-size: var(--fs-sm);
-  color: var(--white);
-  font-variant-numeric: tabular-nums;
+/* The prize, in the same face and the same gold as the pot and the tray. */
+.upnext__amt {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
 }
 
+.upnext__amt b {
+  font-family: var(--font-display);
+  font-size: var(--fs-md);
+  font-variant-numeric: tabular-nums;
+  color: #ffdb7d;
+}
+
+.upnext__amt > span {
+  font-size: var(--fs-xs);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+/*
+ * The bar and where the player stands against it.
+ *
+ * At 11px, clipped to one line with an ellipsis, it was a caption under the
+ * reward — and the half a player is looking for is at the end of it, which
+ * is the half an ellipsis eats. It wraps now, and it is readable.
+ */
 .upnext__req {
-  font-size: 11px;
+  font-size: 13px;
+  line-height: 1.4;
   color: var(--text-dim);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+}
+
+.upnext__req b {
+  font-family: var(--font-display);
+  font-weight: 600;
+  color: var(--white);
+}
+
+/* Teal only once it is cleared. Every upcoming mission is one you have not
+   qualified for yet, so marking them all would say nothing. */
+.upnext__row--ready .upnext__req b {
+  color: var(--teal);
 }
 
 .upnext__when {
@@ -641,7 +715,7 @@
   font-family: var(--font-display);
   font-size: var(--fs-sm);
   font-variant-numeric: tabular-nums;
-  color: var(--text-dim);
+  color: var(--white);
 }
 
 /* ---------- the compacted mission body ---------- */
@@ -781,6 +855,15 @@
 
 /* ---------- who is in ---------- */
 
+.candleboard__panel {
+  border-radius: 18px;
+  background: linear-gradient(180deg, #2b3a5c, #16203a 18%, #101829 70%, #0a1120);
+  border: 1px solid rgb(148 163 184 / 30%);
+  box-shadow:
+    0 30px 70px rgb(0 0 0 / 60%),
+    inset 0 2px 0 rgb(255 255 255 / 14%);
+}
+
 .candleboard {
   display: grid;
   gap: 2px;
@@ -794,19 +877,34 @@
  * The two figures are pinned to their own columns rather than allowed to
  * follow the name, because the whole point of the board is reading down them.
  */
+/*
+ * One sunk row each, and the light from above.
+ *
+ * The board is read down two columns of figures, so the rows are the same
+ * recess the tray and the hopper are cut into — it puts the numbers on a
+ * surface rather than on a tint, and the cyan row reads as yours because
+ * cyan is what the player's own things are everywhere else on the cabinet.
+ */
+.candleboard {
+  gap: 6px;
+}
+
 .candleboard__row {
   display: grid;
   grid-template-columns: 28px 28px minmax(0, 1fr) auto auto;
   align-items: center;
   gap: var(--sp-2);
-  padding: var(--sp-2);
-  border-radius: var(--radius-xs);
-  background: rgb(255 255 255 / 4%);
+  padding: 8px 12px;
+  border-radius: 9px;
+  border: 1px solid rgb(148 163 184 / 16%);
+  background: linear-gradient(180deg, #0a1220, #05090f);
+  box-shadow: inset 0 8px 14px rgb(0 0 0 / 50%);
 }
 
 .candleboard__row--you {
-  background: rgb(24 179 255 / 14%);
-  box-shadow: inset 0 0 0 1px rgb(24 179 255 / 32%);
+  border-color: rgb(0 186 255 / 45%);
+  background: linear-gradient(180deg, rgb(0 186 255 / 14%), rgb(0 88 130 / 12%));
+  box-shadow: inset 0 8px 14px rgb(0 0 0 / 35%);
 }
 
 .candleboard__avatar {
@@ -836,6 +934,8 @@
 
 .candleboard__cut {
   color: var(--text-dim);
+  font-family: var(--font-display);
+  font-size: var(--fs-xs);
   font-variant-numeric: tabular-nums;
 }
 
@@ -844,4 +944,708 @@
   align-items: center;
   gap: 4px;
   font-variant-numeric: tabular-nums;
+}
+
+/* ---------- the machine ---------- */
+
+/*
+ * The mission as a cabinet on the arena floor.
+ *
+ * A campaign is a thing you feed and a thing that pays out, and a card with
+ * a heading and four stat tiles said neither. This is the same figures in a
+ * shape that explains itself: a lit sign with the clock on it, the prize
+ * behind glass with the gems it will be split between, a hopper you put
+ * gems into and a tray the reward comes out of.
+ */
+.mach {
+  position: relative;
+  overflow: hidden;
+  border-radius: 18px;
+  padding: 14px;
+  background: linear-gradient(180deg, #2b3a5c, #16203a 18%, #101829 70%, #0a1120);
+  border: 1px solid rgb(148 163 184 / 30%);
+  box-shadow:
+    0 30px 70px rgb(0 0 0 / 60%),
+    inset 0 2px 0 rgb(255 255 255 / 14%);
+}
+
+.mach + .mach {
+  margin-top: var(--sp-8);
+}
+
+/* The scrim that keeps it a backdrop rather than a picture. */
+.mach::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    rgb(7 13 24 / 82%),
+    rgb(7 13 24 / 50%) 40%,
+    rgb(7 13 24 / 95%)
+  );
+}
+
+/* Everything else sits on top of both. */
+.mach > * {
+  position: relative;
+  z-index: 1;
+}
+
+.mach--loading {
+  min-height: 460px;
+  opacity: 0.5;
+}
+
+/* ---- the sign ---- */
+
+/*
+ * A sign, not a lamp.
+ *
+ * Full-saturation gold across the width of the panel was the brightest
+ * surface on the screen and it carried the least urgent thing on it. It
+ * keeps its shape and its gold edge; what goes is the fill.
+ */
+.mach__marquee {
+  position: relative;
+  border-radius: 10px;
+  padding: 10px 14px;
+  text-align: center;
+  cursor: pointer;
+  color: var(--white);
+  /*
+     The sign is the deep one, the row under it the lit one — swapped from
+     how they started. Folded, a lighter sign over a darker row read as the
+     panel's lid rather than as its heading, and the eye went to the row.
+     The inner shadow travels with the colour: a recess is the dark surface
+     and a top highlight is the raised one, so keeping them where they were
+     would have undone the swap.
+  */
+  background: linear-gradient(180deg, #0a1220, #05090f);
+  border: 1px solid rgb(246 168 0 / 35%);
+  box-shadow: inset 0 8px 18px rgb(0 0 0 / 60%);
+}
+
+.mach__title {
+  min-width: 0;
+}
+
+/*
+ * The gold belongs to the name of the mission.
+ *
+ * Folded, the panel showed a white title over a gold figure, and gold on
+ * this background is the loudest thing a screen has — so the eye landed on
+ * the pot and had to come back up to find out which mission it belonged to.
+ * The two have swapped: the title takes the gold, the figures below it take
+ * the white, and the faint kicker above stays faint so the accent is said
+ * once.
+ */
+.mach__title b {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 19px;
+  letter-spacing: 0.04em;
+  color: #ffdb7d;
+}
+
+.mach__title > span {
+  font-size: 11px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+/*
+ * The clock sits in the corner of the sign rather than beside the title.
+ *
+ * A row of [title | clock] can only centre the title in the room the clock
+ * leaves, and a balanced row squeezes the longer mission names onto two
+ * lines. Out of flow, the title owns the full width and is centred in it —
+ * and the plate stacks its label over the time so it is narrow enough to
+ * clear even a long one.
+ */
+.mach__tools {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mach__clock {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 12px 5px 9px;
+  border-radius: 10px;
+  white-space: nowrap;
+  text-align: left;
+  background: rgb(0 0 0 / 40%);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 10%);
+}
+
+.mach__clock svg {
+  width: 15px;
+  height: 15px;
+  flex: 0 0 auto;
+  color: #ffd27a;
+}
+
+.mach__clock span {
+  display: block;
+  font-size: 8.5px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgb(255 226 183 / 75%);
+  line-height: 1;
+}
+
+.mach__clock b {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 15px;
+  color: #ffe9c9;
+  line-height: 1.15;
+}
+
+.mach__toggle {
+  width: 30px;
+  height: 30px;
+  flex: 0 0 auto;
+  border: 0;
+  border-radius: 50%;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  color: #ffe9c9;
+  background: rgb(0 0 0 / 40%);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 10%);
+}
+
+.mach__toggle:hover {
+  background: rgb(0 0 0 / 60%);
+}
+
+.mach__toggle svg {
+  width: 15px;
+  height: 15px;
+  transition: transform 0.22s ease;
+}
+
+.mach--shut .mach__toggle svg {
+  transform: rotate(-90deg);
+}
+
+/* ---- folded ---- */
+
+.mach__mini {
+  display: none;
+  gap: 22px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-top: 10px;
+  padding: 12px 16px;
+  border-radius: 10px;
+  background: rgb(9 14 26 / 75%);
+  border: 1px solid rgb(148 163 184 / 20%);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 8%);
+}
+
+.mach--shut .mach__mini {
+  display: flex;
+}
+
+.mach--shut .mach__body {
+  display: none;
+}
+
+.mach__mini span {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 7px;
+  font-size: 12px;
+  color: var(--text-faint);
+}
+
+.mach__mini b {
+  font-family: var(--font-display);
+  font-size: 20px;
+  color: var(--white);
+}
+
+/* The pot still leads the row, but on weight rather than on colour — the
+   gold is the title's now. */
+.mach__mini span:first-child b {
+  color: var(--white);
+}
+
+.mach__mini span + span b {
+  color: var(--text-dim);
+}
+
+.mach__mini img {
+  align-self: center;
+}
+
+/* ---- the case ---- */
+
+.mach__glass {
+  position: relative;
+  margin-top: 10px;
+  border-radius: 12px;
+  padding: 26px 20px;
+  overflow: hidden;
+  /*
+     Flat and opaque.
+
+     It was a 55% wash with a diagonal sheen across it and a vignette
+     pulling the corners down — a pane of glass, which is where the class
+     name comes from. All three worked against the one number on the screen
+     that has to be read off a clean ground: the pile of gems behind the
+     panel came through the wash, and the sheen put a bright edge under the
+     figure. The pile still fills the panel around it.
+  */
+  background: #050b15;
+  border: 1px solid rgb(148 163 184 / 18%);
+}
+
+.mach__pot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.mach__pot b {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: clamp(34px, 6vw, 58px);
+  line-height: 1;
+  color: var(--white);
+  text-shadow: 0 0 34px rgb(0 186 255 / 70%);
+}
+
+.mach__pot span {
+  font-family: var(--font-display);
+  font-size: 15px;
+  color: #7ee7fb;
+  align-self: flex-end;
+  padding-bottom: 6px;
+}
+
+/*
+ * The gems fill the case.
+ *
+ * At 420px in the middle of it they read as a picture hung inside the
+ * machine; pulled out past the case's own padding they are what is in it.
+ * `max-width` has to be released because the sheet caps every image at its
+ * container.
+ */
+.mach__pile {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  display: block;
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  margin: 0;
+  object-fit: cover;
+  object-position: 50% 60%;
+  opacity: 0.28;
+  filter: saturate(0.55) brightness(0.55);
+}
+
+/* A screen asking for calm does not need it at all. */
+:root[data-fx='low'] .mach__pile {
+  display: none;
+}
+
+.mach__empty {
+  margin: 14px 0 0;
+  text-align: center;
+  font-size: 12.5px;
+  color: var(--text-faint);
+  line-height: 1.5;
+  pointer-events: none;
+}
+
+.mach__empty b {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 15px;
+  color: #7ee7fb;
+  margin-bottom: 3px;
+}
+
+/* ---- the hopper ---- */
+
+/*
+ * No edge of its own: the field inside it is already a bordered control, and
+ * a cyan box around a cyan box made the one thing to fill in look like two.
+ * With the edge gone the inset that cleared it has nothing left to clear, so
+ * the label and the field run the width of the panel like everything else on
+ * it.
+ */
+.mach__slot {
+  margin-top: 14px;
+  border-radius: 10px;
+  padding: 12px 0 0;
+  background: none;
+}
+
+.mach__kick {
+  display: block;
+  margin-bottom: 8px;
+  font-family: var(--font-display);
+  font-size: 10px;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+/*
+ * The amount and the action are one control.
+ *
+ * A field and a button side by side are two things to look at for one
+ * decision. Joined into a single bordered box the focus ring lights all of
+ * it, and it reads as the slot you post gems into.
+ */
+.mach__field {
+  display: flex;
+  align-items: stretch;
+  border-radius: 8px;
+  overflow: hidden;
+  background: rgb(2 7 14 / 90%);
+  border: 1px solid rgb(0 186 255 / 40%);
+}
+
+.mach__field:focus-within {
+  border-color: var(--cyan);
+  box-shadow: 0 0 0 3px rgb(0 186 255 / 18%);
+}
+
+.mach__in {
+  flex: 1 1 auto;
+  min-width: 0;
+  border: 0;
+  background: none;
+  outline: none;
+  padding: 10px 14px;
+  text-align: center;
+  font-family: var(--font-display);
+  font-variant-numeric: tabular-nums;
+  font-size: 22px;
+  color: var(--white);
+}
+
+.mach__in:disabled {
+  color: var(--text-faint);
+}
+
+.mach__go {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 0;
+  padding: 13px 22px;
+  cursor: pointer;
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #03080f;
+  background: linear-gradient(180deg, #7ee7fb, var(--cyan));
+  transition: filter 0.15s ease;
+}
+
+.mach__go:hover:not(:disabled) {
+  filter: brightness(1.12);
+}
+
+.mach__go:disabled {
+  background: rgb(148 163 184 / 20%);
+  color: var(--text-faint);
+  cursor: not-allowed;
+}
+
+/* ---- the figures ---- */
+
+/*
+ * Five figures a contribution is decided on, so they have to be readable.
+ *
+ * At 12px in the display face they were a footnote under the field, which
+ * is the wrong weight for the numbers that say what a gem is worth here and
+ * whether you can afford one.
+ */
+.mach__meta {
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+  align-items: baseline;
+  font-size: 14px;
+  color: var(--text-faint);
+  padding: 12px 0 0;
+}
+
+.mach__meta b {
+  font-size: 15px;
+  color: var(--white);
+  font-family: var(--font-display);
+}
+
+.mach__gem {
+  display: inline-block;
+  vertical-align: -0.15em;
+  margin-left: 3px;
+}
+
+/* A projection reads as a projection. */
+.mach__after b {
+  color: #ffdb7d;
+}
+
+.mach__who {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  color: var(--text-faint);
+  cursor: pointer;
+  border-bottom: 1px dashed rgb(148 163 184 / 50%);
+}
+
+.mach__who:hover:not(:disabled) {
+  border-bottom-color: var(--cyan);
+}
+
+.mach__who:disabled {
+  cursor: default;
+  border-bottom: 0;
+}
+
+/* ---- the tray ---- */
+
+.mach__tray {
+  margin-top: 12px;
+  border-radius: 0 0 12px 12px;
+  padding: 14px 18px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background: linear-gradient(180deg, #0a1220, #05090f);
+  border: 1px solid rgb(148 163 184 / 20%);
+  box-shadow: inset 0 14px 22px rgb(0 0 0 / 70%);
+}
+
+.mach__tray .mach__kick {
+  margin-bottom: 0;
+}
+
+.mach__trayval {
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 700;
+  color: #ffdb7d;
+}
+
+.mach__trayval small {
+  font-size: 13px;
+  color: var(--text-faint);
+  font-weight: 400;
+  margin-left: 6px;
+}
+
+/* ---- a gate that is shut ---- */
+
+/*
+ * The gate, on the sign rather than under it.
+ *
+ * It began as a red card below the marquee: a box, a border and a full
+ * sentence, which made the one mission a player cannot enter the loudest
+ * thing in a column of missions they can — and cost it a row that pushed
+ * its own figures down. It sits opposite the clock now, so the sign carries
+ * both facts about whether the mission is open to you, on the line it
+ * already had.
+ */
+.mach__gate {
+  position: absolute;
+  top: 50%;
+  left: 12px;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #f5a3a3;
+}
+
+.mach__gate > span {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--white);
+  background: #e33;
+}
+
+/* The clock's own size, so the two things the sign says about whether you
+   can enter are said at the same weight. */
+.mach__gate b {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.15;
+  white-space: nowrap;
+}
+
+/*
+ * The title is centred in the whole sign, so with the clock on one side and
+ * this on the other a long mission name has to be told to clear them both.
+ * Only barred missions pay it.
+ */
+.mach--barred .mach__title {
+  padding-inline: 90px;
+}
+
+/*
+ * Narrow enough, and three things will not share the line.
+ *
+ * The clock is absolute and the title is centred in the whole sign, so past
+ * this width a mission name starts running under one or the other. The chip
+ * comes back into the flow beneath the title — still on the sign, still not
+ * a card, and still not a row of the panel.
+ */
+@media (max-width: 680px) {
+  .mach__marquee {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .mach__gate {
+    position: static;
+    order: 2;
+    transform: none;
+    justify-content: center;
+    margin-top: 6px;
+  }
+
+  .mach--barred .mach__title {
+    padding-inline: 0;
+  }
+}
+
+/*
+ * A barred mission wears it on the sign.
+ *
+ * Gold is this screen saying "there is a prize here", and on the one
+ * mission a player cannot enter it was promising something they cannot
+ * have — with a small red chip in the corner arguing against the rest of
+ * the panel. The sign takes the red instead: same shape, one hue over, so
+ * the state is read before any of the words are.
+ */
+.mach--barred .mach__marquee {
+  border-color: rgb(224 52 79 / 40%);
+  background: linear-gradient(180deg, #14090d, #0a0406);
+}
+
+.mach--barred .mach__title b {
+  color: #ff9ca8;
+}
+
+.mach--barred .mach__clock svg {
+  color: #ff9ca8;
+}
+
+.mach--barred .mach__clock b {
+  color: #ffd9de;
+}
+
+.mach--barred .mach__clock span {
+  color: rgb(255 217 222 / 75%);
+}
+
+.mach--barred .mach__toggle {
+  color: #ffd9de;
+}
+
+/* Shut, not hidden: the case dims and the sign keeps its light, because a
+   mission you cannot enter today is one you may qualify for tomorrow. */
+.mach--barred .mach__glass,
+.mach--soon .mach__glass {
+  filter: saturate(0.55) brightness(0.72);
+}
+
+.mach--barred .mach__pile,
+.mach--soon .mach__pile {
+  opacity: 0.16;
+}
+
+.mach--barred .mach__field,
+.mach--soon .mach__field {
+  border-color: rgb(148 163 184 / 25%);
+}
+
+.mach--barred .mach__trayval,
+.mach--soon .mach__trayval {
+  color: var(--text-faint);
+}
+
+/* ---- a mission that has not started ---- */
+
+.mach--soon .mach__pile {
+  filter: grayscale(0.7) brightness(0.5);
+}
+
+@media (max-width: 820px) {
+  /* Too narrow for a corner: the plate comes back into flow under the
+     title, still centred. */
+  .mach__tools {
+    position: static;
+    transform: none;
+    justify-content: center;
+    margin-top: 8px;
+  }
+}
+
+@media (max-width: 560px) {
+  /* The caption drops under the figure rather than wrapping into a column
+     beside it, and the button sits under the number so the number keeps its
+     room — still one bordered control, just stacked. */
+  .mach__pot {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .mach__pot span {
+    width: 100%;
+    align-self: auto;
+    padding-bottom: 0;
+  }
+
+  .mach__field {
+    flex-wrap: wrap;
+  }
+
+  .mach__in {
+    flex: 1 1 100%;
+  }
+
+  .mach__go {
+    flex: 1 1 100%;
+    justify-content: center;
+    border-top: 1px solid rgb(0 186 255 / 35%);
+  }
 }

@@ -217,6 +217,7 @@ interface AssetRow {
   asset_id: string
   owner: string
   name?: string
+  template?: { template_id: string } | null
 }
 
 /** Identical concurrent lookups share one request. */
@@ -257,6 +258,36 @@ export async function fetchAssetOwners(
 
   inflight.set(key, request)
   return request
+}
+
+/**
+ * Which template each of these assets is a copy of.
+ *
+ * Some rows name a card by asset id — the individual copy — where everything
+ * that draws one works from the template: a tournament entry keeps its crew
+ * and weapon that way. One request for the batch, and an asset never changes
+ * template, so the answer is held for as long as the cache holds anything.
+ */
+export async function fetchAssetTemplates(
+  assetIds: (string | number)[],
+): Promise<Map<string, number>> {
+  const ids = [...new Set(assetIds.map(String).filter((id) => id && id !== '0'))].sort()
+  if (ids.length === 0) return new Map()
+
+  const key = `templates:${ids.join(',')}`
+  const hit = cacheGet<[string, number][]>(key, true)
+  if (hit) return new Map(hit)
+
+  const res = await get<{ data: AssetRow[] }>(
+    `/atomicassets/v1/assets?ids=${ids.join(',')}&limit=${ids.length}`,
+  )
+  const out = new Map<string, number>()
+  for (const row of res.data ?? []) {
+    const template = Number(row.template?.template_id)
+    if (Number.isFinite(template)) out.set(String(row.asset_id), template)
+  }
+  cacheSet(key, [...out.entries()], TTL.long, true)
+  return out
 }
 
 /**

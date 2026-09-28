@@ -153,6 +153,7 @@ const Dungeon = lazyScreen(() => import('./routes/Dungeon'))
 const Arena = lazyScreen(() => import('./routes/Arena'))
 const Market = lazyScreen(() => import('./routes/Market'))
 const Battle = lazyScreen(() => import('./routes/Battle'))
+const Tournament = lazyScreen(() => import('./routes/Tournament'))
 const ComingSoon = lazyScreen(() => import('./routes/ComingSoon'))
 
 /* Lives in its own module so a screen can hold it up past its own load. */
@@ -224,8 +225,14 @@ function Boot({ children }: { children: React.ReactNode }) {
   return <>{children}</>
 }
 
-/** Sections whose contracts are live but whose screens aren't built yet. */
-const SOON_ROUTES = [['tournament', 'Tournament']] as const
+/**
+ * Sections whose contracts are live but whose screens are not built yet.
+ *
+ * Empty since the tournament got its own screen. Kept, rather than deleted
+ * along with the placeholder, because the next contract to land ahead of its
+ * screen will want exactly this back.
+ */
+const SOON_ROUTES: readonly (readonly [string, string])[] = []
 
 export default function App() {
   return (
@@ -257,6 +264,7 @@ export default function App() {
                 <Route path="/dungeon" element={<Dungeon />} />
                 <Route path="/arena" element={<Arena />} />
                 <Route path="/market" element={<Market />} />
+                <Route path="/tournament" element={<Tournament />} />
                 <Route path="/battle/:historyId" element={<Battle />} />
                 {SOON_ROUTES.map(([path, title]) => (
                   <Route

@@ -29,6 +29,9 @@ import { fetchRoster } from '@/dungeon/queries'
 import { useConfig, useLazyConfig } from '@/state/useConfig'
 import { useChainQuery } from '@/chain/useChainQuery'
 import { useModal } from '@/components/useModal'
+import { usePhone } from '@/components/usePhone'
+import { HoverPopover, useHoverCard } from '@/components/HoverPopover'
+import { FighterHoverCard } from '@/components/FighterPanel'
 import { useAction } from '@/wharf/useAction'
 import { DIRTIES } from '@/wharf/actions'
 import { fighterAvailable } from '@/dungeon/rules'
@@ -1264,6 +1267,76 @@ export function BuyDialog({
   )
 }
 
+/**
+ * One sellable fighter, with the read the pickers already give.
+ *
+ * A seller is pricing the rolls and the tile says a class, a level and a
+ * damage figure — everything the price actually turns on was behind a
+ * button. This is the same card the dungeon and arena grids open on a rest
+ * of the pointer, in the same way, so nothing new has to be learned and
+ * nothing is built until the pointer settles on one.
+ *
+ * The hover is hung on a wrapper rather than the button: the hook measures
+ * the element it is given, and the grid item is what the card should open
+ * beside.
+ */
+function SellPickTile({
+  fighter: f,
+  classes,
+  levelMod,
+  ageDecay,
+  picked,
+  hoverStats,
+  onPick,
+}: {
+  fighter: RosterFighter
+  classes: Map<string, ClassTemplate>
+  levelMod: number
+  ageDecay: number
+  picked: boolean
+  hoverStats: boolean
+  onPick: () => void
+}) {
+  const preview = useCallback(
+    () => ({
+      panel: rosterPanel(f, levelMod, ageDecay),
+      template: classes.get(f.classname),
+    }),
+    [f, levelMod, ageDecay, classes],
+  )
+  const { ref, shown, close, handlers } = useHoverCard(preview, hoverStats)
+
+  return (
+    <div className="sellpick__slot" ref={ref} {...handlers}>
+      {shown && (
+        <HoverPopover anchor={shown.rect}>
+          <FighterHoverCard fighter={shown.value.panel} template={shown.value.template} />
+        </HoverPopover>
+      )}
+      <button
+        type="button"
+        className="sellpick__one"
+        aria-pressed={picked}
+        onClick={() => {
+          close()
+          onPick()
+        }}
+      >
+        <Portrait element={f.element} classname={f.classname} racename={f.racename} />
+        {!!f.marker && (
+          <span className="sellpick__marker" title={`Marked ${f.marker}`}>
+            <img src={markerIcon(f.marker)} alt="" width={14} height={14} />
+          </span>
+        )}
+        <span className="sellpick__name">{f.classname}</span>
+        <span className="sellpick__sub mono">
+          L{f.stats.level} · {formatScaled(f.stats.damage_min)} dmg
+        </span>
+      </button>
+    </div>
+  )
+}
+
 export function SellTab({
   sellable,
   classes,
@@ -1300,18 +1373,37 @@ export function SellTab({
      re-sorted the auction board behind it.
   */
   const [filter, setFilter] = useState<RosterFilter>({ ...EMPTY_FILTER })
+  /* Asked once here rather than in every tile; a roster is sixty of them. */
+  const phone = usePhone()
   const shown = useMemo(
     () => applyFilter(sellable, filter, ageDecay, Date.now(), classes, undefined, levelMod),
     [sellable, filter, ageDecay, classes, levelMod],
   )
   const [price, setPrice] = useState(minStart)
-  const [keep, setKeep] = useState(true)
+  const [keep, setKeep] = useState(false)
+  /* Whether the terms are open. The choice is the page; this is the deal. */
+  const [selling, setSelling] = useState(false)
 
   useEffect(() => setPrice(minStart), [minStart])
 
   const picked = sellable.find((f) => f.fighter_id === pickedId) ?? null
   const gate = canList(picked, price, player!, config)
   const hours = Math.round(Number(config?.standard_duration_minutes ?? 0) / 60)
+
+  /*
+     The dialog shuts itself once the listing lands.
+
+     `onList` is fired and forgotten — the screen finds out it worked when
+     the reload drops the fighter out of `sellable`, because it is in the
+     market now. That is also the moment everything the dialog is saying
+     stops being true, so it is the moment to close it.
+  */
+  useEffect(() => {
+    if (!selling || pickedId === null) return
+    if (sellable.some((f) => f.fighter_id === pickedId)) return
+    setSelling(false)
+    setPickedId(null)
+  }, [selling, pickedId, sellable])
 
   return (
     <div className="selltab">
@@ -1322,108 +1414,47 @@ export function SellTab({
         </p>
       ) : (
         <>
-          {/* The roll-quality rules come with `RosterFilters`, which renders
-              them itself — a second one here was a duplicate of the same two
-              selects, and would now be the copy that did not fold away. */}
-          <RosterFilters filter={filter} onChange={setFilter} roster={sellable} />
+          {/*
+            The bar over the roster it is choosing from.
 
-          {shown.length === 0 ? (
-            <p className="faint">No fighter you can sell matches these filters.</p>
-          ) : (
-          <div className="sellpick">
-            {shown.map((f) => (
-              <button
-                type="button"
-                key={f.fighter_id}
-                className="sellpick__one"
-                aria-pressed={f.fighter_id === pickedId}
-                onClick={() => setPickedId(f.fighter_id)}
-              >
-                <Portrait
-                  element={f.element}
-                  classname={f.classname}
-                  racename={f.racename}
-                />
-                {!!f.marker && (
-                  <span className="sellpick__marker" title={`Marked ${f.marker}`}>
-                    <img src={markerIcon(f.marker)} alt="" width={14} height={14} />
-                  </span>
-                )}
-                <span className="sellpick__name">{f.classname}</span>
-                <span className="sellpick__sub mono">
-                  L{f.stats.level} · {formatScaled(f.stats.damage_min)} dmg
+            The same arrangement My Fighters uses, and for the same reason:
+            the button acts on something below it, the thing below it is
+            usually past the fold, and scrolling back up to reach the button
+            for the fighter you just tapped is the whole interaction. It
+            pins itself only once there is a fighter to act on, so an
+            untouched tab is not carrying a bar that does nothing.
+          */}
+          <div className={`selltab__bar${picked ? ' selltab__bar--pinned' : ''}`}>
+            {picked ? (
+              <span className="selltab__who">
+                <span className="selltab__face">
+                  <Portrait
+                    element={picked.element}
+                    classname={picked.classname}
+                    racename={picked.racename}
+                  />
                 </span>
-              </button>
-            ))}
-          </div>
-          )}
+                <span>
+                  <b>{picked.classname}</b>
+                  <em className="faint mono">
+                    L{picked.stats.level} · {picked.racename}
+                  </em>
+                </span>
+              </span>
+            ) : (
+              <span className="selltab__who selltab__who--none">
+                Pick a fighter below to sell it.
+              </span>
+            )}
 
-          <label className="field">
-            <span className="field__label">Starting bid (min {minStart})</span>
-            <input
-              className="input mono"
-              type="number"
-              min={minStart}
-              step={1}
-              value={price}
-              onChange={(e) =>
-                setPrice(Math.max(0, Math.floor(Number(e.target.value) || 0)))
-              }
-            />
-          </label>
-
-          <label className="checkline">
-            <input
-              type="checkbox"
-              checked={keep}
-              onChange={(e) => setKeep(e.target.checked)}
-            />
-            <span>
-              Keep it listed if nobody bids
-              <em className="faint">
-                {' '}
-                — it becomes a fixed-price offer at{' '}
-                {config?.gems_instant_buy_price ?? 0} gems instead of coming back
-                to you
-              </em>
-            </span>
-          </label>
-
-          <dl className="marketdialog__facts">
-            <div>
-              <dt>Listing fee</dt>
-              <dd className="mono">{config?.gems_listing_price ?? 0}</dd>
-            </div>
-            <div>
-              <dt>Runs for</dt>
-              <dd className="mono">{hours}h</dd>
-            </div>
-            <div>
-              <dt>Fee on sale</dt>
-              <dd className="mono">
-                {config?.gems_processing_fee_percent ?? 0}% (min{' '}
-                {config?.gems_processing_fee_min ?? 0})
-              </dd>
-            </div>
-            <div>
-              <dt>You keep at {price}</dt>
-              <dd className="mono">{sellerPayout(price, config)}</dd>
-            </div>
-          </dl>
-
-          <p className="hint">
-            The fighter is locked in the market while it is listed, and the
-            listing fee is spent whether or not it sells. Once anybody bids,
-            the auction cannot be withdrawn.
-          </p>
-
-          <div className="selltab__act">
             {/*
                Listing a fighter is permanent for as long as the auction
-               runs, and the grid tile says a class and a level. The whole
-               panel - every graded roll, the resistances, the abilities - is
-               what a seller is actually pricing, so it is one button away
-               rather than something to go and look up on another screen.
+               runs, and a tile says a class and a level. The whole panel —
+               every graded roll, the resistances, the abilities — is what a
+               seller is actually pricing, so it is one button away rather
+               than something to go and look up on another screen. It stays
+               out here: from inside the terms it would be a second sheet on
+               top of the first.
             */}
             <button
               type="button"
@@ -1438,16 +1469,113 @@ export function SellTab({
             <button
               type="button"
               className="btn btn--primary"
-              onClick={() => picked && onList(picked.fighter_id, price, keep)}
-              disabled={busy || !gate.ok}
-              title={gate.reason}
+              onClick={() => setSelling(true)}
+              disabled={!picked}
+              title={picked ? undefined : 'Pick a fighter first'}
             >
-              {busy && <span className="spinner" />}
-              {gate.ok
-                ? `List for ${config?.gems_listing_price ?? 0} gems`
-                : gate.reason}
+              Sell
             </button>
           </div>
+
+          {/* The roll-quality rules come with `RosterFilters`, which renders
+              them itself — a second one here was a duplicate of the same two
+              selects, and would now be the copy that did not fold away. */}
+          <RosterFilters filter={filter} onChange={setFilter} roster={sellable} />
+
+          {shown.length === 0 ? (
+            <p className="faint">No fighter you can sell matches these filters.</p>
+          ) : (
+          <div className="sellpick">
+            {shown.map((f) => (
+              <SellPickTile
+                key={f.fighter_id}
+                fighter={f}
+                classes={classes}
+                levelMod={levelMod}
+                ageDecay={ageDecay}
+                picked={f.fighter_id === pickedId}
+                hoverStats={!phone}
+                onPick={() => setPickedId(f.fighter_id)}
+              />
+            ))}
+          </div>
+          )}
+
+          {selling && picked && (
+            <Backdrop title={`Sell ${picked.classname}`} onClose={() => setSelling(false)}>
+              <label className="field">
+                <span className="field__label">Starting bid (min {minStart})</span>
+                <input
+                  className="input mono"
+                  type="number"
+                  min={minStart}
+                  step={1}
+                  value={price}
+                  onChange={(e) =>
+                    setPrice(Math.max(0, Math.floor(Number(e.target.value) || 0)))
+                  }
+                />
+              </label>
+
+              <label className="checkline">
+                <input
+                  type="checkbox"
+                  checked={keep}
+                  onChange={(e) => setKeep(e.target.checked)}
+                />
+                <span>
+                  Keep it listed if nobody bids
+                  <em className="faint">
+                    {' '}
+                    — it becomes a fixed-price offer at{' '}
+                    {config?.gems_instant_buy_price ?? 0} gems instead of coming
+                    back to you
+                  </em>
+                </span>
+              </label>
+
+              <dl className="marketdialog__facts">
+                <div>
+                  <dt>Listing fee</dt>
+                  <dd className="mono">{config?.gems_listing_price ?? 0}</dd>
+                </div>
+                <div>
+                  <dt>Runs for</dt>
+                  <dd className="mono">{hours}h</dd>
+                </div>
+                <div>
+                  <dt>Fee on sale</dt>
+                  <dd className="mono">
+                    {config?.gems_processing_fee_percent ?? 0}% (min{' '}
+                    {config?.gems_processing_fee_min ?? 0})
+                  </dd>
+                </div>
+                <div>
+                  <dt>You keep at {price}</dt>
+                  <dd className="mono">{sellerPayout(price, config)}</dd>
+                </div>
+              </dl>
+
+              <p className="hint">
+                The fighter is locked in the market while it is listed, and the
+                listing fee is spent whether or not it sells. Once anybody bids,
+                the auction cannot be withdrawn.
+              </p>
+
+              <button
+                type="button"
+                className="btn btn--primary btn--block"
+                onClick={() => onList(picked.fighter_id, price, keep)}
+                disabled={busy || !gate.ok}
+                title={gate.reason}
+              >
+                {busy && <span className="spinner" />}
+                {gate.ok
+                  ? `List for ${config?.gems_listing_price ?? 0} gems`
+                  : gate.reason}
+              </button>
+            </Backdrop>
+          )}
         </>
       )}
     </div>

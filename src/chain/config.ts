@@ -89,6 +89,8 @@ export const CONTRACTS = {
   creation: 'creation.ale',
   nfts: 'nfts.ale',
   battle: 'battle.ale',
+  /** Daily bracketed tournaments: entries, the schedule and the pairings. */
+  tournament: 'tournmnt.ale',
   rewardLog: 'rwrdlog.ale',
   /** Receives the WAX signup fee after it is forwarded on. */
   ram: 'ram.ale',

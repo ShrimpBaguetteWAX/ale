@@ -247,6 +247,20 @@ export default function Candle() {
             them put up.
           </p>
         </div>
+
+        {/*
+          What is waiting to be claimed, on the title's line.
+
+          It was a full panel in a column of its own, which cost the missions
+          a third of the width for two figures and a button. Up here it is
+          read on the way past and the cabinets get the whole page.
+        */}
+        <Winnings
+          claim={claim}
+          busy={busy}
+          canAct={!!session}
+          onClaim={() => void doClaim()}
+        />
       </header>
 
       <ActionBanner notice={notice} error={error ?? data.error} />
@@ -254,7 +268,7 @@ export default function Candle() {
       <div className="candle__cols">
         <div>
           {data.loading ? (
-            <div className="mission mission--loading" />
+            <div className="mach mach--loading" />
           ) : running.length === 0 ? (
             <p className="candle__empty">
               No mission is running.
@@ -290,17 +304,8 @@ export default function Candle() {
             })
           )}
 
-          {upcoming.length > 0 && <UpNext offers={upcoming} now={now} />}
+          {upcoming.length > 0 && <UpNext offers={upcoming} player={player} now={now} />}
         </div>
-
-        <aside className="candle__side">
-          <Winnings
-            claim={claim}
-            busy={busy}
-            canAct={!!session}
-            onClaim={() => void doClaim()}
-          />
-        </aside>
       </div>
     </div>
   )
@@ -316,15 +321,35 @@ export default function Candle() {
  * legitimate play, and the screen could not previously tell anyone one
  * existed. Every offer is already in memory — this is a filter, not a fetch.
  */
-export function UpNext({ offers, now }: { offers: CandleOffer[]; now: number }) {
+export function UpNext({
+  offers,
+  player,
+  now,
+}: {
+  offers: CandleOffer[]
+  player: Player
+  now: number
+}) {
   return (
     <section className="upnext">
       <h3 className="panel__title">Coming up</h3>
       <div className="upnext__rows">
         {offers.map((o) => {
           const opensIn = Date.parse(o.offer_start + 'Z') - now
+          /*
+             Whether this one is already within reach.
+
+             The bar on its own is half a sentence: a player reading "needs
+             110 quests finished" has no idea whether that is a mission to
+             plan for or one they are already through — and the only thing
+             they can act on before it opens is the difference.
+          */
+          const gate = eligibility(o, player)
           return (
-            <article className="upnext__row" key={o.offer_id}>
+            <article
+              className={`upnext__row${gate.qualified ? ' upnext__row--ready' : ''}`}
+              key={o.offer_id}
+            >
               <img
                 className="upnext__icon"
                 src={tokenIcon(o.reward_type)}
@@ -333,18 +358,22 @@ export function UpNext({ offers, now }: { offers: CandleOffer[]; now: number }) 
                 height={26}
               />
               <span className="upnext__what">
-                <strong>
-                  {formatDecimals(
-                    tokenAmount(o.reward_amount, o.reward_type),
-                    placesFor(tokenAmount(o.reward_amount, o.reward_type), o.reward_type),
-                  )}{' '}
-                  {tokenSymbol(o.reward_type)}
-                </strong>
-                {/* The bar to get in, not just what it is measured on:
-                    "Portals used" alone does not say whether the player is
-                    anywhere near qualifying for it. */}
+                <span className="upnext__amt">
+                  <b>
+                    {formatDecimals(
+                      tokenAmount(o.reward_amount, o.reward_type),
+                      placesFor(tokenAmount(o.reward_amount, o.reward_type), o.reward_type),
+                    )}
+                  </b>
+                  <span>{tokenSymbol(o.reward_type)}</span>
+                </span>
+                {/* The bar to get in, what it is measured on, and where the
+                    player stands against it — the three together are the
+                    whole of what can be done about a mission before it
+                    opens. */}
                 <span className="upnext__req">
-                  Needs {formatNumber(o.requirement_amount)} {o.requirements.toLowerCase()}
+                  Needs {formatNumber(o.requirement_amount)} {o.requirements.toLowerCase()} ·{' '}
+                  <b>you have {formatNumber(gate.have)}</b>
                 </span>
               </span>
               <span className="upnext__when">
@@ -356,48 +385,6 @@ export function UpNext({ offers, now }: { offers: CandleOffer[]; now: number }) 
         })}
       </div>
     </section>
-  )
-}
-
-/* ---------- the mission clock ---------- */
-
-/**
- * How long is left, as a ring that empties.
- *
- * The figure alone is easy to skim past; a ring that is visibly draining says
- * "decide now" at a glance, and its colour does the rest — the fill turns
- * amber and then red as the window closes, so urgency is legible without
- * reading the number at all.
- *
- * `--left` is the percentage still to run and drives a conic gradient, masked
- * into an annulus so the countdown can sit inside it.
- */
-function MissionClock({
-  left,
-  label,
-  time,
-  running,
-}: {
-  /** Fraction of the window still to run, 0–1. */
-  left: number
-  label: string
-  time: string
-  running: boolean
-}) {
-  const pct = Math.min(100, Math.max(0, left * 100))
-  const urgency = !running ? 'done' : pct > 50 ? 'calm' : pct > 20 ? 'soon' : 'now'
-
-  return (
-    <div
-      className={`missionclock missionclock--${urgency}`}
-      style={{ ['--left' as string]: pct }}
-    >
-      <span className="missionclock__ring" aria-hidden="true" />
-      <span className="missionclock__face">
-        <span className="missionclock__label">{label}</span>
-        <strong className="missionclock__time">{time}</strong>
-      </span>
-    </div>
   )
 }
 
@@ -465,7 +452,7 @@ function ContributorBoard({
       onClick={onClose}
     >
       <div
-        className="sheet__panel panel"
+        className="sheet__panel panel candleboard__panel"
         ref={panel}
         onClick={(e) => e.stopPropagation()}
       >
@@ -563,6 +550,17 @@ export function Mission({
   onContribute: () => void
 }) {
   const [showBoard, setShowBoard] = useState(false)
+  /*
+     Folded to begin with.
+
+     The cabinet keeps the four things worth knowing at a glance: the
+     mission, the clock, the prize and what you have already put in. A
+     player with three missions running wants to see all of them at once
+     more often than they want to feed any one of them, so the screen opens
+     as a list and a mission is opened deliberately.
+  */
+  const [shut, setShut] = useState(true)
+
   const state = offerState(offer, now)
   const gate = eligibility(offer, player)
   const share = shareOf(offer, mine)
@@ -571,161 +569,145 @@ export function Mission({
   const prize = tokenAmount(offer.reward_amount, type)
   /* Per figure, not per screen: only the sub-one ones keep decimals. */
   const dp = (v: number) => placesFor(v, type)
-  const symbol = tokenSymbol(offer.reward_type)
-  const icon = tokenIcon(offer.reward_type)
+  const symbol = tokenSymbol(type)
+  const icon = tokenIcon(type)
 
+  const open = state.phase === 'open'
+  const soon = state.phase === 'upcoming'
   const tooPoor = amount > balance
   const canContribute =
-    canAct && busy === null && state.phase === 'open' && gate.qualified && amount > 0 && !tooPoor
+    canAct && busy === null && open && gate.qualified && amount > 0 && !tooPoor
 
-  /*
-     How much of the window is left, as a fraction.
+  /* What the plate on the marquee counts down to. */
+  const clock = soon
+    ? { label: 'Opens in', time: countdown(state.msLeft) }
+    : open
+      ? { label: 'Closes in', time: countdown(state.msLeft) }
+      : { label: 'Closed', time: 'settling' }
 
-     Falls back to a full ring rather than an empty one when the dates cannot
-     be read: an empty one claims the mission is nearly over, which is the
-     more damaging thing to say wrongly.
-  */
-  const opened = Date.parse(offer.offer_start + 'Z')
-  const closes = Date.parse(offer.offer_end + 'Z')
-  const span = closes - opened
-  const burn =
-    Number.isFinite(span) && span > 0
-      ? Math.min(1, Math.max(0, (closes - now) / span))
-      : 1
+  const action = soon ? 'Not open yet' : !open ? 'Closed' : !gate.qualified ? 'Locked' : 'Drop them in'
+
+  const toggle = () => setShut((was) => !was)
+  /* The sign is the handle, so anything on it that is not the handle has to
+     say so — a countdown that collapsed the panel when you looked at it
+     would be a small betrayal. */
+  const stop = (e: { stopPropagation: () => void }) => e.stopPropagation()
+
+  const gemIcon = (
+    <img className="mach__gem" src={asset('/assets/icons/gems.png')} alt="gems" width={13} height={13} />
+  )
 
   return (
-    <section className="mission">
-      <header className="mission__head">
-        <div className="mission__intro">
-          <p className={`mission__phase mission__phase--${state.phase}`}>
-            {state.phase === 'open'
-              ? 'Open now'
-              : state.phase === 'upcoming'
-                ? 'Not started'
-                : 'Closed — waiting for claim'}
-          </p>
-          <h2 className="mission__title">{offer.requirements}</h2>
+    <section
+      className={`mach${shut ? ' mach--shut' : ''}${soon ? ' mach--soon' : ''}${
+        !gate.qualified && !soon ? ' mach--barred' : ''
+      }`}
+    >
+      {/* The room the machine stands in. See `.mach__pile`. */}
+      <img className="mach__pile" src={asset('/assets/shop/candle-gems.webp')} alt="" />
 
-          <div className="mission__prize">
-            <img src={icon} alt="" width={34} height={34} />
-            <span className="mission__prizeval">
-              {formatDecimals(prize, dp(prize))}
-            </span>
-            <span className="mission__prizesym">{symbol}</span>
-            <span className="mission__prizecap">to share</span>
-          </div>
+      <header className="mach__marquee" onClick={toggle}>
+        {/*
+          The gate, on the sign opposite the clock.
+
+          It was a row of its own under the marquee, which pushed the
+          mission's own figures down the page for the one mission a player
+          cannot act on. All they need from it is how far short they are;
+          the arithmetic behind that number is a tooltip.
+        */}
+        {!gate.qualified && (
+          <span
+            className="mach__gate"
+            title={`Needs ${formatNumber(gate.need)} lifetime ${offer.requirements.toLowerCase()} — you have ${formatNumber(gate.have)}`}
+          >
+            <span aria-hidden="true">&#10005;</span>
+            <b>{formatNumber(gate.short)} short</b>
+          </span>
+        )}
+
+        <div className="mach__title">
+          <span>Mission</span>
+          <b>{offer.requirements}</b>
         </div>
 
-        <MissionClock
-          left={burn}
-          running={state.phase === 'open'}
-          label={state.phase === 'upcoming' ? 'Starts in' : 'Closes in'}
-          time={state.phase === 'closed' ? '—' : countdown(state.msLeft)}
-        />
+        <span className="mach__tools">
+          <span className="mach__clock" onClick={stop}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"
+              strokeLinecap="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="9" />
+              <path d="M12 7v5.2l3.2 2" />
+            </svg>
+            <span className="mach__clockcol">
+              <span>{clock.label}</span>
+              <b>{clock.time}</b>
+            </span>
+          </span>
+          <button
+            type="button"
+            className="mach__toggle"
+            aria-expanded={!shut}
+            aria-label={shut ? 'Expand mission' : 'Collapse mission'}
+            onClick={(e) => {
+              stop(e)
+              toggle()
+            }}
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6"
+              strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M5 9l7 7 7-7" />
+            </svg>
+          </button>
+        </span>
       </header>
 
-      {/*
-        The entry requirement, as one line.
+      {/* What survives the fold. */}
+      <div className="mach__mini">
+        <span>
+          <img src={icon} alt="" width={20} height={20} />
+          <b>{formatDecimals(prize, dp(prize))}</b> {symbol} {soon ? 'on offer' : 'in the pot'}
+        </span>
+        {/*
+          What the pot is being split between.
 
-        It was a titled panel wrapping a paragraph wrapping a badge, for what
-        is a yes or a no. The badge already carries the whole answer — "288
-        short — 12 of 300" — so the prose around it was restating it at
-        length. The rest of the sentence it used to make survives as the
-        tooltip, for anyone who wants to know it is a gate rather than a
-        target.
-      */}
-      <div
-        className={`gate${gate.qualified ? ' gate--ok' : ''}`}
-        title={`Taking part needs ${formatNumber(gate.need)} lifetime ${offer.requirements.toLowerCase()}. It is a gate rather than a target — the contract refuses a contribution below it outright.`}
-      >
-        <span className="gate__mark">{gate.qualified ? '✓' : '✕'}</span>
-        <span className="gate__text">
-          {gate.qualified
-            ? `Qualified — ${formatNumber(gate.have)} of ${formatNumber(gate.need)} ${offer.requirements.toLowerCase()}`
-            : `${formatNumber(gate.short)} short — ${formatNumber(gate.have)} of ${formatNumber(gate.need)} ${offer.requirements.toLowerCase()}`}
+          The reward alone says what is on the table and not what a share of
+          it is worth — that depends entirely on how many gems are in
+          against it, which was a fact you had to unfold the panel to see.
+        */}
+        <span>
+          <img src={asset('/assets/icons/gems.png')} alt="" width={20} height={20} />
+          <b>{formatNumber(share.total)}</b> gems contributed
+        </span>
+        <span>
+          <img src={asset('/assets/icons/gems.png')} alt="" width={20} height={20} />
+          <b>{formatNumber(mine)}</b> your contribution
         </span>
       </div>
 
-      {/* ---------- contributions ---------- */}
-
-      {/*
-        Five small numbers. As stacked full-width rows inside a titled panel
-        they took more height than the mission above them; as a row of tiles
-        they are read in one pass, which is what a stat block is for.
-      */}
-      <dl className="mission__facts">
-          <div>
-            <dt>Total in</dt>
-            <dd>
-              {formatNumber(share.total)}
-              <img src={asset("/assets/icons/gems.png")} alt="gems" width={14} height={14} />
-            </dd>
-          </div>
-          <div>
-            <dt>You put in</dt>
-            <dd>
-              {formatNumber(share.mine)}
-              <img src={asset("/assets/icons/gems.png")} alt="gems" width={14} height={14} />
-            </dd>
-          </div>
-          <div>
-            <dt>Players</dt>
-            {/*
-              The count opens the board rather than just stating it. What a
-              gem buys here depends on who else has spent and how much, and
-              "14 players" does not say whether that is fourteen small stakes
-              or one whale and thirteen hopefuls.
-            */}
-            <dd>
-              <button
-                type="button"
-                className="mission__who"
-                onClick={() => setShowBoard(true)}
-                disabled={contributors === 0}
-                title="See who has contributed and how much"
-              >
-                {formatNumber(contributors)}
-                <span className="mission__whoHint">view</span>
-              </button>
-            </dd>
-          </div>
-          {/*
-            The rate, not the prize. It is what a contribution is actually
-            buying, and it falls every time anybody adds to the pot.
-          */}
-          <div>
-            <dt>Per gem</dt>
-            <dd>
-              {share.total > 0 ? formatDecimals(share.perGem, perGemPlaces(share.perGem, type)) : '—'}
-              {share.total > 0 && <span className="faint">{symbol}</span>}
-            </dd>
-          </div>
-          <div className="mission__facts--lead">
-            <dt>Your share now</dt>
-            <dd>
-              {formatDecimals(share.payout, dp(share.payout))}
-              <span className="faint">
-                {symbol} · {(share.fraction * 100).toFixed(1)}%
-              </span>
-            </dd>
-          </div>
-      </dl>
-
-      {/* ---------- contribute ---------- */}
-
-      {state.phase === 'open' && (
-        <section className="missionact">
-          <div className="missionact__lead">
-            <strong>{mine > 0 ? 'Add more gems' : 'Contribute gems'}</strong>
-            <span className="faint">
-              You hold {formatNumber(balance)}
-              <img src={asset("/assets/icons/gems.png")} alt="gems" width={13} height={13} />
+      <div className="mach__body">
+        <div className="mach__glass">
+          <div className="mach__pot">
+            <img src={icon} alt="" width={44} height={44} />
+            <b>{formatDecimals(prize, dp(prize))}</b>
+            <span>
+              {symbol} {soon ? 'on offer' : 'in the pot'}
             </span>
           </div>
+          {soon && (
+            <p className="mach__empty">
+              <b>The case is empty</b>nobody can feed it until it opens
+            </p>
+          )}
+        </div>
 
-          <div className="contribute">
+        {/*
+          One control, not two: the amount and the action share a box, so the
+          decision is in one place and the focus ring lights all of it.
+        */}
+        <div className="mach__slot">
+          <span className="mach__kick">Contribute gems</span>
+          <div className="mach__field">
             <input
-              className="input"
+              className="mach__in"
               type="number"
               min={1}
               max={balance}
@@ -734,68 +716,105 @@ export function Mission({
               placeholder="0"
               value={gems}
               onChange={(e) => onGems(e.target.value)}
-              disabled={!canAct || busy !== null || !gate.qualified}
+              disabled={!canAct || busy !== null || !open || !gate.qualified}
             />
             <button
               type="button"
-              className="btn btn--primary"
+              className="mach__go"
               disabled={!canContribute}
               onClick={onContribute}
               title={
-                !gate.qualified
-                  ? 'You do not meet the requirement for this mission'
-                  : tooPoor
-                    ? 'More gems than you hold'
-                    : 'Gems are spent immediately'
+                soon
+                  ? 'This mission has not opened yet'
+                  : !gate.qualified
+                    ? 'You do not meet the requirement for this mission'
+                    : tooPoor
+                      ? 'More gems than you hold'
+                      : 'Gems are spent immediately'
               }
             >
               {busy === busyKey && <span className="spinner" />}
-              Contribute Gems
+              {action}
             </button>
           </div>
+        </div>
+
+        {tooPoor && <p className="hint hint--error">That is more gems than you hold.</p>}
+
+        <div className="mach__meta">
+          <span>
+            In the pot <b>{formatNumber(share.total)}</b>
+            {gemIcon}
+          </span>
+          <span>
+            Your contribution <b>{formatNumber(share.mine)}</b>
+            {gemIcon}
+          </span>
+          <span>
+            Players{' '}
+            {/*
+              The count opens the board rather than just stating it. What a
+              gem buys here depends on who else has spent and how much, and
+              "14 players" does not say whether that is fourteen small stakes
+              or one whale and thirteen hopefuls.
+            */}
+            <button
+              type="button"
+              className="mach__who"
+              onClick={() => setShowBoard(true)}
+              disabled={contributors === 0}
+              title="See who has contributed and how much"
+            >
+              <b>{formatNumber(contributors)}</b>
+            </button>
+          </span>
+          <span>
+            A gem buys{' '}
+            <b>
+              {share.total > 0
+                ? formatDecimals(share.perGem, perGemPlaces(share.perGem, type))
+                : '—'}
+            </b>{' '}
+            {share.total > 0 && symbol}
+          </span>
+          <span>
+            You hold <b>{formatNumber(balance)}</b>
+            {gemIcon}
+          </span>
 
           {/*
-            What the contribution would actually do — to the share and to the
-            rate. Adding to the pot lowers the rate for everyone, so quoting
-            today's rate against tomorrow's gems would flatter every one of
-            these decisions. Hidden for a player who does not qualify, since
-            the contract would refuse the contribution the figure describes.
+            What the contribution would do — to the share and to the rate.
+            Adding to the pot lowers the rate for everyone, so both sides of
+            the sum move and the gems go into the denominator too. Only shown
+            once there is a contribution to talk about.
           */}
-          {amount > 0 && gate.qualified && (
-            <dl className="mission__facts mission__facts--after">
-              <div>
-                <dt>Your share after</dt>
-                <dd>
-                  {formatDecimals(after.payout, dp(after.payout))}
-                  <span className="faint">
-                    {symbol} · {(after.fraction * 100).toFixed(1)}%
-                  </span>
-                </dd>
-              </div>
-              <div>
-                <dt>Worth per gem after</dt>
-                <dd>
-                  {formatDecimals(after.perGem, perGemPlaces(after.perGem, type))}
-                  <span className="faint">{symbol}</span>
-                </dd>
-              </div>
-              <div>
-                <dt>Gain over contributing nothing</dt>
-                <dd>
-                  +{formatDecimals(after.payout - share.payout, dp(after.payout - share.payout))}
-                  <span className="faint">{symbol}</span>
-                </dd>
-              </div>
-            </dl>
+          {amount > 0 && gate.qualified && open && (
+            <>
+              <span className="mach__after">
+                Your share after <b>{formatDecimals(after.payout, dp(after.payout))}</b> {symbol}
+              </span>
+              <span className="mach__after">
+                Worth per gem after{' '}
+                <b>{formatDecimals(after.perGem, perGemPlaces(after.perGem, type))}</b> {symbol}
+              </span>
+            </>
           )}
+        </div>
 
-          {tooPoor && (
-            <p className="hint hint--error">
-              That is more gems than you hold.
-            </p>
-          )}
-        </section>
-      )}
+        <div className="mach__tray">
+          <span className="mach__kick">Payout tray — your share now</span>
+          <span className="mach__trayval">
+            {mine > 0 ? (
+              <>
+                {formatDecimals(share.payout, dp(share.payout))} {symbol}
+                <small>({(share.fraction * 100).toFixed(1)}%)</small>
+              </>
+            ) : (
+              '—'
+            )}
+          </span>
+        </div>
+      </div>
 
       {showBoard && (
         <ContributorBoard
@@ -811,6 +830,15 @@ export function Mission({
 
 /* ---------- winnings ---------- */
 
+/**
+ * What is waiting to be claimed.
+ *
+ * This was a panel with the two tokens, two lifetime gem tallies and a
+ * paragraph about what claiming does. None of it was a decision: the gem
+ * tallies are a record rather than a reason, and the paragraph described a
+ * button that has one outcome. What is left is the two figures and the
+ * button, on one line beside the page title.
+ */
 export function Winnings({
   claim,
   busy,
@@ -826,61 +854,42 @@ export function Winnings({
   const wax = tokenAmount(Number(claim?.wax ?? 0), 'wax')
   const anything = tlm > 0 || wax > 0
 
+  /*
+     Whole tokens only.
+
+     Decimals on a strip that exists to be glanced at are noise — nobody
+     claims on the strength of a fourth decimal place. A balance that is
+     real but rounds away says so rather than reading as nothing.
+  */
+  const whole = (v: number) => (v > 0 && v < 1 ? '<1' : formatNumber(Math.floor(v)))
+
   return (
-    <section className="winnings">
-      <h3 className="panel__title">Gains since last claim</h3>
+    <section className={`claimbar${anything ? '' : ' claimbar--nil'}`}>
+      <span className="claimbar__label">To claim</span>
 
-      {!claim ? (
-        <p className="faint">
-          Nothing waiting. Finished missions pay out here once they settle.
-        </p>
-      ) : (
-        <>
-          <div className="winnings__rows">
-            <div className="winnings__row">
-              <img src={asset("/assets/icons/tlm.svg")} alt="" width={20} height={20} />
-              <strong>{formatDecimals(tlm, placesFor(tlm, 'tlm'))}</strong>
-              <span>TLM</span>
-            </div>
-            <div className="winnings__row">
-              <img src={asset("/assets/icons/wax-coin.png")} alt="" width={20} height={20} />
-              <strong>{formatDecimals(wax, placesFor(wax, 'wax'))}</strong>
-              <span>WAX</span>
-            </div>
-          </div>
+      <span className="claimbar__amt">
+        <img src={asset('/assets/icons/tlm.svg')} alt="" width={18} height={18} />
+        <b>{whole(tlm)}</b>
+        <span>TLM</span>
+      </span>
 
-          <dl className="mission__facts">
-            <div>
-              <dt>Gems you have contributed</dt>
-              <dd>{formatNumber(Number(claim.gems ?? 0))}</dd>
-            </div>
-            <div>
-              <dt>Gems across those missions</dt>
-              <dd>{formatNumber(Number(claim.total_gems ?? 0))}</dd>
-            </div>
-          </dl>
-
-          {/*
-            `payout` sends both tokens and then erases the row, which takes
-            the lifetime gem tallies with it. Worth saying, because they read
-            like a permanent record.
-          */}
-          <p className="hint">
-            Claiming takes both tokens at once and clears this record,
-            including the gem tallies above.
-          </p>
-        </>
-      )}
+      <span className="claimbar__amt">
+        <img src={asset('/assets/icons/wax-coin.png')} alt="" width={18} height={18} />
+        <b>{whole(wax)}</b>
+        <span>WAX</span>
+      </span>
 
       <button
         type="button"
-        className="btn btn--primary winnings__claim"
+        className="btn btn--primary claimbar__go"
         disabled={!canAct || busy !== null || !anything}
         onClick={onClaim}
+        title={anything ? 'Claim both tokens at once' : 'Nothing has settled yet'}
       >
         {busy === 'claim' && <span className="spinner" />}
-        Claim Rewards
+        Claim
       </button>
     </section>
   )
 }
+

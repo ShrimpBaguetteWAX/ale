@@ -440,6 +440,42 @@ export function levelUpFighters(
 }
 
 /**
+ * Enter the tournament.
+ *
+ * One signature, and it costs energy rather than credits — the only entry
+ * fee in the game that does. It also takes the five fighters out of
+ * circulation: `tournament::signup` sets `in_use` on each of them with the
+ * reason "Tournament", and no action in the contract as deployed sets it
+ * back, so the screen warns before this is called rather than after.
+ *
+ * The cards are passed by asset id, not template id — the same pair a
+ * dungeon or an arena run is fielded with, resolved from the player's own
+ * assets immediately before signing.
+ */
+export function tournamentSignup(
+  session: Session,
+  params: {
+    tournamentName: string
+    fighterIds: number[]
+    crewAssetId: string
+    weaponAssetId: string
+  },
+) {
+  const action: ActionInput = {
+    account: CONTRACTS.tournament,
+    name: 'signup',
+    data: {
+      wallet: String(session.actor),
+      tournament_name: params.tournamentName,
+      fighter_ids: params.fighterIds,
+      crew_asset_id: params.crewAssetId,
+      arms_asset_id: params.weaponAssetId,
+    },
+  }
+  return transact(session, [action])
+}
+
+/**
  * Pay a fighter's upkeep.
  *
  * This *spends* credits — `den::payday` ends in `inline_spendcur` — and in
@@ -1149,6 +1185,10 @@ export const DIRTIES = {
   payFighters: ['player', 'fighters'],
   sellFighters: ['player', 'fighters'],
   setFighterMarker: ['fighters'],
+
+  /* The tournament. Energy off the player row, five fighters marked busy,
+     one more entrant on the stage row and one more row in the field. */
+  tournamentSignup: ['player', 'fighters', 'tournament', 'tournamentSignups'],
 
   /* Ascension: three fighters are destroyed and a fourth is rewritten. */
   ascendFighter: ['player', 'fighters'],

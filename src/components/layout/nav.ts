@@ -82,6 +82,9 @@ export const NAV_ITEMS: NavItem[] = [
     to: '/tournament',
     label: 'Tournament',
     icon: asset('/assets/icons/menu/tournament.png'),
+    /* Back behind the badge: the screen is built and the route still
+       answers, but the menu should not send players to a tournament the
+       game is not running for them yet. */
     soon: true,
   },
   { to: '/market', label: 'Market', icon: asset('/assets/icons/menu/market.png') },
@@ -113,6 +116,5 @@ export const TABBAR_ORDER = ['/map', '/fighters', '/quests', '/shop']
 /** Screens that actually exist, keyed by label, for the ComingSoon copy. */
 export const SECTION_BLURBS: Record<string, string> = {
   Ascension: 'Push a maxed fighter past its cap to unlock its true potential.',
-  Tournament: 'Weekly bracketed tournaments for the top squads.',
   Market: 'Buy and sell fighters and land with other players.',
 }

@@ -397,6 +397,16 @@ export default function Profile({ section = 'account' }: { section?: Section }) 
         <div className="alert alert--error">{error ?? own.error}</div>
       )}
 
+      {/*
+         The tabs, and the one control that is not a tab.
+
+         Disconnecting used to be the last thing on the Stats tab, below a
+         list of forty lifetime counters — somewhere you would only find it
+         by scrolling past everything you were not looking for. It belongs
+         on the line you already read to move around this screen, at the
+         opposite end so it is never the thing a thumb reaches first.
+      */}
+      <div className="accounthead">
       <div
         className="accounttabs"
         role="tablist"
@@ -422,6 +432,29 @@ export default function Profile({ section = 'account' }: { section?: Section }) 
             )}
           </button>
         ))}
+      </div>
+
+      {section === 'account' && (
+        <button
+          type="button"
+          className="btn btn--ghost accounthead__leave"
+          title="Disconnect wallet"
+          aria-label="Disconnect wallet"
+          onClick={async () => {
+            await disconnect()
+            navigate('/', { replace: true })
+          }}
+        >
+          {/* The glyph carries it on a phone, where the words would push the
+              tabs onto a line of their own. */}
+          <svg className="accounthead__icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3" />
+            <path d="M10 16l-4-4 4-4" />
+            <path d="M6 12h10" />
+          </svg>
+          <span className="accounthead__word">Disconnect wallet</span>
+        </button>
+      )}
       </div>
 
       {tab === 'avatar' && (
@@ -537,15 +570,7 @@ export default function Profile({ section = 'account' }: { section?: Section }) 
         />
       )}
 
-      {tab === 'stats' && (
-        <StatsTab
-          player={player}
-          onDisconnect={async () => {
-            await disconnect()
-            navigate('/', { replace: true })
-          }}
-        />
-      )}
+      {tab === 'stats' && <StatsTab player={player} />}
 
       {minedRewards.length > 0 && (
         <MineCelebration
@@ -1994,13 +2019,7 @@ export function StatBoardRow({
   )
 }
 
-export function StatsTab({
-  player,
-  onDisconnect,
-}: {
-  player: Player
-  onDisconnect: () => void | Promise<void>
-}) {
+export function StatsTab({ player }: { player: Player }) {
   const [showAll, setShowAll] = useState(false)
   /* Which stat's board is open, if any. */
   const [board, setBoard] = useState<string | null>(null)
@@ -2079,15 +2098,6 @@ export function StatsTab({
         />
       )}
 
-      <section className="panel">
-        <button
-          type="button"
-          className="btn btn--ghost btn--block"
-          onClick={() => void onDisconnect()}
-        >
-          Disconnect wallet
-        </button>
-      </section>
     </div>
   )
 }

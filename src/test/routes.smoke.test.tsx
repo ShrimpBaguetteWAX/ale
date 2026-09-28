@@ -101,6 +101,9 @@ const ROUTES: Route[] = [
   { name: 'market', path: '/market', element: async () => {
     const { default: S } = await import('@/routes/Market'); return <S />
   } },
+  { name: 'tournament', path: '/tournament', element: async () => {
+    const { default: S } = await import('@/routes/Tournament'); return <S />
+  } },
   { name: 'candle', path: '/candle', element: async () => {
     const { default: S } = await import('@/routes/Candle'); return <S />
   } },

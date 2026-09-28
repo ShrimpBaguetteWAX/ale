@@ -367,6 +367,22 @@
   padding: var(--sp-1);
 }
 
+/*
+ * The tile sits in a slot of its own.
+ *
+ * The hover read measures the element it is hung on and opens beside it, so
+ * it wants the grid item rather than the button inside it — and a button
+ * cannot carry the hook's ref without being one.
+ */
+.sellpick__slot {
+  display: grid;
+  min-width: 0;
+}
+
+.sellpick__slot > .sellpick__one {
+  height: 100%;
+}
+
 .sellpick__one {
   display: grid;
   gap: 2px;
@@ -924,15 +940,86 @@
  * looking properly before committing is part of the same decision - not a
  * detour onto another screen.
  */
-.selltab__act {
+/*
+ * The sell bar, over the roster it is choosing from.
+ *
+ * The terms of the listing — the price, the keep flag, the fees — used to
+ * stand under a grid of every sellable fighter, which on a large roster put
+ * the price box and the button most of a screen below the fighter being
+ * priced. They are a dialog now, and this is the way into it: the same
+ * arrangement `.roster__bar` uses on My Fighters, where the button also
+ * acts on a card that is usually past the fold.
+ */
+.selltab__bar {
   display: flex;
-  gap: var(--sp-2);
+  align-items: center;
   flex-wrap: wrap;
-  align-items: stretch;
+  gap: var(--sp-2);
+  padding: var(--sp-2);
+  /* Opaque, because the grid passes behind it. */
+  background: rgb(8 14 30 / 96%);
+  backdrop-filter: blur(6px);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-sm);
 }
 
-.selltab__act .btn--primary {
-  flex: 1 1 200px;
+/*
+ * Under the top bar rather than the window, since that one is sticky too —
+ * `--topbar-h` is the height the shell's grid reserves for it. Pinned only
+ * once a fighter is picked: with nothing to act on it is a bar that follows
+ * you down the page doing nothing.
+ */
+.selltab__bar--pinned {
+  position: sticky;
+  top: var(--topbar-h);
+  z-index: calc(var(--z-sticky) - 1);
+}
+
+.selltab__who {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+  /* Takes the slack, so the two buttons sit together at the far end. */
+  margin-right: auto;
+}
+
+.selltab__who b {
+  display: block;
+  font-family: var(--font-display);
+  font-size: var(--fs-sm);
+  color: var(--white);
+  text-transform: capitalize;
+}
+
+.selltab__who em {
+  font-style: normal;
+  font-size: var(--fs-xs);
+}
+
+.selltab__who--none {
+  font-size: var(--fs-sm);
+  color: var(--text-faint);
+}
+
+/* Enough of the fighter to be sure it is the one that was tapped. */
+.selltab__face {
+  display: block;
+  width: 38px;
+  flex: none;
+  border-radius: var(--radius-xs);
+  overflow: hidden;
+}
+
+@media (max-width: 560px) {
+  /* Side by side on one line of their own, under the name. */
+  .selltab__who {
+    flex-basis: 100%;
+  }
+
+  .selltab__bar .btn {
+    flex: 1 1 0;
+  }
 }
 
 /* The marker rides the corner of the tile, same as it does in the pickers. */

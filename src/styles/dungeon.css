@@ -517,43 +517,11 @@
   grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
 }
 
-.fightercard--compact .fightercard__hit {
-  display: grid;
-  gap: var(--sp-1);
-  padding: var(--sp-1);
-}
-
-/* The portrait carries the badges, so it is the positioning context. */
-.fightercard--compact .fightercard__portrait {
-  position: relative;
-}
-
-.fightercard--compact .fightercard__age {
-  justify-self: center;
-  font-size: 11px;
-}
-
-/* Small enough to sit on the art without covering the fighter. */
-.fightercard--compact .fightercard__tick {
-  position: absolute;
-  right: 3px;
-  bottom: 3px;
-  z-index: 1;
-  padding: 1px 4px;
-  font-size: 9px;
-  line-height: 1.3;
-  border-radius: var(--radius-xs);
-}
-
 @media (max-width: 719px) {
   /* Five across a phone, which is what was asked for and what the three
      things left on the card will take. */
   .fightergrid.fightergrid--compact {
     grid-template-columns: repeat(auto-fill, minmax(52px, 1fr));
-  }
-
-  .fightercard--compact .fightercard__age {
-    font-size: 10px;
   }
 
   /*
@@ -642,6 +610,255 @@
   position: relative;
   display: block;
   width: 100%;
+}
+
+/*
+ * The compact tile: the portrait, edge to edge.
+ *
+ * The card it replaces gave 67% of itself to artwork and the rest to a
+ * frame, a gap and a row of type under the art. The tile is now the art,
+ * and the four facts it carries move to its four corners — each on its own
+ * dark floor, because the artwork behind them runs from near-black to
+ * near-white and a chip tinted with the card would vanish on half the
+ * roster. Nothing is dropped: the level and the age simply stop having a
+ * row of their own.
+ */
+.fightercard--compact {
+  border: 0;
+  border-radius: 9px;
+  background: none;
+}
+
+.fightercard--compact:hover {
+  border-color: transparent;
+}
+
+.fightercard--compact .fightercard__hit {
+  display: block;
+  gap: 0;
+  padding: 0;
+}
+
+/* The portrait carries the badges, so it is the positioning context — and
+   now the tile's own corner, since there is no frame holding one. */
+.fightercard--compact .fightercard__portrait {
+  position: relative;
+  border-radius: 9px;
+  overflow: hidden;
+}
+
+.fightercard--compact .portrait--slot {
+  border-radius: 9px;
+}
+
+/*
+ * The ring, in place of a border on the frame there no longer is.
+ *
+ * Drawn as a shadow on the portrait so it hugs the art's own corner, and
+ * doubled with a line running inside it. Being in the team is the state a
+ * player checks most often and from furthest away — across forty tiles it
+ * has to carry without being read.
+ */
+.fightercard--compact.fightercard--picked {
+  background: none;
+}
+
+.fightercard--compact.fightercard--picked .fightercard__portrait {
+  box-shadow:
+    0 0 0 2px var(--cyan),
+    0 0 16px rgb(0 186 255 / 45%);
+}
+
+.fightercard--compact.fightercard--picked::after {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  z-index: 2;
+  border: 1px dashed rgb(255 255 255 / 80%);
+  border-radius: 6px;
+  pointer-events: none;
+}
+
+.fightercard--compact.fightercard--ascending,
+.fightercard--compact.fightercard--sacrifice {
+  background: none;
+  box-shadow: none;
+}
+
+.fightercard--compact.fightercard--ascending .fightercard__portrait {
+  box-shadow:
+    0 0 0 2px var(--gold),
+    0 0 16px rgb(246 168 0 / 40%);
+}
+
+.fightercard--compact.fightercard--sacrifice .fightercard__portrait {
+  box-shadow:
+    0 0 0 2px var(--red),
+    0 0 14px rgb(255 52 52 / 35%);
+}
+
+/*
+ * Unavailable drains rather than fades.
+ *
+ * At 42% opacity a tile with no frame dissolves into the page — the frame
+ * was the part still visible. Grey art under a scrim says the same thing
+ * and leaves the fighter recognisable, which is what a player scanning a
+ * roster is going on.
+ */
+.fightercard--compact.fightercard--off {
+  opacity: 1;
+}
+
+.fightercard--compact.fightercard--off .portrait__art {
+  filter: grayscale(1) brightness(0.5);
+}
+
+.fightercard--compact.fightercard--off .fightercard__portrait::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgb(6 13 26 / 55%);
+}
+
+.fightercard--compact.fightercard--off .fightercard__foot {
+  opacity: 0.6;
+}
+
+/* ---- what the tile says, on the tile ----
+
+   The level takes the top right on its own. The age bonus and the state
+   word share the foot: "-100%" and "Sacrifice" do not fit one line of an
+   84px tile, and posted to opposite corners they overlapped by eight
+   pixels. As a wrapping row the word steps up a line instead, which costs
+   nothing on the tiles where both fit. */
+
+.fightercard--compact .fightercard__foot {
+  position: absolute;
+  inset: 3px;
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap-reverse;
+  /* wrap-reverse swaps cross-start for cross-end, so `flex-start` here is
+     the bottom of the tile — which is where both of these belong. */
+  align-content: flex-start;
+  align-items: flex-start;
+  justify-content: flex-end;
+  gap: 2px;
+  /* The art underneath is the hit target; these are labels on it. */
+  pointer-events: none;
+}
+
+.fightercard--compact .fightercard__lvl,
+.fightercard--compact .fightercard__age,
+.fightercard--compact .fightercard__tick {
+  padding: 1px 4px;
+  border-radius: 4px;
+  background: rgb(4 10 20 / 78%);
+  font-family: var(--font-display);
+  font-weight: var(--fw-bold);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.35;
+  white-space: nowrap;
+}
+
+.fightercard--compact .fightercard__lvl,
+.fightercard--compact .fightercard__age {
+  font-size: 9.5px;
+}
+
+/* Out of the flow, so the row below is only ever the other two. */
+.fightercard--compact .fightercard__lvl {
+  position: absolute;
+  top: 0;
+  right: 0;
+  color: var(--text-dim);
+}
+
+/* Pushes the word to the far side of whatever line they share. */
+.fightercard--compact .fightercard__age {
+  margin-right: auto;
+}
+
+.fightercard--compact .fightercard__tick {
+  font-size: 8px;
+  letter-spacing: 0.04em;
+  transition: opacity var(--dur-fast) var(--ease);
+}
+
+/*
+ * The details button takes the same corner as the state word.
+ *
+ * There is no quiet edge left for it, and of the two it is the one a player
+ * reaches for deliberately — so it arrives on a rest of the pointer and the
+ * word steps aside while it is there. A phone, which has no rest, keeps
+ * both: see the strip below.
+ */
+@media (hover: hover) {
+  .fightercard--compact .fightercard__info {
+    top: auto;
+    bottom: 3px;
+    right: 3px;
+    width: 18px;
+    height: 18px;
+    font-size: 10px;
+    opacity: 0;
+    transition: opacity var(--dur-fast) var(--ease);
+  }
+
+  .fightercard--compact:hover .fightercard__info,
+  .fightercard--compact .fightercard__info:focus-visible {
+    opacity: 1;
+  }
+
+  .fightercard--compact:hover .fightercard__tick {
+    opacity: 0;
+  }
+}
+
+/*
+ * A phone gathers the corners into one strip.
+ *
+ * The tile is 53px there and the details button stays at the top right,
+ * where the level would be — two 20px chips and a 22px button cannot share
+ * one 53px square. So the level and the age come back together on a strip
+ * fading up out of the bottom edge, which is where they were before, only
+ * on the art rather than under it.
+ */
+@media (max-width: 719px) {
+  .fightercard--compact .fightercard__foot {
+    inset: auto 0 0 0;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0 4px;
+    padding: 9px 3px 2px;
+    background: linear-gradient(180deg, transparent, rgb(4 10 20 / 88%) 58%);
+  }
+
+  /* All three on the strip: the top right belongs to the details button
+     here, since a finger has no hover to summon it with. */
+  .fightercard--compact .fightercard__lvl,
+  .fightercard--compact .fightercard__age,
+  .fightercard--compact .fightercard__tick {
+    position: static;
+    padding: 0;
+    background: none;
+    font-size: 9px;
+  }
+
+  .fightercard--compact .fightercard__age {
+    margin-right: 0;
+  }
+
+  /* Its own line above the pair, and never wider than the tile. */
+  .fightercard--compact .fightercard__tick {
+    order: -1;
+    flex-basis: 100%;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-align: center;
+    font-size: 7.5px;
+  }
 }
 
 /*
@@ -3752,55 +3969,11 @@ button.combatcard--empty:hover {
   }
 }
 
-/*
- * Level on the compact picker card, beside the age bonus.
- *
- * Under the portrait rather than on it, so nothing drawn on the art can cover
- * it on any card, selected ones included. The two sit on one line and read as
- * one pair: the level and the age are the two things scaling the fight before
- * the first blow. Drawn in the age chip's own shape so they match.
- */
-.fightercard--compact .fightercard__foot {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  align-items: center;
-  gap: 1px 2px;
-  min-width: 0;
-}
-
-/*
-   A size smaller than the age chip beside it, and tighter. The widest pair,
-   "L10 +100%", needed 79px on a card with 77 to give and wrapped onto two
-   lines — and the grid lets a card shrink to 84px, which leaves 74. At this
-   size the pair is about 73.5, so it holds one line on every desktop card.
-*/
-.fightercard--compact .fightercard__lvl {
-  padding: 0 3px;
-  border-radius: var(--radius-full);
-  background: rgb(255 255 255 / 8%);
-  font-family: var(--font-display);
-  font-size: 10px;
-  font-weight: var(--fw-bold);
-  font-variant-numeric: tabular-nums;
-  color: var(--text-dim);
-  white-space: nowrap;
-}
-
+/* A 53px tile: the letter goes, as it does on the line-up cards, so the
+   level and the age bonus still fit the strip on one line. */
 @media (max-width: 719px) {
-  /* A 53px card: the letter goes, as it does on the line-up cards, so the
-     level and the age bonus still fit on one line. */
   .fightercard--compact .fightercard__lvlL {
     display: none;
-  }
-
-  .fightercard--compact .fightercard__foot {
-    gap: 2px;
-  }
-
-  .fightercard--compact .fightercard__lvl {
-    padding: 0 3px;
-    font-size: 10px;
   }
 }
 

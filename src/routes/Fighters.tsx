@@ -253,7 +253,15 @@ export default function Fighters() {
 
   /* The starting bid every fighter in the batch is listed at. */
   const [startPrice, setStartPrice] = useState(0)
-  const [keepListed, setKeepListed] = useState(true)
+  /*
+     Off unless the seller says so, as on the market's own sell tab.
+
+     It turns an auction nobody bid on into a fixed-price offer rather than
+     handing the fighter back — a second decision about a fighter the market
+     has already refused once, and not one to make on a seller's behalf
+     because the box happened to start ticked.
+  */
+  const [keepListed, setKeepListed] = useState(false)
   const minStart = Number(marketConfig?.gems_min_start_bid ?? 0)
   useEffect(() => setStartPrice(minStart), [minStart])
 

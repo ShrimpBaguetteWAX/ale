@@ -454,7 +454,21 @@ export function Portrait({
  * the two teams belongs in the balance bar, where it can be felt rather than
  * counted.
  */
-export function WeatherPanel({ weather }: { weather: Weather | null | undefined }) {
+export function WeatherPanel({
+  weather,
+  /**
+   * The hover text, which is not always wanted.
+   *
+   * On the dungeon and the arena the row is one line in a column of them and
+   * the detail has nowhere else to go. The tournament shows its rolls as a
+   * strip under the prize, where a tooltip that cannot be opened on a phone
+   * is a promise to half the players — so that screen asks for them off.
+   */
+  tooltip = true,
+}: {
+  weather: Weather | null | undefined
+  tooltip?: boolean
+}) {
   if (!weather) return null
 
   const calm = weatherIsCalm(weather)
@@ -475,7 +489,7 @@ export function WeatherPanel({ weather }: { weather: Weather | null | undefined 
   return (
     <div
       className={`weather weather--${lean}`}
-      title={`${detail}. ${falls}. Changes daily.`}
+      title={tooltip ? `${detail}. ${falls}. Changes daily.` : undefined}
     >
       {/*
         The stats the roll touches, as their own icons. A generic weather
@@ -491,7 +505,7 @@ export function WeatherPanel({ weather }: { weather: Weather | null | undefined 
               key={label}
               src={src}
               alt={label}
-              title={label}
+              title={tooltip ? label : undefined}
               width={18}
               height={18}
             />
@@ -1886,15 +1900,20 @@ export function PickCard({
   )
 
   /*
-     The compact card: the portrait, the marker and the age bonus.
+     The compact tile: the portrait, edge to edge.
 
-     Everything else is deliberately absent rather than shrunk. A smaller
-     version of the full card would still be the full card's questions asked
-     in a font nobody can read; this answers the three a roster is scanned by
-     and sends the rest to the details button, which is kept for exactly that
-     reason. The marker earns its place here and appears on no other card —
-     it is the label the player chose themselves, so at this size it is the
-     fastest way to find a particular fighter.
+     Everything the full card asks is deliberately absent rather than
+     shrunk — a smaller version of it would still be its questions asked in
+     a font nobody can read. This answers the ones a roster is scanned by
+     and sends the rest to the details button, which is kept for exactly
+     that reason. The marker earns its place here and appears on no other
+     card: it is the label the player chose themselves, so at this size it
+     is the fastest way to find a particular fighter.
+
+     All of it rides on the art. The card used to hold the level and the age
+     in a row underneath, which cost a third of the tile to a frame, a gap
+     and a line of type; they are corners of the portrait now, each on its
+     own dark floor so a pale fighter cannot swallow them.
   */
   if (density === 'compact') {
     return (
@@ -1949,27 +1968,29 @@ export function PickCard({
             {banner && <span className="fightercard__banner">{banner}</span>}
             {/* Picked and blocked both have to survive the shrink: they are
                 why a card can or cannot be tapped. */}
-            {tick && <span className="fightercard__tick">{tick}</span>}
-          </span>
-          {/*
-            Level beside the age bonus, under the portrait rather than on it.
+            {/*
+              Level, age bonus and the state word, on the art.
 
-            It stays on the compact card because it multiplies health and
-            damage before the first blow, so two identical portraits can be
-            very different picks. It first went in a corner of the art, but
-            the "In team" label runs along the foot of the portrait — across
-            all of it on a phone — so a picked card, the one a player is most
-            likely to be comparing, lost its level. Below the art nothing
-            covers it on any card.
-          */}
-          <span className="fightercard__foot">
-            {f.stats.level > 0 && (
-              <span className="fightercard__lvl">
-                <span className="fightercard__lvlL">L</span>
-                {f.stats.level}
-              </span>
-            )}
-            {ageChip}
+              The level stays on the compact tile because it multiplies
+              health and damage before the first blow, so two identical
+              portraits can be very different picks.
+
+              The three are one group rather than three corners because they
+              have to give way to each other: an 84px tile cannot hold
+              "-100%" and "Sacrifice" on one line, and posted to opposite
+              corners they simply overlapped. Laid out together, the word
+              steps up a line when there is no room beside the numbers.
+            */}
+            <span className="fightercard__foot">
+              {f.stats.level > 0 && (
+                <span className="fightercard__lvl">
+                  <span className="fightercard__lvlL">L</span>
+                  {f.stats.level}
+                </span>
+              )}
+              {ageChip}
+              {tick && <span className="fightercard__tick">{tick}</span>}
+            </span>
           </span>
         </button>
 

@@ -271,7 +271,7 @@ async function main() {
     />,
   )
 
-  render('stats tab', <StatsTab player={player} onDisconnect={() => {}} />)
+  render("stats tab", <StatsTab player={player} />)
 
   writeGallery(pages)
 }
