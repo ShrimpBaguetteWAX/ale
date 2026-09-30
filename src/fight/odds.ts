@@ -102,7 +102,14 @@ function seedsFor(runs: number): number[] {
 const battleLevel = (own: number, difficulty: number) => (difficulty === 0 ? own : difficulty)
 
 export interface Fielding {
-  weather: Weather | null | undefined
+  /**
+   * The roll, or rolls, the fight is fought under.
+   *
+   * A dungeon and an arena stand on one land and have one. A tournament
+   * rolls per planet and all of them apply, so this takes a list too — each
+   * one is asked in turn whether it reaches this fighter.
+   */
+  weather: Weather | Weather[] | null | undefined
   caps: StatCaps
   levelMod: number
   ageDecay: number
@@ -120,7 +127,7 @@ export type EnemyScaling =
   | { venue: 'arena'; power: number; fullPower: number }
 
 /** One roster fighter as the roll leaves it — no scaling, no weather yet. */
-function rollFighter(f: RosterFighter, seed: number, slot: number): BattleFighter {
+export function rollFighter(f: RosterFighter, seed: number, slot: number): BattleFighter {
   const s = f.stats
   /*  is passed by value per fighter and advanced by ten between
      them, so slot four's draws do not depend on slot three's. */
@@ -159,7 +166,7 @@ function rollFighter(f: RosterFighter, seed: number, slot: number): BattleFighte
  * `getFighterFromNFT` gives it level 1 and the current time as its creation
  * date, so it takes one step of the level curve and no age decay at all.
  */
-function nftAsFighter(nft: FlatFighter, now: number): BattleFighter {
+export function nftAsFighter(nft: FlatFighter, now: number): BattleFighter {
   return asCombatant({
     ...nft,
     fighter_id: 99999999999,
@@ -230,7 +237,7 @@ function asCombatant(f: {
  * the weather after, which is where flat effects land and why the two cannot
  * be swapped.
  */
-function fieldInRing(
+export function fieldInRing(
   f: SimFighter,
   creationDate: string | undefined,
   difficulty: number,
@@ -244,7 +251,11 @@ function fieldInRing(
   f.max_health = Math.trunc(f.max_health * factor)
   f.damage = Math.trunc(f.damage * factor)
   if (difficulty !== 0) f.level = difficulty
-  Object.assign(f, applyWeather(f, weather, caps))
+  /* Folded, so three rolls compound the way three would on chain. Each
+     checks for itself whether it reaches this fighter. */
+  for (const roll of Array.isArray(weather) ? weather : [weather]) {
+    Object.assign(f, applyWeather(f, roll, caps))
+  }
   /* The bars read this, and it is the health the fight opens on. */
   f.start_health = f.health
 }

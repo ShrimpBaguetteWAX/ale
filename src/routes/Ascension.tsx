@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { useGame } from '@/state/useGame'
 import { fetchRoster } from '@/dungeon/queries'
 import { battleFactor } from '@/fighters/rules'
@@ -456,7 +456,29 @@ function Builder({
           {REQUIREMENTS.map((r) => (
             <AscSlot
               key={r.key}
-              label={r.label}
+              /*
+                 The class, named on all three.
+
+                 It is the requirement every sacrifice shares and the only
+                 one none of the labels said — "same element" and "same
+                 race" read as the whole of it, which leaves a player
+                 wondering why a roster of sixty offers them four. Repeated
+                 on each of the three deliberately: seeing the same class
+                 three times is the point being made.
+              */
+              label={
+                <>
+                  {r.label}
+                  <b
+                    className={`ascslot__class${target ? '' : ' ascslot__class--any'}`}
+                  >
+                    {/* Before a fighter is chosen there is no class to name,
+                        only the rule — which is the half worth knowing while
+                        deciding who to ascend. */}
+                    {target ? target.classname : 'same class'}
+                  </b>
+                </>
+              }
               hint={r.hint}
               fighter={
                 chosenFighters.find((f) => f.fighter_id === slots[r.key]) ?? null
@@ -635,7 +657,7 @@ function AscSlot({
   disabled = false,
   onClick,
 }: {
-  label: string
+  label: ReactNode
   hint: string
   fighter: RosterFighter | null
   /** Which end of the trade this slot is. */

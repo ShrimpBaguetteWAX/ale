@@ -37,12 +37,29 @@ const FOCUSABLE = [
 export function useModal(onClose: () => void) {
   const panel = useRef<HTMLDivElement>(null)
 
+  /*
+     The close callback is read through a ref so the effect below can depend
+     on nothing and run exactly once, on mount.
+
+     It used to list `onClose`, and every caller passes an inline arrow —
+     a new function on each of the caller's renders. On a screen that
+     re-renders on a timer, that tore the whole thing down and set it up
+     again on every tick, and setup ends by moving focus to the panel's
+     first control. On the market, whose countdown re-renders it once a
+     second, a player typing a bid amount had the field taken off them
+     within a second of clicking into it, every second.
+  */
+  const close = useRef(onClose)
+  useEffect(() => {
+    close.current = onClose
+  })
+
   useEffect(() => {
     const opener = document.activeElement as HTMLElement | null
 
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        onClose()
+        close.current()
         return
       }
       if (e.key !== 'Tab') return
@@ -92,7 +109,9 @@ export function useModal(onClose: () => void) {
       /* Back where it came from, if that is still on the page. */
       if (opener && document.contains(opener)) opener.focus?.()
     }
-  }, [onClose])
+    /* Mount and unmount only — see the ref above. */
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   return panel
 }

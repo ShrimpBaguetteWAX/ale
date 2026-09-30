@@ -22,6 +22,7 @@ import { MemoryRouter } from 'react-router-dom'
 import type { ReactElement } from 'react'
 import {
   Battle,
+  BoutLineup,
   DayStrip,
   EntryActions,
   EntryPanel,
@@ -180,42 +181,44 @@ const played = (won: number, points: number): TournamentSignup => ({
   reward_points: points,
 })
 
-const PAIRINGS: TournamentMatchup[] = [
-  {
-    index: 1,
-    matchup_seed: 88,
-    wallet_player1: 'me.wam',
-    wallet_player2: 'player7.wam',
-    gamertag_player1: 'Shade',
-    gamertag_player2: 'Quill',
-    avatar_player1: 1000,
-    avatar_player2: 1008,
-    fighter_ids_player1: [1, 2, 3, 4, 5],
-    fighter_ids_player2: [6, 7, 8, 9, 10],
-    crew_asset_id_player1: 0,
-    crew_asset_id_player2: 0,
-    arms_asset_id_player1: 0,
-    arms_asset_id_player2: 0,
-    winner: 'me.wam',
-  },
-  {
-    index: 2,
-    matchup_seed: 91,
-    wallet_player1: 'player3.wam',
-    wallet_player2: 'me.wam',
-    gamertag_player1: 'Orrery',
-    gamertag_player2: 'Shade',
-    avatar_player1: 1004,
-    avatar_player2: 1000,
-    fighter_ids_player1: [11, 12, 13, 14, 15],
-    fighter_ids_player2: [1, 2, 3, 4, 5],
-    crew_asset_id_player1: 0,
-    crew_asset_id_player2: 0,
-    arms_asset_id_player1: 0,
-    arms_asset_id_player2: 0,
-    winner: '',
-  },
-]
+/*
+   The opening round as the contract draws it.
+
+   Twenty-three entrants make a power of two of 32, so sixteen go through to
+   the first knockout round: nine of them on seed and seven out of the other
+   fourteen, paired best-of-the-rest against worst. The draw is built here
+   rather than written out because the arrangement is the thing worth
+   seeing — two hand-written rows both involving the player showed a board
+   with no shape to it.
+*/
+const FREE_PASSES = 9
+const BOUT_COUNT = 7
+
+const PAIRINGS: TournamentMatchup[] = Array.from({ length: BOUT_COUNT }, (_, i) => {
+  const order = seedOrder(FIELD)
+  const a = order[FREE_PASSES + i]
+  const b = order[order.length - 1 - i]
+  return {
+    index: i,
+    matchup_seed: 80 + i,
+    wallet_player1: a.wallet,
+    wallet_player2: b.wallet,
+    gamertag_player1: a.playertag,
+    gamertag_player2: b.playertag,
+    avatar_player1: a.avatar,
+    avatar_player2: b.avatar,
+    fighter_ids_player1: a.fighter_ids,
+    fighter_ids_player2: b.fighter_ids,
+    /* Real templates, so the pair draws rather than showing two blanks. */
+    crew_template_id_player1: 260678,
+    crew_template_id_player2: 260678,
+    arms_template_id_player1: 260676,
+    arms_template_id_player2: 260676,
+    /* Two fought, one under way, the rest to come — every state the row
+       can be in, on one board. */
+    winner: i === 0 ? a.wallet : i === 1 ? b.wallet : '',
+  }
+})
 
 /*
    Real class/race pairs, so the portraits resolve to shipped art.
@@ -336,8 +339,11 @@ const fighting = stage({
   allow_player_cancellation: false,
   free_passes: bracketOf(23).freePasses,
   rounds: bracketOf(23).rounds,
-  current_round: 1,
-  battles_in_round: 8,
+  /* The opening round, which is the only one with byes in it — and the one
+     a player is most likely to be looking at, since it is where the whole
+     field is still on the board. */
+  current_round: 0,
+  battles_in_round: BOUT_COUNT,
   current_battle: 3,
 })
 
@@ -454,10 +460,16 @@ const STATES: { id: string; note: string; body: string }[] = [
           stage={fighting}
           bracket={bracketOf(23)}
           pairings={PAIRINGS}
+          byes={seedOrder(FIELD).slice(0, FREE_PASSES)}
+          weather={WEATHER.map((w) => w.weather) as never}
           mineWallet="me.wam"
           entered
         />,
       ) +
+      '<p class="tourcat__note">A bout with its line-ups open — the click this page cannot make</p>' +
+      '<div class="tour__bout tour__bout--open">' +
+      draw(<BoutLineup m={PAIRINGS[3]} />) +
+      '</div>' +
       draw(
         <MyEntry
           mine={played(2, 20)}

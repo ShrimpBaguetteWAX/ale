@@ -136,10 +136,22 @@ export interface TournamentMatchup {
   avatar_player2: number
   fighter_ids_player1: number[]
   fighter_ids_player2: number[]
-  crew_asset_id_player1: number
-  crew_asset_id_player2: number
-  arms_asset_id_player1: number
-  arms_asset_id_player2: number
+  /**
+   * The crew and weapon as templates, not as assets.
+   *
+   * A signup row stores the two asset ids a player entered, which have to
+   * be resolved through AtomicAssets before anything can be drawn or
+   * fielded — and an asset that has since been burned or sold resolves to
+   * nothing, which would leave a side fighting five against six. The
+   * matchup stores what the pair actually is, so a bout needs no lookup and
+   * cannot lose its sixth fighter after the draw.
+   *
+   * Zero where no card was entered.
+   */
+  crew_template_id_player1: number
+  crew_template_id_player2: number
+  arms_template_id_player1: number
+  arms_template_id_player2: number
   winner: string
 }
 

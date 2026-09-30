@@ -1,6 +1,7 @@
 import { CONTRACTS } from '@/chain/config'
 import { getAllRows, getRow } from '@/chain/client'
 import { TTL } from '@/chain/cache'
+import { nameToUint64 } from '@/dungeon/queries'
 import type { RosterFighter } from '@/dungeon/types'
 import type {
   TournamentConfig,
@@ -92,15 +93,26 @@ export function fetchTournamentSignups(
 }
 
 /**
- * The pairings drawn so far.
+ * The pairings for one round of one tournament.
  *
- * Under the contract's own scope rather than the tournament's, so two
- * overlapping tournaments share the table — which is why every row is
- * matched back to its players by wallet rather than trusted wholesale.
+ * Scoped per round, not per tournament: `create_matchups` writes into
+ * `tournament_name.value + current_round`, so round 0 of a tournament and
+ * round 1 of the tournament whose name is one greater would collide — they
+ * do not in practice, because a name's value is astronomically larger than
+ * a round number, but it does mean every round needs its own read and that
+ * the scope is arithmetic rather than a name.
+ *
+ * `index` restarts at 0 in each round's scope, so a pairing is only
+ * identified by round and index together.
  */
-export function fetchTournamentMatchups(refresh = false): Promise<TournamentMatchup[]> {
+export function fetchTournamentMatchups(
+  tournamentName: string,
+  round: number,
+  refresh = false,
+): Promise<TournamentMatchup[]> {
+  const scope = (nameToUint64(tournamentName) + BigInt(Math.max(0, Math.trunc(round)))).toString()
   return getAllRows<TournamentMatchup>(
-    { code: CONTRACTS.tournament, scope: CONTRACTS.tournament, table: 'matchup' },
+    { code: CONTRACTS.tournament, scope, table: 'matchup' },
     { ttl: TTL.live, refresh },
   )
 }

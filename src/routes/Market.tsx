@@ -1380,7 +1380,10 @@ export function SellTab({
     [sellable, filter, ageDecay, classes, levelMod],
   )
   const [price, setPrice] = useState(minStart)
-  const [keep, setKeep] = useState(false)
+  /* Ticked by default: an unsold fighter staying up at the price its seller
+     already chose is the outcome most of them want, and the box is right
+     there to untick. */
+  const [keep, setKeep] = useState(true)
   /* Whether the terms are open. The choice is the page; this is the deal. */
   const [selling, setSelling] = useState(false)
 
@@ -1524,12 +1527,11 @@ export function SellTab({
                   onChange={(e) => setKeep(e.target.checked)}
                 />
                 <span>
-                  Keep it listed if nobody bids
+                  Keep listed if nobody bids
                   <em className="faint">
                     {' '}
-                    — it becomes a fixed-price offer at{' '}
-                    {config?.gems_instant_buy_price ?? 0} gems instead of coming
-                    back to you
+                    — it becomes a fixed-price instant buy offer at your
+                    starting price instead of coming back to you
                   </em>
                 </span>
               </label>

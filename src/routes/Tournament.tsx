@@ -28,6 +28,7 @@ import {
 } from '@/tavern/fighterStats'
 import { GameImg } from '@/components/GameImg'
 import { PlayerAvatar } from '@/components/PlayerAvatar'
+import { BoutBroadcast } from '@/tournament/BoutBroadcast'
 import { usePhone } from '@/components/usePhone'
 import { WeatherPanel } from '@/fight/setup'
 import { fetchWeatherRow, type Weather } from '@/fight/weather'
@@ -49,7 +50,6 @@ import {
   chainTime,
   currentStepEnd,
   mySignup,
-  myMatchups,
   phaseOf,
   pickTournament,
   crewFaces,
@@ -889,54 +889,345 @@ export function Battle({
   stage,
   bracket,
   pairings,
+  byes,
+  weather,
   mineWallet,
   entered,
 }: {
   stage: TournamentStage
   bracket: Bracket
   pairings: TournamentMatchup[]
+  /**
+   * Entrants whose seed spared them the round.
+   *
+   * Only the opening one has any: the contract hands the top seeds a win
+   * apiece and draws the pairings out of everyone below them, so from round
+   * one onwards the field is a power of two and everybody fights.
+   */
+  byes: TournamentSignup[]
+  /** Every roll of the round — the bout is fought under all of them. */
+  weather: Weather[]
   mineWallet: string | null
   entered: boolean
 }) {
+  const round = Number(stage.current_round ?? 0)
+  const fought = Number(stage.current_battle ?? 0)
+  const inRound = Number(stage.battles_in_round ?? 0)
+  /* One open at a time: two line-ups is ten combat cards, and the point of
+     opening one is to read it against the name across from it. */
+  const [open, setOpen] = useState<number | null>(null)
+
+  /*
+     The bout the contract is on, or the last one once the round is fought
+     out — so the broadcast always has something to offer rather than going
+     blank the moment the fighting stops.
+  */
+  const live = pairings.length
+    ? pairings[Math.min(fought, pairings.length - 1)]
+    : null
+
   return (
     <section className="tour__panel">
-      <h2 className="tour__h2">
-        Round {Math.max(1, Number(stage.current_round ?? 0) + 1)}
-        {bracket.rounds > 0 ? ` of ${bracket.rounds}` : ''}
-      </h2>
-      {Number(stage.battles_in_round ?? 0) > 0 ? (
-        <p className="muted">
-          Battle {formatNumber(Number(stage.current_battle ?? 0))} of{' '}
-          {formatNumber(Number(stage.battles_in_round ?? 0))} in this round.
-        </p>
-      ) : (
-        <p className="muted">The pairings for this round are being fought.</p>
+      {live && !!live.wallet_player2 && (
+        <BoutBroadcast
+          m={live}
+          round={round}
+          bout={Math.min(fought, pairings.length - 1)}
+          weather={weather}
+          mineWallet={mineWallet}
+        />
       )}
 
+      <header className="tour__fieldhead">
+        <h2 className="tour__h2">
+          Round {round + 1}
+          {bracket.rounds > 0 ? ` of ${bracket.rounds}` : ''}
+        </h2>
+        <span className="faint">
+          {inRound > 0
+            ? `${formatNumber(Math.min(fought, inRound))} of ${formatNumber(inRound)} fought`
+            : 'Drawing the pairings'}
+        </span>
+      </header>
+
       {pairings.length > 0 ? (
-        <ul className="tour__pairs">
-          {pairings.map((m) => {
-            const first = m.wallet_player1 === mineWallet
-            const meTag = first ? m.gamertag_player1 : m.gamertag_player2
-            const themTag = first ? m.gamertag_player2 : m.gamertag_player1
-            const done = !!m.winner
-            const won = done && m.winner === (first ? m.wallet_player1 : m.wallet_player2)
+        <ol className="tour__bouts">
+          {pairings.map((m, i) => {
+            const mine =
+              !!mineWallet && (m.wallet_player1 === mineWallet || m.wallet_player2 === mineWallet)
+            /*
+               A pairing is decided when the chain says who took it, and
+               `winner` is a string — the contract has written a tag in it
+               and a wallet in it at different times — so both are checked
+               rather than guessing which this row holds.
+            */
+            const took = (wallet: string, tag: string) =>
+              !!m.winner && (m.winner === wallet || m.winner === tag)
+            const won1 = took(m.wallet_player1, m.gamertag_player1)
+            const won2 = took(m.wallet_player2, m.gamertag_player2)
+            const drawn = !!m.wallet_player2
+            const isOpen = open === m.index
+            /* The contract fights them in order, one call at a time. */
+            const state = !drawn
+              ? 'Being drawn'
+              : m.winner
+                ? 'Fought'
+                : i < fought
+                  ? 'Fought'
+                  : i === fought
+                    ? 'Fighting now'
+                    : 'To come'
+
             return (
-              <li key={m.index} className="tour__pair">
-                <span className="tour__pairside">{meTag || 'You'}</span>
-                <span className="tour__vs">vs</span>
-                <span className="tour__pairside">{themTag || 'Waiting'}</span>
-                <span className={`tour__pairres${won ? ' tour__pairres--won' : ''}`}>
-                  {done ? (won ? 'Won' : 'Lost') : 'Fighting'}
-                </span>
+              <li
+                key={m.index}
+                className={
+                  'tour__bout' +
+                  (mine ? ' tour__bout--mine' : '') +
+                  (state === 'Fighting now' ? ' tour__bout--live' : '') +
+                  (isOpen ? ' tour__bout--open' : '')
+                }
+              >
+                <button
+                  type="button"
+                  className="tour__boutrow"
+                  aria-expanded={isOpen}
+                  disabled={!drawn}
+                  onClick={() => setOpen(isOpen ? null : m.index)}
+                  title={drawn ? 'See both line-ups' : 'This pairing is still being drawn'}
+                >
+                  <span className="tour__boutno mono">{i + 1}</span>
+                  <BoutSide
+                    wallet={m.wallet_player1}
+                    tag={m.gamertag_player1}
+                    avatar={m.avatar_player1}
+                    won={won1}
+                    beaten={won2}
+                    mineWallet={mineWallet}
+                  />
+                  <span className="tour__boutvs" aria-hidden="true">
+                    VS
+                  </span>
+                  <BoutSide
+                    wallet={m.wallet_player2}
+                    tag={m.gamertag_player2}
+                    avatar={m.avatar_player2}
+                    won={won2}
+                    beaten={won1}
+                    mineWallet={mineWallet}
+                    right
+                  />
+                  <span className="tour__boutend">
+                    <span
+                      className={`tour__boutstate${
+                        state === 'Fighting now' ? ' tour__boutstate--live' : ''
+                      }`}
+                    >
+                      {state}
+                    </span>
+                    {drawn && (
+                      <svg
+                        className={`tour__chev${isOpen ? ' tour__chev--open' : ''}`}
+                        viewBox="0 0 16 16"
+                        aria-hidden="true"
+                      >
+                        <path d="M4 6l4 4 4-4" />
+                      </svg>
+                    )}
+                  </span>
+                </button>
+                {isOpen && <BoutLineup m={m} />}
               </li>
             )
           })}
-        </ul>
+        </ol>
       ) : (
-        entered && <p className="faint">Your next pairing has not been drawn yet.</p>
+        <p className="faint">
+          {entered
+            ? 'The pairings for this round have not been drawn yet.'
+            : 'The pairings for this round are being drawn.'}
+        </p>
+      )}
+
+      {/*
+        The byes, named.
+
+        A bracket that shows eleven fighting and says nothing about the five
+        sitting out is a bracket a player cannot count. These are the seeds
+        the field earned a pass for, and on the opening round they are half
+        the story of who is still in.
+      */}
+      {round === 0 && byes.length > 0 && (
+        <div className="tour__byes">
+          <h3 className="tour__byeshead">
+            Through on seed
+            <span className="faint"> · no opponent this round</span>
+          </h3>
+          <ul className="tour__byelist">
+            {byes.map((s) => (
+              <li
+                key={s.wallet}
+                className={`tour__bye${s.wallet === mineWallet ? ' tour__bye--mine' : ''}`}
+              >
+                <PlayerAvatar
+                  id={s.avatar}
+                  name={s.playertag}
+                  className="tour__byeface"
+                  size={28}
+                />
+                <span>{s.playertag || 'Unnamed'}</span>
+                <span className="tour__byescore mono">{formatNumber(s.score)}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
     </section>
+  )
+}
+
+/**
+ * Both line-ups in a pairing, read when somebody opens it.
+ *
+ * Ten fighters and four cards, which is two of the reads the field list
+ * already makes — so it is done on a click rather than for every bout on
+ * the board. Side by side because that is the comparison being asked for:
+ * what beats what is the whole of why a player opens a matchup they are not
+ * in.
+ */
+export function BoutLineup({ m }: { m: TournamentMatchup }) {
+  return (
+    <div className="tour__boutdetail">
+      <div className="tour__corner">
+        <h4 className="tour__cornername">{m.gamertag_player1 || 'Unnamed'}</h4>
+        <BoutCorner
+          who={m.wallet_player1}
+          fighterIds={m.fighter_ids_player1}
+          crew={m.crew_template_id_player1}
+          arms={m.arms_template_id_player1}
+        />
+      </div>
+      <div className="tour__corner">
+        <h4 className="tour__cornername">{m.gamertag_player2 || 'Unnamed'}</h4>
+        <BoutCorner
+          who={m.wallet_player2}
+          fighterIds={m.fighter_ids_player2}
+          crew={m.crew_template_id_player2}
+          arms={m.arms_template_id_player2}
+        />
+      </div>
+    </div>
+  )
+}
+
+/**
+ * One side of a pairing: five fighters read on demand, and its two cards.
+ *
+ * Five keyed reads and nothing else — the templates are on the row.
+ */
+function BoutCorner({
+  who,
+  fighterIds,
+  crew,
+  arms,
+}: {
+  who: string
+  fighterIds: number[]
+  crew: number
+  arms: number
+}) {
+  const ids = fighterIds.join(',')
+  const crews = useChainQuery(`tournament-bout:${who}:${ids}`, () => fetchFightersByIds(fighterIds), {
+    deps: ['fighters'],
+    enabled: fighterIds.length > 0,
+  })
+
+  const { classes, levelMod, ageDecay } = useConfig()
+
+  if (crews.loading && !crews.data) {
+    return (
+      <div className="tour__lineup tour__lineup--wait">
+        <span className="spinner" /> Reading the line-up…
+      </div>
+    )
+  }
+
+  const fighters = crews.data ?? []
+
+  return (
+    <div className="tour__lineup">
+      {fighters.map((fighter) => (
+        <CombatCard
+          key={fighter.fighter_id}
+          element={fighter.element}
+          classname={fighter.classname}
+          racename={fighter.racename}
+          level={fighter.stats.level}
+          health={
+            mid(fighter.stats.health_min, fighter.stats.health_max) *
+            levelFactor(fighter.stats.level, levelMod) *
+            ageFactor(fighter.creation_date, ageDecay)
+          }
+          damage={
+            mid(fighter.stats.damage_min, fighter.stats.damage_max) *
+            levelFactor(fighter.stats.level, levelMod) *
+            ageFactor(fighter.creation_date, ageDecay)
+          }
+          side="mine"
+          marker={fighter.marker}
+          onOpen={() => {}}
+          preview={() => ({
+            panel: rosterPanel(fighter, levelMod, ageDecay),
+            template: classes.get(fighter.classname),
+          })}
+        />
+      ))}
+
+      <LineupCard label="Crew" template={crew || undefined} />
+      <LineupCard label="Weapon" template={arms || undefined} />
+
+      {crews.error && <span className="hint">{crews.error}</span>}
+      {!crews.loading && fighters.length === 0 && (
+        <span className="faint">These fighters are no longer on chain.</span>
+      )}
+    </div>
+  )
+}
+
+/** One corner of a pairing. Empty until the second half of the draw runs. */
+function BoutSide({
+  wallet,
+  tag,
+  avatar,
+  won,
+  beaten,
+  mineWallet,
+  right = false,
+}: {
+  wallet: string
+  tag: string
+  avatar: number
+  won: boolean
+  beaten: boolean
+  mineWallet: string | null
+  right?: boolean
+}) {
+  if (!wallet) {
+    return <span className="tour__boutside tour__boutside--empty">Waiting</span>
+  }
+  return (
+    <span
+      className={
+        'tour__boutside' +
+        (right ? ' tour__boutside--right' : '') +
+        (won ? ' tour__boutside--won' : '') +
+        (beaten ? ' tour__boutside--out' : '') +
+        (wallet === mineWallet ? ' tour__boutside--me' : '')
+      }
+    >
+      <PlayerAvatar id={avatar} name={tag} className="tour__boutface" size={44} />
+      <span className="tour__boutname">{tag || 'Unnamed'}</span>
+    </span>
   )
 }
 
@@ -1037,6 +1328,37 @@ export function MyEntry({
  * the stage row is final.
  */
 /**
+ * One of the two cards a line-up was entered with.
+ *
+ * Drawn from the template rather than the asset: a template is what the
+ * card *is*, it has the artwork and the rarity hanging off it, and two
+ * players holding the same crew card hold the same template. Where the
+ * caller only has an asset id it resolves that first — see `EntryLineup`.
+ */
+function LineupCard({ label, template }: { label: string; template: number | undefined }) {
+  const { nftValues } = useConfig()
+  const value = template ? nftValues.get(template) : undefined
+
+  return (
+    <span className="tour__lcard">
+      {template ? (
+        <GameImg
+          className="tour__lcardart"
+          src={asset(`/assets/cards/${template}.webp`)}
+          fallback={asset('/assets/default-card.png')}
+          alt={label}
+          loading="lazy"
+        />
+      ) : (
+        <span className="tour__lcardart tour__lcardart--none" />
+      )}
+      <span className="tour__lname">{label}</span>
+      <span className="tour__lmeta mono">{value ? value.rarity : 'none'}</span>
+    </span>
+  )
+}
+
+/**
  * One entrant's line-up, fetched when their row is opened.
  *
  * Nothing is read until somebody asks: a field of fifty is fifty line-ups,
@@ -1044,7 +1366,16 @@ export function MyEntry({
  * Opened once, it stays in the cache — an entry cannot change after it is
  * made.
  */
-export function EntryLineup({ entry }: { entry: TournamentSignup }) {
+export function EntryLineup({
+  entry,
+}: {
+  /* Narrowed from `TournamentSignup` so a pairing can hand over one of its
+     two corners, which carries the same four fields under longer names. */
+  entry: Pick<
+    TournamentSignup,
+    'wallet' | 'fighter_ids' | 'crew_asset_id' | 'arms_asset_id'
+  >
+}) {
   const ids = entry.fighter_ids.join(',')
   const crew = String(entry.crew_asset_id ?? 0)
   const arms = String(entry.arms_asset_id ?? 0)
@@ -1057,7 +1388,7 @@ export function EntryLineup({ entry }: { entry: TournamentSignup }) {
     return { fighters, templates }
   })
 
-  const { classes, nftValues, levelMod, ageDecay } = useConfig()
+  const { classes, levelMod, ageDecay } = useConfig()
   const cards = [
     { label: 'Crew', assetId: crew },
     { label: 'Weapon', assetId: arms },
@@ -1108,29 +1439,9 @@ export function EntryLineup({ entry }: { entry: TournamentSignup }) {
         />
       ))}
 
-      {cards.map(({ label, assetId }) => {
-        const template = templates.get(assetId)
-        const value = template ? nftValues.get(template) : undefined
-        return (
-          <span className="tour__lcard" key={label}>
-            {template ? (
-              <GameImg
-                className="tour__lcardart"
-                src={asset(`/assets/cards/${template}.webp`)}
-                fallback={asset('/assets/default-card.png')}
-                alt={label}
-                loading="lazy"
-              />
-            ) : (
-              <span className="tour__lcardart tour__lcardart--none" />
-            )}
-            <span className="tour__lname">{label}</span>
-            <span className="tour__lmeta mono">
-              {value ? value.rarity : assetId === '0' ? 'none' : '—'}
-            </span>
-          </span>
-        )
-      })}
+      {cards.map(({ label, assetId }) => (
+        <LineupCard key={label} label={label} template={templates.get(assetId)} />
+      ))}
 
       {detail.error && <span className="hint">{detail.error}</span>}
       {!detail.loading && fighters.length === 0 && (
@@ -1268,7 +1579,15 @@ export function Field({
                     />
                   ))}
                 </span>
-                {s.battles_won > 0 && <span className="tour__wins mono">{s.battles_won}W</span>}
+                {/*
+                   No win count on the row.
+
+                   `battles_won` is not wins. The contract bumps it once per
+                   free pass while it is handing the top seeds through the
+                   opening round — so "1W" appeared on a seed that had not
+                   fought anything, next to eleven others who had not either.
+                   The pass already has its own ticket beside the name.
+                */}
                 <span className="tour__escore mono">{formatNumber(s.score)}</span>
                 <svg
                   className={`tour__chev${isOpen ? ' tour__chev--open' : ''}`}
@@ -1341,7 +1660,15 @@ export default function Tournament() {
 
       const [plan, matchups, payouts, weather] = await Promise.all([
         stage ? fetchTournamentPlan(stage.tournament_name, fresh) : Promise.resolve([]),
-        stage ? fetchTournamentMatchups(fresh) : Promise.resolve([]),
+        /* Per round, so this is the round the tournament is on. Earlier
+           rounds live in their own scopes and are not read here. */
+        stage
+          ? fetchTournamentMatchups(
+              stage.tournament_name,
+              Number(stage.current_round ?? 0),
+              fresh,
+            )
+          : Promise.resolve([]),
         fetchTournamentPayouts(),
         /*
            The rolls, resolved.
@@ -1571,7 +1898,29 @@ export default function Tournament() {
   const entered = stage ? Number(stage.player_count ?? signups.length) : signups.length
   const bracket = bracketOf(entered)
   const seeding = stage ? seedingOf(signups, stage, mine?.wallet ?? player.wallet) : null
-  const pairings = mine ? myMatchups(board.data?.matchups ?? [], mine.wallet) : []
+  /*
+     Every pairing in the round, not only the player's own.
+
+     A tournament screen that showed you your one bout and nothing else was
+     a fixture list with one fixture on it — who else is still in is the
+     thing a bracket is for.
+  */
+  const pairings = board.data?.matchups ?? []
+  /* The rolls that landed, in the order the stage lists them. */
+  const rolls = useMemo(
+    () =>
+      (board.data?.weather ?? [])
+        .map((w) => w.weather)
+        .filter((w): w is Weather => !!w),
+    [board.data],
+  )
+
+  /* The seeds the draw spared, which is only ever the opening round. */
+  const passes = freePassCount(stage, entered)
+  const byes = useMemo(
+    () => (Number(stage?.current_round ?? 0) === 0 ? field.slice(0, passes) : []),
+    [stage, field, passes],
+  )
   const payout = board.data?.payouts?.find((p) => p.wallet === player.wallet)
   const nextStart = chainTime(board.data?.tracking?.next_tournament_start)
 
@@ -1777,6 +2126,15 @@ export default function Tournament() {
           stage={stage}
           bracket={bracket}
           pairings={pairings}
+          byes={byes}
+          /*
+             All of them.
+
+             `curstage` rolls one per planet and every one applies, so the
+             bout is fought under the lot — they compound in turn, each
+             asking for itself whether it reaches a given fighter.
+          */
+          weather={rolls}
           mineWallet={mine?.wallet ?? null}
           entered={!!mine}
         />
@@ -1788,13 +2146,23 @@ export default function Tournament() {
 
       {mine && <MyEntry mine={mine} seeding={seeding} bracket={bracket} />}
 
-      <Field
-        field={field}
-        mineWallet={mine?.wallet ?? null}
-        entryOpen={entryOpen}
-        freePasses={freePassCount(stage, entered)}
-        degenerate={bracket.degenerate}
-      />
+      {/*
+        Not once the fighting starts.
+
+        The field is the list of who entered, seeded — the question the
+        screen answers while entry is open and the draw is being made. Once
+        there are pairings it is the same names in a worse arrangement,
+        below a board that already says who is left and who they drew.
+      */}
+      {phase !== 'battle' && (
+        <Field
+          field={field}
+          mineWallet={mine?.wallet ?? null}
+          entryOpen={entryOpen}
+          freePasses={freePassCount(stage, entered)}
+          degenerate={bracket.degenerate}
+        />
+      )}
 
       {detail && (
         <DetailSheet panel={detail.panel} template={detail.template} onClose={() => setDetail(null)} />

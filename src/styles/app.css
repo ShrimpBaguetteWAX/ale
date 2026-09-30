@@ -1036,6 +1036,30 @@
   color: var(--text-faint);
 }
 
+/*
+ * The class every sacrifice has to share, on each of their three headers.
+ *
+ * It is the one requirement all three have in common and the one the labels
+ * never carried — "same element" and "same race" read as the whole of it,
+ * so a roster of sixty offering four candidates looked like a bug. Set off
+ * from the requirement beside it, because they are two different things
+ * being asked for.
+ */
+.ascslot__class {
+  padding: 1px 5px;
+  border-radius: var(--radius-full);
+  background: rgb(0 186 255 / 14%);
+  color: #7ee7fb;
+  font-weight: var(--fw-bold);
+}
+
+/* Nothing to name yet: the rule stated, in the shape the class will take —
+   so the slot does not change size when a fighter is finally chosen. */
+.ascslot__class--any {
+  background: rgb(148 163 184 / 12%);
+  color: var(--text-faint);
+}
+
 /* Still somewhere to put something: dashed, and the height of the card that
    will land in it, so choosing one does not reflow the other three. */
 .ascslot__empty {

@@ -82,9 +82,8 @@ export const NAV_ITEMS: NavItem[] = [
     to: '/tournament',
     label: 'Tournament',
     icon: asset('/assets/icons/menu/tournament.png'),
-    /* Back behind the badge: the screen is built and the route still
-       answers, but the menu should not send players to a tournament the
-       game is not running for them yet. */
+    /* The screen is built and everything behind it stays where it is; only
+       the way in is closed while it is not ready to be found. */
     soon: true,
   },
   { to: '/market', label: 'Market', icon: asset('/assets/icons/menu/market.png') },

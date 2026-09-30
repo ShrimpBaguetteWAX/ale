@@ -113,13 +113,25 @@ describe('the sell tab', () => {
      fixed-price offer rather than handing the fighter back, which is not a
      decision to make for them because a box happened to be ticked.
   */
-  it('leaves the keep-if-nobody-bids flag off', () => {
+  it('starts with the keep-if-nobody-bids flag ticked', () => {
     const { container } = draw([fighter()])
     fireEvent.click(tile(container, 'Hunter'))
     fireEvent.click(sellBtn(container))
 
     const box = container.querySelector('.checkline input') as HTMLInputElement
-    expect(box.checked).toBe(false)
+    expect(box.checked).toBe(true)
+  })
+
+  it('carries the flag through to the listing when it is unticked', () => {
+    const calls: unknown[][] = []
+    const { container } = draw([fighter()], ((...a: unknown[]) => calls.push(a)) as never)
+
+    fireEvent.click(tile(container, 'Hunter'))
+    fireEvent.click(sellBtn(container))
+    fireEvent.click(container.querySelector('.checkline input') as HTMLElement)
+    fireEvent.click(container.querySelector('.sheet .btn--primary') as HTMLElement)
+
+    expect(calls[0][2]).toBe(false)
   })
 
   it('lists the fighter the bar was showing', () => {
@@ -134,7 +146,7 @@ describe('the sell tab', () => {
 
     expect(calls).toHaveLength(1)
     expect(calls[0][0]).toBe(wanted.fighter_id)
-    expect(calls[0][2]).toBe(false)
+    expect(calls[0][2]).toBe(true)
   })
 
   it('says so plainly when there is nothing to sell', () => {

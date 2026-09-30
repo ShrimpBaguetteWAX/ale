@@ -231,6 +231,19 @@ export const MINEABLE_POOLS: {
 ]
 
 /**
+ * Pools that never get a card, whatever the player is holding.
+ *
+ * `shards: null` above only keeps a pool out of the standing set, which is
+ * not the same as keeping it off the tab: the pass below that picks up
+ * "anything else the player has power in" puts it straight back the moment
+ * a power row exists, and the chain does carry `shrdarenadom` with a
+ * balance. The shard side of Arena Domination is not mined — the arena pays
+ * it — so that card is one a player can neither fill nor claim, and the
+ * shards tab is Arena Wins and Dungeon Wins only.
+ */
+const HIDDEN_POOLS = new Set(['shrdarenadom'])
+
+/**
  * The pools one currency tab should list.
  *
  * Shows the mineable pools whether or not the player has banked anything in
@@ -282,7 +295,9 @@ export function poolBoard(
      zero — a card with nothing to mine, for a reward the leaderboard's own
      Claim button pays.
    */
-  for (const pool of banked.keys()) if (!seen.has(pool) && poolHasMinimum(pool)) order.push(pool)
+  for (const pool of banked.keys()) {
+    if (!seen.has(pool) && !HIDDEN_POOLS.has(pool) && poolHasMinimum(pool)) order.push(pool)
+  }
 
   const board: PoolEntry[] = []
 

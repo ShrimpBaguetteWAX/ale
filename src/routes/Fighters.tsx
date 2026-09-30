@@ -153,7 +153,9 @@ interface RosterData {
   ageDecay: number
   loading: boolean
   error: string | null
-  reload: () => Promise<unknown>
+  /* The roster it re-read, so an action can say for itself when its change
+     has landed rather than waiting out the default six rounds. */
+  reload: () => Promise<RosterFighter[] | undefined>
 }
 
 function useRoster(account: string | null): RosterData {
@@ -254,14 +256,14 @@ export default function Fighters() {
   /* The starting bid every fighter in the batch is listed at. */
   const [startPrice, setStartPrice] = useState(0)
   /*
-     Off unless the seller says so, as on the market's own sell tab.
+     Ticked by default, as on the market's own sell tab.
 
-     It turns an auction nobody bid on into a fixed-price offer rather than
-     handing the fighter back — a second decision about a fighter the market
-     has already refused once, and not one to make on a seller's behalf
-     because the box happened to start ticked.
+     It turns an auction nobody bid on into a fixed-price instant buy offer
+     rather than handing the fighter back, and it does so at the starting
+     price the seller already set — so it carries on asking for what they
+     asked for rather than making a fresh decision for them.
   */
-  const [keepListed, setKeepListed] = useState(false)
+  const [keepListed, setKeepListed] = useState(true)
   const minStart = Number(marketConfig?.gems_min_start_bid ?? 0)
   useEffect(() => setStartPrice(minStart), [minStart])
 
@@ -463,7 +465,19 @@ export default function Fighters() {
       'marker',
       () => setFighterMarker(session!, f.fighter_id, marker),
       marker ? 'Marker set.' : 'Marker cleared.',
-      opts('setFighterMarker'),
+      {
+        ...opts('setFighterMarker'),
+        /*
+           The roster says when this has landed; the player row never will.
+
+           Without a `settled` the wait falls back to watching the player's
+           own figures move, and a marker is free — nothing it can see ever
+           changes, so the loop ran all six rounds and re-read the roster
+           six times for a write that had already landed on the first.
+        */
+        settled: (fresh: RosterFighter[] | undefined) =>
+          !!fresh?.some((x) => x.fighter_id === f.fighter_id && x.marker === marker),
+      },
     )
 
   const toggleChecked = useCallback(
@@ -617,7 +631,8 @@ export default function Fighters() {
                 Keep listed if nobody bids
                 <em className="faint">
                   {' '}
-                  — at {marketConfig?.gems_instant_buy_price ?? 0} gems
+                  — it becomes a fixed-price instant buy offer at your starting
+                  price instead of coming back to you
                 </em>
               </span>
             </label>
@@ -800,7 +815,17 @@ export default function Fighters() {
         onAtLevelOne={setAtLevelOne}
       />
 
-      {data.loading ? (
+      {/*
+        Skeletons are for the first read, not for every re-read.
+
+        `query.data` survives a reload — the rows stay on screen the whole
+        time — so swapping them for six grey blocks says "gone" about
+        something that is still there. Every action on this screen re-reads
+        when it lands, and a confirm wait re-reads several times, which had
+        the whole grid blinking between cards and skeletons for as long as
+        the wait ran.
+      */}
+      {data.loading && roster.length === 0 ? (
         <div className="rostergrid">
           {Array.from({ length: 6 }, (_, i) => (
             <div className="fcard fcard--loading" key={i} />
@@ -920,7 +945,7 @@ export default function Fighters() {
               </p>
               <p className="faint">
                 {keepListed
-                  ? `Unsold fighters stay up as fixed-price offers at ${gemsWord(Number(marketConfig?.gems_instant_buy_price ?? 0))}.`
+                  ? 'Unsold fighters stay up as fixed-price instant buy offers at your starting price.'
                   : 'Unsold fighters come back to you.'}
               </p>
               <ul className="confirm__list">

@@ -1208,19 +1208,40 @@
    behind a twenty pixel target, and the art is untouched until a player
    reaches for it.
 */
+/*
+ * A grid, so the card fills the place it stands in.
+ *
+ * The row sizes its tracks `1fr` and the card used to be the track's own
+ * item, which stretched it to the tallest in the row. Wrapping it in this
+ * slot made the slot the item instead and left the card at its natural
+ * height inside a taller box — two pixels of it, under the name plate,
+ * which the scrim then covered and the card did not.
+ */
 .tour__slot {
   position: relative;
+  display: grid;
   min-width: 0;
 }
 
-/* The lift the card does for itself elsewhere. The scrim takes its hover,
-   so the row would otherwise go flat the moment this screen got it. */
-.tour__slot:hover .combatcard {
+/*
+ * The lift belongs to the place, not to the card standing in it.
+ *
+ * The card does this for itself everywhere else, and the scrim takes its
+ * hover here so the row would otherwise go flat. But the pair of buttons is
+ * positioned against the slot: lifting the card alone slid it out from
+ * under them, leaving three pixels of artwork uncovered along the top edge
+ * and three pixels of scrim hanging past the bottom. Lifting the slot takes
+ * both with it.
+ */
+.tour__slot:hover {
   transform: translateY(-3px);
+}
+
+.tour__slot:hover .combatcard {
   border-color: var(--purple);
 }
 
-:root[data-fx='low'] .tour__slot:hover .combatcard {
+:root[data-fx='low'] .tour__slot:hover {
   transform: none;
 }
 
@@ -1631,50 +1652,327 @@
 
 /* ——— Pairings ——— */
 
-.tour__pairs {
+/*
+   The draw, one line to a bout.
+
+   The screen used to show a player their own pairing and nothing else,
+   which is a fixture list with one fixture on it. A round is a shape — who
+   is left, who drew whom, how much of it has been fought — and none of that
+   survives being reduced to "you vs them". Each line is the two corners
+   with the number of the bout between them and its state at the end, in the
+   order the contract will fight them.
+*/
+.tour__bouts {
   margin: 12px 0 0;
   padding: 0;
   list-style: none;
   display: flex;
   flex-direction: column;
   gap: 6px;
+  counter-reset: bout;
 }
 
-.tour__pair {
+/*
+   A fight card, not a table row.
+
+   Two names either side of a struck medallion, lit from both corners — the
+   arrangement every poster for a bout has used, because it is the one that
+   says these two are about to meet. The list it replaced put them at 0.95rem
+   with a lowercase "vs" between, which reads as a fixture list.
+*/
+.tour__bout {
+  border-radius: 12px;
+  /* Lit from both corners and dark in the middle, so the medallion sits in
+     the gap between them rather than on top of one of them. */
+  background:
+    radial-gradient(ellipse 45% 130% at 0% 50%, rgb(0 186 255 / 10%), transparent 70%),
+    radial-gradient(ellipse 45% 130% at 100% 50%, rgb(224 52 79 / 10%), transparent 70%),
+    #101b2e;
+  border: 1px solid rgb(148 163 184 / 16%);
+  overflow: hidden;
+  transition: border-color var(--dur-fast) var(--ease);
+}
+
+.tour__bout:hover {
+  border-color: rgb(148 163 184 / 32%);
+}
+
+.tour__boutrow {
+  width: 100%;
   display: grid;
-  grid-template-columns: 1fr auto 1fr auto;
+  grid-template-columns: auto minmax(0, 1fr) auto minmax(0, 1fr) auto;
   align-items: center;
-  gap: 10px;
-  padding: 9px 12px;
-  border-radius: 10px;
-  background: rgba(148, 163, 184, 0.07);
+  gap: 12px;
+  padding: 12px 14px;
+  background: none;
+  border: 0;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
 }
 
-.tour__pairside {
+.tour__boutrow:disabled {
+  cursor: default;
+}
+
+/* Yours, lit from the left the way the field list does it. */
+.tour__bout--mine {
+  border-color: rgb(0 186 255 / 45%);
+  background:
+    radial-gradient(ellipse 55% 130% at 0% 50%, rgb(0 186 255 / 22%), transparent 70%),
+    radial-gradient(ellipse 45% 130% at 100% 50%, rgb(224 52 79 / 10%), transparent 70%),
+    #101b2e;
+}
+
+/* The one the contract is on, edged so it is findable from the top of a
+   board of sixteen. */
+.tour__bout--live {
+  border-color: rgb(0 186 255 / 55%);
+  box-shadow: 0 0 18px rgb(0 186 255 / 18%);
+}
+
+.tour__bout--open {
+  border-color: rgb(148 163 184 / 36%);
+}
+
+/* Struck into the card rather than printed on it. */
+.tour__boutno {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  flex: none;
+  border-radius: 50%;
+  background: rgb(4 10 20 / 70%);
+  border: 1px solid rgb(148 163 184 / 20%);
+  font-size: 0.74rem;
+  color: var(--text-faint);
+}
+
+.tour__boutside {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+/* The two corners face each other across the "vs" rather than both reading
+   left to right, which is what makes the row a fixture and not a list. */
+.tour__boutside--right {
+  flex-direction: row-reverse;
+}
+
+.tour__boutname {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  letter-spacing: 0.01em;
+  color: var(--white);
+}
+
+.tour__boutface {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border-radius: 11px;
+  border: 1px solid rgb(148 163 184 / 22%);
+}
+
+.tour__boutside--me .tour__boutname {
+  color: #7ee7fb;
+}
+
+.tour__boutside--won .tour__boutname {
+  color: #86efac;
+  font-weight: 600;
+}
+
+/* Out of the tournament: still named, because who went out is half of what
+   a bracket says, but no longer competing for the eye. */
+.tour__boutside--out {
+  opacity: 0.45;
+}
+
+.tour__boutside--out .tour__boutname {
+  text-decoration: line-through;
+}
+
+.tour__boutside--empty {
+  color: var(--text-faint);
+  font-size: 0.85rem;
+}
+
+/*
+   The medallion.
+
+   The word carries the whole arrangement — without it the row is two names
+   that happen to be near each other — so it is struck rather than set: gold
+   on a dark disc, the one warm thing on the card.
+*/
+.tour__boutvs {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  flex: none;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 30%, #1d1608, #0a0d16);
+  border: 1px solid rgb(246 168 0 / 45%);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 10%);
+  font-family: var(--font-display);
+  font-size: 0.72rem;
+  font-weight: var(--fw-bold);
+  letter-spacing: 0.04em;
+  color: #ffdb7d;
+}
+
+.tour__boutend {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+}
+
+.tour__boutstate {
+  min-width: 7.5em;
+  text-align: right;
+  font-size: 0.76rem;
+  color: var(--text-muted);
+}
+
+/* The one the contract is on. */
+.tour__boutstate--live {
+  color: #7ee7fb;
+}
+
+/*
+   Both line-ups, under the card they belong to.
+
+   Two columns on a wide screen because the comparison is the point; one
+   under the other where there is not room for ten combat cards side by
+   side. Inside the card's own edge, so an open bout is one object rather
+   than a row with a panel beneath it.
+*/
+.tour__boutdetail {
+  display: grid;
+  gap: var(--sp-3);
+  padding: 0 14px 14px;
+  border-top: 1px solid rgb(148 163 184 / 14%);
+  margin-top: 2px;
+  padding-top: 12px;
+}
+
+@media (min-width: 1080px) {
+  .tour__boutdetail {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.tour__cornername {
+  margin: 0 0 8px;
+  font-family: var(--font-display);
+  font-size: 0.78rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+/*
+   The byes.
+
+   A board that shows eleven fighting and says nothing about the five
+   sitting out is a board a player cannot count. Quieter than the bouts —
+   nothing is happening to these entrants this round — but named, because on
+   the opening round they are half of who is still in.
+*/
+.tour__byes {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid rgb(148 163 184 / 16%);
+}
+
+.tour__byeshead {
+  margin: 0 0 10px;
+  font-family: var(--font-display);
+  font-size: 0.8rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgb(255 219 125 / 80%);
+}
+
+.tour__byelist {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 6px;
+}
+
+.tour__bye {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 9px;
+  background: #101b2e;
+  border: 1px solid rgb(148 163 184 / 14%);
+  font-size: 0.9rem;
+}
+
+.tour__bye--mine {
+  background: linear-gradient(90deg, #0b3d5c, #101b2e 70%);
+  border-color: rgb(0 186 255 / 45%);
+}
+
+.tour__byeface {
+  flex: none;
+  border-radius: 8px;
+}
+
+.tour__bye > span:nth-child(2) {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-/* Pulled in against the "vs" so the two names read as one line rather than
-   sitting at opposite ends of the row with the word stranded between. */
-.tour__pair > .tour__pairside:first-child {
-  text-align: right;
-}
-
-.tour__vs {
+.tour__byescore {
+  margin-left: auto;
   color: var(--text-faint);
-  font-size: 0.78rem;
-  text-transform: uppercase;
+  font-size: 0.82rem;
 }
 
-.tour__pairres {
-  font-size: 0.8rem;
-  color: var(--text-muted);
-}
+@media (max-width: 640px) {
+  /* The state moves under the pair rather than squeezing the two names into
+     nothing to keep a seven-character label on the same line. */
+  .tour__boutrow {
+    grid-template-columns: auto minmax(0, 1fr) auto minmax(0, 1fr);
+    row-gap: 6px;
+    gap: 8px;
+    padding: 10px;
+  }
 
-.tour__pairres--won {
-  color: #86efac;
+  .tour__boutend {
+    grid-column: 2 / -1;
+    justify-content: space-between;
+  }
+
+  .tour__boutstate {
+    text-align: left;
+    min-width: 0;
+  }
+
+  .tour__boutname {
+    font-size: 1rem;
+  }
+
+  .tour__boutface {
+    width: 36px;
+    height: 36px;
+  }
 }
 
 /* ——— The field ——— */
@@ -1963,11 +2261,6 @@
   white-space: nowrap;
 }
 
-.tour__wins {
-  color: var(--text-muted);
-  font-size: 0.85rem;
-}
-
 .tour__escore {
   min-width: 3.5em;
   text-align: right;
@@ -2059,11 +2352,963 @@
     text-align: left;
   }
 
-  .tour__pair {
-    grid-template-columns: 1fr auto 1fr;
+}
+
+/* ————————————————— The broadcast ————————————————— */
+
+/*
+ * A pairing, watched.
+ *
+ * The poster sells the bout while it is still ahead of you; pressing play
+ * wipes it away and the floor comes up with twelve fighters on it, standing
+ * where they fight and staying there until it is over. The arrangement is
+ * the battle screen's, because a tournament bout is the same fight and
+ * should not be watched through a different window.
+ */
+.bcast {
+  position: relative;
+  /* Cinematic rather than broadcast: two lines facing each other want
+     width, not height, and the panel it sits in is a page a player is
+     scrolling — 16:9 spent most of a screen on empty sky above the fight. */
+  aspect-ratio: 21 / 9;
+  min-height: 300px;
+  border-radius: 14px;
+  overflow: hidden;
+  background: #04070e;
+  border: 1px solid var(--line);
+  isolation: isolate;
+}
+
+.bcast__bg {
+  position: absolute;
+  inset: 0;
+  background-image: url('/assets/background/bg-fight.png');
+  background-size: cover;
+  background-position: center;
+  filter: saturate(0.6) brightness(0.3) contrast(1.1);
+  transition: filter 700ms var(--ease);
+}
+
+.bcast--live .bcast__bg {
+  filter: saturate(0.85) brightness(0.45);
+}
+
+.bcast__vig {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: radial-gradient(ellipse 75% 75% at 50% 45%, transparent, rgb(3 6 12 / 80%));
+}
+
+/* ---- the poster ---- */
+
+.bcast__poster {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 2px;
+  padding: 14px;
+  text-align: center;
+  transition:
+    opacity 520ms var(--ease),
+    transform 520ms var(--ease),
+    filter 520ms var(--ease);
+}
+
+.bcast--live .bcast__poster,
+.bcast--wiping .bcast__poster {
+  opacity: 0;
+  transform: scale(1.08);
+  filter: blur(6px);
+  pointer-events: none;
+}
+
+.bcast__kick {
+  font-family: var(--font-display);
+  font-size: 10px;
+  letter-spacing: 0.4em;
+  color: #ffdb7d;
+}
+
+.bcast__name {
+  font-family: var(--font-display);
+  font-size: clamp(22px, 5.2vw, 54px);
+  font-weight: 900;
+  line-height: 0.95;
+  text-shadow: 0 4px 34px rgb(0 0 0 / 85%);
+}
+
+.bcast__vs {
+  margin: 5px 0;
+  font-family: var(--font-display);
+  font-size: clamp(11px, 1.7vw, 15px);
+  letter-spacing: 0.34em;
+  color: var(--red);
+}
+
+.bcast__play {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  margin-top: 14px;
+  padding: 0;
+  border-radius: 50%;
+  border: 2px solid rgb(255 219 125 / 70%);
+  background: rgb(6 12 22 / 72%);
+  color: #ffdb7d;
+  cursor: pointer;
+  transition:
+    transform var(--dur-fast) var(--ease),
+    background var(--dur-fast) var(--ease),
+    box-shadow var(--dur-fast) var(--ease);
+}
+
+.bcast__play:hover:not(:disabled) {
+  background: rgb(246 168 0 / 26%);
+  box-shadow: 0 0 34px rgb(246 168 0 / 35%);
+  transform: scale(1.06);
+}
+
+.bcast__play:disabled { cursor: progress; }
+.bcast__play svg { width: 24px; height: 24px; margin-left: 3px; fill: currentColor; }
+
+/* The cut between the two states. */
+.bcast__wipe {
+  position: absolute;
+  inset: 0;
+  z-index: 9;
+  pointer-events: none;
+  opacity: 0;
+  background: linear-gradient(105deg, transparent 38%, rgb(255 219 125 / 85%) 50%, transparent 62%);
+  transform: translateX(-100%);
+}
+
+.bcast--wiping .bcast__wipe {
+  opacity: 1;
+  animation: bcastwipe 620ms ease-in-out forwards;
+}
+
+@keyframes bcastwipe { to { transform: translateX(100%) } }
+
+/* ---- the feed ---- */
+
+.bcast__feed {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 420ms var(--ease) 200ms;
+}
+
+.bcast--live .bcast__feed { opacity: 1; pointer-events: auto; }
+
+/* The floor empties before the winner is named. */
+.bcast--done .bcast__feed {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 420ms var(--ease);
+}
+
+.bcast__score {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  padding: 6px 12px;
+  background: linear-gradient(180deg, rgb(4 8 16 / 92%), transparent);
+}
+
+.bcast__side { display: flex; align-items: center; gap: 9px; min-width: 0; }
+.bcast__side--b { flex-direction: row-reverse; }
+.bcast__side--me .bcast__tag { color: #7ee7fb; }
+.bcast__face { flex: none; border-radius: 8px; }
+.bcast__who { min-width: 0; flex: 1; }
+
+.bcast__tag {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 0.9rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bcast__side--b .bcast__tag { text-align: right; }
+/*
+   Health, wherever it is shown.
+
+   One shape for the pair on the scorebar and the twelve under the
+   fighters: a dark channel with a fill that runs teal on the near side and
+   red on the far one, so a glance along either line reads the same way as a
+   glance at the top.
+*/
+.bcast .hp {
+  height: 5px;
+  border-radius: 99px;
+  background: rgb(4 10 20 / 88%);
+  overflow: hidden;
+}
+
+.bcast .hp i {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #0ed4a8, #7ee7fb);
+  transition: width 280ms linear;
+}
+
+.bcast .hp--b i {
+  background: linear-gradient(90deg, #ff8a9c, #e0344f);
+  margin-left: auto;
+}
+
+.bcast__score .hp { margin-top: 4px; }
+
+/* The badge and the billing are two separate statements — one is that
+   this is happening now, the other is which fight it is — so they are not
+   stacked on top of each other. */
+.bcast__mid { display: grid; justify-items: center; gap: 7px; padding: 0 12px; }
+
+.bcast__bout {
+  font-family: var(--font-display);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  color: #ffdb7d;
+  white-space: nowrap;
+}
+
+.bcast__wx { font-size: 10px; color: var(--text-faint); white-space: nowrap; }
+
+.bcast__livetag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: rgb(224 52 79 / 90%);
+  font-family: var(--font-display);
+  font-size: 9px;
+  font-weight: var(--fw-bold);
+  letter-spacing: 0.18em;
+  color: #fff;
+}
+
+.bcast__livetag::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #fff;
+  animation: bcastblink 1.4s infinite;
+}
+
+@keyframes bcastblink { 0%, 100% { opacity: 1 } 50% { opacity: 0.2 } }
+
+/*
+   Twelve on the floor, in formation.
+
+   Six a side standing in a wedge that recedes away from the middle: the one
+   nearest the centre is nearest the camera, largest and lowest, and each
+   one behind it is smaller, higher and darker. They overlap, the way a team
+   lines up rather than a row of tokens, which buys every figure about twice
+   the height a six-column grid could give it.
+
+   Nobody is ever swapped out. A blow lands where the fighter is standing,
+   so which end of a line is collapsing is on screen the whole time.
+*/
+.bcast__arena {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: end;
+  padding: 0 10px 4px;
+  min-height: 0;
+}
+
+.bcast__arena::before,
+.bcast__arena::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  width: 44%;
+  height: 82%;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.bcast__arena::before {
+  left: 0;
+  background: radial-gradient(ellipse 70% 80% at 35% 100%, rgb(0 186 255 / 20%), transparent 70%);
+}
+
+.bcast__arena::after {
+  right: 0;
+  background: radial-gradient(ellipse 70% 80% at 65% 100%, rgb(224 52 79 / 20%), transparent 70%);
+}
+
+.bcast__line {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  min-height: 0;
+  height: 100%;
+}
+
+.bcast__line--b { justify-content: flex-start; }
+
+.bcast__stand {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  align-content: end;
+  /* Six even steps. The figures are far wider than their step and spill
+     over each other — that spill is the formation. */
+  width: calc(100% / 6);
+  min-width: 0;
+  height: 100%;
+  z-index: calc(10 - var(--d));
+  transform: translateY(calc(var(--d) * -3.4%)) scale(calc(1 - var(--d) * 0.062));
+  transform-origin: 50% 100%;
+  filter: brightness(calc(1 - var(--d) * 0.07)) saturate(calc(1 - var(--d) * 0.06));
+  transition: filter 220ms var(--ease);
+}
+
+/*
+   Out of the flow, so its height comes from the frame.
+
+   Left in it, the box was sized by the artwork and the artwork by the box —
+   the figures resolved to their intrinsic height and hung out of the floor.
+*/
+.bcast__body { position: absolute; inset: 0 0 20px; display: grid; place-items: end center; }
+
+/*
+ * The floor ring.
+ *
+ * Flat and wide, so it reads as lying on the ground rather than as a
+ * circle floating in front of the fighter — the same trick the selection
+ * ring in a football game plays. Unlit it is just the soft pool the
+ * fighter stands in; the border is there the whole time and only gets a
+ * colour when they are called up or swinging.
+ */
+.bcast__pool {
+  position: absolute;
+  bottom: -21px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 150%;
+  height: 42px;
+  /* Whole pixels: 1.5 rounds down to a hairline that reads as a smudge. */
+  border: 2px solid transparent;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at 50% 50%, rgb(126 231 251 / 30%), transparent 70%);
+  transition:
+    border-color 180ms var(--ease),
+    box-shadow 180ms var(--ease);
+}
+
+.bcast__line--b .bcast__pool {
+  background: radial-gradient(ellipse at 50% 50%, rgb(255 138 156 / 30%), transparent 70%);
+}
+
+.bcast__art {
+  height: 100%;
+  width: auto;
+  /* Wider than its slot, but capped — six at full height would be six
+     slivers. */
+  max-width: 240%;
+  object-fit: contain;
+  object-position: bottom center;
+  filter: drop-shadow(0 10px 20px rgb(0 0 0 / 78%));
+  transition: filter 200ms var(--ease);
+}
+
+.bcast__line--b .bcast__art { transform: scaleX(-1); }
+
+/* The plate rides under the figure, narrower than it, so twelve can sit
+   under an overlapping line without stacking into a wall of text. */
+.bcast__plate {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%);
+  z-index: 2;
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  width: 104%;
+}
+
+.bcast__standname {
+  font-size: 8.5px;
+  color: var(--text-dim);
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-transform: capitalize;
+  text-shadow: 0 1px 4px rgb(0 0 0 / 90%);
+}
+
+.bcast__stand .hp { width: 100%; height: 3.5px; }
+
+/*
+ * Called up, a beat before the blow.
+ *
+ * The fight is forty exchanges of arithmetic and each one was over before
+ * it could be watched. Marking the fighter first gives the turn somewhere
+ * to start: the badge drops in over their head and pulses, they lift out
+ * of the line, and a second later the blow lands on somebody.
+ */
+/*
+ * A pointer over the head, the way a football game marks the player you
+ * have.
+ *
+ * Not a badge: a badge is a thing to read, and there is nothing to read
+ * here — it only has to say *this one, next*. A flat triangle aimed down at
+ * whoever it belongs to does that without asking for a moment's attention,
+ * and the bob is what makes it findable in a line of twelve.
+ */
+.bcast__aim {
+  position: absolute;
+  top: calc(8% - 21px);
+  left: 50%;
+  z-index: 26;
+  width: 30px;
+  height: 21px;
+  margin-left: -15px;
+  color: #ffdb7d;
+  filter: drop-shadow(0 2px 10px rgb(246 168 0 / 70%)) drop-shadow(0 1px 2px rgb(0 0 0 / 85%));
+  animation: bcastbob 900ms ease-in-out infinite;
+}
+
+.bcast__aim svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  fill: currentColor;
+}
+
+/* Drops in once, then hovers. */
+@keyframes bcastbob {
+  0% { transform: translateY(-4px) }
+  50% { transform: translateY(2px) }
+  100% { transform: translateY(-4px) }
+}
+
+/* Lifted out of the line while they are called, without changing depth. */
+.bcast__stand--aim { filter: brightness(1.08) saturate(1.04); }
+
+/* Quieter than it was: the pointer over the head is what says "this one",
+   and a second gold signal underneath it was saying it twice. */
+.bcast__stand--aim .bcast__art {
+  filter: drop-shadow(0 10px 20px rgb(0 0 0 / 78%)) drop-shadow(0 0 10px rgb(255 219 125 / 28%));
+}
+
+.bcast__stand--aim .bcast__pool {
+  background: radial-gradient(ellipse at 50% 50%, rgb(255 219 125 / 34%), transparent 72%);
+  border-color: rgb(255 226 148 / 90%);
+  animation: bcastring 900ms ease-in-out infinite;
+}
+
+@keyframes bcastring {
+  0%,
+  100% {
+    box-shadow:
+      0 0 10px rgb(255 219 125 / 40%),
+      inset 0 0 8px rgb(255 219 125 / 25%);
   }
 
-  .tour__pairres {
-    grid-column: 1 / -1;
+  50% {
+    box-shadow:
+      0 0 18px rgb(255 219 125 / 70%),
+      inset 0 0 12px rgb(255 219 125 / 45%);
   }
+}
+
+/* Swinging — a step toward the other line, and lit for it. */
+/*
+ * Acting does not move a fighter forward.
+ *
+ * Lifting the attacker over the line put whoever was swinging in front of
+ * everybody, so the formation rearranged itself every turn and a fighter at
+ * the back of the wedge kept jumping to the front. Depth is where they
+ * stand; it is not a turn order. They are marked by light instead — and the
+ * even step means each one's own slot is the part of it that is never
+ * covered, so the glow and the damage number stay visible from the back
+ * rank without anything having to move.
+ */
+/*
+ * A swing is a moment, not a state.
+ *
+ * This was a held brighten and a soft gold halo, which is the wrong shape
+ * for a blow — the fighter simply sat lit for half a second and nothing
+ * about it read as a strike. The one that worked is the red the defender
+ * takes: sharp, at its peak almost immediately, gone before the eye
+ * settles. So the gold does the same thing, inside the lunge, and nothing
+ * is left glowing afterwards.
+ */
+
+.bcast__stand--atk .bcast__art { animation: bcastlunge 460ms var(--ease); }
+.bcast__line--b .bcast__stand--atk .bcast__art { animation: bcastlungeb 460ms var(--ease); }
+
+/*
+ * The step in, and the flash that goes with it.
+ *
+ * The light lives in the keyframes rather than on the element, so it peaks
+ * with the step and is gone by the time the foot lands — the same shape as
+ * the red the defender takes, which is the one that reads.
+ */
+@keyframes bcastlunge {
+  18% {
+    transform: translateX(8px) scale(1.03);
+    filter: drop-shadow(0 10px 20px rgb(0 0 0 / 78%)) drop-shadow(0 0 20px rgb(255 219 125 / 95%));
+  }
+
+  40% {
+    transform: translateX(18px) scale(1.07);
+    filter: drop-shadow(0 10px 20px rgb(0 0 0 / 78%)) drop-shadow(0 0 10px rgb(255 219 125 / 40%));
+  }
+}
+
+@keyframes bcastlungeb {
+  18% {
+    transform: scaleX(-1) translateX(8px) scale(1.03);
+    filter: drop-shadow(0 10px 20px rgb(0 0 0 / 78%)) drop-shadow(0 0 20px rgb(255 219 125 / 95%));
+  }
+
+  40% {
+    transform: scaleX(-1) translateX(18px) scale(1.07);
+    filter: drop-shadow(0 10px 20px rgb(0 0 0 / 78%)) drop-shadow(0 0 10px rgb(255 219 125 / 40%));
+  }
+}
+
+.bcast__stand--def .bcast__art { animation: bcastflinch 340ms var(--ease); }
+.bcast__line--b .bcast__stand--def .bcast__art { animation: bcastflinchb 340ms var(--ease); }
+@keyframes bcastflinch { 30% { transform: translateX(-10px); filter: drop-shadow(0 0 20px rgb(224 52 79 / 95%)) } }
+@keyframes bcastflinchb { 30% { transform: scaleX(-1) translateX(-10px); filter: drop-shadow(0 0 20px rgb(224 52 79 / 95%)) } }
+
+/* Down, and staying down where they fell — the gap is the shape of the bout. */
+.bcast__stand--down { filter: brightness(0.5) saturate(0.2); }
+.bcast__stand--down .bcast__art { transform: translateY(8px) rotate(-7deg); opacity: 0.5; }
+.bcast__line--b .bcast__stand--down .bcast__art { transform: scaleX(-1) translateY(8px) rotate(7deg); }
+.bcast__stand--down .bcast__standname { color: var(--text-faint); text-decoration: line-through; }
+.bcast__stand--atk .bcast__pool {
+  animation: bcastringhit 520ms cubic-bezier(0.1, 0.82, 0.28, 1);
+}
+
+/* translateX(-50%) is what centres the ring, so every frame has to carry
+   it — dropping it for one keyframe slides the ring off the fighter. */
+@keyframes bcastringhit {
+  0% {
+    transform: translateX(-50%) scale(0.66);
+    border-width: 3px;
+    border-color: rgb(255 250 232 / 100%);
+    box-shadow:
+      0 0 34px rgb(255 219 125 / 95%),
+      inset 0 0 20px rgb(255 219 125 / 75%);
+  }
+
+  /* Still clearly a ring here — it is out past the fighter's feet before
+     it starts giving up, which is what makes it read as a blast rather
+     than a fade. */
+  55% {
+    border-width: 2px;
+    border-color: rgb(255 226 148 / 62%);
+  }
+
+  100% {
+    transform: translateX(-50%) scale(3);
+    border-width: 1px;
+    border-color: rgb(255 219 125 / 0%);
+    box-shadow:
+      0 0 0 rgb(255 219 125 / 0%),
+      inset 0 0 0 rgb(255 219 125 / 0%);
+  }
+}
+
+.bcast__stand--down .bcast__pool { opacity: 0.15; }
+
+.bcast__hit {
+  position: absolute;
+  /* Up around the head, where a blow reads as landing — low on the figure
+     it looked like it had come off their feet. */
+  top: 18%;
+  left: 50%;
+  z-index: 25;
+  font-family: var(--font-display);
+  font-size: clamp(16px, 2.3vw, 30px);
+  font-weight: 900;
+  color: #ff8a9c;
+  /* The heavier the blow, the further its glow carries. */
+  text-shadow:
+    0 2px 10px rgb(0 0 0 / 95%),
+    0 0 calc(4px + var(--heft, 0) * 22px) rgb(255 90 110 / calc(0.25 + var(--heft, 0) * 0.55));
+  /* The easing lives in the keyframes: the rise and the fall want opposite
+     curves, and one function cannot be both. */
+  animation: bcastrise 1300ms linear forwards;
+  white-space: nowrap;
+  will-change: transform, opacity;
+}
+
+/*
+ * The number, thrown and dropped.
+ *
+ * It arrives fast and small, rises a little as it grows to full size —
+ * appearing and growing are one movement, which is what makes it read as a
+ * blow landing rather than as text switching on — hangs at the top of the
+ * arc long enough to be read, then falls away as it fades.
+ *
+ * Up quickly and down slowly, so the half of the second that matters is
+ * the half where the number is solid and still.
+ *
+ * `--drift` pushes each one sideways as it goes, so a cleave's numbers
+ * scatter instead of stacking into one illegible column, and `--heft` is
+ * how hard the blow was: it decides how big the number swells to on the
+ * way up and how big it stays, so a fight's worst hit is the one that
+ * fills the frame and a glancing blow barely interrupts.
+ */
+@keyframes bcastrise {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, 6px) scale(calc(0.4 + var(--heft, 0) * 0.08));
+    animation-timing-function: cubic-bezier(0.15, 0.85, 0.3, 1);
+  }
+
+  /* The swell. A scratch reaches 1.15; the worst blow of a fight reaches
+     nearly twice that, and you feel it land without reading it. */
+  16% {
+    opacity: 1;
+    transform: translate(calc(-50% + var(--drift, 0) * 2px), -12px)
+      scale(calc(1.15 + var(--heft, 0) * 0.78));
+    animation-timing-function: cubic-bezier(0.3, 0, 0.4, 1);
+  }
+
+  30% {
+    opacity: 1;
+    transform: translate(calc(-50% + var(--drift, 0) * 4px), -18px)
+      scale(calc(0.92 + var(--heft, 0) * 0.4));
+  }
+
+  /* The hang: nothing moves, and this is when it gets read. */
+  52% {
+    opacity: 1;
+    transform: translate(calc(-50% + var(--drift, 0) * 6px), -17px)
+      scale(calc(0.92 + var(--heft, 0) * 0.4));
+    animation-timing-function: cubic-bezier(0.55, 0, 0.9, 0.55);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(calc(-50% + var(--drift, 0) * 12px), 26px)
+      scale(calc(0.84 + var(--heft, 0) * 0.32));
+  }
+}
+
+.bcast__clash {
+  position: relative;
+  z-index: 15;
+  display: grid;
+  justify-items: center;
+  gap: 5px;
+  min-width: 44px;
+  padding-bottom: 20px;
+}
+
+.bcast__medal {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 30%, #1d1608, #0a0d16);
+  border: 1px solid rgb(246 168 0 / 45%);
+  box-shadow: 0 0 24px rgb(246 168 0 / 25%);
+  font-family: var(--font-display);
+  font-size: 0.7rem;
+  font-weight: var(--fw-bold);
+  color: #ffdb7d;
+}
+
+.bcast__el { width: 20px; height: 20px; opacity: 0.9; }
+
+/* ---- the transport ---- */
+
+.bcast__deck {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 6px 12px;
+  background: rgb(4 8 16 / 94%);
+  border-top: 1px solid rgb(246 168 0 / 22%);
+}
+
+.bcast__deckbtn {
+  width: 28px;
+  height: 28px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 7px;
+  border: 1px solid var(--line);
+  background: #0a1220;
+  color: var(--white);
+  cursor: pointer;
+}
+
+.bcast__deckbtn:hover { border-color: rgb(246 168 0 / 55%); color: #ffdb7d; }
+.bcast__deckbtn svg { width: 12px; height: 12px; fill: currentColor; }
+/*
+ * The bar, the way a video player has one.
+ *
+ * It used to carry the turn count and the blow-by-blow, which made a
+ * transport into a scoreboard — and the fight was already saying both
+ * better, with numbers rising off the fighters and bars dropping under
+ * them. What is left is the one thing a player reaches for.
+ *
+ * A thin rail that thickens under the pointer, a fill that glides rather
+ * than ticking — the transition is exactly one turn long, so it crosses the
+ * gap between blows at the speed the fight is running — and a knob that
+ * appears only when there is something to grab.
+ */
+.bcast__bar {
+  position: relative;
+  flex: 1;
+  min-width: 60px;
+  height: 14px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.bcast__bar::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 3px;
+  border-radius: 99px;
+  background: rgb(255 255 255 / 20%);
+  transition: height var(--dur-fast) var(--ease);
+}
+
+.bcast__fill {
+  position: absolute;
+  left: 0;
+  height: 3px;
+  border-radius: 99px;
+  background: linear-gradient(90deg, var(--gold), #ffdb7d);
+  /* Linear, and as long as a turn — the component sets the duration from
+     the beat it is playing at, so the two cannot drift. */
+  transition:
+    width 1500ms linear,
+    height var(--dur-fast) var(--ease);
+  pointer-events: none;
+}
+
+.bcast__fill::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 50%;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: #ffdb7d;
+  transform: translate(50%, -50%) scale(0);
+  transition: transform var(--dur-fast) var(--ease);
+}
+
+.bcast__bar:hover::before,
+.bcast__bar:hover .bcast__fill {
+  height: 5px;
+}
+
+.bcast__bar:hover .bcast__fill::after,
+.bcast__seek:focus-visible ~ .bcast__fill::after {
+  transform: translate(50%, -50%) scale(1);
+}
+
+/*
+ * The real control, invisible over the rail it drives.
+ *
+ * Styling a range input's own track and thumb takes three vendor pseudo
+ * elements and still cannot be transitioned; hiding it over a rail that
+ * can keeps the drag, the click-to-seek and the arrow keys for nothing.
+ */
+.bcast__seek {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+/* ---- the result ---- */
+
+.bcast__result {
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+  display: grid;
+  /* Opaque: a lit floor and a dark hall, not the fight through a tint. The
+     losing side is not still lying there behind the celebration. */
+  background:
+    radial-gradient(ellipse 70% 62% at 50% 104%, rgb(246 168 0 / 26%), transparent 70%),
+    radial-gradient(ellipse 90% 70% at 50% 120%, rgb(120 70 10 / 30%), transparent 70%),
+    #04070e;
+  animation: bcastfade 520ms var(--ease);
+}
+
+@keyframes bcastfade { from { opacity: 0 } }
+
+.bcast__podium {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  align-items: end;
+  justify-items: center;
+  padding: 0 9% 7%;
+  pointer-events: none;
+}
+
+.bcast__pod {
+  position: relative;
+  width: auto;
+  /* Wider than its column, like the fighting lines — the team closes ranks
+     for the picture. */
+  max-width: 210%;
+  filter: drop-shadow(0 16px 34px rgb(0 0 0 / 85%));
+  opacity: 0;
+  transform: translateY(30px);
+  animation: bcaststandup 680ms cubic-bezier(0.2, 0.9, 0.25, 1) forwards;
+}
+
+@keyframes bcaststandup { to { opacity: 1; transform: none } }
+
+.bcast__shaft {
+  position: absolute;
+  inset: auto 0 0;
+  z-index: -1;
+  height: 86%;
+  background:
+    radial-gradient(ellipse 58% 100% at 50% 100%, rgb(246 168 0 / 40%), transparent 72%),
+    linear-gradient(180deg, transparent, rgb(246 168 0 / 12%));
+  animation: bcastraise 900ms var(--ease) forwards;
+}
+
+@keyframes bcastraise {
+  from { opacity: 0; transform: scaleY(0.6); transform-origin: 50% 100% }
+  to { opacity: 1 }
+}
+
+.bcast__podfloor {
+  position: absolute;
+  left: 50%;
+  bottom: 7%;
+  transform: translateX(-50%);
+  width: 78%;
+  height: 28px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at 50% 50%, rgb(246 168 0 / 45%), transparent 70%);
+}
+
+.bcast__panel {
+  position: relative;
+  z-index: 2;
+  align-self: start;
+  display: grid;
+  justify-items: center;
+  gap: 3px;
+  padding: 14px 12px 10px;
+  text-align: center;
+  background: linear-gradient(
+    180deg,
+    rgb(3 6 12 / 92%) 0%,
+    rgb(3 6 12 / 82%) 62%,
+    transparent 100%
+  );
+}
+
+.bcast__win {
+  font-family: var(--font-display);
+  font-size: clamp(24px, 5vw, 50px);
+  font-weight: 900;
+  color: #ffdb7d;
+  text-shadow: 0 4px 38px rgb(246 168 0 / 60%), 0 2px 10px rgb(0 0 0 / 95%);
+}
+
+.bcast__margin {
+  justify-self: center;
+  margin-top: 4px;
+  padding: 5px 14px;
+  border-radius: 999px;
+  border: 1px solid rgb(255 255 255 / 12%);
+  background: rgb(3 6 12 / 88%);
+  font-size: 15px;
+  letter-spacing: 0.06em;
+  color: #fff;
+  /* Tight and dark: enough to keep the edge crisp on the plate, not a
+     halo doing the work of a background. */
+  text-shadow: 0 1px 2px rgb(0 0 0 / 90%);
+}
+
+.bcast__again {
+  position: relative;
+  z-index: 3;
+  align-self: end;
+  justify-self: center;
+  margin: 0 0 14px;
+  padding: 7px 16px;
+  border-radius: 8px;
+  border: 1px solid rgb(255 219 125 / 55%);
+  background: rgb(6 12 22 / 80%);
+  color: #ffdb7d;
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.bcast__again:hover { background: rgb(246 168 0 / 22%); }
+
+@media (prefers-reduced-motion: reduce) {
+  .bcast__aim,
+  .bcast__art,
+  .bcast__hit,
+  .bcast__pod,
+  .bcast__shaft,
+  .bcast__wipe {
+    animation: none !important;
+  }
+
+  .bcast__pod { opacity: 1; transform: none }
+}
+
+@media (max-width: 760px) {
+  .bcast { aspect-ratio: 3 / 4; }
+
+  /* Six a side facing at phone width would be thirty pixels a fighter, so
+     the two lines stack instead. */
+  .bcast__arena { grid-template-columns: 1fr; grid-template-rows: 1fr auto 1fr; padding-bottom: 2px; }
+  .bcast__arena::before { width: 100%; height: 42%; bottom: auto; top: 0; }
+  .bcast__arena::after { width: 100%; height: 42%; }
+  .bcast__clash { grid-auto-flow: column; padding: 0; }
+  .bcast__line,
+  .bcast__line--b { justify-content: center; }
+  .bcast__line--b .bcast__art { transform: scaleX(1); }
+  .bcast__line--b .bcast__stand--down .bcast__art { transform: translateY(8px) rotate(7deg); }
+  .bcast__standname { font-size: 7.5px; }
+  .bcast__say { display: none; }
 }

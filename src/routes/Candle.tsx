@@ -585,7 +585,13 @@ export function Mission({
       ? { label: 'Closes in', time: countdown(state.msLeft) }
       : { label: 'Closed', time: 'settling' }
 
-  const action = soon ? 'Not open yet' : !open ? 'Closed' : !gate.qualified ? 'Locked' : 'Drop them in'
+  const action = soon
+    ? 'Not open yet'
+    : !open
+      ? 'Closed'
+      : !gate.qualified
+        ? 'Locked'
+        : 'Contribute gems'
 
   const toggle = () => setShut((was) => !was)
   /* The sign is the handle, so anything on it that is not the handle has to
@@ -802,7 +808,7 @@ export function Mission({
         </div>
 
         <div className="mach__tray">
-          <span className="mach__kick">Payout tray — your share now</span>
+          <span className="mach__kick">Your share now</span>
           <span className="mach__trayval">
             {mine > 0 ? (
               <>

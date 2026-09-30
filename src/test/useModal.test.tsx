@@ -26,11 +26,50 @@ function Dialog({ onClose }: { onClose: () => void }) {
   )
 }
 
+/** A dialog with a field in it, as the market's bid and sell dialogs have. */
+function FormDialog({ onClose }: { onClose: () => void }) {
+  const panel = useModal(onClose)
+  return (
+    <div ref={panel}>
+      <button type="button">close</button>
+      <input aria-label="amount" />
+    </div>
+  )
+}
+
 beforeEach(() => {
   document.body.style.overflow = ''
 })
 
 describe('useModal', () => {
+  it('leaves focus alone when the caller re-renders with a new callback', () => {
+    /*
+       The market re-renders its dialogs once a second to keep a countdown
+       moving, and passes `onClose` as an inline arrow, so the identity
+       changes on every one of those renders. Focus has to survive that: a
+       player typing a bid cannot have the field taken off them mid-number.
+    */
+    const { rerender, getByLabelText } = render(<FormDialog onClose={() => {}} />)
+
+    const field = getByLabelText('amount') as HTMLInputElement
+    field.focus()
+    expect(document.activeElement).toBe(field)
+
+    for (let tick = 0; tick < 3; tick++) rerender(<FormDialog onClose={() => {}} />)
+
+    expect(document.activeElement).toBe(field)
+  })
+
+  it('still closes on Escape after the callback has changed', () => {
+    /* The ref that fixes the above must not pin the first callback. */
+    let closed = 0
+    const { rerender } = render(<Dialog onClose={() => {}} />)
+    rerender(<Dialog onClose={() => closed++} />)
+
+    fireEvent.keyDown(window, { key: 'Escape' })
+    expect(closed).toBe(1)
+  })
+
   it('closes on Escape', () => {
     let closed = 0
     render(<Dialog onClose={() => closed++} />)
