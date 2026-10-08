@@ -48,20 +48,12 @@ const player = {
 
 const claim = { wallet: 'previewer.wam', gems: 0, total_gems: 0, tlm: 92_400, wax: 6_500, expiry_date: iso(5 * 86_400_000) }
 
-/*
-   The panel with its lid up.
-
-   `Mission` keeps its own folded flag and starts shut, which a static
-   render has no way to click — so the expanded half of the screen, the
-   whole of the contributing, was not in this preview at all. Whether it is
-   folded is nothing but a class, so the harness takes it off: the markup is
-   identical to what the component draws once a player opens one.
-*/
 const opened = renderToStaticMarkup(
   <Mission
     offer={offer}
     player={player}
     mine={900}
+    stakes={[]}
     contributors={37}
     now={NOW}
     balance={4_200}
@@ -72,7 +64,7 @@ const opened = renderToStaticMarkup(
     onGems={() => {}}
     onContribute={() => {}}
   />,
-).replace('class="mach mach--shut"', 'class="mach"')
+)
 
 const body = renderToStaticMarkup(
   <div className="candle">
@@ -93,6 +85,7 @@ const body = renderToStaticMarkup(
           offer={offer}
           player={player}
           mine={900}
+          stakes={[]}
           contributors={37}
           now={NOW}
           balance={4_200}
@@ -124,6 +117,7 @@ const body = renderToStaticMarkup(
           }}
           player={player}
           mine={0}
+          stakes={[]}
           contributors={12}
           now={NOW}
           balance={4_200}

@@ -23,6 +23,21 @@ export function formatNumber(value: number): string {
   return value.toLocaleString(NUM_LOCALE)
 }
 
+/**
+ * A number the way a game HUD writes it: 74.4K, 2.82M.
+ *
+ * Under ten thousand it is left alone — "9,840" is shorter than "9.8K" and
+ * exact. From there it drops to one decimal, then to none at a hundred
+ * thousand, then to millions at two. The resource strip in the header has
+ * always written its balances this way; this is that rule, lifted so a
+ * figure elsewhere can match it rather than invent a near miss.
+ */
+export function formatCompact(n: number): string {
+  if (n < 10_000) return n.toLocaleString(NUM_LOCALE)
+  if (n < 1_000_000) return `${(n / 1000).toFixed(n < 100_000 ? 1 : 0)}K`
+  return `${(n / 1_000_000).toFixed(2)}M`
+}
+
 /** A number to a fixed number of decimal places. */
 export function formatDecimals(value: number, places: number): string {
   return value.toLocaleString(NUM_LOCALE, {

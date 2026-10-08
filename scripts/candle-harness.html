@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Candle — live harness</title>
+  <!--
+    The real Candle screen, past the wallet gate, with real chain data.
+
+      npm run dev
+      open http://localhost:5273/scripts/candle-harness.html
+      (or ?as=wallet to see it as a particular player)
+
+    The gate is a store: this page fetches a registered player's row, puts
+    it in the game store as if they had signed in, loads the config store,
+    and mounts the screen itself. Nothing is signed and nothing can be —
+    there is no session — so the contribute and claim buttons stay
+    disabled. What it gives is the screen as a player sees it: the bar
+    drawn from a real board, the slider, the hover names.
+  -->
+</head>
+<body>
+  <div id="root"></div>
+  <script type="module" src="./candle-harness.tsx"></script>
+</body>
+</html>

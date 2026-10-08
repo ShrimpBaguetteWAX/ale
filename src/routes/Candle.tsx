@@ -48,10 +48,11 @@ import { asset } from '@/assets'
  *
  * That makes it a dilution game, which is the opposite of how a "contribute"
  * screen normally reads. Adding gems raises your share and lowers what every
- * gem in the pot is worth — including the ones you already put in. So the
- * screen leads with the **rate** rather than the prize: what a gem is worth
- * right now, and what it would be worth after the contribution you are about
- * to make.
+ * gem in the pot is worth — including the ones you already put in. So each
+ * mission is drawn as the split itself: a bar of everyone's stake to scale,
+ * with the player's own slice in teal and a ghost slice for what they are
+ * about to add, so the dilution is seen rather than explained — alongside
+ * what a gem is worth now and what it would be worth after.
  *
  * Entry is a gate, not a score. `contribute` checks the player's lifetime
  * counter against the requirement and refuses outright below it, so there is
@@ -193,6 +194,30 @@ export default function Candle() {
   */
   const { busy, error, notice, run } = useAction()
 
+  /*
+     Player tags and faces, read once for the whole screen.
+
+     Every mission's bar names its slices and every board names its rows,
+     out of the same cached page the rest of the app resolves names from —
+     so this is usually no request at all. Names are a courtesy; the
+     wallets underneath are the real answer, so a failure is silent.
+  */
+  const [names, setNames] = useState<{
+    tags: Record<string, string>
+    avatars: Record<string, number>
+  }>({ tags: {}, avatars: {} })
+  useEffect(() => {
+    let live = true
+    fetchPlayerTags()
+      .then((r) => {
+        if (live) setNames({ tags: r.tags, avatars: r.avatars })
+      })
+      .catch(() => {})
+    return () => {
+      live = false
+    }
+  }, [])
+
   const [now, setNow] = useState(() => Date.now())
   useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), 1000)
@@ -268,7 +293,7 @@ export default function Candle() {
       <div className="candle__cols">
         <div>
           {data.loading ? (
-            <div className="mach mach--loading" />
+            <div className="split split--loading" />
           ) : running.length === 0 ? (
             <p className="candle__empty">
               No mission is running.
@@ -299,6 +324,8 @@ export default function Candle() {
                   canAct={!!session}
                   onGems={(value) => setGemsFor(offer.offer_id, value)}
                   onContribute={() => void doContribute(offer)}
+                  tags={names.tags}
+                  avatars={names.avatars}
                 />
               )
             })
@@ -393,49 +420,28 @@ export function UpNext({
 /**
  * Everyone's stake in the running campaign, biggest first.
  *
- * The screen already read this board — it is how a player's share of the pot
- * is worked out — and then reduced it to a count. But a candle is a contest
- * between the people in it: what a gem buys depends entirely on who else has
- * spent and how much, and "14 players" does not say whether that is fourteen
- * small stakes or one whale and thirteen hopefuls.
- *
- * Named and faced rather than listed by wallet, because these are opponents
- * rather than addresses — the same tag and avatar the leaderboards show.
+ * The bar on the card is this board drawn to scale; this is the same board
+ * read down as a list, for when the slices are too thin to hover or the
+ * player wants the figures in a column. Named and faced rather than listed
+ * by wallet, because these are opponents rather than addresses — the same
+ * tag and avatar the leaderboards show, resolved once by the screen and
+ * handed down.
  */
 function ContributorBoard({
   stakes,
   total,
   wallet,
+  tags,
+  avatars,
   onClose,
 }: {
   stakes: Contribution[]
   total: number
   wallet: string
+  tags: Record<string, string>
+  avatars: Record<string, number>
   onClose: () => void
 }) {
-  const [tags, setTags] = useState<Record<string, string>>({})
-  const [avatars, setAvatars] = useState<Record<string, number>>({})
-
-  /*
-     Read only once the board is opened, and from the same cached page the
-     rest of the app resolves names out of — so this is usually no request at
-     all, and never one for a player who does not open it.
-  */
-  useEffect(() => {
-    let live = true
-    fetchPlayerTags()
-      .then((r) => {
-        if (!live) return
-        setTags(r.tags)
-        setAvatars(r.avatars)
-      })
-      /* Names are a courtesy; the wallets underneath are the real answer. */
-      .catch(() => {})
-    return () => {
-      live = false
-    }
-  }, [])
-
   const rows = useMemo(
     () => [...stakes].sort((a, b) => Number(b.amount) - Number(a.amount)),
     [stakes],
@@ -511,6 +517,22 @@ function ContributorBoard({
 
 /* ---------- the running mission ---------- */
 
+const NO_TAGS: Record<string, string> = {}
+const NO_AVATARS: Record<string, number> = {}
+
+/**
+ * The mission as a split.
+ *
+ * The pot is a fixed sum divided by gems, so the truest picture of a mission
+ * is a proportional bar: everyone's stake as a slice, the player's own in
+ * teal. Pulling the slider grows that slice and visibly shrinks everyone
+ * else's — dilution is seen rather than explained, which is the one thing
+ * about this screen that every earlier shape of it had to say in words.
+ *
+ * Hovering a slice names it; the player count opens the same board as a
+ * list, for slices too thin to hover. Nothing folds: with the bar carrying
+ * the board, the card is short enough to show every mission in full.
+ */
 export function Mission({
   offer,
   player,
@@ -526,6 +548,8 @@ export function Mission({
   canAct,
   onGems,
   onContribute,
+  tags = NO_TAGS,
+  avatars = NO_AVATARS,
 }: {
   offer: CandleOffer
   player: Player
@@ -548,18 +572,11 @@ export function Mission({
   canAct: boolean
   onGems: (v: string) => void
   onContribute: () => void
+  /** Player tags and faces by wallet, for the slices and the board. */
+  tags?: Record<string, string>
+  avatars?: Record<string, number>
 }) {
   const [showBoard, setShowBoard] = useState(false)
-  /*
-     Folded to begin with.
-
-     The cabinet keeps the four things worth knowing at a glance: the
-     mission, the clock, the prize and what you have already put in. A
-     player with three missions running wants to see all of them at once
-     more often than they want to feed any one of them, so the screen opens
-     as a list and a mission is opened deliberately.
-  */
-  const [shut, setShut] = useState(true)
 
   const state = offerState(offer, now)
   const gate = eligibility(offer, player)
@@ -575,10 +592,17 @@ export function Mission({
   const open = state.phase === 'open'
   const soon = state.phase === 'upcoming'
   const tooPoor = amount > balance
-  const canContribute =
-    canAct && busy === null && open && gate.qualified && amount > 0 && !tooPoor
+  /* Whether the controls take input at all — the gate, the clock and a
+     signature in flight all shut them. */
+  const usable = canAct && busy === null && open && gate.qualified
+  const canContribute = usable && amount > 0 && !tooPoor
+  /*
+     Whether there is a contribution to price. The ghost slice and the two
+     "after" figures appear together, and only when the contribution could
+     actually be made — a locked or unopened mission has nothing to project.
+  */
+  const priced = amount > 0 && gate.qualified && open
 
-  /* What the plate on the marquee counts down to. */
   const clock = soon
     ? { label: 'Opens in', time: countdown(state.msLeft) }
     : open
@@ -593,127 +617,185 @@ export function Mission({
         ? 'Locked'
         : 'Contribute gems'
 
-  const toggle = () => setShut((was) => !was)
-  /* The sign is the handle, so anything on it that is not the handle has to
-     say so — a countdown that collapsed the panel when you looked at it
-     would be a small betrayal. */
-  const stop = (e: { stopPropagation: () => void }) => e.stopPropagation()
+  /* Biggest first, so the bar reads like the board. */
+  const slices = useMemo(
+    () => [...stakes].sort((a, b) => Number(b.amount) - Number(a.amount)),
+    [stakes],
+  )
+  /* The bar's denominator: the pot, plus what is about to go in. */
+  const whole = share.total + (priced ? amount : 0)
+  const name = (wallet: string) => (wallet === player.wallet ? 'you' : tags[wallet] || wallet)
+
+  const gateHint = `Needs ${formatNumber(gate.need)} lifetime ${offer.requirements.toLowerCase()} — you have ${formatNumber(gate.have)}`
 
   const gemIcon = (
-    <img className="mach__gem" src={asset('/assets/icons/gems.png')} alt="gems" width={13} height={13} />
+    <img className="split__gem" src={asset('/assets/icons/gems.png')} alt="gems" width={13} height={13} />
   )
 
   return (
     <section
-      className={`mach${shut ? ' mach--shut' : ''}${soon ? ' mach--soon' : ''}${
-        !gate.qualified && !soon ? ' mach--barred' : ''
+      className={`split${soon ? ' split--soon' : ''}${
+        !gate.qualified && !soon ? ' split--locked' : ''
       }`}
     >
-      {/* The room the machine stands in. See `.mach__pile`. */}
-      <img className="mach__pile" src={asset('/assets/shop/candle-gems.webp')} alt="" />
-
-      <header className="mach__marquee" onClick={toggle}>
+      <header className="split__top">
+        <span className="split__kick">Mission</span>
+        <h3 className="split__name">{offer.requirements}</h3>
         {/*
-          The gate, on the sign opposite the clock.
+          The gate, as a chip beside the name.
 
-          It was a row of its own under the marquee, which pushed the
-          mission's own figures down the page for the one mission a player
-          cannot act on. All they need from it is how far short they are;
-          the arithmetic behind that number is a tooltip.
+          All a player needs from it is yes or how far short; the bar and
+          where they stand against it are a tooltip on either answer.
         */}
-        {!gate.qualified && (
-          <span
-            className="mach__gate"
-            title={`Needs ${formatNumber(gate.need)} lifetime ${offer.requirements.toLowerCase()} — you have ${formatNumber(gate.have)}`}
-          >
+        {gate.qualified ? (
+          <span className="split__gate split__gate--ok" title={gateHint}>
+            <span aria-hidden="true">&#10003;</span> qualified
+          </span>
+        ) : (
+          <span className="split__gate split__gate--short" title={gateHint}>
             <span aria-hidden="true">&#10005;</span>
             <b>{formatNumber(gate.short)} short</b>
           </span>
         )}
-
-        <div className="mach__title">
-          <span>Mission</span>
-          <b>{offer.requirements}</b>
-        </div>
-
-        <span className="mach__tools">
-          <span className="mach__clock" onClick={stop}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"
-              strokeLinecap="round" aria-hidden="true">
-              <circle cx="12" cy="12" r="9" />
-              <path d="M12 7v5.2l3.2 2" />
-            </svg>
-            <span className="mach__clockcol">
-              <span>{clock.label}</span>
-              <b>{clock.time}</b>
-            </span>
-          </span>
-          <button
-            type="button"
-            className="mach__toggle"
-            aria-expanded={!shut}
-            aria-label={shut ? 'Expand mission' : 'Collapse mission'}
-            onClick={(e) => {
-              stop(e)
-              toggle()
-            }}
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6"
-              strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <path d="M5 9l7 7 7-7" />
-            </svg>
-          </button>
+        <span className="split__clock">
+          <span>{clock.label}</span>
+          <b>{clock.time}</b>
         </span>
       </header>
 
-      {/* What survives the fold. */}
-      <div className="mach__mini">
+      <p className="split__pot">
+        <img src={icon} alt="" width={28} height={28} />
+        <b>{formatDecimals(prize, dp(prize))}</b>
         <span>
-          <img src={icon} alt="" width={20} height={20} />
-          <b>{formatDecimals(prize, dp(prize))}</b> {symbol} {soon ? 'on offer' : 'in the pot'}
+          {symbol} {soon ? 'on offer' : 'in the pot'}
         </span>
-        {/*
-          What the pot is being split between.
+      </p>
 
-          The reward alone says what is on the table and not what a share of
-          it is worth — that depends entirely on how many gems are in
-          against it, which was a fact you had to unfold the panel to see.
-        */}
+      {/*
+        The split itself. Every slice is a share of the bar's whole, so
+        adding a ghost slice for the pending contribution is what shrinks
+        the others — the arithmetic draws itself.
+      */}
+      <div
+        className="split__bar"
+        role="img"
+        aria-label={`${formatNumber(share.total)} gems contributed by ${formatNumber(contributors)} players`}
+      >
+        {slices.map((r, i) => {
+          const gemsIn = Number(r.amount)
+          const you = r.wallet === player.wallet
+          return (
+            <span
+              className={`split__seg${you ? ' split__seg--you' : ''}`}
+              style={{ flexBasis: `${(gemsIn / whole) * 100}%` }}
+              key={r.wallet}
+            >
+              <span className="split__tip">
+                {i + 1}. {name(r.wallet)} · <b>{((gemsIn / whole) * 100).toFixed(1)}%</b> ·{' '}
+                {formatNumber(gemsIn)} gems
+              </span>
+            </span>
+          )
+        })}
+        {/* A pot with gems but no board yet: one plain slice, not an empty bar. */}
+        {slices.length === 0 && share.total > 0 && (
+          <span className="split__seg" style={{ flexBasis: `${(share.total / whole) * 100}%` }} />
+        )}
+        {priced && (
+          <span className="split__seg split__seg--ghost" style={{ flexBasis: `${(amount / whole) * 100}%` }}>
+            <span className="split__tip">+{formatNumber(amount)} gems you are about to add</span>
+          </span>
+        )}
+      </div>
+
+      {share.total === 0 && (
+        <p className="split__none">
+          {soon ? 'Nobody can contribute until it opens.' : 'Nobody has contributed yet.'}
+        </p>
+      )}
+
+      <div className="split__under">
         <span>
-          <img src={asset('/assets/icons/gems.png')} alt="" width={20} height={20} />
-          <b>{formatNumber(share.total)}</b> gems contributed
+          A gem buys{' '}
+          <b>
+            {share.total > 0
+              ? formatDecimals(share.perGem, perGemPlaces(share.perGem, type))
+              : '—'}
+          </b>{' '}
+          {share.total > 0 && symbol}
         </span>
         <span>
-          <img src={asset('/assets/icons/gems.png')} alt="" width={20} height={20} />
-          <b>{formatNumber(mine)}</b> your contribution
+          <b>{formatNumber(share.total)}</b> gems contributed ·{' '}
+          {/*
+            The count opens the board rather than just stating it. What a
+            gem buys here depends on who else has spent and how much, and
+            "14 players" does not say whether that is fourteen small stakes
+            or one whale and thirteen hopefuls.
+          */}
+          <button
+            type="button"
+            className="split__who"
+            onClick={() => setShowBoard(true)}
+            disabled={contributors === 0}
+            title="See who has contributed and how much"
+          >
+            <b>{formatNumber(contributors)}</b> players
+          </button>
         </span>
       </div>
 
-      <div className="mach__body">
-        <div className="mach__glass">
-          <div className="mach__pot">
-            <img src={icon} alt="" width={44} height={44} />
-            <b>{formatDecimals(prize, dp(prize))}</b>
-            <span>
-              {symbol} {soon ? 'on offer' : 'in the pot'}
-            </span>
-          </div>
-          {soon && (
-            <p className="mach__empty">
-              <b>The case is empty</b>nobody can feed it until it opens
+      {/* The player's own row: what is in, what it is worth, and the control. */}
+      <div className="split__you">
+        <div className="split__share">
+          <span className="split__kick">
+            Your contribution · <b>{formatNumber(mine)}</b>
+            {gemIcon}
+          </span>
+          <p className="split__now">
+            Your share now{' '}
+            <b>{mine > 0 ? `${formatDecimals(share.payout, dp(share.payout))} ${symbol}` : '—'}</b>
+            {mine > 0 && <small>({(share.fraction * 100).toFixed(1)}%)</small>}
+          </p>
+          {/*
+            What the contribution would do — to the share and to the rate.
+            Adding to the pot lowers the rate for everyone, so both sides of
+            the sum move and the gems go into the denominator too.
+          */}
+          {priced && (
+            <p className="split__after">
+              Your share after <b>{formatDecimals(after.payout, dp(after.payout))} {symbol}</b>
+              <span aria-hidden="true"> · </span>
+              Worth per gem after{' '}
+              <b>{formatDecimals(after.perGem, perGemPlaces(after.perGem, type))} {symbol}</b>
             </p>
           )}
+          {tooPoor && <p className="hint hint--error">That is more gems than you hold.</p>}
         </div>
 
-        {/*
-          One control, not two: the amount and the action share a box, so the
-          decision is in one place and the focus ring lights all of it.
-        */}
-        <div className="mach__slot">
-          <span className="mach__kick">Contribute gems</span>
-          <div className="mach__field">
+        <div className="split__ctl">
+          <span className="split__kick">
+            You hold <b>{formatNumber(balance)}</b>
+            {gemIcon}
+          </span>
+          {/*
+            Slider, box and button as one control: the slider is for feeling
+            the bar move, the box for an exact figure, and both write the
+            same draft.
+          */}
+          <div className="split__field">
             <input
-              className="mach__in"
+              className="split__range"
+              type="range"
+              min={0}
+              max={Math.max(0, balance)}
+              step={1}
+              value={Math.min(amount, Math.max(0, balance))}
+              onChange={(e) => onGems(e.target.value)}
+              disabled={!usable || balance <= 0}
+              aria-label="Gems to contribute"
+            />
+            <input
+              className="split__in"
               type="number"
               min={1}
               max={balance}
@@ -722,11 +804,12 @@ export function Mission({
               placeholder="0"
               value={gems}
               onChange={(e) => onGems(e.target.value)}
-              disabled={!canAct || busy !== null || !open || !gate.qualified}
+              disabled={!usable}
+              aria-label="Gems to contribute, exactly"
             />
             <button
               type="button"
-              className="mach__go"
+              className="btn btn--primary split__go"
               disabled={!canContribute}
               onClick={onContribute}
               title={
@@ -744,82 +827,6 @@ export function Mission({
             </button>
           </div>
         </div>
-
-        {tooPoor && <p className="hint hint--error">That is more gems than you hold.</p>}
-
-        <div className="mach__meta">
-          <span>
-            In the pot <b>{formatNumber(share.total)}</b>
-            {gemIcon}
-          </span>
-          <span>
-            Your contribution <b>{formatNumber(share.mine)}</b>
-            {gemIcon}
-          </span>
-          <span>
-            Players{' '}
-            {/*
-              The count opens the board rather than just stating it. What a
-              gem buys here depends on who else has spent and how much, and
-              "14 players" does not say whether that is fourteen small stakes
-              or one whale and thirteen hopefuls.
-            */}
-            <button
-              type="button"
-              className="mach__who"
-              onClick={() => setShowBoard(true)}
-              disabled={contributors === 0}
-              title="See who has contributed and how much"
-            >
-              <b>{formatNumber(contributors)}</b>
-            </button>
-          </span>
-          <span>
-            A gem buys{' '}
-            <b>
-              {share.total > 0
-                ? formatDecimals(share.perGem, perGemPlaces(share.perGem, type))
-                : '—'}
-            </b>{' '}
-            {share.total > 0 && symbol}
-          </span>
-          <span>
-            You hold <b>{formatNumber(balance)}</b>
-            {gemIcon}
-          </span>
-
-          {/*
-            What the contribution would do — to the share and to the rate.
-            Adding to the pot lowers the rate for everyone, so both sides of
-            the sum move and the gems go into the denominator too. Only shown
-            once there is a contribution to talk about.
-          */}
-          {amount > 0 && gate.qualified && open && (
-            <>
-              <span className="mach__after">
-                Your share after <b>{formatDecimals(after.payout, dp(after.payout))}</b> {symbol}
-              </span>
-              <span className="mach__after">
-                Worth per gem after{' '}
-                <b>{formatDecimals(after.perGem, perGemPlaces(after.perGem, type))}</b> {symbol}
-              </span>
-            </>
-          )}
-        </div>
-
-        <div className="mach__tray">
-          <span className="mach__kick">Your share now</span>
-          <span className="mach__trayval">
-            {mine > 0 ? (
-              <>
-                {formatDecimals(share.payout, dp(share.payout))} {symbol}
-                <small>({(share.fraction * 100).toFixed(1)}%)</small>
-              </>
-            ) : (
-              '—'
-            )}
-          </span>
-        </div>
       </div>
 
       {showBoard && (
@@ -827,6 +834,8 @@ export function Mission({
           stakes={stakes}
           total={share.total}
           wallet={player.wallet}
+          tags={tags}
+          avatars={avatars}
           onClose={() => setShowBoard(false)}
         />
       )}

@@ -96,6 +96,9 @@ const planAt = (moment: number): TournamentPlanStep[] => {
   })
 }
 
+const SIGNUP_AT = timelineOf(planAt(NOW), NOW).find((t) => t.name === 'signup')?.startMs ?? NOW
+const PREP_NOW = SIGNUP_AT - 95_000
+
 const stage = (over: Partial<TournamentStage> = {}): TournamentStage =>
   ({
     /* `name(1790000044)` — the second the tournament started. */
@@ -111,7 +114,7 @@ const stage = (over: Partial<TournamentStage> = {}): TournamentStage =>
     allow_player_signup: true,
     allow_player_cancellation: true,
     tlm_rewards: '18400.0000 TLM',
-    wax_rewards: '0.00000000 WAX',
+    wax_rewards: '412.50000000 WAX',
     player_count: 23,
     rounds: 0,
     free_passes: 0,
@@ -214,6 +217,9 @@ const PAIRINGS: TournamentMatchup[] = Array.from({ length: BOUT_COUNT }, (_, i) 
     crew_template_id_player2: 260678,
     arms_template_id_player1: 260676,
     arms_template_id_player2: 260676,
+    /* Spread across the fighting window the way the contract stamps them,
+       so the slot column reads as it will in the game. */
+    play_time: new Date(Date.UTC(2026, 8, 27, 21, 16 + i * 7)).toISOString().slice(0, 19),
     /* Two fought, one under way, the rest to come — every state the row
        can be in, on one board. */
     winner: i === 0 ? a.wallet : i === 1 ? b.wallet : '',
@@ -374,15 +380,39 @@ const STATES: { id: string; note: string; body: string }[] = [
     id: 'preparing',
     note: '<code>set_weather</code> / <code>get_rewards</code> — screen <code>preparing</code>',
     body:
-      /* Nothing but the doors: see the screen's own `preparing` branch. */
-      draw(<Preparing fighters={RING} />),
+      /*
+         The doors, plus whatever the setup steps have settled: the rolls
+         land in `set_weather` and the pot in `get_rewards`, both before
+         signup opens, so both are readable here.
+      */
+      draw(
+        <Preparing
+          fighters={RING}
+          stage={stage()}
+          weather={WEATHER}
+          signupAt={SIGNUP_AT}
+          now={PREP_NOW}
+        />,
+      ),
+  },
+  {
+    id: 'preparing-early',
+    note: '<code>set_weather</code> — nothing settled yet, so the pot reads as unclaimed',
+    body: draw(
+      <Preparing
+        fighters={RING}
+        stage={stage({ tlm_rewards: '0.0000 TLM', wax_rewards: '0.00000000 WAX' })}
+        weather={[]}
+        signupAt={SIGNUP_AT}
+        now={PREP_NOW}
+      />,
+    ),
   },
   {
     id: 'signup',
     note: '<code>signup</code> — the only ten minutes a player can do anything',
     body:
-      draw(<TournamentHead />) +
-      draw(<PrizeBar stage={stage()} weather={WEATHER} />) +
+      `<div class="tour__top">` + draw(<TournamentHead />) + draw(<PrizeBar stage={stage()} weather={WEATHER} />) + `</div>` +
       '<div class="tour__band">' +
       draw(<DayStrip timeline={timelineOf(planAt(NOW), NOW)} now={NOW} />) +
       draw(

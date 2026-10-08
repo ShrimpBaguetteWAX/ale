@@ -54,6 +54,7 @@ export function BoutBroadcast({
   bout,
   weather,
   mineWallet,
+  autoPlay = false,
 }: {
   m: TournamentMatchup
   round: number
@@ -66,6 +67,14 @@ export function BoutBroadcast({
    */
   weather: Weather[]
   mineWallet: string | null
+  /**
+   * Skip the poster and run it.
+   *
+   * Pressing play against a row on the board below is already the ask — the
+   * poster exists for the fight the screen offers unprompted, not for one
+   * the player has just gone looking for.
+   */
+  autoPlay?: boolean
 }) {
   const [asked, setAsked] = useState(false)
   const [phase, setPhase] = useState<'poster' | 'wipe' | 'live' | 'done'>('poster')
@@ -162,6 +171,19 @@ export function BoutBroadcast({
     setPaused(false)
     setPhase('wipe')
   }
+
+  /*
+     Started from the board rather than from the poster.
+
+     The broadcast is keyed on the pairing, so picking a different fight
+     remounts this and the effect runs on the new one. Picking the fight
+     already on screen does not remount, which is why it watches the flag
+     rather than only firing once.
+  */
+  useEffect(() => {
+    if (autoPlay) play()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoPlay, m.index])
 
   const again = () => {
     setStep(0)

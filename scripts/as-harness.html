@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Alien Legends — as another wallet</title>
+  <!--
+    The whole game, seen as another wallet, read-only.
+
+      npm run dev
+      open http://localhost:5273/scripts/as-harness.html?as=fkwaa.c.wam#/farming
+
+    The query picks the wallet, the hash picks the screen — the app's own
+    hash router takes it from there, so every screen and the menu work as
+    usual. Nothing can be signed: there is no session for that wallet.
+  -->
+</head>
+<body>
+  <div id="root"></div>
+  <script type="module" src="./as-harness.tsx"></script>
+</body>
+</html>

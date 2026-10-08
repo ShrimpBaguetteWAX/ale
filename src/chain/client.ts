@@ -155,6 +155,9 @@ export async function getRows<T>(
  * Used for the land grid — 861 rows per planet come back in a single page at
  * `limit: 1000`, so a whole planet costs one request.
  */
+/** Pages of 1,000 a single read may walk: 50,000 rows. */
+const MAX_PAGES = 50
+
 export async function getAllRows<T>(
   query: TableQuery,
   opts: ReadOptions = {},
@@ -174,15 +177,25 @@ export async function getAllRows<T>(
   const request = (async () => {
     const out: T[] = []
     let lower = query.lower_bound
-    // Guard against a malformed `next_key` looping forever.
-    for (let page = 0; page < 25; page++) {
+    /*
+       Up to 50,000 rows, and never the same page twice.
+
+       The page cap is a guard against a malformed `next_key` looping
+       forever, but at 25 pages it was also a ceiling on what a player can
+       hold: a farmer with 25,008 cards staked saw 25,000 of them, and the
+       eight that fell off were the newest — the index runs by asset id, so
+       the card staked this morning was the first to go missing. Fifty
+       pages clears every real position with room to spare, and a key that
+       does not advance stops the walk on its own.
+    */
+    for (let page = 0; page < MAX_PAGES; page++) {
       const res = await post<TableResponse<T>>(
         '/v1/chain/get_table_rows',
         { json: true, limit: 1000, ...query, lower_bound: lower },
         signal,
       )
       out.push(...res.rows)
-      if (!res.more || !res.next_key) break
+      if (!res.more || !res.next_key || res.next_key === lower) break
       lower = res.next_key
       if (pageDelayMs > 0) {
         await new Promise((r) => setTimeout(r, pageDelayMs))

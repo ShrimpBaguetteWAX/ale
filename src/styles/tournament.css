@@ -119,25 +119,28 @@
    is the whole argument for spending the energy, so it is set like a
    headline and the gold is the game's own.
 */
+/* The strip's own measuring stick: see the two container queries below. */
+.pot__frame {
+  container: pot / inline-size;
+}
+
 .pot {
   /*
-     One line: what is on the table, and the weather it is fought in.
+     A lower third: tab, band, tab, band — one line, no box around it.
 
-     Stacked — label over figure over rolls — this was a hundred and sixty
-     pixels of banner above the thing the screen is actually for. Across, it
-     is seventy and says exactly as much. The figure is still the biggest
-     type on the screen, which is the part that matters.
+     The chamfers on the tabs and the bands are what make the four pieces
+     read as one strip rather than four boxes in a row; each one is cut on
+     the same angle and overlaps the next by a few pixels under it.
   */
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px 22px;
-  padding: 12px 18px;
-  border-radius: 14px;
+  align-items: stretch;
+  min-height: 54px;
   text-align: left;
-  background: #0a1220;
-  border: 1px solid rgb(148 163 184 / 20%);
-  box-shadow: inset 0 1px 0 rgb(255 255 255 / 6%);
+}
+
+.pot__tab,
+.pot__body {
+  filter: drop-shadow(0 8px 22px rgb(0 0 0 / 55%));
 }
 
 .pot__label {
@@ -147,19 +150,196 @@
   color: var(--text-faint);
 }
 
+/* The two tabs. Gold says what is on the table; cyan says what it is fought
+   under — the same pairing the broadcast's scorebar uses. */
+.pot__tab {
+  position: relative;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  flex: none;
+  padding: 0 20px 0 16px;
+  font-family: var(--font-display);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: #1a1304;
+  background: linear-gradient(180deg, #ffe49a, #f6a800);
+  clip-path: polygon(0 0, 100% 0, calc(100% - 12px) 100%, 0 100%);
+}
+
+/* The conditions tab is the rewards tab in a mirror: it follows its band
+   rather than leading it, cut on the opposite angle, at the far right. */
+.pot__tab--cond {
+  padding: 0 14px 0 16px;
+  color: #04131c;
+  background: linear-gradient(180deg, #a9f0ff, #00baff);
+  clip-path: polygon(12px 0, 100% 0, 100% 100%, 0 100%);
+}
+
+/*
+ * The gap, and the line across it.
+ *
+ * A dashed hairline at the strip's midline is the least that keeps the two
+ * halves reading as one lower third. It takes whatever room the figures
+ * and the rolls leave, but never less than a visible break.
+ */
+.pot__bridge {
+  position: relative;
+  flex: 1;
+  min-width: 28px;
+}
+
+.pot__bridge::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 1px;
+  background: repeating-linear-gradient(
+    90deg,
+    rgb(126 231 251 / 55%) 0 6px,
+    transparent 6px 12px
+  );
+}
+
+/* The two bands, each tucked under the tab before it. Neither shrinks:
+   a band that gives way folds its figures onto two lines, and the strip
+   has to overflow instead so the measurement above it can see it. */
+.pot__body {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  margin-left: -10px;
+  padding: 0 22px 0 26px;
+  background: linear-gradient(180deg, rgb(10 18 32 / 96%), rgb(6 11 20 / 96%));
+  border-top: 1px solid rgb(255 255 255 / 10%);
+  border-bottom: 1px solid rgb(0 0 0 / 60%);
+  clip-path: polygon(10px 0, 100% 0, calc(100% - 12px) 100%, 0 100%);
+}
+
+/* The right-hand band tucks under the tab that follows it. */
+.pot__body--cond {
+  flex: none;
+  gap: 18px;
+  margin-left: 0;
+  margin-right: -10px;
+  padding: 0 24px 0 18px;
+  clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 100%, 12px 100%);
+}
+
+/* ————————————————— how the pot is split ————————————————— */
+
+/* The panel's anchor: positioned, and nothing else — no clip, no filter,
+   so the panel underneath it can be drawn at all. */
+.pot__howwrap {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  flex: none;
+}
+
+/* The label, now also the way in. It keeps looking like a label — the mark
+   beside it is the only thing that says there is more to read. */
+/* The gold tab is the button: pressing it, or resting on it, opens the
+   explainer. It keeps every tab style; only the button chrome is reset. */
+.pot__label--ask {
+  gap: 6px;
+  border: 0;
+  cursor: help;
+}
+
+.pot__label--ask svg {
+  width: 12px;
+  height: 12px;
+  fill: currentColor;
+  opacity: 0.7;
+  /* The letterspacing above pushes the last glyph a third of a character
+     clear of the word; this pulls the mark back onto it. */
+  margin-left: -4px;
+}
+
+.pot__howwrap:hover .pot__tab--rewards,
+.pot__howwrap:focus-within .pot__tab--rewards {
+  background: linear-gradient(180deg, #fff1c4, #ffbe2e);
+}
+
+.pot__how {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 30;
+  width: max-content;
+  max-width: min(340px, 86vw);
+  padding: 11px 14px;
+  border-radius: 10px;
+  border: 1px solid rgb(255 219 125 / 28%);
+  background: rgb(6 11 20 / 97%);
+  box-shadow: 0 12px 30px rgb(0 0 0 / 55%);
+  font-size: 0.78rem;
+  line-height: 1.45;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--text-dim);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-4px);
+  transition:
+    opacity var(--dur-fast) var(--ease),
+    transform var(--dur-fast) var(--ease),
+    visibility var(--dur-fast);
+}
+
+.pot__how b {
+  color: #ffdb7d;
+  font-weight: 700;
+}
+
+/* Hover for a mouse, press for a thumb — neither excludes the other. */
+.pot__howwrap:hover .pot__how,
+.pot__howwrap:focus-within .pot__how,
+.pot__how--open {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+/* On a phone it is the width of the panel rather than of the label. */
+@media (max-width: 640px) {
+  .pot__how {
+    left: 50%;
+    transform: translate(-50%, -4px);
+  }
+
+  .pot__howwrap:hover .pot__how,
+  .pot__howwrap:focus-within .pot__how,
+  .pot__how--open {
+    transform: translate(-50%, 0);
+  }
+}
+
 .pot__figures {
   display: flex;
-  align-items: baseline;
-  justify-content: center;
-  gap: 26px;
-  flex-wrap: wrap;
+  align-items: center;
+  gap: 22px;
+  flex-wrap: nowrap;
+}
+
+/* A hairline between the two currencies, where the broadcast would put
+   one. */
+.pot__figure + .pot__figure {
+  padding-left: 22px;
+  border-left: 1px solid rgb(255 255 255 / 14%);
 }
 
 .pot__figure {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
-  font-size: clamp(1.7rem, 2.8vw, 2.2rem);
+  gap: 8px;
+  font-size: clamp(1.3rem, 2.2vw, 1.6rem);
   line-height: 1.05;
   font-weight: 700;
   letter-spacing: 0.01em;
@@ -183,27 +363,136 @@
   color: var(--text-faint);
 }
 
-.pot__figure--wax {
-  background: linear-gradient(180deg, #e8f4ff, #7ee7fb 55%, #0187b1);
-  -webkit-background-clip: text;
-  background-clip: text;
+/*
+ * The WAX figure carries no colour of its own.
+ *
+ * It reads in the same gold as the Trilium beside it, because the coin in
+ * front of the number is already saying which currency it is and the hue
+ * would only be saying it again. A clipped gradient used to live here,
+ * never actually showed, and is not missed.
+ */
+
+/* The gold bloom belongs to the Trilium mark; the coin is a rendered object
+   and reads as one without being lit. */
+.pot__figure--wax img {
+  filter: none;
 }
 
 .pot__empty {
   margin: 0;
-  font-size: 1.1rem;
+  font-size: 0.95rem;
+  letter-spacing: 0.04em;
   color: var(--text-faint);
 }
 
 .pot__weather {
-  display: flex;
+  flex-wrap: nowrap;
+}
+
+/*
+ * Low-resolution desktops and tablets: the strip stacks.
+ *
+ * Between a phone and a 1280-wide screen there is not one row's worth of
+ * room for two tabs, two figures and three rolls, so the strip becomes two
+ * lower thirds, one under the other, and both read the same way: tab on
+ * the left, band after it. REWARDS leads the top row, CONDITIONS leads the
+ * bottom one. The bridge still forces the row break but draws nothing —
+ * a dashed tick at the end of a row read as stray marks on the page.
+ *
+ * Every tab, chamfer and band is unchanged; only the arrangement is, and
+ * the conditions tab swaps its trailing cut for the leading one.
+ *
+ * Not a breakpoint: the strip measures itself and sets this class when
+ * its parts plus a real gap are wider than its frame (see PrizeBar). No
+ * width could stand in for that, because the rolls' text is different
+ * every tournament.
+ */
+.pot--stacked {
   flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: 8px 10px;
-  margin-top: 0;
-  /* Pushed to the far end of the band: the pot is what the panel is for,
-     and the weather is the condition attached to it. */
-  margin-left: auto;
+  row-gap: 10px;
+  height: auto;
+  min-height: 0;
+}
+
+/* A row break, and only that. */
+.pot--stacked .pot__bridge {
+  flex: 1 1 100%;
+  min-width: 0;
+  height: 0;
+  margin: 0;
+}
+
+.pot--stacked .pot__bridge::before {
+  display: none;
+}
+
+.pot--stacked .pot__howwrap,
+.pot--stacked .pot__tab,
+.pot--stacked .pot__body {
+  min-height: 54px;
+}
+
+.pot--stacked .pot__body--rewards {
+  flex: 1;
+  clip-path: polygon(10px 0, 100% 0, calc(100% - 12px) 100%, 0 100%);
+}
+
+/* The conditions tab leads its row, so it takes the rewards tab's cut
+   and comes before its band. */
+.pot--stacked .pot__tab--cond {
+  order: 2;
+  padding: 0 20px 0 16px;
+  clip-path: polygon(0 0, 100% 0, calc(100% - 12px) 100%, 0 100%);
+}
+
+.pot--stacked .pot__weather {
+  order: 3;
+  flex: 1;
+  margin-left: -10px;
+  margin-right: 0;
+  padding: 0 22px 0 26px;
+  clip-path: polygon(10px 0, 100% 0, calc(100% - 12px) 100%, 0 100%);
+}
+
+.pot--stacked .pot__weather .pot__roll {
+  cursor: pointer;
+}
+
+/*
+ * Narrower still, the rolls go to their icons.
+ *
+ * Below about 900 pixels three rolls' worth of text does not fit on one
+ * row even with the whole row to itself, so each roll shows only the stat
+ * glyphs that say which numbers it moves. Pressing one opens its text; the
+ * other two stay as icons. The same open-one-at-a-time state the phone
+ * row uses, so there is nothing new to learn between the two sizes.
+ */
+@container pot (max-width: 960px) {
+  .pot__weather {
+    gap: 14px;
+  }
+
+  /*
+     Only once the strip has already stacked: the order is two rows first,
+     icons second. Shrinking the rolls on a single row would make that row
+     fit and stop the strip ever stacking — which is what happened.
+
+     The first roll keeps its text until another is opened, so the row is
+     never three unlabelled glyphs. `--mini` is what the screen puts on
+     every roll that is not the open one, so it is the one signal needed:
+     with nothing open, only the first shows its text; open any roll and
+     it alone does.
+  */
+  .pot--stacked .pot__roll--mini .weather__name,
+  .pot--stacked .pot__roll:not(.pot__roll--open):not(:first-child) .weather__name {
+    display: none;
+  }
+
+  /* An icon-only roll still gets a hairline, so three of them read as
+     three entries rather than a row of six glyphs. */
+  .pot__weather .pot__roll + .pot__roll {
+    padding-left: 14px;
+  }
 }
 
 .pot__weather .weather .weather__name {
@@ -211,17 +500,28 @@
   font-weight: 400;
 }
 
+/*
+ * Each roll bare: icon and text, nothing around them.
+ *
+ * A pill was a soft shape on a strip made of hard angles, and a coloured
+ * dot in front of each one was saying what the roll's own + or − already
+ * says. So neither. The rolls are entries on a readout, parted by the same
+ * hairline that parts TLM from WAX on the other side of the bridge — which
+ * is what makes the two bands the same object.
+ */
 .pot__weather .weather {
   margin-top: 0;
-  background: #111c2e;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
   color: var(--text-dim);
+  --lean-colour: transparent;
+}
 
-  /* The violet lean belongs to screens where weather is the subject. Here
-     it is a footnote on the pot, and three of them in a row at full
-     strength outshouted the prize beside them. */
-  --lean-colour: rgb(148 163 184 / 45%);
-  background: rgb(2 7 14 / 60%);
-  border-color: rgb(148 163 184 / 20%);
+.pot__weather .pot__roll + .pot__roll {
+  padding-left: 18px;
+  border-left: 1px solid rgb(255 255 255 / 14%);
 }
 
 /* A button, but only a phone ever needs it to look like one. */
@@ -248,40 +548,49 @@
 */
 @media (max-width: 720px) {
   /*
-     The pot rides on the title's line, and the weather takes the next one.
+     A phone gets the same two stacked strips as a small desktop — REWARDS
+     over CONDITIONS, each tab leading its band, rolls as icons that open on
+     a tap. It used to collapse the pot into the title's own line with the
+     rolls loose beneath it, which was a different screen from the one a
+     tablet showed a few pixels wider. One strip, drawn smaller, is easier
+     to recognise than two layouts.
 
-     No panel around either: a bordered band for one figure and three chips
-     was most of the space above the fold, and the rolls can be long enough
-     to overflow it anyway. `display: contents` on both the group and the pot
-     puts the title, the figure and the weather into one grid, so the figure
-     lands beside the heading and the rolls span the full width under it.
+     The title sits above the strip rather than beside it: the strip wants
+     the whole width.
   */
   .tour__top {
     display: grid;
-    grid-template-columns: auto 1fr;
-    align-items: center;
-    column-gap: 12px;
-    row-gap: 6px;
+    grid-template-columns: 1fr;
+    row-gap: 8px;
   }
 
-  .pot {
-    display: contents;
+  /* Drawn a size down. 54px of tab on a phone is a button, not a label. */
+  .pot__howwrap,
+  .pot__tab,
+  .pot__body {
+    min-height: 44px;
   }
 
-  /* "18,400 TLM" beside the word Tournament needs no caption. */
-  .pot__label {
-    display: none;
+  .pot__tab {
+    padding: 0 14px 0 12px;
+    font-size: 0.56rem;
+  }
+
+  .pot__body {
+    padding: 0 16px 0 22px;
   }
 
   .pot__figures {
-    grid-column: 2;
-    justify-content: flex-end;
     gap: 14px;
   }
 
   .pot__figure {
-    font-size: 1.5rem;
+    font-size: 1.15rem;
     gap: 6px;
+  }
+
+  .pot__figure + .pot__figure {
+    padding-left: 14px;
   }
 
   .pot__figure img {
@@ -289,68 +598,34 @@
     height: 20px;
   }
 
+  /* Icon and number, no unit word — the coin already says which currency,
+     and it is how the resource strip at the top of every screen writes a
+     balance. The two words were the difference between one line and two. */
+  .pot__figure small {
+    display: none;
+  }
+
   .pot__empty {
-    grid-column: 2;
-    justify-self: end;
     font-size: 0.86rem;
   }
 
   .pot__weather {
-    grid-column: 1 / -1;
-    margin-left: 0;
-    flex-wrap: nowrap;
-    justify-content: flex-start;
-    gap: 6px;
-  }
-
-  /*
-     One line, three rolls, one of them readable.
-
-     Equal thirds by default, each cut off where it runs out of room. Press
-     one and it takes the space it needs while the other two drop back to
-     their stat icons — so nothing leaves the screen and the row never wraps
-     or scrolls.
-  */
-  .pot__roll {
-    flex: 1 1 0;
-    cursor: pointer;
-  }
-
-  .pot__roll--open {
-    flex: 1 1 auto;
-  }
-
-  .pot__roll--mini {
-    flex: 0 0 auto;
-  }
-
-  .pot__roll--mini .weather__name {
-    display: none;
+    padding: 0 16px 0 22px;
   }
 
   .pot__weather .weather {
-    display: flex;
-    width: 100%;
-    margin-top: 0;
-    flex-wrap: nowrap;
-    gap: 6px;
-    padding: 4px 8px 4px 6px;
     font-size: 0.74rem;
-  }
-
-  .pot__weather .weather__name {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .pot__roll--open .weather__name {
-    overflow: visible;
   }
 
   .pot__weather .weather__stat {
     width: 14px;
     height: 14px;
+  }
+
+  /* An opened roll may be longer than the band is wide; it wraps inside
+     the band rather than leaving it. */
+  .pot__roll--open .weather__name {
+    white-space: normal;
   }
 }
 
@@ -416,6 +691,14 @@
 .tour__steptask {
   font-size: 0.72rem;
   color: var(--text-faint);
+}
+
+/* The day and the time each stay whole: a narrow step breaks between them,
+   never inside "08:00 AM". */
+.tour__stepday,
+.tour__stepat {
+  display: inline-block;
+  white-space: nowrap;
 }
 
 /*
@@ -1606,50 +1889,6 @@
   border-top: 1px solid rgba(148, 163, 184, 0.14);
 }
 
-/* ——— Your entry ——— */
-
-.tour__minehead {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 12px;
-}
-
-/* A portrait, not an icon: this is the one picture of the opponent. */
-.tour__avatar {
-  width: 60px;
-  height: 60px;
-  border-radius: 13px;
-  flex: none;
-}
-
-.tour__minestats {
-  display: flex;
-  gap: 18px;
-  margin: 0 0 0 auto;
-}
-
-.tour__minestats div {
-  text-align: right;
-}
-
-.tour__minestats dt {
-  font-size: 0.72rem;
-  text-transform: uppercase;
-  letter-spacing: 0.07em;
-  color: var(--text-faint);
-}
-
-.tour__minestats dd {
-  margin: 2px 0 0;
-  font-size: 1.05rem;
-}
-
-.tour__pass {
-  margin: 12px 0 0;
-  color: #86efac;
-}
-
 /* ——— Pairings ——— */
 
 /*
@@ -1698,7 +1937,15 @@
 }
 
 .tour__boutrow {
-  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-right: 10px;
+}
+
+.tour__boutmain {
+  flex: 1;
+  min-width: 0;
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto minmax(0, 1fr) auto;
   align-items: center;
@@ -1712,7 +1959,7 @@
   cursor: pointer;
 }
 
-.tour__boutrow:disabled {
+.tour__boutmain:disabled {
   cursor: default;
 }
 
@@ -1836,11 +2083,24 @@
   flex: none;
 }
 
-.tour__boutstate {
+.tour__boutwhen {
+  display: grid;
+  justify-items: end;
+  gap: 1px;
   min-width: 7.5em;
+}
+
+.tour__boutstate {
   text-align: right;
   font-size: 0.76rem;
   color: var(--text-muted);
+}
+
+/* The slot the chain will run this one in. Quieter than the state: it is a
+   fact to look up, not the thing the row is telling you. */
+.tour__bouttime {
+  font-size: 0.68rem;
+  color: var(--text-faint);
 }
 
 /* The one the contract is on. */
@@ -1993,63 +2253,6 @@
   color: rgb(255 219 125 / 80%);
 }
 
-.tour__list {
-  margin: 12px 0 0;
-  padding: 0;
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-/*
- * An entrant is a card, not a line of a table.
- *
- * A flat tint with a divider reads as a spreadsheet however big the
- * portrait on it is. Each one gets its own edge and its own light —
- * brighter on the left, falling away to the right — so a field reads as a
- * stack of opponents you could pick up.
- */
-.tour__entry {
-  border-radius: 12px;
-  overflow: hidden;
-  background: linear-gradient(90deg, #16233a, #0a1220 62%);
-  border: 1px solid rgb(148 163 184 / 16%);
-  transition: border-color 0.15s ease;
-}
-
-.tour__entry:hover {
-  border-color: rgb(0 186 255 / 35%);
-}
-
-/*
-   The whole row opens the line-up.
-
-   A button rather than a click handler on the list item: it is a control,
-   it wants a keyboard and a focus ring, and an entry that expands ought to
-   say so before it is pressed.
-*/
-.tour__entryrow {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  /* Room to be a row of the game rather than a line of a spreadsheet — and
-     a target a thumb can hit, since the whole row is the control. */
-  padding: 12px 14px;
-  min-height: 84px;
-  border: 0;
-  background: none;
-  color: inherit;
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-}
-
-.tour__entryrow:hover {
-  background: rgba(148, 163, 184, 0.08);
-}
-
 .tour__chev {
   width: 14px;
   height: 14px;
@@ -2183,22 +2386,225 @@
   }
 }
 
-/* Yours is lit from the left, the way the player's own things are. */
-.tour__entry--me {
-  background: linear-gradient(90deg, #0b3d5c, #0a1220 62%);
-  border: 1px solid rgb(0 186 255 / 45%);
+/* ——— The fight card ——— */
+
+/*
+   The field as a fight card.
+
+   An event poster: the event and when it starts across the top, your own
+   entry as the headliner line in gold, and everyone who entered as the
+   card itself — one line each, seed, face, name, titles, the five fighters
+   they brought and their score, on dotted rules. It says a fight is booked
+   and you are on the bill, which is what this screen is for while the
+   field is still arriving.
+*/
+.tour__poster {
+  position: relative;
+  padding: 26px 28px 24px;
+  border: 1px solid rgb(148 163 184 / 16%);
+  background:
+    radial-gradient(ellipse at 50% -20%, rgb(26 53 80 / 85%), transparent 60%),
+    rgb(7 13 24 / 82%);
+}
+
+/* The inner rule a poster has. */
+.tour__poster::before {
+  content: '';
+  position: absolute;
+  inset: 10px;
+  border: 1px solid rgb(246 168 0 / 25%);
+  pointer-events: none;
+}
+
+.tour__posterhead {
+  text-align: center;
+}
+
+.tour__presents {
+  font-family: var(--font-display);
+  font-size: 0.66rem;
+  letter-spacing: 0.4em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+
+.tour__event {
+  margin: 6px 0 0;
+  font-family: var(--font-display);
+  font-size: 2.2rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--white);
+}
+
+.tour__when {
+  margin: 6px 0 0;
+  font-size: 0.92rem;
+  color: var(--text-dim);
+}
+
+.tour__when b {
+  font-family: var(--font-display);
+  color: #ffdb7d;
+}
+
+/* ---- your line ---- */
+
+.tour__mine {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: center;
+  max-width: 640px;
+  margin: 20px auto 0;
+  padding: 12px 16px;
+  border: 1px solid rgb(246 168 0 / 45%);
+  background: rgb(246 168 0 / 7%);
+}
+
+/* Outside the poster — during the fighting — it keeps the same frame. */
+.tour > .tour__mine {
+  max-width: none;
+  margin-top: 0;
+}
+
+.tour__headav {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  border: 2px solid var(--gold);
+  box-shadow: 0 0 0 3px rgb(246 168 0 / 20%);
+  flex: none;
+}
+
+.tour__minetext {
+  min-width: 0;
+}
+
+.tour__minetitle {
+  margin: 0;
+  font-size: 0.95rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #ffdb7d;
+}
+
+.tour__minesub {
+  margin: 2px 0 0;
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+
+.tour__pass {
+  color: #86efac;
+}
+
+/* The record: four figures on one line, labels under them. */
+.tour__minestats {
+  display: flex;
+  gap: 16px;
+  margin: 0;
+  white-space: nowrap;
+}
+
+.tour__minestats div {
+  text-align: center;
+}
+
+.tour__minestats dt {
+  font-size: 0.6rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.tour__minestats dd {
+  margin: 1px 0 0;
+  font-family: var(--font-display);
+  font-size: 1rem;
+  color: var(--white);
+}
+
+/* ---- the card ---- */
+
+.tour__list {
+  max-width: 860px;
+  margin: 22px auto 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tour__entry {
+  border-bottom: 1px dotted rgb(255 255 255 / 18%);
+}
+
+.tour__entryrow {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 6px;
+  min-height: 58px;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.tour__entryrow:hover .tour__tag {
+  color: var(--cyan-lit, #7ee7fb);
 }
 
 .tour__seed {
-  width: 2.2em;
+  width: 1.8em;
+  flex: none;
+  font-family: var(--font-display);
+  font-size: 0.78rem;
   color: var(--text-faint);
-  font-size: 0.95rem;
+}
+
+.tour__entryrow .tour__avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 2px solid rgb(148 163 184 / 40%);
+  flex: none;
+}
+
+.tour__entry--me .tour__avatar {
+  border-color: var(--gold);
+}
+
+.tour__who {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tour__tag {
+  flex: 0 1 auto;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: color 0.15s;
+}
+
+.tour__entry--me .tour__tag {
+  color: #ffdb7d;
 }
 
 /*
    Titles, beside the name.
 
-   Gold, small and struck rather than outlined: on a list row the eye should
+   Gold, small and struck rather than outlined: on a line the eye should
    read "this one has won before" without stopping to count.
 */
 .tour__crowns {
@@ -2236,81 +2642,132 @@
   filter: drop-shadow(0 0 5px rgb(255 52 52 / 60%));
 }
 
-@media (max-width: 560px) {
-  .tour__star {
-    width: 11px;
-    height: 11px;
-  }
-}
-
-/* The name and its badges, taking the middle of the row together. */
-.tour__who {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.tour__tag {
-  flex: 0 1 auto;
-  font-size: 1.12rem;
-  font-weight: 600;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.tour__escore {
-  min-width: 3.5em;
-  text-align: right;
-  font-size: 1.5rem;
-  color: var(--white);
+.tour__youmark {
+  font-family: var(--font-display);
+  font-size: 0.56rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--gold);
 }
 
 /*
-   The crew, stacked along the row.
+   The five they brought, as squares in a row.
 
-   Overlapped rather than spaced: five separate portraits read as five more
-   columns, whereas a stack reads as one thing belonging to the name beside
-   it. The ring is the row's own background, so they cut out of it.
+   Each face is its own target: resting on one opens the same read the
+   combat cards in the line-up show, so the stats are a hover away without
+   opening the line.
 */
 .tour__crew {
   display: flex;
   flex: none;
+  gap: 3px;
   margin-left: auto;
-  padding-right: 4px;
 }
 
-.tour__crew img {
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
+.tour__face {
+  position: relative;
+  display: block;
+  width: 36px;
+  height: 36px;
+}
+
+.tour__face img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 6px;
   object-fit: cover;
-  margin-left: -9px;
-  border: 2px solid #0d1626;
-  background: #0d1626;
+  background: #0a1220;
+  border: 1px solid rgb(0 0 0 / 60%);
+  transition: transform 0.12s;
 }
 
-.tour__crew img:first-child {
-  margin-left: 0;
+.tour__face:hover img {
+  transform: scale(1.12);
+  border-color: rgb(0 186 255 / 60%);
+}
+
+.tour__escore {
+  min-width: 2.6em;
+  flex: none;
+  text-align: right;
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  color: var(--white);
+}
+
+.tour__entry--me .tour__escore {
+  color: #ffdb7d;
+}
+
+.tour__cardfoot {
+  margin: 14px 0 0;
+  text-align: center;
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-faint);
 }
 
 @media (max-width: 720px) {
-  /* Three is enough to tell two crews apart on a phone. */
-  .tour__crew img:nth-child(n + 4) {
+  .tour__poster {
+    padding: 20px 14px 18px;
+  }
+
+  .tour__event {
+    font-size: 1.6rem;
+  }
+
+  .tour__mine {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .tour__minestats {
+    grid-column: 1 / -1;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  /* Three is enough to tell two crews apart on a phone, and smaller: the
+     name is the thing a line must never lose. */
+  .tour__face:nth-child(n + 4) {
     display: none;
   }
 
-  .tour__avatar {
-    width: 46px;
-    height: 46px;
-    border-radius: 11px;
+  .tour__face {
+    width: 30px;
+    height: 30px;
+  }
+
+  .tour__entryrow .tour__avatar {
+    width: 34px;
+    height: 34px;
+  }
+
+  .tour__tag {
+    min-width: 6ch;
+    font-size: 0.92rem;
+  }
+
+  /* The gold line already says it is yours; the word was costing the name. */
+  .tour__youmark {
+    display: none;
+  }
+
+  .tour__star {
+    width: 11px;
+    height: 11px;
+  }
+
+  .tour__escore {
+    min-width: 2.2em;
+    font-size: 0.95rem;
   }
 
   .tour__entryrow {
-    min-height: 68px;
-    gap: 10px;
+    gap: 7px;
+    padding: 8px 2px;
   }
 }
 
@@ -3311,4 +3768,233 @@
   .bcast__line--b .bcast__stand--down .bcast__art { transform: translateY(8px) rotate(7deg); }
   .bcast__standname { font-size: 7.5px; }
   .bcast__say { display: none; }
+}
+
+
+/* ————————————————— choosing between tournaments ————————————————— */
+
+/*
+ * Shown only when two or more are running at once, which is most of a cycle:
+ * `advance` starts the next on the clock without waiting for the last to
+ * finish. It is a plain list of cards rather than a tab strip, because the
+ * thing being chosen has four facts worth reading before you choose.
+ */
+.tourpick {
+  display: grid;
+  gap: 14px;
+  max-width: 720px;
+  margin: 24px auto;
+  padding: 0 16px;
+}
+
+.tourpick__title {
+  font-family: var(--font-display);
+  font-size: clamp(20px, 4vw, 30px);
+  font-weight: 900;
+  text-align: center;
+  margin: 0;
+}
+
+.tourpick__sub {
+  margin: -8px 0 4px;
+  text-align: center;
+  font-size: 14px;
+}
+
+.tourpick__list {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tourpick__card {
+  display: grid;
+  gap: 7px;
+  width: 100%;
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1px solid rgb(255 255 255 / 10%);
+  background: rgb(10 16 28 / 72%);
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 160ms var(--ease),
+    background 160ms var(--ease),
+    transform 160ms var(--ease);
+}
+
+.tourpick__card:hover,
+.tourpick__card:focus-visible {
+  border-color: rgb(255 219 125 / 55%);
+  background: rgb(14 22 38 / 85%);
+  transform: translateY(-1px);
+}
+
+/* The one they are already entered in reads first without being shouted. */
+.tourpick__card--mine { border-color: rgb(126 231 251 / 45%); }
+
+.tourpick__when {
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.tourpick__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.tourpick__phase,
+.tourpick__badge {
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.tourpick__phase {
+  border: 1px solid rgb(255 255 255 / 16%);
+  color: var(--text-dim);
+}
+
+.tourpick__phase--signup {
+  border-color: rgb(126 231 251 / 50%);
+  color: #7ee7fb;
+}
+
+.tourpick__phase--battle {
+  border-color: rgb(224 52 79 / 55%);
+  color: #ff8a9c;
+}
+
+.tourpick__phase--finish { color: var(--text-faint); }
+
+.tourpick__badge {
+  background: rgb(126 231 251 / 16%);
+  color: #7ee7fb;
+}
+
+.tourpick__badge--open {
+  background: rgb(255 219 125 / 16%);
+  color: #ffdb7d;
+}
+
+.tourpick__facts {
+  font-size: 13px;
+  color: var(--text-dim);
+}
+
+/* The way back, once they are looking at one. Quiet: it is a correction,
+   not a thing to do. */
+.tourpick__switch {
+  justify-self: start;
+  margin: 0 0 10px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: 1px solid rgb(255 255 255 / 14%);
+  background: transparent;
+  color: var(--text-dim);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.tourpick__switch:hover {
+  border-color: rgb(255 219 125 / 45%);
+  color: #ffdb7d;
+}
+
+
+/* ————————————————— watching a fight again ————————————————— */
+
+/*
+ * Every pairing keeps its seed, and the fight is generated from it rather
+ * than replayed from a log — so one that has already been fought can simply
+ * be run again, exactly as it happened.
+ */
+.tour__watch {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid rgb(255 219 125 / 40%);
+  background: rgb(255 219 125 / 8%);
+  color: #ffdb7d;
+  cursor: pointer;
+  transition:
+    background var(--dur-fast) var(--ease),
+    border-color var(--dur-fast) var(--ease),
+    opacity var(--dur-fast) var(--ease);
+}
+
+.tour__watch svg {
+  width: 13px;
+  height: 13px;
+  fill: currentColor;
+  /* The triangle's own mass sits left of centre; a hair right puts it on
+     the button's axis rather than on its bounding box's. */
+  margin-left: 2px;
+}
+
+.tour__watch:hover:not(:disabled) {
+  background: rgb(255 219 125 / 18%);
+  border-color: rgb(255 219 125 / 70%);
+}
+
+.tour__watch--on {
+  background: rgb(255 219 125 / 24%);
+  border-color: #ffdb7d;
+}
+
+/* Still there, still in the column, plainly not available yet. */
+.tour__watch:disabled {
+  border-color: rgb(148 163 184 / 22%);
+  background: transparent;
+  color: var(--text-faint);
+  opacity: 0.45;
+  cursor: default;
+}
+
+/* The way back to whatever the chain is on, shown only while watching an
+   older one. */
+.tour__backlive {
+  justify-self: start;
+  margin: 10px 0 0;
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: 1px solid rgb(255 255 255 / 14%);
+  background: transparent;
+  color: var(--text-dim);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.tour__backlive:hover {
+  border-color: rgb(255 219 125 / 45%);
+  color: #ffdb7d;
+}
+
+/*
+ * Air under the broadcast.
+ *
+ * The round header sat hard against the bottom of the picture, which read as
+ * a caption on it rather than as the heading of the list below.
+ */
+.tour__panel > .tour__fieldhead { margin-top: 22px; }
+
+@media (max-width: 640px) {
+  .tour__watch {
+    width: 30px;
+    height: 30px;
+  }
+
+  .tour__boutwhen { min-width: 0; }
 }

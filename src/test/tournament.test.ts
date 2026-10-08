@@ -13,6 +13,7 @@ import {
   signupWindow,
   startedAt,
   teamScore,
+  stripSteps,
   stripWindow,
   timelineOf,
 } from '@/tournament/rules'
@@ -314,6 +315,73 @@ describe('the day', () => {
   })
 })
 
+describe('the strip, as a player reads it', () => {
+  /* The live stage template, read off `tournmnt.ale`. */
+  const day = (running: number) =>
+    [
+      'set_weather',
+      'get_rewards',
+      'signup',
+      'close_signup',
+      'create_matchups',
+      'battle',
+      'cleanup',
+    ].map((name, i) => ({
+      index: i,
+      name,
+      startMs: i * 1000,
+      endMs: i * 1000 + 500,
+      state: i < running ? 'done' : i === running ? 'running' : 'waiting',
+      current: i === running ? 3 : 0,
+      total: i === running ? 9 : 0,
+    })) as Parameters<typeof stripSteps>[0]
+
+  it('drops the two steps nobody waits on and merges the rest into four', () => {
+    expect(stripSteps(day(5)).map((s) => s.name)).toEqual([
+      'signup',
+      'preparation',
+      'battle',
+      'results',
+    ])
+  })
+
+  it('spans a merged cell across every step it swallowed', () => {
+    /* close_signup starts at 3000, create_matchups ends at 4500. */
+    const prep = stripSteps(day(5)).find((s) => s.name === 'preparation')!
+    expect(prep.startMs).toBe(3000)
+    expect(prep.endMs).toBe(4500)
+  })
+
+  it('runs a merged cell while any step inside it is running', () => {
+    /* close_signup running, create_matchups still waiting. */
+    const prep = stripSteps(day(3)).find((s) => s.name === 'preparation')!
+    expect(prep.state).toBe('running')
+    expect(prep.current).toBe(3)
+    expect(prep.total).toBe(9)
+
+    /* close_signup done, create_matchups running — still the one cell. */
+    const later = stripSteps(day(4)).find((s) => s.name === 'preparation')!
+    expect(later.state).toBe('running')
+  })
+
+  it('finishes a merged cell only once every step inside it has', () => {
+    /* battle running, so preparation is wholly behind us. */
+    expect(stripSteps(day(5)).find((s) => s.name === 'preparation')!.state).toBe('done')
+    /* signup running, so preparation has not begun. */
+    expect(stripSteps(day(2)).find((s) => s.name === 'preparation')!.state).toBe('waiting')
+  })
+
+  it('starts the results when the fighting ends, not when cleanup is scheduled', () => {
+    /* battle ends at 5500; cleanup's own row says 6000. */
+    const results = stripSteps(day(5)).find((s) => s.name === 'results')!
+    expect(results.startMs).toBe(5500)
+
+    /* A results row that is not late keeps its own time. */
+    const early = day(5).map((s) => (s.name === 'cleanup' ? { ...s, startMs: 5200 } : s))
+    expect(stripSteps(early).find((s) => s.name === 'results')!.startMs).toBe(5200)
+  })
+})
+
 describe('the strip, when it will not all fit', () => {
   const steps = (running: number) =>
     ['set_weather', 'get_rewards', 'signup', 'close_signup', 'create_matchups', 'battle', 'cleanup'].map(
@@ -426,6 +494,27 @@ describe('what the screen shows', () => {
     expect(pickTournament([open, mine], ['aaa'])?.tournament_name).toBe('aaa')
     expect(pickTournament([open, mine], [])?.tournament_name).toBe('bbb')
     expect(pickTournament([], [])).toBeUndefined()
+  })
+
+  it('lets the pick the player made beat every fallback', () => {
+    /*
+       Two run at once for most of a cycle, and the fallbacks would otherwise
+       move the screen under a player who was watching one of them: their own
+       entry outranks the open one, and an open one outranks the newest. Once
+       they have chosen, none of that applies.
+    */
+    const mine = stage({ tournament_name: 'aaa', allow_player_signup: false })
+    const open = stage({ tournament_name: 'bbb', allow_player_signup: true })
+
+    expect(pickTournament([open, mine], ['aaa'], 'bbb')?.tournament_name).toBe('bbb')
+    expect(pickTournament([open, mine], [], 'aaa')?.tournament_name).toBe('aaa')
+  })
+
+  it('ignores a pick that is no longer running', () => {
+    /* The picked tournament finished and cleanup erased its curstage row.
+       Falling back beats showing an empty board. */
+    const open = stage({ tournament_name: 'bbb', allow_player_signup: true })
+    expect(pickTournament([open], [], 'gone')?.tournament_name).toBe('bbb')
   })
 })
 

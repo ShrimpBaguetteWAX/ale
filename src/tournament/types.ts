@@ -152,6 +152,14 @@ export interface TournamentMatchup {
   crew_template_id_player2: number
   arms_template_id_player1: number
   arms_template_id_player2: number
+  /**
+   * When this fight unlocks.
+   *
+   * `create_matchups` and the battle stage stamp every pairing with a slot
+   * spread across the fighting window, and `advance` refuses to run one
+   * before its time. It is the only answer to "when is mine on".
+   */
+  play_time: string
   winner: string
 }
 

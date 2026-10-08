@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Prize strip — live harness</title>
+  <!--
+    The prize strip, mounted for real.
+
+      npm run dev
+      open http://localhost:5273/scripts/pot-harness.html
+
+    The static preview (ssr-tournament) draws the strip but runs none of
+    its effects, and the real screen sits behind the wallet gate. This
+    page is the strip with React running: resize the window and it
+    measures itself and stacks, exactly as it does in the game. Vite
+    serves any .html under the project as its own entry, so nothing in
+    the app changes to make this exist.
+  -->
+</head>
+<body>
+  <div id="root"></div>
+  <script type="module" src="./pot-harness.tsx"></script>
+</body>
+</html>

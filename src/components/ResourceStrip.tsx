@@ -1,14 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import type { Player } from '@/chain/types'
-import { NUM_LOCALE } from '@/format'
+import { NUM_LOCALE, formatCompact } from '@/format'
 import { asset } from '@/assets'
-
-function compact(n: number): string {
-  if (n < 10_000) return n.toLocaleString(NUM_LOCALE)
-  if (n < 1_000_000) return `${(n / 1000).toFixed(n < 100_000 ? 1 : 0)}K`
-  return `${(n / 1_000_000).toFixed(2)}M`
-}
 
 /**
  * Which shop shelf each chip opens, as `SHOP_CATEGORIES` keys.
@@ -80,7 +74,7 @@ function Res({
         <span className="res__socket">
           <img className="res__icon" src={icon} alt="" width={22} height={22} />
         </span>
-        <span className="res__value">{compact(value)}</span>
+        <span className="res__value">{formatCompact(value)}</span>
       </span>
       <span className="sr-only">{label} - open the Shop</span>
     </Link>

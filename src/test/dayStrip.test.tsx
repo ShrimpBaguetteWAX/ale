@@ -1,6 +1,6 @@
 import { describe, expect, it, afterEach } from 'vitest'
 import { render, cleanup } from '@testing-library/react'
-import { DayStrip } from '@/routes/Tournament'
+import { DayStrip, dayClock } from '@/routes/Tournament'
 import type { TimelineStep } from '@/tournament/rules'
 
 /**
@@ -14,6 +14,10 @@ import type { TimelineStep } from '@/tournament/rules'
  * jsdom reports every element as zero-wide unless told otherwise, which is
  * the narrow case for free; the wide case stubs `clientWidth`, and both go
  * through the same measuring effect the browser runs.
+ *
+ * The seven steps below are the contract's; the strip draws four, because
+ * `stripSteps` drops the two nobody waits on and merges the rest into
+ * Preparation and Results. The counts here are of cells, not of steps.
  */
 const STEPS = [
   'set_weather',
@@ -59,10 +63,13 @@ function atWidth(px: number, run: () => void) {
 afterEach(cleanup)
 
 describe('the day strip', () => {
-  it('draws the whole day when it has the room', () => {
+  it('draws every cell when it has the room', () => {
     atWidth(1200, () => {
       const { container } = render(<DayStrip timeline={timeline(2)} now={Date.now()} />)
-      expect(container.querySelectorAll('.tour__step')).toHaveLength(7)
+      const names = [...container.querySelectorAll('.tour__stepname')].map((n) =>
+        n.textContent?.trim(),
+      )
+      expect(names).toEqual(['Signup open', 'Preparation', 'Fighting', 'Results'])
     })
   })
 
@@ -72,7 +79,7 @@ describe('the day strip', () => {
       const names = [...container.querySelectorAll('.tour__stepname')].map((n) =>
         n.textContent?.trim(),
       )
-      expect(names).toEqual(['Signup open', 'Preparation', 'Bracket drawn'])
+      expect(names).toEqual(['Signup open', 'Preparation', 'Fighting'])
     })
   })
 
@@ -80,5 +87,31 @@ describe('the day strip', () => {
     /* Zero width is what jsdom reports by default, and the floor is three. */
     const { container } = render(<DayStrip timeline={timeline(5)} now={Date.now()} />)
     expect(container.querySelectorAll('.tour__step')).toHaveLength(3)
+  })
+})
+
+describe('dayClock', () => {
+  /* A Wednesday at noon, local time. */
+  const now = new Date(2026, 9, 7, 12, 0).getTime()
+  const at = (days: number, h: number, m = 0) => new Date(2026, 9, 7 + days, h, m).getTime()
+
+  it('names today and the days either side', () => {
+    expect(dayClock(at(0, 22, 2), now)).toMatch(/^Today /)
+    expect(dayClock(at(1, 8), now)).toMatch(/^Tomorrow /)
+    expect(dayClock(at(-1, 8), now)).toMatch(/^Yesterday /)
+    /* Just after midnight is still tomorrow, not "in twelve hours". */
+    expect(dayClock(at(1, 0, 5), now)).toMatch(/^Tomorrow /)
+  })
+
+  it('names the rest of the week by weekday and anything further by date', () => {
+    expect(dayClock(at(3, 10), now)).toMatch(/^Saturday /)
+    expect(dayClock(at(6, 10), now)).toMatch(/^Tuesday /)
+    expect(dayClock(at(7, 10), now)).toMatch(/^(Oct 14|14 Oct) /)
+    expect(dayClock(at(20, 10), now)).toMatch(/^(Oct 27|27 Oct) /)
+  })
+
+  it('keeps the time the strip already showed', () => {
+    expect(dayClock(at(3, 10), now)).toMatch(/10:00/)
+    expect(dayClock(NaN, now)).toBe('—')
   })
 })

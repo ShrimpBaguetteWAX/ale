@@ -1,4 +1,12 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react'
 import { useGame } from '@/state/useGame'
 import { useConfig } from '@/state/useConfig'
 import { useChainQuery } from '@/chain/useChainQuery'
@@ -28,6 +36,8 @@ import {
 } from '@/tavern/fighterStats'
 import { GameImg } from '@/components/GameImg'
 import { PlayerAvatar } from '@/components/PlayerAvatar'
+import { FighterHoverCard } from '@/components/FighterPanel'
+import { HoverPopover, useHoverCard } from '@/components/HoverPopover'
 import { BoutBroadcast } from '@/tournament/BoutBroadcast'
 import { usePhone } from '@/components/usePhone'
 import { WeatherPanel } from '@/fight/setup'
@@ -56,12 +66,16 @@ import {
   pretendTournamentWins,
   seedOrder,
   seedingOf,
+  startedAt,
+  stripSteps,
   stripWindow,
   teamScore,
   timelineOf,
   type Bracket,
   type EntryBlock,
   type TimelineStep,
+  type TournamentPhase,
+  type CrewFace,
 } from '@/tournament/rules'
 import type {
   TournamentMatchup,
@@ -73,7 +87,7 @@ import { assetAmount } from '@/leaderboard/rules'
 import { DIRTIES, tournamentSignup } from '@/wharf/actions'
 import { useAction } from '@/wharf/useAction'
 import { readableError } from '@/wharf/errors'
-import { formatNumber, NUM_LOCALE } from '@/format'
+import { formatCompact, formatNumber, NUM_LOCALE } from '@/format'
 import { asset, ipfsImage } from '@/assets'
 
 /**
@@ -149,6 +163,43 @@ const clock = (ms: number) =>
     ? new Date(ms).toLocaleTimeString(NUM_LOCALE, { hour: '2-digit', minute: '2-digit' })
     : '—'
 
+/**
+ * A time with its day: "Today 10:00 AM", "Tomorrow 08:00 AM", "Thursday
+ * 10:02 PM", "14 Oct 10:00 AM".
+ *
+ * The strip's steps are days apart — signup alone runs three — so a bare
+ * time said nothing about *which* 10:00 AM the fighting starts at. The day
+ * is named relative to the player's own clock while that is unambiguous:
+ * today and tomorrow by name, the rest of the week by weekday, and
+ * anything further out by date, since "Tuesday" nine days away reads as
+ * the one coming.
+ */
+export function dayClock(ms: number, now: number): string {
+  const { day, time } = dayParts(ms, now)
+  return day ? `${day} ${time}` : time
+}
+
+/** The two halves of `dayClock`, so a narrow strip can break between them. */
+export function dayParts(ms: number, now: number): { day: string; time: string } {
+  if (!Number.isFinite(ms)) return { day: '', time: '—' }
+  const day = (t: number) => {
+    const d = new Date(t)
+    return Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())
+  }
+  const apart = Math.round((day(ms) - day(now)) / 86_400_000)
+  const when =
+    apart === 0
+      ? 'Today'
+      : apart === 1
+        ? 'Tomorrow'
+        : apart === -1
+          ? 'Yesterday'
+          : apart > 1 && apart < 7
+            ? new Date(ms).toLocaleDateString(NUM_LOCALE, { weekday: 'long' })
+            : new Date(ms).toLocaleDateString(NUM_LOCALE, { day: 'numeric', month: 'short' })
+  return { day: when, time: clock(ms) }
+}
+
 /** The contract's step names, said the way a player would say them. */
 const STEP_LABEL: Record<string, string> = {
   set_weather: 'Weather rolled',
@@ -160,6 +211,9 @@ const STEP_LABEL: Record<string, string> = {
   hall_of_fame: 'Hall of fame',
   reward_payout: 'Rewards paid',
   cleanup: 'Wrapped up',
+  /* The two the strip merges several steps into. */
+  preparation: 'Preparation',
+  results: 'Results',
 }
 
 const stepLabel = (name: string) => STEP_LABEL[name] ?? name.replace(/_/g, ' ')
@@ -195,35 +249,179 @@ export function TournamentHead() {
  * use, one roll per planet, because it is the same thing: the first thing
  * that happens to a fighter, before level, age or anything else.
  */
+/** The least gap a single-row strip is allowed between its two halves. */
+const POT_MIN_BRIDGE = 60
+
+/**
+ * How much wider the frame must get before a stacked strip tries one row
+ * again.
+ *
+ * Switching layouts changes the page's height, and on a page near the
+ * edge of needing a scrollbar that adds or removes one — which changes the
+ * frame's width by a scrollbar, 15 to 17 pixels, up to two of them. With
+ * no slack that was a loop: stack, scrollbar goes, frame grows, unstack,
+ * strip overflows, scrollbar returns, frame shrinks, stack — until React
+ * gave up with "maximum update depth exceeded". The band is wider than
+ * two scrollbars, so the only thing that can unstack the strip is the
+ * window actually getting bigger.
+ */
+const POT_UNSTACK_SLACK = 48
+
 export function PrizeBar({
   stage,
   weather,
+  stacked: forced,
 }: {
   stage: TournamentStage
   weather: { planet: string; weather?: Weather }[]
+  /** Force the two-row layout — for a render with no window to measure. */
+  stacked?: boolean
 }) {
-  const tlm = assetAmount(stage.tlm_rewards)
-  const wax = assetAmount(stage.wax_rewards)
+  /*
+     Stacked when it has to be, measured rather than guessed.
+
+     No breakpoint can say when one row stops fitting: the rolls' text is
+     different every tournament, and a band that is allowed to shrink folds
+     its figures onto two lines long before the strip overflows. So the
+     bands are pinned to their content and the strip watches its own frame:
+     if the parts plus a real gap are wider than the frame, it stacks.
+
+     Measured only in the single-row layout, where every part is its own
+     width. Once stacked, the strip tries a single row again only when the
+     frame has grown past the width it stacked at by more than a scrollbar
+     or two (POT_UNSTACK_SLACK) — the layout effect then re-measures before
+     anything is painted, and stacks again if it still does not fit. The
+     slack is what stops it looping at the boundary; see the constant.
+  */
+  const frame = useRef<HTMLDivElement>(null)
+  const [measured, setMeasured] = useState(false)
+  const stackedAt = useRef(0)
+  const stack = forced ?? measured
+
+  useLayoutEffect(() => {
+    const el = frame.current
+    if (!el || forced !== undefined) return
+
+    const measure = () => {
+      const room = el.clientWidth
+      if (measured) {
+        if (room > stackedAt.current + POT_UNSTACK_SLACK) setMeasured(false)
+        return
+      }
+      const pot = el.firstElementChild
+      if (!pot) return
+      let need = POT_MIN_BRIDGE
+      for (const part of pot.children) {
+        if (!part.classList.contains('pot__bridge')) need += part.getBoundingClientRect().width
+      }
+      if (need > room) {
+        stackedAt.current = room
+        setMeasured(true)
+      }
+    }
+
+    measure()
+    if (typeof ResizeObserver === 'undefined') return
+    const ro = new ResizeObserver(measure)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [measured, forced])
+
+  /*
+     Whole numbers.
+
+     `formatNumber` leaves three decimals to the locale, which on a pot of
+     3.6355 TLM reads as "3.636" — four digits of precision nobody can act
+     on, in the largest type on the screen. The pot is a headline figure;
+     what it is worth to a hundredth of a Trilium is not the point.
+  */
+  const tlm = Math.round(assetAmount(stage.tlm_rewards))
+  const wax = Math.round(assetAmount(stage.wax_rewards))
   const rolled = weather.filter((w) => w.weather)
+  /*
+     On a phone the two figures share one short band beside a tab, and
+     "18,400 TLM" next to "413 WAX" will not. They are written the way the
+     header writes balances — 18.4K — which is the convention a player
+     already reads at the top of every screen.
+  */
+  const phone = usePhone()
+  const figure = phone ? formatCompact : formatNumber
   /* Which roll is being read, on a screen too narrow for all three. */
   const [open, setOpen] = useState<number | null>(null)
+  /* Whether the pot is explaining itself. */
+  const [split, setSplit] = useState(false)
 
   return (
-    <section className="pot">
-      <span className="pot__label">Prize pool</span>
+    /*
+       The frame is a container the strip's own breakpoints read. A media
+       query measures the window, and the window is not what the strip
+       gets — a 1090-wide screen hands it 850 once the sidebar has taken
+       its column. The strip stacks when *it* is short of room, whatever
+       the screen is doing.
+    */
+    <div className="pot__frame" ref={frame}>
+    <section className={'pot' + (stack ? ' pot--stacked' : '')}>
+      {/*
+         The label doubles as the way in to how the pot is split.
 
+         Opens on hover for a mouse and on press for a thumb — the rolls
+         beside it already work that way, so the panel is not teaching a new
+         gesture. What it says is deliberately in places and shares rather
+         than in figures: the exact split is a contract detail, and a player
+         standing in front of the entry button wants to know whether going
+         out in the first round is worth anything.
+      */}
+      {/*
+         Built like a broadcast lower third: a gold REWARDS tab leading the
+         figures on the left, the rolls trailing into a cyan CONDITIONS tab
+         on the right, and a dashed bridge across the gap between them. It
+         is the same visual language the fight broadcast uses, so the header
+         and the fight read as one production. The bridge is what keeps two
+         strips with a gap between them reading as one graphic with a break
+         in it, rather than two that happen to share a row.
+      */}
+      <span className="pot__howwrap">
+        <button
+          type="button"
+          className="pot__tab pot__tab--rewards pot__label--ask"
+          aria-expanded={split}
+          onClick={() => setSplit(!split)}
+        >
+          Rewards
+          <svg viewBox="0 0 16 16" aria-hidden="true">
+            <path d="M8 1a7 7 0 100 14A7 7 0 008 1zm0 3.1a1.1 1.1 0 110 2.2 1.1 1.1 0 010-2.2zM9.1 12H6.9V7.3h2.2z" />
+          </svg>
+        </button>
+
+        <span className={'pot__how' + (split ? ' pot__how--open' : '')} role="note">
+          <b>Trilium</b> goes to everyone who wins at least a fight, shared out
+          by how far they got. Each round you win is worth a great deal more
+          than the one before, so lasting is what pays. A free pass in the
+          opening round counts as a win.
+          <br />
+          <b>WAX</b> goes to the top sixteen only. The champion takes about a
+          third of it, the runner-up a sixth, and the rest tapers away down to
+          sixteenth place.
+        </span>
+      </span>
+
+      <div className="pot__body pot__body--rewards">
       {tlm > 0 || wax > 0 ? (
         <div className="pot__figures">
           {tlm > 0 && (
             <span className="pot__figure mono">
               <img src={asset('/assets/icons/tlm.svg')} alt="" width={30} height={30} />
-              {formatNumber(tlm)}
+              {figure(tlm)}
               <small>TLM</small>
             </span>
           )}
           {wax > 0 && (
             <span className="pot__figure pot__figure--wax mono">
-              {formatNumber(wax)}
+              {/* The same coin the wallet, the candle and the profile use —
+                  a currency a player has seen elsewhere should not need
+                  reading twice. */}
+              <img src={asset('/assets/icons/wax-coin.png')} alt="" width={30} height={30} />
+              {figure(wax)}
               <small>WAX</small>
             </span>
           )}
@@ -231,9 +429,11 @@ export function PrizeBar({
       ) : (
         <p className="pot__empty">Being collected</p>
       )}
+      </div>
 
+      {rolled.length > 0 && <span className="pot__bridge" aria-hidden="true" />}
       {rolled.length > 0 && (
-        <div className="pot__weather">
+        <div className="pot__weather pot__body pot__body--cond">
           {/*
              No planet name: the roll applies to the whole tournament, so
              where it was drawn from is bookkeeping rather than something a
@@ -258,7 +458,9 @@ export function PrizeBar({
           ))}
         </div>
       )}
+      {rolled.length > 0 && <span className="pot__tab pot__tab--cond">Conditions</span>}
     </section>
+    </div>
   )
 }
 
@@ -305,7 +507,7 @@ export function DayStrip({ timeline, now }: { timeline: TimelineStep[]; now: num
     return () => ro.disconnect()
   }, [])
 
-  const shown = stripWindow(timeline, fits)
+  const shown = stripWindow(stripSteps(timeline), fits)
 
   return (
     <ol className="tour__strip" ref={strip}>
@@ -333,7 +535,15 @@ export function DayStrip({ timeline, now }: { timeline: TimelineStep[]; now: num
             </span>
             <span className="tour__steptime mono">
               {step.state !== 'running'
-                ? clock(step.startMs)
+                ? (() => {
+                    const { day, time } = dayParts(step.startMs, now)
+                    return (
+                      <>
+                        <span className="tour__stepday">{day}</span>{' '}
+                        <span className="tour__stepat">{time}</span>
+                      </>
+                    )
+                  })()
                 : Number.isFinite(step.endMs) && step.endMs > now
                   ? untilText(step.endMs - now)
                   : /*
@@ -569,7 +779,7 @@ export function NoTournament({
       <TournamentGates
         fighters={fighters}
         progress={progress}
-        label="Signup opens in"
+        label="Tournament preparation starting in"
         centre={boardText(nextStart - now)}
       />
       <WaitLinks />
@@ -577,15 +787,50 @@ export function NoTournament({
   )
 }
 
-export function Preparing({ fighters }: { fighters: GateFighter[] }) {
+export function Preparing({
+  fighters,
+  stage,
+  weather,
+  signupAt,
+  now,
+}: {
+  fighters: GateFighter[]
+  /**
+   * The tournament being prepared, where there is one.
+   *
+   * The pot and the rolls are on this row the moment the chain writes them:
+   * `set_weather` fills `weather_effects` and `get_rewards` fills the two
+   * reward assets. Both land during preparation, so both can be read before
+   * the doors open rather than after.
+   */
+  stage?: TournamentStage
+  weather: { planet: string; weather?: Weather }[]
+  /** When the `signup` step starts, off the tournament's own schedule. */
+  signupAt: number
+  now: number
+}) {
   return (
     <section className="tour__panel tour__panel--wait">
       {/*
-         The doors at their widest: the setup steps take minutes and nobody
-         can act during them, so the picture says "about to open" rather
-         than counting something down.
+         Shown from the first moment of preparation, not once it is full.
+
+         PrizeBar says "Being collected" while the pot is still zero and
+         draws nothing where no roll has landed, so it tells the truth at
+         every point of the setup and fills in as the steps run.
       */}
-      <TournamentGates fighters={fighters} progress={1} label="Signup opens in" centre="any moment" />
+      {stage && <PrizeBar stage={stage} weather={weather} />}
+
+      {/*
+         The doors at their widest — nobody can act during setup — but the
+         clock is real: the schedule says when signup starts, and
+         `boardText` falls back to "any moment" once that moment is here.
+      */}
+      <TournamentGates
+        fighters={fighters}
+        progress={1}
+        label="Signup opens in"
+        centre={boardText(signupAt - now)}
+      />
       <WaitLinks />
     </section>
   )
@@ -918,24 +1163,54 @@ export function Battle({
   const [open, setOpen] = useState<number | null>(null)
 
   /*
+     A fight the player went back to watch.
+
+     Null is "follow the chain", which is what the screen does on its own.
+     Once they pick one it stays put — a round moving on underneath them
+     must not yank the broadcast away mid-fight.
+  */
+  const [watching, setWatching] = useState<number | null>(null)
+
+  /*
      The bout the contract is on, or the last one once the round is fought
      out — so the broadcast always has something to offer rather than going
      blank the moment the fighting stops.
   */
-  const live = pairings.length
-    ? pairings[Math.min(fought, pairings.length - 1)]
-    : null
+  const liveAt = pairings.length ? Math.min(fought, pairings.length - 1) : -1
+
+  const watchedAt = watching === null ? -1 : pairings.findIndex((p) => p.index === watching)
+  const shownAt = watchedAt >= 0 ? watchedAt : liveAt
+  const shown = shownAt >= 0 ? pairings[shownAt] : null
+
+  /* A pick that is no longer among this round's pairings — the round moved
+     on — drops back to following the chain. */
+  useEffect(() => {
+    if (watching !== null && watchedAt < 0) setWatching(null)
+  }, [watching, watchedAt])
 
   return (
     <section className="tour__panel">
-      {live && !!live.wallet_player2 && (
+      {shown && !!shown.wallet_player2 && (
+        /*
+           Keyed on the pairing so switching to an older fight starts it at
+           the poster, rather than dropping the viewer into the middle of a
+           replay the previous fight had already wound forward.
+        */
         <BoutBroadcast
-          m={live}
+          key={`${round}:${shown.index}`}
+          m={shown}
           round={round}
-          bout={Math.min(fought, pairings.length - 1)}
+          bout={shownAt}
           weather={weather}
           mineWallet={mineWallet}
+          autoPlay={watchedAt >= 0}
         />
+      )}
+
+      {watchedAt >= 0 && (
+        <button type="button" className="tour__backlive" onClick={() => setWatching(null)}>
+          Back to the live fight
+        </button>
       )}
 
       <header className="tour__fieldhead">
@@ -977,6 +1252,15 @@ export function Battle({
                   : i === fought
                     ? 'Fighting now'
                     : 'To come'
+            const unlocks = m.play_time ? clock(chainTime(m.play_time)) : ''
+            /*
+               Every fight the chain has reached can be watched: the seed is
+               on the row and the fight is generated from it, so one already
+               fought runs again exactly as it happened, and the one under
+               way runs as it is happening. Only a fight whose slot has not
+               come round yet has nothing to show.
+            */
+            const watchable = drawn && state !== 'To come'
 
             return (
               <li
@@ -988,14 +1272,15 @@ export function Battle({
                   (isOpen ? ' tour__bout--open' : '')
                 }
               >
-                <button
-                  type="button"
-                  className="tour__boutrow"
-                  aria-expanded={isOpen}
-                  disabled={!drawn}
-                  onClick={() => setOpen(isOpen ? null : m.index)}
-                  title={drawn ? 'See both line-ups' : 'This pairing is still being drawn'}
-                >
+                <div className="tour__boutrow">
+                  <button
+                    type="button"
+                    className="tour__boutmain"
+                    aria-expanded={isOpen}
+                    disabled={!drawn}
+                    onClick={() => setOpen(isOpen ? null : m.index)}
+                    title={drawn ? 'See both line-ups' : 'This pairing is still being drawn'}
+                  >
                   <span className="tour__boutno mono">{i + 1}</span>
                   <BoutSide
                     wallet={m.wallet_player1}
@@ -1018,12 +1303,22 @@ export function Battle({
                     right
                   />
                   <span className="tour__boutend">
-                    <span
-                      className={`tour__boutstate${
-                        state === 'Fighting now' ? ' tour__boutstate--live' : ''
-                      }`}
-                    >
-                      {state}
+                    <span className="tour__boutwhen">
+                      <span
+                        className={`tour__boutstate${
+                          state === 'Fighting now' ? ' tour__boutstate--live' : ''
+                        }`}
+                      >
+                        {state}
+                      </span>
+                      {/* Every pairing carries a slot, and the contract will
+                          not run one before its time — so this is the answer
+                          to "when is mine on". */}
+                      {unlocks && (
+                        <span className="tour__bouttime mono">
+                          {state === 'To come' ? `from ${unlocks}` : unlocks}
+                        </span>
+                      )}
                     </span>
                     {drawn && (
                       <svg
@@ -1035,7 +1330,30 @@ export function Battle({
                       </svg>
                     )}
                   </span>
-                </button>
+                  </button>
+
+                  {/* Shown on every row so the column lines up, and dimmed
+                      rather than dropped where there is nothing to play —
+                      an absent control reads as a layout fault. */}
+                  <button
+                    type="button"
+                    className={'tour__watch' + (m.index === watching ? ' tour__watch--on' : '')}
+                    disabled={!watchable}
+                    onClick={() => setWatching(m.index)}
+                    title={
+                      watchable
+                        ? `Watch fight ${i + 1}`
+                        : unlocks
+                          ? `This fight starts at ${unlocks}`
+                          : 'This fight has not started yet'
+                    }
+                    aria-label={`Watch fight ${i + 1}`}
+                  >
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <path d="M8 5v14l11-7z" />
+                    </svg>
+                  </button>
+                </div>
                 {isOpen && <BoutLineup m={m} />}
               </li>
             )
@@ -1264,6 +1582,37 @@ export function Finish({
   )
 }
 
+/**
+ * The top of the fight card: the event, and when the fighting starts.
+ *
+ * "The Grand Tournament", presented by the game — winning one is what
+ * makes a player a legend. Not "Fight Night": the battle stage opens at
+ * the same instant for everyone, which is the morning for half of them.
+ * The line underneath says when in the player's own clock, and goes away
+ * once the fighting has begun: by then the board below it is the news.
+ */
+export function PosterHead({ fightAt, now }: { fightAt: number; now: number }) {
+  return (
+    <header className="tour__posterhead">
+      <span className="tour__presents">Alien Legends presents</span>
+      <h2 className="tour__event">The Grand Tournament</h2>
+      {Number.isFinite(fightAt) && fightAt > now && (
+        <p className="tour__when">
+          Fighting starts <b>{dayClock(fightAt, now)}</b>
+        </p>
+      )}
+    </header>
+  )
+}
+
+/**
+ * Your entry: the headliner line on the card.
+ *
+ * Gold-framed and above the field rather than a panel of its own: it is
+ * the one line of the bill that is about you. The four figures sit as a
+ * record on the right, and the free-pass verdict rides on the entry line
+ * rather than taking a paragraph.
+ */
 export function MyEntry({
   mine,
   seeding,
@@ -1273,48 +1622,46 @@ export function MyEntry({
   seeding: { rank: number; total: number; freePass: boolean | null } | null
   bracket: Bracket
 }) {
+  const pass =
+    seeding?.freePass === true
+      ? 'your seed earned a free pass through the opening round'
+      : seeding?.freePass === false && bracket.preliminaryBattles > 0
+        ? 'your seed did not reach a free pass, so you fight the opening round'
+        : null
+
   return (
     <section className="tour__mine">
-      <header className="tour__minehead">
-        <PlayerAvatar id={mine.avatar} name={mine.playertag} className="tour__avatar" size={40} />
-        <div>
-          <h2 className="tour__h2">You are in</h2>
-          <p className="faint">
-            Entered {clock(chainTime(mine.signup_timestamp))} with {mine.fighter_ids.length}{' '}
-            fighter{mine.fighter_ids.length === 1 ? '' : 's'}
-          </p>
-        </div>
-        <dl className="tour__minestats">
-          <div>
-            <dt>Score</dt>
-            <dd className="mono">{formatNumber(mine.score)}</dd>
-          </div>
-          {seeding && (
-            <div>
-              <dt>Seed</dt>
-              <dd className="mono">
-                {seeding.rank}/{seeding.total}
-              </dd>
-            </div>
-          )}
-          <div>
-            <dt>Wins</dt>
-            <dd className="mono">{formatNumber(mine.battles_won)}</dd>
-          </div>
-          <div>
-            <dt>Points</dt>
-            <dd className="mono">{formatNumber(mine.reward_points)}</dd>
-          </div>
-        </dl>
-      </header>
-      {seeding?.freePass === true && (
-        <p className="tour__pass">Your seed earned a free pass through the opening round.</p>
-      )}
-      {seeding?.freePass === false && bracket.preliminaryBattles > 0 && (
-        <p className="faint">
-          Your seed did not reach a free pass — you fight the opening round.
+      <PlayerAvatar id={mine.avatar} name={mine.playertag} className="tour__headav" size={52} />
+      <div className="tour__minetext">
+        <h2 className="tour__h2 tour__minetitle">You are in</h2>
+        <p className="faint tour__minesub">
+          Entered {clock(chainTime(mine.signup_timestamp))} with {mine.fighter_ids.length}{' '}
+          fighter{mine.fighter_ids.length === 1 ? '' : 's'}
+          {pass && <span className="tour__pass"> · {pass}</span>}
         </p>
-      )}
+      </div>
+      <dl className="tour__minestats">
+        <div>
+          <dt>Score</dt>
+          <dd className="mono">{formatNumber(mine.score)}</dd>
+        </div>
+        {seeding && (
+          <div>
+            <dt>Seed</dt>
+            <dd className="mono">
+              {seeding.rank}/{seeding.total}
+            </dd>
+          </div>
+        )}
+        <div>
+          <dt>Wins</dt>
+          <dd className="mono">{formatNumber(mine.battles_won)}</dd>
+        </div>
+        <div>
+          <dt>Points</dt>
+          <dd className="mono">{formatNumber(mine.reward_points)}</dd>
+        </div>
+      </dl>
     </section>
   )
 }
@@ -1366,27 +1713,36 @@ function LineupCard({ label, template }: { label: string; template: number | und
  * Opened once, it stays in the cache — an entry cannot change after it is
  * made.
  */
-export function EntryLineup({
-  entry,
-}: {
-  /* Narrowed from `TournamentSignup` so a pairing can hand over one of its
-     two corners, which carries the same four fields under longer names. */
-  entry: Pick<
-    TournamentSignup,
-    'wallet' | 'fighter_ids' | 'crew_asset_id' | 'arms_asset_id'
-  >
-}) {
+/* Narrowed from `TournamentSignup` so a pairing can hand over one of its
+   two corners, which carries the same four fields under longer names. */
+type EntryRef = Pick<TournamentSignup, 'wallet' | 'fighter_ids' | 'crew_asset_id' | 'arms_asset_id'>
+
+/**
+ * An entry's fighters and its two cards, read once and kept.
+ *
+ * Shared between the opened line-up and the hover on the row's faces, under
+ * one key, so whichever a player reaches for first pays for the read and
+ * the other finds it waiting. `enabled` lets the hover ask for it only once
+ * a pointer has actually come to rest on a row.
+ */
+function useEntryDetail(entry: EntryRef, enabled = true) {
   const ids = entry.fighter_ids.join(',')
   const crew = String(entry.crew_asset_id ?? 0)
   const arms = String(entry.arms_asset_id ?? 0)
 
-  const detail = useChainQuery(`tournament-entry:${entry.wallet}:${ids}`, async () => {
+  return useChainQuery(enabled ? `tournament-entry:${entry.wallet}:${ids}` : null, async () => {
     const [fighters, templates] = await Promise.all([
       fetchFightersByIds(entry.fighter_ids),
       fetchAssetTemplates([crew, arms]),
     ])
     return { fighters, templates }
   })
+}
+
+export function EntryLineup({ entry }: { entry: EntryRef }) {
+  const crew = String(entry.crew_asset_id ?? 0)
+  const arms = String(entry.arms_asset_id ?? 0)
+  const detail = useEntryDetail(entry)
 
   const { classes, levelMod, ageDecay } = useConfig()
   const cards = [
@@ -1509,21 +1865,15 @@ export function Field({
 
   if (field.length === 0) return null
   return (
-    <section className="tour__field">
-      <header className="tour__fieldhead">
-        <h2 className="tour__h2">The field</h2>
-        <span className="faint">
-          {formatNumber(field.length)} entered{entryOpen ? ' so far' : ''} · seeded by score
-        </span>
-      </header>
+    <section className="tour__field" aria-label="The field">
       <ol className="tour__list">
         {field.slice(0, 50).map((s, i) => {
           const isMe = !!mineWallet && s.wallet === mineWallet
           const pass = !entryOpen && !degenerate && i < freePasses
           const key = `${s.wallet}-${s.signup_timestamp}`
           const isOpen = open === key
-          /* Their crew, for the strip at the end of the row. It rides in
-             on the signup row itself — see `crewFaces`. */
+          /* Their crew, for the faces on the line. It rides in on the
+             signup row itself — see `crewFaces`. */
           const crew = crewFaces(s)
           return (
             <li key={key} className={`tour__entry${isMe ? ' tour__entry--me' : ''}`}>
@@ -1534,17 +1884,10 @@ export function Field({
                 onClick={() => setOpen(isOpen ? null : key)}
               >
                 <span className="tour__seed mono">{i + 1}</span>
-                <PlayerAvatar id={s.avatar} name={s.playertag} className="tour__avatar" size={60} />
-                {/*
-                   The name and what it has earned, in one group.
-
-                   The tag used to take the whole middle of the row, which
-                   pushed the badges over beside the score — so a ticket
-                   that belongs to a player read as another column of the
-                   table. Grouped, they travel with the name.
-                */}
+                <PlayerAvatar id={s.avatar} name={s.playertag} className="tour__avatar" size={40} />
                 <span className="tour__who">
                   <span className="tour__tag">{s.playertag || 'Unnamed'}</span>
+                  {isMe && <span className="tour__youmark">You</span>}
                   {pass && (
                     <svg
                       className="tour__ticket"
@@ -1561,32 +1904,14 @@ export function Field({
                       `pretendTournamentWins`. */}
                   <Crowns wins={pretendTournamentWins(s.wallet)} />
                 </span>
+                <EntryFaces entry={s} faces={crew} />
                 {/*
-                   Who they brought, at a size you can tell apart.
-
-                   The point of a field list is the comparison, and a name
-                   with a number beside it gives nothing to compare. Five
-                   faces do.
-                */}
-                <span className="tour__crew" aria-hidden="true">
-                  {crew.slice(0, 5).map((f, at) => (
-                    <GameImg
-                      key={s.fighter_ids[at] ?? at}
-                      src={fighterAvatar(f)}
-                      fallback={fighterArtFallback()}
-                      alt=""
-                      loading="lazy"
-                    />
-                  ))}
-                </span>
-                {/*
-                   No win count on the row.
+                   No win count on the line.
 
                    `battles_won` is not wins. The contract bumps it once per
                    free pass while it is handing the top seeds through the
                    opening round — so "1W" appeared on a seed that had not
-                   fought anything, next to eleven others who had not either.
-                   The pass already has its own ticket beside the name.
+                   fought anything. The pass already has its own ticket.
                 */}
                 <span className="tour__escore mono">{formatNumber(s.score)}</span>
                 <svg
@@ -1602,9 +1927,202 @@ export function Field({
           )
         })}
       </ol>
-      {field.length > 50 && <p className="faint">…and {formatNumber(field.length - 50)} more.</p>}
+      <p className="tour__cardfoot">
+        {formatNumber(field.length)} entered{entryOpen ? ' so far' : ''} · seeded by score
+        {field.length > 50 && ` · and ${formatNumber(field.length - 50)} more`}
+      </p>
     </section>
   )
+}
+
+/**
+ * The five faces on an entrant's line, each with the fighter's read on hover.
+ *
+ * The faces come free with the signup row; the stats behind them do not,
+ * so the read is asked for once a pointer rests on the line — the same read
+ * the opened line-up uses, under the same key — and a face hovered before
+ * it has arrived opens the moment it does.
+ */
+function EntryFaces({ entry, faces }: { entry: TournamentSignup; faces: CrewFace[] }) {
+  const [peek, setPeek] = useState(false)
+  const detail = useEntryDetail(entry, peek)
+  const fighters = detail.data?.fighters ?? []
+
+  return (
+    <span className="tour__crew" aria-hidden="true" onMouseEnter={() => setPeek(true)}>
+      {faces.slice(0, 5).map((face, at) => {
+        const id = entry.fighter_ids[at]
+        return (
+          <Face
+            key={id ?? at}
+            face={face}
+            fighter={fighters.find((f) => String(f.fighter_id) === String(id))}
+          />
+        )
+      })}
+    </span>
+  )
+}
+
+function Face({ face, fighter }: { face: CrewFace; fighter?: RosterFighter }) {
+  const phone = usePhone()
+  const { classes, levelMod, ageDecay } = useConfig()
+  const preview = useMemo(
+    () =>
+      fighter
+        ? () => ({
+            panel: rosterPanel(fighter, levelMod, ageDecay),
+            template: classes.get(fighter.classname),
+          })
+        : undefined,
+    [fighter, classes, levelMod, ageDecay],
+  )
+  const { ref, shown, handlers } = useHoverCard(preview, !!preview && !phone)
+
+  /*
+     Hovered before the stats arrived.
+
+     The hover hook only opens if it has something to show at the moment
+     the pointer enters. A face hovered a beat before the read lands would
+     otherwise stay silent until the pointer left and came back, so this
+     opens it once the read is in — only the read changing can trigger it.
+  */
+  const [resting, setResting] = useState(false)
+  useEffect(() => {
+    if (resting && preview) handlers.onMouseEnter()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [preview])
+
+  return (
+    <span
+      className="tour__face"
+      ref={ref}
+      onMouseEnter={() => {
+        setResting(true)
+        handlers.onMouseEnter()
+      }}
+      onMouseLeave={() => {
+        setResting(false)
+        handlers.onMouseLeave()
+      }}
+    >
+      {shown && (
+        <HoverPopover anchor={shown.rect}>
+          <FighterHoverCard fighter={shown.value.panel} template={shown.value.template} />
+        </HoverPopover>
+      )}
+      <GameImg src={fighterAvatar(face)} fallback={fighterArtFallback()} alt="" loading="lazy" />
+    </span>
+  )
+}
+
+/**
+ * Which tournament, when more than one is running.
+ *
+ * `advance` starts a tournament on the clock whether or not the last has
+ * finished, so two or three overlap for most of a cycle. Showing whichever
+ * the fallbacks happened to prefer meant a player's screen could change
+ * under them — a tournament they were watching finishes, and the board is
+ * suddenly a different one at a different phase. So when there is a choice
+ * to make, they make it.
+ *
+ * One tournament and this never appears: there is nothing to choose.
+ */
+function TournamentPicker({
+  live,
+  entered,
+  onPick,
+}: {
+  live: TournamentStage[]
+  entered: string[]
+  onPick: (name: string) => void
+}) {
+  /* Newest first — the one still taking entrants is almost always the one a
+     player came here for, and it is the youngest. */
+  const order = useMemo(
+    () =>
+      [...live].sort(
+        (a, b) => (startedAt(b.tournament_name) ?? 0) - (startedAt(a.tournament_name) ?? 0),
+      ),
+    [live],
+  )
+
+  return (
+    <section className="tourpick">
+      <h2 className="tourpick__title">Choose a tournament</h2>
+      <p className="tourpick__sub faint">
+        {order.length} are running. Pick the one you want to follow — you can
+        switch at any time.
+      </p>
+
+      <ul className="tourpick__list">
+        {order.map((s) => {
+          const phase = phaseOf(s)
+          const mine = entered.includes(s.tournament_name)
+          const started = startedAt(s.tournament_name)
+          const tlm = assetAmount(s.tlm_rewards)
+          const wax = assetAmount(s.wax_rewards)
+
+          return (
+            <li key={s.tournament_name}>
+              <button
+                type="button"
+                className={'tourpick__card' + (mine ? ' tourpick__card--mine' : '')}
+                onClick={() => onPick(s.tournament_name)}
+              >
+                <span className="tourpick__when">
+                  {started
+                    ? new Date(started).toLocaleString(NUM_LOCALE, {
+                        day: 'numeric',
+                        month: 'short',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })
+                    : s.tournament_name}
+                </span>
+
+                <span className="tourpick__tags">
+                  <span className={`tourpick__phase tourpick__phase--${phase}`}>
+                    {PHASE_LABEL[phase]}
+                  </span>
+                  {mine && <span className="tourpick__badge">You are in</span>}
+                  {s.allow_player_signup && !mine && (
+                    <span className="tourpick__badge tourpick__badge--open">Entry open</span>
+                  )}
+                </span>
+
+                <span className="tourpick__facts">
+                  <span className="mono">{formatNumber(Number(s.player_count ?? 0))}</span> entered
+                  {tlm > 0 && (
+                    <>
+                      {' · '}
+                      <span className="mono">{formatNumber(tlm)}</span> TLM
+                    </>
+                  )}
+                  {wax > 0 && (
+                    <>
+                      {' · '}
+                      <span className="mono">{formatNumber(wax)}</span> WAX
+                    </>
+                  )}
+                </span>
+              </button>
+            </li>
+          )
+        })}
+      </ul>
+    </section>
+  )
+}
+
+/* What each phase is called on the chooser's cards. */
+const PHASE_LABEL: Record<TournamentPhase, string> = {
+  none: 'Not started',
+  preparing: 'Preparing',
+  signup: 'Signups open',
+  creation: 'Seeding',
+  battle: 'Fighting',
+  finish: 'Finished',
 }
 
 /* ————————————————— the screen ————————————————— */
@@ -1634,8 +2152,17 @@ export default function Tournament() {
   */
   const forceNext = useRef(false)
 
+  /*
+     The tournament this player is looking at, once they have said.
+
+     In the query key rather than beside it: the board below is read per
+     tournament — plan, matchups, entrants — so changing the pick is a
+     different read, and `useChainQuery` re-asks exactly when its key moves.
+  */
+  const [chosen, setChosen] = useState<string | null>(null)
+
   const board = useChainQuery(
-    `tournament:${player.wallet}`,
+    `tournament:${player.wallet}:${chosen ?? ''}`,
     async () => {
       const fresh = forceNext.current
       forceNext.current = false
@@ -1655,7 +2182,7 @@ export default function Tournament() {
         .filter((_, i) => !!mySignup(fields[i], player.wallet))
         .map((s) => s.tournament_name)
 
-      const stage = pickTournament(live, entered)
+      const stage = pickTournament(live, entered, chosen)
       const at = stage ? live.indexOf(stage) : -1
 
       const [plan, matchups, payouts, weather] = await Promise.all([
@@ -1692,6 +2219,7 @@ export default function Tournament() {
         tracking,
         template,
         live,
+        entered,
         stage,
         plan,
         matchups,
@@ -1782,6 +2310,18 @@ export default function Tournament() {
   const [crew, setCrew] = useState<CardTemplate | null>(null)
   const [weapon, setWeapon] = useState<CardTemplate | null>(null)
   const [tab, setTab] = useState<Tab>('fighters')
+  /*
+     An empty card is a long way above the roster it is filled from. Tapping
+     it opens the right tab and brings the picker up to the top of the
+     screen, so the gesture lands on the fighters rather than on a panel
+     that appears to have done nothing — the arena and the dungeon do the
+     same.
+  */
+  const picker = useRef<HTMLElement>(null)
+  const goPick = (t: Tab) => {
+    setTab(t)
+    picker.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
   const [filter, setFilter] = useState<RosterFilter>(EMPTY_FILTER)
   const [atLevelOne, setAtLevelOne] = useState(false)
   const [cardQuery, setCardQuery] = useState('')
@@ -1894,6 +2434,14 @@ export default function Tournament() {
     [board.data, now, stage],
   )
   const stepEnds = currentStepEnd(board.data?.plan ?? [], stage)
+  const signupAt = useMemo(
+    () => timeline.find((s) => s.name === 'signup')?.startMs ?? NaN,
+    [timeline],
+  )
+  const fightAt = useMemo(
+    () => timeline.find((s) => s.name === 'battle')?.startMs ?? NaN,
+    [timeline],
+  )
   const field = useMemo(() => seedOrder(signups), [signups])
   const entered = stage ? Number(stage.player_count ?? signups.length) : signups.length
   const bracket = bracketOf(entered)
@@ -1955,12 +2503,37 @@ export default function Tournament() {
     return () => clearInterval(id)
   }, [overdue, reload])
 
+  const live = useMemo(() => board.data?.live ?? [], [board.data])
+  const enteredNames = useMemo(() => board.data?.entered ?? [], [board.data])
+
+  /*
+     A picked tournament finishes and is cleaned off `curstage`.
+
+     `pickTournament` already ignores a name that is no longer running, but
+     leaving it in state would keep it in the query key and keep the chooser
+     hidden, so the pick is dropped and the choice comes back.
+  */
+  useEffect(() => {
+    if (!chosen || live.length === 0) return
+    if (!live.some((s) => s.tournament_name === chosen)) setChosen(null)
+  }, [chosen, live])
+
   if (board.loading && !board.data) {
     return (
       <div className="tour">
         <div className="tour__loading">
           <span className="spinner" /> Reading the tournament…
         </div>
+      </div>
+    )
+  }
+
+  /* More than one running and nothing picked: the choice is the screen. */
+  if (live.length > 1 && !chosen) {
+    return (
+      <div className="tour">
+        {board.error && <div className="alert alert--error">{board.error}</div>}
+        <TournamentPicker live={live} entered={enteredNames} onPick={setChosen} />
       </div>
     )
   }
@@ -1985,6 +2558,16 @@ export default function Tournament() {
           {!waiting && <TournamentHead />}
           {!waiting && stage && <PrizeBar stage={stage} weather={board.data?.weather ?? []} />}
         </div>
+      )}
+
+      {live.length > 1 && (
+        <button
+          type="button"
+          className="tourpick__switch"
+          onClick={() => setChosen(null)}
+        >
+          Choose another tournament
+        </button>
       )}
 
       {board.error && <div className="alert alert--error">{board.error}</div>}
@@ -2021,7 +2604,15 @@ export default function Tournament() {
         />
       )}
 
-      {phase === 'preparing' && <Preparing fighters={ringFighters} />}
+      {phase === 'preparing' && (
+        <Preparing
+          fighters={ringFighters}
+          stage={stage}
+          weather={board.data?.weather ?? []}
+          signupAt={signupAt}
+          now={now}
+        />
+      )}
 
       {phase === 'signup' && stage && !mine && (
         <EntryPanel
@@ -2032,7 +2623,7 @@ export default function Tournament() {
               ageDecay={ageDecay}
               onInspect={showFighter}
               onRemove={toggleFighter}
-              onEmpty={() => setTab('fighters')}
+              onEmpty={() => goPick('fighters')}
               sixth={
                 <NftSlot
                   crew={crew}
@@ -2041,21 +2632,21 @@ export default function Tournament() {
                   onOpenCard={showCard}
                   onClearCrew={() => setCrew(null)}
                   onClearWeapon={() => setWeapon(null)}
-                  onPick={setTab}
+                  onPick={goPick}
                   onOpen={() => {
                     const fused = combineNftFighter(
                       crew ? (nftValues.get(crew.template_id) ?? null) : null,
                       weapon ? (nftValues.get(weapon.template_id) ?? null) : null,
                     )
                     if (fused) setDetail({ kind: 'panel', panel: fused })
-                    else setTab('crew')
+                    else goPick('crew')
                   }}
                 />
               }
             />
           }
         >
-          <section className="tour__picker">
+          <section className="tour__picker" ref={picker}>
             <div className="tabs">
               {(['fighters', 'crew', 'weapon'] as Tab[]).map((key) => (
                 <button
@@ -2144,24 +2735,29 @@ export default function Tournament() {
         <Finish mine={mine} payout={payout} nextStart={nextStart} now={now} />
       )}
 
-      {mine && <MyEntry mine={mine} seeding={seeding} bracket={bracket} />}
-
       {/*
-        Not once the fighting starts.
+        The fight card: the event, your line on it, and the field.
 
-        The field is the list of who entered, seeded — the question the
-        screen answers while entry is open and the draw is being made. Once
-        there are pairings it is the same names in a worse arrangement,
-        below a board that already says who is left and who they drew.
+        Not once the fighting starts. The field is the list of who entered,
+        seeded — the question the screen answers while entry is open and the
+        draw is being made. Once there are pairings it is the same names in
+        a worse arrangement, below a board that already says who is left and
+        who they drew — so only your own line survives into the battle.
       */}
-      {phase !== 'battle' && (
-        <Field
-          field={field}
-          mineWallet={mine?.wallet ?? null}
-          entryOpen={entryOpen}
-          freePasses={freePassCount(stage, entered)}
-          degenerate={bracket.degenerate}
-        />
+      {phase !== 'battle' ? (
+        <section className="tour__poster">
+          <PosterHead fightAt={fightAt} now={now} />
+          {mine && <MyEntry mine={mine} seeding={seeding} bracket={bracket} />}
+          <Field
+            field={field}
+            mineWallet={mine?.wallet ?? null}
+            entryOpen={entryOpen}
+            freePasses={freePassCount(stage, entered)}
+            degenerate={bracket.degenerate}
+          />
+        </section>
+      ) : (
+        mine && <MyEntry mine={mine} seeding={seeding} bracket={bracket} />
       )}
 
       {detail && (

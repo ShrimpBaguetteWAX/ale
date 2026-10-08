@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tournament — live harness</title>
+  <!--
+    The real Tournament screen, past the wallet gate, with real chain data.
+
+      npm run dev
+      open http://localhost:5273/scripts/tour-harness.html
+
+    The gate is a store: this page fetches any registered player's row,
+    puts it in the game store as if they had signed in, loads the config
+    store, and mounts the screen itself. Nothing is signed and nothing can
+    be — there is no session — so every button that would send an action
+    stays disabled. What it gives is the screen as a player sees it,
+    including every effect that only runs in a real browser.
+  -->
+</head>
+<body>
+  <div id="root"></div>
+  <script type="module" src="./tour-harness.tsx"></script>
+</body>
+</html>

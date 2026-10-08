@@ -449,6 +449,87 @@ export function timelineOf(
  *
  * Never fewer than three: the one before, the one now, the one next.
  */
+/*
+   Steps the strip leaves out.
+
+   Both run instantly at the top of the tournament and neither is anything a
+   player waits on or acts on — by the time the screen is worth looking at
+   they are already ticked, so they cost two cells to say "yes, it started".
+   What they settle shows up where it matters, on the prize bar.
+*/
+const STRIP_SKIP = new Set(['set_weather', 'get_rewards'])
+
+/*
+   Steps the strip shows as one.
+
+   The contract splits its work finely because it has to pace itself across
+   calls; a player does not care that drawing a bracket is two steps, only
+   that the tournament is getting ready. Consecutive steps sharing a group
+   collapse into a single cell spanning all of them.
+*/
+const STRIP_GROUP: Record<string, string> = {
+  close_signup: 'preparation',
+  create_matchups: 'preparation',
+  hall_of_fame: 'results',
+  reward_payout: 'results',
+  cleanup: 'results',
+}
+
+/**
+ * The timeline as the strip shows it: some steps dropped, some merged.
+ *
+ * Kept apart from `timelineOf` because the full list is still what every
+ * other reader wants — finding when signup starts, or which step the chain
+ * is on — and only the strip is short of room.
+ */
+export function stripSteps(steps: TimelineStep[]): TimelineStep[] {
+  const out: TimelineStep[] = []
+
+  for (const step of steps) {
+    if (STRIP_SKIP.has(step.name)) continue
+
+    const group = STRIP_GROUP[step.name]
+    const last = out[out.length - 1]
+
+    if (group && last && last.name === group) {
+      last.endMs = Math.max(last.endMs, step.endMs)
+      /*
+         A group is running while any step in it is, and its task count is
+         that step's — the others have either finished or not begun, and
+         neither has a number worth showing.
+      */
+      if (step.state === 'running') {
+        last.state = 'running'
+        last.current = step.current
+        last.total = step.total
+      } else if (last.state === 'done' && step.state !== 'done') {
+        last.state = step.state
+      }
+      continue
+    }
+
+    /*
+       The results begin when the fighting ends.
+
+       The contract schedules `cleanup` a few minutes after the battle
+       stage closes — a pacing margin, not a stage of its own — so the
+       timestamp on the row says 10:02 PM for a tournament whose last
+       fight is over at 10:00. A player asking "when are the results?" is
+       asking when the fighting is done, so the cell takes the previous
+       step's end, and only when the row's own time is the later one: a
+       results step that somehow starts early keeps its own time.
+    */
+    const start =
+      group === 'results' && last && Number.isFinite(last.endMs) && last.endMs < step.startMs
+        ? last.endMs
+        : step.startMs
+
+    out.push(group ? { ...step, name: group, startMs: start } : { ...step })
+  }
+
+  return out
+}
+
 export function stripWindow(steps: TimelineStep[], fits: number): TimelineStep[] {
   const room = Math.max(3, Math.floor(fits))
   if (steps.length <= room) return steps
@@ -505,15 +586,26 @@ export function signupWindow(
 /**
  * Which of several running tournaments to put on screen.
  *
- * The one this player is in, if they are in one — nothing else on the screen
- * matters as much as their own entry. Otherwise the one still taking
- * entrants, and failing that the one that started most recently.
+ * A name the player picked wins outright — once they have chosen, the screen
+ * is theirs to steer, and a tournament moving into a new phase must not
+ * pull them somewhere they did not ask to go. The fallbacks below only
+ * decide which one a *single*-tournament screen shows, and which one the
+ * chooser highlights: the one this player is in, else the one still taking
+ * entrants, else the one that started most recently.
+ *
+ * `chosen` is ignored when it names a tournament that is no longer running,
+ * so a finished one cannot strand the screen on an empty board.
  */
 export function pickTournament(
   stages: TournamentStage[],
   enteredNames: string[],
+  chosen?: string | null,
 ): TournamentStage | undefined {
   if (stages.length === 0) return undefined
+  if (chosen) {
+    const picked = stages.find((s) => s.tournament_name === chosen)
+    if (picked) return picked
+  }
   const mine = stages.find((s) => enteredNames.includes(s.tournament_name))
   if (mine) return mine
   const open = stages.find((s) => s.allow_player_signup)
