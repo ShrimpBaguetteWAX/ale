@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { simulateBout } from '@/tournament/bout'
+import { nftAsFighter } from '@/fight/odds'
 import { DEFAULT_CAPS } from '@/dungeon/sim'
 import type { RosterFighter } from '@/dungeon/types'
 
@@ -150,5 +151,36 @@ describe('the weather a bout is fought under', () => {
 
   it('still takes a single roll, the way a dungeon passes one', () => {
     expect(openingHealth(roll(-20))).toBe(openingHealth([roll(-20)]))
+  })
+})
+
+describe('walking the path the contract walks', () => {
+  const now = Date.parse('2026-09-28T12:00:00Z')
+
+  it('rolls side two from where the stream of side one stops, not from the seed again', () => {
+    /* Side one five strong, then four: side two is the same team both times,
+       but on chain its rolls start ten positions later per fighter ahead
+       of it — so its opening numbers must move when side one shrinks. */
+    const sideTwo = (count: number) => {
+      const one = { fighters: strong.fighters.slice(0, count), nft: null }
+      const replay = simulateBout(4821, one, { fighters: five(31, [900, 1100], 100), nft: null }, fielding, 10, now)!
+      return replay.opening.slice(count).map((f) => f.health)
+    }
+    expect(sideTwo(5)).not.toEqual(sideTwo(4))
+    /* And the same inputs still give the same fight. */
+    expect(sideTwo(5)).toEqual(sideTwo(5))
+  })
+
+  it('keeps the target rule of the crew card on the sixth fighter', () => {
+    const sixth = nftAsFighter(
+      {
+        health: 400, damage: 150, taunt: 0, initiative: 0, attackspeed: 500,
+        ...RES, element: 'fire', classname: 'tactician', racename: 'human',
+        abilities: [], target: 'enemy_health_min',
+      } as never,
+      now,
+    )
+    expect(sixth.target).toBe('enemy_health_min')
+    expect(sixth.level).toBe(1)
   })
 })

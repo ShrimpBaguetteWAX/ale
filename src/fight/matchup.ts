@@ -229,6 +229,8 @@ export interface FlatFighter extends Resistances {
   racename?: string
   taunt?: number
   initiative?: number
+  /** Who this fighter hits — the crew card's rule, for the sixth fighter. */
+  target?: string
 }
 
 /**

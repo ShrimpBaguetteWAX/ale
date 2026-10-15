@@ -20,20 +20,26 @@ export interface BoutSide {
  * Fight a tournament pairing from the row that describes it.
  *
  * The contract records who was drawn against whom, the ids they brought and
- * a seed — and nothing about what happened, because as of this writing the
- * battle contract has no notion of how a tournament is fought at all.
+ * a seed — and nothing about what happened. `battle::fight`'s tournament
+ * path rolls both sides off that seed and fights them with the same loop a
+ * dungeon uses, so the same roll here reproduces the fight blow for blow:
+ * a **model that agrees with the chain**, checked against every fight of a
+ * real tournament (scripts/bout-check.ts), rather than footage.
  *
- * So this is a **model of the bout, not a replay of one**. It runs the fight
- * the way `fight()` runs a dungeon — the same `simulate` the odds centre
- * uses to price one — on the assumption that a tournament will be fought
- * the same way once the chain learns how. The seed makes it come out the
- * same for everyone who presses play, which is what a shared broadcast
- * needs; it does not make it agree with a result the chain has not produced.
+ * It stays right only while it walks the contract's path exactly. Three
+ * things it has to match, and did not always:
  *
- * When the battle step lands, this has to be checked against it. If it
- * fights differently — a different turn order, a different target rule, any
- * scaling of its own — this is wrong and the screen is showing a fight that
- * did not happen.
+ *   • **One roll stream, not two.** The contract rolls side one's fighters
+ *     ten positions apart and then carries on, so side two's first fighter
+ *     starts at seed + 10 × (side one's count). Restarting side two at
+ *     seed + 1 rolled every stat on it from different numbers, and a final
+ *     the chain gave to player one played out for player two.
+ *
+ *   • **No building.** The contract fights a tournament on no land, so no
+ *     building-gated ability fires; the simulator's default is a dungeon.
+ *
+ *   • **The crew card's target rule**, kept on the sixth fighter the way
+ *     `getFighterFromNFT` keeps it.
  *
  * Two things differ from a dungeon:
  *
@@ -54,7 +60,8 @@ export function simulateBout(
   now = Date.now(),
 ): Replay | null {
   const one = teamOf(a, seed, now)
-  const two = teamOf(b, seed + 1, now)
+  /* Side two picks up the stream where side one's fighters left it. */
+  const two = teamOf(b, seed + 10 * a.fighters.length, now)
   if (!one.team.length || !two.team.length) return null
 
   /*
@@ -83,8 +90,10 @@ export function simulateBout(
   return simulate(row, {
     tauntDeduction,
     caps: fielding.caps,
-    /* Not a dungeon and not an arena, so no `building` ability condition
-       can be met — which is what the contract does with a tournament too. */
+    /* Not a dungeon and not an arena: the contract fights a tournament on
+       no land, so no building-gated ability can fire. Named rather than
+       left to the simulator's default, which is a dungeon. */
+    building: 'tournament',
     prepare,
   })
 }

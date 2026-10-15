@@ -358,6 +358,22 @@ export function pretendTournamentWins(wallet: string): number {
   return ((hash >>> 3) % 10) + 1
 }
 
+/**
+ * Which side of a pairing the chain says took it: 1, 2, or 0 while unfought.
+ *
+ * `winner` is a string the contract has filled three ways over time — a
+ * gamertag, a wallet, and now the side itself, "player1" or "player2",
+ * which is what `reportmatch` writes. All three are read, so a board drawn
+ * from an older row and one from a newer agree.
+ */
+export function winnerSide(m: Pick<TournamentMatchup, 'winner' | 'wallet_player1' | 'wallet_player2' | 'gamertag_player1' | 'gamertag_player2'>): 0 | 1 | 2 {
+  const w = m.winner
+  if (!w) return 0
+  if (w === 'player1' || w === m.wallet_player1 || (!!m.gamertag_player1 && w === m.gamertag_player1)) return 1
+  if (w === 'player2' || w === m.wallet_player2 || (!!m.gamertag_player2 && w === m.gamertag_player2)) return 2
+  return 0
+}
+
 /** The pairings that involve this player, newest drawn last. */
 export function myMatchups(
   matchups: TournamentMatchup[],

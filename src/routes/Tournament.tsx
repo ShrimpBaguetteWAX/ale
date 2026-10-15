@@ -76,6 +76,7 @@ import {
   type TimelineStep,
   type TournamentPhase,
   type CrewFace,
+  winnerSide,
 } from '@/tournament/rules'
 import type {
   TournamentMatchup,
@@ -1158,9 +1159,6 @@ export function Battle({
   const round = Number(stage.current_round ?? 0)
   const fought = Number(stage.current_battle ?? 0)
   const inRound = Number(stage.battles_in_round ?? 0)
-  /* One open at a time: two line-ups is ten combat cards, and the point of
-     opening one is to read it against the name across from it. */
-  const [open, setOpen] = useState<number | null>(null)
 
   /*
      A fight the player went back to watch.
@@ -1226,139 +1224,13 @@ export function Battle({
       </header>
 
       {pairings.length > 0 ? (
-        <ol className="tour__bouts">
-          {pairings.map((m, i) => {
-            const mine =
-              !!mineWallet && (m.wallet_player1 === mineWallet || m.wallet_player2 === mineWallet)
-            /*
-               A pairing is decided when the chain says who took it, and
-               `winner` is a string — the contract has written a tag in it
-               and a wallet in it at different times — so both are checked
-               rather than guessing which this row holds.
-            */
-            const took = (wallet: string, tag: string) =>
-              !!m.winner && (m.winner === wallet || m.winner === tag)
-            const won1 = took(m.wallet_player1, m.gamertag_player1)
-            const won2 = took(m.wallet_player2, m.gamertag_player2)
-            const drawn = !!m.wallet_player2
-            const isOpen = open === m.index
-            /* The contract fights them in order, one call at a time. */
-            const state = !drawn
-              ? 'Being drawn'
-              : m.winner
-                ? 'Fought'
-                : i < fought
-                  ? 'Fought'
-                  : i === fought
-                    ? 'Fighting now'
-                    : 'To come'
-            const unlocks = m.play_time ? clock(chainTime(m.play_time)) : ''
-            /*
-               Every fight the chain has reached can be watched: the seed is
-               on the row and the fight is generated from it, so one already
-               fought runs again exactly as it happened, and the one under
-               way runs as it is happening. Only a fight whose slot has not
-               come round yet has nothing to show.
-            */
-            const watchable = drawn && state !== 'To come'
-
-            return (
-              <li
-                key={m.index}
-                className={
-                  'tour__bout' +
-                  (mine ? ' tour__bout--mine' : '') +
-                  (state === 'Fighting now' ? ' tour__bout--live' : '') +
-                  (isOpen ? ' tour__bout--open' : '')
-                }
-              >
-                <div className="tour__boutrow">
-                  <button
-                    type="button"
-                    className="tour__boutmain"
-                    aria-expanded={isOpen}
-                    disabled={!drawn}
-                    onClick={() => setOpen(isOpen ? null : m.index)}
-                    title={drawn ? 'See both line-ups' : 'This pairing is still being drawn'}
-                  >
-                  <span className="tour__boutno mono">{i + 1}</span>
-                  <BoutSide
-                    wallet={m.wallet_player1}
-                    tag={m.gamertag_player1}
-                    avatar={m.avatar_player1}
-                    won={won1}
-                    beaten={won2}
-                    mineWallet={mineWallet}
-                  />
-                  <span className="tour__boutvs" aria-hidden="true">
-                    VS
-                  </span>
-                  <BoutSide
-                    wallet={m.wallet_player2}
-                    tag={m.gamertag_player2}
-                    avatar={m.avatar_player2}
-                    won={won2}
-                    beaten={won1}
-                    mineWallet={mineWallet}
-                    right
-                  />
-                  <span className="tour__boutend">
-                    <span className="tour__boutwhen">
-                      <span
-                        className={`tour__boutstate${
-                          state === 'Fighting now' ? ' tour__boutstate--live' : ''
-                        }`}
-                      >
-                        {state}
-                      </span>
-                      {/* Every pairing carries a slot, and the contract will
-                          not run one before its time — so this is the answer
-                          to "when is mine on". */}
-                      {unlocks && (
-                        <span className="tour__bouttime mono">
-                          {state === 'To come' ? `from ${unlocks}` : unlocks}
-                        </span>
-                      )}
-                    </span>
-                    {drawn && (
-                      <svg
-                        className={`tour__chev${isOpen ? ' tour__chev--open' : ''}`}
-                        viewBox="0 0 16 16"
-                        aria-hidden="true"
-                      >
-                        <path d="M4 6l4 4 4-4" />
-                      </svg>
-                    )}
-                  </span>
-                  </button>
-
-                  {/* Shown on every row so the column lines up, and dimmed
-                      rather than dropped where there is nothing to play —
-                      an absent control reads as a layout fault. */}
-                  <button
-                    type="button"
-                    className={'tour__watch' + (m.index === watching ? ' tour__watch--on' : '')}
-                    disabled={!watchable}
-                    onClick={() => setWatching(m.index)}
-                    title={
-                      watchable
-                        ? `Watch fight ${i + 1}`
-                        : unlocks
-                          ? `This fight starts at ${unlocks}`
-                          : 'This fight has not started yet'
-                    }
-                    aria-label={`Watch fight ${i + 1}`}
-                  >
-                    <svg viewBox="0 0 24 24" aria-hidden="true">
-                      <path d="M8 5v14l11-7z" />
-                    </svg>
-                  </button>
-                </div>
-                {isOpen && <BoutLineup m={m} />}
-              </li>
-            )
-          })}
-        </ol>
+        <BoutRows
+          pairings={pairings}
+          fought={fought}
+          mineWallet={mineWallet}
+          watching={watching}
+          onWatch={setWatching}
+        />
       ) : (
         <p className="faint">
           {entered
@@ -1401,6 +1273,167 @@ export function Battle({
         </div>
       )}
     </section>
+  )
+}
+
+/**
+ * The fights of one round, as rows.
+ *
+ * Shared by the live board and the results: a row names both sides, marks
+ * who took it, says when its slot was, opens to both line-ups, and plays.
+ * `fought` is how far the contract has got through the round — every row
+ * once the round is over — and decides which rows can be watched.
+ */
+export function BoutRows({
+  pairings,
+  fought,
+  mineWallet,
+  watching,
+  onWatch,
+}: {
+  pairings: TournamentMatchup[]
+  fought: number
+  mineWallet: string | null
+  /** The index of the fight being watched, if one was picked from here. */
+  watching: number | null
+  onWatch: (index: number) => void
+}) {
+  /* One open at a time: two line-ups is ten combat cards, and the point of
+     opening one is to read it against the name across from it. */
+  const [open, setOpen] = useState<number | null>(null)
+
+  return (
+  <ol className="tour__bouts">
+    {pairings.map((m, i) => {
+      const mine =
+        !!mineWallet && (m.wallet_player1 === mineWallet || m.wallet_player2 === mineWallet)
+      /*
+         A pairing is decided when the chain says who took it, and
+         `winner` is a string — the contract has written a tag in it
+         and a wallet in it at different times — so both are checked
+         rather than guessing which this row holds.
+      */
+      const won1 = winnerSide(m) === 1
+      const won2 = winnerSide(m) === 2
+      const drawn = !!m.wallet_player2
+      const isOpen = open === m.index
+      /* The contract fights them in order, one call at a time. */
+      const state = !drawn
+        ? 'Being drawn'
+        : m.winner
+          ? 'Fought'
+          : i < fought
+            ? 'Fought'
+            : i === fought
+              ? 'Fighting now'
+              : 'To come'
+      const unlocks = m.play_time ? clock(chainTime(m.play_time)) : ''
+      /*
+         Every fight the chain has reached can be watched: the seed is
+         on the row and the fight is generated from it, so one already
+         fought runs again exactly as it happened, and the one under
+         way runs as it is happening. Only a fight whose slot has not
+         come round yet has nothing to show.
+      */
+      const watchable = drawn && state !== 'To come'
+
+      return (
+        <li
+          key={m.index}
+          className={
+            'tour__bout' +
+            (mine ? ' tour__bout--mine' : '') +
+            (state === 'Fighting now' ? ' tour__bout--live' : '') +
+            (isOpen ? ' tour__bout--open' : '')
+          }
+        >
+          <div className="tour__boutrow">
+            <button
+              type="button"
+              className="tour__boutmain"
+              aria-expanded={isOpen}
+              disabled={!drawn}
+              onClick={() => setOpen(isOpen ? null : m.index)}
+              title={drawn ? 'See both line-ups' : 'This pairing is still being drawn'}
+            >
+            <span className="tour__boutno mono">{i + 1}</span>
+            <BoutSide
+              wallet={m.wallet_player1}
+              tag={m.gamertag_player1}
+              avatar={m.avatar_player1}
+              won={won1}
+              beaten={won2}
+              mineWallet={mineWallet}
+            />
+            <span className="tour__boutvs" aria-hidden="true">
+              VS
+            </span>
+            <BoutSide
+              wallet={m.wallet_player2}
+              tag={m.gamertag_player2}
+              avatar={m.avatar_player2}
+              won={won2}
+              beaten={won1}
+              mineWallet={mineWallet}
+              right
+            />
+            <span className="tour__boutend">
+              <span className="tour__boutwhen">
+                <span
+                  className={`tour__boutstate${
+                    state === 'Fighting now' ? ' tour__boutstate--live' : ''
+                  }`}
+                >
+                  {state}
+                </span>
+                {/* Every pairing carries a slot, and the contract will
+                    not run one before its time — so this is the answer
+                    to "when is mine on". */}
+                {unlocks && (
+                  <span className="tour__bouttime mono">
+                    {state === 'To come' ? `from ${unlocks}` : unlocks}
+                  </span>
+                )}
+              </span>
+              {drawn && (
+                <svg
+                  className={`tour__chev${isOpen ? ' tour__chev--open' : ''}`}
+                  viewBox="0 0 16 16"
+                  aria-hidden="true"
+                >
+                  <path d="M4 6l4 4 4-4" />
+                </svg>
+              )}
+            </span>
+            </button>
+
+            {/* Shown on every row so the column lines up, and dimmed
+                rather than dropped where there is nothing to play —
+                an absent control reads as a layout fault. */}
+            <button
+              type="button"
+              className={'tour__watch' + (m.index === watching ? ' tour__watch--on' : '')}
+              disabled={!watchable}
+              onClick={() => onWatch(m.index)}
+              title={
+                watchable
+                  ? `Watch fight ${i + 1}`
+                  : unlocks
+                    ? `This fight starts at ${unlocks}`
+                    : 'This fight has not started yet'
+              }
+              aria-label={`Watch fight ${i + 1}`}
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M8 5v14l11-7z" />
+              </svg>
+            </button>
+          </div>
+          {isOpen && <BoutLineup m={m} />}
+        </li>
+      )
+    })}
+  </ol>
   )
 }
 
@@ -1549,31 +1582,134 @@ function BoutSide({
   )
 }
 
-export function Finish({
+/**
+ * The results: every fight of the tournament, who took it, and play.
+ *
+ * By the time the stage reaches its results the signups are gone — cleanup
+ * erases them before it erases itself — so the matchups are all that is
+ * left of what happened, and they carry everything the board needs: both
+ * names and faces, the line-ups, the slot and the winner. The player's own
+ * record is counted off them rather than read off a row that no longer
+ * exists. The final is offered first, at its poster; play on any row runs
+ * that fight.
+ */
+export function Results({
+  history,
+  weather,
+  wallet,
   mine,
   payout,
   nextStart,
   now,
 }: {
+  /** Every round's matchups, round 0 first; a round the chain has no rows for is empty. */
+  history: TournamentMatchup[][]
+  weather: Weather[]
+  /** The player looking, whether or not they entered. */
+  wallet: string
   mine: TournamentSignup | undefined
   payout: TournamentPayout | undefined
   nextStart: number
   now: number
 }) {
+  const rounds = history
+    .map((pairings, round) => ({ round, pairings }))
+    .filter((r) => r.pairings.length > 0)
+  const last = rounds[rounds.length - 1]
+  const final = last?.pairings[0]
+
+  const [watching, setWatching] = useState<{ round: number; index: number } | null>(null)
+  const picked = watching
+    ? history[watching.round]?.find((m) => m.index === watching.index)
+    : undefined
+  const shown = picked ?? final
+  const shownRound = picked ? watching!.round : (last?.round ?? 0)
+  const shownAt = shown ? Math.max(0, history[shownRound]?.indexOf(shown) ?? 0) : 0
+
+  const champion = !final
+    ? null
+    : winnerSide(final) === 1
+      ? { wallet: final.wallet_player1, tag: final.gamertag_player1 }
+      : winnerSide(final) === 2
+        ? { wallet: final.wallet_player2, tag: final.gamertag_player2 }
+        : null
+
+  const fights = history.flat()
+  const side = (m: TournamentMatchup) =>
+    m.wallet_player1 === wallet ? 1 : m.wallet_player2 === wallet ? 2 : 0
+  const played = fights.some((m) => side(m) > 0)
+  const wins = fights.filter((m) => side(m) > 0 && winnerSide(m) === side(m)).length
+  const losses = fights.filter(
+    (m) => side(m) > 0 && winnerSide(m) > 0 && winnerSide(m) !== side(m),
+  ).length
+  const points = mine?.reward_points ?? payout?.reward_points
+  /* Fights are the truth where there are any; `battles_won` also counts a
+     free pass, so it is only the fallback. */
+  const record = fights.length > 0 ? wins : (mine?.battles_won ?? 0)
+
   return (
-    <section className="tour__panel">
-      <h2 className="tour__h2">Results</h2>
-      {mine ? (
+    <section className="tour__panel tour__results">
+      {shown && !!shown.wallet_player2 && (
+        <BoutBroadcast
+          key={`${shownRound}:${shown.index}`}
+          m={shown}
+          round={shownRound}
+          bout={shownAt}
+          weather={weather}
+          mineWallet={wallet}
+          autoPlay={!!picked}
+        />
+      )}
+
+      <header className="tour__fieldhead">
+        <h2 className="tour__h2">Results</h2>
+        {champion && (
+          <span className="tour__champion">
+            Champion <b>{champion.tag || champion.wallet}</b>
+            {champion.wallet === wallet && <span className="tour__championyou"> · you</span>}
+          </span>
+        )}
+      </header>
+
+      {played || mine ? (
         <p className="tour__big mono">
-          {formatNumber(mine.battles_won)} win{mine.battles_won === 1 ? '' : 's'}
+          {formatNumber(record)} win{record === 1 ? '' : 's'}
           <span className="tour__bigsub">
-            {formatNumber(mine.reward_points)} reward points
-            {payout ? ` · ${formatNumber(payout.reward_points)} banked` : ''}
+            {losses > 0
+              ? `${losses} loss${losses === 1 ? '' : 'es'}`
+              : champion?.wallet === wallet
+                ? 'unbeaten'
+                : ''}
+            {points !== undefined ? ` · ${formatNumber(points)} reward points` : ''}
+            {payout && mine ? ` · ${formatNumber(payout.reward_points)} banked` : ''}
           </span>
         </p>
       ) : (
         <p className="muted">You did not enter this one.</p>
       )}
+
+      {rounds.length === 0 && (
+        <p className="faint">The fights of this tournament are no longer on chain.</p>
+      )}
+
+      {rounds.map(({ round, pairings }) => (
+        <section key={round} className="tour__round">
+          <h3 className="tour__roundhead">
+            {round === last?.round ? 'Final' : `Round ${round + 1}`}
+            <span className="faint">
+              {' '}· {pairings.length} fight{pairings.length === 1 ? '' : 's'}
+            </span>
+          </h3>
+          <BoutRows
+            pairings={pairings}
+            fought={pairings.length}
+            mineWallet={wallet}
+            watching={watching?.round === round ? watching.index : null}
+            onWatch={(index) => setWatching({ round, index })}
+          />
+        </section>
+      ))}
+
       <p className="faint">
         Reward points decide the share of the pool. The next tournament opens
         {Number.isFinite(nextStart) ? ` in ${untilText(nextStart - now)}` : ' soon'}.
@@ -2185,7 +2321,7 @@ export default function Tournament() {
       const stage = pickTournament(live, entered, chosen)
       const at = stage ? live.indexOf(stage) : -1
 
-      const [plan, matchups, payouts, weather] = await Promise.all([
+      const [plan, matchups, payouts, weather, history] = await Promise.all([
         stage ? fetchTournamentPlan(stage.tournament_name, fresh) : Promise.resolve([]),
         /* Per round, so this is the round the tournament is on. Earlier
            rounds live in their own scopes and are not read here. */
@@ -2212,6 +2348,22 @@ export default function Tournament() {
             weather: await fetchWeatherRow(w.planet, w.weather_id),
           })),
         ),
+        /*
+           Every round, for the results.
+
+           Once the fighting is over the signups are already gone — cleanup
+           erases them before it erases the stage — so the matchups are all
+           that is left of what happened, and they are what a player comes
+           back to watch. Read only then: while the fighting is on, the
+           current round is the board.
+        */
+        stage && phaseOf(stage) === 'finish'
+          ? Promise.all(
+              Array.from({ length: Number(stage.rounds ?? 0) }, (_, r) =>
+                fetchTournamentMatchups(stage.tournament_name, r, fresh),
+              ),
+            )
+          : Promise.resolve([] as TournamentMatchup[][]),
       ])
 
       return {
@@ -2223,6 +2375,7 @@ export default function Tournament() {
         stage,
         plan,
         matchups,
+        history,
         payouts,
         weather,
         signups: at >= 0 ? fields[at] : [],
@@ -2454,6 +2607,7 @@ export default function Tournament() {
      thing a bracket is for.
   */
   const pairings = board.data?.matchups ?? []
+  const history = board.data?.history ?? []
   /* The rolls that landed, in the order the stage lists them. */
   const rolls = useMemo(
     () =>
@@ -2732,7 +2886,15 @@ export default function Tournament() {
       )}
 
       {phase === 'finish' && (
-        <Finish mine={mine} payout={payout} nextStart={nextStart} now={now} />
+        <Results
+          history={history}
+          weather={rolls}
+          wallet={player.wallet}
+          mine={mine}
+          payout={payout}
+          nextStart={nextStart}
+          now={now}
+        />
       )}
 
       {/*
@@ -2744,7 +2906,7 @@ export default function Tournament() {
         a worse arrangement, below a board that already says who is left and
         who they drew — so only your own line survives into the battle.
       */}
-      {phase !== 'battle' ? (
+      {phase !== 'battle' && phase !== 'finish' ? (
         <section className="tour__poster">
           <PosterHead fightAt={fightAt} now={now} />
           {mine && <MyEntry mine={mine} seeding={seeding} bracket={bracket} />}

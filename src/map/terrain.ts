@@ -141,6 +141,24 @@ export function liveBoostPercent(
 }
 
 /**
+ * The boost below which a building is not worth walking to, and so is not
+ * drawn on the map.
+ *
+ * In the contract's unit, which is the one `liveBoostPercent` returns: 1
+ * is 0.1x on the screen. A building this far decayed pays nothing worth
+ * the trip, and a marker for it is a promise the land cannot keep — the
+ * tile still exists and the land card still says what is there, it is only
+ * the map that stops pointing at it.
+ *
+ * Taverns and portals carry no boost and are never hidden by this.
+ */
+export const MIN_SHOWN_BOOST = 1
+
+export function boostShown(percent: number): boolean {
+  return percent >= MIN_SHOWN_BOOST
+}
+
+/**
  * A boost, written the way the game shows it: a multiplier, not a percentage.
  *
  * The contract counts in percent — full boost is 1,000,000, which `boost`

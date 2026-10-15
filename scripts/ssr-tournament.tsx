@@ -27,7 +27,7 @@ import {
   EntryActions,
   EntryPanel,
   Field,
-  Finish,
+  Results,
   MyEntry,
   NoTournament,
   Preparing,
@@ -514,7 +514,10 @@ const STATES: { id: string; note: string; body: string }[] = [
     body:
       draw(<TournamentHead />) +
       draw(
-        <Finish
+        <Results
+          history={[]}
+          weather={[]}
+          wallet="me.wam"
           mine={played(4, 40)}
           payout={{ wallet: 'me.wam', reward_points: 40 }}
           nextStart={Date.parse('2026-09-28T12:54:04Z')}

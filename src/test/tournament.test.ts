@@ -16,6 +16,7 @@ import {
   stripSteps,
   stripWindow,
   timelineOf,
+  winnerSide,
 } from '@/tournament/rules'
 import type {
   TournamentPlanStep,
@@ -553,5 +554,29 @@ describe('entering', () => {
   it('will not field a fighter that is busy, which signup aborts on', () => {
     const busy = [...five.slice(0, 4), fighter(9, 0, true)]
     expect(canEnter(busy, true, true, 50, 10, stage(), false, 5).reason).toMatch(/busy elsewhere/)
+  })
+})
+
+describe('who took a pairing', () => {
+  const m = {
+    wallet_player1: 'a.wam',
+    wallet_player2: 'b.wam',
+    gamertag_player1: 'Alpha',
+    gamertag_player2: 'Bravo',
+  }
+
+  it('reads the side the contract writes now', () => {
+    expect(winnerSide({ ...m, winner: 'player1' })).toBe(1)
+    expect(winnerSide({ ...m, winner: 'player2' })).toBe(2)
+  })
+
+  it('still reads the wallet and the tag older rows carried', () => {
+    expect(winnerSide({ ...m, winner: 'b.wam' })).toBe(2)
+    expect(winnerSide({ ...m, winner: 'Alpha' })).toBe(1)
+  })
+
+  it('is nobody while unfought, and never a blank tag', () => {
+    expect(winnerSide({ ...m, winner: '' })).toBe(0)
+    expect(winnerSide({ ...m, gamertag_player1: '', winner: '' })).toBe(0)
   })
 })

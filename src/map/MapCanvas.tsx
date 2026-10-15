@@ -13,6 +13,7 @@ import {
   formatBoost,
   liveBoostPercent,
   type MarkerKey,
+  boostShown,
 } from './terrain'
 
 export interface MapCanvasProps {
@@ -455,8 +456,22 @@ export function MapCanvas({
           // actually using is missing from the active list.
           marker = 'tavern'
         } else if (land.buildings.length > 0) {
-          const fromLand = buildingMarker(String(land.buildings[0].building_name))
-          marker = fromLand === 'tavern' ? null : fromLand
+          const b = land.buildings[0]
+          const fromLand = buildingMarker(String(b.building_name))
+          /*
+             A building decayed below 0.1x is not drawn at all — not as an
+             icon and not as a dot. See `MIN_SHOWN_BOOST`. The multiplier is
+             aged forward the same way the label under the marker ages it,
+             so the two can never disagree about whether it is there.
+          */
+          const worth = boostShown(
+            liveBoostPercent(
+              Number(b.boost_score ?? 0),
+              String(b.boost_score_update ?? ''),
+              decayRef.current,
+            ),
+          )
+          marker = fromLand === 'tavern' || !worth ? null : fromLand
         }
 
         // A dungeon the player has already run today is spent until the

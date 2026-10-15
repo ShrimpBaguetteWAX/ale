@@ -164,7 +164,8 @@ export function rollFighter(f: RosterFighter, seed: number, slot: number): Battl
  * The crew-and-weapon fighter, as the screen assembled it.
  *
  * `getFighterFromNFT` gives it level 1 and the current time as its creation
- * date, so it takes one step of the level curve and no age decay at all.
+ * date, so it takes one step of the level curve and no age decay at all —
+ * and the crew card's target rule, which is who this fighter hits.
  */
 export function nftAsFighter(nft: FlatFighter, now: number): BattleFighter {
   return asCombatant({
@@ -175,7 +176,7 @@ export function nftAsFighter(nft: FlatFighter, now: number): BattleFighter {
     initiative: nft.initiative ?? 0,
     abilities: nft.abilities ?? [],
     level: 1,
-    target: '',
+    target: nft.target ?? '',
   })
 }
 

@@ -138,6 +138,8 @@ export function combineNftFlat(crew: NftValue | null, weapon: NftValue | null): 
     classname: crew?.classname || '',
     racename: crew?.racename || '',
     element: weapon?.element || 'neutral',
+    /* The crew's, as `getFighterFromNFT` sets it. */
+    target: crew?.stats.target || '',
     health: sum((s) => s.health),
     damage: sum((s) => s.damage),
     taunt: sum((s) => s.taunt),

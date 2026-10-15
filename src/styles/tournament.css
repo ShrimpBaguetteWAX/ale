@@ -2771,6 +2771,51 @@
   }
 }
 
+/* ——— The results ——— */
+
+/* The record: the figure, and what it was made of on its own line. */
+.tour__big {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  color: var(--white);
+}
+
+.tour__bigsub {
+  display: block;
+  margin-top: 2px;
+  font-family: var(--font-body);
+  font-size: 0.88rem;
+  color: var(--text-dim);
+}
+
+.tour__round {
+  margin-top: 18px;
+}
+
+.tour__roundhead {
+  margin: 0 0 8px;
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgb(255 219 125 / 80%);
+}
+
+.tour__champion {
+  font-size: 0.9rem;
+  color: var(--text-dim);
+}
+
+.tour__champion b {
+  font-family: var(--font-display);
+  color: #ffdb7d;
+}
+
+.tour__championyou {
+  color: var(--cyan);
+}
+
 .tour__tailspace {
   height: 24px;
 }
