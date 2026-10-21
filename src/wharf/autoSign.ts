@@ -1,4 +1,5 @@
-import type { SessionKeyWhitelistInput } from '@wharfkit/session'
+import { Name } from '@wharfkit/antelope'
+import type { SessionKeyWhitelistEntry } from '@wharfkit/session'
 import { CONTRACTS } from '@/chain/config'
 
 /**
@@ -198,8 +199,17 @@ export const NEVER_AUTO_SIGNED: readonly AutoSignAction[] = [
 const forbidden = (a: AutoSignAction) =>
   a.action === 'transfer' || NEVER_AUTO_SIGNED.some((n) => n.contract === a.contract && n.action === a.action)
 
-/** The actions of the chosen groups, one entry per contract, as WharfKit wants them. */
-export function whitelistFor(groupIds: readonly string[]): SessionKeyWhitelistInput[] {
+/**
+ * The actions of the chosen groups, one entry per contract, as WharfKit
+ * wants them.
+ *
+ * As `Name`s, not strings. The kit's own constructor converts whatever it
+ * is given, but the two places the page writes a whitelist later — the
+ * key manager and the wallet plugin — are plain fields, and WharfKit
+ * compares their entries with `.equals`, which a string does not have:
+ * the first change after setup died with "t.equals is not a function".
+ */
+export function whitelistFor(groupIds: readonly string[]): SessionKeyWhitelistEntry[] {
   const byContract = new Map<string, Set<string>>()
   for (const group of AUTO_SIGN_GROUPS) {
     if (!groupIds.includes(group.id)) continue
@@ -210,7 +220,10 @@ export function whitelistFor(groupIds: readonly string[]): SessionKeyWhitelistIn
       byContract.set(a.contract, actions)
     }
   }
-  return [...byContract].map(([contract, actions]) => ({ contract, actions: [...actions].sort() }))
+  return [...byContract].map(([contract, actions]) => ({
+    contract: Name.from(contract),
+    actions: [...actions].sort().map((a) => Name.from(a)),
+  }))
 }
 
 /** Which groups a whitelist covers: every one of a group's actions has to be in it. */

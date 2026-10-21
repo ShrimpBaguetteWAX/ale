@@ -41,11 +41,14 @@ describe('whitelistFor', () => {
     expect(whitelistFor([])).toEqual([])
   })
 
-  it('gathers a group s actions under their contracts', () => {
-    expect(whitelistFor(['fighting'])).toEqual([
+  it('gathers a group s actions under their contracts, as names', () => {
+    const list = whitelistFor(['fighting'])
+    expect(list.map((e) => ({ contract: String(e.contract), actions: (e.actions ?? []).map(String) }))).toEqual([
       { contract: 'dungeons.ale', actions: ['playdungeon'] },
       { contract: 'arena.ale', actions: ['playarena'] },
     ])
+    /* The kind WharfKit compares with .equals, not strings. */
+    expect(typeof (list[0].contract as { equals?: unknown }).equals).toBe('function')
   })
 
   it('names a contract once when two groups share it', () => {

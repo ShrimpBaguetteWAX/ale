@@ -64,10 +64,10 @@ export async function applyAutoSign(session: Session | null, groupIds: readonly 
     if (wanted.length === 0) {
       if (status.exists) await session.removeSessionKey()
     } else if (!status.active) {
-      if (manager) manager.whitelist = list as typeof manager.whitelist
+      if (manager) manager.whitelist = list
       await session.setupSessionKey()
     } else {
-      if (manager) manager.whitelist = list as typeof manager.whitelist
+      if (manager) manager.whitelist = list
       plugin.whitelist = list
       await session.updateSessionKeyLinks()
     }
