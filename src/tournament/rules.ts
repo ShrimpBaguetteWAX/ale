@@ -93,6 +93,34 @@ export function phaseOf(stage: TournamentStage | undefined | null): TournamentPh
   return PHASES.find((p) => p === screen) ?? 'preparing'
 }
 
+/**
+ * Whether the last fight has been reported.
+ *
+ * `reportmatch` moves `current_round` on when a round's last fight lands,
+ * so after the final the counter stands one past the last round — and
+ * stays there until the cleanup step comes round, which is days. The stage
+ * row still says "battle" for all of that time; read literally it asks
+ * for a round that does not exist ("Round 3 of 2"). This is what the
+ * screen reads instead: the fighting is over, show the results.
+ */
+export function fightingDone(stage: TournamentStage | undefined | null): boolean {
+  if (!stage) return false
+  const rounds = Number(stage.rounds ?? 0)
+  return rounds > 0 && Number(stage.current_round ?? 0) >= rounds
+}
+
+/**
+ * Whether a tournament on `curstage` is over bar the cleanup.
+ *
+ * Its results are the only thing left to look at: the stage row says so,
+ * or the round counter has run past the last round (see `fightingDone`).
+ * A finished tournament stays on `curstage` for days, next to the one
+ * that replaced it, and must not be offered as a choice beside it.
+ */
+export function isFinished(stage: TournamentStage): boolean {
+  return phaseOf(stage) === 'finish' || fightingDone(stage)
+}
+
 export const PHASE_LABEL: Record<TournamentPhase, string> = {
   none: 'Between tournaments',
   preparing: 'Preparing',
@@ -622,11 +650,18 @@ export function pickTournament(
     const picked = stages.find((s) => s.tournament_name === chosen)
     if (picked) return picked
   }
-  const mine = stages.find((s) => enteredNames.includes(s.tournament_name))
+  /*
+     A finished tournament is never the default — only something a player
+     asks for by name. While one is still running, that is the screen;
+     with nothing running the last finished one is all there is to show.
+  */
+  const running = stages.filter((s) => !isFinished(s))
+  const pool = running.length > 0 ? running : stages
+  const mine = pool.find((s) => enteredNames.includes(s.tournament_name))
   if (mine) return mine
-  const open = stages.find((s) => s.allow_player_signup)
+  const open = pool.find((s) => s.allow_player_signup)
   if (open) return open
-  return [...stages].sort(
+  return [...pool].sort(
     (a, b) => (startedAt(b.tournament_name) ?? 0) - (startedAt(a.tournament_name) ?? 0),
   )[0]
 }

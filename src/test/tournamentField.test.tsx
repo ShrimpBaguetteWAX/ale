@@ -1,8 +1,8 @@
 import { describe, expect, it, afterEach } from 'vitest'
 import { render, cleanup, fireEvent } from '@testing-library/react'
-import { boardText, Crowns, Field, gateCrowd } from '@/routes/Tournament'
+import { boardText, BoutRows, Crowns, Field, gateCrowd } from '@/routes/Tournament'
 import { crewFaces } from '@/tournament/rules'
-import type { TournamentSignup } from '@/tournament/types'
+import type { TournamentMatchup, TournamentSignup } from '@/tournament/types'
 
 /**
  * The field list, and the two things in it that only exist on screen.
@@ -222,5 +222,60 @@ describe('the crew on a field row', () => {
     )
     expect(container.querySelectorAll('.tour__crew img')).toHaveLength(0)
     expect(container.querySelectorAll('.tour__entry')).toHaveLength(1)
+  })
+})
+
+describe('a fight before its slot', () => {
+  const NOW = Date.parse('2026-10-18T14:00:00Z')
+  const pairing = (play_time: string): TournamentMatchup =>
+    ({
+      index: 0,
+      matchup_seed: 1,
+      wallet_player1: 'a.wam',
+      wallet_player2: 'b.wam',
+      gamertag_player1: 'Alpha',
+      gamertag_player2: 'Bravo',
+      avatar_player1: 0,
+      avatar_player2: 0,
+      fighter_ids_player1: [1],
+      fighter_ids_player2: [2],
+      crew_template_id_player1: 0,
+      crew_template_id_player2: 0,
+      arms_template_id_player1: 0,
+      arms_template_id_player2: 0,
+      play_time,
+      winner: '',
+    }) as TournamentMatchup
+
+  it('is still to come while the contract already points at it', () => {
+    /* current_battle is 0, so the counter says this one — but its slot is
+       four hours off, and the chain will not fight it before then. */
+    const { container, getByText } = render(
+      <BoutRows
+        pairings={[pairing('2026-10-18T18:00:00')]}
+        fought={0}
+        mineWallet={null}
+        watching={null}
+        onWatch={() => {}}
+        now={NOW}
+      />,
+    )
+    expect(getByText('To come')).toBeTruthy()
+    expect(container.querySelector('.tour__watch')).toHaveProperty('disabled', true)
+  })
+
+  it('is fighting now once the slot has come', () => {
+    const { container, getByText } = render(
+      <BoutRows
+        pairings={[pairing('2026-10-18T13:00:00')]}
+        fought={0}
+        mineWallet={null}
+        watching={null}
+        onWatch={() => {}}
+        now={NOW}
+      />,
+    )
+    expect(getByText('Fighting now')).toBeTruthy()
+    expect(container.querySelector('.tour__watch')).toHaveProperty('disabled', false)
   })
 })

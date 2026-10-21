@@ -1261,3 +1261,164 @@
   justify-content: center;
   margin-top: var(--sp-3);
 }
+
+/* ---------- auto-signing ---------- */
+
+/*
+ * What the game may sign without the wallet window.
+ *
+ * One switch per thing a player does, and never a transfer: the lead says so
+ * and the list cannot contain one. The switch is the same one the farming
+ * screen's options use, teal when on.
+ */
+.autosign {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+.autosign__on {
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid rgb(14 212 168 / 50%);
+  font-family: var(--font-display);
+  font-size: 0.66rem;
+  letter-spacing: 0.16em;
+  color: var(--teal);
+}
+
+.autosign__lead,
+.autosign__never {
+  margin: 0;
+  max-width: 70ch;
+  font-size: var(--fs-sm);
+  line-height: 1.5;
+  color: var(--text-dim);
+}
+
+.autosign__never {
+  color: #ffdb7d;
+}
+
+.autosign__groups {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 10px;
+}
+
+.autosign__group {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--line-soft);
+  border-left: 2px solid rgb(255 255 255 / 14%);
+  border-radius: var(--radius-sm);
+  background: rgb(0 0 0 / 28%);
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease;
+}
+
+.autosign__group:hover {
+  border-color: rgb(0 186 255 / 35%);
+}
+
+.autosign__group--on {
+  border-left-color: var(--teal);
+  background: linear-gradient(90deg, rgb(14 212 168 / 12%), rgb(14 212 168 / 2%));
+}
+
+.autosign__text {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.autosign__text strong {
+  font-family: var(--font-display);
+  font-size: 0.8rem;
+  letter-spacing: 0.04em;
+  color: var(--white);
+}
+
+.autosign__text span {
+  font-size: var(--fs-sm);
+  line-height: 1.45;
+  color: var(--text-dim);
+}
+
+.autosign__text small {
+  font-size: var(--fs-xs);
+  color: #ffdb7d;
+}
+
+.autosign__actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.autosign__hint {
+  font-size: var(--fs-xs);
+  color: var(--text-faint);
+}
+
+.autosign__hint--ok {
+  color: var(--teal);
+}
+
+.autosign__hint--warn {
+  color: #f4a0a0;
+}
+
+.autosign__group .toggle {
+  position: relative;
+  display: inline-flex;
+  flex: none;
+  margin-top: 2px;
+}
+
+.autosign__group .toggle input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.autosign__group .toggle__track {
+  position: relative;
+  width: 40px;
+  height: 22px;
+  border-radius: 999px;
+  background: rgb(148 163 184 / 25%);
+  transition: background 0.15s ease;
+}
+
+.autosign__group .toggle__thumb {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform 0.15s ease;
+}
+
+.autosign__group .toggle input:checked + .toggle__track {
+  background: var(--teal);
+}
+
+.autosign__group .toggle input:checked + .toggle__track .toggle__thumb {
+  transform: translateX(18px);
+}
+
+.autosign__group .toggle input:focus-visible + .toggle__track {
+  outline: 2px solid var(--cyan);
+  outline-offset: 2px;
+}
+
+.autosign__group .toggle input:disabled + .toggle__track {
+  opacity: 0.5;
+}

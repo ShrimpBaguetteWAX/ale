@@ -9,6 +9,7 @@ import WebRenderer from '@wharfkit/web-renderer'
 import { WalletPluginAnchor } from '@wharfkit/wallet-plugin-anchor'
 import { WalletPluginCloudWallet } from '@wharfkit/wallet-plugin-cloudwallet'
 import { CosignPlugin } from './cosign'
+import { AUTO_SIGN_PERMISSION, savedGroups, whitelistFor } from './autoSign'
 import { CHAIN_ID } from '@/chain/config'
 import { endpointPool } from '@/chain/endpoints'
 import { isUserCancel } from './errors'
@@ -35,12 +36,22 @@ export async function getSessionKit(): Promise<SessionKit> {
      on every transaction the game makes; the one the game has is wanted on
      exactly one action, and `transact` below passes it there.
   */
-  kit = new SessionKit({
-    appName: 'Alien Legends',
-    chains: [chain],
-    ui: new WebRenderer(),
-    walletPlugins: [new WalletPluginAnchor(), new WalletPluginCloudWallet()],
-  })
+  kit = new SessionKit(
+    {
+      appName: 'Alien Legends',
+      chains: [chain],
+      ui: new WebRenderer(),
+      walletPlugins: [new WalletPluginAnchor(), new WalletPluginCloudWallet()],
+    },
+    {
+      /*
+         Auto-signing: a key kept in this browser that may sign only what the
+         player chose on the Account screen. Nothing until they choose, and
+         never a transfer — see autoSign.ts.
+      */
+      sessionKey: { permission: AUTO_SIGN_PERMISSION, whitelist: whitelistFor(savedGroups()) },
+    },
+  )
 
   return kit
 }

@@ -30,6 +30,7 @@ import { rankClass } from '@/leaderboard/rules'
 import { landId } from '@/chain/landId'
 import { byQuality } from '@/dungeon/nftFighter'
 import { PlayerAvatar } from '@/components/PlayerAvatar'
+import { AutoSign } from '@/components/AutoSign'
 import { landThumbStyle } from '@/map/terrain'
 import { fetchMiningTools, type MiningTool } from '@/chain/atomic'
 import {
@@ -112,7 +113,7 @@ import { GameImg } from '@/components/GameImg'
  * shows the rest with the number still to reach.
  */
 
-type Tab = 'avatar' | 'mining' | 'cpu' | 'stats' | Currency
+type Tab = 'avatar' | 'mining' | 'cpu' | 'autosign' | 'stats' | Currency
 
 /** How many spare tools the Rewards screen draws at a time. */
 const TOOL_BATCH = 240
@@ -142,6 +143,7 @@ const SECTION_TABS: Record<Section, [Tab, string][]> = {
   account: [
     ['avatar', 'Avatar'],
     ['cpu', 'CPU'],
+    ['autosign', 'Auto-sign'],
     ['stats', 'Stats'],
   ],
 }
@@ -569,6 +571,8 @@ export default function Profile({ section = 'account' }: { section?: Section }) 
           }}
         />
       )}
+
+      {tab === 'autosign' && <AutoSign />}
 
       {tab === 'stats' && <StatsTab player={player} />}
 

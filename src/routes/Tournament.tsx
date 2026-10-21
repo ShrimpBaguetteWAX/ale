@@ -77,6 +77,8 @@ import {
   type TournamentPhase,
   type CrewFace,
   winnerSide,
+  fightingDone,
+  isFinished,
 } from '@/tournament/rules'
 import type {
   TournamentMatchup,
@@ -721,18 +723,25 @@ export function TournamentGates({
 }
 
 /**
- * Two doors that are not open yet.
+ * Two doors on the waiting screen.
  *
- * The contract's `hall_of_fame` and `reward_payout` steps are empty and
- * finished tournaments are cleared rather than kept, so neither of these can
- * show anything today. They are here because the waiting screen is where a
- * player will look for them, and a door you can see is not built yet is
- * better than one nobody knows to expect.
+ * The first opens while the last tournament is still on `curstage`
+ * waiting for its cleanup, which is days: its results are there to look
+ * at. Without one it is shut, as the hall of fame still is — the
+ * contract's `hall_of_fame` step is not in the schedule yet, so that door
+ * has nothing behind it. A door you can see is not built yet is better
+ * than one nobody knows to expect.
  */
-export function WaitLinks() {
+export function WaitLinks({ onPrevious }: { onPrevious?: () => void }) {
   return (
     <div className="gates__links">
-      <button type="button" className="btn btn--ghost" disabled title="Coming soon">
+      <button
+        type="button"
+        className="btn btn--ghost"
+        disabled={!onPrevious}
+        title={onPrevious ? 'The results of the last tournament' : 'No finished tournament to show'}
+        onClick={onPrevious}
+      >
         Previous Tournament
       </button>
       <button type="button" className="btn btn--ghost" disabled title="Coming soon">
@@ -753,11 +762,13 @@ export function NoTournament({
   now,
   everySec,
   fighters,
+  onPrevious,
 }: {
   nextStart: number
   now: number
   everySec: number
   fighters: GateFighter[]
+  onPrevious?: () => void
 }) {
   if (!Number.isFinite(nextStart)) {
     return (
@@ -783,7 +794,7 @@ export function NoTournament({
         label="Tournament preparation starting in"
         centre={boardText(nextStart - now)}
       />
-      <WaitLinks />
+      <WaitLinks onPrevious={onPrevious} />
     </section>
   )
 }
@@ -794,6 +805,7 @@ export function Preparing({
   weather,
   signupAt,
   now,
+  onPrevious,
 }: {
   fighters: GateFighter[]
   /**
@@ -809,6 +821,7 @@ export function Preparing({
   /** When the `signup` step starts, off the tournament's own schedule. */
   signupAt: number
   now: number
+  onPrevious?: () => void
 }) {
   return (
     <section className="tour__panel tour__panel--wait">
@@ -832,7 +845,7 @@ export function Preparing({
         label="Signup opens in"
         centre={boardText(signupAt - now)}
       />
-      <WaitLinks />
+      <WaitLinks onPrevious={onPrevious} />
     </section>
   )
 }
@@ -1139,6 +1152,7 @@ export function Battle({
   weather,
   mineWallet,
   entered,
+  now,
 }: {
   stage: TournamentStage
   bracket: Bracket
@@ -1155,6 +1169,7 @@ export function Battle({
   weather: Weather[]
   mineWallet: string | null
   entered: boolean
+  now: number
 }) {
   const round = Number(stage.current_round ?? 0)
   const fought = Number(stage.current_battle ?? 0)
@@ -1202,6 +1217,10 @@ export function Battle({
           weather={weather}
           mineWallet={mineWallet}
           autoPlay={watchedAt >= 0}
+          /* The next fight is on screen as soon as the last is reported,
+             but it cannot be run before its slot: see BoutRows. */
+          lockedUntil={shownAt === liveAt && !shown.winner ? chainTime(shown.play_time) : NaN}
+          now={now}
         />
       )}
 
@@ -1230,6 +1249,7 @@ export function Battle({
           mineWallet={mineWallet}
           watching={watching}
           onWatch={setWatching}
+          now={now}
         />
       ) : (
         <p className="faint">
@@ -1290,10 +1310,13 @@ export function BoutRows({
   mineWallet,
   watching,
   onWatch,
+  now,
 }: {
   pairings: TournamentMatchup[]
   fought: number
   mineWallet: string | null
+  /** The screen's clock: a fight is not live before its own slot. */
+  now: number
   /** The index of the fight being watched, if one was picked from here. */
   watching: number | null
   onWatch: (index: number) => void
@@ -1317,17 +1340,25 @@ export function BoutRows({
       const won2 = winnerSide(m) === 2
       const drawn = !!m.wallet_player2
       const isOpen = open === m.index
-      /* The contract fights them in order, one call at a time. */
+      /*
+         The contract fights them in order, one call at a time — but not
+         before each one's slot. Its counter points at the next fight the
+         moment the last one is reported, which can be hours before that
+         fight's time; until then it is still to come, and running it
+         early would show a result the chain has not produced.
+      */
+      const slotAt = chainTime(m.play_time)
+      const due = !Number.isFinite(slotAt) || slotAt <= now
       const state = !drawn
         ? 'Being drawn'
         : m.winner
           ? 'Fought'
           : i < fought
             ? 'Fought'
-            : i === fought
+            : i === fought && due
               ? 'Fighting now'
               : 'To come'
-      const unlocks = m.play_time ? clock(chainTime(m.play_time)) : ''
+      const unlocks = m.play_time ? clock(slotAt) : ''
       /*
          Every fight the chain has reached can be watched: the seed is
          on the row and the fight is generated from it, so one already
@@ -1494,6 +1525,8 @@ function BoutCorner({
   })
 
   const { classes, levelMod, ageDecay } = useConfig()
+  /* The fighter a tap opened, as the sheet the rest of the game uses. */
+  const [shown, setDetail] = useState<Detail>(null)
 
   if (crews.loading && !crews.data) {
     return (
@@ -1526,7 +1559,14 @@ function BoutCorner({
           }
           side="mine"
           marker={fighter.marker}
-          onOpen={() => {}}
+          /* A tap opens what the hover shows: on a phone there is no hover. */
+          onOpen={() =>
+            setDetail({
+              kind: 'panel',
+              panel: rosterPanel(fighter, levelMod, ageDecay),
+              template: classes.get(fighter.classname),
+            })
+          }
           preview={() => ({
             panel: rosterPanel(fighter, levelMod, ageDecay),
             template: classes.get(fighter.classname),
@@ -1536,6 +1576,9 @@ function BoutCorner({
 
       <LineupCard label="Crew" template={crew || undefined} />
       <LineupCard label="Weapon" template={arms || undefined} />
+      {shown && (
+        <DetailSheet panel={shown.panel} template={shown.template} onClose={() => setDetail(null)} />
+      )}
 
       {crews.error && <span className="hint">{crews.error}</span>}
       {!crews.loading && fighters.length === 0 && (
@@ -1706,6 +1749,7 @@ export function Results({
             mineWallet={wallet}
             watching={watching?.round === round ? watching.index : null}
             onWatch={(index) => setWatching({ round, index })}
+            now={now}
           />
         </section>
       ))}
@@ -1879,6 +1923,8 @@ export function EntryLineup({ entry }: { entry: EntryRef }) {
   const crew = String(entry.crew_asset_id ?? 0)
   const arms = String(entry.arms_asset_id ?? 0)
   const detail = useEntryDetail(entry)
+  /* The fighter a tap opened, as the sheet the rest of the game uses. */
+  const [shown, setDetail] = useState<Detail>(null)
 
   const { classes, levelMod, ageDecay } = useConfig()
   const cards = [
@@ -1923,7 +1969,14 @@ export function EntryLineup({ entry }: { entry: EntryRef }) {
           }
           side="mine"
           marker={fighter.marker}
-          onOpen={() => {}}
+          /* A tap opens what the hover shows: on a phone there is no hover. */
+          onOpen={() =>
+            setDetail({
+              kind: 'panel',
+              panel: rosterPanel(fighter, levelMod, ageDecay),
+              template: classes.get(fighter.classname),
+            })
+          }
           preview={() => ({
             panel: rosterPanel(fighter, levelMod, ageDecay),
             template: classes.get(fighter.classname),
@@ -1938,6 +1991,9 @@ export function EntryLineup({ entry }: { entry: EntryRef }) {
       {detail.error && <span className="hint">{detail.error}</span>}
       {!detail.loading && fighters.length === 0 && (
         <span className="faint">These fighters are no longer on chain.</span>
+      )}
+      {shown && (
+        <DetailSheet panel={shown.panel} template={shown.template} onClose={() => setDetail(null)} />
       )}
     </div>
   )
@@ -2357,7 +2413,7 @@ export default function Tournament() {
            back to watch. Read only then: while the fighting is on, the
            current round is the board.
         */
-        stage && phaseOf(stage) === 'finish'
+        stage && (phaseOf(stage) === 'finish' || fightingDone(stage))
           ? Promise.all(
               Array.from({ length: Number(stage.rounds ?? 0) }, (_, r) =>
                 fetchTournamentMatchups(stage.tournament_name, r, fresh),
@@ -2385,7 +2441,8 @@ export default function Tournament() {
   )
 
   const stage = board.data?.stage
-  const phase = phaseOf(stage)
+  /* The results, as soon as the last fight is in — not when cleanup comes. */
+  const phase = phaseOf(stage) === 'battle' && fightingDone(stage) ? 'finish' : phaseOf(stage)
   /* The two phases the gates are the screen. */
   const waiting = phase === 'none' || phase === 'preparing'
   const signups = useMemo(() => board.data?.signups ?? [], [board.data])
@@ -2659,6 +2716,23 @@ export default function Tournament() {
 
   const live = useMemo(() => board.data?.live ?? [], [board.data])
   const enteredNames = useMemo(() => board.data?.entered ?? [], [board.data])
+  /*
+     What is running and what is only waiting to be cleaned up.
+
+     A finished tournament stays on `curstage` beside the one that replaced
+     it until its cleanup step comes round, which is days. It is not a
+     choice — there is nothing to do in it — but its results are worth a
+     look, so it sits behind one button rather than in the chooser.
+  */
+  const running = useMemo(() => live.filter((s) => !isFinished(s)), [live])
+  const previous = useMemo(
+    () =>
+      [...live]
+        .filter(isFinished)
+        .sort((a, b) => (startedAt(b.tournament_name) ?? 0) - (startedAt(a.tournament_name) ?? 0))[0],
+    [live],
+  )
+  const viewingPrevious = !!previous && !!stage && stage.tournament_name === previous.tournament_name
 
   /*
      A picked tournament finishes and is cleaned off `curstage`.
@@ -2683,11 +2757,11 @@ export default function Tournament() {
   }
 
   /* More than one running and nothing picked: the choice is the screen. */
-  if (live.length > 1 && !chosen) {
+  if (running.length > 1 && !chosen) {
     return (
       <div className="tour">
         {board.error && <div className="alert alert--error">{board.error}</div>}
-        <TournamentPicker live={live} entered={enteredNames} onPick={setChosen} />
+        <TournamentPicker live={running} entered={enteredNames} onPick={setChosen} />
       </div>
     )
   }
@@ -2707,6 +2781,27 @@ export default function Tournament() {
          between the top of the screen and the picture. Everywhere else it
          stays, because everywhere else the screen is a list of figures.
       */}
+      {(running.length > 1 || (previous && running.length > 0)) && (
+        <div className="tourpick__switches">
+          {running.length > 1 && !viewingPrevious && (
+            <button type="button" className="tourpick__switch" onClick={() => setChosen(null)}>
+              Choose another tournament
+            </button>
+          )}
+          {/* The last finished tournament, behind one button: its results
+              are worth a look, but it is not a choice beside the live one. */}
+          {previous && running.length > 0 && (
+            <button
+              type="button"
+              className="tourpick__switch"
+              onClick={() => setChosen(viewingPrevious ? null : previous.tournament_name)}
+            >
+              {viewingPrevious ? 'Back to the current tournament' : 'Previous tournament'}
+            </button>
+          )}
+        </div>
+      )}
+
       {(!waiting || stage) && (
         <div className="tour__top">
           {!waiting && <TournamentHead />}
@@ -2714,15 +2809,6 @@ export default function Tournament() {
         </div>
       )}
 
-      {live.length > 1 && (
-        <button
-          type="button"
-          className="tourpick__switch"
-          onClick={() => setChosen(null)}
-        >
-          Choose another tournament
-        </button>
-      )}
 
       {board.error && <div className="alert alert--error">{board.error}</div>}
       {fault && <div className="alert alert--error">{fault}</div>}
@@ -2755,6 +2841,7 @@ export default function Tournament() {
           now={now}
           everySec={everySec}
           fighters={ringFighters}
+          onPrevious={previous ? () => setChosen(previous.tournament_name) : undefined}
         />
       )}
 
@@ -2765,6 +2852,7 @@ export default function Tournament() {
           weather={board.data?.weather ?? []}
           signupAt={signupAt}
           now={now}
+          onPrevious={previous ? () => setChosen(previous.tournament_name) : undefined}
         />
       )}
 
@@ -2882,6 +2970,7 @@ export default function Tournament() {
           weather={rolls}
           mineWallet={mine?.wallet ?? null}
           entered={!!mine}
+          now={now}
         />
       )}
 

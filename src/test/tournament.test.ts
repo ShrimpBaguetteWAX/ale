@@ -17,6 +17,8 @@ import {
   stripWindow,
   timelineOf,
   winnerSide,
+  fightingDone,
+  isFinished,
 } from '@/tournament/rules'
 import type {
   TournamentPlanStep,
@@ -578,5 +580,62 @@ describe('who took a pairing', () => {
   it('is nobody while unfought, and never a blank tag', () => {
     expect(winnerSide({ ...m, winner: '' })).toBe(0)
     expect(winnerSide({ ...m, gamertag_player1: '', winner: '' })).toBe(0)
+  })
+})
+
+describe('when the fighting is over', () => {
+  const at = (current_round: number, rounds: number) =>
+    ({ rounds, current_round } as unknown as Parameters<typeof fightingDone>[0])
+
+  it('is once the round counter has run past the last round', () => {
+    /* Two rounds: the final reported moves the counter to 2. */
+    expect(fightingDone(at(2, 2))).toBe(true)
+    expect(fightingDone(at(1, 2))).toBe(false)
+    expect(fightingDone(at(0, 2))).toBe(false)
+  })
+
+  it('is never before the bracket exists', () => {
+    expect(fightingDone(at(0, 0))).toBe(false)
+    expect(fightingDone(undefined)).toBe(false)
+  })
+})
+
+describe('a finished tournament beside a running one', () => {
+  const stage = (tournament_name: string, over: Partial<TournamentStage>): TournamentStage =>
+    ({
+      tournament_name,
+      stage_index: 0,
+      stage_name: 'signup',
+      tournament_screen: 'signup',
+      allow_player_signup: false,
+      allow_player_cancellation: false,
+      weather_effects: [],
+      tlm_rewards: '0.0000 TLM',
+      wax_rewards: '0.00000000 WAX',
+      player_count: 5,
+      rounds: 2,
+      current_round: 0,
+      ...over,
+    }) as TournamentStage
+
+  /* Names carry their start time; the older one has the smaller value. */
+  const done = stage('......3etk3i', { stage_name: 'battle', tournament_screen: 'battle', current_round: 2 })
+  const open = stage('......3evfaa', { allow_player_signup: true })
+
+  it('is finished once its last fight is in, whatever the stage row says', () => {
+    expect(isFinished(done)).toBe(true)
+    expect(isFinished(open)).toBe(false)
+    expect(isFinished(stage('x', { stage_name: 'cleanup', tournament_screen: 'finish' }))).toBe(true)
+  })
+
+  it('is never picked by default while something is running', () => {
+    expect(pickTournament([done, open], [])?.tournament_name).toBe(open.tournament_name)
+    /* Even for a player who entered it: the one they can act in wins. */
+    expect(pickTournament([done, open], [done.tournament_name])?.tournament_name).toBe(open.tournament_name)
+  })
+
+  it('is shown when asked for by name, and when nothing else is running', () => {
+    expect(pickTournament([done, open], [], done.tournament_name)?.tournament_name).toBe(done.tournament_name)
+    expect(pickTournament([done], [])?.tournament_name).toBe(done.tournament_name)
   })
 })

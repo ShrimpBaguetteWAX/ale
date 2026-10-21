@@ -2318,10 +2318,24 @@
   font-size: 0.85rem;
 }
 
-/* Small enough that six fit under a row, large enough to read. */
-.tour__lineup .combatcard {
+/*
+   Small enough that six fit under a row, large enough to read.
+
+   Sized on the slot, not the card. A combat card sits inside a
+   `.combatslot` that holds the hover read, and a width on the card is
+   measured against that slot — which, as a flex item with nothing else to
+   size it, is as wide as its content, and its content is the card. On a
+   phone that circle collapsed every fighter to a sliver a few pixels wide
+   beside two full-size crew and weapon cards. The slot takes the width and
+   the card fills it.
+*/
+.tour__lineup .combatslot {
   width: 96px;
   flex: none;
+}
+
+.tour__lineup .combatslot > .combatcard {
+  width: 100%;
 }
 
 .tour__lcard {
@@ -2379,10 +2393,11 @@
     gap: 6px;
   }
 
-  /* Three across a phone rather than six squeezed into a scroll. */
-  .tour__lineup .combatcard,
+  /* Four across a phone: five fighters and the two cards in two rows
+     rather than three, at a size the plate still reads at. */
+  .tour__lineup .combatslot,
   .tour__lcard {
-    width: calc(33.333% - 4px);
+    width: calc(25% - 4.5px);
   }
 }
 
@@ -3398,6 +3413,37 @@
 @keyframes bcastflinch { 30% { transform: translateX(-10px); filter: drop-shadow(0 0 20px rgb(224 52 79 / 95%)) } }
 @keyframes bcastflinchb { 30% { transform: scaleX(-1) translateX(-10px); filter: drop-shadow(0 0 20px rgb(224 52 79 / 95%)) } }
 
+/*
+   The same blows with the lines stacked, for the phone layout.
+
+   Side A stands on the top band and steps down toward the middle; side B
+   stands below and steps up. Neither is mirrored there, so these carry no
+   scaleX — the desktop side-B keyframes do, and played un-mirrored they
+   flipped the fighter on every blow.
+*/
+@keyframes bcastlungedown {
+  18% {
+    transform: translateY(6px) scale(1.03);
+    filter: drop-shadow(0 10px 20px rgb(0 0 0 / 78%)) drop-shadow(0 0 20px rgb(255 219 125 / 95%));
+  }
+  40% {
+    transform: translateY(14px) scale(1.07);
+    filter: drop-shadow(0 10px 20px rgb(0 0 0 / 78%)) drop-shadow(0 0 10px rgb(255 219 125 / 40%));
+  }
+}
+@keyframes bcastlungeup {
+  18% {
+    transform: translateY(-6px) scale(1.03);
+    filter: drop-shadow(0 10px 20px rgb(0 0 0 / 78%)) drop-shadow(0 0 20px rgb(255 219 125 / 95%));
+  }
+  40% {
+    transform: translateY(-14px) scale(1.07);
+    filter: drop-shadow(0 10px 20px rgb(0 0 0 / 78%)) drop-shadow(0 0 10px rgb(255 219 125 / 40%));
+  }
+}
+@keyframes bcastflinchup { 30% { transform: translateY(-8px); filter: drop-shadow(0 0 20px rgb(224 52 79 / 95%)) } }
+@keyframes bcastflinchdown { 30% { transform: translateY(8px); filter: drop-shadow(0 0 20px rgb(224 52 79 / 95%)) } }
+
 /* Down, and staying down where they fell — the gap is the shape of the bout. */
 .bcast__stand--down { filter: brightness(0.5) saturate(0.2); }
 .bcast__stand--down .bcast__art { transform: translateY(8px) rotate(-7deg); opacity: 0.5; }
@@ -3540,6 +3586,23 @@
   color: #ffdb7d;
 }
 
+.bcast__elslot { display: grid; place-items: center; width: 20px; height: 20px; }
+
+/* The poster before the slot: the time where the play button would be. */
+.bcast__until {
+  margin-top: 14px;
+  padding: 8px 16px;
+  border-radius: 999px;
+  border: 1px solid rgb(255 219 125 / 35%);
+  background: rgb(3 6 12 / 70%);
+  font-size: 0.82rem;
+  color: var(--text-dim);
+}
+
+.bcast__until b {
+  font-family: var(--font-display);
+  color: #ffdb7d;
+}
 .bcast__el { width: 20px; height: 20px; opacity: 0.9; }
 
 /* ---- the transport ---- */
@@ -3692,6 +3755,11 @@
   /* Wider than its column, like the fighting lines — the team closes ranks
      for the picture. */
   max-width: 210%;
+  /* The height is set per fighter for the stagger; on a phone the column is
+     narrower than the picture wants, and without this the portrait was
+     squeezed to the column and stretched to the height. */
+  object-fit: contain;
+  object-position: center bottom;
   filter: drop-shadow(0 16px 34px rgb(0 0 0 / 85%));
   opacity: 0;
   transform: translateY(30px);
@@ -3798,8 +3866,54 @@
   .bcast__pod { opacity: 1; transform: none }
 }
 
+/* The band names: off until the arena stacks. */
+.bcast__band { display: none; }
+
 @media (max-width: 760px) {
   .bcast { aspect-ratio: 3 / 4; }
+
+  /*
+     The scorebar, in two rows.
+
+     Three columns across a phone left each name about seventy pixels
+     beside its face, which is two letters and an ellipsis — the one
+     thing the bar exists to say. The round and the LIVE tag take a row
+     of their own and the two names share the full width underneath.
+  */
+  .bcast__score {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-areas: 'mid mid' 'a b';
+    row-gap: 4px;
+  }
+  .bcast__mid { grid-area: mid; grid-auto-flow: column; align-items: center; gap: 10px; padding: 0; }
+  .bcast__side { grid-area: a; }
+  .bcast__side--b { grid-area: b; }
+  .bcast__tag { font-size: 0.8rem; }
+
+  /* Each band named in its own corner: top band is player one. */
+  .bcast__band {
+    display: block;
+    position: absolute;
+    left: 8px;
+    z-index: 3;
+    max-width: 60%;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: rgb(4 8 16 / 72%);
+    font-family: var(--font-display);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #ffdb7d;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    pointer-events: none;
+  }
+  .bcast__band--a { top: 6px; }
+  .bcast__band--b { bottom: 6px; }
+  .bcast__band--me { color: #7ee7fb; }
+  .bcast__band--me::after { content: ' · you'; color: rgb(126 231 251 / 70%); letter-spacing: 0.06em; text-transform: none; }
 
   /* Six a side facing at phone width would be thirty pixels a fighter, so
      the two lines stack instead. */
@@ -3811,6 +3925,15 @@
   .bcast__line--b { justify-content: center; }
   .bcast__line--b .bcast__art { transform: scaleX(1); }
   .bcast__line--b .bcast__stand--down .bcast__art { transform: translateY(8px) rotate(7deg); }
+  /* Blows run toward the middle, and nothing turns round. */
+  .bcast__stand--atk .bcast__art { animation-name: bcastlungedown; }
+  .bcast__line--b .bcast__stand--atk .bcast__art { animation-name: bcastlungeup; }
+  .bcast__stand--def .bcast__art { animation-name: bcastflinchup; }
+  .bcast__line--b .bcast__stand--def .bcast__art { animation-name: bcastflinchdown; }
+  /* The medal alone in the row, dead centre; the element slot hangs off
+     its right edge rather than sharing the row and nudging it left. */
+  .bcast__clash { grid-auto-flow: row; align-items: center; justify-items: center; }
+  .bcast__elslot { position: absolute; left: calc(50% + 24px); top: 50%; transform: translateY(-50%); }
   .bcast__standname { font-size: 7.5px; }
   .bcast__say { display: none; }
 }
@@ -3937,6 +4060,12 @@
 
 /* The way back, once they are looking at one. Quiet: it is a correction,
    not a thing to do. */
+.tourpick__switches {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
 .tourpick__switch {
   justify-self: start;
   margin: 0 0 10px;

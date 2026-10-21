@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useChainQuery } from '@/chain/useChainQuery'
 import { useConfig, useLazyConfig } from '@/state/useConfig'
 import { fetchFightersByIds } from '@/tournament/queries'
+import { dayClock } from '@/routes/Tournament'
 import { simulateBout, type BoutSide } from '@/tournament/bout'
 import { combineNftFlat } from '@/dungeon/nftFighter'
 import { stateAt } from '@/dungeon/standing'
@@ -55,6 +56,8 @@ export function BoutBroadcast({
   weather,
   mineWallet,
   autoPlay = false,
+  lockedUntil,
+  now,
 }: {
   m: TournamentMatchup
   round: number
@@ -75,6 +78,16 @@ export function BoutBroadcast({
    * the player has just gone looking for.
    */
   autoPlay?: boolean
+  /**
+   * The fight's slot, when it has not come round yet.
+
+   * The seed is on the row from the moment the pairing is drawn, so the
+   * model could run the fight hours early — and show a winner the chain
+   * has not produced. Until the slot the poster stays shut, with the time
+   * on it. NaN or the past means open.
+   */
+  lockedUntil?: number
+  now?: number
 }) {
   const [asked, setAsked] = useState(false)
   const [phase, setPhase] = useState<'poster' | 'wipe' | 'live' | 'done'>('poster')
@@ -180,10 +193,12 @@ export function BoutBroadcast({
      already on screen does not remount, which is why it watches the flag
      rather than only firing once.
   */
+  const locked = Number.isFinite(lockedUntil) && (lockedUntil as number) > (now ?? Date.now())
+
   useEffect(() => {
-    if (autoPlay) play()
+    if (autoPlay && !locked) play()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [autoPlay, m.index])
+  }, [autoPlay, m.index, locked])
 
   const again = () => {
     setStep(0)
@@ -222,6 +237,8 @@ export function BoutBroadcast({
         waiting={asked && !replay && !crews.error}
         error={crews.error}
         onPlay={play}
+        lockedUntil={locked ? (lockedUntil as number) : NaN}
+        now={now ?? Date.now()}
       />
 
       {replay && (
@@ -262,6 +279,8 @@ function Poster({
   waiting,
   error,
   onPlay,
+  lockedUntil,
+  now,
 }: {
   round: number
   bout: number
@@ -270,7 +289,10 @@ function Poster({
   waiting: boolean
   error: string | null
   onPlay: () => void
+  lockedUntil: number
+  now: number
 }) {
+  const locked = Number.isFinite(lockedUntil) && lockedUntil > now
   return (
     <div className="bcast__poster">
       <span className="bcast__kick">
@@ -282,6 +304,10 @@ function Poster({
 
       {error ? (
         <p className="hint hint--error">{error}</p>
+      ) : locked ? (
+        <span className="bcast__until">
+          Starts <b>{dayClock(lockedUntil, now)}</b>
+        </span>
       ) : (
         <button
           type="button"
@@ -416,6 +442,17 @@ export function Feed({
       </div>
 
       <div className="bcast__arena">
+        {/*
+           Whose band is whose, on a phone.
+
+           Stacked one above the other the two lines have no side to be read
+           from, and the names on the scorebar are a scroll away from the
+           bottom one — so each band carries its player's name in its own
+           corner. Drawn only where the arena stacks; side by side the
+           scorebar already sits over the right half.
+        */}
+        <span className={`bcast__band bcast__band--a${mine === 1 ? ' bcast__band--me' : ''}`}>{a}</span>
+        <span className={`bcast__band bcast__band--b${mine === 2 ? ' bcast__band--me' : ''}`}>{b}</span>
         <Line
           side="a"
           fighters={one}
@@ -428,13 +465,17 @@ export function Feed({
         />
         <span className="bcast__clash">
           <span className="bcast__medal">VS</span>
-          {turn && (
-            <img
-              className="bcast__el"
-              src={asset(`/assets/icons/elements/${turn.element}.png`)}
-              alt={turn.element}
-            />
-          )}
+          {/* The slot is always there: the icon coming and going between
+              blows must not shove the medal about. */}
+          <span className="bcast__elslot">
+            {turn && (
+              <img
+                className="bcast__el"
+                src={asset(`/assets/icons/elements/${turn.element}.png`)}
+                alt={turn.element}
+              />
+            )}
+          </span>
         </span>
         <Line
           side="b"
