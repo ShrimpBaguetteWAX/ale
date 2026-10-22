@@ -87,7 +87,7 @@ export interface MapCanvasProps {
   /**
    * Land ids on this planet of the buildings hottest right now across every
    * planet (see `hottestLands`). Those on this planet glow white-hot with
-   * embers rising off them, unless spent or defended.
+   * embers rising off them, played and defended ones included.
    */
   hotLands?: Set<string>
   /**
@@ -602,7 +602,8 @@ export function MapCanvas({
   const hotMarks = useMemo(() => {
     if (!hotLands?.size) return []
     return lands
-      .filter((l) => hotLands.has(l.land_id) && !lockedLands?.has(l.land_id) && !heldArenaLands?.has(l.land_id))
+      /* Played and defended ones burn too: they are still among the hottest. */
+      .filter((l) => hotLands.has(l.land_id))
       .flatMap((l) => {
         const b = l.buildings[0]
         const kind = b && buildingMarker(String(b.building_name))
@@ -612,7 +613,7 @@ export function MapCanvas({
         )
         return [{ id: l.land_id, x: l.x, y: l.y, src: RANKED_SRC[kind][rank - 1].lit, top: HOT_TOP[kind][rank - 1] }]
       })
-  }, [lands, hotLands, lockedLands, heldArenaLands, boostDecayPerHour])
+  }, [lands, hotLands, boostDecayPerHour])
   const tripEndRef = useRef<{ x: number; y: number } | null>(null)
   tripEndRef.current = trip?.end ?? null
   const hereRef = useRef<HTMLDivElement>(null)
