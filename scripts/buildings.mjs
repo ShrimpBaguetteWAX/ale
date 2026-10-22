@@ -21,7 +21,7 @@ const mix = (a, b, t) => '#' + hex(a).map((v, i) => Math.round(v + (hex(b)[i] - 
 const BASE = {
   arena:{ lit:'#ffd04a', mid:'#f6a800', dark:'#b57200', top:'#ffdc80', inner:'#6e4300', tierA:'#c98a12', tierB:'#9f6a08', sand:'#ead08c', win:'#4e2f00', gate:'#2e1b00', ink:'#362700', flag:'#f6a800', flagLit:'#ffd36a', pole:'#4a3000', bright:'#fff0a8' },
   dungeon:{ crown:'#ffcf3a', stoneLit:'#8d96a6', stone:'#626b7b', stoneDark:'#3b4250', cave:'#070d18', glow:'#00baff', lit:'#45b8ee', mid:'#0087c0', dark:'#005a84', ink:'#002738', eye:'#ffd36a' },
-  tavern:{ wall:'#f2e0b4', wallSide:'#c7ab74', beam:'#5c3b1c', roofLit:'#2bd86b', roof:'#00b347', roofDark:'#007f31', roofEdge:'#005a23', win:'#ffd36a', winSide:'#e3b347', door:'#4a2a10', ink:'#2b1a08', sign:'#00c04a', signDark:'#008a35', signInk:'#002b10', mug:'#f4f0de', chimney:'#8b5a3a', chimneySide:'#5f3d27' },
+  tavern:{ wall:'#f2e0b4', wallMid:'#dcc28c', wallDark:'#a7884e', woodLit:'#b07a40', wood:'#8b5a2b', woodDark:'#5c3b1c', roofLit:'#2bd86b', roof:'#00b347', roofDark:'#007f31', roofEdge:'#005a23', win:'#ffd36a', door:'#4a2a10', ink:'#2b1a08', sign:'#00c04a', signInk:'#002b10', mug:'#f4f0de', foam:'#ffffff' },
 }
 /* ---------- geometry helpers, in building units: 100 across, ground at y=0 ---------- */
 const P = (pts) => pts.map((p) => p.map(f).join(',')).join(' ')
@@ -228,36 +228,54 @@ function dungeon(sid, pal, O, uid, heads = DUNGEON_HEADS[3]) {
   return s
 }
 
-/* ---------- the tavern: a timbered house, green roof, the sign out front ---------- */
+/* ---------- the tavern: a two-tier rotunda with a gallery ---------- */
+/*
+  Built the way the arena is: a round hall with a row of lit arches under a
+  green skirt roof, and a smaller round storey rising out of it under its
+  own green cone, a pennant on top. A wooden gallery runs round the foot of
+  the upper storey and two lanterns hang from the eaves; the sign with the
+  mug hangs from a bracket on the left.
+*/
 function tavern(sid, pal, O, uid) {
-  let s = `<defs><clipPath id="${uid}-tsc"><polygon points="6,8 31,-2 31,-32 6,-22"/></clipPath></defs>`
-  /* chimney behind the ridge */
-  s += `<polygon points="${P([[16, -45], [22, -47.4], [22, -60], [16, -57.6]])}" fill="${pal.chimney}"${edge(O, pal.ink, 1.6)}/><polygon points="${P([[22, -47.4], [25, -48.6], [25, -61.2], [22, -60]])}" fill="${pal.chimneySide}"${edge(O, pal.ink, 1.6)}/>`
-  /* side wall, receding to the right */
-  s += `<polygon points="6,8 31,-2 31,-32 6,-22" fill="${pal.wallSide}"${edge(O, pal.ink)}/>`
-  s += hatchOver(O, sid, `${uid}-tsc`, 4, 33, -34, 10)
-  s += `<polygon points="${P([[12, -11.5], [18.5, -14.1], [18.5, -21.6], [12, -19]])}" fill="${pal.winSide}"${edge(O, pal.beam, 1.2)}/><polygon points="${P([[22, -15.1], [27.5, -17.3], [27.5, -24.8], [22, -22.6]])}" fill="${pal.winSide}"${edge(O, pal.beam, 1.2)}/>`
-  s += `<path d="M6,-8 L31,-18" stroke="${pal.beam}" stroke-width="1.8"/>`
-  /* front wall and gable */
-  s += `<polygon points="-30,8 6,8 6,-22 -30,-22" fill="${pal.wall}"${edge(O, pal.ink)}/>`
-  s += `<polygon points="-30,-22 6,-22 -12,-42" fill="${pal.wall}"${edge(O, pal.ink)}/>`
-  /* the timber frame */
-  s += `<path d="M-30,-8 L6,-8 M-30,-22 L6,-22 M-12,-22 L-12,-42 M-21,-22 L-12,-34 M-3,-22 L-12,-34" fill="none" stroke="${pal.beam}" stroke-width="2.2" stroke-linecap="round"/>`
-  s += `<path d="${archPath(-12, 8, -6, 9)}" fill="${pal.door}"${edge(O, pal.ink, 1.2)}/>`
-  s += `<rect x="-27" y="-18.5" width="8" height="7.5" fill="${pal.win}"${edge(O, pal.beam, 1.4)}/><rect x="-5" y="-18.5" width="8" height="7.5" fill="${pal.win}"${edge(O, pal.beam, 1.4)}/><path d="M-23,-18.5 V-11 M-27,-14.75 H-19 M-1,-18.5 V-11 M-5,-14.75 H3" stroke="${pal.beam}" stroke-width="1"/>`
-  s += `<circle cx="-12" cy="-29.5" r="3" fill="${pal.win}"${edge(O, pal.beam, 1.2)}/>`
-  /* roof: the plane seen from above on the right, and its edge along the gable */
-  s += `<polygon points="${P([[-12, -44], [13, -54], [34, -31.5], [9, -21]])}" fill="${O.soft ? `url(#${uid}-tr)` : pal.roof}"${edge(O, pal.roofEdge)}/>`
-  if (O.soft) s = s.replace('</defs>', `<linearGradient id="${uid}-tr" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${pal.roofLit}"/><stop offset="1" stop-color="${pal.roofDark}"/></linearGradient></defs>`)
-  else s += `<polygon points="${P([[-12, -44], [13, -54], [16.5, -50.2], [-8.5, -40.2]])}" fill="${pal.roofLit}"/>`
-  s += `<path d="M-4.5,-40 L21,-50 M3,-36 L28.5,-46 M10.5,-32 L36,-42" stroke="${pal.roofDark}" stroke-width="1.2" opacity=".7" transform="translate(-2 6)"/>`
-  s += `<polygon points="${P([[-12, -44], [-34, -20.5], [-30.5, -19.5], [-12, -39.5]])}" fill="${pal.roofDark}"${edge(O, pal.roofEdge, 1.6)}/>`
-  /* the sign on its bracket, the tavern's own green and mug */
-  s += `<path d="M-30,-17 L-46,-17" stroke="${pal.beam}" stroke-width="2.4" stroke-linecap="round"/><path d="M-42,-17 V-14 M-34.5,-17 V-14" stroke="${pal.beam}" stroke-width="1.2"/>`
-  s += `<path d="M-45.5,-14 H-31 V0 C-34,-2 -36,2 -38.2,1 C-40.5,0 -42.5,3 -45.5,0 Z" fill="${pal.sign}" stroke="${pal.signInk}" stroke-width="${O.outline ? 1.8 : 1.2}" stroke-linejoin="round"/>`
-  s += `<path d="M-41.5,-10.5 H-36 V-2.5 H-41.5 Z M-36,-8.5 H-34.2 V-5 H-36" fill="${pal.mug}" stroke="${pal.signInk}" stroke-width=".8"/><path d="M-41.8,-11 C-41.5,-13 -38.5,-13 -38,-12 C-37.2,-13.2 -35.3,-12.6 -35.7,-11 Z" fill="#fff"/>`
+  const ink = (w = 2.2, c = pal.ink) => edge(O, c, w)
+  const wallPath = (R, r, H) => `M${-R},${-H} L${-R},0 A${R},${r} 0 0 0 ${R},0 L${R},${-H} A${R},${r} 0 0 1 ${-R},${-H} Z`
+  const onWall = (R, r, deg, h) => { const t = deg * Math.PI / 180; return [R * Math.sin(t), h + r * Math.cos(t), Math.cos(t)] }
+  const wall = (id, R, r, H) => `<defs>${shade(id, -R, R, [pal.wall, pal.wallMid, pal.wallDark], O)}</defs><path d="${wallPath(R, r, H)}" fill="url(#${id})"${ink()}/>`
+  const arches = (R, r, h, tall, step, w, skipGate) => {
+    let g = ''
+    for (let d = -72; d <= 72; d += step) { if (skipGate && d === 0) continue; const [x, y, c] = onWall(R, r, d, h); if (c > .3) g += `<path d="${archPath(x, y + tall, y, w * c)}" fill="${pal.win}"${ink(1.1, pal.woodDark)}/>` }
+    return g
+  }
+  const lantern = (x, y) => `<circle cx="${x}" cy="${y}" r="5" fill="${pal.win}" opacity=".35"/><rect x="${x - 2}" y="${y - 2.6}" width="4" height="5.2" rx="1" fill="${pal.win}"${ink(.9)}/><path d="M${x - 2.4},${y - 2.6} H${x + 2.4} M${x},${y - 2.6} V${y - 4.4}" stroke="${pal.ink}" stroke-width="1"/>`
+  const LR = 36, Lr = 12.5, LH = 18, UR = 22, Ur = 7.8, UH = 18, LIFT = 34
+
+  /* the lower storey */
+  let s = wall(`${uid}-lw`, LR, Lr, LH)
+  s += arches(LR, Lr, -16, 10, 24, 7, true)
+  s += `<path d="${archPath(0, Lr, -6, 11)}" fill="${pal.door}"${ink(1.3)}/><path d="M0,-2 V${Lr}" stroke="${pal.woodDark}" stroke-width="1"/>`
+  /* the skirt roof, cut off where the upper storey rises */
+  s += `<defs>${shade(`${uid}-sk`, -39, 39, [pal.roofLit, pal.roof, pal.roofDark], O)}</defs><path d="M-39,-18 A39,13.6 0 0 0 39,-18 L24,-36 A24,8.4 0 0 1 -24,-36 Z" fill="url(#${uid}-sk)"${ink(2.2, pal.roofEdge)}/>`
+
+  /* the upper storey, its gallery and its cone */
+  let u = wall(`${uid}-uw`, UR, Ur, UH)
+  u += arches(UR, Ur, -15, 7, 30, 5.6, false)
+  u += `<path d="M-28,-1 A28,10 0 0 0 28,-1" fill="none" stroke="${pal.woodDark}" stroke-width="2.4"/><path d="M-28,-6 A28,10 0 0 0 28,-6" fill="none" stroke="${pal.woodLit}" stroke-width="1.6"/>`
+  for (let d = -80; d <= 80; d += 16) { const t = d * Math.PI / 180; u += `<line x1="${f(28 * Math.sin(t))}" y1="${f(-6 + 10 * Math.cos(t))}" x2="${f(28 * Math.sin(t))}" y2="${f(-1 + 10 * Math.cos(t))}" stroke="${pal.woodDark}" stroke-width="1.2"/>` }
+  const CR = UR + 3, Cr = Ur + 1, CH = 24
+  u += `<defs>${shade(`${uid}-co`, -CR, CR, [pal.roofLit, pal.roof, pal.roofDark], O)}</defs><path d="M${-CR},${-UH} A${CR},${Cr} 0 0 0 ${CR},${-UH} L0,${-UH - CH} Z" fill="url(#${uid}-co)"${ink(2.2, pal.roofEdge)}/>`
+  for (const k of [.35, .65]) u += `<path d="M${f(-CR * (1 - k))},${f(-UH - CH * k)} A${f(CR * (1 - k))},${f(Cr * (1 - k))} 0 0 0 ${f(CR * (1 - k))},${f(-UH - CH * k)}" fill="none" stroke="${pal.roofEdge}" stroke-width="1" opacity=".6"/>`
+  const py = -UH - CH
+  u += `<line x1="0" y1="${py}" x2="0" y2="${py - 12}" stroke="${pal.woodDark}" stroke-width="2" stroke-linecap="round"/><polygon points="${P([[0, py - 12], [13, py - 10.4], [8.6, py - 7.4], [13, py - 3.6], [0, py - 2.6]])}" fill="${pal.sign}"${ink(1.4, pal.signInk)}/>`
+  s += `<g transform="translate(0 ${-LIFT})">${u}</g>`
+
+  /* lanterns from the eaves of the skirt roof */
+  for (const x of [-30, 30]) s += `<path d="M${x},-20 v4" stroke="${pal.ink}" stroke-width="1"/>` + lantern(x, -13)
+  /* the sign with the mug, on its bracket */
+  s += `<path d="M-35,-14 L-49,-14" stroke="${pal.woodDark}" stroke-width="2.4" stroke-linecap="round"/><path d="M-46.5,-14 V-11 M-37.5,-14 V-11" stroke="${pal.woodDark}" stroke-width="1.2"/>`
+  s += `<g transform="translate(-42 -11)"><path d="M-7.3,0 H7.3 V14 C4.3,12 2.3,16 .1,15 C-2.2,14 -4.2,17 -7.3,14 Z" fill="${pal.sign}" stroke="${pal.signInk}" stroke-width="1.8" stroke-linejoin="round"/><path d="M-3.5,3.5 H2 V11.5 H-3.5 Z M2,5.5 H3.8 V9 H2" fill="${pal.mug}" stroke="${pal.signInk}" stroke-width=".8"/><path d="M-3.8,3 C-3.5,1 -.5,1 0,2 C.8,.8 2.7,1.4 2.3,3 Z" fill="${pal.foam}"/></g>`
   return s
 }
+
 const BUILD = { arena, dungeon, tavern }
 
 
@@ -307,9 +325,7 @@ for (let rank = 1; rank <= 5; rank++) {
 for (const kind of ['arena', 'dungeon', 'tavern']) {
   for (const muted of [false, true]) {
     const pal = muted ? grey(washed(BASE[kind])) : washed(BASE[kind])
-    let body = BUILD[kind]('b', pal, O, kind)
-    /* The house is drawn smaller than the other two; brought up to their size. */
-    if (kind === 'tavern') body = `<g transform="scale(1.18)">${body}</g>`
+    const body = BUILD[kind]('b', pal, O, kind)
     const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="-58 -96 116 116" width="116" height="116">${body}</svg>\n`
     writeFileSync(join(out, `${kind}${muted ? '-muted' : ''}.svg`), svg)
   }
