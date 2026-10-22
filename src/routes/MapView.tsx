@@ -16,6 +16,7 @@ import type { Land, LandsConfig } from '@/chain/types'
 import { MapCanvas, type ZoomApi } from '@/map/MapCanvas'
 import { QuestClaims, useClaimableQuests } from '@/map/MapQuests'
 import { shortSpan } from '@/map/tileSteps'
+import { hottestLands } from '@/map/hot'
 import {
   playedDungeonsToday,
   summarisePlanet,
@@ -619,6 +620,15 @@ export default function MapView() {
   const currentTavernLand =
     player.last_tavern?.planet === planet ? player.last_tavern.land_id || undefined : undefined
 
+  /*
+     The top ten arenas and top ten dungeons across every planet, from the
+     lands already warmed for the planet menu: no extra request.
+  */
+  const hotLands = useMemo(
+    () => hottestLands(Object.values(landsByPlanet).flat(), landsConfig?.boost_decay_per_hour ?? 0),
+    [landsByPlanet, landsConfig],
+  )
+
   const summaries = useMemo(
     () =>
       PLANETS.map((p) =>
@@ -1163,6 +1173,7 @@ export default function MapView() {
           heldArenaLands={heldArenaLands}
           tavernLands={tavernLands}
           currentTavernLand={currentTavernLand}
+          hotLands={hotLands}
           path={path}
           selectionSlot={travelTag}
           pinSlot={pinSlot}

@@ -56,6 +56,86 @@
  * Laid out in tile units; MapCanvas scales the group with the map, and the
  * strokes keep their width whatever the zoom.
  */
+/*
+ * The hottest buildings: a white-hot glow round the outline, breathing, and
+ * embers rising off the top that flicker, sway and burn out as they climb.
+ * Laid out in each building's own units; the layer is scaled with the map.
+ */
+.maphot {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  overflow: visible;
+  pointer-events: none;
+}
+.maphot__glow {
+  animation: hot-glow 3.6s ease-in-out infinite;
+}
+@keyframes hot-glow {
+  0%,
+  100% {
+    opacity: 0.82;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+.maphot__ember {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: hot-ember 1.9s cubic-bezier(0.3, 0.6, 0.5, 1) infinite;
+}
+@keyframes hot-ember {
+  0% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  40% {
+    opacity: 0.65;
+  }
+  55% {
+    opacity: 0.95;
+  }
+  75% {
+    opacity: 0.6;
+  }
+  100% {
+    transform: translate(var(--dx, 0px), -46px) scale(0.25);
+    opacity: 0;
+  }
+}
+.maphot__sway {
+  animation: hot-sway 1.6s ease-in-out infinite alternate;
+}
+@keyframes hot-sway {
+  from {
+    transform: translateX(-2px);
+  }
+  to {
+    transform: translateX(2px);
+  }
+}
+/* Where the player asked for less motion, the glow holds still and there are no embers. */
+:root[data-fx='low'] .maphot__glow {
+  animation: none;
+}
+:root[data-fx='low'] .maphot__ember {
+  display: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .maphot__glow {
+    animation: none;
+  }
+  .maphot__ember {
+    display: none;
+  }
+}
+
 .maptrip {
   position: absolute;
   inset: 0;

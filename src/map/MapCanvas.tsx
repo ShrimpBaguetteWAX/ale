@@ -85,6 +85,12 @@ export interface MapCanvasProps {
   /** The tavern the player is standing in, if it is on this planet. */
   currentTavernLand?: string
   /**
+   * Land ids of the buildings that are hottest right now, across every
+   * planet (see `hottestLands`). Those on this planet glow white-hot with
+   * embers rising off them, unless spent or defended.
+   */
+  hotLands?: Set<string>
+  /**
    * The way to the selected tile, start and end as tile coordinates on this
    * planet, drawn tile by tile. Travel is priced by straight-line distance,
    * so the tiles drawn are how the trip reads, not a route it pays for.
@@ -332,6 +338,19 @@ function drawMarker(
   ctx.globalAlpha = 1
 }
 
+/** How high each building stands, in its own units, by kind and rank: where the embers start. */
+const HOT_TOP = { arena: [-28, -36, -50, -58, -70], dungeon: [-48, -58, -66, -62, -66] }
+/** The white-hot embers: where each starts over the building's top, its size, drift and colour. */
+const HOT_EMBERS = [-24, -14, -4, 6, 16, 26, -18, 0, 20, -8].map((x, i) => ({
+  x,
+  y: 6 + (i % 4) * 3,
+  /* Larger than on the sheet: a building unit is under half a pixel at the opening zoom. */
+  r: 5 * [1, 0.7, 0.85, 0.6, 0.95][i % 5],
+  dx: i % 2 ? 6 : -6,
+  tilt: ((i % 3) - 1) * 14,
+  color: ['#fff0a0', '#ffd36a', '#ffb02e', '#ff8a2a'][i % 4],
+}))
+
 /**
  * A building standing on its tile: a soft shadow on the ground, the boost
  * rank as rings lying on the ground around its foot (the back half behind
@@ -504,6 +523,7 @@ export function MapCanvas({
   heldArenaLands,
   tavernLands,
   currentTavernLand,
+  hotLands,
   path,
   children,
   selectionSlot,
@@ -536,6 +556,8 @@ export function MapCanvas({
   const pinRef = useRef<HTMLDivElement>(null)
   /* The trip's layer: one group, moved with the map like the pin. */
   const tripRef = useRef<SVGGElement>(null)
+  /* The hot buildings' layer, moved the same way. */
+  const hotRef = useRef<SVGGElement>(null)
   /*
      The holes the markers by the land cut in its rings, so the rings run
      behind them. The markers are canvas paint under this layer; the canvas
@@ -570,6 +592,27 @@ export function MapCanvas({
     const stops = hop.stops.map((p) => ({ x: p.x + 0.5, y: p.y + 0.5 }))
     return { legs, pads: stops.slice(1, -1), end: stops[stops.length - 1], start: from }
   }, [path, lands])
+  /*
+     The hot buildings on this planet: a white-hot glow round each one's
+     outline and embers rising off it. An SVG layer over the canvas, like the
+     trip, so it can move without repainting the planet; the glow is drawn
+     only outside the building's own outline, so it never covers the
+     building, its rings or its label. Laid out in the buildings' own units.
+  */
+  const hotMarks = useMemo(() => {
+    if (!hotLands?.size) return []
+    return lands
+      .filter((l) => hotLands.has(l.land_id) && !lockedLands?.has(l.land_id) && !heldArenaLands?.has(l.land_id))
+      .flatMap((l) => {
+        const b = l.buildings[0]
+        const kind = b && buildingMarker(String(b.building_name))
+        if (kind !== 'arena' && kind !== 'dungeon') return []
+        const rank = boostRank(
+          liveBoostPercent(Number(b.boost_score ?? 0), String(b.boost_score_update ?? ''), boostDecayPerHour ?? 0),
+        )
+        return [{ id: l.land_id, x: l.x, y: l.y, src: RANKED_SRC[kind][rank - 1].lit, top: HOT_TOP[kind][rank - 1] }]
+      })
+  }, [lands, hotLands, lockedLands, heldArenaLands, boostDecayPerHour])
   const tripEndRef = useRef<{ x: number; y: number } | null>(null)
   tripEndRef.current = trip?.end ?? null
   const hereRef = useRef<HTMLDivElement>(null)
@@ -1018,6 +1061,15 @@ export function MapCanvas({
        tile units once, and each frame only the group's transform changes, so
        a pan never rebuilds them and their pulse never restarts.
     */
+    /* The hot layer rides the map too; with the buildings drawn as dots it has nothing to sit on. */
+    const hot = hotRef.current
+    if (hot) {
+      hot.setAttribute(
+        'transform',
+        `translate(${tx - PLAY_MIN_X * scale} ${ty - PLAY_MIN_Y * scale}) scale(${scale})`,
+      )
+      hot.style.display = showMarkers ? '' : 'none'
+    }
     const trip = tripRef.current
     if (trip) {
       trip.setAttribute(
@@ -1544,6 +1596,97 @@ export function MapCanvas({
       onKeyDown={onKeyDown}
     >
       <canvas ref={canvasRef} className="mapstage__canvas" />
+
+      {hotMarks.length > 0 && (
+        <svg className="maphot" aria-hidden="true">
+          <defs>
+            {/* Light only outside the outline: a tight white-hot rim, an orange halo, a deep red haze. */}
+            <filter id="maphot-glow" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur in="SourceAlpha" stdDeviation="2.2" result="a0" />
+              <feComponentTransfer in="a0" result="a">
+                <feFuncA type="linear" slope="2.6" />
+              </feComponentTransfer>
+              <feFlood floodColor="#fff0a0" />
+              <feComposite in2="a" operator="in" result="core" />
+              <feGaussianBlur in="SourceAlpha" stdDeviation="6" result="b0" />
+              <feComponentTransfer in="b0" result="b">
+                <feFuncA type="linear" slope="2.2" />
+              </feComponentTransfer>
+              <feFlood floodColor="#ff6a14" />
+              <feComposite in2="b" operator="in" result="halo" />
+              <feGaussianBlur in="SourceAlpha" stdDeviation="12" result="c0" />
+              <feComponentTransfer in="c0" result="c">
+                <feFuncA type="linear" slope="1.8" />
+              </feComponentTransfer>
+              <feFlood floodColor="#c82800" floodOpacity="0.75" />
+              <feComposite in2="c" operator="in" result="wide" />
+              <feMerge result="all">
+                <feMergeNode in="wide" />
+                <feMergeNode in="halo" />
+                <feMergeNode in="core" />
+                <feMergeNode in="core" />
+              </feMerge>
+              <feComposite in="all" in2="SourceAlpha" operator="out" />
+            </filter>
+            {/* The glow stops at the building's foot, so it never lies over the multiplier under it. */}
+            <clipPath id="maphot-above" clipPathUnits="userSpaceOnUse">
+              <rect x={-150} y={-250} width={300} height={252} />
+            </clipPath>
+            <radialGradient id="maphot-halo">
+              <stop offset="0" stopColor="#ff8a1a" stopOpacity="0.6" />
+              <stop offset="1" stopColor="#ff6a14" stopOpacity="0" />
+            </radialGradient>
+            <linearGradient id="maphot-tail" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stopColor="#ffb02e" stopOpacity="0.7" />
+              <stop offset="1" stopColor="#ff7a1a" stopOpacity="0" />
+            </linearGradient>
+          </defs>
+          <g ref={hotRef}>
+            {hotMarks.map((m) => (
+              <g
+                key={m.id}
+                transform={`translate(${m.x + 0.5} ${m.y + 0.5 + BUILDING_GROUND}) scale(${BUILDING_UNIT})`}
+              >
+                <image
+                  className="maphot__glow"
+                  href={m.src}
+                  x={-BUILDING_VIEW.half}
+                  y={-BUILDING_VIEW.above}
+                  width={BUILDING_VIEW.size}
+                  height={BUILDING_VIEW.size}
+                  filter="url(#maphot-glow)"
+                  clipPath="url(#maphot-above)"
+                />
+                {HOT_EMBERS.map((e, i) => (
+                  <g
+                    key={i}
+                    className="maphot__ember"
+                    style={
+                      {
+                        animationDelay: `${(-i * 1.9) / HOT_EMBERS.length}s`,
+                        '--dx': `${e.dx}px`,
+                      } as React.CSSProperties
+                    }
+                  >
+                    <g className="maphot__sway" style={{ animationDelay: `${-i * 0.7}s` }}>
+                      <ellipse cx={e.x} cy={m.top + e.y + e.r * 2.6} rx={e.r * 0.32} ry={e.r * 2.2} fill="url(#maphot-tail)" />
+                      <ellipse cx={e.x} cy={m.top + e.y} rx={e.r * 1.6} ry={e.r * 2.1} fill="url(#maphot-halo)" />
+                      <ellipse
+                        cx={e.x}
+                        cy={m.top + e.y}
+                        rx={e.r * 0.48}
+                        ry={e.r * 0.95}
+                        fill={e.color}
+                        transform={`rotate(${e.tilt} ${e.x} ${m.top + e.y})`}
+                      />
+                    </g>
+                  </g>
+                ))}
+              </g>
+            ))}
+          </g>
+        </svg>
+      )}
 
       {trip && (
         <svg className="maptrip" aria-hidden="true">
