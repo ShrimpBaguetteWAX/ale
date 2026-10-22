@@ -1592,6 +1592,8 @@
 .herepin {
   --pin-size: 26px;
   --pin-dot: clamp(20px, calc(var(--pin-size) * 0.8), 28px);
+  /* The halo's size, as the pin draws it, so the tag can hang clear of it. */
+  --pin-halo: clamp(44px, calc(var(--pin-size) * 1.9), 80px);
 }
 
 /*
@@ -1829,13 +1831,15 @@
  * the gold Enter is the far end. The same height, hairline edge, shadow and
  * pointing arrow as the Travel tag, built from the same sizes, so the two
  * read as one component: Travel says go and where, this says where you are
- * and go in. It sits to the right of the halo, clear of the "You" tag.
+ * and go in. It hangs under the pin, the arrow on its top edge pointing up
+ * at you, so the row you stand on stays clear on both sides.
  */
 .heretag {
   position: absolute;
-  left: calc(var(--pin-dot) / 2 + 22px);
-  top: 0;
-  translate: 0 -50%;
+  /* Under the pin, centred, clear of the halo by the arrow's length. */
+  left: 0;
+  top: calc(var(--pin-halo) / 2 + 9px);
+  translate: -50% 0;
   width: max-content;
   pointer-events: auto;
   --tag-h: clamp(40px, var(--pin-size), 52px);
@@ -1868,12 +1872,12 @@
 .heretag__pair::before {
   content: '';
   position: absolute;
-  left: -7px;
-  top: 50%;
-  translate: 0 -50%;
+  left: 50%;
+  top: -7px;
+  translate: -50% 0;
   border: 7px solid transparent;
-  border-right-color: rgb(9 18 34);
-  border-left: 0;
+  border-bottom-color: rgb(9 18 34);
+  border-top: 0;
 }
 
 .heretag__name {
