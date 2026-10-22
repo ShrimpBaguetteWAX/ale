@@ -96,6 +96,9 @@ const BASE_TURN_MS = 1500
  */
 const IMPACT_MS = 580
 
+/** How long the next attacker is called before the blow, as on the tournament. */
+const AIM_LEAD_MS = 1000
+
 /**
  * How long the arena holds after the final blow lands.
  *
@@ -327,6 +330,22 @@ function Arena({
 
   /** The blow just played, which drives every animation on screen. */
   const current: TurnEvent | null = step > 0 ? replay.turns[step - 1] : null
+
+  /*
+     Who swings next, called a beat before the blow, as the tournament's
+     broadcast does: half a second after a blow lands the next attacker is
+     picked out, and the pointer stays over them until they strike.
+  */
+  const [aimUid, setAimUid] = useState<string | null>(null)
+  useEffect(() => {
+    setAimUid(null)
+    if (!playing || step >= total) return
+    const at = window.setTimeout(
+      () => setAimUid(replay.turns[step]?.attackerUid ?? null),
+      (step === 0 ? 0 : BASE_TURN_MS - AIM_LEAD_MS) / speed,
+    )
+    return () => window.clearTimeout(at)
+  }, [step, playing, total, speed, replay])
 
   /**
    * Whether the current blow has landed yet.
@@ -822,6 +841,7 @@ function Arena({
                 playertag={playertag}
                 enemyLabel={venue === 'arena' ? 'The defenders' : 'The dungeon'}
                 broadcast={broadcast ? (venue === 'arena' ? 'Arena' : 'Dungeon') : undefined}
+                aimUid={aimUid}
               />
               {broadcast && (
                 <>
@@ -1289,6 +1309,7 @@ function Battlefield({
   wide,
   queue,
   broadcast,
+  aimUid,
 }: {
   team1: SimFighter[]
   team2: SimFighter[]
@@ -1306,6 +1327,8 @@ function Battlefield({
   queue?: React.ReactNode
   /** The venue's name for the LIVE tag, when the field plays as a broadcast. */
   broadcast?: string
+  /** The fighter about to swing, for the pointer over their head. */
+  aimUid?: string | null
 }) {
   const where = new Map<string, [number, number]>()
   const depth = new Map<string, number>()
@@ -1412,11 +1435,11 @@ function Battlefield({
             role={role}
             turn={turn}
             attack={current?.damage ?? 0}
-            blocked={current?.blocked ?? 0}
             killed={!!current?.killed}
             abilityDelta={abilityDelta.get(f.uid) ?? 0}
             standing={standing.get(f.uid)}
             next={nextUp === f.uid}
+            aiming={aimUid === f.uid}
             lunge={role === 'attacker' ? lunge : null}
             owner={
               f.team === 1 ? f.gamertag || playertag || 'You' : f.gamertag || f.owner || 'AI'
@@ -1509,11 +1532,11 @@ function FieldUnit({
   role,
   turn,
   attack,
-  blocked,
   killed,
   abilityDelta,
   standing,
   next,
+  aiming,
   lunge,
   owner,
 }: {
@@ -1525,11 +1548,12 @@ function FieldUnit({
   role: 'attacker' | 'defender' | null
   turn: number
   attack: number
-  blocked: number
   killed: boolean
   abilityDelta: number
   standing: Standing | undefined
   next: boolean
+  /** Called to swing next: the tournament's pointer over the head. */
+  aiming?: boolean
   lunge: { dx: number; dy: number } | null
   owner: string
 }) {
@@ -1566,6 +1590,13 @@ function FieldUnit({
     >
       <div className="bunit__figure">
         <span className="bunit__platform" aria-hidden="true" />
+        {aiming && !dead && (
+          <span className="bcast__aim bunit__aim" aria-hidden="true">
+            <svg viewBox="0 0 24 16">
+              <path d="M12 16 1.5 1.5h21z" />
+            </svg>
+          </span>
+        )}
         {/* Keyed by the blow, so a fighter that swings twice in a row swings
             twice on screen. */}
         <span className="bunit__body" key={role ? `${role}-${turn}` : 'idle'}>
@@ -1593,17 +1624,26 @@ function FieldUnit({
           {role === 'defender' && <span className="bunit__flash" />}
         </span>
 
+        {/*
+           The blow as the tournament's broadcast throws it: up from the head,
+           swelling with how hard it was (`--heft`, the share of half the
+           fighter's health it took), held to be read, then dropped. A
+           cleave's numbers drift apart by slot rather than stacking. What
+           was blocked is in the caption and the log.
+        */}
         {role === 'defender' && attack > 0 && (
           <span
-            className={`dmgnum dmgnum--${killed ? 'ko' : band === 'low' ? 'strong' : 'hit'}`}
+            className="bcast__hit bunit__hit"
             key={`dmg-${turn}`}
+            style={{
+              ['--drift' as string]: `${(Number(fighter.uid.split('-')[1]) % 3) - 1 || 0}`,
+              ['--heft' as string]: (maxHealth > 0
+                ? Math.min(1, attack / (maxHealth * 0.5))
+                : 0
+              ).toFixed(2),
+            }}
           >
-            {formatScaled(attack)}
-          </span>
-        )}
-        {role === 'defender' && blocked > 0 && (
-          <span className="blocknum" key={`blk-${turn}`}>
-            −{formatScaled(blocked)} blocked
+            −{formatScaled(attack)}
           </span>
         )}
         {abilityDelta !== 0 && (
