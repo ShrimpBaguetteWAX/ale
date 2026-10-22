@@ -5091,3 +5091,61 @@ button.combatcard--empty:hover {
     min-width: 96px;
   }
 }
+
+/*
+ * Remove, as a folded corner.
+ *
+ * Pointing at a chosen fighter folds its top-right corner down into a dark
+ * triangle carrying a cross, over the level badge; under the pointer the
+ * fold turns red. It is part of the card rather than a button floating on
+ * it, and the rest of the card still opens the details. The slot lifts as
+ * one, so the fold rises with the card it belongs to.
+ */
+@media (min-width: 720px) {
+  .combatslot__remove {
+    top: 0;
+    right: 0;
+    width: 48px;
+    height: 48px;
+    display: block;
+    border-radius: 0 var(--radius-xs) 0 0;
+    background: linear-gradient(225deg, rgb(4 9 20 / 94%) 50%, transparent 50%);
+    box-shadow: none;
+  }
+  .combatslot__remove:hover,
+  .combatslot__remove:focus-visible {
+    background: linear-gradient(225deg, #d8324f 50%, transparent 50%);
+  }
+  .combatslot__remove > [aria-hidden] {
+    position: absolute;
+    top: 4px;
+    right: 8px;
+    font-size: 18px;
+    font-weight: var(--fw-bold);
+    line-height: 1;
+  }
+
+  /* The fold takes the level badge's corner while it is down. */
+  .combatslot:has(.combatslot__remove):hover .combatcard__level {
+    opacity: 0;
+  }
+
+  .combatslot > .combatcard:hover {
+    transform: none;
+  }
+  .combatslot:hover > .combatcard,
+  .combatslot:hover > .combatslot__remove {
+    transform: translateY(-3px);
+  }
+}
+
+@media (min-width: 720px) and (prefers-reduced-motion: reduce) {
+  .combatslot:hover > .combatcard,
+  .combatslot:hover > .combatslot__remove {
+    transform: none;
+  }
+}
+:root[data-fx='low'] .combatslot:hover > .combatcard,
+:root[data-fx='low'] .combatslot:hover > .combatslot__remove {
+  transform: none;
+}
