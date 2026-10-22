@@ -50,6 +50,89 @@
   height: 100%;
 }
 
+/*
+ * The trip to the selected tile: muted gold arrows tile by tile and a
+ * dashed ring on the land, breathing in a slow wave toward where it goes.
+ * Laid out in tile units; MapCanvas scales the group with the map, and the
+ * strokes keep their width whatever the zoom.
+ */
+.maptrip {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  overflow: visible;
+  pointer-events: none;
+}
+.maptrip__step {
+  fill: #e8b23a;
+  fill-opacity: 0.68;
+  stroke: rgb(46 26 0 / 62%);
+  stroke-width: 1.4;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: trip-wave 2.4s ease-in-out infinite;
+}
+@keyframes trip-wave {
+  0%,
+  60%,
+  100% {
+    fill-opacity: 0.62;
+    transform: scale(1);
+  }
+  30% {
+    fill-opacity: 0.92;
+    transform: scale(1.12);
+  }
+}
+.maptrip__ring {
+  fill: none;
+  stroke: #e8b23a;
+  stroke-opacity: 0.8;
+  stroke-width: 2.5;
+  stroke-dasharray: 6 5;
+  vector-effect: non-scaling-stroke;
+  animation: trip-ring 2.4s ease-in-out infinite;
+}
+/* A dark bed under the ring, so it reads on sand. A CSS shadow would blur in
+   tile units here, about forty pixels at the opening zoom. */
+.maptrip__bed {
+  fill: none;
+  stroke: rgb(46 26 0 / 40%);
+  stroke-width: 5;
+  vector-effect: non-scaling-stroke;
+}
+@keyframes trip-ring {
+  0%,
+  100% {
+    stroke-opacity: 0.65;
+  }
+  50% {
+    stroke-opacity: 0.95;
+  }
+}
+.maptrip__start {
+  fill: #e8b23a;
+  fill-opacity: 0.7;
+  stroke: rgb(5 16 30 / 55%);
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+}
+/* Still, where the player asked for less motion. */
+:root[data-fx='low'] .maptrip__step,
+:root[data-fx='low'] .maptrip__ring {
+  animation: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .maptrip__step,
+  .maptrip__ring {
+    animation: none;
+  }
+}
+
 /* ---------- Overlays on the map ---------- */
 
 .mapoverlay {

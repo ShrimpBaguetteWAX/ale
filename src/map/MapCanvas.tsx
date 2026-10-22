@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useRef } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react'
 import {
   PLAY_MAX_X,
   PLAY_MAX_Y,
@@ -360,6 +360,32 @@ export function MapCanvas({
   const imgRef = useRef<HTMLImageElement | null>(null)
   const markersRef = useRef(new Map<MarkerKey, HTMLImageElement>())
   const pinRef = useRef<HTMLDivElement>(null)
+  /* The trip's layer: one group, moved with the map like the pin. */
+  const tripRef = useRef<SVGGElement>(null)
+
+  /*
+     The trip, tile by tile, the way a strategy map plots a march: a muted
+     arrow on each tile it crosses, pointing at the next, and a dashed ring
+     on the land. An SVG layer rather than canvas paint so it can pulse
+     without repainting the planet every frame; and because that layer sits
+     over the canvas, a tile with a building or a portal on it gets no arrow,
+     so the trip never covers one.
+  */
+  const trip = useMemo(() => {
+    if (!path || path.length < 2) return null
+    const steps = tileSteps(path[0], path[path.length - 1])
+    const taken = new Set(
+      lands.filter((l) => l.buildings.length > 0 || l.special_effect).map((l) => l.x + ',' + l.y),
+    )
+    const arrows: { x: number; y: number; angle: number; i: number }[] = []
+    for (let i = 1; i < steps.length - 1; i++) {
+      const a = steps[i]
+      const b = steps[i + 1]
+      if (taken.has(a.x + ',' + a.y)) continue
+      arrows.push({ x: a.x, y: a.y, angle: (Math.atan2(b.y - a.y, b.x - a.x) * 180) / Math.PI, i })
+    }
+    return { arrows, start: steps[0], end: steps[steps.length - 1] }
+  }, [path, lands])
   const hereRef = useRef<HTMLDivElement>(null)
   const selRef = useRef<HTMLDivElement>(null)
   /* The scale the map opened at, which is what the zoom readout counts from. */
@@ -524,67 +550,6 @@ export function MapCanvas({
         ctx.lineTo(tx + GRID_W * scale, py)
       }
       ctx.stroke()
-    }
-
-    /*
-       The trip, tile by tile, the way a strategy map plots a march: a gold
-       arrow on every tile it crosses, each pointing at the next, and a
-       dashed gold ring on the land at its end. Drawn before the buildings,
-       so a trip that passes over one never covers it. Where it starts
-       somewhere other than the pin — the far side of a portal — a small
-       dot marks the start.
-    */
-    const path = pathRef.current
-    if (path && path.length > 1) {
-      const centre = (t: { x: number; y: number }): [number, number] => [
-        (t.x - PLAY_MIN_X) * scale + tx + scale / 2,
-        (t.y - PLAY_MIN_Y) * scale + ty + scale / 2,
-      ]
-      const steps = tileSteps(path[0], path[path.length - 1])
-      const size = Math.max(5, Math.min(scale * 0.2, 11))
-      ctx.save()
-      ctx.lineJoin = 'round'
-      for (let i = 1; i < steps.length - 1; i++) {
-        const [x, y] = centre(steps[i])
-        const [nx, ny] = centre(steps[i + 1])
-        ctx.save()
-        ctx.translate(x, y)
-        ctx.rotate(Math.atan2(ny - y, nx - x))
-        ctx.beginPath()
-        ctx.moveTo(-size, -size)
-        ctx.lineTo(size, 0)
-        ctx.lineTo(-size, size)
-        ctx.lineTo(-size * 0.45, 0)
-        ctx.closePath()
-        ctx.fillStyle = '#f6b512'
-        ctx.fill()
-        ctx.lineWidth = 1.6
-        ctx.strokeStyle = 'rgba(5, 16, 30, 0.75)'
-        ctx.stroke()
-        ctx.restore()
-      }
-      const [ex, ey] = centre(steps[steps.length - 1])
-      ctx.beginPath()
-      ctx.arc(ex, ey, scale * 0.64, 0, Math.PI * 2)
-      ctx.lineWidth = 5
-      ctx.strokeStyle = 'rgba(5, 16, 30, 0.35)'
-      ctx.stroke()
-      ctx.setLineDash([7, 5])
-      ctx.lineWidth = 3
-      ctx.strokeStyle = '#f6b512'
-      ctx.stroke()
-      ctx.setLineDash([])
-      if (!pos || path[0].x !== pos.x || path[0].y !== pos.y) {
-        const [x, y] = centre(path[0])
-        ctx.beginPath()
-        ctx.arc(x, y, 5, 0, Math.PI * 2)
-        ctx.fillStyle = '#f6b512'
-        ctx.fill()
-        ctx.lineWidth = 2
-        ctx.strokeStyle = 'rgba(5, 16, 30, 0.7)'
-        ctx.stroke()
-      }
-      ctx.restore()
     }
 
     for (let gx = x0; gx <= x1; gx++) {
@@ -752,6 +717,19 @@ export function MapCanvas({
       }
     }
     placeSelection()
+
+    /*
+       The trip rides the map the way the pin does: its marks are laid out in
+       tile units once, and each frame only the group's transform changes, so
+       a pan never rebuilds them and their pulse never restarts.
+    */
+    const trip = tripRef.current
+    if (trip) {
+      trip.setAttribute(
+        'transform',
+        `translate(${tx - PLAY_MIN_X * scale} ${ty - PLAY_MIN_Y * scale}) scale(${scale})`,
+      )
+    }
 
     /* The readout only hears about a change it would show. */
     if (openScaleRef.current > 0) {
@@ -1220,6 +1198,37 @@ export function MapCanvas({
       onKeyDown={onKeyDown}
     >
       <canvas ref={canvasRef} className="mapstage__canvas" />
+
+      {trip && (
+        <svg className="maptrip" aria-hidden="true">
+          <g ref={tripRef}>
+            {trip.arrows.map((a) => (
+              <g key={a.x + ',' + a.y} transform={`translate(${a.x + 0.5} ${a.y + 0.5}) rotate(${a.angle})`}>
+                <path
+                  className="maptrip__step"
+                  style={{ animationDelay: `${a.i * 110}ms` }}
+                  d="M-0.22,-0.22 L0.22,0 L-0.22,0.22 L-0.09,0 Z"
+                />
+              </g>
+            ))}
+            <circle className="maptrip__bed" cx={trip.end.x + 0.5} cy={trip.end.y + 0.5} r={0.86} />
+            <circle
+              className="maptrip__ring"
+              cx={trip.end.x + 0.5}
+              cy={trip.end.y + 0.5}
+              r={0.86}
+            />
+            {(!position || trip.start.x !== position.x || trip.start.y !== position.y) && (
+              <circle
+                className="maptrip__start"
+                cx={trip.start.x + 0.5}
+                cy={trip.start.y + 0.5}
+                r={0.12}
+              />
+            )}
+          </g>
+        </svg>
+      )}
 
       {/* "You are here". Animated in CSS so the canvas stays idle. */}
       <div ref={pinRef} className="playerpin" aria-hidden="true">
