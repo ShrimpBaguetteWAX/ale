@@ -232,6 +232,16 @@ const ICON_FIND = (
     <circle cx="12" cy="12" r="1.5" fill="currentColor" />
   </svg>
 )
+const ICON_MENU = (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
+    <path d="M4 7h16M4 12h16M4 17h16" />
+  </svg>
+)
+const ICON_CLOSE = (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+    <path d="M6 6l12 12M18 6 6 18" />
+  </svg>
+)
 const ICON_QUESTS = (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
     <path d="M7 4h11a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H7" />
@@ -310,6 +320,11 @@ export default function MapView() {
   const [jump, setJump] = useState<Planet | null>(null)
   const [travelError, setTravelError] = useState<string | null>(null)
   const [panel, setPanel] = useState<Panel | null>(null)
+  /*
+     On a phone the rail is folded behind one corner button; this is whether
+     it is open. A wide screen never folds it, and ignores this.
+  */
+  const [railOpen, setRailOpen] = useState(false)
   const [folded, setFolded] = useState(() => {
     try {
       return localStorage.getItem(HERETAG_KEY) === '1'
@@ -669,6 +684,7 @@ export default function MapView() {
     setTravelError(null)
     /* A tap on the map is also how a menu is put away. */
     setPanel(null)
+    setRailOpen(false)
     window.clearTimeout(settleTimer.current)
     if (!byTouch) {
       setArmed(true)
@@ -1140,8 +1156,40 @@ export default function MapView() {
             One rail for every control. The eye heads it at every width and
             is all that is left of it when the furniture is put away, because
             it is the way to bring the furniture back.
+
+            On a phone the rail folds behind one corner button, which carries
+            the quests badge so nothing ready to claim is hidden by the fold.
+            Find me moves to its own round button under the thumb, and the
+            zoom buttons go: a phone pinches. The level stays in the rail and
+            still resets the zoom.
           */}
-          <div className="maprail">
+          <button
+            type="button"
+            className="maprail__toggle"
+            aria-expanded={railOpen}
+            onClick={() => {
+              setRailOpen((v) => !v)
+              setPanel(null)
+            }}
+            aria-label={railOpen ? 'Close the map controls' : 'Map controls'}
+          >
+            {railOpen ? ICON_CLOSE : ICON_MENU}
+            {!railOpen && claimable.length > 0 && (
+              <span className="maprail__badge">{claimable.length}</span>
+            )}
+          </button>
+          <button
+            type="button"
+            className="mapfind"
+            onClick={() => {
+              setPlanet(player.planet)
+              setRecenter((n) => n + 1)
+            }}
+            aria-label="Find me"
+          >
+            {ICON_FIND}
+          </button>
+          <div className={`maprail${railOpen ? ' maprail--open' : ''}`}>
             {claimable.length > 0 && (
               <div className="maprail__slot">
                 <button
@@ -1197,7 +1245,7 @@ export default function MapView() {
                 </div>
                 <button
                   type="button"
-                  className="maprail__btn"
+                  className="maprail__btn maprail__btn--find"
                   onClick={() => {
                     setPlanet(player.planet)
                     setRecenter((n) => n + 1)
@@ -1210,7 +1258,7 @@ export default function MapView() {
                 <span className="maprail__gap" aria-hidden="true" />
                 <button
                   type="button"
-                  className="maprail__btn"
+                  className="maprail__btn maprail__btn--zoom"
                   onClick={() => zoomApi.current?.zoomIn()}
                   data-tip="Zoom in"
                   aria-label="Zoom in"
@@ -1228,7 +1276,7 @@ export default function MapView() {
                 </button>
                 <button
                   type="button"
-                  className="maprail__btn"
+                  className="maprail__btn maprail__btn--zoom"
                   onClick={() => zoomApi.current?.zoomOut()}
                   data-tip="Zoom out"
                   aria-label="Zoom out"

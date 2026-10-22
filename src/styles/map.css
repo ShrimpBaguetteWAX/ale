@@ -1157,6 +1157,105 @@
   }
 }
 
+/*
+ * The rail on a phone: folded behind one corner button.
+ *
+ * The button carries the quests badge, so a quest ready to claim still
+ * shows while the rail is folded. Opened, the rail drops under it as a
+ * shorter column of smaller tiles: quests, the eye, the legend and the zoom
+ * level. Find me is its own round button at the bottom right, under the
+ * thumb, and the zoom buttons are gone, because a phone pinches.
+ */
+.maprail__toggle,
+.mapfind {
+  display: none;
+}
+@media (max-width: 719px) {
+  .maprail__toggle {
+    position: absolute;
+    right: var(--sp-3);
+    top: var(--sp-3);
+    z-index: 6;
+    display: grid;
+    place-items: center;
+    width: 38px;
+    height: 38px;
+    padding: 0;
+    color: var(--text-dim);
+    background: rgb(5 16 30 / 85%);
+    border: 1px solid var(--line-bright);
+    border-radius: 10px;
+    box-shadow: var(--shadow);
+    cursor: pointer;
+  }
+  .maprail__toggle[aria-expanded='true'] {
+    color: var(--white);
+    background: var(--violet-glass);
+  }
+  .maprail__toggle svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .mapfind {
+    position: absolute;
+    right: var(--sp-3);
+    bottom: var(--sp-3);
+    z-index: 5;
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    color: var(--text-dim);
+    background: rgb(5 16 30 / 85%);
+    border: 1px solid var(--line-bright);
+    border-radius: 50%;
+    box-shadow: var(--shadow);
+    cursor: pointer;
+  }
+  .mapfind:active {
+    color: var(--white);
+    background: var(--violet-glass);
+  }
+  .mapfind svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .maprail {
+    top: calc(var(--sp-3) + 44px);
+    width: 38px;
+    transform-origin: top right;
+    transition:
+      transform var(--dur-fast) var(--ease),
+      opacity var(--dur-fast) var(--ease);
+  }
+  .maprail:not(.maprail--open) {
+    transform: scale(0.6);
+    opacity: 0;
+    pointer-events: none;
+  }
+  .maprail__btn {
+    width: 36px;
+    height: 36px;
+  }
+  .maprail__btn svg {
+    width: 17px;
+    height: 17px;
+  }
+  .maprail__btn--find,
+  .maprail__btn--zoom,
+  .maprail__gap {
+    display: none;
+  }
+  .maprail__level {
+    width: 36px;
+    border-bottom: 0;
+    border-radius: 0 0 9px 9px;
+  }
+}
+
 /* A panel hanging off its tile, to the left. */
 .railpop {
   right: calc(100% + 10px);
