@@ -598,22 +598,6 @@ function Arena({
             is what Back was being used for as well, except that Back threw
             the result away.
           */}
-          <button type="button" className="btn btn--ghost btn--sm" onClick={skip}>
-            Skip Fight
-          </button>
-
-          <div className="battle__progress">
-            <span className="battle__turn mono">
-              Attack {step}/{total}
-            </span>
-            <span className="battle__track" aria-hidden="true">
-              <span
-                className="battle__fill"
-                style={{ transform: `scaleX(${total ? step / total : 1})` }}
-              />
-            </span>
-          </div>
-
           <div className="viewswitch" role="group" aria-label="Battle view">
             {(['classic', 'field'] as const).map((v) => (
               <button
@@ -627,6 +611,23 @@ function Arena({
               </button>
             ))}
           </div>
+
+          <div className="battle__progress">
+            <span className="battle__turn mono">
+              Attack {step}/{total}
+            </span>
+            <span className="battle__track" aria-hidden="true">
+              <span
+                className="battle__fill"
+                style={{ transform: `scaleX(${total ? step / total : 1})` }}
+              />
+            </span>
+          </div>
+
+          {/* On the right, where a hand goes to move on. */}
+          <button type="button" className="btn btn--ghost btn--sm" onClick={skip}>
+            Skip Fight
+          </button>
         </header>
 
         {view === 'classic' ? (
