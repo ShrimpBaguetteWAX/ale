@@ -677,6 +677,46 @@ export function Elemental({
 }
 
 /**
+ * The same matchup figures as `Elemental`, as a line of text.
+ *
+ * Wider screens put this under each team's name instead of the coloured
+ * pills: a label and a figure each, colour on the figure only. The count of
+ * abilities the other side gets out of a line-up is left out; the cards
+ * that switch them on still carry it.
+ */
+export function MatchupReadout({
+  side,
+  who,
+}: {
+  side: { landShare: number; blockShare: number; bonuses: number }
+  who: string
+}) {
+  const land = Math.round(side.landShare * 100)
+  const block = Math.round(side.blockShare * 100)
+  return (
+    <div className="readout">
+      <span
+        className="readout__bit"
+        title={`${who} land ${land}% of that damage once the other side's resistances are applied`}
+      >
+        Lands <b className={`readout__v--${land >= 80 ? 'good' : land >= 55 ? 'fair' : 'poor'}`}>{land}%</b>
+      </span>
+      <span className="readout__bit" title={`${who} turn away ${block}% of the damage coming the other way`}>
+        Blocks <b className={`readout__v--${block >= 45 ? 'good' : block >= 25 ? 'fair' : 'poor'}`}>{block}%</b>
+      </span>
+      {side.bonuses > 0 && (
+        <span
+          className="readout__bit"
+          title={`${side.bonuses} of ${who === 'You' ? 'your' : 'their'} ability firing${side.bonuses === 1 ? '' : 's'} that only this matchup allows, across the whole line-up — the crew-and-weapon fighter included`}
+        >
+          Bonus abilities <b className="readout__v--bonus">+{side.bonuses}</b>
+        </span>
+      )}
+    </div>
+  )
+}
+
+/**
  * One fighter on the versus screen.
  *
  * Deliberately bigger than a picker tile: this is the line-up a player is

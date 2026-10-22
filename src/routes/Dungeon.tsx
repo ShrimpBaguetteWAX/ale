@@ -68,6 +68,7 @@ import {
   enemyNftPanel,
   nftCards,
   Elemental,
+  MatchupReadout,
   FighterGrid,
   WeatherPanel,
   POLL_ATTEMPTS,
@@ -986,17 +987,15 @@ export default function Dungeon() {
               <span className="versus__totals mono">
                 {formatScaled(outlook.mine.damage)} DMG ·{' '}
                 {formatScaled(outlook.mine.health)} HP
-                <Elemental side={outlook.mine} against={outlook.theirs.bonuses} who="You" />
+                {phone && <Elemental side={outlook.mine} against={outlook.theirs.bonuses} who="You" />}
               </span>
             </header>
 
             {/*
-               Under the header on a desktop: the header names the team and
-               totals it, and the control that changes the line-up sits on its
-               own line between that and the fighters it fills. A phone puts it
-               under the row instead, where the thumb is.
+               Wider screens read the matchup under the name, as plain text;
+               a phone keeps the pills beside the totals.
             */}
-            {!phone && <div className="versus__pick">{autoPickButton}</div>}
+            {!phone && <MatchupReadout side={outlook.mine} who="You" />}
 
             <div className="versus__row">
               {team.map((f, i) =>
@@ -1116,12 +1115,25 @@ export default function Dungeon() {
               )}
             </div>
 
-            {phone && autoPickButton}
+            {/*
+               Under the line-up it fills, as a toolbar on wider screens and
+               full width on a phone, where the thumb is.
+            */}
+            {phone ? autoPickButton : <div className="versus__pick">{autoPickButton}</div>}
 
           </div>
 
         <div className="versus__divider">
             <OddsCentre odds={odds} />
+            {/*
+               Each side's share of the matchup as one bar under the odds,
+               where wider screens used to draw an underline under each name.
+            */}
+            {!phone && (
+              <div className="versus__tug" aria-hidden="true">
+                <i style={{ width: `${myShare * 100}%` }} />
+              </div>
+            )}
           </div>
 
           <div className="versus__side versus__side--enemy">
@@ -1140,9 +1152,10 @@ export default function Dungeon() {
               <span className="versus__totals mono">
                 {formatScaled(outlook.theirs.damage)} DMG ·{' '}
                 {formatScaled(outlook.theirs.health)} HP
-                <Elemental side={outlook.theirs} against={outlook.mine.bonuses} who="They" />
+                {phone && <Elemental side={outlook.theirs} against={outlook.mine.bonuses} who="They" />}
               </span>
             </header>
+            {!phone && <MatchupReadout side={outlook.theirs} who="They" />}
 
             <div className="versus__row">
               {/*

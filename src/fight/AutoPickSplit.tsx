@@ -224,8 +224,8 @@ export function AutoPickSplit({
       {switchable && (
         <span className="autosplit__switch" role="group" aria-label="What auto-pick does with the team">
           {[
-            { fill: true, icon: FILL_ICON, title: 'Fill the empty slots, keeping the fighters already chosen' },
-            { fill: false, icon: REPLACE_ICON, title: `Replace all ${teamSize} fighters` },
+            { fill: true, icon: FILL_ICON, word: 'Fill', title: 'Fill the empty slots, keeping the fighters already chosen' },
+            { fill: false, icon: REPLACE_ICON, word: 'Replace', title: `Replace all ${teamSize} fighters` },
           ].map((side) => (
             <button
               key={String(side.fill)}
@@ -236,6 +236,8 @@ export function AutoPickSplit({
               title={side.title}
             >
               {side.icon}
+              {/* Spelled out where there is room; a phone keeps the icons. */}
+              <span className="autosplit__word">{side.word}</span>
             </button>
           ))}
         </span>
@@ -285,6 +287,7 @@ export function AutoPickSplit({
         disabled={disabled || !roster}
         title="Change what auto-pick picks from"
       >
+        <span className="autosplit__from">from:</span>
         {modeLabel}
         <span className="autosplit__caret" aria-hidden="true">
           ▾
