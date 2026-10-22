@@ -2535,27 +2535,32 @@ export function loadoutSummary(
 /**
  * The crew and weapon, as a second toolbar in the line-up.
  *
- * Wider screens keep the loadout's everyday controls with the fighters they
- * belong to: the card auto-pick sits directly under the fighters' one, the
- * pair is shown as two chips with their art, and "Loadout" opens the full
- * panel below for picking by hand. A phone keeps the folded panel instead.
+ * Wider screens have no loadout panel: this line is the whole of it. The
+ * card auto-pick sits directly under the fighters' one, and the pair is two
+ * chips with their art. A chip opens its card's details and has a cross to
+ * take it out; an empty one goes to the tab its card is picked from, below.
+ * A phone keeps the folded panel instead.
  */
 export function CardsToolbar({
   crew,
   weapon,
   autoPick,
-  open,
-  onToggle,
+  onOpen,
+  onClear,
+  onChoose,
 }: {
   crew: CardTemplate | null
   weapon: CardTemplate | null
   autoPick: React.ReactNode
-  open: boolean
-  onToggle: () => void
+  onOpen: (card: CardTemplate) => void
+  onClear: (kind: 'crew' | 'weapon') => void
+  onChoose: (kind: 'crew' | 'weapon') => void
 }) {
-  const chip = (label: string, card: CardTemplate | null) =>
-    card ? (
-      <button type="button" className="cardchip" onClick={onToggle} title={`${label}: ${card.name}`}>
+  const chip = (label: string, card: CardTemplate | null) => {
+    const kind = label === 'Crew' ? 'crew' : 'weapon'
+    return card ? (
+      <span className="cardchip">
+      <button type="button" className="cardchip__open" onClick={() => onOpen(card)} title={`${label}: ${card.name}`}>
         <img
           className="cardchip__art"
           src={asset(`/assets/cards/${card.template_id}.webp`)}
@@ -2575,11 +2580,27 @@ export function CardsToolbar({
           {card.name}
         </span>
       </button>
+      <button
+        type="button"
+        className="cardchip__clear"
+        onClick={() => onClear(kind)}
+        aria-label={`Take out the ${label.toLowerCase()} card`}
+        title={`Take out the ${label.toLowerCase()} card`}
+      >
+        ×
+      </button>
+      </span>
     ) : (
-      <button type="button" className="cardchip cardchip--empty" onClick={onToggle}>
-        No {label.toLowerCase()}
+      <button
+        type="button"
+        className="cardchip cardchip--empty"
+        onClick={() => onChoose(kind)}
+        title={`Pick a ${label.toLowerCase()} card below`}
+      >
+        + {label}
       </button>
     )
+  }
 
   return (
     <div className="cardsbar">
@@ -2587,11 +2608,6 @@ export function CardsToolbar({
       {autoPick}
       {chip('Crew', crew)}
       {chip('Weapon', weapon)}
-      <span className="spacer" />
-      <button type="button" className="cardsbar__open" aria-expanded={open} onClick={onToggle}>
-        Loadout
-        <span className="panel__chev" aria-hidden="true" />
-      </button>
     </div>
   )
 }

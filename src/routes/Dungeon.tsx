@@ -1097,11 +1097,16 @@ export default function Dungeon() {
                   className="combatcard combatcard--empty combatcard--nft"
                   onClick={() => {
                     setTab('crew')
-                    /* Opened as well as scrolled to. The panel is folded by
-                       default, and landing on a shut one would answer the
-                       press with less than was there before it. */
-                    setLoadoutOpen(true)
-                    loadout.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                    if (phone) {
+                      /* Opened as well as scrolled to. The panel is folded by
+                         default, and landing on a shut one would answer the
+                         press with less than was there before it. */
+                      setLoadoutOpen(true)
+                      loadout.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                    } else {
+                      /* No panel on a wider screen: straight to the cards. */
+                      picker.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                    }
                   }}
                   title="Pick a crew card and a weapon card"
                 >
@@ -1127,8 +1132,12 @@ export default function Dungeon() {
                   crew={crew}
                   weapon={weapon}
                   autoPick={autoPickCardsButton}
-                  open={loadoutOpen}
-                  onToggle={() => setLoadoutOpen((v) => !v)}
+                  onOpen={showCard}
+                  onClear={(kind) => (kind === 'crew' ? setCrew(null) : setWeapon(null))}
+                  onChoose={(kind) => {
+                    setTab(kind)
+                    picker.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                  }}
                 />
               </div>
             )}
@@ -1244,9 +1253,8 @@ export default function Dungeon() {
         */}
         {phone && <div className="loadoutauto">{autoPickCardsButton}</div>}
 
-        {/* A wider screen folds it away entirely: the toolbar in the line-up
-            stands for it, and opens it. */}
-        {(phone || loadoutOpen) && (
+        {/* Phones only: a wider screen has the cards toolbar in the line-up. */}
+        {phone && (
         <FoldingPanel
           className="loadout"
           panelRef={loadout}

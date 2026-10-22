@@ -5255,27 +5255,39 @@ button.combatcard--empty:hover {
   text-transform: uppercase;
 }
 
-.cardsbar__open {
+.cardchip__open {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  height: 32px;
-  padding: 0 12px;
+  height: 100%;
+  padding: 0;
   border: 0;
-  border-radius: 8px;
-  color: var(--white);
-  background: rgb(255 255 255 / 6%);
-  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 14%);
-  font-size: 12.5px;
-  font-weight: var(--fw-semibold, 600);
+  background: none;
+  color: inherit;
+  font: inherit;
   cursor: pointer;
 }
-.cardsbar__open:hover {
-  background: rgb(255 255 255 / 12%);
+.cardchip:has(.cardchip__open) {
+  padding-right: 4px;
+  cursor: default;
 }
-.cardsbar__open[aria-expanded='true'] .panel__chev {
-  rotate: 225deg;
-  translate: 0 2px;
+.cardchip__clear {
+  width: 22px;
+  height: 22px;
+  margin-left: 2px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  color: var(--text-faint);
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+}
+.cardchip__clear:hover,
+.cardchip__clear:focus-visible {
+  color: var(--white);
+  background: #d8324f;
 }
 
 @media (min-width: 720px) {

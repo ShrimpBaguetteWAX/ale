@@ -1036,8 +1036,12 @@ export default function Arena() {
                   crew={crew}
                   weapon={weapon}
                   autoPick={autoPickCardsButton}
-                  open={loadoutOpen}
-                  onToggle={() => setLoadoutOpen((v) => !v)}
+                  onOpen={showCard}
+                  onClear={(kind) => (kind === 'crew' ? setCrew(null) : setWeapon(null))}
+                  onChoose={(kind) => {
+                    setTab(kind)
+                    picker.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                  }}
                 />
               </div>
             )}
@@ -1132,9 +1136,8 @@ export default function Arena() {
 
         {phone && <div className="loadoutauto">{autoPickCardsButton}</div>}
 
-        {/* A wider screen folds it away entirely: the toolbar in the line-up
-            stands for it, and opens it. */}
-        {(phone || loadoutOpen) && (
+        {/* Phones only: a wider screen has the cards toolbar in the line-up. */}
+        {phone && (
         <FoldingPanel
           className="loadout"
           title="Loadout"
