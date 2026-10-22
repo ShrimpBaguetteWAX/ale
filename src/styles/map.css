@@ -1398,10 +1398,20 @@
 }
 .selpin {
   --tile: 24px;
+  /*
+   * The tags size from the tile, within limits. Fixed at 36px they read as
+   * small next to markers that are drawn from the tile and sit near 45px at
+   * the opening zoom; sized from the same number they keep the proportion
+   * the stylesheet showed at every zoom.
+   */
+  --tag-h: clamp(40px, calc(var(--tile) * 0.8), 52px);
+  --tag-fs: clamp(12px, calc(var(--tile) * 0.24), 15px);
 }
 .herepin {
   --pin-size: 26px;
   --pin-dot: clamp(20px, calc(var(--pin-size) * 0.8), 28px);
+  --tag-h: clamp(40px, var(--pin-size), 52px);
+  --tag-fs: clamp(12px, calc(var(--pin-size) * 0.3), 15px);
 }
 
 /*
@@ -1434,15 +1444,15 @@
   position: relative;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  height: 36px;
-  padding: 0 12px 0 11px;
+  gap: 10px;
+  height: var(--tag-h);
+  padding: 0 14px 0 13px;
   border: 0;
   border-radius: var(--radius-sm);
   background: var(--grad-gold);
   color: #2a1c00;
   font-family: var(--font-display);
-  font-size: var(--fs-xs);
+  font-size: var(--tag-fs);
   font-weight: var(--fw-bold);
   letter-spacing: 0.06em;
   white-space: nowrap;
@@ -1484,22 +1494,22 @@
   border-left-color: #3a1620;
 }
 .traveltag__go .spinner {
-  width: 14px;
-  height: 14px;
+  width: 16px;
+  height: 16px;
 }
 .traveltag__cost {
   display: inline-flex;
   align-items: center;
-  gap: 3px;
-  padding: 2px 7px;
+  gap: 4px;
+  padding: 3px 9px;
   border-radius: 999px;
   background: rgb(0 0 0 / 22%);
-  font-size: 11px;
+  font-size: calc(var(--tag-fs) - 1px);
   font-variant-numeric: tabular-nums;
 }
 .traveltag__cost img {
-  width: 12px;
-  height: 12px;
+  width: 15px;
+  height: 15px;
 }
 
 /* Why there is no gold tag, or what to know before pressing it. */
@@ -1507,12 +1517,12 @@
 .traveltag__note,
 .herelabel {
   display: inline-block;
-  padding: 3px 8px;
+  padding: 4px 10px;
   border-radius: 999px;
   background: rgb(5 16 30 / 85%);
   border: 1px solid var(--line-bright);
   color: var(--text-dim);
-  font-size: var(--fs-xs);
+  font-size: var(--fs-sm);
   line-height: 1.3;
   white-space: nowrap;
 }
@@ -1534,14 +1544,14 @@
   translate: -50% -100%;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  height: 36px;
-  padding: 0 14px 0 10px;
+  gap: 10px;
+  height: var(--tag-h);
+  padding: 0 16px 0 12px;
   border-radius: var(--radius-sm);
   background: linear-gradient(170deg, #14e2b2, #0a9c7b);
   color: #06201a;
   font-family: var(--font-display);
-  font-size: var(--fs-xs);
+  font-size: var(--tag-fs);
   font-weight: var(--fw-bold);
   letter-spacing: 0.06em;
   white-space: nowrap;
@@ -1563,8 +1573,8 @@
   filter: brightness(1.08);
 }
 .entertag img {
-  width: 18px;
-  height: 18px;
+  width: 24px;
+  height: 24px;
   object-fit: contain;
 }
 
@@ -1589,7 +1599,7 @@
   border-bottom: 7px solid #14e2b2;
 }
 .herepin--below .herelabel {
-  top: calc(var(--pin-dot) / 2 + 52px);
+  top: calc(var(--pin-dot) / 2 + var(--tag-h) + 18px);
 }
 
 /* ---------- clearing the map ---------- */
