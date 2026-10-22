@@ -3369,3 +3369,13 @@
 :root[data-fx='low'] .lower {
   animation: none;
 }
+
+/*
+ * The battlefield throws its numbers the way the tournament does (see
+ * .bcast__hit), but on this stage the blow lands --impact after the turn
+ * starts: the number waits for it, hidden, rather than flying before the
+ * strike. The rise keeps the tournament length, scaled by the speed.
+ */
+.bunit__hit {
+  animation: bcastrise calc(1300ms * var(--beat)) linear var(--impact) both;
+}
