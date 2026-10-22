@@ -1819,6 +1819,54 @@
   color: var(--k);
 }
 
+/* The fold: a chevron set off from the name by a hairline. */
+.heretag__fold {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  margin-left: 2px;
+  padding: 0 0 0 6px;
+  border: 0;
+  border-left: 1px solid rgb(255 255 255 / 10%);
+  background: transparent;
+  color: var(--text-dim);
+  cursor: pointer;
+}
+.heretag__fold:hover,
+.heretag__name--folded:hover {
+  color: var(--white);
+}
+.heretag__fold svg,
+.heretag__name--folded svg {
+  width: 11px;
+  height: 11px;
+}
+
+/*
+ * Folded: the dark end is the icon and a chevron, one button that opens
+ * it again, and the tag sits a little lower and tighter. The gold Enter
+ * stays, because folding is for reading the map, not for losing the door.
+ */
+.heretag--folded .heretag__pair {
+  height: calc(var(--tag-h) - 6px);
+}
+.heretag__name--folded {
+  gap: 6px;
+  padding: 0 8px;
+  color: var(--text-dim);
+  font: inherit;
+  cursor: pointer;
+}
+.heretag__name--folded .heretag__icon {
+  width: 15px;
+  height: 15px;
+}
+.heretag--folded .heretag__go {
+  padding: 0 13px;
+  font-size: calc(var(--tag-fs) - 1px);
+}
+
 /* The way in: the Travel tag's own gold, as the far end. */
 .heretag__go {
   display: inline-flex;

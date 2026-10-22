@@ -240,6 +240,26 @@ const ICON_QUESTS = (
   </svg>
 )
 
+/*
+ * Whether the tag by the pin is folded to its door. Remembered on this
+ * device: a player who folds it wants the map, and should not have to fold
+ * it again on every visit or after every trip.
+ */
+const HERETAG_KEY = 'al.map.heretag.folded'
+
+const CHEV = (dir: 'left' | 'right') => (
+  <svg viewBox="0 0 12 12" aria-hidden="true">
+    <path
+      d={dir === 'left' ? 'M7.5 2.5 4 6l3.5 3.5' : 'M4.5 2.5 8 6 4.5 9.5'}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+)
+
 /** What is open on the rail or the pill: one at a time. */
 type Panel = 'planets' | 'legend' | 'quests'
 
@@ -290,6 +310,23 @@ export default function MapView() {
   const [jump, setJump] = useState<Planet | null>(null)
   const [travelError, setTravelError] = useState<string | null>(null)
   const [panel, setPanel] = useState<Panel | null>(null)
+  const [folded, setFolded] = useState(() => {
+    try {
+      return localStorage.getItem(HERETAG_KEY) === '1'
+    } catch {
+      return false
+    }
+  })
+  const toggleFolded = useCallback(() => {
+    setFolded((was) => {
+      try {
+        localStorage.setItem(HERETAG_KEY, was ? '0' : '1')
+      } catch {
+        /* Without storage the choice lasts as long as the page. */
+      }
+      return !was
+    })
+  }, [])
   const togglePanel = useCallback(
     (p: Panel) => setPanel((open) => (open === p ? null : p)),
     [],
@@ -855,6 +892,9 @@ export default function MapView() {
      Travel tag turned round: a dark end against the pin with the icon, the
      name and the kind, and the gold Enter as its far end. Same height,
      edge and arrow as Travel, so the two read as one family.
+
+     Folding hides the name and never the way in: folded, the dark end is
+     only the icon and a chevron to open it again, and the gold Enter stays.
   */
   const hereLand = useMemo(
     () => (onPlanet ? (lands ?? []).find((l) => l.x === player.x && l.y === player.y) : undefined),
@@ -899,15 +939,39 @@ export default function MapView() {
   const pinSlot: ReactNode = useMemo(() => {
     if (travelling || !here) return null
     return (
-      <div className={`heretag heretag--${here.kind}`}>
+      <div className={`heretag heretag--${here.kind}${folded ? ' heretag--folded' : ''}`}>
         <span className={`heretag__pair${enterTo ? '' : ' heretag__pair--plain'}`}>
-          <span className="heretag__name">
-            <img className="heretag__icon" src={here.icon} alt="" />
-            <span className="heretag__text">
-              <span className="heretag__title">{here.name}</span>
-              <span className="heretag__kind">{here.sub}</span>
+          {folded ? (
+            <button
+              type="button"
+              className="heretag__name heretag__name--folded"
+              onClick={toggleFolded}
+              aria-expanded={false}
+              aria-label={`Show ${here.name}`}
+              title={here.name}
+            >
+              <img className="heretag__icon" src={here.icon} alt="" />
+              {CHEV('right')}
+            </button>
+          ) : (
+            <span className="heretag__name">
+              <img className="heretag__icon" src={here.icon} alt="" />
+              <span className="heretag__text">
+                <span className="heretag__title">{here.name}</span>
+                <span className="heretag__kind">{here.sub}</span>
+              </span>
+              <button
+                type="button"
+                className="heretag__fold"
+                onClick={toggleFolded}
+                aria-expanded
+                aria-label="Fold the name away"
+                title="Fold the name away"
+              >
+                {CHEV('left')}
+              </button>
             </span>
-          </span>
+          )}
           {enterTo && (
             <Link className="heretag__go" to={`/${enterTo}`} aria-label={`Enter ${here.name}`}>
               Enter
@@ -916,7 +980,7 @@ export default function MapView() {
         </span>
       </div>
     )
-  }, [travelling, here, enterTo])
+  }, [travelling, here, enterTo, folded, toggleFolded])
 
   /*
      Hangs off the selected tile: the way there, with the cost, or the one
