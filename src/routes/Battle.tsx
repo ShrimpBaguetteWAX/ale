@@ -2093,12 +2093,12 @@ function Result({
         */}
         <button
           type="button"
-          className="btn btn--ghost btn--sm"
+          className="btn btn--ghost"
           onClick={() => setShowLog(true)}
         >
           Display Combat Log
         </button>
-        <button type="button" className="btn btn--ghost btn--sm" onClick={onReplay}>
+        <button type="button" className="btn btn--ghost" onClick={onReplay}>
           Watch again
         </button>
         {/*
@@ -2112,7 +2112,7 @@ function Result({
         */}
         <button
           type="button"
-          className="btn btn--primary btn--sm"
+          className="btn btn--primary"
           onClick={won || !onRetry ? onLeave : onRetry}
         >
           {won || !onRetry ? 'Back to map' : `Back to the ${venue}`}

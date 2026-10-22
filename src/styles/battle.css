@@ -1260,11 +1260,20 @@
   padding-bottom: var(--sp-6);
 }
 
+/* Full-size buttons, the size of Start Fight that began the fight. */
 .result__bar {
   display: flex;
   gap: var(--sp-2);
   justify-content: flex-end;
   flex-wrap: wrap;
+}
+
+/* A phone fits them by sharing the width rather than by shrinking them. */
+@media (max-width: 560px) {
+  .result__bar .btn {
+    flex: 1 1 auto;
+    padding: 0 var(--sp-3);
+  }
 }
 
 /* ---------- verdict and team ---------- */
