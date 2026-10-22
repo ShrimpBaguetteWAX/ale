@@ -9,7 +9,7 @@ import type { Land, Player } from '@/chain/types'
  * drawn, so it must not be counted either — a "12 dungeons" that includes
  * three the player cannot find on the map is a number that lies.
  */
-/* Boost in the contract's unit: 10,000 is 1x, 1,000 is 0.1x. Written `hoursAgo` ago. */
+/* Boost in the contract's unit: 100,000 is 1x, 10,000 is 0.1x. Written `hoursAgo` ago. */
 const land = (id: string, building: string, boost: number, hoursAgo = 1): Land =>
   ({
     land_id: id,
@@ -38,7 +38,7 @@ describe('summarisePlanet', () => {
   it('counts every dungeon and arena when nothing has decayed', () => {
     const s = summarisePlanet(
       'neri',
-      [land('1', 'dungeon', 350_000), land('2', 'dungeon', 2_000), land('3', 'arena', 1_000)],
+      [land('1', 'dungeon', 350_000), land('2', 'dungeon', 20_000), land('3', 'arena', 10_000)],
       player,
       new Set(),
       [],
@@ -55,12 +55,13 @@ describe('summarisePlanet', () => {
       'neri',
       [
         land('1', 'dungeon', 350_000),
-        /* Stored at 2x ten hours ago, decaying 1,500 an hour: 0.5x now. */
-        land('2', 'dungeon', 20_000, 10),
-        /* Stored at 2x twenty hours ago: gone to nothing. */
+        /* Stored at 2x ten hours ago, decaying 1,500 an hour: 1.85x now. */
+        land('2', 'dungeon', 200_000, 10),
+        /* Stored at 0.2x twenty hours ago: gone to nothing. */
         land('3', 'dungeon', 20_000, 20),
         land('4', 'arena', 0),
-        land('5', 'arena', 1_000, 0),
+        /* Exactly the floor, written just now: still drawn. */
+        land('5', 'arena', 10_000, 0),
       ],
       player,
       new Set(),
