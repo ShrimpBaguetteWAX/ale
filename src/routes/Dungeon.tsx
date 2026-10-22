@@ -883,6 +883,18 @@ export default function Dungeon() {
             */}
             <WeatherPanel weather={weather} />
           </div>
+          {!phone && (
+            <>
+              <span className="spacer" />
+              <DifficultyStepper
+                value={difficulty}
+                onChange={setDifficulty}
+                difMods={difMods}
+                xpPerDifficulty={xpPerDifficulty}
+                nftMinDifficulty={nftMinDifficulty}
+              />
+            </>
+          )}
           <span className="spacer" />
           <div className="dungeon__actions">
             <button
@@ -929,13 +941,16 @@ export default function Dungeon() {
           </div>
         )}
 
-        <DifficultyPicker
-          value={difficulty}
-          onChange={setDifficulty}
-          difMods={difMods}
-          xpPerDifficulty={xpPerDifficulty}
-          nftMinDifficulty={nftMinDifficulty}
-        />
+        {/* A desktop chooses it in the title line above. */}
+        {phone && (
+          <DifficultyPicker
+            value={difficulty}
+            onChange={setDifficulty}
+            difMods={difMods}
+            xpPerDifficulty={xpPerDifficulty}
+            nftMinDifficulty={nftMinDifficulty}
+          />
+        )}
 
         {/*
           The matchup, as a versus screen.
@@ -1520,6 +1535,106 @@ function DifficultyWheel({
 
       {/* Where the value is read, so the strip has a place to stop. */}
       <span className="difficulty__marker" aria-hidden="true" />
+    </div>
+  )
+}
+
+/**
+ * The difficulty on a desktop: a stepper in the title line.
+ *
+ * It was a panel of its own, twenty 44px buttons and a line of figures, the
+ * first thing under the title and 130px of page before the line-up. It is
+ * one ordinal value, so it reads as one: the number, a step either way, and
+ * a ladder of twenty ticks lit up to it that can still be clicked straight
+ * to 17. The tick where the dungeon's own NFT fighter joins wears a ring,
+ * and the figures sit beside it, so nothing the panel said is gone.
+ */
+function DifficultyStepper({
+  value,
+  onChange,
+  difMods,
+  xpPerDifficulty,
+  nftMinDifficulty,
+}: {
+  value: number
+  onChange: (n: number) => void
+  difMods: Map<number, number>
+  xpPerDifficulty: number
+  nftMinDifficulty: number
+}) {
+  const first = DIFFICULTIES[0]
+  const last = DIFFICULTIES[DIFFICULTIES.length - 1]
+  const go = (n: number) => onChange(Math.min(last, Math.max(first, n)))
+  const joins = `From difficulty ${nftMinDifficulty} the dungeon fields its own NFT fighter as well`
+
+  return (
+    <div className="dstep">
+      <button
+        type="button"
+        className="dstep__arrow"
+        onClick={() => go(value - 1)}
+        disabled={value <= first}
+        aria-label="Lower difficulty"
+        tabIndex={-1}
+      >
+        ‹
+      </button>
+      <span className="dstep__value" aria-hidden="true">
+        {value}
+      </span>
+      <button
+        type="button"
+        className="dstep__arrow"
+        onClick={() => go(value + 1)}
+        disabled={value >= last}
+        aria-label="Higher difficulty"
+        tabIndex={-1}
+      >
+        ›
+      </button>
+
+      <div className="dstep__side">
+        <span className="dstep__tally" title={value >= nftMinDifficulty ? joins : undefined}>
+          <span className="dstep__label">Difficulty</span>
+          Enemy <b>×{powerAt(value, difMods).toFixed(2)}</b> · Rewards{' '}
+          <b>×{rewardAt(value).toFixed(2)}</b> · <b>{xpFor(value, xpPerDifficulty)} XP</b>
+        </span>
+        <div
+          className="dstep__ticks"
+          role="radiogroup"
+          aria-label="Difficulty"
+          onKeyDown={(e) => {
+            const step = { ArrowLeft: -1, ArrowDown: -1, ArrowRight: 1, ArrowUp: 1 }[e.key]
+            if (!step) return
+            e.preventDefault()
+            const next = Math.min(last, Math.max(first, value + step))
+            onChange(next)
+            ;(e.currentTarget.children[next - first] as HTMLElement | undefined)?.focus()
+          }}
+        >
+          {DIFFICULTIES.map((d) => (
+            <button
+              type="button"
+              key={d}
+              role="radio"
+              aria-checked={d === value}
+              aria-label={`Difficulty ${d}`}
+              tabIndex={d === value ? 0 : -1}
+              title={
+                d === nftMinDifficulty
+                  ? `Difficulty ${d}: the dungeon's own NFT fighter joins from here`
+                  : `Difficulty ${d}`
+              }
+              className={[
+                'dstep__tick',
+                d <= value ? 'dstep__tick--lit' : '',
+                d === nftMinDifficulty ? 'dstep__tick--nft' : '',
+              ].join(' ')}
+              onClick={() => onChange(d)}
+            />
+          ))}
+        </div>
+      </div>
     </div>
   )
 }
