@@ -136,10 +136,15 @@ export function AppShell() {
         </div>
 
         {/*
-          The rail leans like the rest of the game, which means the contents
-          have to lean back — and a bare text node cannot be counter-skewed.
-          Hence the inner wrapper: it is load-bearing, not decoration.
+          The balances, in the menu: desktop has no top bar, and they belong
+          on every screen. The phone keeps them in its top bar.
         */}
+        {player && (
+          <div className="rail__wallet">
+            <ResourceStrip player={player} />
+          </div>
+        )}
+
         {NAV_ITEMS.map((item) =>
           item.soon ? (
             <span className="navlink navlink--soon" key={item.to} aria-disabled="true">

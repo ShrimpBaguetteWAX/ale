@@ -1667,6 +1667,133 @@
   color: var(--text-faint);
 }
 
+/*
+ * Desktop: the planet as a map label. No box while closed: the name sits on
+ * the map in spaced capitals with a soft shadow, the red dot when you are
+ * on it, and a chevron; the counts are in the list. Opened, it becomes a
+ * dark-glass button over a compact list in the same glass, the open planet
+ * lit cyan like the open menu entry. It sits clear of the menu, which the
+ * map now runs under.
+ */
+@media (min-width: 1024px) {
+  .shell--flush .planetmenu {
+    left: calc(var(--rail-w) + var(--sp-3));
+  }
+  .shell--flush .maptoast {
+    left: calc(50% + var(--rail-w) / 2);
+  }
+  .planetpill {
+    gap: 6px;
+    height: 26px;
+    padding: 0 8px;
+    border-color: transparent;
+    border-radius: 8px;
+    background: none;
+    box-shadow: none;
+    text-shadow: 0 1px 3px #000, 0 0 8px #000;
+  }
+  .planetpill:hover {
+    background: rgb(4 9 20 / 45%);
+  }
+  .planetpill[aria-expanded='true'] {
+    background: linear-gradient(180deg, rgb(10 18 34 / 66%), rgb(4 9 20 / 78%));
+    backdrop-filter: blur(14px) saturate(1.35);
+    -webkit-backdrop-filter: blur(14px) saturate(1.35);
+    box-shadow: inset 0 0 0 1px rgb(0 186 255 / 45%);
+    text-shadow: none;
+  }
+  .planetpill__sep,
+  .planetpill .pstats {
+    display: none;
+  }
+  .planetpill__name {
+    font-size: 11px;
+    letter-spacing: 0.2em;
+  }
+  .planetpill__chev {
+    width: 10px;
+    height: 10px;
+    stroke: #dfe7f3;
+    filter: drop-shadow(0 1px 2px #000);
+  }
+  .planetpill .planethere {
+    width: 5px;
+    height: 5px;
+    box-shadow: 0 0 6px var(--red);
+  }
+
+  .planetlist {
+    top: calc(100% + 5px);
+    width: auto;
+    min-width: 252px;
+    padding: 3px;
+    border: 0;
+    border-radius: 8px;
+    background: linear-gradient(180deg, rgb(10 18 34 / 80%), rgb(4 9 20 / 88%));
+    backdrop-filter: blur(14px) saturate(1.35);
+    -webkit-backdrop-filter: blur(14px) saturate(1.35);
+    box-shadow:
+      inset 0 0 0 1px rgb(255 255 255 / 10%),
+      0 12px 30px rgb(0 0 0 / 45%);
+  }
+  .planetlist__head,
+  .planetrow {
+    grid-template-columns: 1fr 30px 30px 30px;
+  }
+  .planetlist__head {
+    padding: 3px 8px 4px;
+  }
+  .planetlist__head img {
+    width: 13px;
+    height: 13px;
+    justify-self: center;
+  }
+  .planetrow {
+    position: relative;
+    height: 26px;
+    padding: 0 8px;
+    border-left: 0;
+    border-radius: 6px;
+    color: #d6deeb;
+    font-size: 10px;
+  }
+  .planetrow:hover {
+    background: rgb(255 255 255 / 7%);
+  }
+  .planetrow[aria-selected='true'] {
+    background: rgb(0 186 255 / 16%);
+  }
+  .planetrow[aria-selected='true']::before {
+    content: '';
+    position: absolute;
+    left: -3px;
+    top: 6px;
+    bottom: 6px;
+    width: 3px;
+    border-radius: 0 3px 3px 0;
+    background: var(--cyan);
+    box-shadow: 0 0 8px var(--cyan);
+  }
+  .planetrow__name {
+    letter-spacing: 0.1em;
+  }
+  .planetrow .pstat {
+    justify-self: center;
+    font-family: var(--font-body);
+    font-size: 11px;
+  }
+  .planetrow .pstat img {
+    display: none;
+  }
+  .planetlist__foot {
+    white-space: nowrap;
+    margin: 4px 8px 3px;
+    padding-top: 6px;
+    border-top: 1px solid rgb(255 255 255 / 8%);
+    font-size: 10.5px;
+  }
+}
+
 /* ---------- Actions, where they happen ---------- */
 
 /*

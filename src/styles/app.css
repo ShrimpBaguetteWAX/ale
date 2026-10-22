@@ -23,12 +23,34 @@
 }
 
 @media (min-width: 1024px) {
+  /*
+   * No top bar on desktop: the balances live in the menu, so the menu and
+   * the page are all there is. Pages that pin a header under the bar pin it
+   * to the top of the window instead.
+   */
   .shell {
     grid-template-columns: var(--rail-w) minmax(0, 1fr);
-    grid-template-rows: var(--topbar-h) 1fr;
-    grid-template-areas:
-      'rail top'
-      'rail main';
+    grid-template-rows: 1fr;
+    grid-template-areas: 'rail main';
+    --topbar-h: 0px;
+  }
+  /* Specific enough to beat the bar's own display, declared further down. */
+  .shell > .topbar {
+    display: none;
+  }
+  /*
+   * The map runs on under the menu, which is glass, and tells the map how
+   * much of its left edge the menu covers: anything under it can be panned
+   * out, and past the planet's edge the map carries on mirrored.
+   */
+  .shell--flush {
+    --map-inset-left: var(--rail-w);
+    /* The planet label and the map's own controls along the top. */
+    --map-inset-top: 48px;
+  }
+  .shell--flush .main {
+    grid-column: 1 / -1;
+    grid-row: 1;
   }
 }
 
@@ -329,38 +351,35 @@
 /* ---------- Left rail ---------- */
 
 /*
- * The rail, built like the top bar: a gradient body and a drawn edge rather
- * than a flat fill under a hairline. The edge is brightest opposite the menu
- * itself and fades toward the floor, so the panel reads as lit from within
- * instead of as a ruled column.
+ * Desktop's menu: dark glass, straight and quiet.
+ *
+ * Whatever is behind it shows through, softly blurred: the map on the map
+ * screen, which now runs on under the menu, and the page's own backdrop
+ * everywhere else. One faint hairline at its edge. The entries carry no
+ * panel of their own; a fill appears only where it means something, a
+ * soft grey under the pointer and cyan for the screen that is open, with a
+ * short cyan bar at the menu's edge. The balances live here too, under the
+ * logo, now that desktop has no top bar.
  */
 .rail {
   grid-area: rail;
   position: relative;
+  z-index: var(--z-sticky);
   display: none;
   flex-direction: column;
-  gap: var(--sp-1);
-  padding: var(--sp-4) var(--sp-3);
-  background: linear-gradient(180deg, rgb(24 34 60 / 94%), rgb(5 16 30 / 97%) 60%);
-  border-right: 0;
+  gap: 2px;
+  padding: var(--sp-3) var(--sp-3) var(--sp-4);
+  background: linear-gradient(180deg, rgb(10 18 34 / 62%), rgb(4 9 20 / 74%));
+  backdrop-filter: blur(14px) saturate(1.35);
+  -webkit-backdrop-filter: blur(14px) saturate(1.35);
+  box-shadow:
+    inset -1px 0 0 rgb(255 255 255 / 10%),
+    6px 0 24px rgb(0 0 0 / 30%);
 }
-
-.rail::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  right: 0;
-  width: 1px;
-  pointer-events: none;
-  background: linear-gradient(
-    180deg,
-    transparent,
-    rgb(145 54 188 / 70%) 8%,
-    rgb(0 186 255 / 45%) 38%,
-    rgb(145 54 188 / 35%) 72%,
-    transparent
-  );
+:root[data-fx='low'] .rail {
+  background: linear-gradient(180deg, rgb(10 18 34 / 94%), rgb(4 9 20 / 97%));
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 
 @media (min-width: 1024px) {
@@ -370,70 +389,95 @@
     top: 0;
     height: 100dvh;
     overflow-y: auto;
+    scrollbar-width: none;
+  }
+  .rail::-webkit-scrollbar {
+    display: none;
   }
 }
 
 .rail__brand {
-  padding: var(--sp-2) var(--sp-2) var(--sp-4);
-  margin-bottom: var(--sp-3);
-  border-bottom: 1px solid rgb(255 255 255 / 8%);
+  padding: var(--sp-1) var(--sp-2) var(--sp-3);
+  margin-bottom: var(--sp-2);
+  border-bottom: 1px solid rgb(255 255 255 / 9%);
 }
 .rail__brand img {
+  display: block;
   width: 100%;
-  max-width: 180px;
+  max-width: 150px;
   height: auto;
+  margin: 0 auto;
 }
 
 /*
- * A menu slot.
- *
- * Same construction as a currency chip in the top bar — the -5deg lean the
- * combat cards use, contents leaning back, an icon in a recessed socket — so
- * the frame reads as one piece of hardware rather than as a header in one
- * style and a sidebar in another.
- *
- * Restrained on purpose. Twelve slots carrying the full treatment the three
- * currency chips wear would be noise; here the socket rim and the fill stay
- * neutral until a slot is hovered or current, and the colour arrives only
- * where it means something.
+ * The balances, as three small tiles under the logo: icon over number. The
+ * chips keep their link to the shop shelf and their flare on a change; only
+ * their frame goes, the tile is the frame.
  */
+.rail__wallet {
+  margin-bottom: var(--sp-2);
+}
+.rail__wallet .resources {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px;
+  padding: 0;
+  overflow: visible;
+}
+.rail__wallet .res {
+  justify-content: center;
+  padding: 7px 0 6px;
+  border: 0;
+  border-radius: 8px;
+  background: rgb(255 255 255 / 5%);
+  box-shadow: none;
+  transform: none;
+}
+.rail__wallet .res::after {
+  display: none;
+}
+.rail__wallet .res:hover {
+  background: rgb(255 255 255 / 9%);
+}
+.rail__wallet .res__inner {
+  flex-direction: column;
+  gap: 3px;
+  transform: none;
+}
+.rail__wallet .res__socket {
+  width: 26px;
+  height: 26px;
+}
+.rail__wallet .res__icon {
+  width: 18px;
+  height: 18px;
+}
+.rail__wallet .res__value {
+  font-size: 11px;
+}
+
 .navlink {
   position: relative;
   display: block;
-  padding: var(--sp-2) var(--sp-3);
-  border-radius: var(--radius-xs);
-  /*
-     A plate at rest, not just on hover.
-     Without a visible body the lean has nothing to lean — the slot is only a
-     row of text, and the rail reads as a list again. A very low-alpha fill is
-     enough: twelve of them stack into a column of angled panels, which is the
-     shape a game menu has.
-  */
-  border: 1px solid rgb(255 255 255 / 7%);
-  background: linear-gradient(
-    180deg,
-    rgb(255 255 255 / 4%),
-    rgb(255 255 255 / 0%) 55%
-  );
-  color: var(--text-dim);
+  flex: none;
+  padding: 5px var(--sp-2);
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: #d6deeb;
   font-family: var(--font-display);
   font-size: var(--fs-sm);
   font-weight: var(--fw-medium);
   letter-spacing: 0.04em;
-  transform: skewX(-5deg);
   transition:
     background var(--dur-fast) var(--ease),
-    border-color var(--dur-fast) var(--ease),
-    color var(--dur-fast) var(--ease),
-    box-shadow var(--dur-fast) var(--ease),
-    translate var(--dur-fast) var(--ease);
+    color var(--dur-fast) var(--ease);
 }
 
 .navlink__inner {
   display: flex;
   align-items: center;
   gap: var(--sp-3);
-  transform: skewX(5deg);
 }
 
 .navlink__label {
@@ -443,108 +487,65 @@
   white-space: nowrap;
 }
 
-/* The icon well. Neutral at rest; the rim takes the accent when current. */
+/* The icon's well: a quiet square, lit cyan on the open screen. */
 .navlink__socket {
   display: grid;
   place-items: center;
-  width: 34px;
-  height: 34px;
+  width: 30px;
+  height: 30px;
   flex: none;
-  border-radius: var(--radius-xs);
-  background: radial-gradient(
-    circle at 50% 30%,
-    rgb(255 255 255 / 9%),
-    rgb(0 0 0 / 55%) 75%
-  );
-  box-shadow:
-    inset 0 0 0 1px rgb(255 255 255 / 12%),
-    inset 0 2px 6px rgb(0 0 0 / 70%);
-  transition: box-shadow var(--dur-fast) var(--ease);
+  border-radius: 8px;
+  background: rgb(255 255 255 / 5%);
+  transition: background var(--dur-fast) var(--ease);
 }
 
 .navlink:hover {
-  background:
-    linear-gradient(180deg, rgb(255 255 255 / 6%), rgb(255 255 255 / 0%) 45%),
-    rgb(145 54 188 / 20%);
-  border-color: rgb(255 255 255 / 12%);
+  background: rgb(255 255 255 / 7%);
   color: var(--white);
   text-decoration: none;
-  /* A nudge along the lean, so the slot answers the cursor. */
-  translate: 2px 0;
 }
 
-/*
- * The current section.
- *
- * Cyan rather than the violet it used to be, because cyan already means
- * "yours" elsewhere in the game — it is the colour on your own side of a
- * fight. A lit stem down the leading edge carries it, which is unmistakable
- * at a glance and cannot be confused with a hover.
- */
 .navlink[aria-current='page'] {
-  background:
-    linear-gradient(180deg, rgb(255 255 255 / 8%), rgb(255 255 255 / 0%) 45%),
-    linear-gradient(90deg, rgb(0 186 255 / 26%), rgb(0 186 255 / 6%));
-  border-color: rgb(0 186 255 / 45%);
+  background: rgb(0 186 255 / 16%);
   color: var(--white);
-  box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 12%),
-    0 0 16px -8px rgb(0 186 255 / 90%);
-  translate: 0 0;
 }
 
+/* Where you are: a short cyan bar on the menu's own edge. */
 .navlink[aria-current='page']::before {
   content: '';
   position: absolute;
-  left: -1px;
-  top: 6px;
-  bottom: 6px;
+  left: calc(-1 * var(--sp-3));
+  top: 8px;
+  bottom: 8px;
   width: 3px;
-  border-radius: 3px;
+  border-radius: 0 3px 3px 0;
   background: var(--cyan);
-  box-shadow: 0 0 10px rgb(0 186 255 / 90%);
+  box-shadow: 0 0 8px var(--cyan);
 }
 
 .navlink[aria-current='page'] .navlink__socket {
-  box-shadow:
-    inset 0 0 0 1px rgb(0 186 255 / 70%),
-    inset 0 2px 5px rgb(0 0 0 / 55%),
-    0 0 10px -4px rgb(0 186 255 / 80%);
+  background: rgb(0 186 255 / 14%);
 }
 
 .navlink--soon {
   opacity: 0.42;
   cursor: not-allowed;
-  /* Unlit: no plate, so a section that is not there yet does not present
-     itself as one of the panels you can press. */
-  background: none;
-  border-color: rgb(255 255 255 / 5%);
 }
 .navlink--soon:hover {
   background: none;
-  border-color: transparent;
-  color: var(--text-dim);
-  translate: 0 0;
+  color: #d6deeb;
 }
 
 .navlink__icon {
-  width: 26px;
-  height: 26px;
+  width: 24px;
+  height: 24px;
   flex: none;
   object-fit: contain;
 }
 
 /*
- * "Something is waiting in here."
- *
- * Amber, and only amber: the rail already uses cyan for the section you are
- * on, and a second meaning on the same colour would make neither legible. It
- * sits at the trailing edge where the SOON badge sits, because both answer
- * the same question about a slot and never appear together — a section that
- * does not exist yet has nothing waiting in it.
- *
- * The pulse is slow on purpose. This is a standing fact, not an alert; a fast
- * blink would demand attention the thing behind it has not earned.
+ * Something waiting in this section. Pulses gently, so a section with news
+ * is noticed without being shouted about.
  */
 .navlink__dot {
   margin-left: auto;
@@ -589,11 +590,6 @@
   font-weight: var(--fw-bold);
   letter-spacing: 0.1em;
   color: var(--text-faint);
-}
-
-:root[data-fx='low'] .navlink,
-:root[data-fx='low'] .navlink[aria-current='page'] {
-  box-shadow: none;
 }
 
 /* ---------- Mobile tab bar ---------- */

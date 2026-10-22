@@ -55,6 +55,13 @@ export interface MapCanvasProps {
    */
   insetTop?: number
   insetBottom?: number
+  /*
+     The same for every side can also come from the frame around the map:
+     `--map-inset-top`, `-right`, `-bottom` and `-left` on any ancestor, in
+     pixels, read whenever the map changes size. The larger of the prop and
+     the variable wins. That way the shell that floats its menu over the map
+     says how much it covers, without the map screen knowing the layout.
+  */
   lowFx?: boolean
   /** From lands.ale config; used to age stored boost values forward. */
   boostDecayPerHour?: number
@@ -177,6 +184,41 @@ function floorScale(w: number, h: number, fill = onPhone()): number {
   const contain = Math.min(w / GRID_W, h / GRID_H)
   const cover = Math.max(w / GRID_W, h / GRID_H)
   return Math.max(MIN_SCALE, fill ? cover : contain)
+}
+
+/**
+ * What lies past the edge of the map, where the frame lets it be panned.
+ *
+ * Empty background there read as the map having run out. Instead the art
+ * carries on, mirrored at each edge so it meets itself without a seam: the
+ * coast runs on and the planet simply seems bigger than its grid. The grid,
+ * the buildings and everything that can be selected stay on the real map.
+ * Only the copies that reach the window are drawn.
+ */
+function drawBeyond(
+  ctx: CanvasRenderingContext2D,
+  img: HTMLImageElement,
+  x: number,
+  y: number,
+  gw: number,
+  gh: number,
+  w: number,
+  h: number,
+) {
+  if (x <= 0 && y <= 0 && x + gw >= w && y + gh >= h) return
+  for (let dy = -1; dy <= 1; dy++) {
+    for (let dx = -1; dx <= 1; dx++) {
+      if (!dx && !dy) continue
+      const rx = x + dx * gw
+      const ry = y + dy * gh
+      if (rx > w || ry > h || rx + gw < 0 || ry + gh < 0) continue
+      ctx.save()
+      ctx.translate(dx ? rx + gw / 2 : 0, dy ? ry + gh / 2 : 0)
+      ctx.scale(dx ? -1 : 1, dy ? -1 : 1)
+      ctx.drawImage(img, dx ? -gw / 2 : rx, dy ? -gh / 2 : ry, gw, gh)
+      ctx.restore()
+    }
+  }
 }
 
 /**
@@ -634,17 +676,19 @@ export function MapCanvas({
     const tag = here.firstElementChild as HTMLElement | null
     if (!tag) return
     const { w, h } = sizeRef.current
+    /* Inside the open area, not under the frame. */
+    const { top, right, bottom, left } = insetRef.current
     const m = 8
     const tw = tag.offsetWidth
     const th = tag.offsetHeight
     const halo = Math.min(80, Math.max(44, at.size * 1.9))
-    const below = at.cy + halo / 2 + 9 + th + m <= h
-    const aboveRoom = at.cy - (halo / 2 + 24 + th + m) >= 0
+    const below = at.cy + halo / 2 + 9 + th + m <= h - bottom
+    const aboveRoom = at.cy - (halo / 2 + 24 + th + m) >= top
     here.classList.toggle('herepin--above', !below && aboveRoom)
     const half = tw / 2
     let dx = 0
-    if (at.cx - half < m) dx = m - (at.cx - half)
-    else if (at.cx + half > w - m) dx = w - m - (at.cx + half)
+    if (at.cx - half < left + m) dx = left + m - (at.cx - half)
+    else if (at.cx + half > w - right - m) dx = w - right - m - (at.cx + half)
     const limit = Math.max(0, half - 18)
     dx = Math.max(-limit, Math.min(limit, dx))
     here.style.setProperty('--tag-dx', dx + 'px')
@@ -741,7 +785,7 @@ export function MapCanvas({
     if (!visible) return
     el.style.transform = 'translate(' + cx + 'px, ' + cy + 'px)'
     el.style.setProperty('--tile', scale + 'px')
-    el.classList.toggle('selpin--left', cx > w - 230)
+    el.classList.toggle('selpin--left', cx > w - insetRef.current.right - 230)
   }, [])
 
   const draw = useCallback(() => {
@@ -767,6 +811,7 @@ export function MapCanvas({
       // Smoothing off when magnified past native: crisper, and cheaper.
       ctx.imageSmoothingEnabled = scale < SRC_TILE
       ctx.drawImage(img, tx, ty, GRID_W * scale, GRID_H * scale)
+      drawBeyond(ctx, img, tx, ty, GRID_W * scale, GRID_H * scale, w, h)
     }
 
     // Visible tile range, so overlays never iterate off-screen lands.
@@ -1329,44 +1374,130 @@ export function MapCanvas({
      this file list it, and giving it a changing identity would re-run them
      every time a card opened.
   */
-  const insetRef = useRef({ top: insetTop, bottom: insetBottom })
-  insetRef.current = { top: insetTop, bottom: insetBottom }
+  /* The frame's covered bands, from the CSS variables; see `insetTop`. */
+  const frameInsetRef = useRef({ top: 0, right: 0, bottom: 0, left: 0, bottomLeft: 0 })
+  /* A taller band in the bottom-left corner, where a phone stacks its quick buttons. */
+  const cornerRef = useRef(0)
+  const insetRef = useRef({ top: insetTop, right: 0, bottom: insetBottom, left: 0 })
+  {
+    const f = frameInsetRef.current
+    insetRef.current = {
+      top: Math.max(insetTop, f.top),
+      right: f.right,
+      bottom: Math.max(insetBottom, f.bottom),
+      left: f.left,
+    }
+  }
+  /* Read the frame's insets off the host; true when they changed. */
+  const readFrameInsets = useCallback((host: HTMLElement): boolean => {
+    const css = getComputedStyle(host)
+    const px = (name: string) => Math.max(0, parseFloat(css.getPropertyValue(name)) || 0)
+    const next = {
+      top: px('--map-inset-top'),
+      right: px('--map-inset-right'),
+      bottom: px('--map-inset-bottom'),
+      left: px('--map-inset-left'),
+      bottomLeft: px('--map-inset-bottom-left'),
+    }
+    cornerRef.current = next.bottomLeft
+    const prev = frameInsetRef.current
+    frameInsetRef.current = next
+    insetRef.current = {
+      top: Math.max(insetRef.current.top, next.top),
+      right: next.right,
+      bottom: Math.max(insetRef.current.bottom, next.bottom),
+      left: next.left,
+    }
+    return prev.top !== next.top || prev.right !== next.right || prev.bottom !== next.bottom || prev.left !== next.left
+  }, [])
 
   const clamp = useCallback(() => {
     const v = viewRef.current
     const { w, h } = sizeRef.current
-    const { top, bottom } = insetRef.current
+    const { top, right, bottom, left } = insetRef.current
     const gridW = GRID_W * v.scale
     const gridH = GRID_H * v.scale
-    v.tx = Math.min(0, Math.max(w - gridW, v.tx))
     /*
-       The extra room at each end is what makes the first and last rows
-       reachable: pan the grid down by `top` and its first row clears whatever
-       sits at the top; pan it up by `bottom` and the last row clears the
-       travel bar.
+       The extra room on each side is what makes the edge tiles reachable:
+       pan the grid in by `left` and its first column clears whatever floats
+       on the left; out by `right` and the last one clears the right; the
+       same for the first and last rows. Anything on the map can be brought
+       out from under the frame.
     */
-    v.ty = Math.min(top, Math.max(h - gridH - bottom, v.ty))
-    if (gridW < w) v.tx = (w - gridW) / 2
-    if (gridH + top + bottom < h) v.ty = (h - gridH) / 2
+    v.tx = Math.min(left, Math.max(w - gridW - right, v.tx))
+    /* The bottom-left corner's taller band too, or a tile in it could never clear it. */
+    v.ty = Math.min(top, Math.max(h - gridH - Math.max(bottom, cornerRef.current), v.ty))
+    /* Smaller than the open area: sit in the middle of it, not of the window. */
+    if (gridW + left + right < w) v.tx = left + (w - left - right - gridW) / 2
+    if (gridH + top + bottom < h) v.ty = top + (h - top - bottom - gridH) / 2
+  }, [])
+
+  /** The middle of the open area: the window less what floats over its edges. */
+  const openCentre = useCallback((): [number, number] => {
+    const { w, h } = sizeRef.current
+    const { top, right, bottom, left } = insetRef.current
+    return [left + (w - left - right) / 2, top + (h - top - bottom) / 2]
   }, [])
 
   const centerOn = useCallback(
     (gx: number, gy: number) => {
       const v = viewRef.current
+      const [cx, cy] = openCentre()
+      v.tx = cx - (gx - PLAY_MIN_X + 0.5) * v.scale
+      v.ty = cy - (gy - PLAY_MIN_Y + 0.5) * v.scale
+      clamp()
+      drawNow()
+    },
+    [clamp, drawNow, openCentre],
+  )
+
+  /**
+   * Bring a tile out into the open area if it is under the frame, moving the
+   * map no more than it takes. The margin leaves room for the tile's own
+   * marker and the tag that hangs off it.
+   */
+  const bringIntoView = useCallback(
+    (gx: number, gy: number) => {
+      const v = viewRef.current
       const { w, h } = sizeRef.current
-      v.tx = w / 2 - (gx - PLAY_MIN_X + 0.5) * v.scale
-      v.ty = h / 2 - (gy - PLAY_MIN_Y + 0.5) * v.scale
+      const { top, right, bottom, left } = insetRef.current
+      const m = v.scale * 0.9
+      const cx = (gx - PLAY_MIN_X + 0.5) * v.scale + v.tx
+      const cy = (gy - PLAY_MIN_Y + 0.5) * v.scale + v.ty
+      /* In the bottom-left quarter the floor is the corner's own, where it has one. */
+      const floor = cx < w / 2 ? Math.max(bottom, cornerRef.current) : bottom
+      let dx = 0
+      let dy = 0
+      if (cx < left + m) dx = left + m - cx
+      else if (cx > w - right - m) dx = w - right - m - cx
+      if (cy < top + m) dy = top + m - cy
+      else if (cy > h - floor - m) dy = h - floor - m - cy
+      if (!dx && !dy) return
+      v.tx += dx
+      v.ty += dy
       clamp()
       drawNow()
     },
     [clamp, drawNow],
   )
 
+  /*
+     How far out the zoom goes. A phone fills the whole screen with the map,
+     glass and all, so its floor stays "cover the window". A wide screen
+     zooms out until the whole planet sits in the open area, clear of the
+     frame.
+  */
+  const floorFor = useCallback((w: number, h: number) => {
+    if (onPhone()) return floorScale(w, h)
+    const { top, right, bottom, left } = insetRef.current
+    return floorScale(Math.max(1, w - left - right), Math.max(1, h - top - bottom), false)
+  }, [])
+
   const zoomAt = useCallback(
     (factor: number, cx: number, cy: number) => {
       const v = viewRef.current
       const { w, h } = sizeRef.current
-      const floor = floorScale(w, h)
+      const floor = floorFor(w, h)
       const next = Math.min(MAX_SCALE, Math.max(floor, v.scale * factor))
       if (Math.abs(next - v.scale) < 0.01) return
       v.tx = cx - ((cx - v.tx) / v.scale) * next
@@ -1375,7 +1506,7 @@ export function MapCanvas({
       clamp()
       drawNow()
     },
-    [clamp, drawNow],
+    [clamp, drawNow, floorFor],
   )
 
   // Size the backing store to the element, capping DPR: a 3x buffer on a
@@ -1403,6 +1534,7 @@ export function MapCanvas({
       */
       const dpr = Math.min(window.devicePixelRatio || 1, 2)
       const first = sizeRef.current.w === 0
+      readFrameInsets(host)
       sizeRef.current = { w, h, dpr }
       canvas.width = Math.round(w * dpr)
       canvas.height = Math.round(h * dpr)
@@ -1410,7 +1542,7 @@ export function MapCanvas({
       canvas.style.height = h + 'px'
 
       const v = viewRef.current
-      const floor = floorScale(w, h)
+      const floor = floorFor(w, h)
       /* Open on 'cover' so the art fills the panel rather than sitting in
          letterbox bars. On a phone that is also the floor, so it stays
          filled; on a desktop zooming out still reaches the whole planet. */
@@ -1429,12 +1561,13 @@ export function MapCanvas({
     const ro = new ResizeObserver(apply)
     ro.observe(host)
     return () => ro.disconnect()
-  }, [clamp, drawNow, lowFx])
+  }, [clamp, drawNow, lowFx, floorFor, readFrameInsets])
 
   /* The zoom, for the rail outside the canvas. */
   useEffect(() => {
     if (!zoomApi) return
-    const centre = () => [sizeRef.current.w / 2, sizeRef.current.h / 2] as const
+    /* Zoom about the middle of what can be seen, not of the window. */
+    const centre = openCentre
     zoomApi.current = {
       zoomIn: () => zoomAt(1.35, ...centre()),
       zoomOut: () => zoomAt(1 / 1.35, ...centre()),
@@ -1446,7 +1579,7 @@ export function MapCanvas({
     return () => {
       zoomApi.current = null
     }
-  }, [zoomApi, zoomAt])
+  }, [zoomApi, zoomAt, openCentre])
 
   /*
      A band that was covered is not any more, so anything panned into its
@@ -1457,6 +1590,13 @@ export function MapCanvas({
     clamp()
     drawNow()
   }, [insetTop, insetBottom, clamp, drawNow])
+
+  /* A newly selected tile under the frame is brought out into the open. */
+  useEffect(() => {
+    if (selected) bringIntoView(selected.x, selected.y)
+    // Keyed on the coordinates: `selected` is a new object on every render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selected?.x, selected?.y, bringIntoView])
 
   /*
      Recentre when asked, and only when asked.
@@ -1583,8 +1723,10 @@ export function MapCanvas({
       }
       onSelectRef.current(next)
       centerOn(next.x, next.y)
+      /* Centred, an edge tile still can sit under the frame: the clamp stops short. */
+      bringIntoView(next.x, next.y)
     },
-    [centerOn],
+    [centerOn, bringIntoView],
   )
 
   return (
