@@ -1420,11 +1420,19 @@
  * the thing you press is next to the thing it does. It flips to the left
  * when the tile is near the right edge of the frame.
  */
+/*
+ * `max-content`, on both tags: an absolutely positioned box inside an anchor
+ * with no width shrinks to fit, and the browser's shrink-to-fit of an
+ * inline-flex row with letter-spaced text comes out a few pixels under what
+ * the text then takes — the last word sat on the right edge, over the
+ * padding. Sized to content, the padding is the padding.
+ */
 .traveltag {
   position: absolute;
   left: calc(var(--tile) / 2 + 12px);
   top: 0;
   translate: 0 -50%;
+  width: max-content;
   display: grid;
   gap: 4px;
   justify-items: start;
@@ -1445,8 +1453,9 @@
   display: inline-flex;
   align-items: center;
   gap: 10px;
+  width: max-content;
   height: var(--tag-h);
-  padding: 0 14px 0 13px;
+  padding: 0 16px 0 14px;
   border: 0;
   border-radius: var(--radius-sm);
   background: var(--grad-gold);
@@ -1517,6 +1526,7 @@
 .traveltag__note,
 .herelabel {
   display: inline-block;
+  width: max-content;
   padding: 4px 10px;
   border-radius: 999px;
   background: rgb(5 16 30 / 85%);
@@ -1545,8 +1555,9 @@
   display: inline-flex;
   align-items: center;
   gap: 10px;
+  width: max-content;
   height: var(--tag-h);
-  padding: 0 16px 0 12px;
+  padding: 0 18px 0 14px;
   border-radius: var(--radius-sm);
   background: linear-gradient(170deg, #14e2b2, #0a9c7b);
   color: #06201a;
