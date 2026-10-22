@@ -612,21 +612,43 @@ function Arena({
             ))}
           </div>
 
-          <div className="battle__progress">
-            <span className="battle__turn mono">
-              Attack {step}/{total}
-            </span>
-            <span className="battle__track" aria-hidden="true">
-              <span
-                className="battle__fill"
-                style={{ transform: `scaleX(${total ? step / total : 1})` }}
-              />
-            </span>
+          {/*
+            The scoreboard: the attack count large, and a segment per attack
+            that lights as it lands. A long fight shares segments, so the
+            row never runs to more than thirty.
+          */}
+          <div
+            className="battle__score"
+            role="progressbar"
+            aria-label="Attacks played"
+            aria-valuemin={0}
+            aria-valuemax={total}
+            aria-valuenow={step}
+          >
+            <div className="battle__scoretop">
+              <span className="battle__scorelbl">Attack</span>
+              <span className="battle__scorenum">
+                {step}
+                <small> / {total}</small>
+              </span>
+            </div>
+            <div className="battle__segs" aria-hidden="true">
+              {(() => {
+                const n = Math.max(1, Math.min(total, 30))
+                const lit = total ? Math.round((step / total) * n) : n
+                return Array.from({ length: n }, (_, i) => (
+                  <i key={i} className={i < lit ? 'is-on' : undefined} />
+                ))
+              })()}
+            </div>
           </div>
 
-          {/* On the right, where a hand goes to move on. */}
-          <button type="button" className="btn btn--ghost btn--sm battle__skip" onClick={skip}>
+          {/* On the right, where a hand goes to move on. The size of Start Fight. */}
+          <button type="button" className="btn btn--ghost battle__skip" onClick={skip}>
             Skip Fight
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M4 5v14l8-7zM12 5v14l8-7z" />
+            </svg>
           </button>
         </header>
 

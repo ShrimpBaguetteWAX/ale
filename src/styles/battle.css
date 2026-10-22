@@ -57,54 +57,89 @@
 
 /* ---------- transport ---------- */
 
+/*
+ * The bar over a running fight, as a small scoreboard: the view switch on
+ * the left, the attack count large in the middle over a segment per attack,
+ * and Skip Fight on the right at the size of Start Fight.
+ */
 .battle__bar {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
   align-items: center;
-  gap: var(--sp-3);
-  flex-wrap: wrap;
-  padding: var(--sp-2) var(--sp-3);
-  background: rgb(0 0 0 / 45%);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
+  gap: var(--sp-4);
+  padding: 10px var(--sp-3);
+  background: linear-gradient(180deg, rgb(10 14 32 / 88%), rgb(5 8 20 / 88%));
+  border: 1px solid rgb(145 54 188 / 55%);
+  border-radius: var(--radius-md);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 6%),
+    0 10px 26px rgb(0 0 0 / 40%);
 }
 
-/* The way out, on the right — and still on the right when the bar wraps
-   and leaves it on a line of its own. */
-.battle__skip {
-  margin-left: auto;
+.battle__skip svg {
+  width: 16px;
+  height: 16px;
 }
 
-.battle__progress {
+.battle__score {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+.battle__scoretop {
   display: flex;
-  align-items: center;
-  gap: var(--sp-3);
-  flex: 1;
-  min-width: 160px;
+  justify-content: space-between;
+  align-items: baseline;
 }
-
-.battle__turn {
-  font-size: var(--fs-xs);
-  color: var(--text-dim);
-  white-space: nowrap;
+.battle__scorelbl {
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: var(--fw-bold);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-faint);
 }
-
-.battle__track {
-  position: relative;
+.battle__scorenum {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--white);
+  font-variant-numeric: tabular-nums;
+}
+.battle__scorenum small {
+  font-size: 12px;
+  font-weight: var(--fw-medium);
+  color: var(--text-faint);
+}
+.battle__segs {
+  display: flex;
+  gap: 3px;
+}
+.battle__segs i {
   flex: 1;
-  height: 4px;
+  height: 6px;
   border-radius: 2px;
   background: rgb(255 255 255 / 12%);
-  overflow: hidden;
+  transition:
+    background calc(300ms * var(--beat, 1)) ease,
+    box-shadow calc(300ms * var(--beat, 1)) ease;
+}
+.battle__segs i.is-on {
+  background: var(--gold);
+  box-shadow: 0 0 6px rgb(246 168 0 / 50%);
 }
 
-.battle__fill {
-  position: absolute;
-  inset: 0;
-  transform-origin: left center;
-  background: var(--grad-gold);
-  /* Follows the beat, so the bar creeps with the fight rather than
-     snapping a fifth of a second after each attack. */
-  transition: transform calc(900ms * var(--beat, 1)) linear;
+/* A phone has no room for three columns: the switch and Skip share the top
+   row, the scoreboard takes the row under them. */
+@media (max-width: 560px) {
+  .battle__bar {
+    grid-template-columns: 1fr auto;
+    gap: var(--sp-3);
+  }
+  .battle__score {
+    grid-column: 1 / -1;
+    order: 1;
+  }
 }
 
 /* ---------- the stage ---------- */
