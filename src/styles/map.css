@@ -1410,8 +1410,6 @@
 .herepin {
   --pin-size: 26px;
   --pin-dot: clamp(20px, calc(var(--pin-size) * 0.8), 28px);
-  --tag-h: clamp(40px, var(--pin-size), 52px);
-  --tag-fs: clamp(12px, calc(var(--pin-size) * 0.3), 15px);
 }
 
 /*
@@ -1523,8 +1521,7 @@
 
 /* Why there is no gold tag, or what to know before pressing it. */
 .traveltag__none,
-.traveltag__note,
-.herelabel {
+.traveltag__note {
   display: inline-block;
   width: max-content;
   padding: 4px 10px;
@@ -1542,75 +1539,100 @@
 }
 
 /*
- * The way in to whatever is under the player's feet, hanging off their own
- * pin, where they are. Teal rather than gold: going somewhere and going in
- * are different offers, and the map should not show two gold tags at once.
+ * The plaque: what the player is standing on, under their own pin.
+ *
+ * One piece. A dark plate names the building, with its kind and live boost
+ * in the building's colour; when there is a way in, the gold Enter is the
+ * plate's bottom edge. Nothing floats above the pin, so the "You" tag keeps
+ * the top and the map above it stays clear.
  */
-.entertag {
+.plaque {
   position: absolute;
   left: 0;
-  /* Above the "You" tag, which sits above the dot. */
-  top: calc(var(--pin-dot) / -2 - 30px);
-  translate: -50% -100%;
-  display: inline-flex;
+  top: calc(var(--pin-dot) / 2 + 10px);
+  translate: -50% 0;
+  width: max-content;
+  display: grid;
+  pointer-events: auto;
+  filter: drop-shadow(0 8px 18px rgb(0 0 0 / 45%));
+  --k: var(--text-dim);
+}
+.plaque--dungeon {
+  --k: var(--cyan);
+}
+.plaque--arena {
+  --k: var(--gold);
+}
+.plaque--tavern {
+  --k: #00c04a;
+}
+.plaque--portal {
+  --k: var(--magenta);
+}
+
+.plaque__plate {
+  display: flex;
   align-items: center;
   gap: 10px;
-  width: max-content;
-  height: var(--tag-h);
-  padding: 0 18px 0 14px;
-  border-radius: var(--radius-sm);
-  background: linear-gradient(170deg, #14e2b2, #0a9c7b);
-  color: #06201a;
-  font-family: var(--font-display);
-  font-size: var(--tag-fs);
-  font-weight: var(--fw-bold);
-  letter-spacing: 0.06em;
-  white-space: nowrap;
-  text-decoration: none;
-  pointer-events: auto;
-  box-shadow: 0 6px 18px rgb(14 212 168 / 40%);
+  padding: 8px 14px 8px 10px;
+  border-radius: 10px;
+  background: linear-gradient(180deg, rgb(16 26 48 / 97%), rgb(8 14 28 / 97%));
+  border: 1px solid rgb(255 255 255 / 14%);
 }
-.entertag::after {
-  content: '';
-  position: absolute;
-  left: 50%;
-  bottom: -7px;
-  translate: -50% 0;
-  border: 7px solid transparent;
-  border-top-color: #0a9c7b;
+.plaque--door .plaque__plate {
+  border-radius: 10px 10px 0 0;
   border-bottom: 0;
 }
-.entertag:hover {
-  filter: brightness(1.08);
-}
-.entertag img {
-  width: 24px;
-  height: 24px;
+.plaque__icon {
+  width: 22px;
+  height: 22px;
+  flex: none;
   object-fit: contain;
 }
-
-/* What the player is standing on, under the dot. */
-.herelabel {
-  position: absolute;
-  left: 0;
-  top: calc(var(--pin-dot) / 2 + 8px);
-  translate: -50% 0;
+.plaque__name {
+  display: block;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  line-height: 1.2;
+  color: var(--white);
+  white-space: nowrap;
   text-transform: capitalize;
 }
+.plaque__sub {
+  display: block;
+  margin-top: 2px;
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: var(--fw-medium);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--k);
+  white-space: nowrap;
+}
 
-/* Near the top of the frame the tag has nowhere to go but down. */
-.herepin--below .entertag {
-  top: calc(var(--pin-dot) / 2 + 8px);
-  translate: -50% 0;
+/* The way in, as the plate's bottom edge. */
+.plaque__go {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 40px;
+  border-radius: 0 0 10px 10px;
+  background: var(--grad-gold);
+  color: #2a1c00;
+  font-family: var(--font-display);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-bold);
+  letter-spacing: 0.1em;
+  white-space: nowrap;
+  text-decoration: none;
 }
-.herepin--below .entertag::after {
-  bottom: auto;
-  top: -7px;
-  border-top: 0;
-  border-bottom: 7px solid #14e2b2;
+.plaque__go::after {
+  content: '▸';
+  font-size: 14px;
 }
-.herepin--below .herelabel {
-  top: calc(var(--pin-dot) / 2 + var(--tag-h) + 18px);
+.plaque__go:hover {
+  filter: brightness(1.08);
 }
 
 /* ---------- clearing the map ---------- */

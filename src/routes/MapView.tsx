@@ -21,7 +21,14 @@ import {
   type LiveArena,
   type PlanetStatus,
 } from '@/map/planetStatus'
-import { MARKER_SRC, formatBoost, liveBoostPercent, planetMapSrc, type MarkerKey } from '@/map/terrain'
+import {
+  MARKER_SRC,
+  buildingIcon,
+  formatBoost,
+  liveBoostPercent,
+  planetMapSrc,
+  type MarkerKey,
+} from '@/map/terrain'
 import { dungeonMaintained } from '@/dungeon/rules'
 import { arenaMaintained } from '@/arena/rules'
 import { fetchCapturedArenas, type CapturedArena } from '@/arena/queries'
@@ -839,27 +846,30 @@ export default function MapView() {
         : null
 
   /*
-     What the player is standing on, named under the dot.
+     What the player is standing on, as a plaque under the dot.
 
      The land under the player rather than the selected one: the card that
      used to describe a selected land is gone, and the one land whose owner
-     and boost are worth a line is the one you are about to walk into.
+     and boost are worth a line is the one you are about to walk into. The
+     plate names it; when there is a way in, the gold Enter is the plate's
+     bottom edge, so the name and the door are one piece.
   */
   const hereLand = useMemo(
     () => (onPlanet ? (lands ?? []).find((l) => l.x === player.x && l.y === player.y) : undefined),
     [onPlanet, lands, player.x, player.y],
   )
-  const hereLabel = useMemo(() => {
+  const here = useMemo(() => {
     if (!hereLand) return null
     const building = hereLand.buildings[0]
     if (!building) {
       const to = hereLand.special_effect ? PORTAL_EFFECTS[hereLand.special_effect] : undefined
-      return to ? `Portal to ${to}` : null
+      return to ? { kind: 'portal', icon: MARKER_SRC.portal, name: `Portal to ${to}`, sub: 'Portal' } : null
     }
-    const name = String(building.building_name).replace(/-/g, ' ')
+    const raw = String(building.building_name)
+    const name = raw.replace(/-/g, ' ')
+    const kind = name === 'tavern' || name === 'dungeon' || name === 'arena' ? name : 'other'
     const who = owners[String(hereLand.asset_id)]
-    const whose =
-      who === player.wallet ? 'Your' : who ? `${tags[who] || who}’s` : ''
+    const whose = who === player.wallet ? 'Your' : who ? `${tags[who] || who}’s` : ''
     const boost =
       name === 'tavern'
         ? ''
@@ -870,24 +880,35 @@ export default function MapView() {
               landsConfig?.boost_decay_per_hour ?? 0,
             ),
           )
-    return `${whose} ${name}${boost ? ` · ${boost}` : ''}`.trim()
+    return {
+      kind,
+      icon: kind === 'other' ? buildingIcon(raw) : MARKER_SRC[kind],
+      name: `${whose} ${name}`.trim(),
+      sub: `${name}${boost ? ` · ${boost}` : ''}`,
+    }
   }, [hereLand, owners, tags, player.wallet, landsConfig])
 
   /*
      Hangs off the pin. Nothing while a trip is playing out: the pin is in
      flight, and an offer to enter what was under it belongs to where it was.
   */
-  const pinSlot: ReactNode = travelling ? null : (
-    <>
-      {enterTo && (
-        <Link className="entertag" to={`/${enterTo}`}>
-          <img src={MARKER_SRC[enterTo]} alt="" />
-          Enter {enterTo === 'tavern' ? 'Tavern' : enterTo === 'dungeon' ? 'Dungeon' : 'Arena'}
-        </Link>
-      )}
-      {hereLabel && <span className="herelabel">{hereLabel}</span>}
-    </>
-  )
+  const pinSlot: ReactNode =
+    travelling || !here ? null : (
+      <div className={`plaque plaque--${here.kind}${enterTo ? ' plaque--door' : ''}`}>
+        <div className="plaque__plate">
+          <img className="plaque__icon" src={here.icon} alt="" />
+          <div>
+            <span className="plaque__name">{here.name}</span>
+            <span className="plaque__sub">{here.sub}</span>
+          </div>
+        </div>
+        {enterTo && (
+          <Link className="plaque__go" to={`/${enterTo}`}>
+            Enter {enterTo === 'tavern' ? 'Tavern' : enterTo === 'dungeon' ? 'Dungeon' : 'Arena'}
+          </Link>
+        )}
+      </div>
+    )
 
   /*
      Hangs off the selected tile: the way there, with the cost, or the one
