@@ -68,6 +68,12 @@
   border-radius: var(--radius-sm);
 }
 
+/* The way out, on the right — and still on the right when the bar wraps
+   and leaves it on a line of its own. */
+.battle__skip {
+  margin-left: auto;
+}
+
 .battle__progress {
   display: flex;
   align-items: center;

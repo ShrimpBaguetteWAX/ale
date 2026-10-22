@@ -625,7 +625,7 @@ function Arena({
           </div>
 
           {/* On the right, where a hand goes to move on. */}
-          <button type="button" className="btn btn--ghost btn--sm" onClick={skip}>
+          <button type="button" className="btn btn--ghost btn--sm battle__skip" onClick={skip}>
             Skip Fight
           </button>
         </header>
