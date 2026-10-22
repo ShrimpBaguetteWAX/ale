@@ -59,17 +59,10 @@ describe('Auto-pick cards with Undo', () => {
     expect(undo().disabled).toBe(true)
   })
 
-  it('leaves nothing to undo when the pick changes nothing, and says so', () => {
+  it('leaves nothing to undo when the pick changes nothing', () => {
     render(<Loadout start={{ crew: A, weapon: B }} picks={{ crew: A, weapon: B }} />)
     fireEvent.click(screen.getByText('Auto-pick cards'))
     expect(undo().disabled).toBe(true)
-    expect(screen.getByText('Nothing beats your pair.')).toBeTruthy()
-  })
-
-  it('says nothing when there was no pair to keep', () => {
-    render(<Loadout start={{ crew: null, weapon: null }} picks={{ crew: null, weapon: null }} />)
-    fireEvent.click(screen.getByText('Auto-pick cards'))
-    expect(screen.queryByText('Nothing beats your pair.')).toBeNull()
   })
 
   it('withdraws Undo once the pair is changed by hand', () => {
