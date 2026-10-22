@@ -51,8 +51,8 @@
 }
 
 /*
- * The trip to the selected tile: muted gold arrows tile by tile and a
- * dashed ring on the land, breathing in a slow wave toward where it goes.
+ * The trip to the selected tile: thin arcs of light hopping between landing
+ * pads on the ground, each with its shadow below, the pads glowing in turn.
  * Laid out in tile units; MapCanvas scales the group with the map, and the
  * strokes keep their width whatever the zoom.
  */
@@ -65,53 +65,58 @@
   overflow: visible;
   pointer-events: none;
 }
-.maptrip__step {
-  fill: #e8b23a;
-  fill-opacity: 0.68;
-  stroke: rgb(46 26 0 / 62%);
+/* The hop's shadow on the ground. Two strokes rather than a blur: a blur
+   here would be in tile units, about forty pixels at the opening zoom. */
+.maptrip__shadow path {
+  fill: none;
+  stroke: rgb(30 18 6 / 20%);
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+}
+.maptrip__shadow .maptrip__shadow-soft {
+  stroke: rgb(30 18 6 / 8%);
+  stroke-width: 6;
+}
+/* The hop itself, lifted off the ground. */
+.maptrip__air {
+  fill: none;
+  stroke: #ffe2a0;
+  stroke-opacity: 0.62;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+}
+/* A landing pad: a soft ring of light lying flat, a glow in the middle. */
+.maptrip__pad {
+  opacity: 0.6;
+  animation: trip-pad 9s ease-in-out infinite;
+}
+.maptrip__pad-rim {
+  fill: url(#maptrip-pool);
+  stroke: #ffe2a0;
+  stroke-opacity: 0.75;
   stroke-width: 1.4;
-  stroke-linejoin: round;
   vector-effect: non-scaling-stroke;
-  transform-box: fill-box;
-  transform-origin: center;
-  animation: trip-wave 6s ease-in-out infinite;
 }
-@keyframes trip-wave {
-  0%,
-  60%,
-  100% {
-    fill-opacity: 0.66;
-    transform: scale(1);
-  }
-  30% {
-    fill-opacity: 0.8;
-    transform: scale(1.03);
-  }
-}
-.maptrip__ring {
+.maptrip__pad-inner {
   fill: none;
-  stroke: #e8b23a;
-  stroke-opacity: 0.8;
-  stroke-width: 2.5;
-  stroke-dasharray: 6 5;
-  vector-effect: non-scaling-stroke;
-  animation: trip-ring 6s ease-in-out infinite;
-}
-/* A dark bed under the ring, so it reads on sand. A CSS shadow would blur in
-   tile units here, about forty pixels at the opening zoom. */
-.maptrip__bed {
-  fill: none;
-  stroke: rgb(46 26 0 / 40%);
-  stroke-width: 5;
+  stroke: #ffe2a0;
+  stroke-opacity: 0.65;
+  stroke-width: 1;
   vector-effect: non-scaling-stroke;
 }
-@keyframes trip-ring {
+.maptrip__pad-core {
+  fill: #fff4d6;
+}
+@keyframes trip-pad {
   0%,
   100% {
-    stroke-opacity: 0.7;
+    opacity: 0.6;
   }
-  50% {
-    stroke-opacity: 0.85;
+  8%,
+  22% {
+    opacity: 1;
   }
 }
 .maptrip__start {
@@ -122,13 +127,11 @@
   vector-effect: non-scaling-stroke;
 }
 /* Still, where the player asked for less motion. */
-:root[data-fx='low'] .maptrip__step,
-:root[data-fx='low'] .maptrip__ring {
+:root[data-fx='low'] .maptrip__pad {
   animation: none;
 }
 @media (prefers-reduced-motion: reduce) {
-  .maptrip__step,
-  .maptrip__ring {
+  .maptrip__pad {
     animation: none;
   }
 }

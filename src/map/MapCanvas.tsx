@@ -7,7 +7,7 @@ import {
   PORTAL_EFFECTS,
 } from '@/chain/config'
 import type { Land } from '@/chain/types'
-import { tileSteps } from './tileSteps'
+import { hopStops } from './tileSteps'
 import {
   MARKER_SRC,
   buildingMarker,
@@ -426,27 +426,49 @@ export function MapCanvas({
   const tripRef = useRef<SVGGElement>(null)
 
   /*
-     The trip, tile by tile, the way a strategy map plots a march: a muted
-     arrow on each tile it crosses, pointing at the next, and a dashed ring
-     on the land. An SVG layer rather than canvas paint so it can pulse
-     without repainting the planet every frame; and because that layer sits
-     over the canvas, a tile with a building or a portal on it gets no arrow,
-     so the trip never covers one.
+     The trip as a flight over the planet: it hops between small landing pads
+     lying flat on the ground, each hop a thin arc of light lifted off the
+     surface with its shadow straight below. The pads glow in turn, slowly,
+     from the first to the last. An SVG layer rather than canvas paint so it
+     can glow without repainting the planet every frame; and because that
+     layer sits over the canvas, a pad never lands on a building or a portal.
   */
   const trip = useMemo(() => {
     if (!path || path.length < 2) return null
-    const steps = tileSteps(path[0], path[path.length - 1])
+    const from = path[0]
+    const to = path[path.length - 1]
     const taken = new Set(
       lands.filter((l) => l.buildings.length > 0 || l.special_effect).map((l) => l.x + ',' + l.y),
     )
-    const arrows: { x: number; y: number; angle: number; i: number }[] = []
-    for (let i = 1; i < steps.length - 1; i++) {
-      const a = steps[i]
-      const b = steps[i + 1]
-      if (taken.has(a.x + ',' + a.y)) continue
-      arrows.push({ x: a.x, y: a.y, angle: (Math.atan2(b.y - a.y, b.x - a.x) * 180) / Math.PI, i })
-    }
-    return { arrows, start: steps[0], end: steps[steps.length - 1] }
+    const free = (p: { x: number; y: number }) =>
+      p.x >= PLAY_MIN_X && p.x <= PLAY_MAX_X && p.y >= PLAY_MIN_Y && p.y <= PLAY_MAX_Y && !taken.has(p.x + ',' + p.y)
+    const stops = hopStops(from, to, free).map((p) => ({
+      x: p.x + 0.5,
+      y: p.y + 0.5,
+    }))
+    const legs = stops.slice(1).map((b, i) => {
+      const a = stops[i]
+      /*
+         Higher for a longer hop, the way a flight climbs. It bows off its
+         line on the side facing up the map, so a hop north or south still
+         stands clear of its shadow instead of lying along it.
+      */
+      const len = Math.hypot(b.x - a.x, b.y - a.y)
+      const lift = Math.min(2.5, len * 0.2)
+      let nx = (b.y - a.y) / len
+      let ny = -(b.x - a.x) / len
+      if (ny > 0 || (ny === 0 && nx > 0)) {
+        nx = -nx
+        ny = -ny
+      }
+      const mx = (a.x + b.x) / 2 + nx * lift
+      const my = (a.y + b.y) / 2 + ny * lift
+      return {
+        air: `M${a.x},${a.y} Q${mx},${my} ${b.x},${b.y}`,
+        ground: `M${a.x},${a.y} L${b.x},${b.y}`,
+      }
+    })
+    return { legs, pads: stops.slice(1, -1), start: from }
   }, [path, lands])
   const hereRef = useRef<HTMLDivElement>(null)
   const selRef = useRef<HTMLDivElement>(null)
@@ -1308,23 +1330,35 @@ export function MapCanvas({
 
       {trip && (
         <svg className="maptrip" aria-hidden="true">
+          <defs>
+            <radialGradient id="maptrip-pool">
+              <stop offset="0" stopColor="#ffd27a" stopOpacity="0.55" />
+              <stop offset="1" stopColor="#ffd27a" stopOpacity="0" />
+            </radialGradient>
+          </defs>
           <g ref={tripRef}>
-            {trip.arrows.map((a) => (
-              <g key={a.x + ',' + a.y} transform={`translate(${a.x + 0.5} ${a.y + 0.5}) rotate(${a.angle})`}>
-                <path
-                  className="maptrip__step"
-                  style={{ animationDelay: `${a.i * 260}ms` }}
-                  d="M-0.22,-0.22 L0.22,0 L-0.22,0.22 L-0.09,0 Z"
-                />
+            {/* Shadows first, so every arc flies over every shadow. */}
+            {trip.legs.map((l) => (
+              <g key={'s' + l.ground} className="maptrip__shadow">
+                <path className="maptrip__shadow-soft" d={l.ground} />
+                <path d={l.ground} />
               </g>
             ))}
-            <circle className="maptrip__bed" cx={trip.end.x + 0.5} cy={trip.end.y + 0.5} r={0.86} />
-            <circle
-              className="maptrip__ring"
-              cx={trip.end.x + 0.5}
-              cy={trip.end.y + 0.5}
-              r={0.86}
-            />
+            {trip.pads.map((p, i) => (
+              <g
+                key={p.x + ',' + p.y}
+                className="maptrip__pad"
+                /* The glow reaches each pad in turn over one slow cycle. */
+                style={{ animationDelay: `${-9 + ((i + 1) * 9) / trip.legs.length}s` }}
+              >
+                <ellipse className="maptrip__pad-rim" cx={p.x} cy={p.y} rx={0.46} ry={0.17} />
+                <ellipse className="maptrip__pad-inner" cx={p.x} cy={p.y} rx={0.21} ry={0.077} />
+                <circle className="maptrip__pad-core" cx={p.x} cy={p.y} r={0.065} />
+              </g>
+            ))}
+            {trip.legs.map((l) => (
+              <path key={'a' + l.air} className="maptrip__air" d={l.air} />
+            ))}
             {(!position || trip.start.x !== position.x || trip.start.y !== position.y) && (
               <circle
                 className="maptrip__start"
