@@ -51,6 +51,26 @@
   align-items: center;
 }
 
+/*
+ * Leave, in the glass the page stands on. The shared ghost button is 4%
+ * white with a violet rim, drawn for the old dark backdrops; over the map
+ * it all but vanished. Here it is frosted glass with a white hairline:
+ * plainly a button, and plainly quieter than Start Fight beside it.
+ */
+@media (min-width: 1024px) {
+  .dungeon__actions .btn--ghost {
+    --btn-bg: rgb(255 255 255 / 9%);
+    --btn-line: rgb(255 255 255 / 24%);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+  .dungeon__actions .btn--ghost:hover:not(:disabled) {
+    --btn-bg: rgb(255 255 255 / 15%);
+    --btn-line: rgb(255 255 255 / 40%);
+    filter: none;
+  }
+}
+
 /* The one destructive-feeling action on the screen; it spends energy. */
 .btn--danger {
   --btn-bg: linear-gradient(180deg, #d8324f, #96162f);
