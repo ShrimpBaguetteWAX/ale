@@ -9,12 +9,12 @@ import {
 import type { Land } from '@/chain/types'
 import { tripHops } from './tileSteps'
 import {
-  ARENA_RANK_SRC,
   BUILDING_GROUND,
   BUILDING_SRC,
   BUILDING_UNIT,
   BUILDING_VIEW,
   MARKER_SRC,
+  RANKED_SRC,
   buildingMarker,
   formatBoost,
   liveBoostPercent,
@@ -866,8 +866,10 @@ export function MapCanvas({
                   marker === 'portal'
                     ? undefined
                     : buildingsRef.current.get(
-                        /* An arena's cloth says its rank. */
-                        (marker === 'arena' ? `arena-r${Math.min(5, Math.max(1, rank))}` : marker) +
+                        /* An arena's cloth and a hydra's heads say its rank. */
+                        (marker === 'arena' || marker === 'dungeon'
+                          ? `${marker}-r${Math.min(5, Math.max(1, rank))}`
+                          : marker) +
                           (locked || held ? '-muted' : ''),
                       )
                 const standing = !!picture?.complete && picture.naturalWidth > 0
@@ -1092,7 +1094,9 @@ export function MapCanvas({
     const pictures = buildingsRef.current
     const sources: [string, { lit: string; muted: string }][] = [
       ...Object.entries(BUILDING_SRC),
-      ...ARENA_RANK_SRC.map((src, i): [string, { lit: string; muted: string }] => [`arena-r${i + 1}`, src]),
+      ...Object.entries(RANKED_SRC).flatMap(([kind, list]) =>
+        list.map((src, i): [string, { lit: string; muted: string }] => [`${kind}-r${i + 1}`, src]),
+      ),
     ]
     for (const [kind, src] of sources) {
       for (const [key, url] of [

@@ -105,11 +105,16 @@ export const BUILDING_SRC = {
  * under it is a little below the tile's middle, so it stands on the tile
  * rather than floating over the one above.
  */
-/** The arena once per boost rank, 1 to 5: its cloth changes colour with the rank. */
-export const ARENA_RANK_SRC = [1, 2, 3, 4, 5].map((rank) => ({
-  lit: asset(`/assets/markers/buildings/arena-r${rank}.svg`),
-  muted: asset(`/assets/markers/buildings/arena-r${rank}-muted.svg`),
-}))
+/**
+ * The arena and the dungeon once per boost rank, 1 to 5: the arena's cloth
+ * changes colour with the rank, and the hydra grows heads.
+ */
+const ranked = (kind: string) =>
+  [1, 2, 3, 4, 5].map((rank) => ({
+    lit: asset(`/assets/markers/buildings/${kind}-r${rank}.svg`),
+    muted: asset(`/assets/markers/buildings/${kind}-r${rank}-muted.svg`),
+  }))
+export const RANKED_SRC = { arena: ranked('arena'), dungeon: ranked('dungeon') }
 
 export const BUILDING_VIEW = { half: 58, above: 96, size: 116 } as const
 export const BUILDING_UNIT = 0.4 / 42

@@ -20,7 +20,7 @@ const hex = (c) => [1, 3, 5].map((i) => parseInt(c.slice(i, i + 2), 16))
 const mix = (a, b, t) => '#' + hex(a).map((v, i) => Math.round(v + (hex(b)[i] - v) * t).toString(16).padStart(2, '0')).join('')
 const BASE = {
   arena:{ lit:'#ffd04a', mid:'#f6a800', dark:'#b57200', top:'#ffdc80', inner:'#6e4300', tierA:'#c98a12', tierB:'#9f6a08', sand:'#ead08c', win:'#4e2f00', gate:'#2e1b00', ink:'#362700', flag:'#f6a800', flagLit:'#ffd36a', pole:'#4a3000' },
-  dungeon:{ stoneLit:'#8d96a6', stone:'#626b7b', stoneDark:'#3b4250', cave:'#070d18', glow:'#00baff', lit:'#45b8ee', mid:'#0087c0', dark:'#005a84', ink:'#002738', eye:'#ffd36a' },
+  dungeon:{ crown:'#ffcf3a', stoneLit:'#8d96a6', stone:'#626b7b', stoneDark:'#3b4250', cave:'#070d18', glow:'#00baff', lit:'#45b8ee', mid:'#0087c0', dark:'#005a84', ink:'#002738', eye:'#ffd36a' },
   tavern:{ wall:'#f2e0b4', wallSide:'#c7ab74', beam:'#5c3b1c', roofLit:'#2bd86b', roof:'#00b347', roofDark:'#007f31', roofEdge:'#005a23', win:'#ffd36a', winSide:'#e3b347', door:'#4a2a10', ink:'#2b1a08', sign:'#00c04a', signDark:'#008a35', signInk:'#002b10', mug:'#f4f0de', chimney:'#8b5a3a', chimneySide:'#5f3d27' },
 }
 /* ---------- geometry helpers, in building units: 100 across, ground at y=0 ---------- */
@@ -104,8 +104,29 @@ function arena(sid, pal, O, uid, dress = ARENA_DRESS[2]) {
   return s
 }
 
+/*
+  The dungeon's heads by boost rank, the same bands as the rings: the
+  stronger the hydra, the more heads it has. One, on a shorter neck, at
+  rank 1; two; three; four; five with a gold crown on the middle one.
+*/
+const NECKS = {
+  short: { p: [[1, 2], [3, -16], [-4, -30], [1, -44]], dir: 1, rot: -26 },
+  farL: { p: [[-8, 4], [-18, -10], [-40, -8], [-36, -30]], dir: -1, rot: -6 },
+  L: { p: [[-6, 2], [-12, -20], [-32, -28], [-28, -52]], dir: -1, rot: -22 },
+  C: { p: [[1, 2], [4, -28], [-6, -48], [2, -70]], dir: 1, rot: -30 },
+  R: { p: [[7, 2], [16, -20], [32, -26], [28, -46]], dir: 1, rot: -12 },
+  farR: { p: [[9, 4], [20, -8], [40, -6], [35, -27]], dir: 1, rot: -2 },
+}
+const DUNGEON_HEADS = {
+  1: { necks: ['short'] },
+  2: { necks: ['L', 'R'] },
+  3: { necks: ['L', 'C', 'R'] },
+  4: { necks: ['farL', 'L', 'R', 'farR'] },
+  5: { necks: ['farL', 'L', 'C', 'R', 'farR'], crown: 'C' },
+}
+
 /* ---------- the dungeon: the hydra rising out of its lair ---------- */
-function dungeon(sid, pal, O, uid) {
+function dungeon(sid, pal, O, uid, heads = DUNGEON_HEADS[3]) {
   const mound = `M-46,6 C-45,-6 -38,-16 -27,-20 C-21,-31 -8,-36 3,-32 C13,-38 27,-31 31,-21 C41,-16 46,-5 46,6 A46,10 0 0 1 -46,6 Z`
   let s = `<defs>${shade(`${uid}-dm`, -46, 46, [pal.stoneLit, pal.stone, pal.stoneDark], O)}<clipPath id="${uid}-dmc"><path d="${mound}"/></clipPath><radialGradient id="${uid}-dg"><stop offset="0" stop-color="${pal.glow}" stop-opacity=".55"/><stop offset="1" stop-color="${pal.glow}" stop-opacity="0"/></radialGradient></defs>`
   s += `<path d="${mound}" fill="url(#${uid}-dm)"${edge(O, pal.ink)}/>`
@@ -116,11 +137,7 @@ function dungeon(sid, pal, O, uid) {
   const mouth = `M-17,13 C-18,-2 -10,-14 0,-16 C10,-14 18,-2 17,13 A17,4 0 0 1 -17,13 Z`
   s += `<path d="${mouth}" fill="${pal.cave}"${edge(O, pal.ink, 1.6)}/><ellipse cx="0" cy="4" rx="13" ry="9" fill="url(#${uid}-dg)"/>`
   /* three necks: thick tubes, a shadow side and a lit side */
-  const necks = [
-    { p:[[-6, 2], [-12, -20], [-32, -28], [-28, -52]], dir:-1, rot:-22 },
-    { p:[[1, 2], [4, -28], [-6, -48], [2, -70]], dir:1, rot:-30 },
-    { p:[[7, 2], [16, -20], [32, -26], [28, -46]], dir:1, rot:-12 },
-  ]
+  const necks = heads.necks.map((key) => ({ ...NECKS[key], key }))
   s += `<ellipse cx="0" cy="0" rx="13" ry="8" fill="${pal.dark}"${edge(O, pal.ink, 1.6)}/><ellipse cx="-2" cy="-1.5" rx="9" ry="5" fill="${pal.mid}"/>`
   necks.forEach((n) => {
     const d = `M${n.p[0]} C${n.p[1]} ${n.p[2]} ${n.p[3]}`
@@ -138,7 +155,7 @@ function dungeon(sid, pal, O, uid) {
     /* the head, turned along the neck's last stretch */
     const e = n.p[3]
     const head = `M-6,-5 L-12,-12 L-2,-7.5 L5,-8.5 L13,-5 L17,-1 L11,0 L17,2.5 L9,5.5 L-4,6 L-7,1 Z`
-    s += `<g transform="translate(${e[0]} ${e[1] - 3})${n.dir < 0 ? ' scale(-1 1)' : ''} rotate(${n.rot}) scale(1.5)"><path d="${head}" fill="${pal.mid}"${edge(O, pal.ink, 1.6)}/><path d="M-4,-4.5 L5,-7 L12,-4.2" fill="none" stroke="${pal.lit}" stroke-width="1.8" stroke-linecap="round"/><circle cx="5.5" cy="-3" r="1.7" fill="${pal.eye}"/></g>`
+    s += `<g transform="translate(${e[0]} ${e[1] - 3})${n.dir < 0 ? ' scale(-1 1)' : ''} rotate(${n.rot}) scale(1.5)"><path d="${head}" fill="${pal.mid}"${edge(O, pal.ink, 1.6)}/><path d="M-4,-4.5 L5,-7 L12,-4.2" fill="none" stroke="${pal.lit}" stroke-width="1.8" stroke-linecap="round"/><circle cx="5.5" cy="-3" r="1.7" fill="${pal.eye}"/>${heads.crown === n.key ? `<path d="M-7,-8 L-8,-14 L-4.5,-11 L-2,-16 L1,-11 L4.5,-14.5 L4,-8.5 Z" fill="${pal.crown}"${edge(O, pal.ink, 1)}/>` : ''}</g>`
   })
   /* the rock lip in front of the mouth, over the necks' roots */
   s += `<path d="M-19,12 C-12,8 -4,10 0,9 C6,8 13,9 19,12 A19,4 0 0 1 -19,12 Z" fill="${pal.stone}"${edge(O, pal.ink, 1.4)}/>`
@@ -215,6 +232,13 @@ const out = join(dirname(fileURLToPath(import.meta.url)), '..', 'public', 'asset
 mkdirSync(out, { recursive: true })
 const write = (name, svg) => writeFileSync(join(out, name), svg)
 const frame = (body) => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="-58 -96 116 116" width="116" height="116">${body}</svg>\n`
+/* The dungeon once per rank: dungeon-r1.svg to dungeon-r5.svg, and greyed. */
+for (let rank = 1; rank <= 5; rank++) {
+  for (const muted of [false, true]) {
+    const pal = muted ? grey(washed(BASE.dungeon)) : washed(BASE.dungeon)
+    write(`dungeon-r${rank}${muted ? '-muted' : ''}.svg`, frame(dungeon('b', pal, O, 'dungeon', DUNGEON_HEADS[rank])))
+  }
+}
 /* The arena once per rank: arena-r1.svg to arena-r5.svg, and greyed. */
 for (let rank = 1; rank <= 5; rank++) {
   for (const muted of [false, true]) {
