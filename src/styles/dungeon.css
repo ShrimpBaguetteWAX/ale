@@ -5341,3 +5341,20 @@ button.combatcard--empty:hover {
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
 }
+
+/*
+ * Cards / Compact, up on the line of the Fighters, Crew and Weapons tabs,
+ * at its right end (wider than a phone). The readout switch stays above
+ * the cards; in the compact view, which has none, that row folds away.
+ */
+@media (min-width: 720px) {
+  .picker > .picker__countrow .showtabs[aria-label='Card size'] {
+    position: absolute;
+    top: var(--sp-6);
+    right: var(--sp-6);
+  }
+  .picker > .picker__countrow:not(:has(.showtabs[aria-label='Readout'])) {
+    height: 0;
+    margin-top: calc(-1 * var(--sp-3));
+  }
+}
