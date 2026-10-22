@@ -101,6 +101,94 @@
   background: var(--navy);
 }
 
+/*
+ * Desktop: every screen but the map opens on glass in front of the map.
+ *
+ * Behind it, the map as the player left it (see map/snapshot.ts), sharp; the
+ * glass is what blurs it, so a page sliding in passes over the map rather
+ * than replacing it. The glass is thin enough to keep the world's colours
+ * and shapes, and it ends at the menu, whose own glass it meets.
+ *
+ * `.shell__leaving` is the page on its way back out to the map. Phones keep
+ * the backdrop above and none of this.
+ */
+.shell__map,
+.shell__glass,
+.shell__leaving {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  /* A page sliding in starts past the right edge; no scrollbar for that. */
+  .shell {
+    overflow-x: clip;
+  }
+  .shell__bg {
+    background-image: none;
+  }
+  .shell__bg::after {
+    display: none;
+  }
+  .shell__map {
+    display: block;
+    position: absolute;
+    inset: 0;
+    background-color: var(--navy);
+    background-size: cover;
+    background-position: center;
+  }
+  .shell__map canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .shell:not(.shell--flush) > .shell__glass,
+  .shell__leaving--on {
+    display: block;
+    position: fixed;
+    inset: 0 0 0 var(--rail-w);
+    background: linear-gradient(180deg, rgb(10 18 34 / 52%), rgb(4 9 20 / 68%));
+    backdrop-filter: blur(7px) saturate(1.3);
+    -webkit-backdrop-filter: blur(7px) saturate(1.3);
+    /* Only seen while it moves: at rest the menu covers it. */
+    box-shadow: -10px 0 30px rgb(0 0 0 / 35%);
+  }
+  .shell__glass {
+    z-index: -1;
+  }
+  .shell__leaving--on {
+    z-index: var(--z-sticky);
+    overflow: hidden;
+    pointer-events: none;
+  }
+  /*
+   * The pages that painted their own art over the whole window, and a scrim
+   * to read on, would hide the map again: on the glass they need neither.
+   * The battle keeps its arena, and the tournament its gates: those are the
+   * scene, not a backdrop.
+   */
+  .market__art,
+  .market__scrim,
+  .shop__art,
+  .shop__scrim,
+  .candle__art,
+  .candle__scrim,
+  .tavern__art,
+  .tavern__scrim,
+  .dungeon__art,
+  .dungeon__scrim {
+    display: none;
+  }
+}
+
+:root[data-fx='low'] .shell__glass,
+:root[data-fx='low'] .shell__leaving {
+  background: linear-gradient(180deg, rgb(10 18 34 / 88%), rgb(4 9 20 / 94%));
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
 /* ---------- Top bar ---------- */
 
 /*

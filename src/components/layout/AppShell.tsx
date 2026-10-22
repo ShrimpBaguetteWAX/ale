@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useModal } from '@/components/useModal'
-import { NavLink, Outlet, useLocation } from 'react-router-dom'
+import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useGame } from '@/state/useGame'
 import { NetworkStatus } from '../NetworkStatus'
 import { useChores } from '@/chores/useChores'
@@ -8,6 +8,8 @@ import { CHORE_CHECKS } from '@/chores/checks'
 import { ResourceStrip } from '../ResourceStrip'
 import { NAV_ITEMS, TABBAR_ORDER, type NavItem } from './nav'
 import { asset } from '@/assets'
+import { planetMapSrc } from '@/map/terrain'
+import { useMapPicture } from '@/map/snapshot'
 
 /**
  * A menu entry’s picture, or the space where one will go.
@@ -44,6 +46,45 @@ function MenuArt({ item, size }: { item: NavItem; size: number }) {
   }
   return <img src={item.icon} alt="" width={size} height={size} loading="lazy" />
 }
+
+/**
+ * What every other screen sits in front of on a desktop: the map as the
+ * player left it, or — straight into a page, before the map was ever open —
+ * the planet's own artwork. Hidden on phones, which keep the game's backdrop.
+ */
+function MapBackdrop({ planet }: { planet?: string }) {
+  const picture = useMapPicture()
+  const ref = useRef<HTMLCanvasElement>(null)
+
+  useLayoutEffect(() => {
+    const canvas = ref.current
+    if (!canvas || !picture) return
+    canvas.width = picture.width
+    canvas.height = picture.height
+    canvas.getContext('2d')?.drawImage(picture, 0, 0)
+  }, [picture])
+
+  return (
+    <div
+      className="shell__map"
+      style={planet ? { backgroundImage: `url('${planetMapSrc(planet)}')` } : undefined}
+    >
+      {picture && <canvas ref={ref} />}
+    </div>
+  )
+}
+
+/* Desktop only, and never for a player who asked for less motion. */
+function calm(): boolean {
+  return (
+    !window.matchMedia('(min-width: 1024px)').matches ||
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches ||
+    document.documentElement.dataset.fx === 'low'
+  )
+}
+
+const SHEET_IN = { duration: 460, easing: 'cubic-bezier(.16, 1, .3, 1)' }
+const SHEET_OUT = { duration: 320, easing: 'cubic-bezier(.4, 0, 1, 1)' }
 
 /** Bottom-sheet menu holding everything that doesn't fit the tab bar. */
 function MoreSheet({ items, onClose }: { items: NavItem[]; onClose: () => void }) {
@@ -95,7 +136,96 @@ export function AppShell() {
   const account = useGame((s) => s.account)
   const [sheetOpen, setSheetOpen] = useState(false)
   const location = useLocation()
+  const navigate = useNavigate()
   const isMap = location.pathname === '/map'
+
+  /*
+     The page's glass, and how pages come and go on a desktop.
+
+     From the map, the page and its glass arrive from the right as one sheet
+     and stop against the menu. Between two pages the glass stays where it is
+     and only the page changes, fading in. Back to the map, the sheet leaves
+     the way it came: React has already taken the page out by then, but the
+     node it took out still holds the page, so it goes into a layer of its own
+     for the slide and is dropped at the end. Only ever a few hundred
+     milliseconds of motion, and no transform is left behind on the page, so
+     its own dialogs still cover the window.
+  */
+  const glassRef = useRef<HTMLDivElement>(null)
+  const mainRef = useRef<HTMLElement>(null)
+  const leavingRef = useRef<HTMLDivElement>(null)
+  const pageRef = useRef<HTMLDivElement | null>(null)
+  const pageBox = useRef({ left: 0, top: 0, width: 0 })
+  const scrollY = useRef(0)
+  const lastPath = useRef(location.pathname)
+  const leaving = useRef<Animation | null>(null)
+
+  useEffect(() => {
+    const onScroll = () => {
+      scrollY.current = window.scrollY
+    }
+    const measure = () => {
+      const page = pageRef.current
+      if (!page?.isConnected) return
+      const r = page.getBoundingClientRect()
+      pageBox.current = { left: r.left, top: r.top + window.scrollY, width: r.width }
+    }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    window.addEventListener('resize', measure)
+    return () => {
+      window.removeEventListener('scroll', onScroll)
+      window.removeEventListener('resize', measure)
+    }
+  }, [])
+
+  useLayoutEffect(() => {
+    const from = lastPath.current
+    const to = location.pathname
+    lastPath.current = to
+
+    const page = pageRef.current
+    if (to !== '/map' && page?.isConnected) {
+      const r = page.getBoundingClientRect()
+      pageBox.current = { left: r.left, top: r.top + window.scrollY, width: r.width }
+    }
+    if (from === to || calm()) return
+
+    leaving.current?.finish()
+
+    if (from === '/map') {
+      const enter = [{ transform: 'translateX(100%)' }, { transform: 'none' }]
+      glassRef.current?.animate(enter, SHEET_IN)
+      mainRef.current?.animate(enter, SHEET_IN)
+    } else if (to === '/map') {
+      const host = leavingRef.current
+      if (!host || !page || page.isConnected) return
+      const box = pageBox.current
+      Object.assign(page.style, {
+        position: 'absolute',
+        margin: '0',
+        left: `${box.left - host.getBoundingClientRect().left}px`,
+        top: `${box.top - scrollY.current}px`,
+        width: `${box.width}px`,
+      })
+      host.replaceChildren(page)
+      host.classList.add('shell__leaving--on')
+      const out = host.animate([{ transform: 'none' }, { transform: 'translateX(100%)' }], SHEET_OUT)
+      leaving.current = out
+      out.onfinish = () => {
+        host.classList.remove('shell__leaving--on')
+        host.replaceChildren()
+        if (leaving.current === out) leaving.current = null
+      }
+    } else {
+      page?.animate(
+        [
+          { opacity: 0, transform: 'translateY(6px)' },
+          { opacity: 1, transform: 'none' },
+        ],
+        { duration: 240, delay: 40, easing: 'cubic-bezier(.16, 1, .3, 1)', fill: 'backwards' },
+      )
+    }
+  }, [location.pathname])
 
   // Any navigation closes the sheet, including the browser back button.
   useEffect(() => setSheetOpen(false), [location.pathname])
@@ -121,7 +251,10 @@ export function AppShell() {
       className={isMap ? 'shell shell--flush' : 'shell'}
       style={{ '--shell-art': `url('${asset('/assets/background/bg-menu.jpeg')}')` } as React.CSSProperties}
     >
-      <div className="shell__bg" aria-hidden="true" />
+      <div className="shell__bg" aria-hidden="true">
+        <MapBackdrop planet={player?.planet} />
+      </div>
+      <div className="shell__glass" ref={glassRef} aria-hidden="true" />
 
       <nav className="rail" aria-label="Game menu">
         {/*
@@ -157,7 +290,18 @@ export function AppShell() {
               </span>
             </span>
           ) : (
-            <NavLink className="navlink" key={item.to} to={item.to}>
+            <NavLink
+              className="navlink"
+              key={item.to}
+              to={item.to}
+              onClick={(e) => {
+                /* The open screen's entry closes it: back to the map. */
+                if (item.to !== '/map' && location.pathname === item.to) {
+                  e.preventDefault()
+                  navigate('/map')
+                }
+              }}
+            >
               <span className="navlink__inner">
                 <span className="navlink__socket">
                   <Icon item={item} />
@@ -194,11 +338,17 @@ export function AppShell() {
         The map is the one screen that should reach the edges of the frame,
         so it opts out of the page gutter and the reading-width cap.
       */}
-      <main className={isMap ? 'main main--flush' : 'main'}>
+      <main className={isMap ? 'main main--flush' : 'main'} ref={mainRef}>
         {isMap ? (
           <Outlet />
         ) : (
-          <div className="main__inner">
+          <div
+            className="main__inner"
+            ref={(node) => {
+              /* Kept after React lets go of it: see the note on leaving. */
+              if (node) pageRef.current = node
+            }}
+          >
             <Outlet />
           </div>
         )}
@@ -237,6 +387,8 @@ export function AppShell() {
           More
         </button>
       </nav>
+
+      <div className="shell__leaving" ref={leavingRef} aria-hidden="true" />
 
       {sheetOpen && <MoreSheet items={secondary} onClose={closeSheet} />}
 

@@ -8,6 +8,7 @@ import {
 } from '@/chain/config'
 import type { Land } from '@/chain/types'
 import { tripHops } from './tileSteps'
+import { keepMapPicture } from './snapshot'
 import {
   BUILDING_GROUND,
   BUILDING_SRC,
@@ -760,6 +761,15 @@ export function MapCanvas({
   useLayoutEffect(() => {
     fitHereTag()
   }, [pinSlot, fitHereTag])
+
+  /*
+     Leave a picture of the map behind for the screens that open in front of
+     it. A layout cleanup, so it is taken before the next screen first paints.
+  */
+  useLayoutEffect(() => {
+    const canvas = canvasRef.current
+    return () => keepMapPicture(canvas)
+  }, [])
 
   /**
    * Put the selection anchor on the selected tile, or hide it.
