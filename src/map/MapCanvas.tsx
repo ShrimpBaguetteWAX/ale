@@ -9,6 +9,10 @@ import {
 import type { Land } from '@/chain/types'
 import { tripHops } from './tileSteps'
 import {
+  BUILDING_GROUND,
+  BUILDING_SRC,
+  BUILDING_UNIT,
+  BUILDING_VIEW,
   MARKER_SRC,
   buildingMarker,
   formatBoost,
@@ -327,6 +331,110 @@ function drawMarker(
 }
 
 /**
+ * A building standing on its tile: a soft shadow on the ground, the boost
+ * rank as rings lying on the ground around its foot (the back half behind
+ * it, the front half in front), and the building itself.
+ *
+ * The ranks are the disc's: one ring, a heavy ring, a double ring, and rays
+ * at the top two. `ring` is their colour, and a taverns' too when it is the
+ * one you are standing in. `muted` turns the whole thing down for a spent
+ * dungeon or an arena you are defending; its picture is already grey.
+ */
+function drawBuilding(
+  ctx: CanvasRenderingContext2D,
+  img: HTMLImageElement,
+  px: number,
+  py: number,
+  scale: number,
+  rank: number,
+  ring: string,
+  locked: boolean,
+  held: boolean,
+) {
+  const u = scale * BUILDING_UNIT
+  const x = px + scale / 2
+  const y = py + scale / 2 + scale * BUILDING_GROUND
+
+  ctx.save()
+  ctx.translate(x + 3 * u, y + 5 * u)
+  ctx.scale(1, 13 / 50)
+  const shadow = ctx.createRadialGradient(0, 0, 0, 0, 0, 50 * u)
+  shadow.addColorStop(0, 'rgba(30,18,6,0.5)')
+  shadow.addColorStop(0.65, 'rgba(30,18,6,0.22)')
+  shadow.addColorStop(1, 'rgba(30,18,6,0)')
+  ctx.fillStyle = shadow
+  ctx.beginPath()
+  ctx.arc(0, 0, 50 * u, 0, Math.PI * 2)
+  ctx.fill()
+  ctx.restore()
+
+  drawGroundRank(ctx, x, y, u, rank, ring, held, false)
+  ctx.globalAlpha = locked ? 0.7 : held ? 0.8 : 1
+  const { half, above, size } = BUILDING_VIEW
+  ctx.drawImage(img, x - half * u, y - above * u, size * u, size * u)
+  ctx.globalAlpha = 1
+  drawGroundRank(ctx, x, y, u, rank, ring, held, true)
+}
+
+/** One half of a building's rank rings: the back half, or the front. */
+function drawGroundRank(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  u: number,
+  rank: number,
+  color: string,
+  dim: boolean,
+  front: boolean,
+) {
+  if (!rank) return
+  const cy = y + 4 * u
+  const rx = 48 * u
+  const ry = 14 * u
+  if (dim) ctx.globalAlpha = 0.45
+  if (rank >= 4) {
+    const k = rank === 4 ? 8 : 16
+    for (let i = 0; i < k; i++) {
+      const a = ((360 / k) * i * Math.PI) / 180
+      if (Math.cos(a) > 0 !== front) continue
+      const long = rank === 4 || i % 4 === 0
+      const tip = rank === 4 ? 1.42 : long ? 1.48 : 1.3
+      const half = ((rank === 4 ? 9 : long ? 7 : 5.5) * Math.PI) / 180
+      const at = (r: number, t: number) => [x + rx * r * Math.sin(t), cy + ry * r * Math.cos(t)] as const
+      ctx.beginPath()
+      ctx.moveTo(...at(1.12, a - half))
+      ctx.lineTo(...at(tip, a))
+      ctx.lineTo(...at(1.12, a + half))
+      ctx.closePath()
+      ctx.fillStyle = color
+      ctx.fill()
+      ctx.lineWidth = u
+      ctx.strokeStyle = 'rgba(5,16,30,0.85)'
+      ctx.lineJoin = 'round'
+      ctx.stroke()
+    }
+  }
+  /* A ring with a dark bed under it, so it reads on bright ground. */
+  const ringAt = (k: number, w: number) => {
+    ctx.beginPath()
+    ctx.ellipse(x, cy, rx * k, ry * k, 0, front ? 0 : Math.PI, front ? Math.PI : Math.PI * 2)
+    ctx.lineWidth = (w + 2) * u
+    ctx.strokeStyle = 'rgba(5,16,30,0.55)'
+    ctx.stroke()
+    ctx.lineWidth = w * u
+    ctx.strokeStyle = color
+    ctx.stroke()
+  }
+  if (rank === 1) ringAt(1, 2)
+  else if (rank === 2) ringAt(1, 4)
+  else {
+    ringAt(1, 2.8)
+    ringAt(1.14, 1.8)
+  }
+  ctx.globalAlpha = 1
+}
+
+/**
  * The world map.
  *
  * The original ships 4,800 separate 50x50 tile JPEGs — one per land, per
@@ -421,6 +529,8 @@ export function MapCanvas({
   const indexRef = useRef(new Map<string, Land>())
   const imgRef = useRef<HTMLImageElement | null>(null)
   const markersRef = useRef(new Map<MarkerKey, HTMLImageElement>())
+  /* The buildings' pictures, by kind, and by kind + "-muted" for the greyed ones. */
+  const buildingsRef = useRef(new Map<string, HTMLImageElement>())
   const pinRef = useRef<HTMLDivElement>(null)
   /* The trip's layer: one group, moved with the map like the pin. */
   const tripRef = useRef<SVGGElement>(null)
@@ -664,6 +774,7 @@ export function MapCanvas({
     /* Markers near the trip's land, as circles in tiles, for the rings' holes. */
     const under: string[] = []
     const end = tripEndRef.current
+    const paints: { gx: number; gy: number; paint: () => void }[] = []
 
     for (let gx = x0; gx <= x1; gx++) {
       for (let gy = y0; gy <= y1; gy++) {
@@ -725,98 +836,142 @@ export function MapCanvas({
         const held = marker === 'arena' && !!heldRef.current?.has(land.land_id)
 
         if (marker) {
-          if (showMarkers) {
-            /* Taverns and portals carry no boost, and so no rank. */
-            const rank =
-              marker === 'dungeon' || marker === 'arena'
-                ? boostRank(
-                    liveBoostPercent(
-                      Number(land.buildings[0]?.boost_score ?? 0),
-                      String(land.buildings[0]?.boost_score_update ?? ''),
-                      decayRef.current,
-                    ),
+          /*
+             Painted after the sweep, back to front, so a building lower on
+             the map stands in front of one above it.
+          */
+          paints.push({
+            gx,
+            gy,
+            paint: () => {
+              if (showMarkers) {
+                /* Taverns and portals carry no boost, and so no rank. */
+                const rank =
+                  marker === 'dungeon' || marker === 'arena'
+                    ? boostRank(
+                        liveBoostPercent(
+                          Number(land.buildings[0]?.boost_score ?? 0),
+                          String(land.buildings[0]?.boost_score_update ?? ''),
+                          decayRef.current,
+                        ),
+                      )
+                    : 0
+                /*
+                   A tavern, dungeon or arena stands on its tile as a little
+                   building; a portal stays a marker, and so does a building
+                   whose picture has not loaded yet.
+                 */
+                const picture =
+                  marker === 'portal'
+                    ? undefined
+                    : buildingsRef.current.get(marker + (locked || held ? '-muted' : ''))
+                const standing = !!picture?.complete && picture.naturalWidth > 0
+                if (picture && standing) {
+                  drawBuilding(
+                    ctx,
+                    picture,
+                    px,
+                    py,
+                    scale,
+                    /* The tavern you are standing in gets a ring of its own colour. */
+                    current ? 1 : rank,
+                    current ? '#0ed4a8' : locked ? '#7d879e' : '#f6a800',
+                    locked,
+                    held,
                   )
-                : 0
-            drawMarker(
-              ctx,
-              markersRef.current.get(marker),
-              marker,
-              px,
-              py,
-              scale,
-              locked,
-              current,
-              held,
-              rank,
-            )
-            if (end && Math.abs(gx + 0.5 - end.x) < 3 && Math.abs(gy + 0.5 - end.y) < 3) {
-              /* The disc, out to the rank's outer ring or sunburst, and a hair more. */
-              const discR = Math.min(scale * 0.68, 44) * 0.62
-              const reach = rank >= 5 ? 31.5 / 21 : rank === 4 ? 30.5 / 21 : rank === 3 ? 25.5 / 21 : 1.05
-              const r = (discR * reach + 1.5) / scale
-              under.push(`<circle cx="${gx + 0.5}" cy="${gy + 0.5}" r="${r.toFixed(3)}" fill="black"/>`)
-            }
+                } else {
+                  drawMarker(
+                    ctx,
+                    markersRef.current.get(marker),
+                    marker,
+                    px,
+                    py,
+                    scale,
+                    locked,
+                    current,
+                    held,
+                    rank,
+                  )
+                }
+                if (end && Math.abs(gx + 0.5 - end.x) < 3 && Math.abs(gy + 0.5 - end.y) < 3) {
+                  if (standing) {
+                    /* Roughly the building's outline: it stands up into the tile above. */
+                    under.push(`<circle cx="${gx + 0.5}" cy="${gy + 0.3}" r="0.46" fill="black"/>`)
+                  } else {
+                    /* The disc, out to the rank's outer ring or sunburst, and a hair more. */
+                    const discR = Math.min(scale * 0.68, 44) * 0.62
+                    const reach = rank >= 5 ? 31.5 / 21 : rank === 4 ? 30.5 / 21 : rank === 3 ? 25.5 / 21 : 1.05
+                    const r = (discR * reach + 1.5) / scale
+                    under.push(`<circle cx="${gx + 0.5}" cy="${gy + 0.5}" r="${r.toFixed(3)}" fill="black"/>`)
+                  }
+                }
 
-            const labelY = py + scale * 0.86
-            if (marker === 'portal') {
-              const dest = PORTAL_EFFECTS[land.special_effect]
-              if (dest) drawLabel(ctx, dest, px + scale / 2, labelY, scale, '#ff01ff')
-            } else if (current) {
-              drawLabel(ctx, 'Current', px + scale / 2, labelY, scale, '#0ed4a8')
-            } else if (held) {
-              /*
-                 In place of the multiplier, not beside it — there is one
-                 line under a marker. Which arenas you are defending is the
-                 thing you cannot work out from anywhere else on this
-                 screen, and the multiplier is a glance at the tile away.
-               */
-              drawLabel(
-                ctx,
-                'Defending',
-                px + scale / 2,
-                labelY,
-                scale,
-                /* The marker's own gold, turned down with it. */
-                'rgba(246,168,0,0.55)',
-              )
-            } else if (locked) {
-              drawLabel(ctx, 'Played', px + scale / 2, labelY, scale, '#7d879e')
-            } else if (marker !== 'tavern') {
-              /*
-                 Taverns carry no multiplier.
+                /* Under a building the label sits on the ground in front of it. */
+                const labelY = py + scale * (standing ? 0.9 : 0.86)
+                if (marker === 'portal') {
+                  const dest = PORTAL_EFFECTS[land.special_effect]
+                  if (dest) drawLabel(ctx, dest, px + scale / 2, labelY, scale, '#ff01ff')
+                } else if (current) {
+                  drawLabel(ctx, 'Current', px + scale / 2, labelY, scale, '#0ed4a8')
+                } else if (held) {
+                  /*
+                     In place of the multiplier, not beside it — there is one
+                     line under a marker. Which arenas you are defending is the
+                     thing you cannot work out from anywhere else on this
+                     screen, and the multiplier is a glance at the tile away.
+                   */
+                  drawLabel(
+                    ctx,
+                    'Defending',
+                    px + scale / 2,
+                    labelY,
+                    scale,
+                    /* The marker's own gold, turned down with it. */
+                    'rgba(246,168,0,0.55)',
+                  )
+                } else if (locked) {
+                  drawLabel(ctx, 'Played', px + scale / 2, labelY, scale, '#7d879e')
+                } else if (marker !== 'tavern') {
+                  /*
+                     Taverns carry no multiplier.
 
-                 The boost score on a land scales what its building pays
-                 out, and a tavern pays nothing — it offers trainers, which
-                 the score has no bearing on. Printing one there was reading
-                 a number off the land that means nothing for what the
-                 player would actually get by walking in.
-              */
-              const b = land.buildings[0]
-              const mult = liveBoostPercent(
-                Number(b.boost_score ?? 0),
-                String(b.boost_score_update ?? ''),
-                decayRef.current,
-              )
-              drawLabel(ctx, formatBoost(mult), px + scale / 2, labelY, scale, '#f6a800')
-            }
-          } else {
-            // Zoomed out far enough that a 10px icon is mush; a coloured dot
-            // still tells the player something is on this tile.
-            const r = Math.max(1.5, scale * 0.16)
-            ctx.fillStyle = current
-              ? '#0ed4a8'
-              : locked
-                ? '#7d879e'
-              : marker === 'portal'
-                ? '#ff01ff'
-                : '#f6a800'
-            ctx.beginPath()
-            ctx.arc(px + scale / 2, py + scale / 2, r, 0, Math.PI * 2)
-            ctx.fill()
-          }
+                     The boost score on a land scales what its building pays
+                     out, and a tavern pays nothing — it offers trainers, which
+                     the score has no bearing on. Printing one there was reading
+                     a number off the land that means nothing for what the
+                     player would actually get by walking in.
+                  */
+                  const b = land.buildings[0]
+                  const mult = liveBoostPercent(
+                    Number(b.boost_score ?? 0),
+                    String(b.boost_score_update ?? ''),
+                    decayRef.current,
+                  )
+                  drawLabel(ctx, formatBoost(mult), px + scale / 2, labelY, scale, '#f6a800')
+                }
+              } else {
+                // Zoomed out far enough that a 10px icon is mush; a coloured dot
+                // still tells the player something is on this tile.
+                const r = Math.max(1.5, scale * 0.16)
+                ctx.fillStyle = current
+                  ? '#0ed4a8'
+                  : locked
+                    ? '#7d879e'
+                  : marker === 'portal'
+                    ? '#ff01ff'
+                    : '#f6a800'
+                ctx.beginPath()
+                ctx.arc(px + scale / 2, py + scale / 2, r, 0, Math.PI * 2)
+                ctx.fill()
+              }
+            },
+          })
         }
       }
     }
+
+    paints.sort((a, b) => a.gy - b.gy || a.gx - b.gx)
+    for (const p of paints) p.paint()
 
     if (sel) {
       const px = (sel.x - PLAY_MIN_X) * scale + tx
@@ -925,10 +1080,29 @@ export function MapCanvas({
     }
   }, [mapSrc, drawNow])
 
-  // Marker artwork is four small SVGs; load them once and repaint as they
-  // arrive so the map is never waiting on all of them.
+  // Marker artwork is four small SVGs, and the buildings six more; load them
+  // once and repaint as they arrive so the map is never waiting on all of them.
   useEffect(() => {
     let alive = true
+    const pictures = buildingsRef.current
+    for (const [kind, src] of Object.entries(BUILDING_SRC)) {
+      for (const [key, url] of [
+        [kind, src.lit],
+        [kind + '-muted', src.muted],
+      ]) {
+        if (pictures.has(key)) continue
+        const img = new Image()
+        img.decoding = 'async'
+        img.src = url
+        pictures.set(key, img)
+        img
+          .decode()
+          .catch(() => {})
+          .then(() => {
+            if (alive) drawNow()
+          })
+      }
+    }
     const store = markersRef.current
     for (const [key, src] of Object.entries(MARKER_SRC) as [MarkerKey, string][]) {
       if (store.has(key)) continue

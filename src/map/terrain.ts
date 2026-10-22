@@ -87,6 +87,28 @@ export const MARKER_SRC = {
 
 export type MarkerKey = keyof typeof MARKER_SRC
 
+/**
+ * The buildings standing on the map: the arena, dungeon and tavern drawn as
+ * little painted buildings (scripts/buildings.mjs), each with a greyed copy
+ * for a spent dungeon or an arena being defended. Portals stay a marker.
+ */
+export const BUILDING_SRC = {
+  tavern: { lit: asset('/assets/markers/buildings/tavern.svg'), muted: asset('/assets/markers/buildings/tavern-muted.svg') },
+  dungeon: { lit: asset('/assets/markers/buildings/dungeon.svg'), muted: asset('/assets/markers/buildings/dungeon-muted.svg') },
+  arena: { lit: asset('/assets/markers/buildings/arena.svg'), muted: asset('/assets/markers/buildings/arena-muted.svg') },
+} as const
+
+/**
+ * How a building sits on its tile, in the drawing's own units (100 across a
+ * building): the square it is drawn in reaches 58 either side and 96 above
+ * the ground, 116 in all; a building is about a tile across; and the ground
+ * under it is a little below the tile's middle, so it stands on the tile
+ * rather than floating over the one above.
+ */
+export const BUILDING_VIEW = { half: 58, above: 96, size: 116 } as const
+export const BUILDING_UNIT = 0.4 / 42
+export const BUILDING_GROUND = 6 / 42
+
 /** Chain `building_name` to its marker, if we have artwork for it. */
 export function buildingMarker(name: string): MarkerKey | null {
   const key = name?.toLowerCase()

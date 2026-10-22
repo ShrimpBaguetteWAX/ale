@@ -23,6 +23,7 @@ import {
   type PlanetStatus,
 } from '@/map/planetStatus'
 import {
+  BUILDING_SRC,
   MARKER_SRC,
   buildingIcon,
   formatBoost,
@@ -66,7 +67,11 @@ export function Legend() {
           {key === 'you' ? (
             <span className="legend__dot legend__dot--you" />
           ) : (
-            <img className="legend__marker" src={MARKER_SRC[key]} alt="" />
+            <img
+              className="legend__marker"
+              src={key === 'portal' ? MARKER_SRC.portal : BUILDING_SRC[key].lit}
+              alt=""
+            />
           )}
           {label}
         </div>
