@@ -7,6 +7,7 @@ import {
   PORTAL_EFFECTS,
 } from '@/chain/config'
 import type { Land } from '@/chain/types'
+import { tileSteps } from './tileSteps'
 import {
   MARKER_SRC,
   buildingMarker,
@@ -77,11 +78,11 @@ export interface MapCanvasProps {
   /** The tavern the player is standing in, if it is on this planet. */
   currentTavernLand?: string
   /**
-   * The way to the selected tile, as tile coordinates on this planet, drawn
-   * as a dashed line between their centres. A straight line, because that
-   * is what a trip is: travel is priced by distance, not by a route around
-   * anything. From the player when they are on this planet; from the portal
-   * they would arrive through when they are not.
+   * The way to the selected tile, start and end as tile coordinates on this
+   * planet, drawn tile by tile. Travel is priced by straight-line distance,
+   * so the tiles drawn are how the trip reads, not a route it pays for.
+   * From the player when they are on this planet; from the portal they
+   * would arrive through when they are not.
    */
   path?: { x: number; y: number }[] | null
   /** Floating UI rendered over the map: tile inspector, legend. */
@@ -525,6 +526,67 @@ export function MapCanvas({
       ctx.stroke()
     }
 
+    /*
+       The trip, tile by tile, the way a strategy map plots a march: a gold
+       arrow on every tile it crosses, each pointing at the next, and a
+       dashed gold ring on the land at its end. Drawn before the buildings,
+       so a trip that passes over one never covers it. Where it starts
+       somewhere other than the pin — the far side of a portal — a small
+       dot marks the start.
+    */
+    const path = pathRef.current
+    if (path && path.length > 1) {
+      const centre = (t: { x: number; y: number }): [number, number] => [
+        (t.x - PLAY_MIN_X) * scale + tx + scale / 2,
+        (t.y - PLAY_MIN_Y) * scale + ty + scale / 2,
+      ]
+      const steps = tileSteps(path[0], path[path.length - 1])
+      const size = Math.max(5, Math.min(scale * 0.2, 11))
+      ctx.save()
+      ctx.lineJoin = 'round'
+      for (let i = 1; i < steps.length - 1; i++) {
+        const [x, y] = centre(steps[i])
+        const [nx, ny] = centre(steps[i + 1])
+        ctx.save()
+        ctx.translate(x, y)
+        ctx.rotate(Math.atan2(ny - y, nx - x))
+        ctx.beginPath()
+        ctx.moveTo(-size, -size)
+        ctx.lineTo(size, 0)
+        ctx.lineTo(-size, size)
+        ctx.lineTo(-size * 0.45, 0)
+        ctx.closePath()
+        ctx.fillStyle = '#f6b512'
+        ctx.fill()
+        ctx.lineWidth = 1.6
+        ctx.strokeStyle = 'rgba(5, 16, 30, 0.75)'
+        ctx.stroke()
+        ctx.restore()
+      }
+      const [ex, ey] = centre(steps[steps.length - 1])
+      ctx.beginPath()
+      ctx.arc(ex, ey, scale * 0.64, 0, Math.PI * 2)
+      ctx.lineWidth = 5
+      ctx.strokeStyle = 'rgba(5, 16, 30, 0.35)'
+      ctx.stroke()
+      ctx.setLineDash([7, 5])
+      ctx.lineWidth = 3
+      ctx.strokeStyle = '#f6b512'
+      ctx.stroke()
+      ctx.setLineDash([])
+      if (!pos || path[0].x !== pos.x || path[0].y !== pos.y) {
+        const [x, y] = centre(path[0])
+        ctx.beginPath()
+        ctx.arc(x, y, 5, 0, Math.PI * 2)
+        ctx.fillStyle = '#f6b512'
+        ctx.fill()
+        ctx.lineWidth = 2
+        ctx.strokeStyle = 'rgba(5, 16, 30, 0.7)'
+        ctx.stroke()
+      }
+      ctx.restore()
+    }
+
     for (let gx = x0; gx <= x1; gx++) {
       for (let gy = y0; gy <= y1; gy++) {
         const land = index.get(gx + ',' + gy)
@@ -657,49 +719,6 @@ export function MapCanvas({
           }
         }
       }
-    }
-
-    /*
-       The trip, under the selection ring and the pin: a dashed gold line,
-       the Travel tag's own colour, on a dark bed so it reads over sand and
-       forest alike. Where it starts somewhere other than the pin — the far
-       side of a portal — a small foot marks the start.
-    */
-    const path = pathRef.current
-    if (path && path.length > 1) {
-      const at = (t: { x: number; y: number }): [number, number] => [
-        (t.x - PLAY_MIN_X) * scale + tx + scale / 2,
-        (t.y - PLAY_MIN_Y) * scale + ty + scale / 2,
-      ]
-      ctx.save()
-      ctx.lineCap = 'round'
-      ctx.lineJoin = 'round'
-      ctx.beginPath()
-      path.forEach((t, i) => {
-        const [x, y] = at(t)
-        if (i === 0) ctx.moveTo(x, y)
-        else ctx.lineTo(x, y)
-      })
-      ctx.setLineDash([])
-      ctx.lineWidth = 6
-      ctx.strokeStyle = 'rgba(5, 16, 30, 0.45)'
-      ctx.stroke()
-      ctx.setLineDash([10, 9])
-      ctx.lineWidth = 3
-      ctx.strokeStyle = 'rgba(246, 168, 0, 0.95)'
-      ctx.stroke()
-      if (!pos || path[0].x !== pos.x || path[0].y !== pos.y) {
-        const [x, y] = at(path[0])
-        ctx.setLineDash([])
-        ctx.beginPath()
-        ctx.arc(x, y, 5, 0, Math.PI * 2)
-        ctx.fillStyle = '#f6a800'
-        ctx.fill()
-        ctx.lineWidth = 2
-        ctx.strokeStyle = 'rgba(5, 16, 30, 0.7)'
-        ctx.stroke()
-      }
-      ctx.restore()
     }
 
     if (sel) {

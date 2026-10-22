@@ -38,6 +38,8 @@ export interface LiveArena {
   planet: string
   land_id: string
   fighters: { owner: string }[]
+  /** When the arena last changed hands or was fought; the row carries it. */
+  last_fight?: string
 }
 
 /** UTC day number, matching the contract's `sec_since_epoch() / 86400`. */

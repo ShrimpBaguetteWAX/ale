@@ -15,6 +15,7 @@ import type { Land, LandsConfig } from '@/chain/types'
 import { MapCanvas, type ZoomApi } from '@/map/MapCanvas'
 import { QuestClaims, useClaimableQuests } from '@/map/MapQuests'
 import { platePath, plateWidth } from '@/map/cradle'
+import { shortSpan } from '@/map/tileSteps'
 import {
   playedDungeonsToday,
   summarisePlanet,
@@ -925,21 +926,38 @@ export default function MapView() {
      line that says why there is no way there. Nothing on the tile the
      player is standing on — the pin already carries what can be done here.
   */
-  const notes: { text: string; error?: boolean }[] = []
-  if (dungeonLockedHere) notes.push({ text: 'Already run today' })
-  if (heldHere) {
-    notes.push({
-      text: `You are defending this arena · ${heldHere.stored_mining_power.toLocaleString(NUM_LOCALE)} banked`,
+  /*
+     What is waiting at the land, said by the tag itself: a badge on its
+     corner for the glance, and a caption under it in the status colour for
+     the detail. A dungeon run today says when it resets; an arena with the
+     player's fighter in it says how long they have been defending it, from
+     the capture when there is one and from the arena's last fight when not.
+  */
+  const now = Date.now()
+  const statuses: { kind: 'ran' | 'defending' | 'short'; label: string; detail?: string }[] = []
+  if (dungeonLockedHere) {
+    statuses.push({ kind: 'ran', label: 'Ran today', detail: `resets in ${shortSpan(86_400_000 - (now % 86_400_000))}` })
+  }
+  if (heldHere || arenaOccupiedHere) {
+    const since = Date.parse(
+      (heldHere?.captured_at ||
+        arenasByPlanet[planet]?.find((a) => land && a.land_id === land.land_id)?.last_fight ||
+        '') + 'Z',
+    )
+    statuses.push({
+      kind: 'defending',
+      label: 'Defending',
+      detail: Number.isFinite(since) && since <= now ? `for ${shortSpan(now - since)}` : undefined,
     })
-  } else if (arenaOccupiedHere) {
-    notes.push({ text: 'Your fighter is in here' })
   }
   if (selected && land && !canAfford) {
-    notes.push({
-      text: `You have ${player.activestats.action_points.toLocaleString(NUM_LOCALE)} energy`,
-      error: true,
+    statuses.push({
+      kind: 'short',
+      label: 'Not enough energy',
+      detail: `you have ${player.activestats.action_points.toLocaleString(NUM_LOCALE)}`,
     })
   }
+  const badge = statuses.find((s) => s.kind !== 'short')
   const travelTitle = !selected
     ? undefined
     : route
@@ -993,14 +1011,29 @@ export default function MapView() {
             <span className="traveltag__xy" title="The land's coordinates">
               {selected.x} : {selected.y}
             </span>
+            {badge && (
+              <span
+                className={`traveltag__badge traveltag__badge--${badge.kind}`}
+                title={[badge.label, badge.detail].filter(Boolean).join(', ')}
+              >
+                {badge.kind === 'ran' ? (
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <rect x="5" y="11" width="14" height="10" rx="2" />
+                    <path d="M8 11V8a4 4 0 0 1 8 0v3" />
+                  </svg>
+                ) : (
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6l-8-3Z" />
+                  </svg>
+                )}
+              </span>
+            )}
           </span>
         )}
-        {notes.map((n) => (
-          <span
-            key={n.text}
-            className={`traveltag__note${n.error ? ' traveltag__note--error' : ''}`}
-          >
-            {n.text}
+        {statuses.map((s) => (
+          <span key={s.kind} className={`traveltag__cap traveltag__cap--${s.kind}`}>
+            {s.label}
+            {s.detail && <span className="traveltag__detail">{s.detail}</span>}
           </span>
         ))}
       </div>
