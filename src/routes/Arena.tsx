@@ -61,6 +61,7 @@ import {
   nftCards,
   Elemental,
   MatchupReadout,
+  CardsToolbar,
   FighterGrid,
   WeatherPanel,
   POLL_ATTEMPTS,
@@ -1029,6 +1030,17 @@ export default function Arena() {
                full width on a phone, where the thumb is.
             */}
             {phone ? autoPickButton : <div className="versus__pick">{autoPickButton}</div>}
+            {!phone && (
+              <div className="versus__cards">
+                <CardsToolbar
+                  crew={crew}
+                  weapon={weapon}
+                  autoPick={autoPickCardsButton}
+                  open={loadoutOpen}
+                  onToggle={() => setLoadoutOpen((v) => !v)}
+                />
+              </div>
+            )}
           </div>
         <div className="versus__divider">
             <OddsCentre odds={odds} />
@@ -1120,19 +1132,15 @@ export default function Arena() {
 
         {phone && <div className="loadoutauto">{autoPickCardsButton}</div>}
 
+        {/* A wider screen folds it away entirely: the toolbar in the line-up
+            stands for it, and opens it. */}
+        {(phone || loadoutOpen) && (
         <FoldingPanel
           className="loadout"
           title="Loadout"
           summary={loadoutSummary(crew, weapon, loadoutOpen)}
           open={loadoutOpen}
           onToggle={() => setLoadoutOpen((v) => !v)}
-          /*
-             On the heading, so a shut panel still offers it. A phone gets
-             the full-width one above the panel instead: this row is the
-             title, the pair of card names and a chevron already, and a
-             fourth thing on it there would wrap the heading in two.
-          */
-          aside={!phone ? autoPickCardsButton : undefined}
         >
           <div className="cardslots">
             <CardSlot
@@ -1235,6 +1243,7 @@ export default function Arena() {
 
           </div>
         </FoldingPanel>
+        )}
 
         <section className="panel picker" ref={picker}>
           <div className="tabs" role="tablist">

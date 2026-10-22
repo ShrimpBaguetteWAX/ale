@@ -55,6 +55,7 @@ import {
   type StatGrade,
 } from '@/tavern/fighterStats'
 import { asset, ipfsImage } from '@/assets'
+import { rarityColor } from '@/map/terrain'
 import { usePhone } from '@/components/usePhone'
 import { useModal } from '@/components/useModal'
 import {
@@ -2529,6 +2530,70 @@ export function loadoutSummary(
   if (open) return 'crew and weapon combine into your sixth fighter'
   if (!crew && !weapon) return 'no crew or weapon chosen'
   return [crew?.name ?? 'no crew', weapon?.name ?? 'no weapon'].join(' · ')
+}
+
+/**
+ * The crew and weapon, as a second toolbar in the line-up.
+ *
+ * Wider screens keep the loadout's everyday controls with the fighters they
+ * belong to: the card auto-pick sits directly under the fighters' one, the
+ * pair is shown as two chips with their art, and "Loadout" opens the full
+ * panel below for picking by hand. A phone keeps the folded panel instead.
+ */
+export function CardsToolbar({
+  crew,
+  weapon,
+  autoPick,
+  open,
+  onToggle,
+}: {
+  crew: CardTemplate | null
+  weapon: CardTemplate | null
+  autoPick: React.ReactNode
+  open: boolean
+  onToggle: () => void
+}) {
+  const chip = (label: string, card: CardTemplate | null) =>
+    card ? (
+      <button type="button" className="cardchip" onClick={onToggle} title={`${label}: ${card.name}`}>
+        <img
+          className="cardchip__art"
+          src={asset(`/assets/cards/${card.template_id}.webp`)}
+          alt=""
+          loading="lazy"
+          onError={(e) => {
+            const img = e.currentTarget
+            const next = img.dataset.tried ? undefined : ipfsImage(card.img)
+            img.dataset.tried = '1'
+            img.src = next ?? asset('/assets/default-card.png')
+          }}
+        />
+        <span className="cardchip__text">
+          <span className="cardchip__kind" style={{ color: rarityColor(card.rarity.toLowerCase()) }}>
+            {label}
+          </span>
+          {card.name}
+        </span>
+      </button>
+    ) : (
+      <button type="button" className="cardchip cardchip--empty" onClick={onToggle}>
+        No {label.toLowerCase()}
+      </button>
+    )
+
+  return (
+    <div className="cardsbar">
+      <span className="cardsbar__label">Cards</span>
+      {autoPick}
+      {chip('Crew', crew)}
+      {chip('Weapon', weapon)}
+      <span className="spacer" />
+      <button type="button" className="cardsbar__open" aria-expanded={open} onClick={onToggle}>
+        Loadout
+        <span className="panel__chev" aria-hidden="true" />
+      </button>
+    </div>
+  )
 }
 
 export function CardSlot({
