@@ -119,6 +119,28 @@
     opacity: 1;
   }
 }
+/* Touchdown: once a cycle, as the glow reaches the land, like dust from a landing. */
+.maptrip__ripple {
+  fill: none;
+  stroke: #ffe2a0;
+  stroke-width: 1.4;
+  vector-effect: non-scaling-stroke;
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: trip-ripple 9s ease-out infinite;
+}
+@keyframes trip-ripple {
+  0% {
+    transform: scale(0.5);
+    opacity: 0.55;
+  }
+  60%,
+  100% {
+    transform: scale(1.5);
+    opacity: 0;
+  }
+}
 .maptrip__start {
   fill: #e8b23a;
   fill-opacity: 0.7;
@@ -127,11 +149,13 @@
   vector-effect: non-scaling-stroke;
 }
 /* Still, where the player asked for less motion. */
-:root[data-fx='low'] .maptrip__pad {
+:root[data-fx='low'] .maptrip__pad,
+:root[data-fx='low'] .maptrip__ripple {
   animation: none;
 }
 @media (prefers-reduced-motion: reduce) {
-  .maptrip__pad {
+  .maptrip__pad,
+  .maptrip__ripple {
     animation: none;
   }
 }

@@ -450,7 +450,7 @@ export function MapCanvas({
       ground: `M${pt(l.a)} Q${pt(l.ground)} ${pt(l.b)}`,
     }))
     const stops = hop.stops.map((p) => ({ x: p.x + 0.5, y: p.y + 0.5 }))
-    return { legs, pads: stops.slice(1, -1), start: from }
+    return { legs, pads: stops.slice(1, -1), end: stops[stops.length - 1], start: from }
   }, [path, lands])
   const hereRef = useRef<HTMLDivElement>(null)
   const selRef = useRef<HTMLDivElement>(null)
@@ -1338,6 +1338,18 @@ export function MapCanvas({
                 <circle className="maptrip__pad-core" cx={p.x} cy={p.y} r={0.065} />
               </g>
             ))}
+            {/* The land: a wider pad, and a ring that spreads across the ground
+                from it once a cycle, when the glow arrives. */}
+            <ellipse className="maptrip__pad-rim" cx={trip.end.x} cy={trip.end.y} rx={1.09} ry={0.52} />
+            <ellipse className="maptrip__pad-inner" cx={trip.end.x} cy={trip.end.y} rx={0.52} ry={0.25} />
+            <ellipse
+              key={`${trip.end.x},${trip.end.y}`}
+              className="maptrip__ripple"
+              cx={trip.end.x}
+              cy={trip.end.y}
+              rx={1.19}
+              ry={0.57}
+            />
             {trip.legs.map((l) => (
               <path key={'a' + l.air} className="maptrip__air" d={l.air} />
             ))}
