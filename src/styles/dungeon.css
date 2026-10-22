@@ -423,6 +423,42 @@
 }
 
 /*
+ * Auto-pick cards and its Undo, one pair of buttons sharing an edge, the
+ * way the fighters' auto-pick carries its own.
+ */
+.cardsauto {
+  display: inline-flex;
+  align-items: stretch;
+  align-self: center;
+}
+.cardsauto__go {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+.cardsauto__undo {
+  width: 34px;
+  padding: 0;
+  color: var(--text-dim);
+  border-left-width: 0;
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+.cardsauto__undo svg {
+  width: 15px;
+  height: 15px;
+}
+.cardsauto__undo:hover:not(:disabled) {
+  color: var(--gold);
+}
+/* Above the panel on a phone it spans the width, the pick taking the room. */
+.loadoutauto .cardsauto {
+  display: flex;
+}
+.loadoutauto .cardsauto__go {
+  flex: 1;
+}
+
+/*
  * The same button on a phone, lifted out of the fold it was inside.
  *
  * It belongs beside the slots it fills, and those live in the Loadout

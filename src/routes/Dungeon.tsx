@@ -47,6 +47,7 @@ import { recallTeam, rememberTeam, restoreTeam } from '@/fight/lastTeam'
 import { applyWeather, fetchWeather } from '@/fight/weather'
 import { autoPickCards, autoPickCardsByOdds, autoPickFighters } from '@/fight/autopick'
 import { AutoPickSplit } from '@/fight/AutoPickSplit'
+import { AutoPickCards } from '@/fight/AutoPickCards'
 import { TEAM_SIZE, type BattleFighter, type RosterFighter } from '@/dungeon/types'
 import {
   abilityColor,
@@ -539,6 +540,7 @@ export default function Dungeon() {
           })
     setCrew(pick.crew)
     setWeapon(pick.weapon)
+    return pick
   }, [enemies, usableCrew, usableWeapons, nftValues, picked, enemyTeam, difficulty, nftMinDifficulty, difMods, tauntDeduction, weather, caps, levelMod, ageDecay])
 
   /*
@@ -551,15 +553,16 @@ export default function Dungeon() {
      instead, where it is on screen whether the fold is open or not.
   */
   const autoPickCardsButton = (
-    <button
-      type="button"
-      className="btn btn--ghost btn--sm cardslots__auto"
-      onClick={autoPickCardsOnly}
+    <AutoPickCards
+      crew={crew}
+      weapon={weapon}
       disabled={!usableCrew.length && !usableWeapons.length}
-      title="Choose the crew and weapon pair that suits this opponent"
-    >
-      Auto-pick cards
-    </button>
+      onPick={autoPickCardsOnly}
+      onRestore={(pair) => {
+        setCrew(pair.crew)
+        setWeapon(pair.weapon)
+      }}
+    />
   )
 
   const start = async () => {
