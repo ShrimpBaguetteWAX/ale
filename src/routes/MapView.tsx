@@ -623,9 +623,16 @@ export default function MapView() {
   /*
      The top ten arenas and top ten dungeons across every planet, from the
      lands already warmed for the planet menu: no extra request.
+
+     Only once every planet is in, and the decay with them: ranked from part
+     of the field, a building would glow on arrival and go out a moment later
+     as another planet's lands beat it.
   */
   const hotLands = useMemo(
-    () => hottestLands(Object.values(landsByPlanet).flat(), landsConfig?.boost_decay_per_hour ?? 0),
+    () =>
+      landsConfig && PLANETS.every((p) => landsByPlanet[p])
+        ? hottestLands(Object.values(landsByPlanet).flat(), landsConfig.boost_decay_per_hour ?? 0)
+        : undefined,
     [landsByPlanet, landsConfig],
   )
 
