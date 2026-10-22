@@ -7,7 +7,7 @@ import {
   PORTAL_EFFECTS,
 } from '@/chain/config'
 import type { Land } from '@/chain/types'
-import { hopStops } from './tileSteps'
+import { tripHops } from './tileSteps'
 import {
   MARKER_SRC,
   buildingMarker,
@@ -426,9 +426,9 @@ export function MapCanvas({
   const tripRef = useRef<SVGGElement>(null)
 
   /*
-     The trip as a flight over the planet: it hops between small landing pads
-     lying flat on the ground, each hop a thin arc of light lifted off the
-     surface with its shadow straight below. The pads glow in turn, slowly,
+     The trip as a flight over the planet: one long curve to the land, hopping
+     between small landing pads lying flat on the ground along it, each hop a
+     thin arc of light lifted off the surface with its shadow below. The pads glow in turn, slowly,
      from the first to the last. An SVG layer rather than canvas paint so it
      can glow without repainting the planet every frame; and because that
      layer sits over the canvas, a pad never lands on a building or a portal.
@@ -442,32 +442,14 @@ export function MapCanvas({
     )
     const free = (p: { x: number; y: number }) =>
       p.x >= PLAY_MIN_X && p.x <= PLAY_MAX_X && p.y >= PLAY_MIN_Y && p.y <= PLAY_MAX_Y && !taken.has(p.x + ',' + p.y)
-    const stops = hopStops(from, to, free).map((p) => ({
-      x: p.x + 0.5,
-      y: p.y + 0.5,
+    const hop = tripHops(from, to, free)
+    /* Drawn through tile centres; tripHops works in whole tiles. */
+    const pt = (p: { x: number; y: number }) => `${p.x + 0.5},${p.y + 0.5}`
+    const legs = hop.legs.map((l) => ({
+      air: `M${pt(l.a)} Q${pt(l.air)} ${pt(l.b)}`,
+      ground: `M${pt(l.a)} Q${pt(l.ground)} ${pt(l.b)}`,
     }))
-    const legs = stops.slice(1).map((b, i) => {
-      const a = stops[i]
-      /*
-         Higher for a longer hop, the way a flight climbs. It bows off its
-         line on the side facing up the map, so a hop north or south still
-         stands clear of its shadow instead of lying along it.
-      */
-      const len = Math.hypot(b.x - a.x, b.y - a.y)
-      const lift = Math.min(2.5, len * 0.2)
-      let nx = (b.y - a.y) / len
-      let ny = -(b.x - a.x) / len
-      if (ny > 0 || (ny === 0 && nx > 0)) {
-        nx = -nx
-        ny = -ny
-      }
-      const mx = (a.x + b.x) / 2 + nx * lift
-      const my = (a.y + b.y) / 2 + ny * lift
-      return {
-        air: `M${a.x},${a.y} Q${mx},${my} ${b.x},${b.y}`,
-        ground: `M${a.x},${a.y} L${b.x},${b.y}`,
-      }
-    })
+    const stops = hop.stops.map((p) => ({ x: p.x + 0.5, y: p.y + 0.5 }))
     return { legs, pads: stops.slice(1, -1), start: from }
   }, [path, lands])
   const hereRef = useRef<HTMLDivElement>(null)
