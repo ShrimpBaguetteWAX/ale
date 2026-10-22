@@ -1839,7 +1839,7 @@
   /* Under the pin, centred, clear of the halo by the arrow's length. */
   left: 0;
   top: calc(var(--pin-halo) / 2 + 9px);
-  translate: -50% 0;
+  translate: calc(-50% + var(--tag-dx, 0px)) 0;
   width: max-content;
   pointer-events: auto;
   --tag-h: clamp(40px, var(--pin-size), 52px);
@@ -1872,12 +1872,28 @@
 .heretag__pair::before {
   content: '';
   position: absolute;
-  left: 50%;
+  /* Under the pin, wherever the tag has slid to. */
+  left: calc(50% - var(--tag-dx, 0px));
   top: -7px;
   translate: -50% 0;
   border: 7px solid transparent;
   border-bottom-color: rgb(9 18 34);
   border-top: 0;
+}
+
+/*
+ * No room under the pin, on the bottom rows: the tag goes above it, over
+ * the "You" tag, and its arrow moves to the bottom edge.
+ */
+.herepin--above .heretag {
+  top: auto;
+  bottom: calc(var(--pin-dot) / 2 + 30px);
+}
+.herepin--above .heretag__pair::before {
+  top: auto;
+  bottom: -7px;
+  border-bottom: 0;
+  border-top: 7px solid rgb(9 18 34);
 }
 
 .heretag__name {

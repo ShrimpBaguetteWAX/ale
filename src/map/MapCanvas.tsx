@@ -98,10 +98,10 @@ export interface MapCanvasProps {
    */
   selectionSlot?: React.ReactNode
   /**
-   * Rendered at the player's own tile, above the pin, and unlike the pin it
-   * takes pointer input: it is where the way into whatever is under the
-   * player's feet lives. `herepin--below` is set when the pin is near the top
-   * of the frame, so the slot can drop under it instead of leaving the frame.
+   * Rendered at the player's own tile, and unlike the pin it takes pointer
+   * input: it is where the way into whatever is under the player's feet
+   * lives. Kept inside the frame: `herepin--above` is set when there is no
+   * room under the pin, and `--tag-dx` slides it sideways off an edge.
    */
   pinSlot?: React.ReactNode
   /**
@@ -450,6 +450,37 @@ export function MapCanvas({
   }, [path, lands])
   const hereRef = useRef<HTMLDivElement>(null)
   const selRef = useRef<HTMLDivElement>(null)
+  /* Where the pin last sat on screen, so the tag can be re-fitted when it changes size. */
+  const pinAtRef = useRef<{ cx: number; cy: number; size: number } | null>(null)
+
+  /*
+     Keep the tag by the pin on screen. It hangs under the pin; on the bottom
+     rows there is no room there, so it goes above instead, and near a side
+     it slides along so its arrow still points at the pin. Measured rather
+     than assumed: the tag folds, and names differ in length.
+  */
+  const fitHereTag = useCallback(() => {
+    const here = hereRef.current
+    const at = pinAtRef.current
+    if (!here || !at) return
+    const tag = here.firstElementChild as HTMLElement | null
+    if (!tag) return
+    const { w, h } = sizeRef.current
+    const m = 8
+    const tw = tag.offsetWidth
+    const th = tag.offsetHeight
+    const halo = Math.min(80, Math.max(44, at.size * 1.9))
+    const below = at.cy + halo / 2 + 9 + th + m <= h
+    const aboveRoom = at.cy - (halo / 2 + 24 + th + m) >= 0
+    here.classList.toggle('herepin--above', !below && aboveRoom)
+    const half = tw / 2
+    let dx = 0
+    if (at.cx - half < m) dx = m - (at.cx - half)
+    else if (at.cx + half > w - m) dx = w - m - (at.cx + half)
+    const limit = Math.max(0, half - 18)
+    dx = Math.max(-limit, Math.min(limit, dx))
+    here.style.setProperty('--tag-dx', dx + 'px')
+  }, [])
   /* The scale the map opened at, which is what the zoom readout counts from. */
   const openScaleRef = useRef(0)
   const levelRef = useRef(0)
@@ -508,9 +539,15 @@ export function MapCanvas({
     if (here) {
       here.style.transform = transform
       here.style.setProperty('--pin-size', size)
-      here.classList.toggle('herepin--below', cy < 110)
+      pinAtRef.current = { cx, cy, size: parseFloat(size) }
+      fitHereTag()
     }
-  }, [])
+  }, [fitHereTag])
+
+  /* The tag changes size when it folds or names another building. */
+  useLayoutEffect(() => {
+    fitHereTag()
+  }, [pinSlot, fitHereTag])
 
   /**
    * Put the selection anchor on the selected tile, or hide it.
