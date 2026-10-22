@@ -1,0 +1,1 @@
+const r="al:quests.claimed.v1";let t=null;function s(e){if(!t)try{t=JSON.parse(sessionStorage.getItem(r)??"{}")}catch{t={}}for(const[n,o]of Object.entries(t))e-o<36e5||delete t[n];return t}function c(e){t=e;try{sessionStorage.setItem(r,JSON.stringify(e))}catch{}}function i(e,n=Date.now()){c({...s(n),[e]:n})}function a(e,n=Date.now()){return e in s(n)}export{a as c,i as r};
