@@ -5314,3 +5314,30 @@ button.combatcard--empty:hover {
     grid-area: 5 / 1 / 6 / 4;
   }
 }
+
+/*
+ * The fighter's hover read, in the frame's dark glass rather than the old
+ * violet navy: the same fill and blur as the menu, and white hairlines in
+ * place of the purple ones, the level tag's included.
+ */
+@media (min-width: 720px) {
+  .fhover {
+    --line: rgb(255 255 255 / 11%);
+    --line-soft: rgb(255 255 255 / 8%);
+    background: linear-gradient(180deg, rgb(10 18 34 / 86%), rgb(4 9 20 / 92%));
+    backdrop-filter: blur(14px) saturate(1.35);
+    -webkit-backdrop-filter: blur(14px) saturate(1.35);
+    border-color: rgb(255 255 255 / 14%);
+    border-radius: 12px;
+  }
+  .fhover .tag {
+    border-color: rgb(255 255 255 / 22%);
+    background: rgb(255 255 255 / 6%);
+    color: var(--white);
+  }
+}
+:root[data-fx='low'] .fhover {
+  background: linear-gradient(180deg, rgb(10 18 34 / 97%), rgb(4 9 20 / 98%));
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
