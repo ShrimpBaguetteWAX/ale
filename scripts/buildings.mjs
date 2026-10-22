@@ -43,15 +43,43 @@ function shade(id, x0, x1, c, O) {
 const edge = (O, ink, w = 2.2) => O.outline ? ` stroke="${ink}" stroke-width="${w}" stroke-linejoin="round" stroke-linecap="round"` : ''
 const hatchOver = (O, sid, clipId, x0, x1, y0, y1) => O.hatch ? `<rect x="${x0}" y="${y0}" width="${x1 - x0}" height="${y1 - y0}" fill="url(#${sid}-hatch)" clip-path="url(#${clipId})"/>` : ''
 
-/* ---------- the arena: a colosseum, three pennants on its rim ---------- */
-function arena(sid, pal, O, uid) {
+/*
+  The arena's cloth by boost rank, the same bands as the rings: its pennants
+  and banners change colour as the rank climbs, like a fighter's belts, and
+  there are more of them. White, the arena's gold, red, crimson with gold
+  trim, royal purple with gold trim. The building itself never changes.
+*/
+const RED = '#c04a35', CRIMSON = '#a52a35', PURPLE = '#6a3e8c', WHITE = '#efe6cf', GOLD_CLOTH = '#f4c547'
+const GOLD_TRIM = '#e8b83a', GOLD_BRIGHT = '#ffd84a'
+const ARENA_DRESS = {
+  1: { flags: [180], flag: WHITE },
+  2: { flags: [180, -110, 110], flag: GOLD_CLOTH },
+  3: { flags: [180, -110, 110], flag: RED, banners: [-44, 44], banner: RED },
+  4: { flags: [180, -110, 110, -150, 150], flag: CRIMSON, flagTrim: GOLD_TRIM, banners: [-56, -20, 20, 56], banner: CRIMSON, bannerTrim: GOLD_BRIGHT },
+  5: { flags: [180, -110, 110, -150, 150], flag: PURPLE, flagTrim: GOLD_BRIGHT, banners: [-62, -36, -12, 12, 36, 62], long: true, banner: PURPLE, bannerTrim: GOLD_BRIGHT, finials: true },
+}
+
+/* ---------- the arena: a colosseum, its pennants and banners by rank ---------- */
+function arena(sid, pal, O, uid, dress = ARENA_DRESS[2]) {
   const R = 40, r = 14, H = 34
   const wall = `M${-R},${-H} L${-R},0 A${R},${r} 0 0 0 ${R},0 L${R},${-H} A${R},${r} 0 0 1 ${-R},${-H} Z`
+  const rim = (deg) => { const t = deg * Math.PI / 180; return [R * Math.sin(t), -H + r * Math.cos(t)] }
   const onWall = (deg, h) => { const t = deg * Math.PI / 180; return [R * Math.sin(t), h + r * Math.cos(t), Math.cos(t)] }
+  /* cloth keeps a little of the wash the rest of the building has */
+  const cloth = (c) => (pal.wash ? mix(c, pal.wash, 0.12) : c)
   let s = `<defs>${shade(`${uid}-aw`, -R, R, [pal.lit, pal.mid, pal.dark], O)}<clipPath id="${uid}-awc"><path d="${wall}"/></clipPath><clipPath id="${uid}-aic"><ellipse cx="0" cy="${-H + .6}" rx="${R - 6}" ry="${r - 2.2}"/></clipPath></defs>`
-  /* the back pennant stands behind the bowl */
-  const flag = (x, y, lit) => `<line x1="${f(x)}" y1="${f(y)}" x2="${f(x)}" y2="${f(y - 25)}" stroke="${pal.pole}" stroke-width="2.2" stroke-linecap="round"/><polygon points="${P([[x, y - 25], [x + 16, y - 23], [x + 10.5, y - 19.5], [x + 16, y - 15], [x, y - 14]])}" fill="${lit ? pal.flagLit : pal.flag}"${edge(O, pal.ink, 1.6)}/>`
-  s += flag(0, -H - r + .5, false)
+  const flag = (deg) => {
+    const [x, y] = rim(deg)
+    /* the pennants on the left catch the light */
+    const lit = Math.sin(deg * Math.PI / 180) < 0
+    const fill = cloth(lit ? mix(dress.flag, '#ffffff', 0.1) : dress.flag)
+    const rim_ = dress.flagTrim ? ` stroke="${cloth(dress.flagTrim)}" stroke-width="1.4" stroke-linejoin="round"` : edge(O, pal.ink, 1.6)
+    return `<line x1="${f(x)}" y1="${f(y + 1)}" x2="${f(x)}" y2="${f(y - 25)}" stroke="${pal.pole}" stroke-width="2.2" stroke-linecap="round"/><polygon points="${P([[x, y - 25], [x + 16, y - 23], [x + 10.5, y - 19.5], [x + 16, y - 15], [x, y - 14]])}" fill="${fill}"${rim_}/>` +
+      (dress.finials ? `<circle cx="${f(x)}" cy="${f(y - 26.4)}" r="2" fill="${cloth(GOLD_BRIGHT)}" stroke="${pal.ink}" stroke-width=".8"/>` : '')
+  }
+  const behind = (d) => Math.cos(d * Math.PI / 180) <= 0
+  /* pennants on the back half of the rim stand behind the bowl */
+  dress.flags.filter(behind).forEach((d) => { s += flag(d) })
   s += `<path d="${wall}" fill="url(#${uid}-aw)"${edge(O, pal.ink)}/>`
   s += hatchOver(O, sid, `${uid}-awc`, R * .3, R + 2, -H - 2, r + 2)
   /* the band between the two storeys */
@@ -60,13 +88,18 @@ function arena(sid, pal, O, uid) {
   for (let d = -72; d <= 72; d += 24) { if (d === 0) continue; const [x, y, c] = onWall(d, -14); if (c > .3) s += `<path d="${archPath(x, y + 11, y, 7.4 * c)}" fill="${pal.win}" opacity=".85"/>` }
   /* the gate */
   s += `<path d="${archPath(0, r, -4, 13)}" fill="${pal.gate}"/>`
+  /* banners hanging from the top of the wall */
+  ;(dress.banners || []).forEach((d) => {
+    const [x, y, c] = onWall(d, -H + 1)
+    const w = 5.6 * c, h = dress.long ? 22 : 14, fill = cloth(dress.banner)
+    s += `<path d="M${f(x - w / 2)},${f(y)} H${f(x + w / 2)} V${f(y + h)} L${f(x)},${f(y + h - 3)} L${f(x - w / 2)},${f(y + h)} Z" fill="${fill}" stroke="${mix(fill, '#000000', .45)}" stroke-width=".9"/><line x1="${f(x - w / 2)}" y1="${f(y + 2)}" x2="${f(x + w / 2)}" y2="${f(y + 2)}" stroke="${cloth(dress.bannerTrim || pal.flagLit)}" stroke-width="${dress.bannerTrim ? 1.6 : 1}"/>`
+  })
   /* the bowl from above: rim, then tiers stepping down to the sand */
   s += `<ellipse cx="0" cy="${-H}" rx="${R}" ry="${r}" fill="${pal.top}"${edge(O, pal.ink)}/>`
   s += `<g clip-path="url(#${uid}-aic)"><ellipse cx="0" cy="${-H + .6}" rx="${R - 6}" ry="${r - 2.2}" fill="${pal.inner}"/>`
   ;[[pal.tierA, 2.2, 4.4, 1.5], [pal.tierB, 4.6, 8.8, 3], [pal.tierA, 7, 13, 4.4], [pal.sand, 9.6, 17, 5.8]].forEach(([c, dy, dr, dry]) => { s += `<ellipse cx="0" cy="${f(-H + .6 + dy)}" rx="${f(R - 6 - dr)}" ry="${f(r - 2.2 - dry)}" fill="${c}"/>` })
   s += `</g>`
-  s += flag(-R * Math.sin(70 * Math.PI / 180), -H + r * Math.cos(110 * Math.PI / 180) * -1 + 1, true)
-  s += flag(R * Math.sin(70 * Math.PI / 180) - 1, -H + r * Math.cos(110 * Math.PI / 180) * -1 + 1, false)
+  dress.flags.filter((d) => !behind(d)).forEach((d) => { s += flag(d) })
   if (O.soft) s += `<path d="M${-R + 4},${-H + 4} L${-R + 4},-6" stroke="#fff" stroke-opacity=".35" stroke-width="3" stroke-linecap="round"/>`
   return s
 }
@@ -146,6 +179,13 @@ const BUILD = { arena, dungeon, tavern }
 
 
 /* Grey for the muted copies: most of the colour out, the light and shade kept. */
+const greyOne = (v) => {
+  const [r, g, b] = hex(v)
+  const l = Math.round(0.3 * r + 0.59 * g + 0.11 * b)
+  return mix(v, '#' + [l, l, l].map((x) => x.toString(16).padStart(2, '0')).join(''), 0.88)
+}
+const greyDress = (d) =>
+  Object.fromEntries(Object.entries(d).map(([k, v]) => [k, typeof v === 'string' ? greyOne(v) : v]))
 const grey = (pal) =>
   Object.fromEntries(
     Object.entries(pal).map(([k, v]) => {
@@ -168,10 +208,21 @@ const washed = (pal) =>
       return [k, dark ? mix(v, '#2a1a0a', 0.1) : mix(v, PARCHMENT, 0.3)]
     }),
   )
+const washedWith = (pal) => ({ ...washed(pal), wash: PARCHMENT })
 
 const O = { outline: true, soft: true }
 const out = join(dirname(fileURLToPath(import.meta.url)), '..', 'public', 'assets', 'markers', 'buildings')
 mkdirSync(out, { recursive: true })
+const write = (name, svg) => writeFileSync(join(out, name), svg)
+const frame = (body) => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="-58 -96 116 116" width="116" height="116">${body}</svg>\n`
+/* The arena once per rank: arena-r1.svg to arena-r5.svg, and greyed. */
+for (let rank = 1; rank <= 5; rank++) {
+  for (const muted of [false, true]) {
+    const pal = washedWith(BASE.arena)
+    const body = arena('b', muted ? { ...grey(pal), wash: PARCHMENT } : pal, O, 'arena', muted ? greyDress(ARENA_DRESS[rank]) : ARENA_DRESS[rank])
+    write(`arena-r${rank}${muted ? '-muted' : ''}.svg`, frame(body))
+  }
+}
 for (const kind of ['arena', 'dungeon', 'tavern']) {
   for (const muted of [false, true]) {
     const pal = muted ? grey(washed(BASE[kind])) : washed(BASE[kind])
