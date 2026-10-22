@@ -85,7 +85,7 @@ export interface MapCanvasProps {
   /** The tavern the player is standing in, if it is on this planet. */
   currentTavernLand?: string
   /**
-   * Land ids of the buildings that are hottest right now, across every
+   * Land ids on this planet of the buildings hottest right now across every
    * planet (see `hottestLands`). Those on this planet glow white-hot with
    * embers rising off them, unless spent or defended.
    */

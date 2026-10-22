@@ -16,7 +16,7 @@ import type { Land, LandsConfig } from '@/chain/types'
 import { MapCanvas, type ZoomApi } from '@/map/MapCanvas'
 import { QuestClaims, useClaimableQuests } from '@/map/MapQuests'
 import { shortSpan } from '@/map/tileSteps'
-import { hottestLands } from '@/map/hot'
+import { hotKey, hottestLands } from '@/map/hot'
 import {
   playedDungeonsToday,
   summarisePlanet,
@@ -631,10 +631,16 @@ export default function MapView() {
   const hotLands = useMemo(
     () =>
       landsConfig && PLANETS.every((p) => landsByPlanet[p])
-        ? hottestLands(Object.values(landsByPlanet).flat(), landsConfig.boost_decay_per_hour ?? 0)
+        ? hottestLands(landsByPlanet, landsConfig.boost_decay_per_hour ?? 0)
         : undefined,
     [landsByPlanet, landsConfig],
   )
+  /* The ones on the planet being viewed, by land id as the map knows them. */
+  const hotHere = useMemo(() => {
+    if (!hotLands) return undefined
+    const prefix = hotKey(planet, '')
+    return new Set([...hotLands].filter((k) => k.startsWith(prefix)).map((k) => k.slice(prefix.length)))
+  }, [hotLands, planet])
 
   const summaries = useMemo(
     () =>
@@ -1180,7 +1186,7 @@ export default function MapView() {
           heldArenaLands={heldArenaLands}
           tavernLands={tavernLands}
           currentTavernLand={currentTavernLand}
-          hotLands={hotLands}
+          hotLands={hotHere}
           path={path}
           selectionSlot={travelTag}
           pinSlot={pinSlot}
