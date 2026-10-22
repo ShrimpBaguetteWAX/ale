@@ -116,7 +116,7 @@ const ranked = (kind: string) =>
   }))
 export const RANKED_SRC = { arena: ranked('arena'), dungeon: ranked('dungeon') }
 
-/** The portal as a glowing well, one for each planet it leads to. */
+/** The portal as a round gate on a dais, one for each planet it leads to. */
 export const PORTAL_SRC = Object.fromEntries(
   ['eyeke', 'kavian', 'magor', 'naron', 'neri', 'veles'].map((p) => [p, asset(`/assets/markers/buildings/portal-${p}.svg`)]),
 ) as Record<string, string>

@@ -276,11 +276,12 @@ function tavern(sid, pal, O, uid) {
   return s
 }
 
-/* ---------- the portal: a glowing well, one per planet it leads to ---------- */
+/* ---------- the portal: a round gate on a dais, one per planet it leads to ---------- */
 /*
-  A low round well of the destination planet's stone, the swirl on its
-  surface seen from above and a beam of light rising out of it, the
-  planet's emblem on its front. The magenta stays the portal's in every one;
+  A thick round gate standing on a two-step round dais of the destination
+  planet's stone with a magenta edge: you see the top of its band and, inside,
+  its far wall behind the swirl. Chevrons light in magenta and the planet's
+  colour, the planet's emblem sits on top. The magenta stays the portal's;
   the stone, the light and the emblem are the planet it takes you to.
   Writes portal-<planet>.svg.
 */
@@ -299,7 +300,7 @@ const RAW = {
 const PLANET_LOOK = Object.fromEntries(
   Object.entries(RAW).map(([k, t]) => [k, { ...t, name: k, stoneLit: PORTAL_WASH(t.stoneLit), stone: PORTAL_WASH(t.stone), stoneDark: PORTAL_WASH(t.stoneDark), accent: PORTAL_WASH(t.accent, 0.12) }]),
 )
-function portalWell(T, uid) {
+function portalGate(T, uid) {
   const ink = (w = 2.2, c = INK) => ` stroke="${c}" stroke-width="${w}" stroke-linejoin="round" stroke-linecap="round"`
   const grad = (id, c0, c1, c2, x0, x1) => `<linearGradient id="${id}" gradientUnits="userSpaceOnUse" x1="${x0}" y1="0" x2="${x1}" y2="0"><stop offset="0" stop-color="${c0}"/><stop offset=".5" stop-color="${c1}"/><stop offset="1" stop-color="${c2}"/></linearGradient>`
   /* the planet's emblem, small, centred on x, y */
@@ -326,14 +327,50 @@ function portalWell(T, uid) {
     s += `<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="none" stroke="${MAGENTA}" stroke-width="1.8"/>`
     return s
   }
+  const wash = PORTAL_WASH
+  const METAL = { lit:wash('#e4ebf0'), mid:wash('#a6b2bc'), dark:wash('#5e6a76'), side:wash('#7c8894') }
+  const stoneMat = (T) => ({ lit:T.stoneLit, mid:T.stone, dark:T.stoneDark, side:mix(T.stone, T.stoneDark, .5) })
+  /* depth runs back and up: seen from a little above, the ring's top edge shows */
+  const DX = 2.4, DY = -5.5
+  /* a round cylinder seen from above: side from y up to y - h, top ellipse */
+  function cyl(uid, rx, ry, y, h, m, edgeC) {
+    return `<defs>${grad(uid, m.lit, m.mid, m.dark, -rx, rx)}</defs><path d="M${-rx},${y - h} V${y} A${rx},${ry} 0 0 0 ${rx},${y} V${y - h} Z" fill="url(#${uid})"${ink(1.8)}/><ellipse cx="0" cy="${y - h}" rx="${rx}" ry="${ry}" fill="${m.lit}"${ink(1.8)}/>` + (edgeC ? `<path d="M${-rx},${y - h} A${rx},${ry} 0 0 0 ${rx},${y - h}" fill="none" stroke="${edgeC}" stroke-width="1.4"/>` : '')
+  }
+  /*
+    The ring: a thick round band standing upright, its face toward you, its
+    depth going back and up so you see its top edge and, inside, its far wall.
+    Drawn as slices from the back to the front; the swirl hangs in the middle.
+  */
+  function gateRing(T, uid, o) {
+    const m = o.mat || METAL, R = o.R || 24, r = o.r || 17, cy = o.cy
+    const N = 8
+    const ann = (t) => { const x = DX * t, y = cy + DY * t; return `M${f(x - R)},${f(y)} a${R},${R} 0 1 0 ${2 * R},0 a${R},${R} 0 1 0 ${-2 * R},0 Z M${f(x - r)},${f(y)} a${r},${r} 0 1 1 ${2 * r},0 a${r},${r} 0 1 1 ${-2 * r},0 Z` }
+    let s = ''
+    /* the outline of the whole band first, so its silhouette is inked once */
+    for (let i = 0; i <= N; i++) { const t = 1 - i / N; s += `<circle cx="${f(DX * t)}" cy="${f(cy + DY * t)}" r="${R}" fill="none" stroke="${INK}" stroke-width="4.4"/>` }
+    const slice = (t) => `<path d="${ann(t)}" fill-rule="evenodd" fill="${t > .02 ? m.side : m.mid}"/>`
+    for (let i = 0; i <= N / 2; i++) s += slice(1 - i / N)
+    s += `<circle cx="${f(DX)}" cy="${f(cy + DY)}" r="${r}" fill="none" stroke="${INK}" stroke-width="1.4"/>`
+    s += vortex(T, uid, f(DX * .5), f(cy + DY * .5), r + .5, r + .5)
+    for (let i = N / 2 + 1; i < N; i++) s += slice(1 - i / N)
+    /* the front face, lit from the upper left */
+    s += `<defs><linearGradient id="${uid}-ff" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${m.lit}"/><stop offset=".55" stop-color="${m.mid}"/><stop offset="1" stop-color="${m.dark}"/></linearGradient></defs><path d="${ann(0)}" fill-rule="evenodd" fill="url(#${uid}-ff)"${ink(1.8)}/>`
+    if (o.segments) for (let i = 0; i < o.segments; i++) { const t = (i / o.segments) * Math.PI * 2 + Math.PI / o.segments; s += `<line x1="${f(r * Math.sin(t))}" y1="${f(cy - r * Math.cos(t))}" x2="${f(R * Math.sin(t))}" y2="${f(cy - R * Math.cos(t))}" stroke="${m.dark}" stroke-width="1.2"/>` }
+    /* chevrons round the face */
+    if (o.chevrons !== false) for (let i = 0; i < 9; i++) {
+      const t = (i / 9) * Math.PI * 2, rc = (R + r) / 2, x = rc * Math.sin(t), y = cy - rc * Math.cos(t)
+      const c = i === 0 ? MAGENTA : i % 2 ? T.accent : MAGENTA
+      s += `<g transform="translate(${f(x)} ${f(y)}) rotate(${f(t * 180 / Math.PI)})"><circle r="3.6" fill="${c}" opacity=".35"/><path d="M-3,-2.4 L3,-2.4 L1.8,2.4 L-1.8,2.4 Z" fill="${c}"${ink(.9)}/></g>`
+    }
+    /* a soft highlight along the upper left of the face */
+    s += `<path d="M${f(-R * .82)},${f(cy - R * .42)} A${R * .92},${R * .92} 0 0 1 ${f(-R * .2)},${f(cy - R * .9)}" fill="none" stroke="#fff" stroke-opacity=".45" stroke-width="2" stroke-linecap="round"/>`
+    /* the emblem on a mount at the top */
+    if (o.emblem !== false) s += `<path d="M${f(-4 + DX * .5)},${f(cy - R - .5 + DY * .5)} h8 l-1.4,-4 h-5.2 Z" fill="${m.mid}"${ink(1.2)}/>` + motif(T, DX * .5, cy - R - 9 + DY * .5, 1)
+    return s
+  }
   const draw = () => {
-    let s = `<defs><linearGradient id="${uid}-beam" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="${MAGENTA}" stop-opacity=".45"/><stop offset=".4" stop-color="${T.accent}" stop-opacity=".3"/><stop offset="1" stop-color="${T.accent}" stop-opacity="0"/></linearGradient>${grad(uid + '-w', T.stoneLit, T.stone, T.stoneDark, -30, 30)}</defs>`
-    s += `<path d="M-30,-14 V0 A30,10 0 0 0 30,0 V-14 Z" fill="url(#${uid}-w)"${ink(2)}/>`
-    for (const d of [-60, -30, 0, 30, 60]) { const t = d * Math.PI / 180, x = 30 * Math.sin(t), y = 10 * Math.cos(t); s += `<line x1="${f(x)}" y1="${f(y - 14)}" x2="${f(x)}" y2="${f(y)}" stroke="${T.stoneDark}" stroke-width="1"/>` }
-    s += `<ellipse cx="0" cy="-14" rx="30" ry="10" fill="${T.stoneLit}"${ink(2)}/>` + vortex(T, uid, 0, -14, 24, 7.6)
-    s += `<path d="M-22,-14 L-10,-82 H10 L22,-14 Z" fill="url(#${uid}-beam)"/>`
-    ;[[-8, -40], [6, -54], [-4, -66], [10, -30]].forEach(([x, y]) => { s += `<path d="M${x},${y - 3} V${y + 3} M${x - 3},${y} H${x + 3}" stroke="#fff" stroke-width="1.2" stroke-linecap="round"/>` })
-    s += motif(T, 0, 1, .9)
+    let s = cyl(uid + 'a', 34, 11, 2, 4, stoneMat(T)) + cyl(uid + 'b', 26, 8.4, -2, 5, stoneMat(T), MAGENTA)
+    s += gateRing(T, uid, { cy:-30 })
     return s
   }
   return draw()
@@ -385,8 +422,8 @@ for (let rank = 1; rank <= 5; rank++) {
     write(`arena-r${rank}${muted ? '-muted' : ''}.svg`, frame(arena('b', pal, O, 'arena', ARENA_RANKS[rank])))
   }
 }
-/* The portal once per planet it leads to: portal-eyeke.svg and so on. */
-for (const [planet, look] of Object.entries(PLANET_LOOK)) write(`portal-${planet}.svg`, frame(portalWell(look, `portal-${planet}`)))
+/* The portal once per planet it leads to: portal-eyeke.svg and so on, a little larger than the rest. */
+for (const [planet, look] of Object.entries(PLANET_LOOK)) write(`portal-${planet}.svg`, frame(`<g transform="scale(1.2)">${portalGate(look, `portal-${planet}`)}</g>`))
 for (const kind of ['arena', 'dungeon', 'tavern']) {
   for (const muted of [false, true]) {
     const pal = muted ? grey(washed(BASE[kind])) : washed(BASE[kind])

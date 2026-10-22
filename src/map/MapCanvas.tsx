@@ -860,7 +860,7 @@ export function MapCanvas({
                     : 0
                 /*
                    A tavern, dungeon or arena stands on its tile as a little
-                   building, and a portal as the well to the planet it leads
+                   building, and a portal as the gate to the planet it leads
                    to; a building stays a marker while its picture loads.
                  */
                 const picture =
