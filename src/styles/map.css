@@ -1990,6 +1990,23 @@
   filter: brightness(1.08);
 }
 
+/*
+ * The door takes the building's colour: blue into a dungeon, gold into an
+ * arena, green into a tavern. The same colours the markers and the kind
+ * line already use, so the button says where it goes before it is read.
+ * Gold stays the default, for anything without a colour of its own.
+ */
+.heretag--dungeon .heretag__go {
+  background: linear-gradient(170deg, #5ad6ff -32%, #00a2e0 116%);
+  color: #03141d;
+  box-shadow: 0 6px 18px rgb(0 186 255 / 35%);
+}
+.heretag--tavern .heretag__go {
+  background: linear-gradient(170deg, #3fe384 -32%, #00a33d 116%);
+  color: #03200e;
+  box-shadow: 0 6px 18px rgb(0 192 74 / 35%);
+}
+
 /* ---------- clearing the map ---------- */
 
 /*
