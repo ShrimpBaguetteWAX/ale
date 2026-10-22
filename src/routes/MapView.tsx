@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useState, useRef, type ReactNode } from 'react'
-import { Link } from 'react-router-dom'
 import { PLANETS, PORTAL_EFFECTS, type Planet } from '@/chain/config'
 import { fetchAssetOwners } from '@/chain/atomic'
 import {
@@ -15,6 +14,7 @@ import { unrevealedTavernHere } from '@/tavern/rules'
 import type { Land, LandsConfig } from '@/chain/types'
 import { MapCanvas, type ZoomApi } from '@/map/MapCanvas'
 import { QuestClaims, useClaimableQuests } from '@/map/MapQuests'
+import { platePath, plateWidth } from '@/map/cradle'
 import {
   playedDungeonsToday,
   summarisePlanet,
@@ -846,13 +846,14 @@ export default function MapView() {
         : null
 
   /*
-     What the player is standing on, as a plaque under the dot.
+     What the player is standing on, as a cradle around the dot.
 
      The land under the player rather than the selected one: the card that
      used to describe a selected land is gone, and the one land whose owner
-     and boost are worth a line is the one you are about to walk into. The
-     plate names it; when there is a way in, the gold Enter is the plate's
-     bottom edge, so the name and the door are one piece.
+     and boost are worth a line is the one you are about to walk into. A
+     glass plate above the pin names it; when there is a way in, a gold
+     plate below is the door. Both are carved around the halo, so the pin
+     nests between them and the lettering stays straight.
   */
   const hereLand = useMemo(
     () => (onPlanet ? (lands ?? []).find((l) => l.x === player.x && l.y === player.y) : undefined),
@@ -870,6 +871,8 @@ export default function MapView() {
     const kind = name === 'tavern' || name === 'dungeon' || name === 'arena' ? name : 'other'
     const who = owners[String(hereLand.asset_id)]
     const whose = who === player.wallet ? 'Your' : who ? `${tags[who] || who}’s` : ''
+    /* Title case for the plate: the name is a title there, not a sentence. */
+    const title = (s: string) => s.replace(/(^|\s)\w/g, (c) => c.toUpperCase())
     const boost =
       name === 'tavern'
         ? ''
@@ -883,8 +886,8 @@ export default function MapView() {
     return {
       kind,
       icon: kind === 'other' ? buildingIcon(raw) : MARKER_SRC[kind],
-      name: `${whose} ${name}`.trim(),
-      sub: `${name}${boost ? ` · ${boost}` : ''}`,
+      name: title(`${whose} ${name}`.trim()),
+      sub: `${name}${boost ? ` · ${boost}` : ''}`.toUpperCase(),
     }
   }, [hereLand, owners, tags, player.wallet, landsConfig])
 
@@ -892,23 +895,30 @@ export default function MapView() {
      Hangs off the pin. Nothing while a trip is playing out: the pin is in
      flight, and an offer to enter what was under it belongs to where it was.
   */
-  const pinSlot: ReactNode =
-    travelling || !here ? null : (
-      <div className={`plaque plaque--${here.kind}${enterTo ? ' plaque--door' : ''}`}>
-        <div className="plaque__plate">
-          <img className="plaque__icon" src={here.icon} alt="" />
-          <div>
-            <span className="plaque__name">{here.name}</span>
-            <span className="plaque__sub">{here.sub}</span>
-          </div>
-        </div>
+  const pinSlot: ReactNode = useMemo(() => {
+    if (travelling || !here) return null
+    const go = enterTo ? `ENTER ${enterTo.toUpperCase()}` : ''
+    const w = plateWidth(here.name, here.sub, go)
+    return (
+      <svg className={`cradle cradle--${here.kind}`} viewBox="-150 -150 300 300" aria-hidden={!enterTo}>
+        <path className="cradle__glass" d={platePath({ w, far: -92, near: -14, r: 48, rc: 8, rn: 8, top: true })} />
+        <text className="cradle__name" x="0" y="-68" textAnchor="middle">
+          {here.name}
+        </text>
+        <text className="cradle__kind" x="0" y="-54" textAnchor="middle">
+          {here.sub}
+        </text>
         {enterTo && (
-          <Link className="plaque__go" to={`/${enterTo}`}>
-            Enter {enterTo === 'tavern' ? 'Tavern' : enterTo === 'dungeon' ? 'Dungeon' : 'Arena'}
-          </Link>
+          <a className="cradle__door" href={`#/${enterTo}`} aria-label={`Enter ${enterTo}`}>
+            <path className="cradle__gold" d={platePath({ w, far: 76, near: 14, r: 44, rc: 8, rn: 8, top: false })} />
+            <text className="cradle__go" x="0" y="64" textAnchor="middle">
+              {go}
+            </text>
+          </a>
         )}
-      </div>
+      </svg>
     )
+  }, [travelling, here, enterTo])
 
   /*
      Hangs off the selected tile: the way there, with the cost, or the one

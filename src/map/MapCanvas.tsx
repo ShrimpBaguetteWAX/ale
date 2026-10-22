@@ -419,6 +419,8 @@ export function MapCanvas({
     if (here) {
       here.style.transform = transform
       here.style.setProperty('--pin-size', size)
+      /* The same size as a plain number, for things that scale rather than measure. */
+      here.style.setProperty('--pin-k', String(Math.max(18, Math.min(scale * 0.8, 52)) / 45))
       here.classList.toggle('herepin--below', cy < 110)
     }
   }, [])

@@ -1569,100 +1569,81 @@
 }
 
 /*
- * The plaque: what the player is standing on, under their own pin.
+ * The cradle: what the player is standing on, carved around their own pin.
  *
- * One piece. A dark plate names the building, with its kind and live boost
- * in the building's colour; when there is a way in, the gold Enter is the
- * plate's bottom edge. Nothing floats above the pin, so the "You" tag keeps
- * the top and the map above it stays clear.
+ * An SVG centred on the pin, 300 units square with the pin at its origin.
+ * A glass plate above names the building, its kind and live boost in the
+ * building's colour; when there is a way in, a gold plate below is the
+ * door. Both are cut around the halo (src/map/cradle.ts), so the pin nests
+ * between them and nothing floats over the "You" tag.
+ *
+ * Sized with the pin, within limits, so it keeps its proportion to the halo
+ * as the map zooms without the lettering getting small enough to miss.
  */
-.plaque {
+.cradle {
   position: absolute;
-  left: 0;
-  top: calc(var(--pin-dot) / 2 + 10px);
-  translate: -50% 0;
-  width: max-content;
-  display: grid;
-  pointer-events: auto;
-  filter: drop-shadow(0 8px 18px rgb(0 0 0 / 45%));
+  left: -150px;
+  top: -150px;
+  width: 300px;
+  height: 300px;
+  /* The global reset caps an svg at its parent, and the anchor has no width. */
+  max-width: none;
+  overflow: visible;
+  scale: clamp(0.85, var(--pin-k, 1), 1.15);
+  pointer-events: none;
+  filter: drop-shadow(0 6px 14px rgb(0 0 0 / 40%));
   --k: var(--text-dim);
 }
-.plaque--dungeon {
+.cradle--dungeon {
   --k: var(--cyan);
 }
-.plaque--arena {
+.cradle--arena {
   --k: var(--gold);
 }
-.plaque--tavern {
+.cradle--tavern {
   --k: #00c04a;
 }
-.plaque--portal {
+.cradle--portal {
   --k: var(--magenta);
 }
 
-.plaque__plate {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 14px 8px 10px;
-  border-radius: 10px;
-  background: linear-gradient(180deg, rgb(16 26 48 / 97%), rgb(8 14 28 / 97%));
-  border: 1px solid rgb(255 255 255 / 14%);
+.cradle__glass {
+  fill: rgb(10 18 34 / 78%);
+  stroke: rgb(255 255 255 / 28%);
+  stroke-width: 1;
 }
-.plaque--door .plaque__plate {
-  border-radius: 10px 10px 0 0;
-  border-bottom: 0;
-}
-.plaque__icon {
-  width: 22px;
-  height: 22px;
-  flex: none;
-  object-fit: contain;
-}
-.plaque__name {
-  display: block;
-  font-size: var(--fs-sm);
+.cradle__name {
+  font-family: var(--font-body);
+  font-size: 13px;
   font-weight: var(--fw-medium);
-  line-height: 1.2;
-  color: var(--white);
-  white-space: nowrap;
-  text-transform: capitalize;
+  fill: var(--white);
 }
-.plaque__sub {
-  display: block;
-  margin-top: 2px;
+.cradle__kind {
   font-family: var(--font-display);
-  font-size: 10px;
+  font-size: 9px;
   font-weight: var(--fw-medium);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--k);
-  white-space: nowrap;
+  letter-spacing: 0.14em;
+  fill: var(--k);
 }
 
-/* The way in, as the plate's bottom edge. */
-.plaque__go {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  height: 40px;
-  border-radius: 0 0 10px 10px;
-  background: var(--grad-gold);
-  color: #2a1c00;
+/* The door: the one part that takes a tap. */
+.cradle__door {
+  pointer-events: auto;
+  cursor: pointer;
+}
+.cradle__gold {
+  fill: #f3ac05;
+  transition: fill var(--dur-fast) var(--ease);
+}
+.cradle__door:hover .cradle__gold {
+  fill: #ffc12a;
+}
+.cradle__go {
   font-family: var(--font-display);
-  font-size: var(--fs-xs);
+  font-size: 11px;
   font-weight: var(--fw-bold);
-  letter-spacing: 0.1em;
-  white-space: nowrap;
-  text-decoration: none;
-}
-.plaque__go::after {
-  content: '▸';
-  font-size: 14px;
-}
-.plaque__go:hover {
-  filter: brightness(1.08);
+  letter-spacing: 0.18em;
+  fill: #2a1c00;
 }
 
 /* ---------- clearing the map ---------- */
