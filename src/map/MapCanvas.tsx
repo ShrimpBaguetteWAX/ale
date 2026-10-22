@@ -424,6 +424,12 @@ export function MapCanvas({
   const pinRef = useRef<HTMLDivElement>(null)
   /* The trip's layer: one group, moved with the map like the pin. */
   const tripRef = useRef<SVGGElement>(null)
+  /*
+     The holes the markers by the land cut in its rings, so the rings run
+     behind them. The markers are canvas paint under this layer; the canvas
+     says where it drew them, and these are kept in step each frame.
+  */
+  const underRef = useRef<SVGGElement>(null)
 
   /*
      The trip as a flight over the planet: one long curve to the land, hopping
@@ -452,6 +458,8 @@ export function MapCanvas({
     const stops = hop.stops.map((p) => ({ x: p.x + 0.5, y: p.y + 0.5 }))
     return { legs, pads: stops.slice(1, -1), end: stops[stops.length - 1], start: from }
   }, [path, lands])
+  const tripEndRef = useRef<{ x: number; y: number } | null>(null)
+  tripEndRef.current = trip?.end ?? null
   const hereRef = useRef<HTMLDivElement>(null)
   const selRef = useRef<HTMLDivElement>(null)
   /* Where the pin last sat on screen, so the tag can be re-fitted when it changes size. */
@@ -653,6 +661,10 @@ export function MapCanvas({
       ctx.stroke()
     }
 
+    /* Markers near the trip's land, as circles in tiles, for the rings' holes. */
+    const under: string[] = []
+    const end = tripEndRef.current
+
     for (let gx = x0; gx <= x1; gx++) {
       for (let gy = y0; gy <= y1; gy++) {
         const land = index.get(gx + ',' + gy)
@@ -714,6 +726,17 @@ export function MapCanvas({
 
         if (marker) {
           if (showMarkers) {
+            /* Taverns and portals carry no boost, and so no rank. */
+            const rank =
+              marker === 'dungeon' || marker === 'arena'
+                ? boostRank(
+                    liveBoostPercent(
+                      Number(land.buildings[0]?.boost_score ?? 0),
+                      String(land.buildings[0]?.boost_score_update ?? ''),
+                      decayRef.current,
+                    ),
+                  )
+                : 0
             drawMarker(
               ctx,
               markersRef.current.get(marker),
@@ -724,17 +747,15 @@ export function MapCanvas({
               locked,
               current,
               held,
-              /* Taverns and portals carry no boost, and so no rank. */
-              marker === 'dungeon' || marker === 'arena'
-                ? boostRank(
-                    liveBoostPercent(
-                      Number(land.buildings[0]?.boost_score ?? 0),
-                      String(land.buildings[0]?.boost_score_update ?? ''),
-                      decayRef.current,
-                    ),
-                  )
-                : 0,
+              rank,
             )
+            if (end && Math.abs(gx + 0.5 - end.x) < 3 && Math.abs(gy + 0.5 - end.y) < 3) {
+              /* The disc, out to the rank's outer ring or sunburst, and a hair more. */
+              const discR = Math.min(scale * 0.68, 44) * 0.62
+              const reach = rank >= 5 ? 31.5 / 21 : rank === 4 ? 30.5 / 21 : rank === 3 ? 25.5 / 21 : 1.05
+              const r = (discR * reach + 1.5) / scale
+              under.push(`<circle cx="${gx + 0.5}" cy="${gy + 0.5}" r="${r.toFixed(3)}" fill="black"/>`)
+            }
 
             const labelY = py + scale * 0.86
             if (marker === 'portal') {
@@ -841,6 +862,13 @@ export function MapCanvas({
         `translate(${tx - PLAY_MIN_X * scale} ${ty - PLAY_MIN_Y * scale}) scale(${scale})`,
       )
     }
+    /* Only touched when the markers by the land change: a zoom, a new land. */
+    const holes = underRef.current
+    const cut = under.join('')
+    if (holes && holes.getAttribute('data-cut') !== cut) {
+      holes.innerHTML = cut
+      holes.setAttribute('data-cut', cut)
+    }
 
     /* The readout only hears about a change it would show. */
     if (openScaleRef.current > 0) {
@@ -919,6 +947,11 @@ export function MapCanvas({
       alive = false
     }
   }, [drawNow])
+
+  // A new trip's rings need their holes from a frame drawn after they exist.
+  useLayoutEffect(() => {
+    if (trip) drawNow()
+  }, [trip, drawNow])
 
   // Index lands by "x,y" so draw and hit-testing are O(1) per tile.
   useLayoutEffect(() => {
@@ -1317,6 +1350,11 @@ export function MapCanvas({
               <stop offset="0" stopColor="#ffd27a" stopOpacity="0.55" />
               <stop offset="1" stopColor="#ffd27a" stopOpacity="0" />
             </radialGradient>
+            {/* In the trip's own tiles: everything shows but the markers' holes. */}
+            <mask id="maptrip-under" maskUnits="userSpaceOnUse" x={-500} y={-500} width={1000} height={1000}>
+              <rect x={-500} y={-500} width={1000} height={1000} fill="white" />
+              <g ref={underRef} />
+            </mask>
           </defs>
           <g ref={tripRef}>
             {/* Shadows first, so every arc flies over every shadow. */}
@@ -1339,17 +1377,20 @@ export function MapCanvas({
               </g>
             ))}
             {/* The land: a wider pad, and a ring that spreads across the ground
-                from it once a cycle, when the glow arrives. */}
-            <ellipse className="maptrip__pad-rim" cx={trip.end.x} cy={trip.end.y} rx={1.09} ry={0.52} />
-            <ellipse className="maptrip__pad-inner" cx={trip.end.x} cy={trip.end.y} rx={0.52} ry={0.25} />
-            <ellipse
-              key={`${trip.end.x},${trip.end.y}`}
-              className="maptrip__ripple"
-              cx={trip.end.x}
-              cy={trip.end.y}
-              rx={1.19}
-              ry={0.57}
-            />
+                from it once a cycle, when the glow arrives. Both run behind
+                the markers around it. */}
+            <g mask="url(#maptrip-under)">
+              <ellipse className="maptrip__pad-rim" cx={trip.end.x} cy={trip.end.y} rx={1.09} ry={0.52} />
+              <ellipse className="maptrip__pad-inner" cx={trip.end.x} cy={trip.end.y} rx={0.52} ry={0.25} />
+              <ellipse
+                key={`${trip.end.x},${trip.end.y}`}
+                className="maptrip__ripple"
+                cx={trip.end.x}
+                cy={trip.end.y}
+                rx={1.19}
+                ry={0.57}
+              />
+            </g>
             {trip.legs.map((l) => (
               <path key={'a' + l.air} className="maptrip__air" d={l.air} />
             ))}
