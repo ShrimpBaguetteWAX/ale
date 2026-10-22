@@ -793,12 +793,38 @@ export default function MapView() {
            of a flourish after the fact.
         */
         await new Promise((r) => setTimeout(r, WARP_COVERED_MS))
-        await refreshPlayer({ force: true })
+        /*
+           The row the poll confirmed, not a fresh read. A fresh read can be
+           answered by a node that has not seen the trip yet — and then the
+           store is handed the row from before it, the pin goes back to the
+           planet the player just left, and "you are here" says so too.
+        */
+        useGame.setState({ player: arrived, playerLoaded: true })
         if (arrived.planet !== planet) setPlanet(arrived.planet)
         setRecenter((n) => n + 1)
         await new Promise((r) => setTimeout(r, WARP_TOTAL_MS - WARP_COVERED_MS))
         setJump(null)
       } else {
+        /*
+           A jump the nodes have not caught up with by the end of the poll.
+           The transaction went through, so the arrival is coming; until
+           this, nothing published the new row at all on a jump — the poll
+           above deliberately keeps it out of the store — and the player was
+           left standing on the planet they had left until some later read
+           happened to fetch it. Keep asking, a little more slowly, and
+           publish it the moment a node has it.
+        */
+        if (gate && !arrived) {
+          for (let i = 0; i < 12 && !arrived; i++) {
+            await new Promise((r) => setTimeout(r, 1500))
+            const p = (await fetchPlayer(player.wallet, true)) ?? null
+            if (p && p.x === selected.x && p.y === selected.y && (!route || p.planet === planet)) {
+              arrived = p
+              useGame.setState({ player: p, playerLoaded: true })
+            }
+          }
+          if (!arrived) await refreshPlayer({ force: true })
+        }
         if (arrived && arrived.planet !== planet) setPlanet(arrived.planet)
         setRecenter((n) => n + 1)
       }
