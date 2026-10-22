@@ -1723,81 +1723,120 @@
 }
 
 /*
- * The cradle: what the player is standing on, carved around their own pin.
+ * What the player is standing on: the Travel tag turned round.
  *
- * An SVG centred on the pin, 300 units square with the pin at its origin.
- * A glass plate above names the building, its kind and live boost in the
- * building's colour; when there is a way in, a gold plate below is the
- * door. Both are cut around the halo (src/map/cradle.ts), so the pin nests
- * between them and nothing floats over the "You" tag.
- *
- * Sized with the pin, within limits, so it keeps its proportion to the halo
- * as the map zooms without the lettering getting small enough to miss.
+ * A dark end against the pin, with the building's icon, its name, and its
+ * kind and live boost in the building's colour; when there is a way in,
+ * the gold Enter is the far end. The same height, hairline edge, shadow and
+ * pointing arrow as the Travel tag, built from the same sizes, so the two
+ * read as one component: Travel says go and where, this says where you are
+ * and go in. It sits to the right of the halo, clear of the "You" tag.
  */
-.cradle {
+.heretag {
   position: absolute;
-  left: -150px;
-  top: -150px;
-  width: 300px;
-  height: 300px;
-  /* The global reset caps an svg at its parent, and the anchor has no width. */
-  max-width: none;
-  overflow: visible;
-  scale: clamp(0.85, var(--pin-k, 1), 1.15);
-  pointer-events: none;
-  filter: drop-shadow(0 6px 14px rgb(0 0 0 / 40%));
+  left: calc(var(--pin-dot) / 2 + 22px);
+  top: 0;
+  translate: 0 -50%;
+  width: max-content;
+  pointer-events: auto;
+  --tag-h: clamp(40px, var(--pin-size), 52px);
+  --tag-fs: clamp(12px, calc(var(--pin-size) * 0.3), 15px);
   --k: var(--text-dim);
 }
-.cradle--dungeon {
+.heretag--dungeon {
   --k: var(--cyan);
 }
-.cradle--arena {
+.heretag--arena {
   --k: var(--gold);
 }
-.cradle--tavern {
+.heretag--tavern {
   --k: #00c04a;
 }
-.cradle--portal {
+.heretag--portal {
   --k: var(--magenta);
 }
 
-.cradle__glass {
-  fill: rgb(10 18 34 / 78%);
-  stroke: rgb(255 255 255 / 28%);
-  stroke-width: 1;
+.heretag__pair {
+  position: relative;
+  display: inline-flex;
+  align-items: stretch;
+  width: max-content;
+  height: var(--tag-h);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 6px 18px rgb(0 0 0 / 40%);
 }
-.cradle__name {
-  font-family: var(--font-body);
-  font-size: 13px;
-  font-weight: var(--fw-medium);
-  fill: var(--white);
-}
-.cradle__kind {
-  font-family: var(--font-display);
-  font-size: 9px;
-  font-weight: var(--fw-medium);
-  letter-spacing: 0.14em;
-  fill: var(--k);
+/* The arrow pointing at the pin, in the dark end's colour. */
+.heretag__pair::before {
+  content: '';
+  position: absolute;
+  left: -7px;
+  top: 50%;
+  translate: 0 -50%;
+  border: 7px solid transparent;
+  border-right-color: rgb(9 18 34);
+  border-left: 0;
 }
 
-/* The door: the one part that takes a tap. */
-.cradle__door {
-  pointer-events: auto;
-  cursor: pointer;
+.heretag__name {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 0 12px 0 10px;
+  border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+  background: rgb(9 18 34 / 96%);
+  border: 1px solid rgb(255 255 255 / 10%);
+  border-right: 0;
+  white-space: nowrap;
 }
-.cradle__gold {
-  fill: #f3ac05;
-  transition: fill var(--dur-fast) var(--ease);
+/* With no way in, the dark end is the whole tag. */
+.heretag__pair--plain .heretag__name {
+  border-right: 1px solid rgb(255 255 255 / 10%);
+  border-radius: var(--radius-sm);
 }
-.cradle__door:hover .cradle__gold {
-  fill: #ffc12a;
+.heretag__icon {
+  width: 18px;
+  height: 18px;
+  flex: none;
+  object-fit: contain;
 }
-.cradle__go {
+.heretag__text {
+  display: grid;
+  gap: 1px;
+}
+.heretag__title {
+  font-family: var(--font-body);
+  font-size: calc(var(--tag-fs) + 0.5px);
+  font-weight: var(--fw-medium);
+  line-height: 1.15;
+  color: var(--white);
+}
+.heretag__kind {
   font-family: var(--font-display);
-  font-size: 11px;
+  font-size: calc(var(--tag-fs) - 3px);
   font-weight: var(--fw-bold);
-  letter-spacing: 0.18em;
-  fill: #2a1c00;
+  letter-spacing: 0.12em;
+  line-height: 1.2;
+  color: var(--k);
+}
+
+/* The way in: the Travel tag's own gold, as the far end. */
+.heretag__go {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 16px;
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  background: var(--grad-gold);
+  color: #2a1c00;
+  font-family: var(--font-display);
+  font-size: var(--tag-fs);
+  font-weight: var(--fw-bold);
+  letter-spacing: 0.06em;
+  text-decoration: none;
+  white-space: nowrap;
+  box-shadow: 0 6px 18px rgb(246 168 0 / 35%);
+}
+.heretag__go:hover {
+  filter: brightness(1.08);
 }
 
 /* ---------- clearing the map ---------- */
