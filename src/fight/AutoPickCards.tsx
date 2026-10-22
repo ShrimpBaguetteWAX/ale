@@ -41,6 +41,14 @@ export function AutoPickCards<TCard extends { template_id: number }>({
   onRestore: (pair: CardPair<TCard>) => void
 }) {
   const [done, setDone] = useState<{ before: CardPair<TCard>; after: CardPair<TCard> } | null>(null)
+  /* A press that kept the pair says so, briefly: a button that does nothing looks broken. */
+  const [kept, setKept] = useState(false)
+
+  useEffect(() => {
+    if (!kept) return
+    const id = window.setTimeout(() => setKept(false), 5000)
+    return () => window.clearTimeout(id)
+  }, [kept])
 
   useEffect(() => {
     if (!done) return
@@ -50,7 +58,9 @@ export function AutoPickCards<TCard extends { template_id: number }>({
   const pick = () => {
     const before = { crew, weapon }
     const after = onPick()
-    setDone(same(before, after) ? null : { before, after })
+    const unchanged = same(before, after)
+    setDone(unchanged ? null : { before, after })
+    setKept(unchanged && !!(before.crew || before.weapon))
   }
 
   const undo = () => {
@@ -81,6 +91,11 @@ export function AutoPickCards<TCard extends { template_id: number }>({
       >
         {UNDO_ICON}
       </button>
+      {kept && (
+        <span className="cardsauto__note" role="status">
+          Nothing beats your pair.
+        </span>
+      )}
     </span>
   )
 }

@@ -115,6 +115,61 @@ describe('picking the cards by simulation', () => {
     expect(pick.weapon).toBeNull()
   })
 
+  it('fights the finalists with every roll the bar counts, unless told otherwise', () => {
+    const rate = vi.fn(
+      (c: NftValue | null, _w: NftValue | null, _runs: number) => (c?.template_id ?? 0) / 10,
+    )
+    autoPickCardsByOdds({
+      enemies: [enemy()],
+      crewCards: asCards(crew),
+      weaponCards: asCards(weapons),
+      values,
+      rate,
+      finalists: 2,
+    })
+    expect(rate.mock.calls.filter((c) => c[2] === 100).length).toBe(2)
+  })
+
+  it('keeps the pair in the slots when nothing beats it', () => {
+    /* The held pair is not even on the shortlist's best side, and still wins. */
+    const held = { crew: asCards(crew)[0], weapon: asCards(weapons)[0] }
+    const rate = (c: NftValue | null, w: NftValue | null) =>
+      c?.template_id === held.crew.template_id && w?.template_id === held.weapon.template_id ? 0.8 : 0.7
+    const pick = autoPickCardsByOdds({
+      enemies: [enemy()],
+      crewCards: asCards(crew),
+      weaponCards: asCards(weapons),
+      values,
+      rate,
+      current: held,
+    })
+    expect(pick).toEqual(held)
+  })
+
+  it('keeps the pair on a tie, and replaces it only when beaten', () => {
+    const held = { crew: asCards(crew)[0], weapon: asCards(weapons)[0] }
+    const tie = autoPickCardsByOdds({
+      enemies: [enemy()],
+      crewCards: asCards(crew),
+      weaponCards: asCards(weapons),
+      values,
+      rate: () => 0.5,
+      current: held,
+    })
+    expect(tie).toEqual(held)
+
+    const beaten = autoPickCardsByOdds({
+      enemies: [enemy()],
+      crewCards: asCards(crew),
+      weaponCards: asCards(weapons),
+      values,
+      rate: (c, w) => (c?.template_id === 3 && w?.template_id === 11 ? 0.9 : 0.5),
+      current: held,
+    })
+    expect(beaten.crew?.template_id).toBe(3)
+    expect(beaten.weapon?.template_id).toBe(11)
+  })
+
   it('has nothing to choose from an empty collection', () => {
     const pick = autoPickCardsByOdds({
       enemies: [enemy()],

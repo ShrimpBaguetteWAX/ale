@@ -521,6 +521,7 @@ export default function Dungeon() {
             crewCards: usableCrew,
             weaponCards: usableWeapons,
             values: nftValues,
+            current: { crew, weapon },
             rate: (crewValue, weaponValue, runs) =>
               teamOdds({
                 picked,
@@ -541,7 +542,7 @@ export default function Dungeon() {
     setCrew(pick.crew)
     setWeapon(pick.weapon)
     return pick
-  }, [enemies, usableCrew, usableWeapons, nftValues, picked, enemyTeam, difficulty, nftMinDifficulty, difMods, tauntDeduction, weather, caps, levelMod, ageDecay])
+  }, [enemies, usableCrew, usableWeapons, nftValues, picked, crew, weapon, enemyTeam, difficulty, nftMinDifficulty, difMods, tauntDeduction, weather, caps, levelMod, ageDecay])
 
   /*
      One button, rendered in one of two places — like the fighters one.

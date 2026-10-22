@@ -2,6 +2,7 @@ import { fighterAvailable } from '@/dungeon/rules'
 import type { RosterFighter, BattleFighter } from '@/dungeon/types'
 import type { NftValue } from '@/dungeon/nftFighter'
 import { flatMatchup, type Matchup } from './matchup'
+import { ODDS_RUNS } from './odds'
 
 /**
  * Picking the five fighters and two cards that suit *this* opponent.
@@ -161,6 +162,14 @@ export function autoPickTeam<TCard extends { template_id: number }>(options: {
  * separates two pairs that are genuinely close. A collection of any size
  * costs the same, because the shortlist is what is fought, not the
  * collection.
+ *
+ * The final pass fights every roll the game has, the same hundred the bar on
+ * the screen counts, so the number the pick is chosen by is the number the
+ * player then sees. And the pair already chosen is fought alongside the
+ * finalists: a press of the button can only ever leave the player with the
+ * win chance they had or a better one. Forty-nine rolls used to decide, and
+ * a pair that led on those could trail the old one on the full hundred —
+ * the button would then take a good pair away and hand back a worse number.
  */
 export function autoPickCardsByOdds<TCard extends { template_id: number }>(options: {
   enemies: BattleFighter[]
@@ -173,13 +182,15 @@ export function autoPickCardsByOdds<TCard extends { template_id: number }>(optio
   shortlist?: number
   /** Pairs fought properly at the end. */
   finalists?: number
-  /** Fights per finalist. */
+  /** Fights per finalist. The bar's own count unless told otherwise. */
   runs?: number
+  /** The pair in the slots now, which the pick has to beat to replace. */
+  current?: { crew: TCard | null; weapon: TCard | null }
 }): { crew: TCard | null; weapon: TCard | null } {
-  const { enemies, crewCards, weaponCards, values, rate } = options
+  const { enemies, crewCards, weaponCards, values, rate, current } = options
   const shortlist = options.shortlist ?? 16
   const finalists = options.finalists ?? 10
-  const runs = options.runs ?? 49
+  const runs = options.runs ?? ODDS_RUNS
 
   if (!crewCards.length && !weaponCards.length) return { crew: null, weapon: null }
 
@@ -246,5 +257,16 @@ export function autoPickCardsByOdds<TCard extends { template_id: number }>(optio
   short.sort((a, b) => b.rate - a.rate)
 
   const winner = short[0] ?? rough[0]
-  return { crew: winner?.crew ?? null, weapon: winner?.weapon ?? null }
+  if (!winner) return { crew: null, weapon: null }
+
+  /* Never worse than what is there: the old pair stays unless it is beaten. */
+  if (current && (current.crew || current.weapon)) {
+    const held = rate(
+      current.crew ? (values.get(current.crew.template_id) ?? null) : null,
+      current.weapon ? (values.get(current.weapon.template_id) ?? null) : null,
+      runs,
+    )
+    if (winner.rate <= held) return { crew: current.crew, weapon: current.weapon }
+  }
+  return { crew: winner.crew, weapon: winner.weapon }
 }

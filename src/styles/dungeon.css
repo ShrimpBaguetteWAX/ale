@@ -427,6 +427,7 @@
  * way the fighters' auto-pick carries its own.
  */
 .cardsauto {
+  position: relative;
   display: inline-flex;
   align-items: stretch;
   align-self: center;
@@ -4257,7 +4258,8 @@ button.combatcard--empty:hover {
 }
 
 /* Said out loud when the pool is smaller than a team, then gone. */
-.autosplit__note {
+.autosplit__note,
+.cardsauto__note {
   position: absolute;
   top: calc(100% + 4px);
   left: 0;
