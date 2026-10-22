@@ -76,6 +76,14 @@ export interface MapCanvasProps {
   tavernLands?: Set<string>
   /** The tavern the player is standing in, if it is on this planet. */
   currentTavernLand?: string
+  /**
+   * The way to the selected tile, as tile coordinates on this planet, drawn
+   * as a dashed line between their centres. A straight line, because that
+   * is what a trip is: travel is priced by distance, not by a route around
+   * anything. From the player when they are on this planet; from the portal
+   * they would arrive through when they are not.
+   */
+  path?: { x: number; y: number }[] | null
   /** Floating UI rendered over the map: tile inspector, legend. */
   children?: React.ReactNode
   /**
@@ -323,6 +331,7 @@ export function MapCanvas({
   heldArenaLands,
   tavernLands,
   currentTavernLand,
+  path,
   children,
   selectionSlot,
   pinSlot,
@@ -339,6 +348,8 @@ export function MapCanvas({
   tavernsRef.current = tavernLands
   const currentTavernRef = useRef(currentTavernLand)
   currentTavernRef.current = currentTavernLand
+  const pathRef = useRef(path)
+  pathRef.current = path
   const hostRef = useRef<HTMLDivElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const viewRef = useRef<View>({ scale: 18, tx: 0, ty: 0 })
@@ -646,6 +657,49 @@ export function MapCanvas({
       }
     }
 
+    /*
+       The trip, under the selection ring and the pin: a dashed gold line,
+       the Travel tag's own colour, on a dark bed so it reads over sand and
+       forest alike. Where it starts somewhere other than the pin — the far
+       side of a portal — a small foot marks the start.
+    */
+    const path = pathRef.current
+    if (path && path.length > 1) {
+      const at = (t: { x: number; y: number }): [number, number] => [
+        (t.x - PLAY_MIN_X) * scale + tx + scale / 2,
+        (t.y - PLAY_MIN_Y) * scale + ty + scale / 2,
+      ]
+      ctx.save()
+      ctx.lineCap = 'round'
+      ctx.lineJoin = 'round'
+      ctx.beginPath()
+      path.forEach((t, i) => {
+        const [x, y] = at(t)
+        if (i === 0) ctx.moveTo(x, y)
+        else ctx.lineTo(x, y)
+      })
+      ctx.setLineDash([])
+      ctx.lineWidth = 6
+      ctx.strokeStyle = 'rgba(5, 16, 30, 0.45)'
+      ctx.stroke()
+      ctx.setLineDash([10, 9])
+      ctx.lineWidth = 3
+      ctx.strokeStyle = 'rgba(246, 168, 0, 0.95)'
+      ctx.stroke()
+      if (!pos || path[0].x !== pos.x || path[0].y !== pos.y) {
+        const [x, y] = at(path[0])
+        ctx.setLineDash([])
+        ctx.beginPath()
+        ctx.arc(x, y, 5, 0, Math.PI * 2)
+        ctx.fillStyle = '#f6a800'
+        ctx.fill()
+        ctx.lineWidth = 2
+        ctx.strokeStyle = 'rgba(5, 16, 30, 0.7)'
+        ctx.stroke()
+      }
+      ctx.restore()
+    }
+
     if (sel) {
       const px = (sel.x - PLAY_MIN_X) * scale + tx
       const py = (sel.y - PLAY_MIN_Y) * scale + ty
@@ -849,6 +903,7 @@ export function MapCanvas({
   }, [
     selected,
     position,
+    path,
     lowFx,
     lockedLands,
     heldArenaLands,

@@ -1446,27 +1446,22 @@
   pointer-events: none;
 }
 
-.traveltag__go {
+/*
+ * The gold button and, on its right, a small dark end carrying the land's
+ * coordinates: one shape, two materials. The arrow that points at the tile
+ * belongs to the pair, so it keeps pointing when the pair flips to the left
+ * of the tile — and takes the colour of whichever end it is next to.
+ */
+.traveltag__pair {
   position: relative;
   display: inline-flex;
-  align-items: center;
-  gap: 10px;
+  align-items: stretch;
   width: max-content;
   height: var(--tag-h);
-  padding: 0 16px 0 14px;
-  border: 0;
   border-radius: var(--radius-sm);
-  background: var(--grad-gold);
-  color: #2a1c00;
-  font-family: var(--font-display);
-  font-size: var(--tag-fs);
-  font-weight: var(--fw-bold);
-  letter-spacing: 0.06em;
-  white-space: nowrap;
-  cursor: pointer;
   box-shadow: 0 6px 18px rgb(246 168 0 / 40%);
 }
-.traveltag__go::before {
+.traveltag__pair::before {
   content: '';
   position: absolute;
   left: -7px;
@@ -1476,11 +1471,52 @@
   border-right-color: #f0ad05;
   border-left: 0;
 }
-.selpin--left .traveltag__go::before {
+.selpin--left .traveltag__pair::before {
   left: auto;
   right: -7px;
   border-right: 0;
-  border-left: 7px solid #f0ad05;
+  border-left: 7px solid rgb(9 18 34);
+}
+.traveltag__pair--short {
+  box-shadow: none;
+}
+.traveltag__pair--short::before {
+  border-right-color: #3a1620;
+}
+
+.traveltag__go {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  width: max-content;
+  padding: 0 14px 0 14px;
+  border: 0;
+  border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+  background: var(--grad-gold);
+  color: #2a1c00;
+  font-family: var(--font-display);
+  font-size: var(--tag-fs);
+  font-weight: var(--fw-bold);
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.traveltag__xy {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 11px 0 10px;
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  background: rgb(9 18 34 / 96%);
+  border: 1px solid rgb(255 255 255 / 10%);
+  border-left: 0;
+  color: var(--text-dim);
+  font-family: var(--font-display);
+  font-size: calc(var(--tag-fs) - 2px);
+  font-weight: var(--fw-medium);
+  letter-spacing: 0.06em;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 .traveltag__go:hover:not(:disabled) {
   filter: brightness(1.08);
@@ -1493,12 +1529,6 @@
   background: linear-gradient(170deg, #5a2330, #3a1620);
   color: #ffd9de;
   box-shadow: none;
-}
-.traveltag__go--short::before {
-  border-right-color: #3a1620;
-}
-.selpin--left .traveltag__go--short::before {
-  border-left-color: #3a1620;
 }
 .traveltag__go .spinner {
   width: 16px;

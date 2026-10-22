@@ -939,30 +939,51 @@ export default function MapView() {
           : '')
       : `${travelDistance(player, selected).toFixed(1)} away`
 
+  /*
+     The trip, drawn: from the pin to the land when both are on this planet;
+     from where a portal would drop the player when they are not. The portal
+     tile's own coordinates, because that is what the contract writes onto
+     the player row when they go through.
+  */
+  const path = useMemo(() => {
+    if (!selected || isHere || !land) return null
+    if (onPlanet) return [{ x: player.x, y: player.y }, selected]
+    if (route) return [route.portal, selected]
+    return null
+  }, [selected, isHere, land, onPlanet, player.x, player.y, route])
+
   const travelTag: ReactNode =
     selected && !isHere ? (
       <div className={`traveltag${armed ? '' : ' traveltag--settling'}`}>
         {!onPlanet && !route ? (
           <span className="traveltag__none">No portal from {player.planet}</span>
         ) : !land ? (
-          <span className="traveltag__none">No land here</span>
+          <span className="traveltag__none">
+            No land at {selected.x} : {selected.y}
+          </span>
         ) : (
-          <button
-            type="button"
-            className={`traveltag__go${canAfford ? '' : ' traveltag__go--short'}`}
-            onClick={() => void doTravel()}
-            disabled={travelling || !canAfford}
-            title={travelTitle}
-          >
-            {travelling && <span className="spinner" />}
-            {travelling ? 'Travelling' : canAfford ? 'Travel' : 'Need'}
-            {cost !== null && (
-              <span className="traveltag__cost">
-                <img src={asset('/assets/icons/energy.png')} alt="energy" />
-                {cost}
-              </span>
-            )}
-          </button>
+          <span className={`traveltag__pair${canAfford ? '' : ' traveltag__pair--short'}`}>
+            <button
+              type="button"
+              className={`traveltag__go${canAfford ? '' : ' traveltag__go--short'}`}
+              onClick={() => void doTravel()}
+              disabled={travelling || !canAfford}
+              title={travelTitle}
+            >
+              {travelling && <span className="spinner" />}
+              {travelling ? 'Travelling' : canAfford ? 'Travel' : 'Need'}
+              {cost !== null && (
+                <span className="traveltag__cost">
+                  <img src={asset('/assets/icons/energy.png')} alt="energy" />
+                  {cost}
+                </span>
+              )}
+            </button>
+            {/* Where it goes, on the tag's dark end: the one thing a tile is called by. */}
+            <span className="traveltag__xy" title="The land's coordinates">
+              {selected.x} : {selected.y}
+            </span>
+          </span>
         )}
         {notes.map((n) => (
           <span
@@ -991,6 +1012,7 @@ export default function MapView() {
           heldArenaLands={heldArenaLands}
           tavernLands={tavernLands}
           currentTavernLand={currentTavernLand}
+          path={path}
           selectionSlot={travelTag}
           pinSlot={pinSlot}
           zoomApi={zoomApi}
