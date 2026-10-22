@@ -22,6 +22,7 @@ import { DIRTIES } from '@/wharf/actions'
 import type { Player } from '@/chain/types'
 import { NUM_LOCALE } from '@/format'
 import { asset } from '@/assets'
+import { claimedRecently, rememberClaimed } from '@/quests/claimed'
 
 /**
  * Quests.
@@ -149,7 +150,16 @@ export default function Quests() {
   }, [])
 
   const board = useMemo(
-    () => (player ? boardOf(active?.quests ?? [], scopes, player, now) : []),
+    () =>
+      player
+        ? boardOf(
+            /* A quest claimed here is gone, whatever a lagging node says. */
+            (active?.quests ?? []).filter((q) => !claimedRecently(questKey(q))),
+            scopes,
+            player,
+            now,
+          )
+        : [],
     [active, scopes, player, now],
   )
 
@@ -200,7 +210,11 @@ export default function Quests() {
     const key = questKey(quest)
     return run(
       busyKey('claim', key),
-      () => finishQuest(session!, quest),
+      () =>
+        finishQuest(session!, quest).then((res) => {
+          rememberClaimed(key)
+          return res
+        }),
       `Claimed ${r.label} ${r.symbol}. A new quest has taken its place.`,
       { ...opts('finishQuest'), settled: gone(key) },
     )

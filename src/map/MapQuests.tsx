@@ -5,6 +5,7 @@ import { useAction } from '@/wharf/useAction'
 import { DIRTIES, finishQuest } from '@/wharf/actions'
 import { fetchActiveQuests } from '@/quests/queries'
 import { progressOf, questArt, questKey, questText, rewardOf } from '@/quests/rules'
+import { claimedRecently, rememberClaimed } from '@/quests/claimed'
 import type { ActiveQuests, Quest } from '@/quests/types'
 
 /**
@@ -35,7 +36,10 @@ export function useClaimableQuests() {
   const claimable = useMemo(
     () =>
       player
-        ? (query.data?.quests ?? []).filter((q) => progressOf(q, player).claimable)
+        ? (query.data?.quests ?? []).filter(
+            /* A quest claimed here is gone, whatever a lagging node says. */
+            (q) => progressOf(q, player).claimable && !claimedRecently(questKey(q)),
+          )
         : [],
     [query.data, player],
   )
@@ -57,7 +61,12 @@ export function QuestClaims({
   const claim = (quest: Quest) => {
     const r = rewardOf(quest)
     const key = questKey(quest)
-    return run(key, () => finishQuest(session!, quest), `Claimed ${r.label} ${r.symbol}.`, {
+    const signed = () =>
+      finishQuest(session!, quest).then((res) => {
+        rememberClaimed(key)
+        return res
+      })
+    return run(key, signed, `Claimed ${r.label} ${r.symbol}.`, {
       after: reload,
       dirties: DIRTIES.finishQuest,
       /* The claimed quest leaving the row is the chain having caught up. */
