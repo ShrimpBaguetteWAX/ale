@@ -1,5 +1,6 @@
 import type { Land, Player } from '@/chain/types'
 import type { Planet } from '@/chain/config'
+import { boostShown, liveBoostPercent } from './terrain'
 
 /**
  * Per-planet availability, as the contracts define it.
@@ -72,6 +73,8 @@ export function summarisePlanet(
   player: Player,
   playedToday: Set<string>,
   liveArenas: LiveArena[] | undefined,
+  /** From lands.ale config; ages stored boost values forward, as the map does. */
+  decayPerHour = 0,
 ): PlanetStatus {
   /*
    * active_taverns plus last_tavern: users::setreveal MOVES a tavern out of
@@ -111,6 +114,21 @@ export function summarisePlanet(
   let arenasTotal = 0
 
   for (const land of lands) {
+    /*
+       Only what the map shows. A dungeon or arena whose boost has decayed
+       below the map's floor is hidden there, and a count that still included
+       it would send a player looking for a building they cannot find.
+    */
+    const shown = land.buildings.every((b) =>
+      boostShown(
+        liveBoostPercent(
+          Number(b.boost_score ?? 0),
+          String(b.boost_score_update ?? ''),
+          decayPerHour,
+        ),
+      ),
+    )
+    if (!shown) continue
     for (const name of buildingNames(land)) {
       if (name === 'dungeon') {
         dungeonsTotal++

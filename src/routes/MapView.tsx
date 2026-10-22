@@ -557,9 +557,16 @@ export default function MapView() {
   const summaries = useMemo(
     () =>
       PLANETS.map((p) =>
-        summarisePlanet(p, landsByPlanet[p], player, playedToday, arenasByPlanet[p]),
+        summarisePlanet(
+          p,
+          landsByPlanet[p],
+          player,
+          playedToday,
+          arenasByPlanet[p],
+          landsConfig?.boost_decay_per_hour ?? 0,
+        ),
       ),
-    [landsByPlanet, arenasByPlanet, player, playedToday],
+    [landsByPlanet, arenasByPlanet, player, playedToday, landsConfig],
   )
 
   const byCoord = useMemo(() => {
