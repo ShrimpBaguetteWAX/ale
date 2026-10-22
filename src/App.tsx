@@ -76,12 +76,25 @@ const flag = {
   },
 }
 
+type Screen<P> = LazyExoticComponent<ComponentType<P>> & {
+  /** Fetch the code ahead of time, quietly; a failure is left to the real load. */
+  preload: () => void
+}
+
 function lazyScreen<P extends object>(
   load: () => Promise<{ default: ComponentType<P> }>,
-): LazyExoticComponent<ComponentType<P>> {
-  return lazy(async () => {
+): Screen<P> {
+  /* One fetch, shared by the preload and the screen itself. */
+  let pending: Promise<{ default: ComponentType<P> }> | null = null
+  const fetchOnce = () =>
+    (pending ??= load().catch((err: unknown) => {
+      pending = null
+      throw err
+    }))
+
+  const screen = lazy(async () => {
     try {
-      const mod = await load()
+      const mod = await fetchOnce()
       /* Loaded fine, so a later deploy is allowed its own one reload. */
       flag.set(false)
       return mod
@@ -95,6 +108,7 @@ function lazyScreen<P extends object>(
       return new Promise<never>(() => {})
     }
   })
+  return Object.assign(screen, { preload: () => void fetchOnce().catch(() => {}) })
 }
 
 /**
@@ -155,6 +169,32 @@ const Market = lazyScreen(() => import('./routes/Market'))
 const Battle = lazyScreen(() => import('./routes/Battle'))
 const Tournament = lazyScreen(() => import('./routes/Tournament'))
 const ComingSoon = lazyScreen(() => import('./routes/ComingSoon'))
+
+/**
+ * Every game screen's code, fetched in the background once a player is in.
+ *
+ * A screen opened for the first time otherwise waits on its chunk, and on a
+ * desktop that wait is a pause before the page's glass can slide in. A
+ * visitor who never gets past the landing page still downloads none of it:
+ * this only runs inside the game. One chunk at a time, after the map has had
+ * its moment, so it never competes with what is on screen.
+ */
+const GAME_SCREENS = [
+  MapView, Quests, Fighters, Shop, Market, Leaderboard, Briefing, Candle,
+  Dungeon, Arena, Tavern, Battle, Ascension, Lands, Profile, Farming, Tournament,
+]
+
+function WarmScreens() {
+  useEffect(() => {
+    let i = 0
+    let timer = window.setTimeout(function next() {
+      GAME_SCREENS[i++]?.preload()
+      if (i < GAME_SCREENS.length) timer = window.setTimeout(next, 150)
+    }, 2500)
+    return () => window.clearTimeout(timer)
+  }, [])
+  return null
+}
 
 /* Lives in its own module so a screen can hold it up past its own load. */
 
@@ -236,7 +276,12 @@ const SOON_ROUTES: readonly (readonly [string, string])[] = []
 
 export default function App() {
   return (
-    <HashRouter>
+    /*
+       Navigation as a transition: a screen whose code is still on its way
+       leaves the current one up until it arrives, instead of the whole game
+       giving way to the spinner for a moment.
+    */
+    <HashRouter future={{ v7_startTransition: true }}>
       <Boot>
         <ScreenBoundary>
           <MaintenanceGate>
@@ -247,7 +292,14 @@ export default function App() {
             <Route path="/signup" element={<Signup />} />
 
             <Route element={<RequirePlayer />}>
-              <Route element={<AppShell />}>
+              <Route
+                element={
+                  <>
+                    <AppShell />
+                    <WarmScreens />
+                  </>
+                }
+              >
                 <Route path="/map" element={<MapView />} />
                 <Route path="/briefing" element={<Briefing />} />
                 <Route path="/profile" element={<Profile section="account" />} />
