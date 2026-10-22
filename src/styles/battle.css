@@ -3312,7 +3312,8 @@
     height: 3px;
     border-radius: 99px;
     background: linear-gradient(90deg, var(--gold), #ffdb7d);
-    transition: width calc(300ms * var(--beat)) linear;
+    /* Re-read four times a second; gliding between reads keeps it moving. */
+    transition: width 250ms linear;
   }
   .bcdeck__rail i::after {
     content: '';

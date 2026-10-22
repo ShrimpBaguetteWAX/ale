@@ -347,6 +347,28 @@ function Arena({
     return () => window.clearTimeout(at)
   }, [step, playing, total, speed, replay])
 
+  /*
+     The fight as a running time, the way a video player shows it. Every
+     blow takes BASE_TURN_MS at 1x, so the length is known up front and the
+     time into the fight is the blows played plus how far into the next
+     one the clock has run. Re-read four times a second while playing.
+  */
+  const turnStartedAt = useRef(0)
+  useEffect(() => {
+    turnStartedAt.current = performance.now()
+  }, [step, playing, speed])
+  const [, setTicks] = useState(0)
+  useEffect(() => {
+    if (!broadcast || !playing || step >= total) return
+    const id = window.setInterval(() => setTicks((n) => n + 1), 250)
+    return () => window.clearInterval(id)
+  }, [broadcast, playing, step, total])
+  const into =
+    playing && step < total
+      ? Math.min(BASE_TURN_MS, (performance.now() - turnStartedAt.current) * speed)
+      : 0
+  const elapsedMs = Math.min(total * BASE_TURN_MS, step * BASE_TURN_MS + into)
+
   /**
    * Whether the current blow has landed yet.
    *
@@ -870,17 +892,18 @@ function Arena({
                       )}
                     </button>
                     <span className="bcdeck__count mono">
-                      {step} <small>/ {total}</small>
+                      {clock(elapsedMs)} <small>/ {clock(total * BASE_TURN_MS)}</small>
                     </span>
                     {/* The fight's progress, and a way to any point of it. */}
                     <div
                       className="bcdeck__rail"
                       role="slider"
                       tabIndex={0}
-                      aria-label="Attacks played"
+                      aria-label="Fight progress"
                       aria-valuemin={0}
                       aria-valuemax={total}
                       aria-valuenow={step}
+                      aria-valuetext={`${clock(elapsedMs)} of ${clock(total * BASE_TURN_MS)}, blow ${step} of ${total}`}
                       onClick={(e) => {
                         const r = e.currentTarget.getBoundingClientRect()
                         setStep(Math.round(Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)) * total))
@@ -892,7 +915,7 @@ function Arena({
                         setStep((v) => Math.min(total, Math.max(0, v + by)))
                       }}
                     >
-                      <i style={{ width: `${total ? (step / total) * 100 : 0}%` }} />
+                      <i style={{ width: `${total ? (elapsedMs / (total * BASE_TURN_MS)) * 100 : 0}%` }} />
                     </div>
                     <button
                       type="button"
@@ -1508,6 +1531,12 @@ function LowerThirds({
   )
 }
 
+/** Milliseconds as a player's clock: 0:04, 1:12. */
+function clock(ms: number): string {
+  const s = Math.floor(ms / 1000)
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
+}
+
 /** Whether the window is a desktop's, where the page sits on the glass. */
 function useWide(): boolean {
   const query = '(min-width: 1024px)'
@@ -1560,6 +1589,19 @@ function FieldUnit({
   const health = snap?.health ?? fighter.start_health
   const maxHealth = snap?.max_health ?? fighter.max_health
   const dead = health <= 0
+
+  /*
+     The last blow this fighter took, kept until its number has finished
+     falling. The number outlives the turn that dealt it - its rise, hang
+     and fall run past the next blow - so it cannot simply follow `role`,
+     which moves on the moment the turn does and cut it off mid-fall.
+  */
+  /* A list, not one: a fighter struck twice running has two numbers in the air. */
+  const [hits, setHits] = useState<{ turn: number; amount: number }[]>([])
+  useEffect(() => {
+    if (role === 'defender' && attack > 0)
+      setHits((h) => (h.some((x) => x.turn === turn) ? h : [...h, { turn, amount: attack }]))
+  }, [role, attack, turn])
   const pct = maxHealth > 0 ? Math.max(0, (health / maxHealth) * 100) : 0
   const band = pct > 50 ? 'high' : pct > 25 ? 'mid' : 'low'
   const side = fighter.team === 1 ? 'mine' : 'enemy'
@@ -1631,21 +1673,22 @@ function FieldUnit({
            cleave's numbers drift apart by slot rather than stacking. What
            was blocked is in the caption and the log.
         */}
-        {role === 'defender' && attack > 0 && (
+        {hits.map((hit) => (
           <span
             className="bcast__hit bunit__hit"
-            key={`dmg-${turn}`}
+            key={`dmg-${hit.turn}`}
             style={{
               ['--drift' as string]: `${(Number(fighter.uid.split('-')[1]) % 3) - 1 || 0}`,
               ['--heft' as string]: (maxHealth > 0
-                ? Math.min(1, attack / (maxHealth * 0.5))
+                ? Math.min(1, hit.amount / (maxHealth * 0.5))
                 : 0
               ).toFixed(2),
             }}
+            onAnimationEnd={() => setHits((h) => h.filter((x) => x.turn !== hit.turn))}
           >
-            −{formatScaled(attack)}
+            −{formatScaled(hit.amount)}
           </span>
-        )}
+        ))}
         {abilityDelta !== 0 && (
           <span
             className={`effectpill effectpill--${abilityDelta > 0 ? 'heal' : 'damage'}`}
