@@ -13,6 +13,7 @@ import {
   buildingMarker,
   formatBoost,
   liveBoostPercent,
+  boostRank,
   type MarkerKey,
   boostShown,
 } from './terrain'
@@ -217,6 +218,7 @@ function drawMarker(
   locked = false,
   current = false,
   dim = false,
+  rank = 0,
 ) {
   const cx = px + scale / 2
   const cy = py + scale / 2
@@ -233,12 +235,72 @@ function drawMarker(
         ? '#ff01ff'
         : '#f6a800'
 
+  /*
+     The boost rank, as more rim: rings and, at the top two ranks, a
+     sunburst. In units of the disc, which is 21 of them across its radius,
+     so the frame keeps its proportions at every zoom. Drawn in the rim's own
+     colour and faded with it, so a spent dungeon keeps its rank but greys.
+  */
+  const discR = size * 0.62
+  const u = discR / 21
+  if (rank >= 4) {
+    if (dim) ctx.globalAlpha = 0.45
+    const k = rank === 4 ? 8 : 16
+    for (let i = 0; i < k; i++) {
+      const a = ((360 / k) * i * Math.PI) / 180
+      const long = rank === 4 || i % 4 === 0
+      const tip = (rank === 4 ? 30.5 : long ? 31.5 : 29) * u
+      const half = (((rank === 4 ? 9 : long ? 7 : 5.5) * Math.PI) / 180)
+      const at = (r: number, t: number) => [cx + r * Math.sin(t), cy - r * Math.cos(t)] as const
+      const [x1, y1] = at(24 * u, a - half)
+      const [x2, y2] = at(tip, a)
+      const [x3, y3] = at(24 * u, a + half)
+      ctx.beginPath()
+      ctx.moveTo(x1, y1)
+      ctx.lineTo(x2, y2)
+      ctx.lineTo(x3, y3)
+      ctx.closePath()
+      ctx.fillStyle = rim
+      ctx.fill()
+      ctx.lineWidth = Math.max(0.6, u)
+      ctx.strokeStyle = 'rgba(5,16,30,0.9)'
+      ctx.lineJoin = 'round'
+      ctx.stroke()
+    }
+    ctx.globalAlpha = 1
+  }
+
   ctx.fillStyle = locked || dim ? 'rgba(5,16,30,0.86)' : 'rgba(5,16,30,0.72)'
   ctx.beginPath()
-  ctx.arc(cx, cy, size * 0.62, 0, Math.PI * 2)
+  ctx.arc(cx, cy, discR, 0, Math.PI * 2)
   ctx.fill()
+
+  /* A ring with a dark bed under it, so it reads on bright ground. */
+  const ringAt = (r: number, w: number) => {
+    ctx.beginPath()
+    ctx.arc(cx, cy, r, 0, Math.PI * 2)
+    ctx.lineWidth = w + 1.6 * u
+    ctx.strokeStyle = 'rgba(5,16,30,0.55)'
+    ctx.stroke()
+    ctx.lineWidth = w
+    ctx.strokeStyle = rim
+    ctx.stroke()
+  }
+  if (rank >= 2) {
+    if (dim) ctx.globalAlpha = 0.45
+    if (rank === 2) ringAt(discR, 3 * u)
+    else {
+      ringAt(discR, 2 * u)
+      ringAt(24.5 * u, (rank === 5 ? 1.8 : rank === 4 ? 1.4 : 1.2) * u)
+    }
+    ctx.globalAlpha = 1
+    ctx.beginPath()
+    ctx.arc(cx, cy, discR, 0, Math.PI * 2)
+  }
+
   ctx.strokeStyle = rim
   ctx.lineWidth = Math.max(1, scale * (current ? 0.06 : 0.035))
+  if (rank >= 2) ctx.lineWidth = 0
   /*
      `dim` turns a marker down rather than repainting it.
 
@@ -248,7 +310,7 @@ function drawMarker(
      idea as the faded art below, applied to the ring as well.
    */
   if (dim) ctx.globalAlpha = 0.45
-  ctx.stroke()
+  if (rank < 2) ctx.stroke()
 
   if (locked || dim) ctx.globalAlpha = 0.35
 
@@ -621,6 +683,16 @@ export function MapCanvas({
               locked,
               current,
               held,
+              /* Taverns and portals carry no boost, and so no rank. */
+              marker === 'dungeon' || marker === 'arena'
+                ? boostRank(
+                    liveBoostPercent(
+                      Number(land.buildings[0]?.boost_score ?? 0),
+                      String(land.buildings[0]?.boost_score_update ?? ''),
+                      decayRef.current,
+                    ),
+                  )
+                : 0,
             )
 
             const labelY = py + scale * 0.86

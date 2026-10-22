@@ -173,6 +173,20 @@ export function formatBoost(percent: number): string {
 }
 
 /**
+ * A building's rank on the map, 1 to 5, by the boost the player is shown:
+ * up to 2.0x, 4.0x, 6.0x, 8.0x, and above. Read off the rounded multiplier,
+ * so the frame and the label under it can never disagree at a boundary.
+ */
+export function boostRank(percent: number): 1 | 2 | 3 | 4 | 5 {
+  const shown = Math.round(percent) / 10
+  if (shown <= 2) return 1
+  if (shown <= 4) return 2
+  if (shown <= 6) return 3
+  if (shown <= 8) return 4
+  return 5
+}
+
+/**
  * The boost bar's colour, as a ramp rather than three steps.
  *
  * Red up to 30 and green from 70, blending through yellow between. The three
