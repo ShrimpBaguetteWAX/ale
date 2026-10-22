@@ -76,7 +76,7 @@
 @keyframes hot-glow {
   0%,
   100% {
-    opacity: 0.82;
+    opacity: 0.9;
   }
   50% {
     opacity: 1;
@@ -85,7 +85,7 @@
 .maphot__ember {
   transform-box: fill-box;
   transform-origin: center;
-  animation: hot-ember 1.9s cubic-bezier(0.3, 0.6, 0.5, 1) infinite;
+  animation: hot-ember 2.2s cubic-bezier(0.3, 0.6, 0.5, 1) infinite;
 }
 @keyframes hot-ember {
   0% {
@@ -105,7 +105,7 @@
     opacity: 0.6;
   }
   100% {
-    transform: translate(var(--dx, 0px), -46px) scale(0.25);
+    transform: translate(var(--dx, 0px), -72px) scale(0.25);
     opacity: 0;
   }
 }

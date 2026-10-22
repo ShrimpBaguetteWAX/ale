@@ -341,11 +341,11 @@ function drawMarker(
 /** How high each building stands, in its own units, by kind and rank: where the embers start. */
 const HOT_TOP = { arena: [-28, -36, -50, -58, -70], dungeon: [-48, -58, -66, -62, -66] }
 /** The white-hot embers: where each starts over the building's top, its size, drift and colour. */
-const HOT_EMBERS = [-24, -14, -4, 6, 16, 26, -18, 0, 20, -8].map((x, i) => ({
+const HOT_EMBERS = [-30, -20, -10, 0, 10, 20, 30, -25, -5, 15, 25, -15, 5, 35].map((x, i) => ({
   x,
-  y: 6 + (i % 4) * 3,
+  y: 4 + (i % 4) * 4,
   /* Larger than on the sheet: a building unit is under half a pixel at the opening zoom. */
-  r: 5 * [1, 0.7, 0.85, 0.6, 0.95][i % 5],
+  r: 6.5 * [1, 0.7, 0.85, 0.6, 0.95][i % 5],
   dx: i % 2 ? 6 : -6,
   tilt: ((i % 3) - 1) * 14,
   color: ['#fff0a0', '#ffd36a', '#ffb02e', '#ff8a2a'][i % 4],
@@ -1602,23 +1602,23 @@ export function MapCanvas({
           <defs>
             {/* Light only outside the outline: a tight white-hot rim, an orange halo, a deep red haze. */}
             <filter id="maphot-glow" x="-50%" y="-50%" width="200%" height="200%">
-              <feGaussianBlur in="SourceAlpha" stdDeviation="2.2" result="a0" />
+              <feGaussianBlur in="SourceAlpha" stdDeviation="2.6" result="a0" />
               <feComponentTransfer in="a0" result="a">
-                <feFuncA type="linear" slope="2.6" />
+                <feFuncA type="linear" slope="3.4" />
               </feComponentTransfer>
               <feFlood floodColor="#fff0a0" />
               <feComposite in2="a" operator="in" result="core" />
-              <feGaussianBlur in="SourceAlpha" stdDeviation="6" result="b0" />
+              <feGaussianBlur in="SourceAlpha" stdDeviation="8" result="b0" />
               <feComponentTransfer in="b0" result="b">
-                <feFuncA type="linear" slope="2.2" />
+                <feFuncA type="linear" slope="2.8" />
               </feComponentTransfer>
               <feFlood floodColor="#ff6a14" />
               <feComposite in2="b" operator="in" result="halo" />
-              <feGaussianBlur in="SourceAlpha" stdDeviation="12" result="c0" />
+              <feGaussianBlur in="SourceAlpha" stdDeviation="17" result="c0" />
               <feComponentTransfer in="c0" result="c">
-                <feFuncA type="linear" slope="1.8" />
+                <feFuncA type="linear" slope="2.4" />
               </feComponentTransfer>
-              <feFlood floodColor="#c82800" floodOpacity="0.75" />
+              <feFlood floodColor="#e03a00" floodOpacity="0.85" />
               <feComposite in2="c" operator="in" result="wide" />
               <feMerge result="all">
                 <feMergeNode in="wide" />
@@ -1628,10 +1628,23 @@ export function MapCanvas({
               </feMerge>
               <feComposite in="all" in2="SourceAlpha" operator="out" />
             </filter>
-            {/* The glow stops at the building's foot, so it never lies over the multiplier under it. */}
-            <clipPath id="maphot-above" clipPathUnits="userSpaceOnUse">
-              <rect x={-150} y={-250} width={300} height={252} />
-            </clipPath>
+            <filter id="maphot-black">
+              <feFlood floodColor="#000" />
+              <feComposite in2="SourceAlpha" operator="in" />
+            </filter>
+            <radialGradient id="maphot-pool">
+              <stop offset="0" stopColor="#ffb02e" stopOpacity="0.85" />
+              <stop offset="0.45" stopColor="#ff6a14" stopOpacity="0.5" />
+              <stop offset="1" stopColor="#e03a00" stopOpacity="0" />
+            </radialGradient>
+            {/* The glow fades out at the building's foot, so it never lies over the multiplier under it. */}
+            <linearGradient id="maphot-fade-ramp" gradientUnits="userSpaceOnUse" x1={0} y1={-16} x2={0} y2={2}>
+              <stop offset="0" stopColor="white" />
+              <stop offset="1" stopColor="black" />
+            </linearGradient>
+            <mask id="maphot-fade" maskUnits="userSpaceOnUse" x={-150} y={-250} width={300} height={400}>
+              <rect x={-150} y={-250} width={300} height={400} fill="url(#maphot-fade-ramp)" />
+            </mask>
             <radialGradient id="maphot-halo">
               <stop offset="0" stopColor="#ff8a1a" stopOpacity="0.6" />
               <stop offset="1" stopColor="#ff6a14" stopOpacity="0" />
@@ -1647,6 +1660,21 @@ export function MapCanvas({
                 key={m.id}
                 transform={`translate(${m.x + 0.5} ${m.y + 0.5 + BUILDING_GROUND}) scale(${BUILDING_UNIT})`}
               >
+                {/* Firelight on the ground round its foot, never on the building itself. */}
+                <mask id={`maphot-off-${m.id}`} maskUnits="userSpaceOnUse" x={-150} y={-250} width={300} height={400}>
+                  <rect x={-150} y={-250} width={300} height={400} fill="white" />
+                  <image
+                    href={m.src}
+                    x={-BUILDING_VIEW.half}
+                    y={-BUILDING_VIEW.above}
+                    width={BUILDING_VIEW.size}
+                    height={BUILDING_VIEW.size}
+                    filter="url(#maphot-black)"
+                  />
+                </mask>
+                <g mask={`url(#maphot-off-${m.id})`}>
+                  <ellipse className="maphot__glow" cx={0} cy={-4} rx={78} ry={30} fill="url(#maphot-pool)" mask="url(#maphot-fade)" />
+                </g>
                 <image
                   className="maphot__glow"
                   href={m.src}
@@ -1655,7 +1683,7 @@ export function MapCanvas({
                   width={BUILDING_VIEW.size}
                   height={BUILDING_VIEW.size}
                   filter="url(#maphot-glow)"
-                  clipPath="url(#maphot-above)"
+                  mask="url(#maphot-fade)"
                 />
                 {HOT_EMBERS.map((e, i) => (
                   <g
@@ -1663,7 +1691,7 @@ export function MapCanvas({
                     className="maphot__ember"
                     style={
                       {
-                        animationDelay: `${(-i * 1.9) / HOT_EMBERS.length}s`,
+                        animationDelay: `${(-i * 2.2) / HOT_EMBERS.length}s`,
                         '--dx': `${e.dx}px`,
                       } as React.CSSProperties
                     }
