@@ -1206,7 +1206,7 @@ export function MapCanvas({
               <g key={a.x + ',' + a.y} transform={`translate(${a.x + 0.5} ${a.y + 0.5}) rotate(${a.angle})`}>
                 <path
                   className="maptrip__step"
-                  style={{ animationDelay: `${a.i * 110}ms` }}
+                  style={{ animationDelay: `${a.i * 260}ms` }}
                   d="M-0.22,-0.22 L0.22,0 L-0.22,0.22 L-0.09,0 Z"
                 />
               </g>
