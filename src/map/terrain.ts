@@ -90,7 +90,7 @@ export type MarkerKey = keyof typeof MARKER_SRC
 /**
  * The buildings standing on the map: the arena, dungeon and tavern drawn as
  * little painted buildings (scripts/buildings.mjs), each with a greyed copy
- * for a spent dungeon or an arena being defended. Portals stay a marker.
+ * for a spent dungeon or an arena being defended. Portals are in PORTAL_SRC.
  */
 export const BUILDING_SRC = {
   tavern: { lit: asset('/assets/markers/buildings/tavern.svg'), muted: asset('/assets/markers/buildings/tavern-muted.svg') },
@@ -115,6 +115,11 @@ const ranked = (kind: string) =>
     muted: asset(`/assets/markers/buildings/${kind}-r${rank}-muted.svg`),
   }))
 export const RANKED_SRC = { arena: ranked('arena'), dungeon: ranked('dungeon') }
+
+/** The portal as a glowing well, one for each planet it leads to. */
+export const PORTAL_SRC = Object.fromEntries(
+  ['eyeke', 'kavian', 'magor', 'naron', 'neri', 'veles'].map((p) => [p, asset(`/assets/markers/buildings/portal-${p}.svg`)]),
+) as Record<string, string>
 
 export const BUILDING_VIEW = { half: 58, above: 96, size: 116 } as const
 export const BUILDING_UNIT = 0.4 / 42

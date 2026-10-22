@@ -14,6 +14,7 @@ import {
   BUILDING_UNIT,
   BUILDING_VIEW,
   MARKER_SRC,
+  PORTAL_SRC,
   RANKED_SRC,
   buildingMarker,
   formatBoost,
@@ -859,12 +860,12 @@ export function MapCanvas({
                     : 0
                 /*
                    A tavern, dungeon or arena stands on its tile as a little
-                   building; a portal stays a marker, and so does a building
-                   whose picture has not loaded yet.
+                   building, and a portal as the well to the planet it leads
+                   to; a building stays a marker while its picture loads.
                  */
                 const picture =
                   marker === 'portal'
-                    ? undefined
+                    ? buildingsRef.current.get(`portal-${PORTAL_EFFECTS[land.special_effect]}`)
                     : buildingsRef.current.get(
                         /* An arena's cloth and a hydra's heads say its rank. */
                         (marker === 'arena' || marker === 'dungeon'
@@ -1098,6 +1099,20 @@ export function MapCanvas({
         list.map((src, i): [string, { lit: string; muted: string }] => [`${kind}-r${i + 1}`, src]),
       ),
     ]
+    for (const [planet, src] of Object.entries(PORTAL_SRC)) {
+      const key = `portal-${planet}`
+      if (pictures.has(key)) continue
+      const img = new Image()
+      img.decoding = 'async'
+      img.src = src
+      pictures.set(key, img)
+      img
+        .decode()
+        .catch(() => {})
+        .then(() => {
+          if (alive) drawNow()
+        })
+    }
     for (const [kind, src] of sources) {
       for (const [key, url] of [
         [kind, src.lit],

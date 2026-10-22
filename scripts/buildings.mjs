@@ -276,6 +276,69 @@ function tavern(sid, pal, O, uid) {
   return s
 }
 
+/* ---------- the portal: a glowing well, one per planet it leads to ---------- */
+/*
+  A low round well of the destination planet's stone, the swirl on its
+  surface seen from above and a beam of light rising out of it, the
+  planet's emblem on its front. The magenta stays the portal's in every one;
+  the stone, the light and the emblem are the planet it takes you to.
+  Writes portal-<planet>.svg.
+*/
+const MAGENTA = '#ff3cf0', MAGENTA_DARK = '#8a1a86'
+const INK = '#1c1626'
+const PORTAL_WASH = (v, k = 0.3) => (hex(v).reduce((a, b) => a + b, 0) < 230 ? mix(v, '#2a1a0a', 0.1) : mix(v, '#e9d5a4', k))
+/* each planet's look, taken from its own map */
+const RAW = {
+  eyeke: { stoneLit:'#b4c79a', stone:'#8aa070', stoneDark:'#55693f', accent:'#4fd07a', deep:'#0f6a3a', motif:'leaf' },
+  kavian: { stoneLit:'#cfd1d6', stone:'#9a9ca3', stoneDark:'#5f6168', accent:'#b9c9e6', deep:'#3e4c6a', motif:'crystal' },
+  magor: { stoneLit:'#e2a06a', stone:'#b8693a', stoneDark:'#7a3a1c', accent:'#ff8a2a', deep:'#8a2a08', motif:'spike' },
+  naron: { stoneLit:'#ffffff', stone:'#dfe8ee', stoneDark:'#9fb2c0', accent:'#8fdcff', deep:'#2a6a9a', motif:'ice' },
+  neri: { stoneLit:'#f2d68a', stone:'#d9b45a', stoneDark:'#9a7426', accent:'#ffd84a', deep:'#a8740a', motif:'sun' },
+  veles: { stoneLit:'#7cc4bd', stone:'#4f9a96', stoneDark:'#24605e', accent:'#2fd6d0', deep:'#0a4a6a', motif:'wave' },
+}
+const PLANET_LOOK = Object.fromEntries(
+  Object.entries(RAW).map(([k, t]) => [k, { ...t, name: k, stoneLit: PORTAL_WASH(t.stoneLit), stone: PORTAL_WASH(t.stone), stoneDark: PORTAL_WASH(t.stoneDark), accent: PORTAL_WASH(t.accent, 0.12) }]),
+)
+function portalWell(T, uid) {
+  const ink = (w = 2.2, c = INK) => ` stroke="${c}" stroke-width="${w}" stroke-linejoin="round" stroke-linecap="round"`
+  const grad = (id, c0, c1, c2, x0, x1) => `<linearGradient id="${id}" gradientUnits="userSpaceOnUse" x1="${x0}" y1="0" x2="${x1}" y2="0"><stop offset="0" stop-color="${c0}"/><stop offset=".5" stop-color="${c1}"/><stop offset="1" stop-color="${c2}"/></linearGradient>`
+  /* the planet's emblem, small, centred on x, y */
+  function motif(T, x, y, k = 1) {
+    const g = (d) => `<g transform="translate(${f(x)} ${f(y)}) scale(${k})">${d}</g>`
+    switch (T.motif) {
+      case 'leaf': return g(`<path d="M0,5 C-6,1 -5,-5 0,-7 C5,-5 6,1 0,5 Z" fill="${T.accent}"${ink(1)}/><path d="M0,5 V-5" stroke="${T.deep}" stroke-width=".8"/>`)
+      case 'crystal': return g(`<polygon points="0,-7 4,-1 0,6 -4,-1" fill="${T.accent}"${ink(1)}/><path d="M0,-7 V6" stroke="#fff" stroke-width=".7" opacity=".7"/>`)
+      case 'spike': return g(`<polygon points="-5,4 -2,-6 1,1 3,-4 5,4" fill="${T.accent}"${ink(1)}/>`)
+      case 'ice': return g(`<path d="M0,-6 V6 M-5.2,-3 L5.2,3 M-5.2,3 L5.2,-3" stroke="${T.accent}" stroke-width="2.4" stroke-linecap="round"/><path d="M0,-6 V6 M-5.2,-3 L5.2,3 M-5.2,3 L5.2,-3" stroke="#fff" stroke-width=".8" stroke-linecap="round"/>`)
+      case 'sun': return g(`<circle r="3.4" fill="${T.accent}"${ink(1)}/>` + [0, 45, 90, 135, 180, 225, 270, 315].map((a) => { const t = a * Math.PI / 180; return `<line x1="${f(4.6 * Math.cos(t))}" y1="${f(4.6 * Math.sin(t))}" x2="${f(7 * Math.cos(t))}" y2="${f(7 * Math.sin(t))}" stroke="${T.accent}" stroke-width="1.4" stroke-linecap="round"/>` }).join(''))
+      case 'wave': return g(`<path d="M-6,2 C-4,-3 -1,-3 0,1 C1,-3 4,-3 6,2" fill="none" stroke="${T.accent}" stroke-width="2.4" stroke-linecap="round"/><path d="M-6,2 C-4,-3 -1,-3 0,1 C1,-3 4,-3 6,2" fill="none" stroke="#fff" stroke-width=".7" opacity=".7"/>`)
+    }
+  }
+  /* the swirl: the planet's light with a magenta edge and spiral arms */
+  function vortex(T, uid, cx, cy, rx, ry) {
+    let s = `<defs><radialGradient id="${uid}-vx"><stop offset="0" stop-color="#ffffff"/><stop offset=".3" stop-color="${T.accent}"/><stop offset=".78" stop-color="${T.deep}"/><stop offset="1" stop-color="${MAGENTA_DARK}"/></radialGradient></defs>`
+    s += `<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="url(#${uid}-vx)"/>`
+    for (let k = 0; k < 3; k++) {
+      const pts = []
+      for (let i = 0; i <= 14; i++) { const t = i / 14, a = k * 2.094 + t * 3.6, rr = 1 - t * .82; pts.push([cx + rx * .92 * rr * Math.cos(a), cy + ry * .92 * rr * Math.sin(a)]) }
+      s += `<path d="M${pts.map((p) => p.map(f).join(',')).join(' L')}" fill="none" stroke="#fff" stroke-opacity=".55" stroke-width="1.4" stroke-linecap="round"/>`
+    }
+    s += `<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="none" stroke="${MAGENTA}" stroke-width="1.8"/>`
+    return s
+  }
+  const draw = () => {
+    let s = `<defs><linearGradient id="${uid}-beam" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="${MAGENTA}" stop-opacity=".45"/><stop offset=".4" stop-color="${T.accent}" stop-opacity=".3"/><stop offset="1" stop-color="${T.accent}" stop-opacity="0"/></linearGradient>${grad(uid + '-w', T.stoneLit, T.stone, T.stoneDark, -30, 30)}</defs>`
+    s += `<path d="M-30,-14 V0 A30,10 0 0 0 30,0 V-14 Z" fill="url(#${uid}-w)"${ink(2)}/>`
+    for (const d of [-60, -30, 0, 30, 60]) { const t = d * Math.PI / 180, x = 30 * Math.sin(t), y = 10 * Math.cos(t); s += `<line x1="${f(x)}" y1="${f(y - 14)}" x2="${f(x)}" y2="${f(y)}" stroke="${T.stoneDark}" stroke-width="1"/>` }
+    s += `<ellipse cx="0" cy="-14" rx="30" ry="10" fill="${T.stoneLit}"${ink(2)}/>` + vortex(T, uid, 0, -14, 24, 7.6)
+    s += `<path d="M-22,-14 L-10,-82 H10 L22,-14 Z" fill="url(#${uid}-beam)"/>`
+    ;[[-8, -40], [6, -54], [-4, -66], [10, -30]].forEach(([x, y]) => { s += `<path d="M${x},${y - 3} V${y + 3} M${x - 3},${y} H${x + 3}" stroke="#fff" stroke-width="1.2" stroke-linecap="round"/>` })
+    s += motif(T, 0, 1, .9)
+    return s
+  }
+  return draw()
+}
+
 const BUILD = { arena, dungeon, tavern }
 
 
@@ -322,6 +385,8 @@ for (let rank = 1; rank <= 5; rank++) {
     write(`arena-r${rank}${muted ? '-muted' : ''}.svg`, frame(arena('b', pal, O, 'arena', ARENA_RANKS[rank])))
   }
 }
+/* The portal once per planet it leads to: portal-eyeke.svg and so on. */
+for (const [planet, look] of Object.entries(PLANET_LOOK)) write(`portal-${planet}.svg`, frame(portalWell(look, `portal-${planet}`)))
 for (const kind of ['arena', 'dungeon', 'tavern']) {
   for (const muted of [false, true]) {
     const pal = muted ? grey(washed(BASE[kind])) : washed(BASE[kind])
