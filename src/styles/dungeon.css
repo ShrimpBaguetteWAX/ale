@@ -243,14 +243,91 @@
 }
 
 /*
- * Narrower desktops: the stepper takes a line of its own under the title,
- * so Leave and Start Fight keep their place at the top right.
+ * The weather and the difficulty, side by side in the title line: the two
+ * conditions of the fight, the one the day rolled and the one you choose,
+ * in the same shape and parted by a hairline.
+ */
+.dungeon__conditions {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  min-width: 0;
+}
+
+.dungeon__rule {
+  flex: none;
+  width: 1px;
+  height: 36px;
+  background: rgb(255 255 255 / 20%);
+}
+
+/*
+ * Narrower desktops: the two take a line of their own under the title, so
+ * Leave and Start Fight keep their place at the top right.
  */
 @media (max-width: 1279px) {
-  .dstep {
+  .dungeon__conditions {
     order: 3;
     width: 100%;
   }
+}
+
+/*
+ * The weather in the stepper's shape: the label in the same small capitals,
+ * and under it the roll, its leading figure in the colour of what it does
+ * to you. A long roll is cut short rather than pushing the line onto two;
+ * the whole of it is on the hover.
+ */
+.weathertwin {
+  --lean: var(--text-faint);
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+.weathertwin--good {
+  --lean: var(--teal);
+}
+.weathertwin--bad {
+  --lean: #ff6b7d;
+}
+.weathertwin--mixed {
+  --lean: #f6b400;
+}
+
+.weathertwin__label {
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: var(--fw-bold);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.weathertwin__line {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 320px;
+  font-size: var(--fs-md);
+  font-weight: var(--fw-semibold, 600);
+  white-space: nowrap;
+}
+
+.weathertwin__stat {
+  flex: none;
+  display: block;
+}
+
+.weathertwin__name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.weathertwin__lead {
+  margin-right: 0.3em;
+  font-weight: var(--fw-bold);
+  color: var(--lean);
 }
 
 .dstep__tally {

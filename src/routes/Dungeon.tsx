@@ -879,20 +879,29 @@ export default function Dungeon() {
               Where the coordinates used to be, as on the arena screen. A
               player standing on a tile does not need to be told which tile;
               the roll they are about to fight under decides what team they
-              should bring.
+              should bring. A desktop has it in the title line, beside the
+              difficulty.
             */}
-            <WeatherPanel weather={weather} />
+            {phone && <WeatherPanel weather={weather} />}
           </div>
           {!phone && (
             <>
               <span className="spacer" />
-              <DifficultyStepper
-                value={difficulty}
-                onChange={setDifficulty}
-                difMods={difMods}
-                xpPerDifficulty={xpPerDifficulty}
-                nftMinDifficulty={nftMinDifficulty}
-              />
+              {/*
+                The two conditions of the fight, side by side and in one
+                shape: the day's weather, then the difficulty you choose.
+              */}
+              <div className="dungeon__conditions">
+                <WeatherPanel weather={weather} twin />
+                {weather && <span className="dungeon__rule" aria-hidden="true" />}
+                <DifficultyStepper
+                  value={difficulty}
+                  onChange={setDifficulty}
+                  difMods={difMods}
+                  xpPerDifficulty={xpPerDifficulty}
+                  nftMinDifficulty={nftMinDifficulty}
+                />
+              </div>
             </>
           )}
           <span className="spacer" />

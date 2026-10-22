@@ -465,9 +465,17 @@ export function WeatherPanel({
    * is a promise to half the players — so that screen asks for them off.
    */
   tooltip = true,
+  /**
+   * The dungeon's desktop title line, where it sits beside the difficulty
+   * stepper and takes the stepper's shape: a small-capitals label over the
+   * roll itself, no box, its leading figure in the colour of what it does
+   * to you. Who it falls on and that it changes daily are on the hover.
+   */
+  twin = false,
 }: {
   weather: Weather | null | undefined
   tooltip?: boolean
+  twin?: boolean
 }) {
   if (!weather) return null
 
@@ -485,6 +493,26 @@ export function WeatherPanel({
   const falls = targets.length
     ? `Falls on ${targets.join(', ')}`
     : 'Falls on every fighter on the field'
+
+  if (twin) {
+    const name = weatherTitle(weather.displayname)
+    /* "+15%", "-20%", "+3": the part of the name that is the change. */
+    const lead = name.match(/^[+\-−]?\d+(?:\.\d+)?%?/)?.[0] ?? ''
+    return (
+      <div className={`weathertwin weathertwin--${lean}`} title={`${detail}. ${falls}. Changes daily.`}>
+        <span className="weathertwin__label">Weather</span>
+        <span className="weathertwin__line">
+          {icons.map(({ src, label }) => (
+            <img className="weathertwin__stat" key={label} src={src} alt={label} width={18} height={18} />
+          ))}
+          <span className="weathertwin__name">
+            {lead && <span className="weathertwin__lead">{lead}</span>}
+            {name.slice(lead.length)}
+          </span>
+        </span>
+      </div>
+    )
+  }
 
   return (
     <div
