@@ -275,13 +275,21 @@ function Arena({
      turn timer, the impact delay and the bar's own beat, so it stays a
      named thing rather than a 1 sprinkled through four expressions.
   */
-  const [speed] = useState<Speed>(1)
+  const [speed, setSpeed] = useState<Speed>(1)
   const logRef = useRef<HTMLDivElement>(null)
 
   /* Which way the fight is drawn: the battlefield unless this device has
      asked for the classic stage. */
   const [view, setView] = useState<BattleView>(readView)
   const phone = usePhone()
+  /*
+     On a desktop the battlefield plays as a broadcast on the glass, with the
+     map behind it: a window with a scorebar, captions for the blows and a
+     transport bar under the picture. The log opens over it on request.
+  */
+  const wide = useWide()
+  const broadcast = wide && view === 'field'
+  const [showLog, setShowLog] = useState(false)
   const chooseView = useCallback((next: BattleView) => {
     setView(next)
     try {
@@ -576,28 +584,8 @@ function Arena({
     </>
   )
 
-  return (
-    <div className="battle">
-      <img className="battle__art" src={asset("/assets/background/bg-fight.png")} alt="" />
-      <div className="battle__scrim" />
-
-      {!finished && (
-      <div
-        className="battle__inner"
-        style={{ ['--beat' as string]: String(1 / speed) }}
-      >
-        <header className="battle__bar">
-          {/*
-            The only control a fight needs.
-
-            The bar carried Back, Play/Pause, three speeds, Skip Fight and
-            Combat Log - seven controls over a fight that lasts under a
-            minute and has no decisions in it. Every one of them answered
-            the same question, "I do not want to watch the rest of this",
-            and Skip answers it best: it goes straight to the result, which
-            is what Back was being used for as well, except that Back threw
-            the result away.
-          */}
+  const viewSwitch = (
+    <>
           <div className="viewswitch" role="group" aria-label="Battle view">
             {(['classic', 'field'] as const).map((v) => (
               <button
@@ -612,6 +600,53 @@ function Arena({
             ))}
           </div>
 
+    </>
+  )
+  const skipButton = (
+    <>
+          {/* On the right, where a hand goes to move on. The size of Start Fight. */}
+          <button type="button" className="btn btn--ghost battle__skip" onClick={skip}>
+            Skip Fight
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M4 5v14l8-7zM12 5v14l8-7z" />
+            </svg>
+          </button>
+    </>
+  )
+
+  return (
+    <div className="battle">
+      <img className="battle__art" src={asset("/assets/background/bg-fight.png")} alt="" />
+      <div className="battle__scrim" />
+
+      {!finished && (
+      <div
+        className="battle__inner"
+        style={{ ['--beat' as string]: String(1 / speed) }}
+      >
+        {broadcast ? (
+          /* The page's own title line: the view and Skip, nothing else. The
+             count and the progress are on the window's transport bar. */
+          <header className="battle__titleline">
+            <h1 className="page__title">Battle</h1>
+            <span className="spacer" />
+            {viewSwitch}
+            {skipButton}
+          </header>
+        ) : (
+        <header className="battle__bar">
+          {/*
+            The only control a fight needs.
+
+            The bar carried Back, Play/Pause, three speeds, Skip Fight and
+            Combat Log - seven controls over a fight that lasts under a
+            minute and has no decisions in it. Every one of them answered
+            the same question, "I do not want to watch the rest of this",
+            and Skip answers it best: it goes straight to the result, which
+            is what Back was being used for as well, except that Back threw
+            the result away.
+          */}
+          {viewSwitch}
           {/*
             The scoreboard: the attack count large, and a segment per attack
             that lights as it lands. A long fight shares segments, so the
@@ -643,14 +678,9 @@ function Arena({
             </div>
           </div>
 
-          {/* On the right, where a hand goes to move on. The size of Start Fight. */}
-          <button type="button" className="btn btn--ghost battle__skip" onClick={skip}>
-            Skip Fight
-            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-              <path d="M4 5v14l8-7zM12 5v14l8-7z" />
-            </svg>
-          </button>
+          {skipButton}
         </header>
+        )}
 
         {view === 'classic' ? (
           <>
@@ -767,7 +797,7 @@ function Arena({
             the fighters stand. The log takes the right-hand column where the
             screen is wide enough, and sits underneath where it is not.
           */
-          <div className="bfwrap">
+          <div className={`bfwrap${broadcast ? ' bfwrap--bcast' : ''}`}>
             <div className="bfmain">
               {/* On a phone the order sits above the field; on a desktop it is
                   part of the field, under the team names. */}
@@ -791,7 +821,78 @@ function Arena({
                 nextUp={nextUp}
                 playertag={playertag}
                 enemyLabel={venue === 'arena' ? 'The defenders' : 'The dungeon'}
+                broadcast={broadcast ? (venue === 'arena' ? 'Arena' : 'Dungeon') : undefined}
               />
+              {broadcast && (
+                <>
+                  <LowerThirds
+                    current={landed ? current : null}
+                    step={step}
+                    nameOf={nameOf}
+                    next={replay.fighters.find((x) => x.uid === nextUp) ?? null}
+                  />
+                  <div className="bcdeck">
+                    <button
+                      type="button"
+                      className="bcdeck__btn"
+                      onClick={() => (step >= total ? restart() : setPlaying((p) => !p))}
+                      aria-label={playing ? 'Pause' : 'Play'}
+                      title={playing ? 'Pause' : 'Play'}
+                    >
+                      {playing ? (
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                          <path d="M6 5h4v14H6zM14 5h4v14h-4z" />
+                        </svg>
+                      ) : (
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                          <path d="M7 5v14l12-7z" />
+                        </svg>
+                      )}
+                    </button>
+                    <span className="bcdeck__count mono">
+                      {step} <small>/ {total}</small>
+                    </span>
+                    {/* The fight's progress, and a way to any point of it. */}
+                    <div
+                      className="bcdeck__rail"
+                      role="slider"
+                      tabIndex={0}
+                      aria-label="Attacks played"
+                      aria-valuemin={0}
+                      aria-valuemax={total}
+                      aria-valuenow={step}
+                      onClick={(e) => {
+                        const r = e.currentTarget.getBoundingClientRect()
+                        setStep(Math.round(Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)) * total))
+                      }}
+                      onKeyDown={(e) => {
+                        const by = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0
+                        if (!by) return
+                        e.preventDefault()
+                        setStep((v) => Math.min(total, Math.max(0, v + by)))
+                      }}
+                    >
+                      <i style={{ width: `${total ? (step / total) * 100 : 0}%` }} />
+                    </div>
+                    <button
+                      type="button"
+                      className="bcdeck__speed"
+                      onClick={() => setSpeed((v) => SPEEDS[(SPEEDS.indexOf(v) + 1) % SPEEDS.length])}
+                      title="Playback speed"
+                    >
+                      {speed}×
+                    </button>
+                    <button
+                      type="button"
+                      className="bcdeck__log"
+                      aria-pressed={showLog}
+                      onClick={() => setShowLog((v) => !v)}
+                    >
+                      Combat log
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
 
             {/*
@@ -799,6 +900,7 @@ function Arena({
               from the first frame so the field does not shift when the first
               blow lands.
             */}
+            {(!broadcast || showLog) && (
             <section className="panel clog clog--live" aria-label="Combat log">
               <header className="clog__head">
                 <div className="clog__heading">
@@ -820,6 +922,7 @@ function Arena({
                 )}
               </div>
             </section>
+            )}
           </div>
         )}
       </div>
@@ -1185,6 +1288,7 @@ function Battlefield({
   enemyLabel,
   wide,
   queue,
+  broadcast,
 }: {
   team1: SimFighter[]
   team2: SimFighter[]
@@ -1200,6 +1304,8 @@ function Battlefield({
   wide: boolean
   /** The turn order, drawn inside the field. */
   queue?: React.ReactNode
+  /** The venue's name for the LIVE tag, when the field plays as a broadcast. */
+  broadcast?: string
 }) {
   const where = new Map<string, [number, number]>()
   const depth = new Map<string, number>()
@@ -1208,7 +1314,8 @@ function Battlefield({
       const [x, y, d] = wide
         ? FORMATION_WIDE[i % FORMATION_WIDE.length]
         : [...FORMATION[i % FORMATION.length], 1]
-      where.set(f.uid, [f.team === 1 ? x : 100 - x, y])
+      /* A broadcast keeps the foot of the picture for its captions. */
+      where.set(f.uid, [f.team === 1 ? x : 100 - x, broadcast ? y * 0.8 : y])
       depth.set(f.uid, d)
     })
   }
@@ -1223,9 +1330,20 @@ function Battlefield({
   const alive = (team: SimFighter[]) =>
     team.filter((f) => (state.get(f.uid)?.health ?? f.start_health) > 0).length
 
+  /* What is left of a team's health, for the scorebar. */
+  const health = (team: SimFighter[]) => {
+    let now = 0
+    let max = 0
+    for (const f of team) {
+      now += Math.max(0, state.get(f.uid)?.health ?? f.start_health)
+      max += f.start_health
+    }
+    return max ? (now / max) * 100 : 0
+  }
+
   return (
     <div
-      className={`bfield${wide ? ' bfield--wide' : ''}`}
+      className={`bfield${wide ? ' bfield--wide' : ''}${broadcast ? ' bfield--bcast' : ''}`}
       style={
         {
           '--bf-bg': `url('${asset('/assets/background/bg-fight.png')}')`,
@@ -1238,7 +1356,14 @@ function Battlefield({
           <span className="mono">
             {alive(team1)}/{team1.length}
           </span>
+          {broadcast && (
+            <span className="bfield__teamhp" aria-hidden="true">
+              <i style={{ width: `${health(team1)}%` }} />
+            </span>
+          )}
         </span>
+        <span className="bfield__mid">
+        {broadcast && <span className="bfield__live">Live · {broadcast}</span>}
         {current && (
           <span className="bfield__attack" key={`atk-${turn}`}>
             <span className="mono">Attack {turn}</span>
@@ -1253,11 +1378,17 @@ function Battlefield({
             <span className="mono">{current.effectiveness}%</span>
           </span>
         )}
+        </span>
         <span className="bfield__label bfield__label--enemy">
           {enemyLabel}{' '}
           <span className="mono">
             {alive(team2)}/{team2.length}
           </span>
+          {broadcast && (
+            <span className="bfield__teamhp" aria-hidden="true">
+              <i style={{ width: `${health(team2)}%` }} />
+            </span>
+          )}
         </span>
       </div>
 
@@ -1298,6 +1429,78 @@ function Battlefield({
 }
 
 /** One fighter standing on the battlefield. */
+/**
+ * The broadcast's lower thirds.
+ *
+ * The blow that just landed, written out at the foot of the picture on the
+ * left, in the colours of the two sides; and on the right, who swings next.
+ * Each caption slides in fresh when it changes.
+ */
+function LowerThirds({
+  current,
+  step,
+  nameOf,
+  next,
+}: {
+  current: TurnEvent | null
+  step: number
+  nameOf: (uid: string) => string
+  next: SimFighter | null
+}) {
+  const side = (uid: string) => (uid.startsWith('1') ? 'mine' : 'enemy')
+  const nextNft = next ? Number(next.fighter_id) === NFT_FIGHTER_ID : false
+  return (
+    <div className="lowers" aria-live="polite">
+      {current && (
+        <div className="lower lower--blow" key={`blow-${step}`}>
+          <span className="lower__n mono">{step}</span>
+          <span className="lower__text">
+            <b className={`lower__who lower__who--${side(current.attackerUid)}`}>{nameOf(current.attackerUid)}</b> hit{' '}
+            <b className={`lower__who lower__who--${side(current.defenderUid)}`}>{nameOf(current.defenderUid)}</b> for
+          </span>
+          <span className="lower__dmg">{formatScaled(current.damage)}</span>
+          <span className="lower__meta">
+            {current.effectiveness}% landed · {formatScaled(current.defenderHealthBefore)} →{' '}
+            {formatScaled(current.defenderHealthAfter)} HP · {formatScaled(current.blocked)} blocked
+            {current.killed && <em className="lower__ko"> · Knocked out</em>}
+          </span>
+        </div>
+      )}
+      <span className="spacer" />
+      {next && (
+        <div className={`lower lower--next lower--${next.team === 1 ? 'mine' : 'enemy'}`} key={`next-${next.uid}`}>
+          <span className="lower__label">Next</span>
+          <GameImg
+            className="lower__art"
+            src={nextNft ? fighterArtFallback() : fighterArt({ classname: next.classname, racename: next.racename })}
+            alt=""
+            fallback={fighterArtFallback()}
+          />
+          <b className={`lower__who lower__who--${next.team === 1 ? 'mine' : 'enemy'}`}>
+            {nextNft ? 'NFT Fighter' : next.classname || next.racename || 'Fighter'}
+          </b>
+        </div>
+      )}
+    </div>
+  )
+}
+
+/** Whether the window is a desktop's, where the page sits on the glass. */
+function useWide(): boolean {
+  const query = '(min-width: 1024px)'
+  const [wide, setWide] = useState(
+    () => typeof window !== 'undefined' && typeof window.matchMedia === 'function' && window.matchMedia(query).matches,
+  )
+  useEffect(() => {
+    if (typeof window.matchMedia !== 'function') return
+    const mq = window.matchMedia(query)
+    const on = () => setWide(mq.matches)
+    mq.addEventListener('change', on)
+    return () => mq.removeEventListener('change', on)
+  }, [])
+  return wide
+}
+
 function FieldUnit({
   fighter,
   snap,

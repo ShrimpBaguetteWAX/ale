@@ -2993,3 +2993,379 @@
 .bfield__queue .turnq {
   margin: 0;
 }
+
+/* ---------- the fight as a broadcast (desktop) ---------- */
+
+/*
+ * On the glass, with the map behind it like every other page: the fight's
+ * own full-window artwork goes, the page gets a title line, and the
+ * battlefield plays in a window after the tournament's player: a scorebar
+ * across the top, the blows as captions at its foot, and a transport bar
+ * under the picture. The combat log opens over the window on request.
+ */
+@media (min-width: 1024px) {
+  .battle__art,
+  .battle__scrim {
+    display: none;
+  }
+
+  /* The classic stage keeps its bar, in the frame's glass. */
+  .battle__bar {
+    background: linear-gradient(180deg, rgb(10 18 34 / 72%), rgb(4 9 20 / 82%));
+    border-color: rgb(255 255 255 / 12%);
+    backdrop-filter: blur(14px) saturate(1.35);
+    -webkit-backdrop-filter: blur(14px) saturate(1.35);
+  }
+
+  .battle__titleline {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+  }
+  .battle__titleline .page__title {
+    margin: 0;
+  }
+  .battle__titleline .battle__skip {
+    --btn-bg: rgb(255 255 255 / 9%);
+    --btn-line: rgb(255 255 255 / 24%);
+    backdrop-filter: blur(10px);
+  }
+
+  /* ---- the window ---- */
+  .bfwrap--bcast {
+    position: relative;
+  }
+  .bfwrap.bfwrap--bcast {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .bfwrap--bcast .bfmain {
+    position: relative;
+    justify-self: center;
+    width: min(100%, calc((100dvh - 150px) * 16 / 9));
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow:
+      inset 0 0 0 1px rgb(255 255 255 / 14%),
+      0 24px 60px rgb(0 0 0 / 50%);
+  }
+  .bfield--bcast.bfield--wide {
+    width: 100%;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  /* ---- the scorebar ---- */
+  .bfield--bcast .bfield__labels {
+    top: 0;
+    left: 0;
+    right: 0;
+    align-items: flex-start;
+    padding: 12px 18px 28px;
+    background: linear-gradient(180deg, rgb(4 8 16 / 92%), transparent);
+  }
+  .bfield--bcast .bfield__label {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    align-items: baseline;
+    gap: 7px 8px;
+    width: 32%;
+    font-weight: var(--fw-bold);
+    letter-spacing: 0.12em;
+  }
+  .bfield--bcast .bfield__label--enemy {
+    grid-template-columns: 1fr auto;
+    justify-items: end;
+    text-align: right;
+  }
+  .bfield--bcast .bfield__label .mono {
+    margin: 0;
+  }
+  .bfield--bcast .bfield__label--enemy .mono {
+    justify-self: start;
+  }
+  .bfield__teamhp {
+    grid-column: 1 / -1;
+    width: 100%;
+    height: 6px;
+    border-radius: 3px;
+    overflow: hidden;
+    background: rgb(0 0 0 / 50%);
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 10%);
+  }
+  .bfield__teamhp i {
+    display: block;
+    height: 100%;
+    background: linear-gradient(90deg, #0ed4a8, #00baff);
+    transition: width calc(400ms * var(--beat)) var(--ease);
+  }
+  .bfield__label--enemy .bfield__teamhp i {
+    margin-left: auto;
+    background: linear-gradient(270deg, #e0344f, #ff6077);
+  }
+  .bfield--bcast .bfield__mid {
+    display: grid;
+    justify-items: center;
+    gap: 6px;
+  }
+  .bfield__live {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: rgb(224 52 79 / 92%);
+    font-family: var(--font-display);
+    font-size: 9px;
+    font-weight: var(--fw-bold);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--white);
+  }
+  .bfield__live::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--white);
+    animation: bcast-blink 1.4s infinite;
+  }
+  .bfield--bcast .bfield__queue {
+    top: 68px;
+  }
+
+  /* ---- the captions ---- */
+  .lowers {
+    position: absolute;
+    left: 16px;
+    right: 16px;
+    bottom: 64px;
+    z-index: 450;
+    display: flex;
+    align-items: flex-end;
+    gap: var(--sp-3);
+    pointer-events: none;
+  }
+  .lower {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 14px;
+    border-radius: 10px;
+    background: linear-gradient(90deg, rgb(4 8 16 / 92%), rgb(4 8 16 / 74%));
+    box-shadow:
+      inset 3px 0 0 var(--gold),
+      0 8px 20px rgb(0 0 0 / 40%);
+    font-size: var(--fs-sm);
+    white-space: nowrap;
+    animation: lower-in calc(260ms * var(--beat)) var(--ease) both;
+  }
+  .lower--next {
+    box-shadow:
+      inset -3px 0 0 var(--cyan),
+      0 8px 20px rgb(0 0 0 / 40%);
+    animation-name: lower-in-right;
+  }
+  .lower--next.lower--enemy {
+    box-shadow:
+      inset -3px 0 0 #ff6077,
+      0 8px 20px rgb(0 0 0 / 40%);
+  }
+  .lower__n {
+    font-size: 11px;
+    color: var(--text-faint);
+  }
+  .lower__who {
+    text-transform: capitalize;
+  }
+  .battle__titleline .viewswitch {
+    padding: 2px;
+    border: 0;
+    border-radius: 8px;
+    background: rgb(0 0 0 / 30%);
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 12%);
+  }
+  .battle__titleline .viewswitch__btn {
+    border-radius: 6px;
+  }
+  .battle__titleline .viewswitch__btn--on {
+    background: rgb(255 255 255 / 12%);
+    color: var(--white);
+  }
+  .lower__who--mine {
+    color: #4fc8ff;
+  }
+  .lower__who--enemy {
+    color: #ff7a8c;
+  }
+  .lower__dmg {
+    font-family: var(--font-display);
+    font-size: 20px;
+    font-weight: 900;
+    color: #ffd23f;
+  }
+  .lower__meta {
+    font-size: 12px;
+    color: var(--text-faint);
+  }
+  .lower__ko {
+    font-style: normal;
+    color: #ff7a8c;
+  }
+  .lower__label {
+    font-family: var(--font-display);
+    font-size: 10px;
+    font-weight: var(--fw-bold);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+  }
+  .lower__art {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    object-fit: cover;
+    object-position: top;
+    background: rgb(255 255 255 / 6%);
+  }
+
+  /* ---- the transport bar ---- */
+  .bcdeck {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 460;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    background: linear-gradient(0deg, rgb(4 8 16 / 95%), rgb(4 8 16 / 72%));
+    border-top: 1px solid rgb(246 168 0 / 22%);
+  }
+  .bcdeck__btn,
+  .bcdeck__speed,
+  .bcdeck__log {
+    display: inline-grid;
+    place-items: center;
+    height: 30px;
+    border: 0;
+    border-radius: 7px;
+    background: rgb(255 255 255 / 8%);
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 18%);
+    color: var(--white);
+    font-size: 12px;
+    font-weight: var(--fw-bold);
+    cursor: pointer;
+  }
+  .bcdeck__btn {
+    width: 30px;
+  }
+  .bcdeck__btn svg {
+    width: 14px;
+    height: 14px;
+  }
+  .bcdeck__speed {
+    min-width: 36px;
+    padding: 0 8px;
+  }
+  .bcdeck__log {
+    padding: 0 12px;
+  }
+  .bcdeck__btn:hover,
+  .bcdeck__speed:hover,
+  .bcdeck__log:hover {
+    background: rgb(255 255 255 / 14%);
+  }
+  .bcdeck__log[aria-pressed='true'] {
+    background: rgb(0 186 255 / 20%);
+    box-shadow: inset 0 0 0 1px rgb(0 186 255 / 65%);
+  }
+  .bcdeck__count {
+    font-size: 13px;
+    color: var(--white);
+    white-space: nowrap;
+  }
+  .bcdeck__count small {
+    color: var(--text-faint);
+  }
+  .bcdeck__rail {
+    position: relative;
+    flex: 1;
+    height: 14px;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+  }
+  .bcdeck__rail::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 3px;
+    border-radius: 99px;
+    background: rgb(255 255 255 / 20%);
+  }
+  .bcdeck__rail i {
+    position: absolute;
+    left: 0;
+    height: 3px;
+    border-radius: 99px;
+    background: linear-gradient(90deg, var(--gold), #ffdb7d);
+    transition: width calc(300ms * var(--beat)) linear;
+  }
+  .bcdeck__rail i::after {
+    content: '';
+    position: absolute;
+    right: -5px;
+    top: -4px;
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    background: #ffdb7d;
+  }
+  .bcdeck__rail:focus-visible {
+    outline: 2px solid var(--cyan);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  /* ---- the log, over the window ---- */
+  .bfwrap--bcast > .clog--live {
+    position: absolute;
+    top: 72px;
+    right: 14px;
+    bottom: 64px;
+    z-index: 470;
+    width: 360px;
+    height: auto;
+    min-height: 0;
+    max-height: none;
+    background: linear-gradient(180deg, rgb(10 18 34 / 88%), rgb(4 9 20 / 92%));
+    backdrop-filter: blur(14px) saturate(1.35);
+    -webkit-backdrop-filter: blur(14px) saturate(1.35);
+    border-color: rgb(255 255 255 / 14%);
+  }
+}
+
+@keyframes bcast-blink {
+  50% {
+    opacity: 0.2;
+  }
+}
+@keyframes lower-in {
+  from {
+    opacity: 0;
+    transform: translateX(-14px);
+  }
+}
+@keyframes lower-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(14px);
+  }
+}
+:root[data-fx='low'] .bfield__live::before,
+:root[data-fx='low'] .lower {
+  animation: none;
+}
