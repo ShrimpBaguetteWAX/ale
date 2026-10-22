@@ -2395,6 +2395,17 @@
   }
 }
 
+/*
+ * On the glass, the same navy as every other panel. The maroon at the top
+ * was half see-through, and over the map it read as a red cast on the
+ * whole line-up; the two sides carry their colours in their own headings.
+ */
+@media (min-width: 1024px) {
+  .versus {
+    background: linear-gradient(180deg, var(--surface-3), var(--surface-1));
+  }
+}
+
 .combatcard {
   position: relative;
   /*
