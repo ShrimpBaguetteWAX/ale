@@ -78,6 +78,39 @@ export interface MapCanvasProps {
   currentTavernLand?: string
   /** Floating UI rendered over the map: tile inspector, legend. */
   children?: React.ReactNode
+  /**
+   * Rendered at the selected tile and carried with it as the map pans and
+   * zooms, so an action can sit beside the land it acts on rather than in a
+   * corner. The anchor is the tile's centre; `--tile` on it is the tile's
+   * size in CSS pixels, and `selpin--left` is set when the tile is in the
+   * right part of the frame, so whatever hangs off it can flip to the side
+   * that has room.
+   */
+  selectionSlot?: React.ReactNode
+  /**
+   * Rendered at the player's own tile, above the pin, and unlike the pin it
+   * takes pointer input: it is where the way into whatever is under the
+   * player's feet lives. `herepin--below` is set when the pin is near the top
+   * of the frame, so the slot can drop under it instead of leaving the frame.
+   */
+  pinSlot?: React.ReactNode
+  /**
+   * Hands the zoom to controls that live outside the canvas. Filled while
+   * mounted, nulled on unmount.
+   */
+  zoomApi?: React.MutableRefObject<ZoomApi | null>
+  /**
+   * The zoom, as a factor of the opening view, whenever it changes. 1 is the
+   * map as it first appeared; 2 is twice as close.
+   */
+  onZoomLevel?: (level: number) => void
+}
+
+export interface ZoomApi {
+  zoomIn: () => void
+  zoomOut: () => void
+  /** Back to the opening view's zoom, about the centre of the frame. */
+  reset: () => void
 }
 
 interface View {
@@ -291,6 +324,10 @@ export function MapCanvas({
   tavernLands,
   currentTavernLand,
   children,
+  selectionSlot,
+  pinSlot,
+  zoomApi,
+  onZoomLevel,
 }: MapCanvasProps) {
   const decayRef = useRef(boostDecayPerHour)
   decayRef.current = boostDecayPerHour
@@ -311,6 +348,13 @@ export function MapCanvas({
   const imgRef = useRef<HTMLImageElement | null>(null)
   const markersRef = useRef(new Map<MarkerKey, HTMLImageElement>())
   const pinRef = useRef<HTMLDivElement>(null)
+  const hereRef = useRef<HTMLDivElement>(null)
+  const selRef = useRef<HTMLDivElement>(null)
+  /* The scale the map opened at, which is what the zoom readout counts from. */
+  const openScaleRef = useRef(0)
+  const levelRef = useRef(0)
+  const onZoomLevelRef = useRef(onZoomLevel)
+  onZoomLevelRef.current = onZoomLevel
 
   // Interaction inputs live in refs so the pointer listeners bind once.
   const selectedRef = useRef(selected)
@@ -352,9 +396,47 @@ export function MapCanvas({
     const cy = (tileY - PLAY_MIN_Y) * scale + ty + scale / 2
     const visible = cx >= -40 && cy >= -40 && cx <= w + 40 && cy <= h + 40
     pin.style.display = visible ? 'block' : 'none'
+    const here = hereRef.current
+    if (here) here.style.display = visible ? 'block' : 'none'
     if (!visible) return
-    pin.style.transform = 'translate(' + cx + 'px, ' + cy + 'px)'
-    pin.style.setProperty('--pin-size', Math.max(18, Math.min(scale * 0.8, 52)) + 'px')
+    const transform = 'translate(' + cx + 'px, ' + cy + 'px)'
+    const size = Math.max(18, Math.min(scale * 0.8, 52)) + 'px'
+    pin.style.transform = transform
+    pin.style.setProperty('--pin-size', size)
+    /* The slot above the pin rides on the same transform, so the two can
+       never drift apart mid-flight. */
+    if (here) {
+      here.style.transform = transform
+      here.style.setProperty('--pin-size', size)
+      here.classList.toggle('herepin--below', cy < 110)
+    }
+  }, [])
+
+  /**
+   * Put the selection anchor on the selected tile, or hide it.
+   *
+   * Same idea as the pin: one style write per frame on a node that already
+   * exists, rather than anything that would make React re-render while the
+   * map is being dragged.
+   */
+  const placeSelection = useCallback(() => {
+    const el = selRef.current
+    if (!el) return
+    const sel = selectedRef.current
+    if (!sel) {
+      el.style.display = 'none'
+      return
+    }
+    const { w, h } = sizeRef.current
+    const { scale, tx, ty } = viewRef.current
+    const cx = (sel.x - PLAY_MIN_X) * scale + tx + scale / 2
+    const cy = (sel.y - PLAY_MIN_Y) * scale + ty + scale / 2
+    const visible = cx >= -40 && cy >= -40 && cx <= w + 40 && cy <= h + 40
+    el.style.display = visible ? 'block' : 'none'
+    if (!visible) return
+    el.style.transform = 'translate(' + cx + 'px, ' + cy + 'px)'
+    el.style.setProperty('--tile', scale + 'px')
+    el.classList.toggle('selpin--left', cx > w - 230)
   }, [])
 
   const draw = useCallback(() => {
@@ -514,7 +596,7 @@ export function MapCanvas({
                  In place of the multiplier, not beside it — there is one
                  line under a marker. Which arenas you are defending is the
                  thing you cannot work out from anywhere else on this
-                 screen, and the multiplier is still on the tile card.
+                 screen, and the multiplier is a glance at the tile away.
                */
               drawLabel(
                 ctx,
@@ -589,9 +671,22 @@ export function MapCanvas({
       const trip = travelRef.current
       const at = trip ? tripAt(trip, performance.now()) : pos
       if (at) placePin(at.x, at.y)
-      else pin.style.display = 'none'
+      else {
+        pin.style.display = 'none'
+        if (hereRef.current) hereRef.current.style.display = 'none'
+      }
     }
-  }, [placePin])
+    placeSelection()
+
+    /* The readout only hears about a change it would show. */
+    if (openScaleRef.current > 0) {
+      const level = Math.round((scale / openScaleRef.current) * 10) / 10
+      if (level !== levelRef.current) {
+        levelRef.current = level
+        onZoomLevelRef.current?.(level)
+      }
+    }
+  }, [placePin, placeSelection])
 
   /**
    * Coalesce a repaint into the next frame. Used for pan and pinch, where
@@ -866,7 +961,10 @@ export function MapCanvas({
       /* Open on 'cover' so the art fills the panel rather than sitting in
          letterbox bars. On a phone that is also the floor, so it stays
          filled; on a desktop zooming out still reaches the whole planet. */
-      if (first) v.scale = Math.max(w / GRID_W, h / GRID_H)
+      if (first) {
+        v.scale = Math.max(w / GRID_W, h / GRID_H)
+        openScaleRef.current = v.scale
+      }
       /* A rotation or a resize can put the current scale under the new
          floor — most obviously turning a phone from portrait to landscape. */
       if (v.scale < floor) v.scale = floor
@@ -880,10 +978,27 @@ export function MapCanvas({
     return () => ro.disconnect()
   }, [clamp, drawNow, lowFx])
 
+  /* The zoom, for the rail outside the canvas. */
+  useEffect(() => {
+    if (!zoomApi) return
+    const centre = () => [sizeRef.current.w / 2, sizeRef.current.h / 2] as const
+    zoomApi.current = {
+      zoomIn: () => zoomAt(1.35, ...centre()),
+      zoomOut: () => zoomAt(1 / 1.35, ...centre()),
+      reset: () => {
+        const open = openScaleRef.current
+        if (open > 0) zoomAt(open / viewRef.current.scale, ...centre())
+      },
+    }
+    return () => {
+      zoomApi.current = null
+    }
+  }, [zoomApi, zoomAt])
+
   /*
      A band that was covered is not any more, so anything panned into its
-     slack has to come back — otherwise closing the tile card leaves a strip
-     of empty background where the map used to reach.
+     slack has to come back — otherwise what was panned into it leaves a
+     strip of empty background where the map used to reach.
   */
   useEffect(() => {
     clamp()
@@ -1042,25 +1157,15 @@ export function MapCanvas({
         {/* A word as well as a mark, so nothing depends on seeing colour. */}
         <span className="playerpin__tag">You</span>
       </div>
-      {children}
-      <div className="mapstage__zoom">
-        <button
-          type="button"
-          className="zoombtn"
-          aria-label="Zoom in"
-          onClick={() => zoomAt(1.35, sizeRef.current.w / 2, sizeRef.current.h / 2)}
-        >
-          +
-        </button>
-        <button
-          type="button"
-          className="zoombtn"
-          aria-label="Zoom out"
-          onClick={() => zoomAt(1 / 1.35, sizeRef.current.w / 2, sizeRef.current.h / 2)}
-        >
-          &minus;
-        </button>
+      {/* What hangs off the player: the way in to whatever is under their feet. */}
+      <div ref={hereRef} className="herepin">
+        {pinSlot}
       </div>
+      {/* What hangs off the selected tile: the way to it. */}
+      <div ref={selRef} className="selpin">
+        {selectionSlot}
+      </div>
+      {children}
     </div>
   )
 }

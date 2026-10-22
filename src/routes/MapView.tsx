@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, useRef } from 'react'
+import { useCallback, useEffect, useMemo, useState, useRef, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { PLANETS, PORTAL_EFFECTS, type Planet } from '@/chain/config'
 import { fetchAssetOwners } from '@/chain/atomic'
@@ -13,22 +13,15 @@ import {
 import { landId, travelCost, travelDistance } from '@/chain/landId'
 import { unrevealedTavernHere } from '@/tavern/rules'
 import type { Land, LandsConfig } from '@/chain/types'
-import { MapCanvas } from '@/map/MapCanvas'
+import { MapCanvas, type ZoomApi } from '@/map/MapCanvas'
+import { QuestClaims, useClaimableQuests } from '@/map/MapQuests'
 import {
   playedDungeonsToday,
   summarisePlanet,
   type LiveArena,
   type PlanetStatus,
 } from '@/map/planetStatus'
-import {
-  MARKER_SRC,
-  buildingIcon,
-  formatBoost,
-  landThumbStyle,
-  liveBoostPercent,
-  planetMapSrc,
-  type MarkerKey,
-} from '@/map/terrain'
+import { MARKER_SRC, formatBoost, liveBoostPercent, planetMapSrc, type MarkerKey } from '@/map/terrain'
 import { dungeonMaintained } from '@/dungeon/rules'
 import { arenaMaintained } from '@/arena/rules'
 import { fetchCapturedArenas, type CapturedArena } from '@/arena/queries'
@@ -78,8 +71,6 @@ export function Legend() {
   )
 }
 
-const PLANETBAR_KEY = 'al.map.planetbar'
-
 /*
  * How long the overlay waits, once it is up, before the planet is swapped
  * underneath it.
@@ -89,20 +80,9 @@ const PLANETBAR_KEY = 'al.map.planetbar'
  */
 const WARP_COVERED_MS = 600
 
-/** One planet in the switcher, with what the player can actually do there. */
-export function PlanetCard({
-  status,
-  isCurrent,
-  isViewing,
-  onSelect,
-}: {
-  status: PlanetStatus
-  isCurrent: boolean
-  isViewing: boolean
-  onSelect: () => void
-}) {
-  const { planet, taverns, dungeonsOpen, arenasOpen, loaded } = status
-
+/** What a planet offers, as three counts. Teal when there is something to do. */
+function PlanetStats({ status, icons = false }: { status: PlanetStatus; icons?: boolean }) {
+  const { taverns, dungeonsOpen, arenasOpen, loaded } = status
   const stats: [MarkerKey, number, string][] = [
     ['tavern', taverns, `${taverns} active tavern${taverns === 1 ? '' : 's'}`],
     [
@@ -116,28 +96,144 @@ export function PlanetCard({
       `${arenasOpen} arena${arenasOpen === 1 ? '' : 's'} you have no fighter in`,
     ],
   ]
-
   return (
-    <button type="button" className="planetcard" aria-pressed={isViewing} onClick={onSelect}>
-      <span className="planetcard__name">
-        {planet}
-        {isCurrent && <span className="planetcard__here" title="You are here" />}
-      </span>
-      <span className="planetcard__stats">
-        {stats.map(([key, value, title]) => (
-          <span
-            className={`pstat${loaded && value > 0 ? ' pstat--open' : ''}`}
-            key={key}
-            title={loaded ? title : 'Loading…'}
-          >
-            <img src={MARKER_SRC[key]} alt="" />
-            {loaded ? value : <span className="pstat__skeleton skeleton" />}
-          </span>
-        ))}
-      </span>
-    </button>
+    <>
+      {stats.map(([key, value, title]) => (
+        <span
+          className={`pstat${loaded && value > 0 ? ' pstat--open' : ''}`}
+          key={key}
+          title={loaded ? title : 'Loading…'}
+        >
+          {icons && <img src={MARKER_SRC[key]} alt="" />}
+          {loaded ? value : <span className="pstat__skeleton skeleton" />}
+        </span>
+      ))}
+    </>
   )
 }
+
+/**
+ * The planets: one pill for the planet in view, which opens into all of them.
+ *
+ * A table rather than a strip of cards. Six cards across the top of the map
+ * either scrolled sideways or covered a third of a phone; six rows with the
+ * counts in columns can be read in one look and cost the map nothing until
+ * they are asked for. The pill keeps the counts for the planet on screen,
+ * which is the reason the control exists at all.
+ */
+export function PlanetMenu({
+  summaries,
+  viewing,
+  current,
+  open,
+  onToggle,
+  onPick,
+}: {
+  summaries: PlanetStatus[]
+  viewing: Planet
+  current: Planet
+  open: boolean
+  onToggle: () => void
+  onPick: (planet: Planet) => void
+}) {
+  const shown = summaries.find((s) => s.planet === viewing)
+  const heads: MarkerKey[] = ['tavern', 'dungeon', 'arena']
+  return (
+    <div className="planetmenu">
+      <button
+        type="button"
+        className="planetpill"
+        aria-expanded={open}
+        aria-haspopup="listbox"
+        onClick={onToggle}
+        title={open ? 'Close the planets' : 'Every planet'}
+      >
+        <span className="planetpill__name">
+          {viewing}
+          {current === viewing && <span className="planethere" title="You are here" />}
+        </span>
+        <span className="planetpill__sep" />
+        {shown && (
+          <span className="pstats">
+            <PlanetStats status={shown} icons />
+          </span>
+        )}
+        <svg className="planetpill__chev" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="m6 9 6 6 6-6" />
+        </svg>
+      </button>
+      {open && (
+        <div className="mapoverlay planetlist" role="listbox" aria-label="Planet">
+          <div className="planetlist__head">
+            <span>Planet</span>
+            {heads.map((k) => (
+              <img key={k} src={MARKER_SRC[k]} alt={k} title={k} />
+            ))}
+          </div>
+          {summaries.map((s) => (
+            <button
+              type="button"
+              role="option"
+              aria-selected={s.planet === viewing}
+              className="planetrow"
+              key={s.planet}
+              onClick={() => onPick(s.planet)}
+            >
+              <span className="planetrow__name">
+                {s.planet}
+                {s.planet === current && <span className="planethere" title="You are here" />}
+              </span>
+              <PlanetStats status={s} />
+            </button>
+          ))}
+          <div className="planetlist__foot">
+            <span className="planethere" /> you are here ·{' '}
+            <span className="pstat pstat--open">teal</span> = something you can still do
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+/* The rail's glyphs. */
+const ICON_EYE = (open: boolean) => (
+  <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <path
+      d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12Z"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinejoin="round"
+    />
+    <circle cx="12" cy="12" r="2.6" stroke="currentColor" strokeWidth="1.8" />
+    {!open && <path d="M4 20 20 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />}
+  </svg>
+)
+const ICON_LEGEND = (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
+    <circle cx="5" cy="7" r="1.6" fill="currentColor" stroke="none" />
+    <circle cx="5" cy="12" r="1.6" fill="currentColor" stroke="none" />
+    <circle cx="5" cy="17" r="1.6" fill="currentColor" stroke="none" />
+    <path d="M10 7h9M10 12h9M10 17h9" />
+  </svg>
+)
+const ICON_FIND = (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+    <circle cx="12" cy="12" r="6" />
+    <path d="M12 2v4M12 18v4M2 12h4M18 12h4" />
+    <circle cx="12" cy="12" r="1.5" fill="currentColor" />
+  </svg>
+)
+const ICON_QUESTS = (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M7 4h11a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H7" />
+    <path d="M7 4a2 2 0 0 0-2 2v2h4V6a2 2 0 0 0-2-2ZM7 20a2 2 0 0 1-2-2v-2h4v2a2 2 0 0 1-2 2Z" />
+    <path d="M11 9h5M11 13h5" />
+  </svg>
+)
+
+/** What is open on the rail or the pill: one at a time. */
+type Panel = 'planets' | 'legend' | 'quests'
 
 export default function MapView() {
   const player = useGame((s) => s.player)!
@@ -154,25 +250,25 @@ export default function MapView() {
   const [loadError, setLoadError] = useState<string | null>(null)
   const [selected, setSelected] = useState<{ x: number; y: number } | null>(null)
   /*
-     Whether the tile card is old enough to be pressed.
+     Whether the Travel tag is old enough to be pressed.
 
      Selection happens on `pointerup`, and on a touch screen the browser then
-     synthesises a click at the same coordinates. The card opens along the
-     bottom edge — which is where a thumb tends to be — so it renders under
-     the finger and that synthesised click lands on the Travel button that
-     has just appeared there. One tap on the map, and the player is signing a
-     transaction they never asked for.
+     synthesises a click at the same coordinates. The tag appears beside the
+     tile that was tapped — a thumb's width from the finger, but a large tile
+     at a close zoom can put it under the finger — and that synthesised click
+     would land on the Travel button that has just appeared. One tap on the
+     map, and the player is signing a transaction they never asked for.
 
      A mouse does not do this: when press and release land on different
      elements the click is dispatched to their common ancestor, so it goes to
      the map rather than the button. The compatibility click from a touch has
      no such rule and simply hits whatever is under the point.
 
-     So the card ignores pointer input until the tap that opened it is over —
+     So the tag ignores pointer input until the tap that opened it is over —
      and only when it was a tap. A mouse never needs the delay and should not
      have a click of its own swallowed by it.
   */
-  const [cardArmed, setCardArmed] = useState(true)
+  const [armed, setArmed] = useState(true)
   const [recenter, setRecenter] = useState(1)
   const [travelling, setTravelling] = useState(false)
   /*
@@ -185,7 +281,14 @@ export default function MapView() {
   */
   const [jump, setJump] = useState<Planet | null>(null)
   const [travelError, setTravelError] = useState<string | null>(null)
-  const [legendOpen, setLegendOpen] = useState(false)
+  const [panel, setPanel] = useState<Panel | null>(null)
+  const togglePanel = useCallback(
+    (p: Panel) => setPanel((open) => (open === p ? null : p)),
+    [],
+  )
+  const zoomApi = useRef<ZoomApi | null>(null)
+  const [zoomLevel, setZoomLevel] = useState(1)
+  const { claimable, reload: reloadQuests } = useClaimableQuests()
   /*
      Everything over the map, out of the way.
 
@@ -200,37 +303,6 @@ export default function MapView() {
      hold, and a wide screen has room for both.
   */
   const [bare, setBare] = useState(false)
-  /*
-     The planet strip, collapsed to the planet being viewed until asked.
-
-     Six cards across the top is a lot of map to cover for a control used a
-     few times a session, and the map is what the player came to look at — so
-     closed is the default on every size, not just on a phone. Collapsed is
-     not empty: it keeps the card for the planet you are on, which is where
-     the counts that make the bar worth having already are.
-
-     The choice is still remembered, and remembered the way round that makes
-     the stored value mean something: only an explicit open writes '1'. A
-     player who has never touched it gets the collapsed default, and one who
-     opened it yesterday still finds it open today.
-  */
-  const [barOpen, setBarOpen] = useState(() => {
-    try {
-      return localStorage.getItem(PLANETBAR_KEY) === '1'
-    } catch {
-      return false
-    }
-  })
-  const togglePlanetBar = useCallback(() => {
-    setBarOpen((open) => {
-      try {
-        localStorage.setItem(PLANETBAR_KEY, open ? '0' : '1')
-      } catch {
-        // A blocked localStorage costs the player the memory, nothing else.
-      }
-      return !open
-    })
-  }, [])
   const [owners, setOwners] = useState<Record<string, string>>({})
   const [tags, setTags] = useState<Record<string, string>>({})
 
@@ -542,13 +614,16 @@ export default function MapView() {
 
   const handleSelect = useCallback((c: { x: number; y: number }, byTouch?: boolean) => {
     setSelected(c)
+    setTravelError(null)
+    /* A tap on the map is also how a menu is put away. */
+    setPanel(null)
     window.clearTimeout(settleTimer.current)
     if (!byTouch) {
-      setCardArmed(true)
+      setArmed(true)
       return
     }
-    setCardArmed(false)
-    settleTimer.current = window.setTimeout(() => setCardArmed(true), SETTLE_MS)
+    setArmed(false)
+    settleTimer.current = window.setTimeout(() => setArmed(true), SETTLE_MS)
   }, [])
 
   useEffect(() => () => window.clearTimeout(settleTimer.current), [])
@@ -724,49 +799,6 @@ export default function MapView() {
     return here
   }, [lands, planet, player.planet, player.x, player.y, player.wallet, arenasByPlanet])
 
-  /*
-     How much of the map is under something opaque right now.
-
-     Only the bottom, and only what the docked action bar actually occupies.
-     That bar is the full width of the screen, so the slack it buys is
-     invisible — the strip it exposes is exactly the strip the bar sits on.
-     The controls at the top are not full width, so slack there would show
-     background beside them; the way to reach the tiles under those is the
-     clear button.
-
-     On a wide screen the bar is `display: contents` and measures zero, which
-     is the right answer there: nothing covers the map that the player cannot
-     pan around.
-
-     Measured rather than assumed: the bar holds one button or two, and on a
-     narrow screen they can wrap onto a second line. A constant would be wrong
-     for two of those three cases.
-  */
-  const [barHeight, setBarHeight] = useState(0)
-  const actionBar = useRef<HTMLDivElement>(null)
-
-  /* A ref callback that returns a cleanup is a React 19 feature; on 18 the
-     return value is ignored and the observer would leak. */
-  useEffect(() => {
-    const node = actionBar.current
-    if (!node) return
-    const read = () => setBarHeight(node.getBoundingClientRect().height)
-    read()
-    const ro = new ResizeObserver(read)
-    ro.observe(node)
-    return () => ro.disconnect()
-  }, [])
-
-  const insets = useMemo(
-    () => ({ top: 0, bottom: Math.round(barHeight) }),
-    [barHeight],
-  )
-  /** Landowner of the selected tile — undefined until the batch resolves. */
-  const owner = land ? owners[String(land.asset_id)] : undefined
-  /** Gamertag if the landowner plays; empty string once we know they do not. */
-  const ownerTag = owner ? tags[owner] : undefined
-  const ownerResolved = owner !== undefined && ownerTag !== undefined
-
   /* The selected tile is an arena this player took and is now defending. */
   const heldHere = land
     ? held.find((a) => a.planet === planet && a.land_id === land.land_id)
@@ -780,209 +812,140 @@ export default function MapView() {
     )
 
   /*
-     One call to action at a time. A tavern and a dungeon can share a land,
-     and stacking two glowing buttons in the same spot would make neither read
-     as the thing to do; the tavern wins because it is the cheaper, reversible
-     action.
+     Once everything is claimed the tile goes, so what hung off it goes too.
   */
-  const enterLink = inTavern ? (
-    <Link className="btn btn--charged entertavern" to="/tavern">
-      <img src={asset('/assets/markers/tavern.svg')} alt="" />
-      <span className="entertavern__verb">Enter </span>Tavern
-    </Link>
-  ) : dungeonHere ? (
-    <Link className="btn btn--charged entertavern enterdungeon" to="/dungeon">
-      <img src={asset('/assets/markers/dungeons.svg')} alt="" />
-      <span className="entertavern__verb">Enter </span>Dungeon
-    </Link>
-  ) : arenaHere ? (
-    <Link className="btn btn--charged entertavern enterarena" to="/arena">
-      <img src={asset('/assets/markers/arena.svg')} alt="" />
-      <span className="entertavern__verb">Enter </span>Arena
-    </Link>
-  ) : null
+  useEffect(() => {
+    if (claimable.length === 0) setPanel((open) => (open === 'quests' ? null : open))
+  }, [claimable.length])
 
-  const tileCard = selected && (
-    <div className="mapoverlay tilecard">
-      <div className="tilecard__top">
-        <div
-          className="tile__thumb"
-          style={landThumbStyle(planet, selected.x, selected.y, 56)}
-          aria-hidden="true"
-        />
-        <div style={{ minWidth: 0 }}>
-          <div className="tilecard__coords mono">
-            {selected.x} : {selected.y}
-          </div>
-          <div className="tilecard__id">{landId(selected.x, selected.y)}</div>
-          {portalTo && (
-            <div style={{ color: 'var(--magenta)', fontSize: 'var(--fs-sm)' }}>
-              Portal to <span style={{ textTransform: 'capitalize' }}>{portalTo}</span>
-            </div>
-          )}
-        </div>
-        <button
-          type="button"
-          className="tilecard__close"
-          onClick={() => setSelected(null)}
-          aria-label="Close tile details"
-        >
-          ×
-        </button>
-      </div>
+  /*
+     One way in at a time. A tavern and a dungeon can share a land, and two
+     tags on one pin would make neither read as the thing to do; the tavern
+     wins because it is the cheaper, reversible action.
+  */
+  const enterTo: 'tavern' | 'dungeon' | 'arena' | null = inTavern
+    ? 'tavern'
+    : dungeonHere
+      ? 'dungeon'
+      : arenaHere
+        ? 'arena'
+        : null
 
-      {land && land.buildings.length > 0 && (
-        <div className="buildings">
-          {land.buildings.map((b, i) => (
-            <div className="building" key={`${b.building_name}-${i}`}>
-              <img src={buildingIcon(String(b.building_name))} alt="" />
-              <span className="building__text">
-                <span className="building__name">
-                  {ownerResolved ? (
-                    <>
-                      {ownerTag || owner}&rsquo;s{' '}
-                      {String(b.building_name).replace(/-/g, ' ')}
-                    </>
-                  ) : (
-                    String(b.building_name).replace(/-/g, ' ')
-                  )}
-                </span>
-                {!ownerResolved && (
-                  <span className="building__owner">
-                    <span className="skeleton building__owner-skeleton" />
-                  </span>
-                )}
-                {ownerResolved && owner === player.wallet && (
-                  <span className="building__owner">Yours</span>
-                )}
-              </span>
-              <span className="building__mult">
-                {formatBoost(
-                  liveBoostPercent(
-                    Number(b.boost_score ?? 0),
-                    String(b.boost_score_update ?? ''),
-                    landsConfig?.boost_decay_per_hour ?? 0,
-                  ),
-                )}
-              </span>
-            </div>
-          ))}
-        </div>
+  /*
+     What the player is standing on, named under the dot.
+
+     The land under the player rather than the selected one: the card that
+     used to describe a selected land is gone, and the one land whose owner
+     and boost are worth a line is the one you are about to walk into.
+  */
+  const hereLand = useMemo(
+    () => (onPlanet ? (lands ?? []).find((l) => l.x === player.x && l.y === player.y) : undefined),
+    [onPlanet, lands, player.x, player.y],
+  )
+  const hereLabel = useMemo(() => {
+    if (!hereLand) return null
+    const building = hereLand.buildings[0]
+    if (!building) {
+      const to = hereLand.special_effect ? PORTAL_EFFECTS[hereLand.special_effect] : undefined
+      return to ? `Portal to ${to}` : null
+    }
+    const name = String(building.building_name).replace(/-/g, ' ')
+    const who = owners[String(hereLand.asset_id)]
+    const whose =
+      who === player.wallet ? 'Your' : who ? `${tags[who] || who}’s` : ''
+    const boost =
+      name === 'tavern'
+        ? ''
+        : formatBoost(
+            liveBoostPercent(
+              Number(building.boost_score ?? 0),
+              String(building.boost_score_update ?? ''),
+              landsConfig?.boost_decay_per_hour ?? 0,
+            ),
+          )
+    return `${whose} ${name}${boost ? ` · ${boost}` : ''}`.trim()
+  }, [hereLand, owners, tags, player.wallet, landsConfig])
+
+  /*
+     Hangs off the pin. Nothing while a trip is playing out: the pin is in
+     flight, and an offer to enter what was under it belongs to where it was.
+  */
+  const pinSlot: ReactNode = travelling ? null : (
+    <>
+      {enterTo && (
+        <Link className="entertag" to={`/${enterTo}`}>
+          <img src={MARKER_SRC[enterTo]} alt="" />
+          Enter {enterTo === 'tavern' ? 'Tavern' : enterTo === 'dungeon' ? 'Dungeon' : 'Arena'}
+        </Link>
       )}
+      {hereLabel && <span className="herelabel">{hereLabel}</span>}
+    </>
+  )
 
-      {dungeonLockedHere && (
-        <p className="hint">You have already run this dungeon today.</p>
-      )}
-      {/*
-        Holding it is the stronger statement, so it replaces the other rather
-        than stacking with it: an arena you hold is one you have a fighter in
-        by definition, and only one of the two says you are being paid for it.
-      */}
-      {heldHere ? (
-        <p className="hint">
-          You are defending this arena.{' '}
-          {heldHere.stored_mining_power.toLocaleString(NUM_LOCALE)} mining power
-          banked so far, paid out when you lose it or pull your fighter.
-        </p>
-      ) : (
-        arenaOccupiedHere && (
-          <p className="hint">You already have a fighter in this arena.</p>
-        )
-      )}
+  /*
+     Hangs off the selected tile: the way there, with the cost, or the one
+     line that says why there is no way there. Nothing on the tile the
+     player is standing on — the pin already carries what can be done here.
+  */
+  const notes: { text: string; error?: boolean }[] = []
+  if (dungeonLockedHere) notes.push({ text: 'Already run today' })
+  if (heldHere) {
+    notes.push({
+      text: `You are defending this arena · ${heldHere.stored_mining_power.toLocaleString(NUM_LOCALE)} banked`,
+    })
+  } else if (arenaOccupiedHere) {
+    notes.push({ text: 'Your fighter is in here' })
+  }
+  if (selected && land && !canAfford) {
+    notes.push({
+      text: `You have ${player.activestats.action_points.toLocaleString(NUM_LOCALE)} energy`,
+      error: true,
+    })
+  }
+  const travelTitle = !selected
+    ? undefined
+    : route
+      ? `Via the ${player.planet} portal at ${route.portal.x},${route.portal.y}` +
+        (route.legs.length > 1
+          ? `: ${route.legs[0].cost} to the portal, ${route.legs[1].cost} across ${planet}`
+          : '')
+      : `${travelDistance(player, selected).toFixed(1)} away`
 
-      {travelError && (
-        <div className="alert alert--error" style={{ marginTop: 'var(--sp-3)' }}>
-          {travelError}
-        </div>
-      )}
-
-      {!onPlanet && !route ? (
-        <p className="hint">
-          You are on <strong>{player.planet}</strong>, and it has no portal to{' '}
-          <strong>{planet}</strong>. Travel to a planet that does, and go on
-          from there.
-        </p>
-      ) : !land ? (
-        <p className="hint">No land exists at these coordinates.</p>
-      ) : isHere ? (
-        <p className="hint">You are standing here.</p>
-      ) : (
-        <>
-          <div className={`travelcost${canAfford ? '' : ' travelcost--short'}`}>
-            <span className="statline__k">
-              {route
-                ? `via the ${player.planet} portal at ${route.portal.x},${route.portal.y}`
-                : `${travelDistance(player, selected).toFixed(1)} away`}
-            </span>
-            <span className="travelcost__value">
-              <img src={asset("/assets/icons/energy.png")} alt="" />
-              {cost}
-            </span>
-          </div>
-
-          {/*
-            The two legs, priced separately.
-
-            A player looking at a number twice the size of the one they are
-            used to should be able to see where it went, and the split is not
-            guessable: the first leg carries the portal surcharge and is
-            measured from where they stand, the second from the portal's own
-            coordinates on the far side rather than from anything on screen.
-          */}
-          {route && route.legs.length > 1 && (
-            <ul className="travelroute">
-              <li>
-                <span>
-                  To the portal at {route.portal.x},{route.portal.y}
-                </span>
-                <span className="mono">{route.legs[0].cost}</span>
-              </li>
-              <li>
-                <span>
-                  Across {planet} to {selected.x},{selected.y}
-                </span>
-                <span className="mono">{route.legs[1].cost}</span>
-              </li>
-            </ul>
-          )}
-
+  const travelTag: ReactNode =
+    selected && !isHere ? (
+      <div className={`traveltag${armed ? '' : ' traveltag--settling'}`}>
+        {!onPlanet && !route ? (
+          <span className="traveltag__none">No portal from {player.planet}</span>
+        ) : !land ? (
+          <span className="traveltag__none">No land here</span>
+        ) : (
           <button
             type="button"
-            className="btn btn--primary btn--block"
-            style={{ marginTop: 'var(--sp-2)' }}
+            className={`traveltag__go${canAfford ? '' : ' traveltag__go--short'}`}
             onClick={() => void doTravel()}
             disabled={travelling || !canAfford}
+            title={travelTitle}
           >
             {travelling && <span className="spinner" />}
-            {travelling ? (
-              'Travelling'
-            ) : (
-              <>
-                Travel<span className="travelhere__where"> here</span>
-              </>
-            )}
-            {/*
-              Shown only on a phone, where the cost row above is hidden. Until
-              the config lands there is no cost to state, and an energy icon
-              with nothing beside it is worse than no chip.
-            */}
+            {travelling ? 'Travelling' : canAfford ? 'Travel' : 'Need'}
             {cost !== null && (
-              <span className="btn__cost">
+              <span className="traveltag__cost">
                 <img src={asset('/assets/icons/energy.png')} alt="energy" />
                 {cost}
               </span>
             )}
           </button>
-
-          {!canAfford && (
-            <p className="hint hint--error">
-              You have {player.activestats.action_points.toLocaleString(NUM_LOCALE)} energy.
-            </p>
-          )}
-        </>
-      )}
-    </div>
-  )
+        )}
+        {notes.map((n) => (
+          <span
+            key={n.text}
+            className={`traveltag__note${n.error ? ' traveltag__note--error' : ''}`}
+          >
+            {n.text}
+          </span>
+        ))}
+      </div>
+    ) : null
 
   return (
     <div className={`mapview${bare ? ' mapview--bare' : ''}`}>
@@ -994,122 +957,133 @@ export default function MapView() {
           selected={selected}
           onSelect={handleSelect}
           recenterToken={recenter}
-          insetTop={insets.top}
-          insetBottom={insets.bottom}
           lowFx={lowFx}
           boostDecayPerHour={landsConfig?.boost_decay_per_hour ?? 0}
           lockedLands={lockedLands}
           heldArenaLands={heldArenaLands}
           tavernLands={tavernLands}
           currentTavernLand={currentTavernLand}
+          selectionSlot={travelTag}
+          pinSlot={pinSlot}
+          zoomApi={zoomApi}
+          onZoomLevel={setZoomLevel}
         >
           {/* Everything below floats over the map so none of it costs the
               map any height. */}
-          <div className="planetbar">
-            <div className="planetpick" role="group" aria-label="Planet">
-              {(barOpen ? summaries : summaries.filter((x) => x.planet === planet)).map(
-                (status) => (
-                  <PlanetCard
-                    key={status.planet}
-                    status={status}
-                    isCurrent={status.planet === player.planet}
-                    isViewing={status.planet === planet}
-                    onSelect={() => {
-                      setPlanet(status.planet)
-                      /*
-                        On a phone the open grid covers a third of the map and
-                        the prompt under it, so choosing is also dismissing.
-                        On desktop the strip is one row that costs nothing to
-                        leave open, and closing it after every click would
-                        stop a player comparing planets at all.
-
-                        Deliberately not persisted: the player did not choose
-                        to collapse it, so it must not overwrite the choice
-                        the toggle remembers for them.
-                      */
-                      if (window.matchMedia(`(max-width: 719px)`).matches) {
-                        setBarOpen(false)
-                      }
-                    }}
-                  />
-                ),
-              )}
-              {/*
-                Collapsed, the strip keeps the planet you are looking at rather
-                than becoming a bare arrow: the counts on that one card are the
-                reason the bar exists, and hiding them entirely would make the
-                control something you have to open to learn anything from.
-              */}
-              <button
-                type="button"
-                className="planetpick__toggle"
-                aria-expanded={barOpen}
-                onClick={togglePlanetBar}
-                title={barOpen ? 'Collapse the planet bar' : 'Show every planet'}
-                aria-label={barOpen ? 'Collapse the planet bar' : 'Show every planet'}
-              >
-                <img src={asset("/assets/icons/arrow-right.svg")} alt="" width={14} height={14} />
-              </button>
-            </div>
-          </div>
+          <PlanetMenu
+            summaries={summaries}
+            viewing={planet}
+            current={player.planet}
+            open={panel === 'planets'}
+            onToggle={() => togglePanel('planets')}
+            onPick={(p) => {
+              setPlanet(p)
+              setPanel(null)
+            }}
+          />
 
           {/*
-            Stays put when everything else goes, because it is the only way
-            back. Head of the column rather than the foot of it: it governs
-            the controls below it, and when they are gone this is where a
-            player looks for them.
+            One rail for every control. The eye heads it at every width and
+            is all that is left of it when the furniture is put away, because
+            it is the way to bring the furniture back.
           */}
-          <button
-            type="button"
-            className="mapbare"
-            aria-pressed={bare}
-            onClick={() => {
-              setBare((v) => !v)
-              /* A popover left open over a hidden legend button is a panel
-                 with nothing to close it. */
-              setLegendOpen(false)
-            }}
-            title={bare ? 'Show the map controls' : 'Hide the map controls'}
-            aria-label={bare ? 'Show the map controls' : 'Hide the map controls'}
-          >
-            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path
-                d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12Z"
-                stroke="currentColor"
-                strokeWidth="1.8"
-                strokeLinejoin="round"
-              />
-              <circle cx="12" cy="12" r="2.6" stroke="currentColor" strokeWidth="1.8" />
-              {bare && (
-                <path d="M4 20 20 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-              )}
-            </svg>
-          </button>
-
-          <button
-            type="button"
-            className="legendbtn"
-            aria-expanded={legendOpen}
-            onClick={() => setLegendOpen((v) => !v)}
-          >
-            Legend
-          </button>
-          {legendOpen && (
-            <div className="mapoverlay legendpop">
-              <Legend />
-            </div>
-          )}
-
-          <button
-            type="button"
-            className="zoombtn zoombtn--wide findme"
-            onClick={() => {
-              setPlanet(player.planet)
-              setRecenter((n) => n + 1)
-            }}
-          >
-            Find me
-          </button>
+          <div className="maprail">
+            {claimable.length > 0 && (
+              <div className="maprail__slot">
+                <button
+                  type="button"
+                  className="maprail__btn maprail__btn--quests"
+                  aria-expanded={panel === 'quests'}
+                  onClick={() => togglePanel('quests')}
+                  data-tip="Quests to claim"
+                  aria-label={`${claimable.length} quests to claim`}
+                >
+                  {ICON_QUESTS}
+                  <span className="maprail__badge">{claimable.length}</span>
+                </button>
+                {panel === 'quests' && (
+                  <div className="mapoverlay railpop railpop--quests">
+                    <QuestClaims quests={claimable} reload={reloadQuests} />
+                  </div>
+                )}
+              </div>
+            )}
+            <button
+              type="button"
+              className="maprail__btn"
+              aria-pressed={bare}
+              onClick={() => {
+                setBare((v) => !v)
+                /* A panel left open off a hidden tile is a panel with nothing to close it. */
+                setPanel(null)
+              }}
+              data-tip={bare ? 'Show the map controls' : 'Hide the map controls'}
+              aria-label={bare ? 'Show the map controls' : 'Hide the map controls'}
+            >
+              {ICON_EYE(!bare)}
+            </button>
+            {!bare && (
+              <>
+                <div className="maprail__slot">
+                  <button
+                    type="button"
+                    className="maprail__btn"
+                    aria-expanded={panel === 'legend'}
+                    onClick={() => togglePanel('legend')}
+                    data-tip="Legend"
+                    aria-label="Legend"
+                  >
+                    {ICON_LEGEND}
+                  </button>
+                  {panel === 'legend' && (
+                    <div className="mapoverlay railpop">
+                      <Legend />
+                    </div>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  className="maprail__btn"
+                  onClick={() => {
+                    setPlanet(player.planet)
+                    setRecenter((n) => n + 1)
+                  }}
+                  data-tip="Find me"
+                  aria-label="Find me"
+                >
+                  {ICON_FIND}
+                </button>
+                <span className="maprail__gap" aria-hidden="true" />
+                <button
+                  type="button"
+                  className="maprail__btn"
+                  onClick={() => zoomApi.current?.zoomIn()}
+                  data-tip="Zoom in"
+                  aria-label="Zoom in"
+                >
+                  +
+                </button>
+                <button
+                  type="button"
+                  className="maprail__level"
+                  onClick={() => zoomApi.current?.reset()}
+                  title="Back to the opening zoom"
+                  aria-label={`Zoom ${zoomLevel.toFixed(1)} times, back to the opening zoom`}
+                >
+                  {zoomLevel.toFixed(1)}×
+                </button>
+                <button
+                  type="button"
+                  className="maprail__btn"
+                  onClick={() => zoomApi.current?.zoomOut()}
+                  data-tip="Zoom out"
+                  aria-label="Zoom out"
+                >
+                  &minus;
+                </button>
+              </>
+            )}
+          </div>
 
           {loading && (
             <div className="mapoverlay maptoast">
@@ -1122,40 +1096,23 @@ export default function MapView() {
               Could not load {planet}: {loadError}
             </div>
           )}
+          {travelError && (
+            <div className="mapoverlay maptoast maptoast--error" role="alert">
+              {travelError}
+            </div>
+          )}
         </MapCanvas>
-
-        {/*
-          The two things a player can act on, in one place.
-
-          On a phone they are a docked bar along the bottom: the way in to
-          whatever is under your feet, and the way to somewhere else. Grouping
-          them is what lets the Enter prompt stop covering the map without
-          having to disappear — it was the only reason it needed hiding.
-
-          On a wide screen the wrapper is `display: contents`, so both keep
-          the absolute positions they have always had and nothing about that
-          layout changes. `.mapwrap` and `.mapstage` are the same box, so
-          moving the link out of the canvas costs it nothing.
-        */}
-        <div
-          ref={actionBar}
-          className={`mapactions${cardArmed ? '' : ' mapactions--settling'}`}
-        >
-          {enterLink}
-          {tileCard}
-        </div>
       </div>
 
       {/*
         At the top level, deliberately.
 
-        This used to sit inside `tileCard`, which is `selected && (...)` — and
-        the effect on [planet, player.planet] clears the selection the instant
-        the jump confirms. So the overlay unmounted at exactly the moment the
-        arrival was due to play, and the whole transition was however long one
-        poll took. Lengthening the animation did nothing, because nothing was
-        on screen to run it. A full-screen transition must not depend on a
-        detail panel being open.
+        This used to sit inside the tile card, which was `selected && (...)` —
+        and the effect on [planet, player.planet] clears the selection the
+        instant the jump confirms. So the overlay unmounted at exactly the
+        moment the arrival was due to play, and the whole transition was
+        however long one poll took. A full-screen transition must not depend
+        on a detail panel being open.
       */}
       {jump && <PortalWarp to={jump} lowFx={lowFx} />}
     </div>

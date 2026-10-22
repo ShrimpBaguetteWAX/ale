@@ -50,39 +50,6 @@
   height: 100%;
 }
 
-.mapstage__zoom {
-  position: absolute;
-  right: var(--sp-3);
-  bottom: var(--sp-3);
-  display: grid;
-  gap: var(--sp-2);
-  z-index: 2;
-}
-
-.zoombtn {
-  width: 42px;
-  height: 42px;
-  display: grid;
-  place-items: center;
-  font-family: var(--font-display);
-  font-size: var(--fs-lg);
-  line-height: 1;
-  color: var(--white);
-  background: rgb(5 16 30 / 85%);
-  border: 1px solid var(--line-bright);
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-}
-.zoombtn:hover {
-  background: var(--violet-glass);
-}
-.zoombtn--wide {
-  width: auto;
-  padding: 0 var(--sp-3);
-  font-size: var(--fs-xs);
-  font-weight: var(--fw-medium);
-  letter-spacing: 0.08em;
-}
 /* ---------- Overlays on the map ---------- */
 
 .mapoverlay {
@@ -94,246 +61,7 @@
   box-shadow: var(--shadow);
 }
 
-/*
- * The wrapper around the two things a player can act on.
- *
- * `contents` on a wide screen, so the Enter prompt and the tile card keep the
- * absolute positions they have always had and this element contributes no box
- * of its own. It becomes a real bar only on a phone.
- */
-.mapactions {
-  display: contents;
-}
-
-/* Tile inspector, bottom-left so it never covers the zoom controls. */
-.tilecard {
-  left: var(--sp-3);
-  bottom: var(--sp-3);
-  width: min(320px, calc(100% - var(--sp-3) * 2 - 58px));
-  padding: var(--sp-3);
-  max-height: calc(100% - var(--sp-6));
-  overflow-y: auto;
-}
-
-/*
- * On a phone the card still floats — with a full-height map there is no
- * space below it to flow into. It keeps clear of the zoom column on the
- * right and is capped so it never swallows the map.
- */
-@media (max-width: 719px) {
-  .tilecard {
-    width: auto;
-    max-height: 52%;
-  }
-}
-
-.tilecard__top {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--sp-3);
-}
-
-.tilecard__coords {
-  font-family: var(--font-display);
-  font-size: var(--fs-xl);
-  font-weight: var(--fw-bold);
-  color: var(--white);
-  line-height: 1.1;
-}
-
-.tilecard__id {
-  font-size: var(--fs-xs);
-  color: var(--text-faint);
-  font-variant-numeric: tabular-nums;
-}
-
-.tilecard__close {
-  margin-left: auto;
-  width: 28px;
-  height: 28px;
-  flex: none;
-  display: grid;
-  place-items: center;
-  border-radius: var(--radius-xs);
-  border: 1px solid var(--line-soft);
-  color: var(--text-dim);
-  cursor: pointer;
-}
-.tilecard__close:hover {
-  color: var(--white);
-  border-color: var(--purple);
-}
-
-.tile__thumb {
-  width: 56px;
-  height: 56px;
-  flex: none;
-  border-radius: var(--radius-xs);
-  border: 1px solid var(--line-bright);
-  image-rendering: pixelated;
-}
-
-.buildings {
-  display: grid;
-  gap: var(--sp-1);
-  margin-top: var(--sp-3);
-}
-
-.building {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-2);
-  padding: var(--sp-1) var(--sp-2);
-  background: rgb(0 0 0 / 35%);
-  border: 1px solid var(--line-soft);
-  border-radius: var(--radius-xs);
-  font-size: var(--fs-sm);
-}
-.building img {
-  width: 28px;
-  height: 28px;
-  flex: none;
-  object-fit: contain;
-}
-/* Name over owner, so the row stays one line tall per building. */
-.building__text {
-  display: grid;
-  gap: 1px;
-  min-width: 0;
-}
-
-.building__name {
-  text-transform: capitalize;
-  font-weight: var(--fw-medium);
-  line-height: 1.2;
-}
-
-.building__owner {
-  font-size: var(--fs-xs);
-  color: var(--text-faint);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.building__owner-skeleton {
-  display: inline-block;
-  width: 84px;
-  height: 9px;
-  vertical-align: middle;
-}
-.building__mult {
-  margin-left: auto;
-  font-family: var(--font-display);
-  font-size: var(--fs-xs);
-  color: var(--gold);
-}
-
-/* Travel cost gets its own emphasis — it's the number players act on. */
-.travelcost {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--sp-3);
-  margin-top: var(--sp-3);
-  padding: var(--sp-2) var(--sp-3);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
-  background: rgb(0 0 0 / 40%);
-}
-.travelcost--short {
-  border-color: var(--red);
-}
-.travelcost__value {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-2);
-  font-family: var(--font-display);
-  font-size: var(--fs-lg);
-  font-weight: var(--fw-bold);
-  color: var(--cyan);
-}
-.travelcost--short .travelcost__value {
-  color: var(--red);
-}
-.travelcost__value img {
-  width: 20px;
-  height: 20px;
-}
-
-/*
- * The two legs of a cross-planet trip, under the total they add up to.
- *
- * Subordinate to the total on purpose: the number a player decides on is the
- * one in the box above, and this is the working. Dotted leaders rather than a
- * table because there are exactly two rows and a table's chrome would weigh
- * more than the numbers in it.
- */
-.travelroute {
-  margin: var(--sp-2) 0 0;
-  padding: 0 var(--sp-3);
-  list-style: none;
-  font-size: var(--fs-xs);
-  color: var(--text-faint);
-}
-
-.travelroute li {
-  display: flex;
-  align-items: baseline;
-  gap: var(--sp-2);
-  padding: 2px 0;
-}
-
-/* The leader, which is what keeps a label off its own figure. */
-.travelroute li::after {
-  content: '';
-  order: 1;
-  flex: 1 1 auto;
-  min-width: var(--sp-3);
-  border-bottom: 1px dotted var(--line);
-  transform: translateY(-3px);
-}
-
-.travelroute li > :last-child {
-  order: 2;
-  color: var(--text-dim);
-}
-
 /* ---------- Legend ---------- */
-
-.legendbtn {
-  position: absolute;
-  right: var(--sp-3);
-  /* Under the eye, which heads this column at every width. */
-  top: calc(var(--sp-3) + 46px);
-  z-index: 3;
-  display: inline-flex;
-  align-items: center;
-  gap: var(--sp-2);
-  padding: var(--sp-2) var(--sp-3);
-  font-family: var(--font-display);
-  font-size: var(--fs-xs);
-  font-weight: var(--fw-medium);
-  letter-spacing: 0.08em;
-  color: var(--text-dim);
-  background: rgb(5 16 30 / 85%);
-  border: 1px solid var(--line-bright);
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-}
-.legendbtn:hover,
-.legendbtn[aria-expanded='true'] {
-  color: var(--white);
-  background: var(--violet-glass);
-}
-
-.legendpop {
-  right: var(--sp-3);
-  /* Hangs off the Legend button, which the eye pushed down. */
-  top: calc(var(--sp-3) + 88px);
-  padding: var(--sp-3);
-  width: 220px;
-}
 
 .legend {
   display: grid;
@@ -364,168 +92,6 @@
   flex: none;
 }
 
-/* ---------- Planet switcher (overlay, top-left) ---------- */
-
-.planetbar {
-  position: absolute;
-  left: var(--sp-3);
-  top: var(--sp-3);
-  right: 92px; /* clear of the Legend button */
-  z-index: 3;
-  display: flex;
-  align-items: flex-start;
-  gap: var(--sp-2);
-  pointer-events: none;
-}
-.planetbar > * {
-  pointer-events: auto;
-}
-
-.planetpick {
-  display: flex;
-  gap: var(--sp-2);
-  padding: var(--sp-1);
-  background: rgb(5 16 30 / 80%);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
-  overflow-x: auto;
-  scrollbar-width: none;
-  max-width: 100%;
-}
-.planetpick::-webkit-scrollbar {
-  display: none;
-}
-
-/*
- * The collapse control, on the end of the strip.
- *
- * Inside the strip rather than beside it, so the bar stays one object and the
- * arrow lands where the cards stop — which is where the eye already is when a
- * player decides the row is too wide.
- */
-.planetpick__toggle {
-  flex: none;
-  display: grid;
-  place-items: center;
-  width: 26px;
-  align-self: stretch;
-  padding: 0;
-  border: 0;
-  border-left: 1px solid var(--line-soft);
-  border-radius: 0 var(--radius-xs) var(--radius-xs) 0;
-  background: none;
-  cursor: pointer;
-  opacity: 0.55;
-  transition: opacity var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease);
-}
-.planetpick__toggle:hover {
-  opacity: 1;
-  background: rgb(145 54 188 / 22%);
-}
-.planetpick__toggle img {
-  object-fit: contain;
-  transition: transform var(--dur-fast) var(--ease);
-}
-/* Open, the arrow points back the way the strip would fold. */
-.planetpick__toggle[aria-expanded='true'] img {
-  transform: rotate(180deg);
-}
-
-/*
- * Each planet is a small card rather than a text tab: it has to carry the
- * planet name plus three counts, and a player deciding where to go next reads
- * those counts more than the name.
- */
-.planetcard {
-  display: grid;
-  gap: var(--sp-1);
-  flex: none;
-  padding: var(--sp-2) var(--sp-3);
-  border: 1px solid transparent;
-  border-radius: var(--radius-xs);
-  cursor: pointer;
-  text-align: left;
-  color: var(--text-dim);
-  transition: background var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
-}
-.planetcard:hover {
-  color: var(--white);
-  background: rgb(145 54 188 / 22%);
-}
-.planetcard[aria-pressed='true'] {
-  color: var(--white);
-  background: var(--violet-glass);
-  border-color: var(--cyan);
-}
-
-.planetcard__name {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-1);
-  font-family: var(--font-display);
-  font-size: var(--fs-xs);
-  font-weight: var(--fw-bold);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-/* Dot marking the planet the player is actually standing on. Same red as the
-   map pin, so "you are here" reads as one idea in both places. */
-.planetcard__here {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--red);
-  box-shadow: 0 0 0 1px rgb(255 255 255 / 70%);
-  flex: none;
-}
-
-.planetcard__stats {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-2);
-  font-size: var(--fs-xs);
-  font-variant-numeric: tabular-nums;
-}
-
-.pstat {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  color: var(--text-faint);
-}
-.planetcard[aria-pressed='true'] .pstat {
-  color: var(--text-dim);
-}
-/* Something is available here — worth the player's attention. */
-.pstat--open {
-  color: var(--teal);
-}
-.planetcard[aria-pressed='true'] .pstat--open {
-  color: var(--teal);
-}
-.pstat img {
-  width: 14px;
-  height: 14px;
-  object-fit: contain;
-  opacity: 0.85;
-}
-
-.pstat__skeleton {
-  display: inline-block;
-  width: 14px;
-  height: 10px;
-}
-
-/* "Find me" sits above the zoom stack so both live in the same corner. */
-.findme {
-  position: absolute;
-  right: var(--sp-3);
-  /* Clears the two 42px zoom buttons and the gap between them. */
-  bottom: calc(var(--sp-3) + 100px);
-  z-index: 3;
-}
-
 /* Transient status over the map, so loading never shifts the layout. */
 .maptoast {
   left: 50%;
@@ -549,32 +115,6 @@
 @media (max-width: 719px) {
   .maptoast {
     bottom: var(--sp-3);
-  }
-}
-
-/*
- * On a phone the tile card wants the full width at the bottom, so the map
- * controls move to a single column under the Legend button instead of
- * fighting it for the bottom-right corner.
- */
-@media (max-width: 719px) {
-  .findme {
-    top: calc(var(--sp-3) + 46px);
-    bottom: auto;
-  }
-
-  .mapstage__zoom {
-    top: calc(var(--sp-3) + 92px);
-    bottom: auto;
-  }
-
-  .tilecard {
-    right: var(--sp-3);
-  }
-
-  /* The popover covers those controls while it is open. */
-  .legendpop {
-    z-index: 4;
   }
 }
 
@@ -750,62 +290,6 @@
   box-shadow:
     0 0 0 1.5px rgb(5 16 30),
     0 0 0 5px rgb(255 255 255 / 30%);
-}
-
-/*
- * Call to action when the player is standing in a tavern.
- *
- * The only thing on the map the player can act on right now, competing with a
- * full-bleed illustration behind it — so it is deliberately loud: oversized,
- * gold, light running along its border, and a shine crossing the face.
- *
- * The border light slides a gradient horizontally rather than rotating one.
- * A rotating conic looks wrong on a shape this wide: constant angular speed
- * is wildly non-constant along the perimeter, so the light crawls down the
- * long edges and snaps around the short ones. Sliding gives it one even pace
- * the whole way round.
- */
-/*
- * Position and colour only. The rim light, glint and pulse come from
- * .btn--charged in global.css, which the map and the landing page share.
- */
-.entertavern {
-  --btn-bg: var(--grad-gold);
-  --btn-line: transparent;
-  --btn-fg: #2a1c00;
-  position: absolute;
-  left: 50%;
-  bottom: var(--sp-5);
-  /*
-   * Centred with `translate`, not `transform`: `.btn:active` sets its own
-   * transform for the press, which would replace this one and shunt the
-   * button half its width to the right on every click.
-   */
-  translate: -50% 0;
-  z-index: 4;
-  white-space: nowrap;
-  min-height: 56px;
-  padding: 0 var(--sp-6);
-  font-size: var(--fs-md);
-  font-weight: var(--fw-bold);
-  letter-spacing: 0.08em;
-  border-radius: var(--radius-sm);
-  text-shadow: none;
-}
-
-.entertavern img {
-  width: 24px;
-  height: 24px;
-}
-
-/* On a phone the tile card owns the bottom, so the prompt sits up top. */
-@media (max-width: 719px) {
-  .entertavern {
-    bottom: auto;
-    top: calc(var(--sp-3) + 92px);
-    left: var(--sp-3);
-    translate: none;
-  }
 }
 
 /* Legend swatch for the tavern the player is currently standing in. */
@@ -1421,437 +905,701 @@
   }
 }
 
-/* ---------- the map on a phone ---------- */
+/* ---------- The rail ---------- */
 
 /*
- * Two things on this screen were built for a mouse and a wide frame, and both
- * ran off the edge of a 390px one.
+ * One column for every control the map has, top-right.
  *
- * The planet strip scrolls sideways on desktop, which is fine when the row
- * nearly fits and there is a pointer to flick it. On a phone six cards in
- * 286px means four of them are off-screen with nothing saying so — it reads
- * as a cut-off bar, not a scrollable one. Opened, it becomes a grid instead:
- * two columns, wrapping down, every planet visible at once. Closed it is the
- * one card it always was.
- *
- * The tile inspector loses everything but the action. A card carrying a
- * thumbnail, coordinates, a land id, the buildings on it and their owners is
- * a panel to read, and on a phone it covered half the map to tell a player
- * things they can see by looking at the tile they just tapped. What they came
- * for is whether they can afford to go, so that is what is left: one button
- * with the cost on it.
+ * They used to sit in three corners at four different sizes: the eye and
+ * Legend top-right, Find me and the zoom pair bottom-right, the planet strip
+ * top-left. Equal tiles in one strip read as one instrument, and a thumb
+ * learns a single place to go. The zoom level sits between its two buttons
+ * and is itself a button: back to the opening view.
  */
-@media (max-width: 719px) {
-  /*
-     Opened, the grid is a menu, so it covers the Enter prompt beneath it
-     rather than interleaving with it. The prompt sits at a fixed offset that
-     assumes a one-row bar, and three rows reach past it.
-  */
-  .planetbar {
-    z-index: 5;
+.maprail {
+  position: absolute;
+  right: var(--sp-3);
+  top: var(--sp-3);
+  z-index: 5;
+  width: 44px;
+  display: grid;
+  background: rgb(5 16 30 / 85%);
+  border: 1px solid var(--line-bright);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow);
+}
+
+.maprail__slot {
+  position: relative;
+}
+
+.maprail__btn {
+  position: relative;
+  width: 42px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-bottom: 1px solid var(--line-soft);
+  background: transparent;
+  color: var(--text-dim);
+  font-family: var(--font-display);
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-bold);
+  line-height: 1;
+  cursor: pointer;
+}
+.maprail > :first-child,
+.maprail > :first-child > .maprail__btn {
+  border-radius: 7px 7px 0 0;
+}
+.maprail > :last-child,
+.maprail > :last-child > .maprail__btn {
+  border-bottom: 0;
+  border-radius: 0 0 7px 7px;
+}
+.maprail__btn:hover,
+.maprail__btn[aria-expanded='true'],
+.maprail__btn[aria-pressed='true'] {
+  background: var(--violet-glass);
+  color: var(--white);
+}
+.maprail__btn svg {
+  width: 20px;
+  height: 20px;
+}
+.maprail__btn--quests {
+  color: var(--gold);
+}
+
+/* The seam between the view controls and the zoom. */
+.maprail__gap {
+  display: block;
+  height: 8px;
+  background: rgb(0 0 0 / 25%);
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.maprail__level {
+  width: 42px;
+  height: 30px;
+  padding: 0;
+  border: 0;
+  border-bottom: 1px solid var(--line-soft);
+  background: transparent;
+  color: var(--text-faint);
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: var(--fw-bold);
+  letter-spacing: 0.05em;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+.maprail__level:hover {
+  color: var(--white);
+}
+
+/* Finished quests, counted on the tile that opens them. */
+.maprail__badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--gold);
+  color: #2a1c00;
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: var(--fw-bold);
+  box-shadow:
+    0 0 0 2px #0a1222,
+    0 0 12px rgb(246 168 0 / 70%);
+  animation: rail-badge 1.8s ease-in-out infinite;
+}
+@keyframes rail-badge {
+  50% {
+    box-shadow:
+      0 0 0 2px #0a1222,
+      0 0 20px rgb(246 168 0);
   }
+}
+:root[data-fx='low'] .maprail__badge {
+  animation: none;
+}
 
-  /*
-     Solid, not the desktop strip's 80%.
-
-     Over a wide map a translucent rail reads as part of the scene. Over a
-     phone-sized one it lands on the gold Enter prompt, and a bright button
-     showing through a panel looks like a rendering fault rather than a
-     choice. This is the same ground the tile card and the legend already
-     use — the game has one way of putting a panel over the map, and this is
-     now it too.
-  */
-  /*
-     Clear of the Legend and Find me buttons by a margin that reads as
-     deliberate. At the desktop offset the panel stopped 4px short of them,
-     which looks like it ran out of room rather than like it was placed.
-  */
-  .planetbar {
-    right: 112px;
-  }
-
-  .planetpick {
-    flex-wrap: wrap;
-    overflow-x: visible;
-    background: linear-gradient(180deg, #16203a, #0a1222);
-    border-color: var(--line-bright);
-    box-shadow: var(--shadow);
-  }
-
-  .planetpick .planetcard {
-    flex: 1 1 calc(50% - var(--sp-2));
-    min-width: 0;
-  }
-
-  /*
-     The collapse arrow takes a row of its own.
-
-     Sharing the last line with two cards, it was a third flex item on that
-     line only — so those two grew to 117px where the four above them grew to
-     134px, and the last planet sat visibly out of column. A full-width strip
-     costs 24px, lines every card up, and is a far easier thing to hit than a
-     26px sliver.
-  */
-  .planetpick__toggle[aria-expanded='true'] {
-    flex: 1 1 100%;
-    align-self: auto;
-    height: 24px;
-    border-left: 0;
-    border-top: 1px solid var(--line-soft);
-    border-radius: 0 0 var(--radius-xs) var(--radius-xs);
-  }
-
-  /* Pointing down to close, now that it folds upward rather than leftward. */
-  .planetpick__toggle[aria-expanded='true'] img {
-    transform: rotate(-90deg);
-  }
-
-  /* Collapsed there is one card, and it should not be half a bar wide. */
-  .planetpick:has(.planetcard:only-of-type) .planetcard {
-    flex: 1 1 auto;
-  }
-
-  .planetcard {
-    padding: var(--sp-2);
-  }
-
-  /*
-     Only the action survives. Hidden rather than not rendered, so the same
-     markup serves both sizes and there is no second code path to keep in
-     step with the first.
-  */
-  /*
-     The action bar: the way in, and the way somewhere else.
-
-     Docked flush and full width, not floating. The pan slack that makes the
-     covered rows reachable is only invisible if the thing covering them
-     covers them completely — floating 12px up left a strip of map showing
-     underneath, and the slack would have exposed it.
-
-     It is deliberately outside the clear button's reach. Hiding the Enter
-     prompt was the wrong answer to it covering the map: a player standing on
-     a tavern needs the way in, and the map has room for it here.
-  */
-  .mapactions {
+/*
+ * A word for each tile, for a pointer that can hover. A touch screen has no
+ * hover, and a tooltip that appears on tap and never leaves is worse than
+ * none: the tiles carry aria-labels for that.
+ */
+@media (hover: hover) {
+  .maprail [data-tip]::after {
+    content: attr(data-tip);
     position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: 4;
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: var(--sp-2);
-    padding: var(--sp-2);
-    background: linear-gradient(180deg, #16203a, #0a1222);
-    border-top: 1px solid var(--line-bright);
-  }
-
-  /* Empty, it should not be a band across the bottom of the map. */
-  .mapactions:empty {
-    display: none;
-  }
-
-  /* The tap that opened the bar must not also press what is in it. */
-  .mapactions--settling {
-    pointer-events: none;
-  }
-
-  /*
-     Both children stop being overlays and become items in the row. The bar
-     carries the ground and the border now, so they carry neither.
-  */
-  .mapactions .entertavern,
-  .mapactions .tilecard {
-    position: static;
-    inset: auto;
-    translate: none;
-    margin: 0;
-    max-height: none;
-    box-shadow: none;
-  }
-
-  /*
-     The card stops being a box and hands its children to the bar.
-
-     It used to be one half of the row with its own flex layout inside, which
-     meant a note like "you have already run this dungeon today" stacked above
-     the Travel button and made that half two rows tall while the Enter button
-     beside it stayed one — so the two buttons sat at different heights and
-     the note covered half the bar.
-
-     As `contents` the note, the button and the Enter prompt are all items of
-     the same row, so the note can take a line to itself across the whole bar
-     and the buttons share the line under it, level with each other.
-  */
-  .mapactions .tilecard {
-    display: contents;
-  }
-
-  /*
-     Notes and errors first, full width. `order` rather than DOM order,
-     because the Enter prompt is a sibling of the card and the note is inside
-     it — there is no arrangement of the markup that puts them in this order
-     on both sizes.
-  */
-  .mapactions .hint,
-  .mapactions .alert {
-    order: -1;
-    flex: 1 1 100%;
-    margin: 0;
-    text-align: center;
-  }
-
-  /*
-     Equals in the bar.
-
-     The Enter prompt is built to be the loudest thing on a wide map — 56px
-     tall, a size up in type, a 24px glyph — which is right when it is alone
-     in the middle of the screen and wrong beside another button. Here the two
-     are the same offer at the same weight, so it takes the ordinary button
-     metrics and they split the width evenly.
-
-     It keeps its gold: what it does is still different from what Travel does.
-  */
-  /*
-     An even split, from a percentage basis rather than zero.
-
-     With `flex-basis: 0` the two came out 192 and 174 — the Enter button's
-     own padding and border landing on top of its share while the tile card,
-     which has neither, got none. A 50% basis is measured the same way for
-     both, and they resolve to exactly half the bar each.
-  */
-  .mapactions .entertavern,
-  .mapactions .tilecard .btn {
-    flex: 1 1 calc(50% - var(--sp-2));
-    min-width: 0;
-  }
-
-  .mapactions .entertavern {
-    order: 1;
-  }
-
-  .mapactions .tilecard .btn {
-    order: 2;
-  }
-
-  /*
-     The tracking and the roomy padding are what made it wider than its half
-     of the bar: nowrap plus 0.08em plus 12px each side put its min-content
-     over the share, so it took what it needed and Travel got the rest.
-  */
-  .mapactions .entertavern {
-    min-height: 44px;
-    padding: 0 var(--sp-2);
-    font-size: var(--fs-sm);
-    letter-spacing: normal;
+    right: calc(100% + 10px);
+    top: 50%;
+    translate: 0 -50%;
+    padding: 5px 9px;
+    border-radius: var(--radius-xs);
+    background: #ffffff;
+    color: rgb(5 16 30);
+    font-family: var(--font-body);
+    font-size: var(--fs-xs);
+    font-weight: var(--fw-medium);
+    letter-spacing: 0;
     white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--dur-fast) var(--ease);
   }
-
-  /*
-     No charge in the bar.
-
-     `btn--charged` draws its glow in pseudo-elements that reach outside the
-     button box — fine for a lone call to action floating on a map, but in a
-     packed strip it spills over the button beside it and above the bar
-     entirely. The gold ground already says which of the two this is.
-  */
-  .mapactions .entertavern::before,
-  .mapactions .entertavern::after {
-    display: none;
+  .maprail [data-tip]::before {
+    content: '';
+    position: absolute;
+    right: calc(100% + 4px);
+    top: 50%;
+    translate: 0 -50%;
+    border: 5px solid transparent;
+    border-left-color: #ffffff;
+    opacity: 0;
+    transition: opacity var(--dur-fast) var(--ease);
   }
-
-  .mapactions .entertavern img {
-    width: 18px;
-    height: 18px;
+  .maprail [data-tip]:hover::after,
+  .maprail [data-tip]:hover::before {
+    opacity: 1;
   }
+}
 
-  /*
-     "Enter" goes, the destination stays.
+/* A panel hanging off its tile, to the left. */
+.railpop {
+  right: calc(100% + 10px);
+  top: 0;
+  width: 220px;
+  padding: var(--sp-3);
+  z-index: 6;
+}
+.railpop::after {
+  content: '';
+  position: absolute;
+  right: -7px;
+  top: 16px;
+  border: 7px solid transparent;
+  border-left-color: var(--line-bright);
+  border-right: 0;
+}
+.railpop--quests {
+  width: min(400px, calc(100vw - 90px));
+  padding: var(--sp-2);
+}
 
-     The button cannot shrink past its own text — nowrap and `min-width: auto`
-     — and "Enter Arena" in Orbitron is 190px, more than half the bar. So it
-     took what it needed and Travel got what was left: 192 against 174 rather
-     than level. The marker beside the word already says enter, and a gold
-     button reading "Arena" next to a blue one reading "Travel" is a pair of
-     destinations, which is what they are.
-  */
-  .entertavern__verb {
-    display: none;
-  }
+/* ---------- Finished quests ---------- */
 
-  /*
-     Anything that is not the action takes a line of its own — the hints for
-     a tile you cannot travel to, and the error if a travel fails.
-  */
-  .tilecard > .hint,
-  .tilecard > .alert {
-    flex: 1 1 100%;
-    margin: 0;
-  }
-
-  /* `btn--block` is width:100%, which would take the whole line. */
-  .tilecard .btn {
-    width: auto;
-  }
-
-  .tilecard .tilecard__top > *:not(.tilecard__close),
-  .tilecard .buildings {
-    display: none;
-  }
-
-  /*
-     The close control floats in the corner instead of holding a row of its
-     own: with everything else in the header gone, that row was 28px of
-     nothing above a button.
-  */
-  /*
-     No close control. The bar is a strip of two actions rather than a card
-     over the map, and tapping another tile replaces what is in it — so there
-     is nothing to dismiss and a third button competing for the width would
-     cost more than it gives back.
-  */
-  .tilecard__top {
-    display: none;
-  }
-
-  /* The cost rides on the button instead of sitting above it. */
-  .tilecard .travelcost {
-    display: none;
-  }
-
-  .tilecard .btn {
-    margin-top: 0 !important;
-  }
+.questclaims {
+  display: grid;
+  gap: var(--sp-1);
+}
+.questclaims__head {
+  padding: var(--sp-1) var(--sp-2) var(--sp-2);
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: var(--fw-medium);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.questclaim {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2);
+}
+.questclaim + .questclaim {
+  border-top: 1px solid var(--line-soft);
+}
+.questclaim__art {
+  width: 40px;
+  height: 40px;
+  flex: none;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--line-soft);
+  object-fit: cover;
+}
+.questclaim__text {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+  flex: 1;
+}
+.questclaim__text strong {
+  font-size: var(--fs-sm);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.questclaim__text small {
+  font-size: var(--fs-xs);
+  color: var(--text-faint);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.questclaim__btn {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 0 var(--sp-3);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: var(--grad-gold);
+  color: #2a1c00;
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: var(--fw-bold);
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.questclaim__btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.questclaim__btn .spinner {
+  width: 14px;
+  height: 14px;
+}
+.questclaim__reward {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: rgb(0 0 0 / 22%);
+  font-variant-numeric: tabular-nums;
+}
+.questclaim__reward img {
+  width: 14px;
+  height: 14px;
+}
+.questclaims .alert,
+.questclaims .hint {
+  margin: var(--sp-1) var(--sp-2);
 }
 
 /*
- * The cost, printed on the travel button.
- *
- * Only ever shown where the row above it has been taken away — on a wide
- * screen the `.travelcost` line already says it, and saying it twice would
- * be worse than saying it once.
+ * On a phone the panel is the width of the screen less the rail, which is
+ * not enough for a title, its line and a Claim button in one row. The
+ * button drops under the text, in the text column.
  */
-.btn__cost {
-  display: none;
+@media (max-width: 719px) {
+  .questclaim {
+    display: grid;
+    grid-template-columns: 40px 1fr;
+    row-gap: var(--sp-2);
+  }
+  .questclaim__btn {
+    grid-column: 2;
+    justify-self: start;
+  }
 }
 
-@media (max-width: 719px) {
-  .btn__cost {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    margin-left: var(--sp-2);
-    padding-left: var(--sp-2);
-    border-left: 1px solid rgb(255 255 255 / 28%);
-    font-variant-numeric: tabular-nums;
-  }
+/* ---------- The planets ---------- */
 
-  .btn__cost img {
-    width: 15px;
-    height: 15px;
-  }
+/*
+ * One pill for the planet in view, with its counts, that opens into every
+ * planet at once: a table rather than a strip, so the counts line up and six
+ * planets can be compared at a glance instead of scrolled past.
+ */
+.planetmenu {
+  position: absolute;
+  left: var(--sp-3);
+  top: var(--sp-3);
+  z-index: 5;
+}
+
+.planetpill {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  height: 40px;
+  padding: 0 var(--sp-2) 0 var(--sp-3);
+  border: 1px solid var(--line-bright);
+  border-radius: var(--radius-sm);
+  background: rgb(5 16 30 / 85%);
+  color: var(--white);
+  box-shadow: var(--shadow);
+  cursor: pointer;
+}
+.planetpill:hover,
+.planetpill[aria-expanded='true'] {
+  background: var(--violet-glass);
+}
+.planetpill__name {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-display);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-bold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.planetpill__sep {
+  width: 1px;
+  height: 20px;
+  background: var(--line-soft);
+}
+.planetpill__chev {
+  width: 12px;
+  height: 12px;
+  stroke: var(--text-faint);
+  fill: none;
+  stroke-width: 2.2;
+  transition: transform var(--dur-fast) var(--ease);
+}
+.planetpill[aria-expanded='true'] .planetpill__chev {
+  transform: rotate(180deg);
+}
+
+/* Dot marking the planet the player is actually standing on. Same red as the
+   map pin, so "you are here" reads as one idea in both places. */
+.planethere {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--red);
+  box-shadow: 0 0 0 1px rgb(255 255 255 / 70%);
+  flex: none;
+}
+
+.pstats {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: var(--fs-xs);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-dim);
+}
+.pstat {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: var(--text-faint);
+}
+/* Something is available here — worth the player's attention. */
+.pstat--open {
+  color: var(--teal);
+}
+.pstat img {
+  width: 14px;
+  height: 14px;
+  object-fit: contain;
+  opacity: 0.85;
+}
+.pstat__skeleton {
+  display: inline-block;
+  width: 14px;
+  height: 10px;
+}
+
+.planetlist {
+  left: 0;
+  top: calc(100% + 8px);
+  width: min(344px, calc(100vw - 24px));
+  padding: var(--sp-2);
+  z-index: 6;
+}
+.planetlist__head,
+.planetrow {
+  display: grid;
+  grid-template-columns: 1fr 48px 48px 48px;
+  align-items: center;
+}
+.planetlist__head {
+  padding: var(--sp-1) var(--sp-2) var(--sp-2);
+  font-family: var(--font-display);
+  font-size: 9px;
+  font-weight: var(--fw-medium);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.planetlist__head img {
+  width: 14px;
+  height: 14px;
+  justify-self: end;
+  opacity: 0.85;
+}
+.planetrow {
+  width: 100%;
+  padding: var(--sp-2);
+  border: 0;
+  border-left: 2px solid transparent;
+  border-radius: var(--radius-xs);
+  background: transparent;
+  color: var(--text-dim);
+  text-align: left;
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+.planetrow:hover {
+  background: rgb(145 54 188 / 22%);
+  color: var(--white);
+}
+.planetrow[aria-selected='true'] {
+  background: var(--violet-glass);
+  border-left-color: var(--cyan);
+  color: var(--white);
+}
+.planetrow__name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: var(--fw-bold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.planetrow .pstat {
+  justify-self: end;
+}
+.planetlist__foot {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: var(--sp-2) var(--sp-2) 0;
+  font-size: var(--fs-xs);
+  color: var(--text-faint);
+}
+
+/* ---------- Actions, where they happen ---------- */
+
+/*
+ * Two anchors the canvas moves every frame, like the pin: one on the
+ * selected tile, one on the player. Neither has a size of its own; what
+ * hangs off them is positioned from the tile's centre.
+ */
+.selpin,
+.herepin {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+  display: none;
+  z-index: 4;
+  pointer-events: none;
+}
+.selpin {
+  --tile: 24px;
+}
+.herepin {
+  --pin-size: 26px;
+  --pin-dot: clamp(20px, calc(var(--pin-size) * 0.8), 28px);
+}
+
+/*
+ * The way to the selected land: a gold tag hanging off its frame, pointing
+ * at it, with the cost in it. Beside the tile rather than in a corner, so
+ * the thing you press is next to the thing it does. It flips to the left
+ * when the tile is near the right edge of the frame.
+ */
+.traveltag {
+  position: absolute;
+  left: calc(var(--tile) / 2 + 12px);
+  top: 0;
+  translate: 0 -50%;
+  display: grid;
+  gap: 4px;
+  justify-items: start;
+  pointer-events: auto;
+}
+.selpin--left .traveltag {
+  left: auto;
+  right: calc(var(--tile) / 2 + 12px);
+  justify-items: end;
+}
+/* The tap that selected the tile must not also press what appeared beside it. */
+.traveltag--settling {
+  pointer-events: none;
+}
+
+.traveltag__go {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  padding: 0 12px 0 11px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: var(--grad-gold);
+  color: #2a1c00;
+  font-family: var(--font-display);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-bold);
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgb(246 168 0 / 40%);
+}
+.traveltag__go::before {
+  content: '';
+  position: absolute;
+  left: -7px;
+  top: 50%;
+  translate: 0 -50%;
+  border: 7px solid transparent;
+  border-right-color: #f0ad05;
+  border-left: 0;
+}
+.selpin--left .traveltag__go::before {
+  left: auto;
+  right: -7px;
+  border-right: 0;
+  border-left: 7px solid #f0ad05;
+}
+.traveltag__go:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+.traveltag__go:disabled {
+  cursor: default;
+}
+/* Not enough energy: the same tag, gone dark, saying what it needs. */
+.traveltag__go--short {
+  background: linear-gradient(170deg, #5a2330, #3a1620);
+  color: #ffd9de;
+  box-shadow: none;
+}
+.traveltag__go--short::before {
+  border-right-color: #3a1620;
+}
+.selpin--left .traveltag__go--short::before {
+  border-left-color: #3a1620;
+}
+.traveltag__go .spinner {
+  width: 14px;
+  height: 14px;
+}
+.traveltag__cost {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: rgb(0 0 0 / 22%);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+.traveltag__cost img {
+  width: 12px;
+  height: 12px;
+}
+
+/* Why there is no gold tag, or what to know before pressing it. */
+.traveltag__none,
+.traveltag__note,
+.herelabel {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgb(5 16 30 / 85%);
+  border: 1px solid var(--line-bright);
+  color: var(--text-dim);
+  font-size: var(--fs-xs);
+  line-height: 1.3;
+  white-space: nowrap;
+}
+.traveltag__note--error {
+  border-color: var(--red);
+  color: #ffd9de;
+}
+
+/*
+ * The way in to whatever is under the player's feet, hanging off their own
+ * pin, where they are. Teal rather than gold: going somewhere and going in
+ * are different offers, and the map should not show two gold tags at once.
+ */
+.entertag {
+  position: absolute;
+  left: 0;
+  /* Above the "You" tag, which sits above the dot. */
+  top: calc(var(--pin-dot) / -2 - 30px);
+  translate: -50% -100%;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  padding: 0 14px 0 10px;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(170deg, #14e2b2, #0a9c7b);
+  color: #06201a;
+  font-family: var(--font-display);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-bold);
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+  text-decoration: none;
+  pointer-events: auto;
+  box-shadow: 0 6px 18px rgb(14 212 168 / 40%);
+}
+.entertag::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: -7px;
+  translate: -50% 0;
+  border: 7px solid transparent;
+  border-top-color: #0a9c7b;
+  border-bottom: 0;
+}
+.entertag:hover {
+  filter: brightness(1.08);
+}
+.entertag img {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+}
+
+/* What the player is standing on, under the dot. */
+.herelabel {
+  position: absolute;
+  left: 0;
+  top: calc(var(--pin-dot) / 2 + 8px);
+  translate: -50% 0;
+  text-transform: capitalize;
+}
+
+/* Near the top of the frame the tag has nowhere to go but down. */
+.herepin--below .entertag {
+  top: calc(var(--pin-dot) / 2 + 8px);
+  translate: -50% 0;
+}
+.herepin--below .entertag::after {
+  bottom: auto;
+  top: -7px;
+  border-top: 0;
+  border-bottom: 7px solid #14e2b2;
+}
+.herepin--below .herelabel {
+  top: calc(var(--pin-dot) / 2 + 52px);
 }
 
 /* ---------- clearing the map ---------- */
 
 /*
- * The control that puts the map's furniture away, and the state it produces.
- *
- * It began as a phone control, on the grounds that 390 by 640 has no room
- * for both the controls and the terrain. A wide screen has the room and
- * still wants the option: the map is the one screen people look *at* rather
- * than read, and a planet with its corners clear is worth seeing.
- *
- * Same corner at every width, and the column below it moves down to make
- * room — so the button a player reaches for to bring the furniture back is
- * where it was when they sent it away.
+ * The eye puts the furniture away: the planet pill goes, and the rail
+ * shrinks to the eye itself. The tags stay — they are the actions, not the
+ * furniture — and so does anything open on the rail, since the rail closes
+ * it as it goes.
  */
-.mapbare {
-  position: absolute;
-  right: var(--sp-3);
-  top: var(--sp-3);
-  z-index: 4;
-  display: grid;
-  place-items: center;
-  width: 40px;
-  height: 40px;
-  padding: 0;
-  color: var(--text-dim);
-  background: linear-gradient(180deg, #16203a, #0a1222);
-  border: 1px solid var(--line-bright);
-  border-radius: var(--radius-sm);
-  box-shadow: var(--shadow);
-  cursor: pointer;
-}
-
-.mapbare svg {
-  width: 20px;
-  height: 20px;
-}
-
-.mapbare[aria-pressed='true'] {
-  color: var(--white);
-  border-color: var(--cyan);
-}
-
-/*
-   Cleared. The tile card stays — it is the action, not the furniture — and
-   so does the prompt to enter whatever is under your feet.
-
-   The action bar is not furniture either and does not clear with the rest.
-   It is docked out of the map's way and the pan slack accounts for it, so
-   there is nothing to gain by hiding the one thing a player is there to
-   press.
-*/
-.mapview--bare .planetbar,
-.mapview--bare .legendbtn,
-.mapview--bare .legendpop,
-.mapview--bare .findme,
-.mapview--bare .mapstage__zoom {
+.mapview--bare .planetmenu {
   display: none;
-}
-
-@media (max-width: 719px) {
-  /*
-     On a phone the whole column stacks from the top, so these two follow the
-     Legend button down. On a wide screen they sit at the bottom of the same
-     edge and the eye never reaches them.
-  */
-  .findme {
-    top: calc(var(--sp-3) + 92px);
-  }
-
-  .mapstage__zoom {
-    top: calc(var(--sp-3) + 138px);
-  }
-}
-
-/*
- * The tile card, for the moment after it opens.
- *
- * A tap on the map selects on `pointerup`, and a touch screen then
- * synthesises a click at the same point — by which time the card has
- * rendered there. Without this, tapping the bottom of the map opened the card
- * and pressed the button on it in one go.
- *
- * Deliberately the whole card and not just the button: the close control has
- * the same problem in reverse, and a card that half-responds is harder to
- * reason about than one that does not respond yet.
- */
-.tilecard--settling {
-  pointer-events: none;
-}
-
-/*
- * The travel button's second word.
- *
- * "Travel here" beside "Enter Tavern" is more width than a phone has to give,
- * and the tile it refers to is the one lit on the map — "here" was doing very
- * little. A wide screen keeps the full phrase.
- */
-@media (max-width: 719px) {
-  .travelhere__where {
-    display: none;
-  }
 }
