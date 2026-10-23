@@ -438,8 +438,13 @@
   white-space: nowrap;
 }
 
+/* Square whatever the row around it does: a coin, never an oval. */
 .awshards img {
   flex: none;
+  width: 16px;
+  height: 16px;
+  aspect-ratio: 1;
+  object-fit: contain;
 }
 
 .outpost__heading {
@@ -524,22 +529,6 @@
 
 .benefits--short {
   display: none;
-}
-
-/*
- * Alien Worlds shards on a price button.
- *
- * The shard is an amber coin, and on the shop's cyan buttons it sat beside
- * the WAX and gem prices as if it were one of ours. A dark button with an
- * amber edge and amber figures says "a different currency" before it is
- * read, and the coin stands out on it instead of sinking into a gold fill.
- */
-.btn--shards {
-  --btn-bg: linear-gradient(180deg, rgb(40 30 6 / 92%), rgb(20 14 2 / 96%));
-  --btn-line: #ffb800;
-  --btn-fg: #ffd36a;
-  box-shadow: 0 0 12px rgb(255 184 0 / 22%);
-  text-shadow: none;
 }
 
 /* ---------- A phone: rows, one screen per tab ---------- */
@@ -765,7 +754,7 @@
   }
 }
 
-/* The Outpost's rarity chips and pager — a phone's only. */
+/* The Outpost's rarity chips — a phone's only. */
 .outpost__rarities {
   display: flex;
   gap: 5px;
@@ -813,27 +802,3 @@
 .outpost__rarity--legendary { --dot: #ffb23e; }
 .outpost__rarity--mythical { --dot: #ff4f8b; }
 
-.outpost__pager {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  font-size: 11.5px;
-  font-weight: var(--fw-bold);
-  color: var(--text-faint);
-}
-.outpost__pager button {
-  width: 32px;
-  height: 30px;
-  border: 0;
-  border-radius: 8px;
-  background: rgb(255 255 255 / 6%);
-  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 12%);
-  color: var(--white);
-  font-size: 15px;
-  cursor: pointer;
-}
-.outpost__pager button:disabled {
-  opacity: 0.35;
-  cursor: default;
-}

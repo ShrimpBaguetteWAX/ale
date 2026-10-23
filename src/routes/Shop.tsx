@@ -13,6 +13,7 @@ import {
   itemArt,
   formatWax,
   legendExpiry,
+  dailyFlasks,
   priceOf,
   rewardOf,
   valueBadges,
@@ -30,6 +31,7 @@ import { useAction } from '@/wharf/useAction'
 import { useChainQuery } from '@/chain/useChainQuery'
 import { useLazyConfig } from '@/state/useConfig'
 import { asset } from '@/assets'
+import { NUM_LOCALE } from '@/format'
 import { OutpostTab } from '@/outpost/OutpostTab'
 
 const EMPTY_COOLDOWNS: ShopCooldown[] = []
@@ -110,6 +112,9 @@ export default function Shop() {
   )
   /* "+22%", "save 17%": what each rung gives over the bottom one. */
   const badges = useMemo(() => valueBadges(shown), [shown])
+  /* The daily flask with and without Legend, in energy, for the benefits. */
+  const flasks = useMemo(() => dailyFlasks(items ?? []), [items])
+  const energy = (n: number) => n.toLocaleString(NUM_LOCALE)
 
   const buy = (item: ShopItem) => {
     setConfirming(null)
@@ -278,16 +283,22 @@ export default function Shop() {
             <div className="panel__title">Legend account benefits</div>
             <ul className="benefits benefits--long">
               {LEGEND_BENEFITS.map((b) => (
-                <li key={b}>{b}</li>
+                <li key={b}>
+                  {flasks && b === LEGEND_BENEFITS[3]
+                    ? `A free daily energy flask of ${energy(flasks.legend)} energy instead of ${energy(flasks.trial)}`
+                    : b}
+                </li>
               ))}
             </ul>
             {/* A phone shows them as a 2 × 2 under the passes, so the tab
                 fits one screen. */}
             <ul className="benefits benefits--short">
-              {LEGEND_BENEFITS_SHORT.map(([title, detail]) => (
+              {LEGEND_BENEFITS_SHORT.map(([title, detail], i) => (
                 <li key={title}>
                   <b>{title}</b>
-                  {detail}
+                  {flasks && i === 3
+                    ? `${energy(flasks.legend)} energy a day, not ${energy(flasks.trial)}`
+                    : detail}
                 </li>
               ))}
             </ul>

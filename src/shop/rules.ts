@@ -241,6 +241,18 @@ export function valueBadges(items: ShopItem[]): Map<string, string> {
   return badges
 }
 
+/**
+ * The two free daily energy flasks, trial and Legend, by how much energy
+ * each gives — read off the shop's own rows so the Legend benefit can say
+ * "1,000 energy a day, not 100" and stay right if the contract changes them.
+ */
+export function dailyFlasks(items: ShopItem[]): { trial: number; legend: number } | null {
+  const free = items.filter((i) => isFree(i) && i.gain_action_points > 0)
+  const trial = free.find((i) => i.trial_availability)?.gain_action_points
+  const legend = free.find((i) => !i.trial_availability)?.gain_action_points
+  return trial && legend ? { trial, legend } : null
+}
+
 export function itemArt(item: ShopItem): string {
   return asset(`/assets/shop/${item.item}.webp`)
 }
