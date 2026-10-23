@@ -2485,33 +2485,6 @@
   text-transform: capitalize;
 }
 
-/* ---------- view switch ---------- */
-
-/* Classic or Battlefield, at the end of the fight bar. */
-.viewswitch {
-  display: inline-flex;
-  padding: 2px;
-  background: rgb(0 0 0 / 40%);
-  border: 1px solid var(--line-soft);
-  border-radius: 999px;
-}
-
-.viewswitch__btn {
-  padding: 4px 12px;
-  font-size: var(--fs-xs);
-  font-weight: var(--fw-bold);
-  color: var(--text-dim);
-  background: none;
-  border: 0;
-  border-radius: 999px;
-  cursor: pointer;
-}
-
-.viewswitch__btn--on {
-  color: var(--white);
-  background: rgb(145 54 188 / 75%);
-}
-
 /* ---------- battlefield view ---------- */
 
 /*
@@ -3604,4 +3577,23 @@
   1% { opacity: 1; transform: scale(0); }
   35%, 60% { opacity: 1; transform: scale(1); }
   100% { opacity: 0; transform: scale(0); }
+}
+
+/*
+ * The result screen's secondary buttons, in the same frosted glass as Leave
+ * on the dungeon screen: the shared ghost button all but vanished over the
+ * map. The way out keeps its own solid colour.
+ */
+@media (min-width: 1024px) {
+  .result__bar .btn--ghost {
+    --btn-bg: rgb(255 255 255 / 9%);
+    --btn-line: rgb(255 255 255 / 24%);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+  .result__bar .btn--ghost:hover:not(:disabled) {
+    --btn-bg: rgb(255 255 255 / 15%);
+    --btn-line: rgb(255 255 255 / 40%);
+    filter: none;
+  }
 }

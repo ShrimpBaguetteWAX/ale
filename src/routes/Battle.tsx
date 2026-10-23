@@ -15,7 +15,6 @@ import {
 } from '@/dungeon/fightStore'
 import {
   simulate,
-  type EffectEvent,
   type FighterSnapshot,
   type Replay,
   type SimFighter,
@@ -39,7 +38,6 @@ import {
   fighterFace,
   fighterName,
   formatScaled,
-  isNftFighter,
 } from '@/tavern/fighterStats'
 import { DIRTIES, claimPoolRewards, levelUpFighters } from '@/wharf/actions'
 import { useAction } from '@/wharf/useAction'
@@ -122,25 +120,6 @@ const FINISH_HOLD_MS = 950
  * attack lands and the strip is never mid-move when it changes again.
  */
 const QUEUE_SLIDE_MS = 420
-/**
- * The embers that drift off a fighter while they are on the clock.
- *
- * Fixed rather than random: a stable set repeats identically every turn,
- * which reads as a steady fire rather than as noise, and costs no work per
- * render. Nine is enough to feel alive and few enough that a phone does not
- * notice — each one is a single compositor-only transform.
- */
-const EMBERS = [
-  { x: 18, size: 3, drift: 10, rise: 96, delay: 0, life: 2100 },
-  { x: 31, size: 2, drift: -8, rise: 78, delay: 420, life: 1850 },
-  { x: 44, size: 4, drift: 6, rise: 112, delay: 180, life: 2400 },
-  { x: 52, size: 2, drift: -12, rise: 88, delay: 900, life: 1950 },
-  { x: 61, size: 3, drift: 9, rise: 104, delay: 620, life: 2250 },
-  { x: 72, size: 2, drift: -6, rise: 82, delay: 1180, life: 1800 },
-  { x: 26, size: 2, drift: 13, rise: 92, delay: 1450, life: 2050 },
-  { x: 83, size: 3, drift: -10, rise: 100, delay: 300, life: 2300 },
-  { x: 38, size: 2, drift: 4, rise: 74, delay: 1650, life: 1700 },
-] as const
 
 /**
  * How long to keep asking the arena who is standing in it.
@@ -288,27 +267,15 @@ function Arena({
   const [speed, setSpeed] = useState<Speed>(1)
   const logRef = useRef<HTMLDivElement>(null)
 
-  /* Which way the fight is drawn: the battlefield unless this device has
-     asked for the classic stage. */
-  const [view, setView] = useState<BattleView>(readView)
   const phone = usePhone()
   /*
      On a desktop the battlefield plays as a broadcast on the glass, with the
-     map behind it: a window with a scorebar, captions for the blows and a
-     transport bar under the picture. The log opens over it on request.
+     map behind it: a window with a scorebar and a transport bar under the
+     picture. The log opens in a column beside it on request.
   */
   const wide = useWide()
-  const broadcast = wide && view === 'field'
+  const broadcast = wide
   const [showLog, setShowLog] = useState(false)
-  const chooseView = useCallback((next: BattleView) => {
-    setView(next)
-    try {
-      localStorage.setItem(VIEW_KEY, next)
-    } catch {
-      /* Private mode: the choice lasts until the page is left. */
-    }
-  }, [])
-
   /*
    * Playback is a chain of timeouts rather than an interval: the delay has to
    * change with the speed control mid-fight, and a timeout that reschedules
@@ -517,29 +484,6 @@ function Arena({
     return best
   }, [replay, state, finished])
 
-  /**
-   * The pair on stage.
-   *
-   * Before the first blow the opening matchup stands ready, so the stage is
-   * never empty and the fight starts on a picture rather than a blank.
-   */
-  const shown = current ?? replay.turns[0]
-  const duel = useMemo(() => {
-    if (!shown) return null
-    const attacker = replay.fighters.find((f) => f.uid === shown.attackerUid)
-    const defender = replay.fighters.find((f) => f.uid === shown.defenderUid)
-    if (!attacker || !defender) return null
-    // Exactly one comes from each side, so the stage can keep fixed places:
-    // the dungeon on the left and the player on the right, matching both the
-    // roster strips above and the selection screen before it.
-    return {
-      theirs: attacker.team === 2 ? attacker : defender,
-      mine: attacker.team === 1 ? attacker : defender,
-      attackerUid: shown.attackerUid,
-      defenderUid: shown.defenderUid,
-    }
-  }, [replay, shown])
-
   /* Asking to skip is asking for the result now, not after the last blow. */
   const skip = useCallback(() => {
     setPlaying(false)
@@ -572,83 +516,6 @@ function Arena({
     URL.revokeObjectURL(url)
   }, [replay, row.history_id])
 
-  const nameOf = (uid: string) => {
-    const f = replay.fighters.find((x) => x.uid === uid)
-    return f ? fighterName(f) : 'Unknown'
-  }
-  const ownerOf = (uid: string) => {
-    const f = replay.fighters.find((x) => x.uid === uid)
-    if (!f) return 'Unknown'
-    return f.team === 1 ? f.gamertag || playertag || 'You' : f.gamertag || 'AI'
-  }
-
-  /* One log, drawn under the classic stage or beside the battlefield. */
-  const combatLog = (
-    <>
-        {/*
-          The running log, in the original's wording: one line per blow with
-          the abilities that fired underneath. Cumulative and self-scrolling,
-          so a player who looks away can catch up.
-        */}
-        {step > 0 && (
-          <div className="combatlog" ref={logRef}>
-            {/*
-              Abilities that fired before the first blow. The chain snapshots
-              the line-ups *before* `prepare_buff` runs, so these are changes
-              a player cannot otherwise see anywhere.
-            */}
-            {replay.openingEffects.length > 0 && (
-              <div className="combatlog__entry">
-                <p className="combatlog__line">
-                  <strong>Before the fight</strong>
-                </p>
-                {replay.openingEffects.map((e, j) => (
-                  <EffectLine key={j} effect={e} nameOf={nameOf} />
-                ))}
-              </div>
-            )}
-            {replay.turns.slice(0, step).map((t, i) => (
-              <div className="combatlog__entry" key={i}>
-                <p className="combatlog__line">
-                  <strong>{i + 1}. </strong>
-                  <strong>
-                    {nameOf(t.attackerUid)} ({ownerOf(t.attackerUid)})
-                  </strong>{' '}
-                  attacked{' '}
-                  <strong>
-                    {nameOf(t.defenderUid)} ({ownerOf(t.defenderUid)})
-                  </strong>{' '}
-                  for <strong>{formatScaled(t.damage)}</strong> damage.
-                  {t.killed && <em className="combatlog__ko"> Knocked out.</em>}
-                </p>
-                {t.effects.map((e, j) => (
-                  <EffectLine key={j} effect={e} nameOf={nameOf} />
-                ))}
-              </div>
-            ))}
-          </div>
-        )}
-    </>
-  )
-
-  const viewSwitch = (
-    <>
-          <div className="viewswitch" role="group" aria-label="Battle view">
-            {(['classic', 'field'] as const).map((v) => (
-              <button
-                type="button"
-                key={v}
-                className={`viewswitch__btn${view === v ? ' viewswitch__btn--on' : ''}`}
-                aria-pressed={view === v}
-                onClick={() => chooseView(v)}
-              >
-                {v === 'classic' ? 'Classic' : 'Battlefield'}
-              </button>
-            ))}
-          </div>
-
-    </>
-  )
   const skipButton = (
     <>
           {/* On the right, where a hand goes to move on. The size of Start Fight. */}
@@ -672,12 +539,11 @@ function Arena({
         style={{ ['--beat' as string]: String(1 / speed) }}
       >
         {broadcast ? (
-          /* The page's own title line: the view and Skip, nothing else. The
+          /* The page's own title line: the title and Skip, nothing else. The
              count and the progress are on the window's transport bar. */
           <header className="battle__titleline">
             <h1 className="page__title">Battle</h1>
             <span className="spacer" />
-            {viewSwitch}
             {skipButton}
           </header>
         ) : (
@@ -693,7 +559,6 @@ function Arena({
             is what Back was being used for as well, except that Back threw
             the result away.
           */}
-          {viewSwitch}
           {/*
             The scoreboard: the attack count large, and a segment per attack
             that lights as it lands. A long fight shares segments, so the
@@ -729,121 +594,11 @@ function Arena({
         </header>
         )}
 
-        {view === 'classic' ? (
-          <>
         {/*
-          Rosters above, the clash below.
-
-          Twelve fighters spread across the full width meant the action landed
-          somewhere different every turn and the eye never settled. The two
-          fighters actually trading blows now step onto a fixed stage in the
-          middle of the screen, and the rosters shrink to strips that report
-          who is left and how they are holding up. Nothing moves position
-          between turns, so there is nothing to hunt for.
+          The battlefield: both teams in formation, every blow played where
+          the fighters stand. The log takes the right-hand column where the
+          screen is wide enough, and sits underneath where it is not.
         */}
-        <div className="stage">
-          <div className="rosters">
-            <RosterStrip
-              label="Your team"
-              side="mine"
-              fighters={team1}
-              state={state}
-              activeUids={[duel?.attackerUid, duel?.defenderUid]}
-              nextUp={nextUp}
-              effects={abilityDelta}
-              turn={step}
-              standing={standing}
-            />
-            <RosterStrip
-              label="The dungeon"
-              side="enemy"
-              fighters={team2}
-              state={state}
-              activeUids={[duel?.attackerUid, duel?.defenderUid]}
-              nextUp={nextUp}
-              effects={abilityDelta}
-              turn={step}
-              standing={standing}
-            />
-          </div>
-
-          <TurnQueue replay={replay} step={step} speed={speed} playertag={playertag} />
-
-          {duel && (
-            <div className="duel">
-              <Duelist
-                key={duel.mine.uid}
-                fighter={duel.mine}
-                state={state.get(duel.mine.uid)}
-                standing={standing.get(duel.mine.uid)}
-                role={
-                  !current
-                    ? null
-                    : duel.attackerUid === duel.mine.uid
-                      ? 'attacker'
-                      : 'defender'
-                }
-                side="mine"
-                turn={step}
-                attack={current?.damage ?? 0}
-                blocked={current?.blocked ?? 0}
-                killed={!!current?.killed}
-                abilityDelta={abilityDelta.get(duel.mine.uid) ?? 0}
-                owner={duel.mine.gamertag || playertag || 'You'}
-              />
-            <div className="duel__centre">
-                <span className="duel__turn mono">
-                  {current ? `Attack ${step}` : 'Ready'}
-                </span>
-                {current && (
-                  <span
-                    className={`duel__element duel__element--${current.element}`}
-                    key={`el-${step}`}
-                  >
-                    <img
-                      src={asset(`/assets/icons/elements/${current.element}.png`)}
-                      alt=""
-                      width={22}
-                      height={22}
-                    />
-                    {current.effectiveness}%
-                  </span>
-                )}
-              </div>
-
-              <Duelist
-                key={duel.theirs.uid}
-                fighter={duel.theirs}
-                state={state.get(duel.theirs.uid)}
-                standing={standing.get(duel.theirs.uid)}
-                role={
-                  !current
-                    ? null
-                    : duel.attackerUid === duel.theirs.uid
-                      ? 'attacker'
-                      : 'defender'
-                }
-                side="enemy"
-                turn={step}
-                attack={current?.damage ?? 0}
-                blocked={current?.blocked ?? 0}
-                killed={!!current?.killed}
-                abilityDelta={abilityDelta.get(duel.theirs.uid) ?? 0}
-                owner={duel.theirs.gamertag || duel.theirs.owner || 'AI'}
-              />
-
-              </div>
-          )}
-        </div>
-
-            {combatLog}
-          </>
-        ) : (
-          /*
-            The battlefield: both teams in formation, every blow played where
-            the fighters stand. The log takes the right-hand column where the
-            screen is wide enough, and sits underneath where it is not.
-          */
           <div className={`bfwrap${broadcast ? ' bfwrap--bcast' : ''}${broadcast && showLog ? ' bfwrap--log' : ''}`}>
             <div className="bfmain">
               {/* On a phone the order sits above the field; on a desktop it is
@@ -967,7 +722,6 @@ function Arena({
             </section>
             )}
           </div>
-        )}
       </div>
       )}
 
@@ -986,300 +740,7 @@ function Arena({
   )
 }
 
-/* ---------- the roster strips ---------- */
 
-/**
- * A team, at a glance.
- *
- * Not where the fight is watched — that is the stage below — but where the
- * shape of it is read: who is still standing, who is nearly gone, and who is
- * about to swing. Small enough that both teams fit above the action without
- * competing with it.
- */
-function RosterStrip({
-  label,
-  side,
-  fighters,
-  state,
-  activeUids,
-  nextUp,
-  effects,
-  turn,
-  standing,
-}: {
-  label: string
-  side: 'mine' | 'enemy'
-  fighters: SimFighter[]
-  state: Map<string, FighterSnapshot>
-  standing: Map<string, Standing>
-  activeUids: (string | undefined)[]
-  nextUp: string | null
-  /** Net ability change this turn, per fighter. */
-  effects: Map<string, number>
-  turn: number
-}) {
-  const alive = fighters.filter(
-    (f) => (state.get(f.uid)?.health ?? f.start_health) > 0,
-  ).length
-
-  return (
-    <section className={`roster roster--${side}`}>
-      <header className="roster__head">
-        <span className="roster__name">{label}</span>
-        <span className="roster__alive mono">
-          {alive}/{fighters.length}
-        </span>
-      </header>
-
-      <div className="roster__row">
-        {fighters.map((f) => {
-          const hp = state.get(f.uid) ?? {
-            health: f.start_health,
-            max_health: f.max_health,
-          }
-          const dead = hp.health <= 0
-          const pct = hp.max_health > 0 ? Math.max(0, (hp.health / hp.max_health) * 100) : 0
-          const band = pct > 50 ? 'high' : pct > 25 ? 'mid' : 'low'
-
-          return (
-            <div
-              className={
-                'rtile' +
-                (dead ? ' rtile--dead' : '') +
-                (activeUids.includes(f.uid) ? ' rtile--active' : '') +
-                (nextUp === f.uid ? ' rtile--next' : '')
-              }
-              key={f.uid}
-              title={`${fighterName(f)} — ${formatScaled(hp.health)}/${formatScaled(hp.max_health)}`}
-              /* The element backdrop every other portrait in the game sits on.
-                 The avatar is a cut-out, so without it the tile was black. */
-              style={{ ['--rtile-bg' as string]: `url('${elementBackground(f.element)}')` }}
-            >
-              <GameImg
-                className="rtile__art"
-                src={fighterFace(f)}
-                alt={fighterName(f)}
-                loading="lazy"
-                fallback={fighterArtFallback()}
-              />
-              <span className="rtile__bar" data-band={band}>
-                <span className="rtile__fill" style={{ width: `${pct}%` }} />
-              </span>
-              {!dead && <ThreatMark standing={standing.get(f.uid)} />}
-              {dead && <span className="rtile__out" aria-label="Down" />}
-              {/*
-                An ability that landed on this fighter.
-                Group effects mostly hit fighters who are not on the stage, so
-                without this the only sign of them was a line in the log after
-                the fact — the thing that made in-fight effects look like they
-                were not happening at all.
-              */}
-              {!dead && (effects.get(f.uid) ?? 0) !== 0 && (
-                <span
-                  className={
-                    'rtile__fx rtile__fx--' +
-                    ((effects.get(f.uid) ?? 0) > 0 ? 'heal' : 'harm')
-                  }
-                  key={`fx-${turn}`}
-                >
-                  {(effects.get(f.uid) ?? 0) > 0 ? '+' : ''}
-                  {formatScaled(effects.get(f.uid) ?? 0)}
-                </span>
-              )}
-            </div>
-          )
-        })}
-      </div>
-    </section>
-  )
-}
-
-/* ---------- the stage ---------- */
-
-/**
- * One of the two fighters on stage.
- *
- * Always in the same place — the dungeon's on the left, the player's on the
- * right — so every blow plays out where the last one did. The role decides
- * what happens to it, not its position.
- */
-function Duelist({
-  fighter,
-  state,
-  standing,
-  role,
-  side,
-  turn,
-  attack,
-  blocked,
-  killed,
-  abilityDelta,
-  owner,
-}: {
-  fighter: SimFighter
-  state: FighterSnapshot | undefined
-  standing: Standing | undefined
-  role: 'attacker' | 'defender' | null
-  side: 'mine' | 'enemy'
-  turn: number
-  attack: number
-  blocked: number
-  killed: boolean
-  abilityDelta: number
-  owner: string
-}) {
-  const health = state?.health ?? fighter.start_health
-  const maxHealth = state?.max_health ?? fighter.max_health
-  const dead = health <= 0
-  const pct = maxHealth > 0 ? Math.max(0, (health / maxHealth) * 100) : 0
-  const band = pct > 50 ? 'high' : pct > 25 ? 'mid' : 'low'
-
-  return (
-    <div
-      className={
-        `duelist duelist--${side}` +
-        (role ? ` duelist--${role}` : '') +
-        (dead ? ' duelist--dead' : '')
-      }
-    >
-      <div className="duelist__frame">
-        {role && (
-          <span className={`rolltag rolltag--${role === 'attacker' ? 'atk' : 'def'}`} key={`role-${turn}`}>
-            <img
-              src={role === 'attacker' ? asset('/assets/icons/swords.svg') : asset('/assets/icons/shield.svg')}
-              alt=""
-            />
-            {role === 'attacker' ? 'Attacks' : 'Hit'}
-          </span>
-        )}
-
-        <span className="duelist__body">
-          {/*
-            Order matters: the pool of light, then the contact shadow on top
-            of it, then the fighter above both. As a sibling *after* the body
-            the shadow painted over the feet instead of under them.
-          */}
-          <span className="duelist__glow" aria-hidden="true">
-            <span className="duelist__pool" />
-            {EMBERS.map((e, i) => (
-              <span
-                className="ember"
-                key={i}
-                style={
-                  {
-                    '--x': `${e.x}%`,
-                    '--s': `${e.size}px`,
-                    '--drift': `${e.drift}px`,
-                    '--rise': `${e.rise}px`,
-                    '--delay': `${e.delay}ms`,
-                    '--life': `${e.life}ms`,
-                  } as React.CSSProperties
-                }
-              />
-            ))}
-          </span>
-          <span className="duelist__floor" />
-          {dead ? (
-            <img
-              className="duelist__art duelist__art--dead"
-              src={asset("/assets/fighter/dead.png")}
-              alt="Defeated"
-            />
-          ) : (
-            <GameImg
-              className="duelist__art"
-              /* The NFT fighter has no class art; the hooded unknown is what
-                 it is drawn as everywhere else on this screen. */
-              src={
-                isNftFighter(fighter.fighter_id)
-                  ? fighterArtFallback()
-                  : fighterArt({ classname: fighter.classname, racename: fighter.racename })
-              }
-              alt={fighterName(fighter)}
-              fallback={fighterArtFallback()}
-            />
-          )}
-          {role === 'defender' && <span className="duelist__flash" key={`fl-${turn}`} />}
-        </span>
-
-        {role === 'defender' && attack > 0 && (
-          <span
-            className={`dmgnum dmgnum--${killed ? 'ko' : band === 'low' ? 'strong' : 'hit'}`}
-            key={`dmg-${turn}`}
-          >
-            {formatScaled(attack)}
-          </span>
-        )}
-
-        {role === 'defender' && blocked > 0 && (
-          <span className="blocknum" key={`blk-${turn}`}>
-            −{formatScaled(blocked)} blocked
-          </span>
-        )}
-
-        {abilityDelta !== 0 && (
-          <span
-            className={`effectpill effectpill--${abilityDelta > 0 ? 'heal' : 'damage'}`}
-            key={`fx-${turn}`}
-          >
-            {abilityDelta > 0 ? '+' : ''}
-            {formatScaled(abilityDelta)}
-          </span>
-        )}
-
-        {killed && role === 'defender' && (
-          <span className="duelist__ko" key={`ko-${turn}`}>
-            K.O.
-          </span>
-        )}
-      </div>
-
-      <div className="duelist__plate">
-        <div className="duelist__id">
-          {/*
-            Never empty. The NFT fighter has no class — no crew row on chain
-            carries one — and an empty span contributes no line box, so its
-            name row measured 16px against everyone else's 22. The plate, the
-            portrait above it and the turn queue below all shifted 6px
-            whenever it took the stage.
-          */}
-          <span className="duelist__name">
-            {fighter.classname || fighter.racename || 'Fighter'}
-          </span>
-          <span className="duelist__owner">{owner}</span>
-        </div>
-
-        <span className="hpbar hpbar--big" data-band={band}>
-          <span className="hpbar__trail" style={{ width: `${pct}%` }} />
-          <span className="hpbar__fill" style={{ width: `${pct}%` }} />
-        </span>
-
-        <div className="duelist__nums">
-          <span className="duelist__hp mono">
-            {formatScaled(health)}
-            <em>/{formatScaled(maxHealth)}</em>
-          </span>
-          {!dead && <ThreatMark standing={standing} />}
-        </div>
-      </div>
-    </div>
-  )
-}
-
-/* ---------- the battlefield view ---------- */
-
-type BattleView = 'classic' | 'field'
-const VIEW_KEY = 'al.battle.view'
-
-function readView(): BattleView {
-  /* The battlefield is the default; the classic stage is what a player
-     switches to, and that choice is what gets remembered. */
-  try {
-    return localStorage.getItem(VIEW_KEY) === 'classic' ? 'classic' : 'field'
-  } catch {
-    return 'field'
-  }
-}
 
 /**
  * Where each fighter stands, as [x, y] percentages of the field.
@@ -1743,63 +1204,7 @@ function FieldUnit({
   )
 }
 
-/* ---------- combat log ---------- */
 
-/** Readable names for the stats an effect can change. */
-const STAT_LABEL: Record<string, string> = {
-  health: 'health',
-  damage: 'damage',
-  taunt: 'taunt',
-  initiative: 'wind-up',
-  attackspeed: 'attack speed',
-  res_gem: 'gem resistance',
-  res_metal: 'metal resistance',
-  res_air: 'air resistance',
-  res_fire: 'fire resistance',
-  res_nature: 'nature resistance',
-  res_neutral: 'neutral resistance',
-}
-
-const TRIGGER_LABEL: Record<string, string> = {
-  on_attack: 'on attack',
-  on_defense: 'on defence',
-  on_fight_start: 'at the start',
-}
-
-/**
- * One ability effect in the log.
- *
- * Says who cast it as well as who it landed on: group effects mostly hit
- * fighters who are not the two on stage, so without the caster the line reads
- * as having come from nowhere. The direction is coloured rather than left to
- * a minus sign, because a heal and a debuff are the same shape otherwise.
- */
-function EffectLine({
-  effect,
-  nameOf,
-}: {
-  effect: EffectEvent
-  nameOf: (uid: string) => string
-}) {
-  const delta = effect.after - effect.before
-  const stat = STAT_LABEL[effect.stat] ?? effect.stat
-  const trigger = TRIGGER_LABEL[effect.trigger] ?? effect.trigger
-  const self = effect.sourceUid === effect.targetUid
-
-  return (
-    <p className={`combatlog__effect combatlog__effect--${delta > 0 ? 'up' : 'down'}`}>
-      <strong>↳ </strong>
-      <strong>{nameOf(effect.sourceUid)}</strong>'s{' '}
-      <strong>{effect.ability}</strong> ({trigger}){' '}
-      {delta > 0 ? 'raised' : 'lowered'}{' '}
-      {self ? 'its own' : <><strong>{nameOf(effect.targetUid)}</strong>'s</>} {stat} by{' '}
-      <strong>{formatScaled(Math.abs(delta))}</strong>{' '}
-      <em>
-        ({formatScaled(effect.before)} → {formatScaled(effect.after)})
-      </em>
-    </p>
-  )
-}
 
 /* ---------- threat and turn order ---------- */
 
