@@ -1926,17 +1926,22 @@ function Result({
                 className={`rescard${holds ? ' rescard--holds' : ''}`}
                 key={f.uid}
               >
-                <div className="rescard__art">
-                  {/* A phone's small card shows the face crop instead. */}
+                <div className={`rescard__art${survived ? '' : ' rescard__art--down'}`}>
+                  {/*
+                    A phone's small card shows the face crop instead: greyed
+                    with a DOWN label for the fallen, where the full card shows
+                    a tombstone. The NFT fighter has no class or race, so it
+                    takes the unknown fighter's face, as its full art does.
+                  */}
                   <GameImg
                     className="rescard__avatar"
                     src={
-                      survived
+                      f.classname && f.racename
                         ? fighterAvatar({ classname: f.classname, racename: f.racename })
-                        : asset('/assets/fighter/dead.png')
+                        : asset('/assets/fighters/unknown_unknown_avatar.webp')
                     }
                     alt=""
-                    fallback={fighterArtFallback()}
+                    fallback={asset('/assets/fighters/unknown_unknown_avatar.webp')}
                   />
                   <GameImg
                     className="rescard__full"
