@@ -3272,3 +3272,336 @@
 .bunit__hit {
   animation: bcastrise calc(1300ms * var(--beat)) linear var(--impact) both;
 }
+
+/* ---------- class signatures on the battlefield ---------- */
+
+/*
+ * Each class swings its own way (SIGNATURE in Battle.tsx). The attacker's
+ * body takes one keyframe animation in place of the plain lunge, and the
+ * blow gets one effect layer on the field. Every move is timed to connect
+ * at --impact (580 ms at 1x), when the damage lands and the defender
+ * recoils, so nothing here changes what the fight shows, only how.
+ *
+ * --dx/--dy are 0.55 of the gap to the target; the melee moves scale them
+ * to close it. Transforms and opacity only.
+ */
+.bunit--attacker.bunit--atk-charge .bunit__body {
+  animation: atk-charge calc(900ms * var(--beat)) cubic-bezier(0.4, 0, 0.3, 1) both;
+}
+@keyframes atk-charge {
+  30% { transform: translate(calc(var(--dx, 0) * -0.15cqw), calc(var(--dy, 0) * var(--ratio) * -0.15cqw)) scale(0.96); }
+  64%, 74% { transform: translate(calc(var(--dx, 0) * 1.5cqw), calc(var(--dy, 0) * var(--ratio) * 1.5cqw)) scale(1.08); }
+}
+.bunit--attacker.bunit--atk-leap .bunit__body {
+  animation: atk-leap calc(950ms * var(--beat)) cubic-bezier(0.35, 0, 0.3, 1) both;
+}
+@keyframes atk-leap {
+  30% { transform: translate(calc(var(--dx, 0) * 0.6cqw), calc(var(--dy, 0) * var(--ratio) * 0.6cqw - 7cqw)); }
+  61%, 72% { transform: translate(calc(var(--dx, 0) * 1.5cqw), calc(var(--dy, 0) * var(--ratio) * 1.5cqw)); }
+}
+.bunit--attacker.bunit--atk-dash .bunit__body {
+  animation: atk-dash calc(900ms * var(--beat)) cubic-bezier(0.2, 0.9, 0.3, 1) both;
+}
+@keyframes atk-dash {
+  52% { transform: translate(calc(var(--dx, 0) * -0.1cqw), 0) scale(0.95); }
+  64%, 78% { transform: translate(calc(var(--dx, 0) * 1.75cqw), calc(var(--dy, 0) * var(--ratio) * 1.75cqw)); }
+}
+.bunit--attacker.bunit--atk-bash .bunit__body {
+  animation: atk-bash calc(850ms * var(--beat)) cubic-bezier(0.3, 0, 0.3, 1) both;
+}
+@keyframes atk-bash {
+  50% { transform: translate(calc(var(--dx, 0) * 1.05cqw), calc(var(--dy, 0) * var(--ratio) * 1.05cqw)); }
+  68%, 80% { transform: translate(calc(var(--dx, 0) * 1.45cqw), calc(var(--dy, 0) * var(--ratio) * 1.45cqw)) scale(1.06); }
+}
+.bunit--attacker.bunit--atk-frenzy .bunit__body {
+  animation: atk-frenzy calc(1150ms * var(--beat)) linear both;
+}
+@keyframes atk-frenzy {
+  50%, 64%, 78% { transform: translate(calc(var(--dx, 0) * 1.5cqw), calc(var(--dy, 0) * var(--ratio) * 1.5cqw)); }
+  57%, 71% { transform: translate(calc(var(--dx, 0) * 1.25cqw), calc(var(--dy, 0) * var(--ratio) * 1.25cqw - 0.6cqw)); }
+}
+.bunit--attacker.bunit--atk-cleave .bunit__body {
+  animation: atk-cleave calc(900ms * var(--beat)) cubic-bezier(0.35, 0, 0.3, 1) both;
+}
+@keyframes atk-cleave {
+  45% { transform: translate(calc(var(--dx, 0) * 0.6cqw), calc(var(--dy, 0) * var(--ratio) * 0.6cqw)) scale(0.97); }
+  64%, 76% { transform: translate(calc(var(--dx, 0) * 1.3cqw), calc(var(--dy, 0) * var(--ratio) * 1.3cqw)) scale(1.06); }
+}
+/* Ranged: a kick back as the shot leaves. */
+.bunit--attacker:is(.bunit--atk-arrow, .bunit--atk-shots, .bunit--atk-bomb) .bunit__body {
+  animation: atk-shoot calc(700ms * var(--beat)) cubic-bezier(0.2, 0.8, 0.3, 1) both;
+}
+@keyframes atk-shoot {
+  40% { transform: translateX(var(--kick)); }
+}
+/* Casters: a lift, the spell, and down. */
+.bunit--attacker:is(.bunit--atk-orb, .bunit--atk-beam, .bunit--atk-rift) .bunit__body {
+  animation: atk-cast calc(800ms * var(--beat)) ease-out both;
+}
+@keyframes atk-cast {
+  30% { transform: translateY(-1.2cqw) scale(1.03); }
+  60% { transform: translateY(-0.4cqw); }
+}
+
+/* ---- the effect layer ---- */
+.bfx {
+  /* Where things are, from the two fighters' feet and depth. */
+  --axp: calc(var(--ax) * 1%);
+  --txp: calc(var(--tx) * 1%);
+  --ach: calc(var(--ay) * 1% - var(--unit) * 0.79 * var(--da));
+  --tch: calc(var(--ty) * 1% - var(--unit) * 0.79 * var(--dt));
+  --tft: calc(var(--ty) * 1%);
+  --mx: calc((var(--tx) - var(--ax)) * 1cqw);
+  --my: calc((var(--ty) - var(--ay)) * var(--ratio) * 1cqw - (var(--dt) - var(--da)) * var(--unit) * 0.79);
+  position: absolute;
+  inset: 0;
+  z-index: 320;
+  pointer-events: none;
+}
+.bfx::before,
+.bfx::after,
+.bfx > i {
+  content: '';
+  position: absolute;
+  display: block;
+}
+:root[data-fx='low'] .bfx {
+  display: none;
+}
+
+/* Effects at the target. Each keyframe starts invisible so the delay shows nothing. */
+@keyframes bfx-grow {
+  0% { opacity: 0; transform: scale(0.2); }
+  1% { opacity: 1; transform: scale(0.2); }
+  100% { opacity: 0; transform: scale(1.8); }
+}
+@keyframes bfx-pop {
+  0% { opacity: 0; transform: scale(0.3); }
+  1% { opacity: 1; transform: scale(0.3); }
+  100% { opacity: 0; transform: scale(1.5); }
+}
+@keyframes bfx-travel {
+  0% { opacity: 0; translate: 0 0; }
+  1%, 96% { opacity: 1; }
+  100% { opacity: 0; translate: var(--mx) var(--my); }
+}
+
+/* Juggernaut: a shockwave ring on the floor. Voidwarden: the same, violet. */
+.bfx--charge::after,
+.bfx--bash::after {
+  left: var(--txp);
+  top: var(--tft);
+  width: 12cqw;
+  height: 3cqw;
+  margin: -1.5cqw 0 0 -6cqw;
+  border-radius: 50%;
+  border: 3px solid rgb(255 220 150);
+  box-shadow: 0 0 14px rgb(255 200 100 / 70%);
+  animation: bfx-grow calc(600ms * var(--beat)) ease-out var(--impact) both;
+}
+.bfx--bash::after {
+  border-color: rgb(170 120 255);
+  box-shadow: 0 0 14px rgb(150 100 255 / 70%);
+}
+
+/* Astral Knight: a burst of starlight where it lands. */
+.bfx--leap::after {
+  left: var(--txp);
+  top: var(--tch);
+  width: 6cqw;
+  height: 6cqw;
+  margin: -3cqw 0 0 -3cqw;
+  background:
+    radial-gradient(circle, #fff 12%, transparent 14%),
+    conic-gradient(from 0deg, transparent 0 40deg, #fff 45deg, transparent 50deg 130deg, #fff 135deg, transparent 140deg 220deg, #fff 225deg, transparent 230deg 310deg, #fff 315deg, transparent 320deg);
+  filter: drop-shadow(0 0 8px #9fd8ff);
+  animation: bfx-pop calc(520ms * var(--beat)) ease-out var(--impact) both;
+}
+
+/* Mindblade: one bright slash across the target. */
+.bfx--dash::after {
+  left: var(--txp);
+  top: var(--tch);
+  width: 14cqw;
+  height: 4px;
+  margin: -2px 0 0 -7cqw;
+  border-radius: 2px;
+  background: linear-gradient(90deg, transparent, #fff, #bfe9ff, transparent);
+  box-shadow: 0 0 12px #9fe2ff;
+  rotate: calc(var(--dir) * -28deg);
+  animation: bfx-slash calc(380ms * var(--beat)) ease-out var(--impact) both;
+}
+@keyframes bfx-slash {
+  0% { opacity: 0; transform: scaleX(0); }
+  1% { opacity: 1; transform: scaleX(0); }
+  40% { opacity: 1; transform: scaleX(1); }
+  100% { opacity: 0; transform: scaleX(1.1); }
+}
+
+/* Lunatic: three claw marks, one per hit. */
+.bfx--frenzy > i {
+  left: var(--txp);
+  top: var(--tch);
+  width: 6cqw;
+  height: 3px;
+  margin: -1.5px 0 0 -3cqw;
+  background: #ff6b8a;
+  box-shadow: 0 0 8px #ff3d6a;
+  animation: bfx-slash calc(300ms * var(--beat)) ease-out both;
+}
+.bfx--frenzy > i:nth-child(1) { rotate: -35deg; translate: -0.8cqw -1.2cqw; animation-delay: var(--impact); }
+.bfx--frenzy > i:nth-child(2) { rotate: 35deg; animation-delay: calc(740ms * var(--beat)); }
+.bfx--frenzy > i:nth-child(3) { rotate: -35deg; translate: 0.8cqw 1.2cqw; animation-delay: calc(900ms * var(--beat)); }
+
+/* Tactician: the cleave, one wide sweeping arc through the front of them. */
+.bfx--cleave::after {
+  left: var(--txp);
+  top: var(--tch);
+  width: 18cqw;
+  height: 9cqw;
+  margin: -6cqw 0 0 -9cqw;
+  border-radius: 50% / 100% 100% 0 0;
+  border-top: 5px solid #fff;
+  filter: drop-shadow(0 0 6px #ffe7a8) drop-shadow(0 0 14px rgb(255 190 80 / 70%));
+  animation: bfx-cleave calc(420ms * var(--beat)) ease-out calc(var(--impact) - 120ms * var(--beat)) both;
+}
+@keyframes bfx-cleave {
+  0% { opacity: 0; transform: rotate(calc(var(--dir) * -70deg)) scale(0.8); }
+  1% { opacity: 1; }
+  60% { opacity: 1; transform: rotate(calc(var(--dir) * 15deg)) scale(1); }
+  100% { opacity: 0; transform: rotate(calc(var(--dir) * 40deg)) scale(1.05); }
+}
+
+/* Hunter: an arrow, flying from bow to target. */
+.bfx--arrow::before {
+  left: var(--axp);
+  top: var(--ach);
+  width: 5cqw;
+  height: 4px;
+  margin: -2px 0 0 -2.5cqw;
+  background: linear-gradient(90deg, transparent, #e8d6a8 40%, #fff);
+  box-shadow: 0 0 6px rgb(255 240 200 / 70%);
+  border-radius: 2px;
+  rotate: atan2(var(--my), var(--mx));
+  animation: bfx-travel calc(320ms * var(--beat)) linear calc(var(--impact) - 320ms * var(--beat)) both;
+}
+
+/* Desperado: two shots, a muzzle flash and two tracers. */
+.bfx--shots > i {
+  left: var(--axp);
+  top: var(--ach);
+  width: 3cqw;
+  height: 4px;
+  margin: -2px 0 0 -1.5cqw;
+  border-radius: 2px;
+  background: linear-gradient(90deg, transparent, #ffe08a 50%, #fff);
+  box-shadow: 0 0 10px #ffcf4a;
+  rotate: atan2(var(--my), var(--mx));
+  animation: bfx-travel calc(200ms * var(--beat)) linear both;
+}
+.bfx--shots > i:nth-child(1) { animation-delay: calc(var(--impact) - 200ms * var(--beat)); }
+.bfx--shots > i:nth-child(2) { animation-delay: calc(var(--impact) - 80ms * var(--beat)); }
+.bfx--shots::before {
+  left: calc(var(--axp) + var(--dir) * 2.4cqw);
+  top: var(--ach);
+  width: 2.4cqw;
+  height: 2.4cqw;
+  margin: -1.2cqw 0 0 -1.2cqw;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fff, #ffd060 40%, transparent 70%);
+  animation: bfx-pop calc(220ms * var(--beat)) ease-out calc(var(--impact) - 200ms * var(--beat)) both;
+}
+
+/* Explosioneer: a bomb lobbed in an arc, bursting on the target. */
+.bfx--bomb > i {
+  left: var(--axp);
+  top: var(--ach);
+  animation: bfx-lob-x calc(360ms * var(--beat)) linear calc(var(--impact) - 360ms * var(--beat)) both;
+}
+.bfx--bomb > i::before {
+  content: '';
+  position: absolute;
+  width: 1.5cqw;
+  height: 1.5cqw;
+  margin: -0.75cqw 0 0 -0.75cqw;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #777, #111);
+  box-shadow: 0 0 0 2px #2a2a2a, 0 0 8px #ff8a2a;
+  animation: bfx-lob-y calc(360ms * var(--beat)) calc(var(--impact) - 360ms * var(--beat)) both;
+}
+@keyframes bfx-lob-x {
+  0% { opacity: 0; translate: 0 0; }
+  1%, 96% { opacity: 1; }
+  100% { opacity: 0; translate: var(--mx) 0; }
+}
+@keyframes bfx-lob-y {
+  0% { transform: translateY(0); animation-timing-function: cubic-bezier(0.3, 0.6, 0.6, 1); }
+  50% { transform: translateY(calc(var(--my) / 2 - 9cqw)); animation-timing-function: cubic-bezier(0.4, 0, 0.7, 0.4); }
+  100% { transform: translateY(var(--my)); }
+}
+.bfx--bomb::after,
+.bfx--orb::after {
+  left: var(--txp);
+  top: var(--tch);
+  width: 8cqw;
+  height: 8cqw;
+  margin: -4cqw 0 0 -4cqw;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fff6c8, #ffae3a 35%, rgb(255 80 40 / 60%) 55%, transparent 72%);
+  animation: bfx-pop calc(460ms * var(--beat)) ease-out var(--impact) both;
+}
+
+/* Arcanist: a glowing orb, bursting blue. */
+.bfx--orb::before {
+  left: var(--axp);
+  top: calc(var(--ach) - 1.5cqw);
+  width: 2.2cqw;
+  height: 2.2cqw;
+  margin: -1.1cqw 0 0 -1.1cqw;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fff, #7fe0ff 45%, rgb(60 140 255 / 0%) 72%);
+  box-shadow: 0 0 16px #4fb8ff;
+  animation: bfx-travel calc(360ms * var(--beat)) cubic-bezier(0.5, 0, 0.9, 0.6) calc(var(--impact) - 360ms * var(--beat)) both;
+}
+.bfx--orb::after {
+  background: radial-gradient(circle, #fff, #8fe4ff 35%, rgb(60 140 255 / 50%) 55%, transparent 72%);
+}
+
+/* Mystic: a column of light from above. */
+.bfx--beam::after {
+  left: var(--txp);
+  top: calc(var(--tft) - 24cqw);
+  width: 4cqw;
+  height: 24cqw;
+  margin-left: -2cqw;
+  transform-origin: 50% 0;
+  border-radius: 2cqw;
+  background: linear-gradient(180deg, rgb(255 250 220 / 0%), rgb(255 245 200 / 85%) 40%, #fff);
+  box-shadow: 0 0 30px rgb(255 230 150 / 70%);
+  animation: bfx-beam calc(620ms * var(--beat)) ease-out calc(var(--impact) - 340ms * var(--beat)) both;
+}
+@keyframes bfx-beam {
+  0% { opacity: 0; transform: scaleY(0); }
+  1% { opacity: 0.9; transform: scaleY(0); }
+  55% { opacity: 1; transform: scaleY(1); }
+  100% { opacity: 0; transform: scaleY(1) scaleX(0.2); }
+}
+
+/* Voidcaller: a rift opens under the target. */
+.bfx--rift::after {
+  left: var(--txp);
+  top: var(--tft);
+  width: 11cqw;
+  height: 3cqw;
+  margin: -1.5cqw 0 0 -5.5cqw;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, #12001f 30%, #6b2cff 60%, transparent 72%);
+  box-shadow: 0 0 24px rgb(140 80 255 / 80%);
+  animation: bfx-rift calc(900ms * var(--beat)) ease-in-out calc(var(--impact) - 320ms * var(--beat)) both;
+}
+@keyframes bfx-rift {
+  0% { opacity: 0; transform: scale(0); }
+  1% { opacity: 1; transform: scale(0); }
+  35%, 60% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(0); }
+}

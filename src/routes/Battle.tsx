@@ -1318,6 +1318,35 @@ const FORMATION_WIDE: [number, number, number][] = [
 /** How far an attacker dashes toward its target, as a share of the gap. */
 const LUNGE_SHARE = 0.55
 
+/**
+ * Every class swings its own way on the battlefield.
+ *
+ * The name is a CSS hook: `bunit--atk-<move>` drives how the attacker moves,
+ * and `bfx--<move>` the one effect drawn for the blow. All of them connect
+ * at --impact, when the damage lands, so the numbers and the health bars
+ * stay in step whatever the class. Anything not listed, the NFT fighter
+ * included, keeps the plain lunge.
+ */
+const SIGNATURE: Record<string, string> = {
+  juggernaut: 'charge',
+  astralknight: 'leap',
+  mindblade: 'dash',
+  voidwarden: 'bash',
+  lunatic: 'frenzy',
+  tactician: 'cleave',
+  hunter: 'arrow',
+  desperado: 'shots',
+  explosioneer: 'bomb',
+  arcanist: 'orb',
+  mystic: 'beam',
+  voidcaller: 'rift',
+}
+
+function signatureOf(f: SimFighter | undefined): string | undefined {
+  if (!f || Number(f.fighter_id) === NFT_FIGHTER_ID) return undefined
+  return SIGNATURE[(f.classname || '').toLowerCase().replace(/[^a-z]/g, '')]
+}
+
 function Battlefield({
   team1,
   team2,
@@ -1371,6 +1400,9 @@ function Battlefield({
     from && to
       ? { dx: (to[0] - from[0]) * LUNGE_SHARE, dy: (to[1] - from[1]) * LUNGE_SHARE }
       : null
+
+  const attacker = current ? [...team1, ...team2].find((f) => f.uid === current.attackerUid) : undefined
+  const signature = signatureOf(attacker)
 
   const alive = (team: SimFighter[]) =>
     team.filter((f) => (state.get(f.uid)?.health ?? f.start_health) > 0).length
@@ -1439,6 +1471,44 @@ function Battlefield({
 
       {queue && <div className="bfield__queue">{queue}</div>}
 
+      {/*
+        The blow's one effect - an arrow, a shockwave, a column of light -
+        drawn on the field between the two fighters, and gone with the turn.
+      */}
+      {current && signature && from && to && (
+        <span
+          key={`sig-${turn}`}
+          className={`bfx bfx--${signature}`}
+          aria-hidden="true"
+          style={
+            {
+              '--ax': from[0],
+              '--ay': from[1],
+              '--tx': to[0],
+              '--ty': to[1],
+              '--da': depth.get(current.attackerUid) ?? 1,
+              '--dt': depth.get(current.defenderUid) ?? 1,
+              '--dir': attacker?.team === 1 ? 1 : -1,
+            } as React.CSSProperties
+          }
+        >
+          {signature === 'shots' && (
+            <>
+              <i />
+              <i />
+            </>
+          )}
+          {signature === 'frenzy' && (
+            <>
+              <i />
+              <i />
+              <i />
+            </>
+          )}
+          {signature === 'bomb' && <i />}
+        </span>
+      )}
+
       {[...team1, ...team2].map((f) => {
         const role: 'attacker' | 'defender' | null = !current
           ? null
@@ -1463,6 +1533,7 @@ function Battlefield({
             next={nextUp === f.uid}
             aiming={aimUid === f.uid}
             lunge={role === 'attacker' ? lunge : null}
+            signature={role === 'attacker' ? signature : undefined}
             owner={
               f.team === 1 ? f.gamertag || playertag || 'You' : f.gamertag || f.owner || 'AI'
             }
@@ -1510,6 +1581,7 @@ function FieldUnit({
   next,
   aiming,
   lunge,
+  signature,
   owner,
 }: {
   fighter: SimFighter
@@ -1527,6 +1599,8 @@ function FieldUnit({
   /** Called to swing next: the tournament's pointer over the head. */
   aiming?: boolean
   lunge: { dx: number; dy: number } | null
+  /** The attacker's class move, when it has one. See SIGNATURE. */
+  signature?: string
   owner: string
 }) {
   const health = snap?.health ?? fighter.start_health
@@ -1557,7 +1631,8 @@ function FieldUnit({
         `bunit bunit--${side}` +
         (role ? ` bunit--${role}` : '') +
         (dead ? ' bunit--dead' : '') +
-        (next && !dead ? ' bunit--next' : '')
+        (next && !dead ? ' bunit--next' : '') +
+        (signature ? ` bunit--atk-${signature}` : '')
       }
       style={
         {
