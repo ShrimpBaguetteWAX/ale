@@ -4140,3 +4140,14 @@
     opacity: 1;
   }
 }
+
+@media (max-width: 719px) {
+  /* The log's panel is its full size from the first blow; no scrollbar
+     appears as it fills, older blows are a swipe away. */
+  .bfwrap--bcast > .clog--live .clog__body {
+    scrollbar-width: none;
+  }
+  .bfwrap--bcast > .clog--live .clog__body::-webkit-scrollbar {
+    display: none;
+  }
+}
