@@ -46,3 +46,57 @@ export function OddsCentre({ odds }: { odds: Odds | null }) {
     </span>
   )
 }
+
+/**
+ * The phone's matchup banner, above your team.
+ *
+ * Your damage and health on a blue blade, the opponent's on a red one, and
+ * the chance to win in a crest where they meet — the matchup screen mobile
+ * games open a fight with. The crest's ring carries the same verdict colour
+ * as the desktop's figure: teal yours, amber anyone's, red not.
+ */
+export function PowerBanner({
+  odds,
+  mine,
+  theirs,
+  them,
+}: {
+  odds: Odds | null
+  mine: { damage: string; health: string }
+  theirs: { damage: string; health: string }
+  /** What the other side is called: "Dungeon", "Arena". */
+  them: string
+}) {
+  const pct = odds ? Math.round(odds.winRate * 100) : null
+  const band = pct === null ? 'none' : pct >= 55 ? 'good' : pct >= 35 ? 'even' : 'poor'
+
+  return (
+    <div
+      className={`powerbanner powerbanner--${band}`}
+      title={odds ? oddsTitle(odds, 'mine') : undefined}
+    >
+      <div className="powerbanner__side powerbanner__side--mine">
+        <small>You · DMG / HP</small>
+        <b className="mono">
+          {mine.damage} / {mine.health}
+        </b>
+      </div>
+      <div className="powerbanner__side powerbanner__side--them">
+        <small>{them} · DMG / HP</small>
+        <b className="mono">
+          {theirs.damage} / {theirs.health}
+        </b>
+      </div>
+      <div className="powerbanner__crest" role="img" aria-label={odds ? oddsTitle(odds, 'mine') : 'Versus'}>
+        {pct === null ? (
+          <b>VS</b>
+        ) : (
+          <>
+            <b>{pct}%</b>
+            <span>to win</span>
+          </>
+        )}
+      </div>
+    </div>
+  )
+}

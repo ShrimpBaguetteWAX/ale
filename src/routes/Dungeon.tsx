@@ -42,7 +42,7 @@ import {
 } from '@/fight/matchup'
 import { ageFactor, levelFactor } from '@/fight/scaling'
 import { oddsTitle, teamOdds } from '@/fight/odds'
-import { OddsCentre } from '@/fight/OddsCentre'
+import { OddsCentre, PowerBanner } from '@/fight/OddsCentre'
 import { recallTeam, rememberTeam, restoreTeam } from '@/fight/lastTeam'
 import { applyWeather, fetchWeather } from '@/fight/weather'
 import { autoPickCards, autoPickCardsByOdds, autoPickFighters } from '@/fight/autopick'
@@ -1043,6 +1043,22 @@ export default function Dungeon() {
           </div>
         )}
 
+        {/* A phone opens the matchup with the odds, above your team. */}
+        {phone && (
+          <PowerBanner
+            odds={odds}
+            mine={{
+              damage: formatScaled(outlook.mine.damage),
+              health: formatScaled(outlook.mine.health),
+            }}
+            theirs={{
+              damage: formatScaled(outlook.theirs.damage),
+              health: formatScaled(outlook.theirs.health),
+            }}
+            them="Dungeon"
+          />
+        )}
+
         {/*
           The matchup, as a versus screen.
 
@@ -1218,6 +1234,7 @@ export default function Dungeon() {
 
           </div>
 
+        {!phone && (
         <div className="versus__divider">
             <OddsCentre odds={odds} />
             {/*
@@ -1228,6 +1245,7 @@ export default function Dungeon() {
               <i style={{ width: `${myShare * 100}%` }} />
             </div>
           </div>
+        )}
 
           <div className="versus__side versus__side--enemy">
             {/*
