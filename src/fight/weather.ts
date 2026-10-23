@@ -1,4 +1,4 @@
-import { getRow } from '@/chain/client'
+import { getRow, getRows } from '@/chain/client'
 import { CONTRACTS } from '@/chain/config'
 import { TTL } from '@/chain/cache'
 import { addValue, capped, type StatCaps } from '@/dungeon/sim'
@@ -82,6 +82,15 @@ export function fetchWeatherRow(
     { code: CONTRACTS.battle, scope: planet, table: 'weather', key: weatherId },
     { ttl: TTL.long, persist: true },
   )
+}
+
+/** A page of a planet's weather table: every roll it can draw from. */
+export async function fetchWeatherRows(planet: string, limit = 20): Promise<Weather[]> {
+  const page = await getRows<Weather>(
+    { code: CONTRACTS.battle, scope: planet, table: 'weather', limit },
+    { ttl: TTL.long, persist: true },
+  )
+  return page.rows
 }
 
 /** Who the weather can reach. */

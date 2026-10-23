@@ -41,7 +41,7 @@ import { HoverPopover, useHoverCard } from '@/components/HoverPopover'
 import { BoutBroadcast } from '@/tournament/BoutBroadcast'
 import { usePhone } from '@/components/usePhone'
 import { WeatherPanel } from '@/fight/setup'
-import { fetchWeatherRow, type Weather } from '@/fight/weather'
+import { fetchWeatherRow, fetchWeatherRows, weatherIsCalm, type Weather } from '@/fight/weather'
 import {
   fetchLiveTournaments,
   fetchTournamentConfig,
@@ -251,6 +251,34 @@ export function TournamentHead() {
  * use, one roll per planet, because it is the same thing: the first thing
  * that happens to a fighter, before level, age or anything else.
  */
+/*
+   Four rolls per tournament.
+
+   The contract rolls one per planet it picks, three today, and is going to
+   roll four. The strip is already drawn for four: until the chain rolls
+   them, it is topped up with stand-ins from the first rolled planet's own
+   weather table, so what a player sees is the layout they will get.
+
+   Display only. The fights read `rolls`, which is only ever what the chain
+   rolled, so a stand-in never touches an outcome. Nothing is added before
+   the first real roll lands — preparation still shows an empty strip.
+*/
+const ROLLS_SHOWN = 4
+
+async function withStandIns(
+  rolled: { planet: string; weather?: Weather }[],
+): Promise<{ planet: string; weather?: Weather }[]> {
+  const real = rolled.filter((w) => w.weather)
+  if (real.length === 0 || real.length >= ROLLS_SHOWN) return rolled
+  const planet = real[0].planet
+  const taken = new Set(real.map((w) => w.weather!.weather_id))
+  const table = await fetchWeatherRows(planet).catch(() => [] as Weather[])
+  const extra = table
+    .filter((w) => !taken.has(w.weather_id) && !weatherIsCalm(w))
+    .slice(0, ROLLS_SHOWN - real.length)
+  return [...rolled, ...extra.map((weather) => ({ planet, weather }))]
+}
+
 /** The least gap a single-row strip is allowed between its two halves. */
 const POT_MIN_BRIDGE = 60
 
@@ -348,8 +376,6 @@ export function PrizeBar({
   */
   const phone = usePhone()
   const figure = phone ? formatCompact : formatNumber
-  /* Which roll is being read, on a screen too narrow for all three. */
-  const [open, setOpen] = useState<number | null>(null)
   /* Whether the pot is explaining itself. */
   const [split, setSplit] = useState(false)
 
@@ -441,22 +467,16 @@ export function PrizeBar({
              where it was drawn from is bookkeeping rather than something a
              player acts on.
 
-             Tapping one opens it. Three rolls at full length do not fit
-             across a phone and a tooltip is no use there, so they share the
-             line in equal thirds and the one you press takes the room it
-             needs while the other two fall back to their stat icons. All
-             three stay on screen; only the reading order changes.
+             Four rolls, every one in words: four columns where the band
+             has the room, two by two where it does not (a phone, a small
+             desktop). A roll's text wraps inside its column rather than
+             hiding behind an icon, because on a touch screen the text is the
+             only way to read it.
           */}
-          {rolled.map((w, i) => (
-            <button
-              type="button"
-              key={`${w.planet}-${w.weather?.weather_id}`}
-              className={`pot__roll${open === i ? ' pot__roll--open' : open === null ? '' : ' pot__roll--mini'}`}
-              aria-expanded={open === i}
-              onClick={() => setOpen(open === i ? null : i)}
-            >
+          {rolled.map((w) => (
+            <div key={`${w.planet}-${w.weather?.weather_id}`} className="pot__roll">
               <WeatherPanel weather={w.weather} tooltip={false} />
-            </button>
+            </div>
           ))}
         </div>
       )}
@@ -2433,6 +2453,8 @@ export default function Tournament() {
         history,
         payouts,
         weather,
+        /* What the Conditions strip draws: the rolls, topped up to four. */
+        shownWeather: await withStandIns(weather),
         signups: at >= 0 ? fields[at] : [],
       }
     },
@@ -2804,7 +2826,7 @@ export default function Tournament() {
       {(!waiting || stage) && (
         <div className="tour__top">
           {!waiting && <TournamentHead />}
-          {!waiting && stage && <PrizeBar stage={stage} weather={board.data?.weather ?? []} />}
+          {!waiting && stage && <PrizeBar stage={stage} weather={board.data?.shownWeather ?? []} />}
         </div>
       )}
 
@@ -2848,7 +2870,7 @@ export default function Tournament() {
         <Preparing
           fighters={ringFighters}
           stage={stage}
-          weather={board.data?.weather ?? []}
+          weather={board.data?.shownWeather ?? []}
           signupAt={signupAt}
           now={now}
           onPrevious={previous ? () => setChosen(previous.tournament_name) : undefined}

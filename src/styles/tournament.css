@@ -454,44 +454,51 @@
   clip-path: polygon(10px 0, 100% 0, calc(100% - 12px) 100%, 0 100%);
 }
 
-.pot--stacked .pot__weather .pot__roll {
-  cursor: pointer;
+/*
+ * Stacked, the conditions row is a grid of four: a column per roll, each
+ * roll's text wrapping inside its own column, so the row stays one row
+ * whatever the rolls say.
+ */
+.pot--stacked .pot__weather {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, auto));
+  justify-content: start;
+  align-items: center;
+  column-gap: 18px;
+  row-gap: 8px;
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+.pot--stacked .pot__weather .weather {
+  flex-wrap: nowrap;
+  min-width: 0;
+}
+
+.pot--stacked .pot__weather .weather__name {
+  min-width: 0;
+  white-space: normal;
+  line-height: 1.25;
 }
 
 /*
- * Narrower still, the rolls go to their icons.
- *
- * Below about 900 pixels three rolls' worth of text does not fit on one
- * row even with the whole row to itself, so each roll shows only the stat
- * glyphs that say which numbers it moves. Pressing one opens its text; the
- * other two stay as icons. The same open-one-at-a-time state the phone
- * row uses, so there is nothing new to learn between the two sizes.
+ * Narrower, two by two. Four columns of text below about 960 pixels is a
+ * word a line; two rows of two keep every roll readable.
  */
 @container pot (max-width: 960px) {
-  .pot__weather {
-    gap: 14px;
+  .pot--stacked .pot__weather {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 14px;
   }
 
-  /*
-     Only once the strip has already stacked: the order is two rows first,
-     icons second. Shrinking the rolls on a single row would make that row
-     fit and stop the strip ever stacking — which is what happened.
-
-     The first roll keeps its text until another is opened, so the row is
-     never three unlabelled glyphs. `--mini` is what the screen puts on
-     every roll that is not the open one, so it is the one signal needed:
-     with nothing open, only the first shows its text; open any roll and
-     it alone does.
-  */
-  .pot--stacked .pot__roll--mini .weather__name,
-  .pot--stacked .pot__roll:not(.pot__roll--open):not(:first-child) .weather__name {
-    display: none;
-  }
-
-  /* An icon-only roll still gets a hairline, so three of them read as
-     three entries rather than a row of six glyphs. */
-  .pot__weather .pot__roll + .pot__roll {
+  .pot--stacked .pot__weather .pot__roll + .pot__roll {
     padding-left: 14px;
+  }
+
+  /* Each row starts at the band's edge, without a hairline before it. */
+  .pot--stacked .pot__weather .pot__roll:nth-child(odd) {
+    padding-left: 0;
+    border-left: 0;
   }
 }
 
@@ -524,15 +531,7 @@
   border-left: 1px solid rgb(255 255 255 / 14%);
 }
 
-/* A button, but only a phone ever needs it to look like one. */
 .pot__roll {
-  padding: 0;
-  border: 0;
-  background: none;
-  color: inherit;
-  font: inherit;
-  text-align: left;
-  cursor: default;
   min-width: 0;
 }
 
@@ -609,8 +608,13 @@
     font-size: 0.86rem;
   }
 
-  .pot__weather {
-    padding: 0 16px 0 22px;
+  /* The rolls take the full width under their tab: two columns of a
+     phone's width each, not two squeezed in beside it. */
+  .pot--stacked .pot__weather {
+    flex: 1 1 100%;
+    margin-left: 0;
+    padding: 8px 16px 8px 16px;
+    clip-path: polygon(0 0, 100% 0, calc(100% - 12px) 100%, 0 100%);
   }
 
   .pot__weather .weather {
@@ -620,12 +624,6 @@
   .pot__weather .weather__stat {
     width: 14px;
     height: 14px;
-  }
-
-  /* An opened roll may be longer than the band is wide; it wraps inside
-     the band rather than leaving it. */
-  .pot__roll--open .weather__name {
-    white-space: normal;
   }
 }
 
