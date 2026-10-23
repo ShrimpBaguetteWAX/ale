@@ -5368,7 +5368,7 @@ button.combatcard--empty:hover {
 @media (max-width: 719px) {
   /* Room under the fight for the pinned Leave and Start Fight. */
   .dungeon {
-    padding-bottom: 76px;
+    padding-bottom: 88px;
   }
   .dungeon__inner {
     gap: var(--sp-2);
@@ -5405,7 +5405,8 @@ button.combatcard--empty:hover {
     position: fixed;
     left: 12px;
     right: 12px;
-    bottom: calc(65px + env(safe-area-inset-bottom));
+    /* A clear gap above the tab bar, not sitting on it. */
+    bottom: calc(77px + env(safe-area-inset-bottom));
     z-index: 30;
     display: flex;
     gap: 8px;

@@ -1780,6 +1780,9 @@ function Result({
     return out
   }, [claimable])
   const claimsIn = (pool: string) => claims.filter((c) => c === pool).length
+  /* Every full 100% banked, of which one Mine sends at most MAX_CLAIMS. */
+  const claimsBanked = claimable.reduce((n, p) => n + Math.floor(p.power / FULL_POWER), 0)
+  const claimsLeft = claimsBanked - claims.length
 
   /*
    * The bars open at the level the pools were at *before* this run and fill
@@ -2206,6 +2209,10 @@ function Result({
                     p.estimate * (claimsIn(p.pool) > 1 ? claimsFactor(claimsIn(p.pool)) : 1)
                   ).toLocaleString('en-US', { maximumFractionDigits: 2 })}
                 </strong>
+                {/* How many of the claims are this currency's. */}
+                {claimsIn(p.pool) > 1 && (
+                  <span className="minepower__claims">×{claimsIn(p.pool)}</span>
+                )}
               </span>
               )
             ))}
@@ -2244,6 +2251,12 @@ function Result({
               <span className="minepower__times">×{claims.length}</span>
             )}
           </button>
+
+          {claimsLeft > 0 && (
+            <p className="minepower__left">
+              Up to {MAX_CLAIMS} claims per Mine · {claimsLeft} more after this one
+            </p>
+          )}
 
           {/* Quietly, in the dock: the receipt says what it paid. */}
           {mined && !mining && <p className="minepower__done">Mined successfully</p>}

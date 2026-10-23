@@ -3692,6 +3692,7 @@
 /* What the TLM and Shard figures are: the estimate for mining, everywhere. */
 .minepower__estlabel {
   flex-basis: 100%;
+  justify-content: center;
   /* The explanation sits under the estimate on wider screens; only a phone
      folds it behind the i. */
   font-family: var(--font-display);
@@ -3930,6 +3931,7 @@
   }
   .minepower__estlabel {
     flex: 1 1 auto;
+    justify-content: flex-start;
     text-align: left;
     font-size: 9.5px;
     letter-spacing: 0.08em;
@@ -3995,4 +3997,19 @@
   font-size: var(--fs-xs);
   font-weight: var(--fw-bold);
   color: var(--teal);
+}
+
+/* The count beside each currency, and the claims left for the next Mine. */
+.minepower__claims {
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: var(--fw-bold);
+  color: var(--text-faint);
+}
+.minepower__left {
+  grid-column: 1 / -1;
+  justify-self: center;
+  margin: 0;
+  font-size: var(--fs-xs);
+  color: var(--text-faint);
 }
