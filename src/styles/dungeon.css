@@ -6035,3 +6035,135 @@ button.combatcard--empty:hover {
     bottom: calc(100% + 2px);
   }
 }
+
+/*
+ * The dungeon on a phone, quieter.
+ *
+ * It used a dozen colours at once: yellow, teal and lavender for three
+ * figures in one line, cyan and pink panel titles, yellow damage and pink
+ * health on every card, blue and amber ability badges, a gold CREW and a red
+ * WEAPON, a purple weather chip and cyan auto-pick buttons. On a small screen
+ * that is everything shouting at once. The figures are white and their
+ * labels grey; what stays coloured is what is chosen or decided — the
+ * difficulty, the chance to win and its bar, the side each card is on — and
+ * the art. Damage and health keep a glyph each instead of a colour each.
+ */
+@media (max-width: 719px) {
+  .dungeon .readout__v--fair,
+  .dungeon .readout__v--good,
+  .dungeon .readout__v--bonus,
+  .dungeon .readout__v--poor {
+    color: var(--white);
+  }
+  /* White titles, each with a short bar in its side's colour: cyan you,
+     red the dungeon — the same two colours as the card edges. */
+  .dungeon .versus__team {
+    position: relative;
+    padding-left: 9px;
+    color: var(--white);
+  }
+  .dungeon .versus__team::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 2px;
+    bottom: 2px;
+    width: 3px;
+    border-radius: 2px;
+  }
+  .dungeon .versus__side--mine .versus__team::before {
+    background: var(--cyan);
+    box-shadow: 0 0 6px var(--cyan);
+  }
+  .dungeon .versus__side--enemy .versus__team::before {
+    background: #e0344f;
+    box-shadow: 0 0 6px #e0344f;
+  }
+
+  .dungeon .combatcard__dmg {
+    color: var(--white);
+  }
+  .dungeon .combatcard__hp {
+    color: #c4cddc;
+  }
+  /* Room for a glyph each on a card a sixth of a phone wide. */
+  .dungeon .combatcard__plate {
+    padding-left: 2px;
+    padding-right: 2px;
+  }
+  .dungeon .combatcard__stats {
+    gap: 2px;
+    font-size: 8.5px;
+    letter-spacing: -0.01em;
+  }
+  .dungeon .combatcard__dmg::before,
+  .dungeon .combatcard__hp::before {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    margin-right: 0.5px;
+    border-radius: 0;
+    vertical-align: -0.5px;
+    background: currentColor;
+    -webkit-mask: url("data:image/svg+xml,%3Csvg%20width%3D%2213%22%20height%3D%2212%22%20viewBox%3D%220%200%2013%2012%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%20%3Cpath%20d%3D%22M12.5276%20-0.610352C11.6876%200.254613%2010.5438%201.12023%209.37702%201.7583C9.39329%201.95881%209.39562%202.15788%209.38468%202.35475L11.4876%204.18848C12.1387%202.82102%2012.5217%201.23325%2012.5276%20-0.610352ZM8.87964%202.01637C7.95146%202.46842%207.03295%202.75602%206.26661%202.76403C6.27856%204.63369%203.05189%207.01652%200%208.5L0.5%209.5C3.26801%208.60135%204.65566%207.86003%206.39308%206.41442C7.99091%205.08497%208.92262%203.60452%208.87964%202.01637ZM9.30776%202.96569C9.15163%203.75902%208.78221%204.51805%208.24644%205.23183L8.33274%205.99746L10.6288%205.6625C10.8521%205.34266%2011.059%205.00821%2011.2483%204.65843L9.30776%202.96569ZM7.79442%205.78046C7.47521%206.13579%207.11528%206.4789%206.72036%206.80749C6.04551%207.36899%205.26676%207.89364%204.41063%208.37893L6.06665%209.59403C6.76624%209.21007%207.44259%208.77821%208.07724%208.29179L7.79442%205.78046ZM10.1947%206.2427L8.38997%206.50589L8.54894%207.91327C9.14709%207.41116%209.70162%206.85662%2010.1947%206.2427ZM3.91675%208.65067C3.66663%208.78357%203.41061%208.91318%203.1494%209.03945L3.5869%2010.7365C4.25258%2010.4801%204.91619%2010.1888%205.56421%209.85889L3.91675%208.65067ZM2.67862%209.26156C1.64147%209.73614%201.29709%209.85889%201.00024%2010L1.50005%2011.5C2.67124%2011.2534%201.82446%2011.3779%203.1059%2010.9159L2.67862%209.26156Z%22%20fill%3D%22%23FFB800%22%2F%3E%20%3C%2Fsvg%3E") center / contain no-repeat;
+    mask: url("data:image/svg+xml,%3Csvg%20width%3D%2213%22%20height%3D%2212%22%20viewBox%3D%220%200%2013%2012%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%20%3Cpath%20d%3D%22M12.5276%20-0.610352C11.6876%200.254613%2010.5438%201.12023%209.37702%201.7583C9.39329%201.95881%209.39562%202.15788%209.38468%202.35475L11.4876%204.18848C12.1387%202.82102%2012.5217%201.23325%2012.5276%20-0.610352ZM8.87964%202.01637C7.95146%202.46842%207.03295%202.75602%206.26661%202.76403C6.27856%204.63369%203.05189%207.01652%200%208.5L0.5%209.5C3.26801%208.60135%204.65566%207.86003%206.39308%206.41442C7.99091%205.08497%208.92262%203.60452%208.87964%202.01637ZM9.30776%202.96569C9.15163%203.75902%208.78221%204.51805%208.24644%205.23183L8.33274%205.99746L10.6288%205.6625C10.8521%205.34266%2011.059%205.00821%2011.2483%204.65843L9.30776%202.96569ZM7.79442%205.78046C7.47521%206.13579%207.11528%206.4789%206.72036%206.80749C6.04551%207.36899%205.26676%207.89364%204.41063%208.37893L6.06665%209.59403C6.76624%209.21007%207.44259%208.77821%208.07724%208.29179L7.79442%205.78046ZM10.1947%206.2427L8.38997%206.50589L8.54894%207.91327C9.14709%207.41116%209.70162%206.85662%2010.1947%206.2427ZM3.91675%208.65067C3.66663%208.78357%203.41061%208.91318%203.1494%209.03945L3.5869%2010.7365C4.25258%2010.4801%204.91619%2010.1888%205.56421%209.85889L3.91675%208.65067ZM2.67862%209.26156C1.64147%209.73614%201.29709%209.85889%201.00024%2010L1.50005%2011.5C2.67124%2011.2534%201.82446%2011.3779%203.1059%2010.9159L2.67862%209.26156Z%22%20fill%3D%22%23FFB800%22%2F%3E%20%3C%2Fsvg%3E") center / contain no-repeat;
+    opacity: 0.75;
+  }
+  .dungeon .combatcard__hp::before {
+    -webkit-mask-image: url("data:image/svg+xml,%3Csvg%20width%3D%2212%22%20height%3D%2211%22%20viewBox%3D%220%200%2012%2011%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%20%3Cpath%20d%3D%22M3.56199%208.72777C1.92394%207.46573%200%205.98342%200%203.41378C0%200.577062%203.20843%20-1.43468%205.83333%201.2925L7%202.45838C7.17086%202.62921%207.44788%202.62915%207.61874%202.45827C7.78954%202.28738%207.78948%202.01038%207.61862%201.83955L6.49162%200.712955C8.96496%20-1.09773%2011.6667%200.810681%2011.6667%203.41378C11.6667%205.98342%209.74272%207.46573%208.10466%208.72777C7.93444%208.85896%207.76726%208.98776%207.60567%209.11516C7%209.59262%206.41667%2010.0421%205.83333%2010.0421C5.25%2010.0421%204.66667%209.59262%204.06101%209.11516C3.89941%208.98776%203.73225%208.85896%203.56199%208.72777Z%22%20fill%3D%22%23F4634A%22%2F%3E%20%3C%2Fsvg%3E");
+    mask-image: url("data:image/svg+xml,%3Csvg%20width%3D%2212%22%20height%3D%2211%22%20viewBox%3D%220%200%2012%2011%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%20%3Cpath%20d%3D%22M3.56199%208.72777C1.92394%207.46573%200%205.98342%200%203.41378C0%200.577062%203.20843%20-1.43468%205.83333%201.2925L7%202.45838C7.17086%202.62921%207.44788%202.62915%207.61874%202.45827C7.78954%202.28738%207.78948%202.01038%207.61862%201.83955L6.49162%200.712955C8.96496%20-1.09773%2011.6667%200.810681%2011.6667%203.41378C11.6667%205.98342%209.74272%207.46573%208.10466%208.72777C7.93444%208.85896%207.76726%208.98776%207.60567%209.11516C7%209.59262%206.41667%2010.0421%205.83333%2010.0421C5.25%2010.0421%204.66667%209.59262%204.06101%209.11516C3.89941%208.98776%203.73225%208.85896%203.56199%208.72777Z%22%20fill%3D%22%23F4634A%22%2F%3E%20%3C%2Fsvg%3E");
+  }
+
+  .dungeon .combatcard__vsbit--bonus,
+  .dungeon .combatcard__vsbit--exposed {
+    background: rgb(12 18 32 / 88%);
+    color: var(--white);
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 30%);
+  }
+
+  /* Set inline from the card's rarity; the name and art already carry it. */
+  .dungeon .cardchip__kind {
+    color: var(--text-faint) !important;
+  }
+
+  /* The difficulty, toned down: the number keeps a warm colour, in an
+     outlined tile rather than a glowing orange block, so it still reads as
+     the enemy's strength; the stepper under it is white. */
+  .dungeon .dstep__value {
+    color: #ffd6c9;
+    background: rgb(224 52 79 / 20%);
+    box-shadow: inset 0 0 0 1px rgb(255 122 92 / 55%);
+  }
+  .dungeon .dstep__tick--lit::before {
+    background: rgb(255 255 255 / 55%);
+  }
+  .dungeon .dstep__tick--lit:hover::before {
+    background: rgb(255 255 255 / 75%);
+  }
+  .dungeon .dstep__tick[aria-checked='true']::before {
+    background: var(--white);
+    box-shadow: 0 0 6px rgb(255 255 255 / 45%);
+  }
+
+  .dungeon .dungeon__head .weather {
+    background: rgb(255 255 255 / 6%);
+    border-color: rgb(255 255 255 / 14%);
+  }
+
+  /* The auto-pick buttons are tools, not the next step: no highlight. */
+  .dungeon .autosplit__go,
+  .dungeon .cardsauto__go {
+    background: rgb(255 255 255 / 5%);
+    border-color: rgb(255 255 255 / 22%);
+    box-shadow: none;
+    color: var(--white);
+  }
+}
+
+/* The narrowest phones: a card is 45px wide, too narrow for two glyphs. The
+   heart stays, so health is marked and the other number is the damage. */
+@media (max-width: 379px) {
+  .dungeon .combatcard__dmg::before {
+    display: none;
+  }
+}
