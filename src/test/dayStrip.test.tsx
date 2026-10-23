@@ -17,7 +17,7 @@ import type { TimelineStep } from '@/tournament/rules'
  *
  * The seven steps below are the contract's; the strip draws four, because
  * `stripSteps` drops the two nobody waits on and merges the rest into
- * Preparation and Results. The counts here are of cells, not of steps.
+ * Signup closed and Results. The counts here are of cells, not of steps.
  */
 const STEPS = [
   'set_weather',
@@ -69,7 +69,7 @@ describe('the day strip', () => {
       const names = [...container.querySelectorAll('.tour__stepname')].map((n) =>
         n.textContent?.trim(),
       )
-      expect(names).toEqual(['Signup open', 'Preparation', 'Fighting', 'Results'])
+      expect(names).toEqual(['Signup open', 'Signup closed', 'Fights start', 'Results'])
     })
   })
 
@@ -79,7 +79,7 @@ describe('the day strip', () => {
       const names = [...container.querySelectorAll('.tour__stepname')].map((n) =>
         n.textContent?.trim(),
       )
-      expect(names).toEqual(['Signup open', 'Preparation', 'Fighting'])
+      expect(names).toEqual(['Signup open', 'Signup closed', 'Fights start'])
     })
   })
 

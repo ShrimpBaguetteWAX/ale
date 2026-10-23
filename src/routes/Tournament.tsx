@@ -208,14 +208,14 @@ const STEP_LABEL: Record<string, string> = {
   set_weather: 'Weather rolled',
   get_rewards: 'Prize collected',
   signup: 'Signup open',
-  close_signup: 'Preparation',
+  close_signup: 'Signup closed',
   create_matchups: 'Bracket drawn',
-  battle: 'Fighting',
+  battle: 'Fights start',
   hall_of_fame: 'Hall of fame',
   reward_payout: 'Rewards paid',
   cleanup: 'Wrapped up',
   /* The two the strip merges several steps into. */
-  preparation: 'Preparation',
+  preparation: 'Signup closed',
   results: 'Results',
 }
 
