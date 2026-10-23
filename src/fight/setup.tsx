@@ -743,6 +743,7 @@ export function CombatCard({
   dormant,
   preview,
   marker,
+  selected,
 }: {
   element: string
   classname: string
@@ -783,6 +784,8 @@ export function CombatCard({
    * whether or not every slot in it happens to be filled.
    */
   onRemove?: () => void
+  /** Picked out on a phone, where a tap selects rather than opens. */
+  selected?: boolean
   /**
    * Why this fighter is on the card but not in the fight.
    *
@@ -873,7 +876,7 @@ export function CombatCard({
   )
 
   return (
-    <div className="combatslot" ref={slot} {...handlers}>
+    <div className={`combatslot${selected ? ' combatslot--selected' : ''}`} ref={slot} {...handlers}>
       {hover && (
         <HoverPopover anchor={hover.rect}>
           <FighterHoverCard
@@ -982,7 +985,7 @@ export function CombatCard({
             bottom. An empty row costs nothing to look at; an uneven band is
             immediately visible.
           */}
-          {!phone && counts}
+          {counts}
         </span>
       </button>
 
@@ -1020,7 +1023,7 @@ export function CombatCard({
         skipped it grew to fill the row on its own — which is what the NFT
         fighter, alone in never being given counts, was doing.
       */}
-      {phone && <div className="combatslot__under">{counts}</div>}
+
 
       {/*
         Undo, at the thing it undoes.

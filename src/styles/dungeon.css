@@ -5442,13 +5442,6 @@ button.combatcard--empty:hover {
     flex: 1;
     min-width: 0;
   }
-  .dungeon__roster {
-    flex: none;
-    align-self: flex-start;
-    margin-top: 4px;
-    --btn-bg: rgb(0 186 255 / 16%);
-    --btn-line: rgb(0 186 255 / 60%);
-  }
   .versus__divider {
     display: flex;
     align-items: center;
@@ -5597,9 +5590,6 @@ button.combatcard--empty:hover {
     margin-top: 6px;
     font-size: 12px;
   }
-  .dungeon__roster {
-    margin-top: 0;
-  }
 
   /* Shorter portraits: the line-up has two rows of them to fit. */
   .combatcard__art {
@@ -5687,7 +5677,189 @@ button.combatcard--empty:hover {
   .dungeon__actions .btn {
     white-space: nowrap;
   }
+  .dungeon__conditions .weathertwin {
+    min-width: 0;
+    overflow: hidden;
+  }
   .dungeon__conditions .weathertwin__line {
     max-width: 100%;
+  }
+}
+
+/* ---------- the phone screen, as the mockup drew it ---------- */
+
+@media (max-width: 719px) {
+  /* Title and weather on one line. */
+  .dungeon__head > div:first-child {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+  }
+  .dungeon__head .weather {
+    flex: 0 1 auto;
+    min-width: 0;
+    margin: 0 0 0 auto;
+    padding: 3px 8px;
+    font-size: 11px;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+  .dungeon__head .weather__name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* Two panels with the odds between them, not one big box. */
+  .versus {
+    gap: 8px;
+    padding: 0;
+    background: none;
+    border: 0;
+    box-shadow: none;
+  }
+  .versus__side {
+    gap: 6px;
+    padding: 9px;
+    border-radius: 12px;
+    background: linear-gradient(180deg, rgb(10 18 34 / 42%), rgb(4 9 20 / 52%));
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 11%);
+  }
+  .versus__divider {
+    padding: 0 2px;
+  }
+
+  /* The cards: portrait, level, element, a slim damage and health strip. */
+  .versus__row {
+    --underrow: 0px;
+    --removerow: 0px;
+  }
+  .versus__side--mine .versus__row {
+    --removerow: 0px;
+  }
+  .combatcard__name {
+    display: none;
+  }
+  .combatcard__plate {
+    padding: 10px 4px 3px;
+    background: linear-gradient(180deg, rgb(0 0 0 / 0%), rgb(0 0 0 / 82%) 45%);
+  }
+  .combatcard__stats {
+    justify-content: center;
+    font-size: 9.5px;
+    font-weight: var(--fw-bold);
+  }
+  .combatcard__art {
+    aspect-ratio: 5 / 7;
+  }
+  /* The ability counts as tabs on the card's edge, as on desktop. */
+  .combatcard__vs {
+    position: absolute;
+    right: 8%;
+    bottom: calc(100% + 18px);
+    display: grid;
+    justify-items: end;
+    gap: 2px;
+    min-height: 0;
+  }
+  .combatcard__vsbit {
+    min-width: 20px;
+    justify-content: center;
+    padding: 0 3px 0 4px;
+    border-radius: 7px 0 0 7px;
+    font-family: var(--font-body);
+    font-size: 9px;
+    font-weight: var(--fw-bold);
+    line-height: 14px;
+    color: var(--white);
+    background: rgb(80 95 210 / 94%);
+  }
+  .combatcard__vsbit img {
+    display: none;
+  }
+  .combatcard__vsbit--exposed {
+    color: #1a1000;
+    background: rgb(232 162 0 / 96%);
+  }
+
+  /* A picked-out fighter. */
+  .combatslot--selected > .combatcard {
+    box-shadow:
+      0 0 0 2px var(--cyan),
+      0 0 12px rgb(0 186 255 / 55%);
+  }
+
+  /* That fighter's bar, where auto-pick was. */
+  .lineupfocus {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+  }
+  .lineupfocus__name {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-family: var(--font-display);
+    font-size: 12px;
+    font-weight: var(--fw-bold);
+    text-transform: capitalize;
+    color: var(--cyan);
+  }
+  .lineupfocus .btn {
+    min-height: 32px;
+    padding: 0 10px;
+    font-family: var(--font-body);
+    font-size: 12px;
+  }
+  .lineupfocus .btn--ghost {
+    --btn-bg: rgb(255 255 255 / 8%);
+    --btn-line: rgb(255 255 255 / 22%);
+  }
+  .lineupfocus__remove {
+    --btn-bg: rgb(216 50 79 / 22%);
+    --btn-line: rgb(255 109 133 / 70%);
+    --btn-fg: #ffd2da;
+  }
+  .lineupfocus__close {
+    width: 30px;
+    height: 30px;
+    flex: none;
+    border: 0;
+    border-radius: 50%;
+    background: rgb(255 255 255 / 8%);
+    color: var(--white);
+    font-size: 17px;
+    line-height: 1;
+  }
+
+  /* Auto-pick cards and the pair on one line, under the dungeon's panel. */
+  .versus__cards--phone .cardsbar {
+    flex-wrap: nowrap;
+    gap: 6px;
+  }
+  .versus__cards--phone .cardsbar .cardsauto {
+    flex: none;
+  }
+}
+
+@media (max-width: 719px) {
+  /* The title line takes the full width; the spacers left from desktop do not. */
+  .dungeon__head {
+    flex-wrap: nowrap;
+  }
+  .dungeon__head > .spacer {
+    display: none;
+  }
+  .dungeon__head > div:first-child {
+    flex: 1 1 100%;
+  }
+  .combatcard__art {
+    aspect-ratio: 5 / 8;
+  }
+  .versus__cards--phone .cardchip--empty {
+    flex: none;
+    padding: 0 10px;
   }
 }

@@ -207,6 +207,13 @@ export default function Dungeon() {
   const [tab, setTab] = useState<Tab>('fighters')
   /* A phone keeps the roster in a sheet over the fight; see openPicker. */
   const [sheet, setSheet] = useState(false)
+  /*
+     A phone has no hover and no room for a remove bar under every card, so
+     a tap picks a fighter out instead, and the toolbar under the line turns
+     into that fighter's: details, change, remove. A number is a roster
+     fighter; 'nft' is the crew-and-weapon sixth.
+  */
+  const [focus, setFocus] = useState<number | 'nft' | null>(null)
   /* Scrolled to from the empty sixth slot, which is two panels above it. */
   /* And from the empty fighter slots, which are three panels above this. */
   const picker = useRef<HTMLElement>(null)
@@ -479,6 +486,65 @@ export default function Dungeon() {
      screen and slides the roster up over it; a wider screen scrolls down to
      where the roster stands under the line-up.
   */
+  const focused =
+    focus === 'nft'
+      ? nftFighter
+        ? { name: 'NFT Fighter' }
+        : null
+      : (() => {
+          const f = team.find((x) => x && x.fighter_id === focus)
+          return f ? { name: f.classname, fighter: f } : null
+        })()
+  const focusBar =
+    phone && focused ? (
+      <div className="lineupfocus">
+        <span className="lineupfocus__name">{focused.name}</span>
+        <button
+          type="button"
+          className="btn btn--ghost btn--sm"
+          onClick={() =>
+            'fighter' in focused && focused.fighter
+              ? showFighter(focused.fighter)
+              : nftFighter && setDetail({ kind: 'panel', panel: nftFighter })
+          }
+        >
+          Details
+        </button>
+        <button
+          type="button"
+          className="btn btn--ghost btn--sm"
+          onClick={() => {
+            setFocus(null)
+            openPicker(focus === 'nft' ? 'crew' : 'fighters')
+          }}
+        >
+          Change
+        </button>
+        <button
+          type="button"
+          className="btn btn--sm lineupfocus__remove"
+          onClick={() => {
+            if ('fighter' in focused && focused.fighter) toggleFighter(focused.fighter)
+            else {
+              setCrew(null)
+              setWeapon(null)
+            }
+            setFocus(null)
+          }}
+        >
+          Remove
+        </button>
+        <button
+          type="button"
+          className="lineupfocus__close"
+          onClick={() => setFocus(null)}
+          aria-label="Done"
+        >
+          ×
+        </button>
+      </div>
+    ) : null
+
   const openPicker = (next: Tab) => {
     setTab(next)
     if (phone) setSheet(true)
@@ -888,16 +954,7 @@ export default function Dungeon() {
             */}
             {phone && <WeatherPanel weather={weather} />}
           </div>
-          {/* A phone's way into the roster, which waits in a sheet. */}
-          {phone && (
-            <button
-              type="button"
-              className="btn btn--ghost btn--sm dungeon__roster"
-              onClick={() => openPicker('fighters')}
-            >
-              All fighters
-            </button>
-          )}
+
           {!phone && (
             <>
               <span className="spacer" />
@@ -1024,13 +1081,18 @@ export default function Dungeon() {
                     damage={fielded.get(f.fighter_id)?.damage ?? 0}
                     side="mine"
                     abilities={enemies.length ? mySlots[i] : undefined}
-                    onOpen={() => showFighter(f)}
+                    onOpen={() =>
+                      phone
+                        ? setFocus((v) => (v === f.fighter_id ? null : f.fighter_id))
+                        : showFighter(f)
+                    }
+                    selected={phone && focus === f.fighter_id}
                     marker={f.marker}
                     preview={() => ({
                       panel: rosterPanel(f, levelMod, ageDecay),
                       template: classes.get(f.classname),
                     })}
-                    onRemove={() => toggleFighter(f)}
+                    onRemove={phone ? undefined : () => toggleFighter(f)}
                   />
                 ) : (
                   /*
@@ -1075,7 +1137,12 @@ export default function Dungeon() {
                   }
                   art={NFT_FIGHTER_ART}
                   badge="NFT"
-                  onOpen={() => setDetail({ kind: 'panel', panel: nftFighter })}
+                  onOpen={() =>
+                    phone
+                      ? setFocus((v) => (v === 'nft' ? null : 'nft'))
+                      : setDetail({ kind: 'panel', panel: nftFighter })
+                  }
+                  selected={phone && focus === 'nft'}
                   preview={() => ({
                     panel: nftFighter,
                     cards: [crew, weapon].filter((c): c is CardTemplate => !!c),
@@ -1087,10 +1154,14 @@ export default function Dungeon() {
                      card in the line with no bar under it would be the one
                      card whose portrait sat 23px lower than the other five.
                   */
-                  onRemove={() => {
-                    setCrew(null)
-                    setWeapon(null)
-                  }}
+                  onRemove={
+                    phone
+                      ? undefined
+                      : () => {
+                          setCrew(null)
+                          setWeapon(null)
+                        }
+                  }
                 />
               ) : (
                 /*
@@ -1122,8 +1193,8 @@ export default function Dungeon() {
             {/*
                Under the line-up it fills, as a toolbar.
             */}
-            <div className="versus__pick">{autoPickButton}</div>
-            {(
+            <div className="versus__pick">{focusBar ?? autoPickButton}</div>
+            {!phone && (
               <div className="versus__cards">
                 <CardsToolbar
                   crew={crew}
@@ -1243,6 +1314,19 @@ export default function Dungeon() {
           chosen once, not combatants being compared, and keeping them in the
           line-up crowded the cards the screen is actually about.
         */}
+
+        {phone && (
+          <div className="versus__cards versus__cards--phone">
+            <CardsToolbar
+              crew={crew}
+              weapon={weapon}
+              autoPick={autoPickCardsButton}
+              onOpen={showCard}
+              onClear={(kind) => (kind === 'crew' ? setCrew(null) : setWeapon(null))}
+              onChoose={(kind) => openPicker(kind)}
+            />
+          </div>
+        )}
 
         {phone && sheet && (
           <div className="picker__scrim" onClick={() => setSheet(false)} aria-hidden="true" />
