@@ -298,6 +298,15 @@ export default function Quests() {
         ))}
       </div>
 
+      {current?.endsAt && (
+        <p className="quests__reset">
+          <span>{current.label} quests</span>
+          <span>
+            New quests in <b>{formatTimeLeft(current.endsAt - now)}</b>
+          </span>
+        </p>
+      )}
+
       {data.loading ? (
         <div className="questgrid">
           {Array.from({ length: 3 }, (_, i) => (
@@ -491,9 +500,15 @@ function QuestCard({
           <span>{reward.symbol}</span>
         </div>
 
-        <div className="qbar">
-          <span className="qbar__fill" style={{ width: `${p.percent}%` }} />
-          <span className="qbar__text">
+        <div className="qprog">
+          <div className="qbar">
+            <span className="qbar__fill" style={{ width: `${p.percent}%` }} />
+            <span className="qbar__text">
+              {Math.min(p.done, p.goal).toLocaleString(NUM_LOCALE)} /{' '}
+              {p.goal.toLocaleString(NUM_LOCALE)}
+            </span>
+          </div>
+          <span className="qprog__count mono">
             {Math.min(p.done, p.goal).toLocaleString(NUM_LOCALE)} /{' '}
             {p.goal.toLocaleString(NUM_LOCALE)}
           </span>

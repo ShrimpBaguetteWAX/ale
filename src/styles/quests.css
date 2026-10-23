@@ -394,3 +394,250 @@
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
+
+/* ---------- a phone: the art is the card ---------- */
+
+.quests__reset,
+.qprog__count {
+  display: none;
+}
+
+/*
+ * The three quests of a cadence on one screen. The illustration stops being
+ * a banner on top and becomes the card's background, faded to the left
+ * where the text sits; the bar thins to a line with its count beside it;
+ * the time left and the button share the foot. The cadence tabs become a
+ * segmented control, as on the fighter picker, with the reset time on a
+ * line of its own under them.
+ */
+@media (max-width: 719px) {
+  .quests {
+    gap: 10px;
+    padding-bottom: var(--sp-4);
+  }
+  .quests__head {
+    align-items: center;
+  }
+  .quests__refill {
+    min-height: 36px;
+  }
+
+  .scopetabs {
+    flex-wrap: nowrap;
+    gap: 3px;
+    padding: 3px;
+    border-radius: 10px;
+    background: rgb(0 0 0 / 30%);
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 12%);
+  }
+  .scopetab {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 32px;
+    padding: 0;
+    border: 0;
+    border-radius: 7px;
+    background: none;
+  }
+  .scopetab:hover {
+    border-color: transparent;
+  }
+  .scopetab[aria-selected='true'] {
+    background: rgb(124 92 255 / 35%);
+    box-shadow: inset 0 0 0 1px #6f55ff;
+  }
+  .scopetab__name {
+    gap: 6px;
+    font-family: var(--font-body);
+    font-size: 12.5px;
+    letter-spacing: 0;
+    color: var(--text-faint);
+  }
+  .scopetab[aria-selected='true'] .scopetab__name {
+    color: var(--white);
+  }
+  .scopetab__badge {
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    font-size: 10px;
+  }
+  .scopetab__meta {
+    display: none;
+  }
+  .quests__reset {
+    display: flex;
+    justify-content: space-between;
+    margin: 0;
+    font-size: 11px;
+    color: var(--text-faint);
+  }
+  .quests__reset b {
+    color: var(--white);
+  }
+
+  .questgrid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+  }
+
+  .qcard {
+    position: relative;
+    display: block;
+    min-height: 172px;
+    border-radius: 12px;
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 9%);
+    border: 0;
+  }
+  .qcard--far {
+    --line-c: #ff4f6a;
+  }
+  .qcard--near {
+    --line-c: #ffb23e;
+  }
+  .qcard--done {
+    --line-c: var(--cyan);
+    box-shadow:
+      inset 0 0 0 1.5px rgb(0 186 255 / 70%),
+      0 0 16px rgb(0 186 255 / 20%);
+  }
+
+  /* The art fills the card, faded to the left under the text. */
+  .qcard__banner {
+    position: absolute;
+    inset: 0;
+    aspect-ratio: auto;
+    border: 0;
+  }
+  .qcard__banner::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      90deg,
+      rgb(8 13 28 / 96%) 30%,
+      rgb(8 13 28 / 55%) 70%,
+      rgb(8 13 28 / 20%)
+    );
+  }
+  .qcard__banner img {
+    object-position: right center;
+  }
+  /* Time left at the foot, opposite the button. */
+  .qcard__clock {
+    top: auto;
+    bottom: 17px;
+    left: 12px;
+    z-index: 1;
+    padding: 0;
+    background: none;
+    font-family: var(--font-body);
+    font-size: 11px;
+    color: var(--text-faint);
+  }
+  .qcard__clock::after {
+    content: ' left';
+  }
+  .qcard__ready {
+    top: 10px;
+    right: 10px;
+    z-index: 1;
+    padding: 1px 6px;
+    border-radius: 5px;
+    background: var(--teal);
+    color: #00131f;
+    font-family: var(--font-body);
+    font-size: 9px;
+    letter-spacing: 0.08em;
+  }
+
+  .qcard__body {
+    position: relative;
+    z-index: 1;
+    gap: 5px;
+    padding: 11px 12px 12px;
+  }
+  .qcard__title {
+    max-width: 70%;
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    color: #e3e9f4;
+  }
+  .qcard__desc {
+    flex: none;
+    max-width: 70%;
+    font-size: 11.5px;
+    line-height: 1.3;
+    color: var(--text-faint);
+  }
+  .qcard__reward {
+    align-items: center;
+    margin-top: 8px;
+  }
+  .qcard__reward strong {
+    font-size: 17px;
+    color: var(--white);
+  }
+  .qcard__reward span {
+    font-size: 9.5px;
+  }
+
+  .qprog {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .qbar {
+    flex: 1;
+    height: 6px;
+    margin: 0;
+    border: 0;
+    border-radius: 3px;
+    background: rgb(255 255 255 / 10%);
+  }
+  .qbar__fill {
+    border-radius: 3px;
+    background: var(--line-c);
+    opacity: 1;
+  }
+  .qbar__text {
+    display: none;
+  }
+  .qprog__count {
+    display: inline;
+    font-size: 11px;
+    font-weight: var(--fw-bold);
+    color: var(--white);
+    white-space: nowrap;
+  }
+
+  /* The button sits at the right of the foot, sized to its words. */
+  .qcard__action {
+    align-self: flex-end;
+    width: auto;
+    min-height: 30px;
+    margin-top: 4px;
+    padding: 0 12px;
+    font-size: 12px;
+  }
+  .qcard__action.btn--ghost {
+    --btn-bg: rgb(8 13 28 / 80%);
+    --btn-line: rgb(255 255 255 / 22%);
+  }
+  .qcard__action .cost img {
+    width: 13px;
+    height: 13px;
+  }
+  .qcard__confirm {
+    margin-top: 4px;
+    padding: 8px;
+    border-radius: 9px;
+    background: rgb(4 8 18 / 88%);
+  }
+  .qcard__warn {
+    font-size: 11.5px;
+  }
+}
