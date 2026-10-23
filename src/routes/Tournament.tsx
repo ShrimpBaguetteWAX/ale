@@ -2514,6 +2514,12 @@ export default function Tournament() {
     },
   )
   const roster = setup.data?.roster ?? null
+  /*
+     Who can be entered. A fighter that is `in_use` — holding an arena,
+     listed on the market, already in a tournament — is refused by `signup`
+     and aborts the whole entry, so it is not offered at all.
+  */
+  const free = useMemo(() => roster?.filter((f) => !f.in_use) ?? null, [roster])
   const crewCards = setup.data?.crewCards ?? EMPTY_CARDS
   const weaponCards = setup.data?.weaponCards ?? EMPTY_CARDS
 
@@ -2581,10 +2587,10 @@ export default function Tournament() {
 
   const picked = useMemo(
     () =>
-      (roster ?? [])
+      (free ?? [])
         .filter((f) => teamIds.includes(f.fighter_id))
         .sort((a, b) => teamIds.indexOf(a.fighter_id) - teamIds.indexOf(b.fighter_id)),
-    [roster, teamIds],
+    [free, teamIds],
   )
   const team = useMemo(() => {
     const slots: (RosterFighter | null)[] = Array(TEAM_SIZE).fill(null)
@@ -2946,13 +2952,13 @@ export default function Tournament() {
                 <RosterFilters
                   filter={filter}
                   onChange={setFilter}
-                  roster={roster ?? []}
+                  roster={free ?? []}
                   atLevelOne={atLevelOne}
                   onAtLevelOne={setAtLevelOne}
                   count={shownCount}
                 />
                 <FighterGrid
-                  roster={roster}
+                  roster={free}
                   filter={filter}
                   ageDecay={ageDecay}
                   levelMod={levelMod}
