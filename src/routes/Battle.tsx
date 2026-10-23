@@ -275,7 +275,19 @@ function Arena({
   */
   const wide = useWide()
   const broadcast = wide
-  const [showLog, setShowLog] = useState(false)
+  /* Open unless this player has closed it; their choice is remembered. */
+  const [showLog, setShowLogState] = useState(readShowLog)
+  const setShowLog = useCallback((next: boolean | ((v: boolean) => boolean)) => {
+    setShowLogState((v) => {
+      const value = typeof next === 'function' ? next(v) : next
+      try {
+        localStorage.setItem(LOG_KEY, value ? '1' : '0')
+      } catch {
+        /* Private mode: the choice lasts until the page is left. */
+      }
+      return value
+    })
+  }, [])
   /*
    * Playback is a chain of timeouts rather than an interval: the delay has to
    * change with the speed control mid-fight, and a timeout that reschedules
@@ -1006,6 +1018,16 @@ function Battlefield({
 }
 
 /** One fighter standing on the battlefield. */
+/** Whether the fight's combat log starts open: yes, until a player closes it. */
+const LOG_KEY = 'al.battle.log'
+function readShowLog(): boolean {
+  try {
+    return localStorage.getItem(LOG_KEY) !== '0'
+  } catch {
+    return true
+  }
+}
+
 /** Milliseconds as a player's clock: 0:04, 1:12. */
 function clock(ms: number): string {
   const s = Math.floor(ms / 1000)
@@ -1833,7 +1855,7 @@ function Result({
         break the letters and the two read as one image instead of a banner
         with a list underneath.
       */}
-      <div className="result__stage">
+      <div className={`result__stage result__stage--${won ? 'win' : 'loss'}`}>
         <h2
           className={`result__verdict${won ? ' result__verdict--win' : ''}`}
           aria-label={won ? 'Victory' : 'Defeat'}
