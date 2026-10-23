@@ -5547,17 +5547,158 @@ button.combatcard--empty:hover {
     border-radius: 2px;
     background: rgb(255 255 255 / 25%);
   }
-  .picker__sheettitle {
-    flex: 1;
-    font-family: var(--font-display);
-    font-size: 13px;
-    font-weight: var(--fw-bold);
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-  }
   .picker__sheetcount {
+    margin-left: auto;
     font-size: 12px;
     color: var(--text-faint);
+    white-space: nowrap;
+  }
+
+  /* The tabs as the sheet's title: one segmented control. */
+  .picker__sheettabs {
+    display: flex;
+    gap: 2px;
+    padding: 3px;
+    border-radius: 9px;
+    background: rgb(0 0 0 / 30%);
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 12%);
+  }
+  .picker__sheettab {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    height: 30px;
+    padding: 0 10px;
+    border: 0;
+    border-radius: 6px;
+    background: none;
+    color: var(--text-faint);
+    font: var(--fw-bold) 12.5px var(--font-body);
+    white-space: nowrap;
+    cursor: pointer;
+  }
+  .picker__sheettab[aria-selected='true'] {
+    background: rgb(124 92 255 / 35%);
+    box-shadow: inset 0 0 0 1px #6f55ff;
+    color: var(--white);
+  }
+  .picker__sheettab i {
+    font-style: normal;
+    font-size: 10.5px;
+    opacity: 0.7;
+  }
+
+  /*
+   * The sheet's toolbar: Filters, the sort, the card size, on one row. The
+   * Filters button is the auto-pick split button's shape — a main press
+   * that opens the filters and an end that shows the caret, or clears what
+   * is on, cyan while anything is.
+   */
+  .sheetbar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .sheetbar__filter {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    height: 38px;
+    border-radius: 9px;
+    background: rgb(255 255 255 / 5%);
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 16%);
+    overflow: hidden;
+  }
+  .sheetbar__filter--on {
+    background: rgb(0 186 255 / 10%);
+    box-shadow: inset 0 0 0 1px rgb(0 186 255 / 70%);
+  }
+  .sheetbar__main,
+  .sheetbar__end {
+    display: inline-flex;
+    align-items: center;
+    border: 0;
+    background: none;
+    color: #e3e9f4;
+    font: var(--fw-bold) 12.5px var(--font-body);
+    cursor: pointer;
+  }
+  .sheetbar__main {
+    flex: 1;
+    min-width: 0;
+    gap: 7px;
+    padding: 0 10px;
+    text-align: left;
+  }
+  .sheetbar__main svg {
+    flex: none;
+    width: 15px;
+    height: 15px;
+  }
+  .sheetbar__end {
+    flex: none;
+    width: 34px;
+    justify-content: center;
+    box-shadow: inset 1px 0 0 rgb(255 255 255 / 14%);
+    font-size: 11px;
+  }
+  .sheetbar__filter--on .sheetbar__main,
+  .sheetbar__filter--on .sheetbar__end {
+    color: #bff0ff;
+  }
+  .sheetbar__label {
+    flex: none;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+  }
+  .sheetbar__hint,
+  .sheetbar__what {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .sheetbar__hint {
+    font-weight: 600;
+    color: var(--text-faint);
+  }
+  .sheetbar__icon {
+    position: relative;
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 38px;
+    height: 38px;
+    border: 0;
+    border-radius: 9px;
+    background: rgb(255 255 255 / 5%);
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 16%);
+    color: #dfe6f2;
+    cursor: pointer;
+  }
+  .sheetbar__icon svg {
+    width: 16px;
+    height: 16px;
+  }
+  .sheetbar__icon--on {
+    background: rgb(124 92 255 / 25%);
+    box-shadow: inset 0 0 0 1px #6f55ff;
+  }
+  /* The real select, invisible over the icon, so a tap opens it. */
+  .sheetbar__icon select {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+  }
+
+  /* The filters themselves open under the toolbar, and only from it. */
+  .filters--sheet.filters--folded {
+    display: none;
   }
   .picker__sheetclose {
     width: 30px;

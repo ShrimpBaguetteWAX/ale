@@ -1086,6 +1086,7 @@ export function RosterFilters({
   versus,
   atLevelOne,
   onAtLevelOne,
+  sheet,
 }: {
   filter: RosterFilter
   onChange: (f: RosterFilter) => void
@@ -1130,6 +1131,14 @@ export function RosterFilters({
    */
   count?: { shown: number; total: number } | null
   omit?: ('status' | 'sort' | 'markers')[]
+  /**
+   * Drawn as the phone sheet's toolbar.
+   *
+   * One row instead of four: a Filters button that names what is switched
+   * on and clears it, the sort as an icon, and the card size as an icon.
+   * Everything else — the markers too — opens under it from Filters.
+   */
+  sheet?: { density: PickDensity; onDensity: (density: PickDensity) => void }
 }) {
   const { classes, races } = useMemo(() => facetsOf(roster), [roster])
 
@@ -1169,6 +1178,25 @@ export function RosterFilters({
   const active = countActiveFilters(filter)
   const folded = !open
 
+  const sortOptions = (
+    <>
+      {versus && (
+        <optgroup label="Against this team">
+          {VERSUS_SORTS.map((s) => (
+            <option key={s.value} value={s.value}>
+              {s.label}
+            </option>
+          ))}
+        </optgroup>
+      )}
+      {SORTS.map((s) => (
+        <option key={s.value} value={s.value}>
+          {s.label}
+        </option>
+      ))}
+    </>
+  )
+
   const toggleElement = (el: Element) =>
     set({
       elements: filter.elements.includes(el)
@@ -1178,7 +1206,89 @@ export function RosterFilters({
 
   return (
     <>
-    <div className={`filters${folded ? ' filters--folded' : ''}`}>
+    {sheet && (
+      <div className="sheetbar">
+        <div className={`sheetbar__filter${active > 0 ? ' sheetbar__filter--on' : ''}`}>
+          <button
+            type="button"
+            className="sheetbar__main"
+            aria-expanded={open}
+            onClick={() => setOpen((v) => !v)}
+          >
+            <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+              <path d="M1.5 3h13l-5 6v4.5l-3-1.5V9z" />
+            </svg>
+            {active > 0 ? (
+              <span className="sheetbar__what">{filterSummary(filter)}</span>
+            ) : (
+              <>
+                <span className="sheetbar__label">Filter</span>
+                <span className="sheetbar__hint">Markers, element, class…</span>
+              </>
+            )}
+          </button>
+          {active > 0 ? (
+            <button
+              type="button"
+              className="sheetbar__end"
+              aria-label="Clear filters"
+              onClick={() => onChange({ ...EMPTY_FILTER, sort: filter.sort })}
+            >
+              ✕
+            </button>
+          ) : (
+            <button
+              type="button"
+              className="sheetbar__end"
+              aria-hidden="true"
+              tabIndex={-1}
+              onClick={() => setOpen((v) => !v)}
+            >
+              {open ? '▴' : '▾'}
+            </button>
+          )}
+        </div>
+        {/* The sort as an icon over a real select: the phone's own picker
+            opens on a tap, with every option and the current one ticked. */}
+        {!omit.includes('sort') && (
+          <label className="sheetbar__icon" title="Sort by">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M5 2.5v11M2.5 11 5 13.5 7.5 11M11 13.5v-11M8.5 5 11 2.5 13.5 5" />
+            </svg>
+            <select aria-label="Sort by" value={filter.sort} onChange={(e) => set({ sort: e.target.value })}>
+              {sortOptions}
+            </select>
+          </label>
+        )}
+        <button
+          type="button"
+          className="sheetbar__icon sheetbar__icon--on"
+          aria-label={sheet.density === 'compact' ? 'Compact cards, show full cards' : 'Full cards, show compact cards'}
+          title={sheet.density === 'compact' ? 'Compact cards' : 'Full cards'}
+          onClick={() => sheet.onDensity(sheet.density === 'compact' ? 'full' : 'compact')}
+        >
+          {sheet.density === 'compact' ? (
+            <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+              <rect x="1.5" y="1.5" width="3.6" height="3.6" rx=".8" />
+              <rect x="6.2" y="1.5" width="3.6" height="3.6" rx=".8" />
+              <rect x="10.9" y="1.5" width="3.6" height="3.6" rx=".8" />
+              <rect x="1.5" y="6.2" width="3.6" height="3.6" rx=".8" />
+              <rect x="6.2" y="6.2" width="3.6" height="3.6" rx=".8" />
+              <rect x="10.9" y="6.2" width="3.6" height="3.6" rx=".8" />
+              <rect x="1.5" y="10.9" width="3.6" height="3.6" rx=".8" />
+              <rect x="6.2" y="10.9" width="3.6" height="3.6" rx=".8" />
+              <rect x="10.9" y="10.9" width="3.6" height="3.6" rx=".8" />
+            </svg>
+          ) : (
+            <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+              <rect x="1.5" y="1.5" width="5.8" height="13" rx="1.2" />
+              <rect x="8.7" y="1.5" width="5.8" height="13" rx="1.2" />
+            </svg>
+          )}
+        </button>
+      </div>
+    )}
+    <div className={`filters${folded ? ' filters--folded' : ''}${sheet ? ' filters--sheet' : ''}`}>
 
       {/*
          Markers first, because a player who has labelled a fighter is
@@ -1217,6 +1327,7 @@ export function RosterFilters({
         </div>
       )}
 
+      {!sheet && (
       <div className="filters__foot filters__keep">
         <button
           type="button"
@@ -1248,20 +1359,7 @@ export function RosterFilters({
               value={filter.sort}
               onChange={(e) => set({ sort: e.target.value })}
             >
-              {versus && (
-                <optgroup label="Against this team">
-                  {VERSUS_SORTS.map((s) => (
-                    <option key={s.value} value={s.value}>
-                      {s.label}
-                    </option>
-                  ))}
-                </optgroup>
-              )}
-              {SORTS.map((s) => (
-                <option key={s.value} value={s.value}>
-                  {s.label}
-                </option>
-              ))}
+              {sortOptions}
             </select>
           </label>
         )}
@@ -1272,6 +1370,7 @@ export function RosterFilters({
           </p>
         )}
       </div>
+      )}
 
       <div className="filters__elements" role="group" aria-label="Element">
         {ELEMENTS.map((el) => (
@@ -1501,6 +1600,26 @@ export function RosterFilters({
   )
 }
 
+/**
+ * What is switched on, in a few words, for the sheet's Filters button:
+ * "Fire · Tactician". Each filter by its value where that is short, and by
+ * its name where it is not.
+ */
+function filterSummary(f: RosterFilter): string {
+  const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
+  const parts: string[] = []
+  if (f.markers.length) parts.push(f.markers.length === 1 ? `${cap(f.markers[0] || 'Unmarked')} marker` : `${f.markers.length} markers`)
+  if (f.elements.length) parts.push(f.elements.map(cap).join(', '))
+  if (f.classname) parts.push(f.classname)
+  if (f.racename) parts.push(f.racename)
+  if (f.status !== 'All') parts.push(f.status)
+  if (f.ability) parts.push(`"${f.ability}"`)
+  if (f.levelReady) parts.push('Level ready')
+  if ((f.qualities?.length ?? 0) > 0) parts.push(`${f.qualities.length} stat rule${f.qualities.length === 1 ? '' : 's'}`)
+  if ((f.versus?.offense ?? 0) > 0 || (f.versus?.defense ?? 0) > 0 || (f.versus?.bonuses ?? 0) > 0) parts.push('Matchup')
+  return parts.join(' · ')
+}
+
 /* ---------- filtering on how well a fighter rolled ---------- */
 
 /**
@@ -1696,7 +1815,8 @@ export function FighterGrid({
   matchups,
   onToggle,
   onInspect,
-  sheet = false,
+  density: heldDensity,
+  onDensity,
 }: {
   roster: RosterFighter[] | null
   filter: RosterFilter
@@ -1734,18 +1854,26 @@ export function FighterGrid({
   onCount?: (shown: number, total: number) => void
   onToggle: (f: RosterFighter) => void
   onInspect: (f: RosterFighter) => void
-  /** Drawn in the phone's picker sheet, which starts compact. */
-  sheet?: boolean
+  /**
+   * The card size, when the caller keeps it.
+   *
+   * The phone's picker sheet puts the switch in its own toolbar, beside the
+   * filters, so it holds the setting and this grid only reads it — and
+   * leaves its own switch out.
+   */
+  density?: PickDensity
+  onDensity?: (density: PickDensity) => void
 }) {
   /* Which face every card shows, until one is turned over on its own. */
   const [view, setView] = useState<PickView>('combat')
   /* Read once here rather than in every card: a grid is 150 of them. */
   const phone = usePhone()
   /* How much of each fighter to draw, remembered from last time. */
-  const [density, setDensity] = useState<PickDensity>(() => recallDensity(sheet))
+  const [ownDensity, setOwnDensity] = useState<PickDensity>(recallDensity)
+  const density = heldDensity ?? ownDensity
   const chooseDensity = (next: PickDensity) => {
-    setDensity(next)
-    rememberDensity(next, sheet)
+    setOwnDensity(next)
+    rememberDensity(next)
   }
 
   const shown = useMemo(
@@ -1803,14 +1931,16 @@ export function FighterGrid({
       {/* The count used to sit here and now rides with the filters that
           decide it, which leaves this row to the two switches: what the
           cards show on the left, how big they are on the right. */}
-      <div className="picker__countrow">
-        {/* The readout switch is what the compact card does not have, so it
-            goes away with the thing it controls rather than sitting there
-            changing nothing. */}
-        {density === 'full' && <PickViewSwitch view={view} onChange={setView} />}
-        <span className="spacer" />
-        <PickDensitySwitch density={density} onChange={chooseDensity} />
-      </div>
+      {(!onDensity || density === 'full') && (
+        <div className="picker__countrow">
+          {/* The readout switch is what the compact card does not have, so it
+              goes away with the thing it controls rather than sitting there
+              changing nothing. */}
+          {density === 'full' && <PickViewSwitch view={view} onChange={setView} />}
+          <span className="spacer" />
+          {!onDensity && <PickDensitySwitch density={density} onChange={chooseDensity} />}
+        </div>
+      )}
       <div
         className={`fightergrid${density === 'compact' ? ' fightergrid--compact' : ''}`}
       >

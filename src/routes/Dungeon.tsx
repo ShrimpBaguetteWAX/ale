@@ -72,7 +72,10 @@ import {
   battlePanel,
   mid,
   rosterPanel,
+  recallDensity,
+  rememberDensity,
   type Detail,
+  type PickDensity,
   type Tab,
 } from '@/fight/setup'
 import { DIRTIES, playDungeon } from '@/wharf/actions'
@@ -207,6 +210,12 @@ export default function Dungeon() {
   const [tab, setTab] = useState<Tab>('fighters')
   /* A phone keeps the roster in a sheet over the fight; see openPicker. */
   const [sheet, setSheet] = useState(false)
+  /* The sheet's card size: its own setting, compact until changed. */
+  const [sheetDensity, setSheetDensity] = useState<PickDensity>(() => recallDensity(true))
+  const chooseSheetDensity = (next: PickDensity) => {
+    setSheetDensity(next)
+    rememberDensity(next, true)
+  }
   /*
      A phone has no hover and no room for a remove bar under every card, so
      a tap picks a fighter out instead, and the toolbar under the line turns
@@ -1338,11 +1347,38 @@ export default function Dungeon() {
         >
           {phone && (
             <div className="picker__sheethead">
-              <span className="picker__sheettitle">
-                {tab === 'fighters' ? 'Choose fighters' : tab === 'crew' ? 'Choose a crew card' : 'Choose a weapon'}
-              </span>
+              {/* The tabs are the title: they already say what is being chosen. */}
+              <div className="picker__sheettabs" role="tablist">
+                {(
+                  [
+                    ['fighters', 'Fighters'],
+                    ['crew', 'Crew'],
+                    ['weapon', 'Weapons'],
+                  ] as [Tab, string][]
+                ).map(([key, label]) => (
+                  <button
+                    type="button"
+                    key={key}
+                    role="tab"
+                    className="picker__sheettab"
+                    aria-selected={tab === key}
+                    onClick={() => setTab(key)}
+                  >
+                    {label}
+                    {key === 'fighters' && (
+                      <i>
+                        {picked.length}/{TEAM_SIZE}
+                      </i>
+                    )}
+                  </button>
+                ))}
+              </div>
               <span className="picker__sheetcount">
-                {picked.length}/{TEAM_SIZE}
+                {tab === 'fighters' && shownCount
+                  ? shownCount.shown < shownCount.total
+                    ? `${shownCount.shown}/${shownCount.total}`
+                    : shownCount.total
+                  : null}
               </span>
               <button
                 type="button"
@@ -1354,6 +1390,7 @@ export default function Dungeon() {
               </button>
             </div>
           )}
+          {!phone && (
           <div className="tabs" role="tablist">
             {(
               [
@@ -1375,6 +1412,7 @@ export default function Dungeon() {
               </button>
             ))}
           </div>
+          )}
 
           {tab === 'fighters' ? (
             <>
@@ -1386,6 +1424,7 @@ export default function Dungeon() {
                 atLevelOne={atLevelOne}
                 onAtLevelOne={setAtLevelOne}
                 count={shownCount}
+                sheet={phone ? { density: sheetDensity, onDensity: chooseSheetDensity } : undefined}
               />
               <FighterGrid
                 roster={roster}
@@ -1399,7 +1438,8 @@ export default function Dungeon() {
                 onToggle={toggleFighter}
                 onCount={countFighters}
                 onInspect={showFighter}
-                sheet={phone}
+                density={phone ? sheetDensity : undefined}
+                onDensity={phone ? chooseSheetDensity : undefined}
               />
             </>
           ) : (
