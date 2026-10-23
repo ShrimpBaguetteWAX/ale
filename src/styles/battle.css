@@ -1724,7 +1724,7 @@
 
 .minepower__estimate {
   display: flex;
-  gap: var(--sp-4);
+  gap: 4px var(--sp-4);
   flex-wrap: wrap;
   justify-content: center;
   font-family: var(--font-display);
@@ -3685,4 +3685,258 @@
 }
 :root[data-fx='low'] .result__stage::after {
   display: none;
+}
+
+/* ---------- the result on a phone: levels first, a reward dock ---------- */
+
+/* What the TLM and Shard figures are: the estimate for mining, everywhere. */
+.minepower__estlabel {
+  flex-basis: 100%;
+  /* The explanation sits under the estimate on wider screens; only a phone
+     folds it behind the i. */
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: var(--fw-bold);
+  letter-spacing: 0.14em;
+  text-align: center;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+/* The icons, the tabs, the face crops and the i are the phone's. */
+.minepower__why,
+.rescard__avatar,
+.result__icobtn svg,
+.result__tabs {
+  display: none;
+}
+
+@media (max-width: 719px) {
+  /* Combat log and replay as two icons beside the way out. */
+  .result__bar {
+    flex-wrap: nowrap;
+  }
+  .result__bar > .btn--primary {
+    flex: 1;
+  }
+  .result__bar .result__icobtn {
+    flex: none;
+    width: 44px;
+    padding: 0;
+  }
+  .result__icobtn svg {
+    display: block;
+    width: 18px;
+    height: 18px;
+  }
+  .result__btnword {
+    display: none;
+  }
+
+  /* Levels or Fight stats. */
+  .result__tabs {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    gap: 2px;
+    margin-bottom: var(--sp-3);
+    padding: 3px;
+    border-radius: 10px;
+    background: rgb(0 0 0 / 30%);
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 12%);
+  }
+  .result__tab {
+    flex: 1;
+    height: 32px;
+    border: 0;
+    border-radius: 7px;
+    background: none;
+    color: var(--text-faint);
+    font-family: var(--font-body);
+    font-size: 13px;
+    font-weight: var(--fw-bold);
+    cursor: pointer;
+  }
+  .result__tab[aria-selected='true'] {
+    background: rgb(255 255 255 / 12%);
+    color: var(--white);
+  }
+  .result__stage {
+    --verdict-size: 46px;
+  }
+
+  /* Each fighter as a small card: portrait, then name and one half. */
+  .resultgrid {
+    gap: var(--sp-2);
+  }
+  .rescard {
+    grid-template-columns: 44px minmax(0, 1fr);
+    align-items: start;
+    gap: 8px;
+    padding: 8px;
+    border-radius: 12px;
+    background: linear-gradient(180deg, rgb(10 18 34 / 80%), rgb(4 9 20 / 90%));
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 10%);
+  }
+  .rescard::before {
+    display: none;
+  }
+  .rescard__art {
+    grid-row: 1 / span 3;
+    width: 44px;
+    height: 52px;
+    aspect-ratio: auto;
+    border-radius: 8px;
+    overflow: hidden;
+    background: rgb(255 255 255 / 6%);
+  }
+  /* The face crop, not the full-length figure. */
+  .rescard__art .rescard__full {
+    display: none;
+  }
+  .rescard__art .rescard__avatar {
+    display: block;
+  }
+  .rescard__art img {
+    padding: 0;
+    object-fit: cover;
+    object-position: 50% 20%;
+    filter: none;
+  }
+  .rescard__holds {
+    grid-column: 1 / -1;
+    order: 9;
+  }
+  .rescard__plate {
+    transform: none;
+    background: none;
+    border: 0;
+    overflow: visible;
+  }
+  .rescard__plateInner {
+    width: auto;
+    margin: 0;
+    padding: 0;
+    transform: none;
+    text-align: left;
+  }
+  .rescard__class {
+    margin-bottom: 4px;
+    font-size: 12px;
+  }
+
+  /* Levels: the bar, the level, the gain, and a priced Level up. */
+  .result--levels .rescard__stats,
+  .result--levels .rescard__race {
+    display: none;
+  }
+  .result--levels .rescard__xp {
+    grid-template-rows: auto;
+    margin-top: 0;
+  }
+  /* At the cap the line already says so; a dead button says it twice. */
+  .result--levels .rescard__xp > .btn:not(.btn--primary) {
+    display: none;
+  }
+  .result--levels .rescard__xp > .btn--primary {
+    margin-left: -52px;
+    width: calc(100% + 52px);
+    margin-top: 4px;
+  }
+
+  /* Fight stats: the numbers, no levels. */
+  .result--stats .rescard__xp {
+    display: none;
+  }
+
+  /*
+   * The reward dock: the minepower, the estimate and Mine pinned above the
+   * tab bar, so the reason to stay on this screen never scrolls away.
+   */
+  .minepower {
+    position: sticky;
+    /* Clear of the tab bar, whose height includes the safe area. */
+    bottom: 66px;
+    z-index: 5;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: center;
+    gap: 7px 10px;
+    max-width: none;
+    padding: 9px;
+    border-radius: 14px;
+    background: linear-gradient(180deg, rgb(10 18 34 / 92%), rgb(4 9 20 / 96%));
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow:
+      inset 0 0 0 1px rgb(255 255 255 / 12%),
+      0 -10px 30px rgb(0 0 0 / 45%);
+  }
+  .minepower > .minebar,
+  .minepower__hint,
+  .minepower__foot {
+    grid-column: 1 / -1;
+  }
+  .minebar {
+    height: 28px;
+  }
+  /* "You'd mine about 32.69 312.1 (i)" in one row. */
+  .minepower__estimate {
+    justify-self: stretch;
+    flex-wrap: nowrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 12px;
+    padding: 6px 8px;
+    border-radius: 8px;
+    background: rgb(255 255 255 / 4%);
+    font-size: 13px;
+  }
+  .minepower__estlabel {
+    flex: 1 1 auto;
+    text-align: left;
+    font-size: 9.5px;
+    letter-spacing: 0.08em;
+  }
+  .minepower__why {
+    display: inline-grid;
+    place-items: center;
+    flex: none;
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: none;
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 28%);
+    color: var(--text-faint);
+    font-family: var(--font-body);
+    font-size: 11px;
+    font-weight: var(--fw-bold);
+    cursor: pointer;
+  }
+  .minepower__why[aria-expanded='true'] {
+    color: var(--white);
+    box-shadow: inset 0 0 0 1px var(--cyan);
+  }
+  .minepower__mine {
+    width: 100%;
+    max-width: none;
+    min-height: 44px;
+  }
+  .minepower__foot {
+    display: none;
+    font-size: 10.5px;
+    line-height: 1.35;
+  }
+  .minepower__foot--open {
+    display: block;
+  }
+
+  /* Fight stats on a narrow card: the label on one line, no icon. */
+  .result--stats .rescard__row dt img {
+    display: none;
+  }
+  .result--stats .rescard__row dt {
+    white-space: nowrap;
+  }
 }

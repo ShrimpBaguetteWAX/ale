@@ -35,6 +35,7 @@ import {
   elementBackground,
   fighterArt,
   fighterArtFallback,
+  fighterAvatar,
   fighterFace,
   fighterName,
   formatScaled,
@@ -1410,6 +1411,10 @@ function Result({
   const refreshPlayer = useGame((s) => s.refreshPlayer)
 
   const [showLog, setShowLog] = useState(false)
+  /* Phones show one of the two halves of each card at a time. */
+  const [phoneTab, setPhoneTab] = useState<'levels' | 'stats'>('levels')
+  /* The note under the estimate, which a phone keeps behind an i. */
+  const [showWhy, setShowWhy] = useState(false)
   const [mining, setMining] = useState(false)
   const [mined, setMined] = useState(false)
   const [notice, setNotice] = useState<string | null>(null)
@@ -1814,7 +1819,7 @@ function Result({
   }
 
   return (
-    <div className="result">
+    <div className={`result result--${phoneTab}`}>
       <header className="result__bar">
         {/*
           Reading the fight, not exporting it. The CSV is a compatibility
@@ -1824,13 +1829,26 @@ function Result({
         */}
         <button
           type="button"
-          className="btn btn--ghost"
+          className="btn btn--ghost result__icobtn"
           onClick={() => setShowLog(true)}
+          aria-label="Display Combat Log"
         >
-          Display Combat Log
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden="true">
+            <path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01" />
+          </svg>
+          <span className="result__btnword">Display Combat Log</span>
         </button>
-        <button type="button" className="btn btn--ghost" onClick={onReplay}>
-          Watch again
+        <button
+          type="button"
+          className="btn btn--ghost result__icobtn"
+          onClick={onReplay}
+          aria-label="Watch again"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M3 12a9 9 0 1 0 3-6.7L3 8" />
+            <path d="M3 3v5h5" />
+          </svg>
+          <span className="result__btnword">Watch again</span>
         </button>
         {/*
           Where Back goes depends on how the fight went.
@@ -1863,6 +1881,32 @@ function Result({
           {won ? 'VICTORY' : 'DEFEAT'}
         </h2>
 
+        {/*
+          Phones only. A card with its stats and its level under them is two
+          screens of scrolling for six fighters, and the level is the part a
+          player acts on - so that half shows first and the stats are a tap
+          away.
+        */}
+        <div className="result__tabs" role="tablist" aria-label="Show">
+          {(
+            [
+              ['levels', 'Levels'],
+              ['stats', 'Fight stats'],
+            ] as const
+          ).map(([key, label]) => (
+            <button
+              type="button"
+              role="tab"
+              key={key}
+              aria-selected={phoneTab === key}
+              className="result__tab"
+              onClick={() => setPhoneTab(key)}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
         <div className="resultgrid">
           {/*
             The art floats free and only the plate is slanted.
@@ -1883,7 +1927,19 @@ function Result({
                 key={f.uid}
               >
                 <div className="rescard__art">
+                  {/* A phone's small card shows the face crop instead. */}
                   <GameImg
+                    className="rescard__avatar"
+                    src={
+                      survived
+                        ? fighterAvatar({ classname: f.classname, racename: f.racename })
+                        : asset('/assets/fighter/dead.png')
+                    }
+                    alt=""
+                    fallback={fighterArtFallback()}
+                  />
+                  <GameImg
+                    className="rescard__full"
                     src={
                       survived
                         ? fighterArt({
@@ -2093,6 +2149,8 @@ function Result({
           )}
 
           <div className="minepower__estimate">
+            {/* What Mine would bring, not something already won. */}
+            <span className="minepower__estlabel">You'd mine about</span>
             {pools.map((p) => (
               p.estimate === null ? null : (
               <span key={p.pool}>
@@ -2106,13 +2164,22 @@ function Result({
                   width={17}
                   height={17}
                 />
-                Estimated {p.type === 'tlm' ? 'TLM' : 'Shard'} reward:{' '}
+                <span className="sr-only">{p.type === 'tlm' ? 'TLM' : 'Shard'}</span>
                 <strong>
                   {p.estimate.toLocaleString('en-US', { maximumFractionDigits: 2 })}
                 </strong>
               </span>
               )
             ))}
+            <button
+              type="button"
+              className="minepower__why"
+              aria-expanded={showWhy}
+              aria-label="How the estimate is decided"
+              onClick={() => setShowWhy((v) => !v)}
+            >
+              i
+            </button>
           </div>
 
           <button
@@ -2130,7 +2197,7 @@ function Result({
             {mined ? 'Mined' : mining ? 'Mining' : 'Mine'}
           </button>
 
-          <p className="minepower__foot">
+          <p className={`minepower__foot${showWhy ? ' minepower__foot--open' : ''}`}>
             {/*
                It is the mining tools equipped on the account that decide
                this, not the cards in the line-up. The old line credited
