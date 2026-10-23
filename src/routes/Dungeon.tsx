@@ -999,7 +999,7 @@ export default function Dungeon() {
             </button>
             <button
               type="button"
-              className="btn btn--danger"
+              className="btn btn--primary dungeon__go"
               onClick={() => void start()}
               disabled={busy || !block.ready || alreadyPlayed}
               title={block.reason}

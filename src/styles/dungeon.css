@@ -71,7 +71,8 @@
   }
 }
 
-/* The one destructive-feeling action on the screen; it spends energy. */
+/* A destructive action: removing, giving something up. Starting a fight is
+   not one; it is the screen's main action and takes the primary cyan. */
 .btn--danger {
   --btn-bg: linear-gradient(180deg, #d8324f, #96162f);
   --btn-line: #ff6d85;
@@ -5422,7 +5423,7 @@ button.combatcard--empty:hover {
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
   }
-  .dungeon__actions--dock .btn--danger {
+  .dungeon__actions--dock .dungeon__go {
     flex: 1;
   }
 
