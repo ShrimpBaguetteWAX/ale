@@ -6481,3 +6481,24 @@ button.combatcard--empty:hover {
     transform: translateY(100%);
   }
 }
+
+/* The part of a phone's bottom sheet a thumb drags down to close it: the
+   head, which never scrolls. */
+.sheet__grip {
+  display: none;
+}
+@media (max-width: 719px) {
+  .sheet__panel--fighter .sheet__grip {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1;
+    display: block;
+    height: 120px;
+    touch-action: none;
+  }
+  .picker__sheethead {
+    touch-action: none;
+  }
+}

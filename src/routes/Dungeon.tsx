@@ -83,6 +83,7 @@ import { settle } from '@/wharf/settle'
 import { readableError } from '@/wharf/errors'
 import { asset } from '@/assets'
 import { usePhone } from '@/components/usePhone'
+import { useSwipeToClose } from '@/components/useSwipeToClose'
 import { useConfig, useLazyConfig } from '@/state/useConfig'
 import { useChainQuery } from '@/chain/useChainQuery'
 import { confirmThen } from '@/chain/confirm'
@@ -226,6 +227,8 @@ export default function Dungeon() {
   /* Scrolled to from the empty sixth slot, which is two panels above it. */
   /* And from the empty fighter slots, which are three panels above this. */
   const picker = useRef<HTMLElement>(null)
+  /* The phone's sheet closes on a swipe down from its head, too. */
+  const { grip: sheetGrip } = useSwipeToClose(() => setSheet(false), picker)
   const [filter, setFilter] = useState<RosterFilter>(EMPTY_FILTER)
   /* A lens on the roster rather than a filter: it hides nothing, and Clear
      restores `EMPTY_FILTER`, which this is deliberately not part of. */
@@ -1351,7 +1354,7 @@ export default function Dungeon() {
           aria-hidden={phone && !sheet ? true : undefined}
         >
           {phone && (
-            <div className="picker__sheethead">
+            <div className="picker__sheethead" {...sheetGrip}>
               {/* The tabs are the title: they already say what is being chosen. */}
               <div className="picker__sheettabs" role="tablist">
                 {(

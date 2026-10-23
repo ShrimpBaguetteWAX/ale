@@ -58,6 +58,7 @@ import { asset, ipfsImage } from '@/assets'
 import { rarityColor } from '@/map/terrain'
 import { usePhone } from '@/components/usePhone'
 import { useModal } from '@/components/useModal'
+import { useSwipeToClose } from '@/components/useSwipeToClose'
 import {
   combatFigures,
   gradeCombatScore,
@@ -3156,6 +3157,8 @@ export function DetailSheet({
   /* Named for the box rather than the fighter: `panel` here is already the
      fighter being shown. */
   const box = useModal(onClose)
+  /* A phone also closes it by swiping the head of the sheet down. */
+  const { grip } = useSwipeToClose(onClose, box)
 
   return (
     <div className="sheet sheet--fighter" role="dialog" aria-modal="true" onClick={onClose}>
@@ -3167,6 +3170,7 @@ export function DetailSheet({
         {/* First in the panel, so the modal's focus lands at the top: with
             only the Close button to focus, the sheet opened scrolled to the
             bottom, the fighter itself off screen. A phone closes here. */}
+        <div className="sheet__grip" aria-hidden="true" {...grip} />
         <button type="button" className="sheet__x" onClick={onClose} aria-label="Close">
           ×
         </button>
