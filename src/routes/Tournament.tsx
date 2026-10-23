@@ -378,6 +378,8 @@ export function PrizeBar({
   const figure = phone ? formatCompact : formatNumber
   /* Whether the pot is explaining itself. */
   const [split, setSplit] = useState(false)
+  /* Which roll a phone shows in words; the others are icons. */
+  const [open, setOpen] = useState(0)
 
   return (
     /*
@@ -467,17 +469,28 @@ export function PrizeBar({
              where it was drawn from is bookkeeping rather than something a
              player acts on.
 
-             Four rolls, every one in words: four columns where the band
-             has the room, two by two where it does not (a phone, a small
-             desktop). A roll's text wraps inside its column rather than
-             hiding behind an icon, because on a touch screen the text is the
-             only way to read it.
+             Four rolls: four columns where the band has the room, two by
+             two on a small desktop. A phone has room beside its tab for the
+             four as icons and one in words, so the icons are a switcher and
+             the open roll is read out on the line under them; tapping an
+             icon reads that one instead. The tab stays on their row.
           */}
-          {rolled.map((w) => (
-            <div key={`${w.planet}-${w.weather?.weather_id}`} className="pot__roll">
+          {rolled.map((w, i) => (
+            <button
+              type="button"
+              key={`${w.planet}-${w.weather?.weather_id}`}
+              className={`pot__roll${i === Math.min(open, rolled.length - 1) ? ' pot__roll--open' : ''}`}
+              aria-pressed={i === Math.min(open, rolled.length - 1)}
+              onClick={() => setOpen(i)}
+            >
               <WeatherPanel weather={w.weather} tooltip={false} />
-            </div>
+            </button>
           ))}
+          {phone && (
+            <div className="pot__rollread" aria-live="polite">
+              <WeatherPanel weather={rolled[Math.min(open, rolled.length - 1)].weather} tooltip={false} />
+            </div>
+          )}
         </div>
       )}
       {rolled.length > 0 && <span className="pot__tab pot__tab--cond">Conditions</span>}

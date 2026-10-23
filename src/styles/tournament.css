@@ -531,8 +531,16 @@
   border-left: 1px solid rgb(255 255 255 / 14%);
 }
 
+/* A button, but only a phone ever needs it to act like one. */
 .pot__roll {
   min-width: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: default;
 }
 
 /*
@@ -608,13 +616,51 @@
     font-size: 0.86rem;
   }
 
-  /* The rolls take the full width under their tab: two columns of a
-     phone's width each, not two squeezed in beside it. */
+  /*
+     Beside the tab, on one row: the four rolls as icons, a switcher, and
+     the open one read out in words on the line under them. The words get
+     the band's whole width, so a long roll takes two lines, not five.
+  */
   .pot--stacked .pot__weather {
+    display: flex;
+    flex: 1 1 0;
+    flex-wrap: wrap;
+    min-width: 0;
+    align-items: center;
+    gap: 4px 6px;
+    padding: 7px 14px 7px 22px;
+  }
+
+  .pot--stacked .pot__weather .pot__roll:nth-child(n) {
+    flex: none;
+    padding: 3px 5px;
+    border-left: 0;
+    border-bottom: 2px solid transparent;
+    opacity: 0.55;
+    cursor: pointer;
+  }
+
+  .pot--stacked .pot__weather .pot__roll--open:nth-child(n) {
+    border-bottom-color: var(--cyan);
+    opacity: 1;
+  }
+
+  .pot--stacked .pot__weather .pot__roll .weather__name {
+    display: none;
+  }
+
+  .pot__rollread {
     flex: 1 1 100%;
-    margin-left: 0;
-    padding: 8px 16px 8px 16px;
-    clip-path: polygon(0 0, 100% 0, calc(100% - 12px) 100%, 0 100%);
+    min-width: 0;
+  }
+
+  .pot__rollread .weather__stats {
+    display: none;
+  }
+
+  .pot__rollread .weather__name {
+    white-space: normal;
+    line-height: 1.3;
   }
 
   .pot__weather .weather {
