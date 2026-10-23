@@ -3036,6 +3036,10 @@
     box-shadow: none;
   }
 
+}
+
+/* The player's parts, at every width: a phone plays the fight in one too. */
+@media all {
   /* ---- the scorebar ---- */
   .bfield--bcast .bfield__labels {
     top: 0;
@@ -3215,6 +3219,9 @@
     border-radius: 4px;
   }
 
+}
+
+@media (min-width: 1024px) {
   /*
    * ---- the log, beside the window ----
    * Opening it narrows the window rather than covering any of the fight.
@@ -4012,4 +4019,124 @@
   margin: 0;
   font-size: var(--fs-xs);
   color: var(--text-faint);
+}
+
+/* ---------- the fight on a phone: a taller player, the log under it ---------- */
+@media (max-width: 719px) {
+  /* No title line: Skip is in the control bar. */
+  .battle__titleline {
+    display: none;
+  }
+  .bfwrap--bcast {
+    gap: var(--sp-2);
+  }
+  .bfwrap--bcast .bfmain {
+    gap: 0;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow:
+      inset 0 0 0 1px rgb(255 255 255 / 14%),
+      0 14px 34px rgb(0 0 0 / 45%);
+  }
+  .bfield--bcast {
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+  /* The scorebar, a little smaller. */
+  .bfield--bcast .bfield__labels {
+    padding: 7px 9px 18px;
+  }
+  .bfield--bcast .bfield__label {
+    width: 36%;
+    font-size: 10px;
+    gap: 4px 6px;
+  }
+  .bfield--bcast .bfield__teamhp {
+    height: 5px;
+  }
+  .bfield--bcast .bfield__attack {
+    display: none;
+  }
+  .bfield--bcast .bfield__live {
+    white-space: nowrap;
+    font-size: 0;
+    gap: 0;
+    padding: 3px 6px;
+  }
+  .bfield--bcast .bfield__live::after {
+    content: 'LIVE';
+    margin-left: 4px;
+    font-size: 8px;
+  }
+  .bfield--bcast .bfield__queue {
+    top: 40px;
+    transform: scale(0.7);
+    transform-origin: 50% 0;
+  }
+  /* The control bar: pause, clock, rail, speed, Skip. */
+  .bcdeck {
+    gap: 7px;
+    padding: 8px 9px;
+  }
+  .bcdeck__count {
+    font-size: 11px;
+  }
+  .bcdeck__skip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    height: 30px;
+    padding: 0 10px;
+    border: 0;
+    border-radius: 7px;
+    background: rgb(255 255 255 / 9%);
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 24%);
+    color: var(--white);
+    font-size: 12px;
+    font-weight: var(--fw-bold);
+    white-space: nowrap;
+    cursor: pointer;
+  }
+  .bcdeck__skip svg {
+    width: 13px;
+    height: 13px;
+  }
+  /* The log: newest blow first, the rest a scroll away. */
+  /* Exactly what is left under the player: the page never scrolls, only
+     the older blows inside the log do. Top bar, tab bar, page padding,
+     the 16:9 picture and its control bar. */
+  .bfwrap--bcast > .clog--live {
+    height: calc(100dvh - 56px - 57px - env(safe-area-inset-bottom) - 40px - (100vw - 32px) * 0.5625 - 46px - var(--sp-2));
+    min-height: 160px;
+    max-height: none;
+    background: linear-gradient(180deg, rgb(10 18 34 / 72%), rgb(4 9 20 / 82%));
+    border-color: rgb(255 255 255 / 12%);
+  }
+}
+
+@media (max-width: 719px) {
+  /* 16:9, as on desktop, with the same two rows of three; the log under
+     it gets the rest of the screen. */
+  .bfield--bcast {
+    --ratio: 0.5625;
+    --unit: 9.5cqw;
+    aspect-ratio: 16 / 9;
+  }
+  .bfield--bcast .bunit__plate {
+    transform: scale(0.72);
+    transform-origin: 50% 0;
+  }
+  .bfield--bcast .bfield__queue {
+    top: 30px;
+    transform: scale(0.6);
+  }
+  /* No ring under every fighter; only the two in the blow get one. */
+  .bfield--bcast .bunit__platform {
+    opacity: 0;
+  }
+  .bfield--bcast .bunit--attacker .bunit__platform,
+  .bfield--bcast .bunit--defender .bunit__platform {
+    opacity: 1;
+  }
 }

@@ -275,7 +275,8 @@ function Arena({
      picture. The log opens in a column beside it on request.
   */
   const wide = useWide()
-  const broadcast = wide
+  /* A phone gets the player too: a taller one, the log always under it. */
+  const broadcast = wide || phone
   /* Open unless this player has closed it; their choice is remembered. */
   const [showLog, setShowLogState] = useState(readShowLog)
   const setShowLog = useCallback((next: boolean | ((v: boolean) => boolean)) => {
@@ -312,7 +313,8 @@ function Arena({
   useEffect(() => {
     const el = logRef.current
     if (!el) return
-    el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' })
+    /* A phone lists the newest blow first, so that is where it stays. */
+    el.scrollTo({ top: phone ? 0 : el.scrollHeight, behavior: 'smooth' })
   }, [step])
 
   /** The blow just played, which drives every animation on screen. */
@@ -612,20 +614,12 @@ function Arena({
           the fighters stand. The log takes the right-hand column where the
           screen is wide enough, and sits underneath where it is not.
         */}
-          <div className={`bfwrap${broadcast ? ' bfwrap--bcast' : ''}${broadcast && showLog ? ' bfwrap--log' : ''}`}>
+          <div className={`bfwrap${broadcast ? ' bfwrap--bcast' : ''}${broadcast && showLog && !phone ? ' bfwrap--log' : ''}`}>
             <div className="bfmain">
-              {/* On a phone the order sits above the field; on a desktop it is
-                  part of the field, under the team names. */}
-              {phone && (
-                <TurnQueue replay={replay} step={step} speed={speed} playertag={playertag} />
-              )}
+              {/* The turn order is part of the picture, under the scorebar. */}
               <Battlefield
                 wide={!phone}
-                queue={
-                  !phone && (
-                    <TurnQueue replay={replay} step={step} speed={speed} playertag={playertag} />
-                  )
-                }
+                queue={<TurnQueue replay={replay} step={step} speed={speed} playertag={playertag} />}
                 team1={team1}
                 team2={team2}
                 state={state}
@@ -693,14 +687,24 @@ function Arena({
                     >
                       {speed}×
                     </button>
-                    <button
-                      type="button"
-                      className="bcdeck__log"
-                      aria-pressed={showLog}
-                      onClick={() => setShowLog((v) => !v)}
-                    >
-                      Combat log
-                    </button>
+                    {phone ? (
+                      /* The title line is a wider screen's; a phone skips from here. */
+                      <button type="button" className="bcdeck__skip" onClick={skip}>
+                        Skip
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                          <path d="M4 5v14l8-7zM12 5v14l8-7z" />
+                        </svg>
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        className="bcdeck__log"
+                        aria-pressed={showLog}
+                        onClick={() => setShowLog((v) => !v)}
+                      >
+                        Combat log
+                      </button>
+                    )}
                   </div>
                 </>
               )}
@@ -711,7 +715,7 @@ function Arena({
               from the first frame so the field does not shift when the first
               blow lands.
             */}
-            {(!broadcast || showLog) && (
+            {(!broadcast || showLog || phone) && (
             <section className="panel clog clog--live" aria-label="Combat log">
               <header className="clog__head">
                 <div className="clog__heading">
@@ -728,7 +732,11 @@ function Arena({
                   <CombatLogEntries
                     replay={replay}
                     playertag={playertag}
-                    turns={Array.from({ length: step }, (_, i) => i)}
+                    turns={
+                      phone
+                        ? Array.from({ length: step }, (_, i) => step - 1 - i)
+                        : Array.from({ length: step }, (_, i) => i)
+                    }
                   />
                 )}
               </div>
@@ -860,7 +868,8 @@ function Battlefield({
   const depth = new Map<string, number>()
   for (const team of [team1, team2]) {
     team.forEach((f, i) => {
-      const [x, y, d] = wide
+      /* The player is wide on a phone too: two rows of three, as on desktop. */
+      const [x, y, d] = wide || broadcast
         ? FORMATION_WIDE[i % FORMATION_WIDE.length]
         : [...FORMATION[i % FORMATION.length], 1]
       where.set(f.uid, [f.team === 1 ? x : 100 - x, y])
