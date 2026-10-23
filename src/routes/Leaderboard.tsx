@@ -36,6 +36,7 @@ import { ActionBanner } from '@/components/ActionBanner'
 import { asset } from '@/assets'
 import { PlayerAvatar } from '@/components/PlayerAvatar'
 import { GameImg } from '@/components/GameImg'
+import { usePhone } from '@/components/usePhone'
 
 /**
  * Leaderboards.
@@ -178,6 +179,7 @@ export default function Leaderboard() {
   const { ranks, config, pool, cooldown, seasons, arena } = data
 
   const [tab, setTab] = useState<Tab>('dungeons')
+  const [showLede, setShowLede] = useState(false)
   /* A boolean here: this screen has one button. */
   const { busy: busyKey, error, notice, run } = useAction()
   const busy = busyKey !== null
@@ -220,10 +222,22 @@ export default function Leaderboard() {
   if (!player) return null
 
   return (
-    <div className="lboard">
+    <div className={`lboard${showLede ? ' lboard--lede' : ''}`}>
       <header className="lboard__head">
         <div>
-          <h1 className="lboard__title">Leaderboards</h1>
+          <h1 className="lboard__title">
+            Leaderboards
+            {/* A phone keeps the explanation behind this. */}
+            <button
+              type="button"
+              className="lboard__info"
+              aria-expanded={showLede}
+              aria-label="How this board works"
+              onClick={() => setShowLede((v) => !v)}
+            >
+              i
+            </button>
+          </h1>
           <p className="lboard__lede">{LEDE[tab]}</p>
         </div>
 
@@ -255,9 +269,17 @@ export default function Leaderboard() {
               is the thing on screen underneath — the greyed control and the
               lede above it carry that between them.
             */}
-            {onCooldown
-              ? `Rewards available in ${countdown(claimAt - now)}`
-              : 'Claim daily Rewards'}
+            {onCooldown ? (
+              <>
+                <span className="lboard__claimlong">Rewards available in </span>
+                <span className="lboard__claimshort">Claim · </span>
+                {countdown(claimAt - now)}
+              </>
+            ) : (
+              <>
+                Claim<span className="lboard__claimlong"> daily Rewards</span>
+              </>
+            )}
           </button>
         )}
       </header>
@@ -331,9 +353,48 @@ export function DungeonBoard({
 }) {
   /* Still the cutoff for the "Pays now" column and the threshold rule. */
   const paid = rewardCount(config)
+  const phone = usePhone()
+  /* A phone puts the top three on a podium and lists from fourth. */
+  const from = phone ? Math.min(3, ranks.length) : 0
+  const payNow = (rank: number) =>
+    rank <= paid ? (
+      <>
+        <img src={asset('/assets/icons/tlm.svg')} alt="TLM" width={14} height={14} />
+        {formatNumber(Math.floor(dungeonReward(rank, config, pool)))}
+      </>
+    ) : null
+  const mine = ranks.findIndex((r) => r.wallet === wallet)
 
   return (
     <>
+      {phone && ranks.length > 0 && (
+        <Podium
+          places={ranks.slice(0, 3).map((r, i) => ({
+            rank: i + 1,
+            wallet: r.wallet,
+            name: displayName(r),
+            avatar: r.avatar,
+            rating: r.rating,
+            pays: payNow(i + 1),
+          }))}
+        />
+      )}
+      {phone && wallet && (
+        <YouPin
+          rank={mine + 1}
+          name={mine >= 0 ? displayName(ranks[mine]) : ''}
+          wallet={wallet}
+          avatar={mine >= 0 ? ranks[mine].avatar : undefined}
+          rating={mine >= 0 ? ranks[mine].rating : 0}
+          pays={mine >= 0 ? payNow(mine + 1) : null}
+          gap={
+            mine >= paid && paid > 0 && ranks[paid - 1]
+              ? `${formatNumber(ranks[paid - 1].rating - ranks[mine].rating)} to top ${paid}`
+              : undefined
+          }
+          absent="Win dungeons to earn a rating"
+        />
+      )}
       <div className="lbtable">
         <div className="lbtable__head lbtable__head--dungeon">
           <span>Rank</span>
@@ -347,7 +408,8 @@ export function DungeonBoard({
           <p className="lboard__empty">Nobody has defended a dungeon yet.</p>
         )}
 
-        {ranks.map((row, i) => {
+        {ranks.slice(from).map((row, n) => {
+          const i = n + from
           const rank = i + 1
           return (
             <div key={row.wallet}>
@@ -465,6 +527,7 @@ export function ArenaBoards({
   }
 
   const shown = seasons.filter((s) => s.scope === (scope ?? seasons[0].scope))
+  const phone = usePhone()
 
   return (
     <div className="seasons">
@@ -504,6 +567,21 @@ export function ArenaBoards({
         const showing = settled && canSwitch
         const rows = showing ? finished : boards.get(season.scope) ?? []
         const pot = seasonPot(season)
+        const placePays = (rank: number, row: ArenaRank) =>
+          !showing && rank <= season.winners ? (
+            <>
+              <img src={asset('/assets/icons/tlm.svg')} alt="TLM" width={14} height={14} />
+              {formatNumber(Math.floor(arenaReward(rank, season)))}
+            </>
+          ) : row.earned_tlm > 0 ? (
+            <>
+              <img src={asset('/assets/icons/tlm.svg')} alt="TLM" width={14} height={14} />
+              {formatDecimals(row.earned_tlm / 10_000, 0)}
+            </>
+          ) : null
+        const rankOf = (row: ArenaRank, i: number) => (showing ? row.rank : i + 1)
+        const from = phone ? Math.min(3, rows.length) : 0
+        const mine = rows.findIndex((r) => r.wallet === wallet)
 
         return (
           <section className="season" key={season.scope}>
@@ -570,6 +648,29 @@ export function ArenaBoards({
               </div>
             </header>
 
+            {phone && rows.length > 0 && (
+              <Podium
+                places={rows.slice(0, 3).map((r, i) => ({
+                  rank: rankOf(r, i),
+                  wallet: r.wallet,
+                  name: displayName(r),
+                  avatar: r.avatar,
+                  rating: r.rating,
+                  pays: placePays(rankOf(r, i), r),
+                }))}
+              />
+            )}
+            {phone && wallet && !showing && (
+              <YouPin
+                rank={mine + 1}
+                name={mine >= 0 ? displayName(rows[mine]) : ''}
+                wallet={wallet}
+                avatar={mine >= 0 ? rows[mine].avatar : undefined}
+                rating={mine >= 0 ? rows[mine].rating : 0}
+                pays={mine >= 0 ? placePays(mine + 1, rows[mine]) : null}
+                absent="Win an arena fight this season to get a rating"
+              />
+            )}
             {rows.length === 0 ? (
               <p className="lboard__empty">
                 No data available for this leaderboard
@@ -585,7 +686,8 @@ export function ArenaBoards({
                   </span>
                 </div>
 
-                {rows.map((row, i) => {
+                {rows.slice(from).map((row, n) => {
+                  const i = n + from
                   /* A settled board carries the place it actually paid. */
                   const rank = showing ? row.rank : i + 1
                   return (
@@ -656,6 +758,98 @@ export function ArenaBoards({
           </section>
         )
       })}
+    </div>
+  )
+}
+
+/* ---------- a phone's podium and pinned row ---------- */
+
+interface Place {
+  rank: number
+  wallet: string
+  name: string
+  avatar?: number
+  rating: number
+  pays: React.ReactNode
+}
+
+/**
+ * The top three on a podium: first in the middle and highest, gold, silver
+ * and bronze. A phone shows this above the list, which carries on from
+ * fourth.
+ */
+function Podium({ places }: { places: Place[] }) {
+  return (
+    <div className="podium">
+      {places.map((p) => (
+        <div className={`podium__place podium__place--${p.rank}`} key={p.wallet}>
+          <PlayerAvatar
+            id={p.avatar}
+            name={p.name}
+            className="podium__avatar"
+            size={p.rank === 1 ? 58 : 46}
+          />
+          <span className="podium__name">{p.name}</span>
+          <span className="podium__rating mono">{formatNumber(p.rating)}</span>
+          <span className="podium__pays">{p.pays}</span>
+          <span className="podium__step">{p.rank}</span>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+/**
+ * The player's own place, pinned above the tab bar on a phone, so however
+ * far the list is scrolled it says where they stand — and how far from the
+ * paid places. On a board they are not on, it says how to get on it.
+ */
+function YouPin({
+  rank,
+  name,
+  wallet,
+  avatar,
+  rating,
+  pays,
+  gap,
+  absent,
+}: {
+  rank: number
+  name: string
+  wallet: string
+  avatar?: number
+  rating: number
+  pays: React.ReactNode
+  gap?: string
+  absent: string
+}) {
+  if (rank < 1) {
+    return (
+      <div className="lbpin">
+        <article className="lbrow lbrow--you lbpin__row">
+          <span className="rank">–</span>
+          <span className="lbrow__id">
+            <span className="lbrow__name">You are not on this board yet</span>
+            <span className="lbrow__wallet">{absent}</span>
+          </span>
+        </article>
+      </div>
+    )
+  }
+  return (
+    <div className="lbpin">
+      <article className="lbrow lbrow--you lbpin__row">
+        <span className={`rank ${rankClass(rank)}`}>{rank}</span>
+        <span className="lbrow__who">
+          <PlayerAvatar id={avatar} name={name} />
+          <span className="lbrow__id">
+            <span className="lbrow__name">{name}</span>
+            <span className="lbrow__wallet">{gap ?? wallet}</span>
+          </span>
+        </span>
+        <span className="lbrow__rating">{formatNumber(rating)}</span>
+        <span className="lbrow__pays">{pays ?? <span className="faint">—</span>}</span>
+      </article>
     </div>
   )
 }

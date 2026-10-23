@@ -512,3 +512,287 @@
     margin-right: auto;
   }
 }
+
+/* ---------- a phone: podium, slim head, you pinned ---------- */
+
+.lboard__info,
+.lboard__claimshort,
+.podium,
+.lbpin {
+  display: none;
+}
+
+@media (max-width: 719px) {
+  .lboard {
+    gap: 10px;
+    /* Room under the list for the pinned row. */
+    padding-bottom: 80px;
+  }
+
+  /* LEADERBOARD and its i on one line, the claim button beside them. */
+  .lboard__head {
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 8px;
+  }
+  .lboard__head > div {
+    flex: 1;
+    min-width: 0;
+  }
+  .lboard__title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 20px;
+    letter-spacing: 0.08em;
+  }
+  .lboard__info {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: none;
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 25%);
+    color: var(--text-faint);
+    font: var(--fw-bold) 12px var(--font-body);
+    cursor: pointer;
+  }
+  .lboard__info[aria-expanded='true'] {
+    color: var(--white);
+    box-shadow: inset 0 0 0 1px var(--cyan);
+  }
+  .lboard__lede {
+    display: none;
+  }
+  .lboard--lede .lboard__lede {
+    display: block;
+    font-size: 12px;
+  }
+  .lboard__claim {
+    flex: none;
+    min-height: 32px;
+    margin: 0;
+    padding: 0 12px;
+    font-size: 11.5px;
+  }
+  .lboard__claimlong {
+    display: none;
+  }
+  .lboard__claimshort {
+    display: inline;
+  }
+
+  /* The three boards as one segmented control. */
+  .lbtabs {
+    flex-wrap: nowrap;
+    gap: 3px;
+    padding: 3px;
+    border-radius: 10px;
+    background: rgb(0 0 0 / 30%);
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 12%);
+  }
+  .lbtab {
+    flex: 1;
+    min-width: 0;
+    justify-content: center;
+    gap: 6px;
+    min-height: 32px;
+    padding: 0;
+    border: 0;
+    border-radius: 7px;
+    background: none;
+    font-family: var(--font-body);
+    font-size: 12.5px;
+    font-weight: var(--fw-bold);
+    letter-spacing: 0;
+    color: var(--text-faint);
+  }
+  .lbtab img {
+    width: 15px;
+    height: 15px;
+  }
+  .lbtab[aria-selected='true'] {
+    background: rgb(124 92 255 / 35%);
+    box-shadow: inset 0 0 0 1px #6f55ff;
+    color: var(--white);
+  }
+
+  /* Arena: the seasons as chips; the name and clock they already carry. */
+  .seasontabs {
+    flex-wrap: nowrap;
+    gap: 5px;
+  }
+  .seasontab {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 5px;
+    min-height: 28px;
+    padding: 0 10px;
+    border: 0;
+    border-radius: 14px;
+    background: rgb(255 255 255 / 6%);
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 12%);
+  }
+  .seasontab[aria-selected='true'] {
+    background: rgb(0 186 255 / 16%);
+    box-shadow: inset 0 0 0 1px rgb(0 186 255 / 60%);
+  }
+  .seasontab__name {
+    font-size: 11.5px;
+  }
+  .seasontab__meta {
+    font-size: 10px;
+  }
+  .season__name,
+  .season__clock {
+    display: none;
+  }
+  .season__head {
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 8px;
+    padding: 0;
+    border: 0;
+    background: none;
+  }
+  .season__head > div:first-child {
+    flex: 1;
+    min-width: 0;
+  }
+  .seasonview .showtabs__btn {
+    min-height: 26px;
+    padding: 0 8px;
+    font-size: 11px;
+  }
+  .season__meta {
+    margin: 0;
+    font-size: 11px;
+  }
+
+  /* Slimmer rows. */
+  .lbrow {
+    min-height: 44px;
+    padding: 4px 10px 4px 6px;
+    border-radius: 10px;
+  }
+  .lbrow .rank {
+    width: 26px;
+    height: 26px;
+    font-size: 12px;
+    background: none;
+  }
+
+  /* The podium: second, first, third; first tallest. */
+  .podium {
+    display: grid;
+    grid-template-columns: 1fr 1.15fr 1fr;
+    align-items: end;
+    gap: 8px;
+    margin-top: 4px;
+  }
+  .podium__place {
+    --medal: #e5a06a;
+    display: grid;
+    justify-items: center;
+    gap: 3px;
+    min-width: 0;
+    text-align: center;
+  }
+  .podium__place--1 {
+    --medal: #ffd25a;
+    grid-column: 2;
+    grid-row: 1;
+  }
+  .podium__place--2 {
+    --medal: #d6dde8;
+    grid-column: 1;
+    grid-row: 1;
+  }
+  .podium__place--3 {
+    grid-column: 3;
+    grid-row: 1;
+  }
+  .podium__avatar {
+    border-radius: 50%;
+    object-fit: cover;
+    box-shadow:
+      0 0 0 3px var(--medal),
+      0 0 14px var(--medal);
+  }
+  .podium__name {
+    max-width: 100%;
+    margin-top: 4px;
+    overflow: hidden;
+    font-size: 12px;
+    font-weight: var(--fw-bold);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .podium__rating {
+    font-family: var(--font-display);
+    font-size: 13px;
+    font-weight: var(--fw-bold);
+  }
+  .podium__pays {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    min-height: 14px;
+    font-size: 11px;
+    font-weight: var(--fw-bold);
+    color: #ffd25a;
+  }
+  .podium__pays img {
+    width: 12px;
+    height: 12px;
+  }
+  .podium__step {
+    display: grid;
+    place-items: center;
+    width: 100%;
+    height: 34px;
+    border-radius: 10px 10px 0 0;
+    background: linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--medal) 33%, transparent),
+      color-mix(in srgb, var(--medal) 6%, transparent)
+    );
+    color: var(--medal);
+    font-family: var(--font-display);
+    font-size: 22px;
+    font-weight: 900;
+  }
+  .podium__place--1 .podium__step {
+    height: 66px;
+  }
+  .podium__place--2 .podium__step {
+    height: 46px;
+  }
+
+  /* You, above the tab bar. */
+  .lbpin {
+    position: fixed;
+    left: 10px;
+    right: 10px;
+    bottom: calc(65px + env(safe-area-inset-bottom));
+    z-index: 6;
+    display: block;
+  }
+  .lbpin__row {
+    grid-template-columns: 44px minmax(0, 1fr) auto auto;
+    gap: var(--sp-2);
+    min-height: 52px;
+    background: linear-gradient(180deg, #10284a, #0a1830);
+    box-shadow:
+      0 0 0 1px var(--cyan),
+      0 -8px 24px rgb(0 0 0 / 60%);
+  }
+  .lbpin .lbrow__wallet {
+    color: #bff0ff;
+  }
+}
