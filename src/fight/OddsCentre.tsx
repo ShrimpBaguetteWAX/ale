@@ -47,56 +47,46 @@ export function OddsCentre({ odds }: { odds: Odds | null }) {
   )
 }
 
+/** The odds in one word, on the same thresholds as the colour. */
+export function verdictOf(pct: number): string {
+  if (pct >= 85) return 'Easy'
+  if (pct >= 55) return 'Favoured'
+  if (pct >= 35) return 'Even'
+  if (pct >= 20) return 'Risky'
+  return 'Deadly'
+}
+
 /**
- * The phone's matchup banner, above your team.
+ * The phone's chance to win, above your team.
  *
- * Your damage and health on a blue blade, the opponent's on a red one, and
- * the chance to win in a crest where they meet — the matchup screen mobile
- * games open a fight with. The crest's ring carries the same verdict colour
- * as the desktop's figure: teal yours, amber anyone's, red not.
+ * Centred and large, because it is the one number the screen exists to move:
+ * the label and a one-word verdict under it, and a hairline that fills to
+ * the percentage. No box around it — the screen is busy enough. The verdict
+ * and the hairline take the colour (teal yours, amber anyone's, red not);
+ * the number stays white so it reads first.
  */
-export function PowerBanner({
-  odds,
-  mine,
-  theirs,
-  them,
-}: {
-  odds: Odds | null
-  mine: { damage: string; health: string }
-  theirs: { damage: string; health: string }
-  /** What the other side is called: "Dungeon", "Arena". */
-  them: string
-}) {
+export function WinChance({ odds }: { odds: Odds | null }) {
   const pct = odds ? Math.round(odds.winRate * 100) : null
   const band = pct === null ? 'none' : pct >= 55 ? 'good' : pct >= 35 ? 'even' : 'poor'
 
   return (
     <div
-      className={`powerbanner powerbanner--${band}`}
+      className={`winchance winchance--${band}`}
+      role="img"
+      aria-label={odds ? oddsTitle(odds, 'mine') : 'No chance to show yet'}
       title={odds ? oddsTitle(odds, 'mine') : undefined}
     >
-      <div className="powerbanner__side powerbanner__side--mine">
-        <small>You · DMG / HP</small>
-        <b className="mono">
-          {mine.damage} / {mine.health}
-        </b>
-      </div>
-      <div className="powerbanner__side powerbanner__side--them">
-        <small>{them} · DMG / HP</small>
-        <b className="mono">
-          {theirs.damage} / {theirs.health}
-        </b>
-      </div>
-      <div className="powerbanner__crest" role="img" aria-label={odds ? oddsTitle(odds, 'mine') : 'Versus'}>
-        {pct === null ? (
-          <b>VS</b>
-        ) : (
-          <>
-            <b>{pct}%</b>
-            <span>to win</span>
-          </>
-        )}
-      </div>
+      <span className="winchance__pct">
+        {pct === null ? '–' : pct}
+        <i>%</i>
+      </span>
+      <span className="winchance__line">
+        <span className="winchance__cap">Chance to win</span>
+        {pct !== null && <span className="winchance__word">· {verdictOf(pct)}</span>}
+      </span>
+      <span className="winchance__rule" aria-hidden="true">
+        <i style={{ width: `${pct ?? 0}%` }} />
+      </span>
     </div>
   )
 }

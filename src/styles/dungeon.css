@@ -6178,92 +6178,78 @@ button.combatcard--empty:hover {
 }
 
 /*
- * The phone's matchup banner, above your team.
+ * The phone's chance to win, above your team: a large centred number, the
+ * label and verdict under it, and a hairline that fills to the percentage.
  */
-.powerbanner {
+.winchance {
   display: none;
 }
 @media (max-width: 719px) {
-  .powerbanner {
+  .winchance {
     --verdict: #0ed4a8;
-    position: relative;
-    display: flex;
-    align-items: stretch;
-    height: 44px;
-    /* Clear of the difficulty stepper above. */
-    margin: 14px 0 10px;
+    display: grid;
+    justify-items: center;
+    gap: 4px;
+    /* Clear of the difficulty stepper above, and of your team below. */
+    margin: 16px 0 12px;
   }
-  .powerbanner--even {
+  .winchance--even {
     --verdict: #ffb23e;
   }
-  .powerbanner--poor {
+  .winchance--poor {
     --verdict: #ff4f6a;
   }
-  .powerbanner--none {
-    --verdict: rgb(255 255 255 / 40%);
+  .winchance--none {
+    --verdict: rgb(255 255 255 / 30%);
   }
-  .powerbanner__side {
-    flex: 1;
+  .winchance__pct {
+    font-family: var(--font-display);
+    font-size: 38px;
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -0.01em;
+    color: var(--white);
+    font-variant-numeric: tabular-nums;
+  }
+  .winchance__pct i {
+    margin-left: 1px;
+    font-size: 0.55em;
+    font-style: normal;
+    opacity: 0.85;
+  }
+  .winchance__line {
     display: flex;
-    flex-direction: column;
-    justify-content: center;
-    min-width: 0;
-    padding: 0 34px 0 10px;
-    background: linear-gradient(90deg, rgb(0 120 190 / 80%), rgb(0 186 255 / 45%));
-    clip-path: polygon(0 0, 100% 0, calc(100% - 14px) 100%, 0 100%);
+    align-items: center;
+    gap: 6px;
   }
-  .powerbanner__side--them {
-    align-items: flex-end;
-    margin-left: -10px;
-    padding: 0 10px 0 34px;
-    background: linear-gradient(270deg, rgb(170 26 54 / 80%), rgb(224 52 79 / 45%));
-    clip-path: polygon(14px 0, 100% 0, 100% 100%, 0 100%);
-  }
-  .powerbanner__side small {
-    font-size: 8.5px;
+  .winchance__cap {
+    font-size: 9.5px;
     font-weight: var(--fw-bold);
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+  }
+  .winchance__word {
+    font-family: var(--font-display);
+    font-size: 11px;
+    font-weight: 800;
     letter-spacing: 0.12em;
     text-transform: uppercase;
-    opacity: 0.8;
-    white-space: nowrap;
-  }
-  .powerbanner__side b {
-    font-family: var(--font-display);
-    font-size: 12.5px;
-    white-space: nowrap;
-  }
-  .powerbanner__crest {
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    z-index: 2;
-    display: grid;
-    place-items: center;
-    align-content: center;
-    width: 56px;
-    height: 56px;
-    margin: -28px 0 0 -28px;
-    border-radius: 50%;
-    background: radial-gradient(circle at 50% 35%, #1d2a4a, #070d1c);
-    box-shadow:
-      0 0 0 3px var(--verdict),
-      0 0 14px color-mix(in srgb, var(--verdict) 55%, transparent),
-      0 6px 14px rgb(0 0 0 / 60%);
-  }
-  .powerbanner__crest b {
-    font-family: var(--font-display);
-    font-size: 15px;
-    line-height: 1;
-    color: var(--white);
-  }
-  .powerbanner__crest span {
-    margin-top: 3px;
-    font-size: 7px;
-    font-weight: var(--fw-bold);
-    line-height: 1;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
     color: var(--verdict);
+  }
+  .winchance__rule {
+    position: relative;
+    width: 180px;
+    height: 2px;
+    overflow: hidden;
+    border-radius: 1px;
+    background: rgb(255 255 255 / 10%);
+  }
+  .winchance__rule i {
+    position: absolute;
+    inset: 0 auto 0 0;
+    background: var(--verdict);
+    transition: width var(--dur-fast) var(--ease);
   }
 }
 
