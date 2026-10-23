@@ -1546,6 +1546,19 @@
     opacity: 0;
     cursor: pointer;
   }
+  /* The list the phone or browser opens for it: dark, like the rest of the
+     game. Without this it took the icon's light text on the browser's white
+     list, which is unreadable. */
+  .rtools__icon select {
+    color-scheme: dark;
+    color: var(--white);
+    background: #0b1324;
+  }
+  .rtools__icon select option,
+  .rtools__icon select optgroup {
+    color: var(--white);
+    background: #0b1324;
+  }
 
   /* Folded, the filters are only the toolbar; open, all of them. */
   .filters--roster.filters--folded {

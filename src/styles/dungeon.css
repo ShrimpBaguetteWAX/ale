@@ -5696,6 +5696,19 @@ button.combatcard--empty:hover {
     opacity: 0;
     cursor: pointer;
   }
+  /* The list the phone or browser opens for it: dark, like the rest of the
+     game. Without this it took the icon's light text on the browser's white
+     list, which is unreadable. */
+  .sheetbar__icon select {
+    color-scheme: dark;
+    color: var(--white);
+    background: #0b1324;
+  }
+  .sheetbar__icon select option,
+  .sheetbar__icon select optgroup {
+    color: var(--white);
+    background: #0b1324;
+  }
 
   /* The filters themselves open under the toolbar, and only from it. */
   .filters--sheet.filters--folded {
