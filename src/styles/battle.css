@@ -3892,8 +3892,13 @@
      the screen, and a short result left the dock floating mid-screen. The
      page keeps room under the cards for it.
   */
+  /* --dock is the dock's measured height, set from Result. */
   .result {
-    padding-bottom: 170px;
+    padding-bottom: calc(var(--dock, 170px) + 24px + env(safe-area-inset-bottom));
+  }
+  /* The bars already show how far each pool has to go. */
+  .minepower__hint {
+    display: none;
   }
   .minepower {
     position: fixed;

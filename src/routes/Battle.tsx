@@ -1440,6 +1440,24 @@ function Result({
   const [phoneTab, setPhoneTab] = useState<'levels' | 'stats'>('levels')
   /* The note under the estimate, which a phone keeps behind an i. */
   const [showWhy, setShowWhy] = useState(false)
+  /*
+     A phone pins the reward dock over the foot of the page, and how tall it
+     is depends on what it holds (a second bar, the claims line, the open
+     note). The page keeps exactly that much room under the cards, so the
+     last level and the last stat can always be scrolled clear of it.
+  */
+  const dockObserver = useRef<ResizeObserver | null>(null)
+  const dockRef = useCallback((dock: HTMLElement | null) => {
+    dockObserver.current?.disconnect()
+    dockObserver.current = null
+    const page = dock?.closest<HTMLElement>('.result')
+    if (!dock || !page || typeof ResizeObserver === 'undefined') return
+    const observer = new ResizeObserver(() =>
+      page.style.setProperty('--dock', `${dock.offsetHeight}px`),
+    )
+    observer.observe(dock)
+    dockObserver.current = observer
+  }, [])
   const [mining, setMining] = useState(false)
   const [mined, setMined] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -2167,7 +2185,7 @@ function Result({
         be on screen or the reward reads as nothing happening.
       */}
       {pools.length > 0 && (
-        <section className="minepower">
+        <section className="minepower" ref={dockRef}>
           {pools.map((p) => (
             <div className="minebar" key={p.pool}>
               <span className="minebar__track">
