@@ -19,19 +19,43 @@ import type {
  * six-fighter defending team with every ability spelled out, so that is
  * megabytes to render twenty names.
  */
-export function fetchDungeonRanks(limit = 100, refresh = false): Promise<DungeonRank[]> {
-  return getRows<DungeonRank>(
-    {
-      code: CONTRACTS.dungeons,
-      scope: CONTRACTS.dungeons,
-      table: 'leaderboard',
-      index_position: 2,
-      key_type: 'i64',
-      reverse: true,
-      limit,
-    },
-    { ttl: TTL.short, refresh },
-  ).then((r) => r.rows)
+export async function fetchDungeonRanks(limit = 100, refresh = false): Promise<DungeonRank[]> {
+  /*
+     Paged until there are `limit` rows.
+
+     A node may stop short of the limit and say `more` — these rows are
+     heavy, and some cap a response by size or time (wax.eosdac.io returns 24
+     of 100) — so one page was a board that ended at 24th whenever that node
+     answered. Walking backwards over the index, the next page is everything
+     at or below `next_key`; rows are matched by wallet so a tie on rating
+     across the page boundary is not listed twice.
+  */
+  const out: DungeonRank[] = []
+  const seen = new Set<string>()
+  let upper: string | undefined
+  for (let page = 0; page < 10 && out.length < limit; page++) {
+    const res = await getRows<DungeonRank>(
+      {
+        code: CONTRACTS.dungeons,
+        scope: CONTRACTS.dungeons,
+        table: 'leaderboard',
+        index_position: 2,
+        key_type: 'i64',
+        reverse: true,
+        limit: limit - out.length,
+        upper_bound: upper,
+      },
+      { ttl: TTL.short, refresh },
+    )
+    for (const row of res.rows) {
+      if (seen.has(row.wallet)) continue
+      seen.add(row.wallet)
+      out.push(row)
+    }
+    if (!res.more || !res.next_key || res.next_key === upper) break
+    upper = res.next_key
+  }
+  return out.slice(0, limit)
 }
 
 /** The reward curve and claim cooldown. */
