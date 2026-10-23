@@ -15,9 +15,9 @@ import type { TimelineStep } from '@/tournament/rules'
  * the narrow case for free; the wide case stubs `clientWidth`, and both go
  * through the same measuring effect the browser runs.
  *
- * The seven steps below are the contract's; the strip draws four, because
- * `stripSteps` drops the two nobody waits on and merges the rest into
- * Signup closed and Results. The counts here are of cells, not of steps.
+ * The seven steps below are the contract's; the strip draws three, because
+ * `stripSteps` drops the ones nobody waits on and merges the two in the
+ * middle into Signup closed. The counts here are of cells, not of steps.
  */
 const STEPS = [
   'set_weather',
@@ -69,7 +69,7 @@ describe('the day strip', () => {
       const names = [...container.querySelectorAll('.tour__stepname')].map((n) =>
         n.textContent?.trim(),
       )
-      expect(names).toEqual(['Signup open', 'Signup closed', 'Fights start', 'Results'])
+      expect(names).toEqual(['Signup open', 'Signup closed', 'Fights start'])
     })
   })
 

@@ -496,12 +496,22 @@ export function timelineOf(
 /*
    Steps the strip leaves out.
 
-   Both run instantly at the top of the tournament and neither is anything a
-   player waits on or acts on — by the time the screen is worth looking at
-   they are already ticked, so they cost two cells to say "yes, it started".
-   What they settle shows up where it matters, on the prize bar.
+   The first two run instantly at the top of the tournament and neither is
+   anything a player waits on or acts on — by the time the screen is worth
+   looking at they are already ticked, so they cost two cells to say "yes, it
+   started". What they settle shows up where it matters, on the prize bar.
+
+   The last three are the wrap-up after the final fight. The strip is the
+   three stages a player waits through — signup open, signup closed, the
+   fights — and the results are the panel under it, not a fourth cell.
 */
-const STRIP_SKIP = new Set(['set_weather', 'get_rewards'])
+const STRIP_SKIP = new Set([
+  'set_weather',
+  'get_rewards',
+  'hall_of_fame',
+  'reward_payout',
+  'cleanup',
+])
 
 /*
    Steps the strip shows as one.
@@ -514,9 +524,6 @@ const STRIP_SKIP = new Set(['set_weather', 'get_rewards'])
 const STRIP_GROUP: Record<string, string> = {
   close_signup: 'preparation',
   create_matchups: 'preparation',
-  hall_of_fame: 'results',
-  reward_payout: 'results',
-  cleanup: 'results',
 }
 
 /**
@@ -552,23 +559,7 @@ export function stripSteps(steps: TimelineStep[]): TimelineStep[] {
       continue
     }
 
-    /*
-       The results begin when the fighting ends.
-
-       The contract schedules `cleanup` a few minutes after the battle
-       stage closes — a pacing margin, not a stage of its own — so the
-       timestamp on the row says 10:02 PM for a tournament whose last
-       fight is over at 10:00. A player asking "when are the results?" is
-       asking when the fighting is done, so the cell takes the previous
-       step's end, and only when the row's own time is the later one: a
-       results step that somehow starts early keeps its own time.
-    */
-    const start =
-      group === 'results' && last && Number.isFinite(last.endMs) && last.endMs < step.startMs
-        ? last.endMs
-        : step.startMs
-
-    out.push(group ? { ...step, name: group, startMs: start } : { ...step })
+    out.push(group ? { ...step, name: group } : { ...step })
   }
 
   return out

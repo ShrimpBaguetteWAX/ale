@@ -339,13 +339,8 @@ describe('the strip, as a player reads it', () => {
       total: i === running ? 9 : 0,
     })) as Parameters<typeof stripSteps>[0]
 
-  it('drops the two steps nobody waits on and merges the rest into four', () => {
-    expect(stripSteps(day(5)).map((s) => s.name)).toEqual([
-      'signup',
-      'preparation',
-      'battle',
-      'results',
-    ])
+  it('drops the steps nobody waits on and merges the rest into three', () => {
+    expect(stripSteps(day(5)).map((s) => s.name)).toEqual(['signup', 'preparation', 'battle'])
   })
 
   it('spans a merged cell across every step it swallowed', () => {
@@ -374,14 +369,9 @@ describe('the strip, as a player reads it', () => {
     expect(stripSteps(day(2)).find((s) => s.name === 'preparation')!.state).toBe('waiting')
   })
 
-  it('starts the results when the fighting ends, not when cleanup is scheduled', () => {
-    /* battle ends at 5500; cleanup's own row says 6000. */
-    const results = stripSteps(day(5)).find((s) => s.name === 'results')!
-    expect(results.startMs).toBe(5500)
-
-    /* A results row that is not late keeps its own time. */
-    const early = day(5).map((s) => (s.name === 'cleanup' ? { ...s, startMs: 5200 } : s))
-    expect(stripSteps(early).find((s) => s.name === 'results')!.startMs).toBe(5200)
+  it('leaves the wrap-up after the fights off the strip', () => {
+    /* cleanup running: the three stages are all behind us, ticked. */
+    expect(stripSteps(day(6)).map((s) => s.state)).toEqual(['done', 'done', 'done'])
   })
 })
 

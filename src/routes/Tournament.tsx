@@ -214,9 +214,8 @@ const STEP_LABEL: Record<string, string> = {
   hall_of_fame: 'Hall of fame',
   reward_payout: 'Rewards paid',
   cleanup: 'Wrapped up',
-  /* The two the strip merges several steps into. */
+  /* The one the strip merges several steps into. */
   preparation: 'Signup closed',
-  results: 'Results',
 }
 
 const stepLabel = (name: string) => STEP_LABEL[name] ?? name.replace(/_/g, ' ')
