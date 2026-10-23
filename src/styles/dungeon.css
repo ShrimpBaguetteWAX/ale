@@ -6261,3 +6261,186 @@ button.combatcard--empty:hover {
   -webkit-user-select: none;
   cursor: pointer;
 }
+
+/*
+ * A fighter's details on a phone: one screen, no scrolling for an ordinary
+ * fighter. A small square portrait beside the name and age, the six stats as
+ * a 2 × 3 grid, the resistances as one row of six, and the abilities under
+ * them. It was a 4:3 portrait and single-column rows, 1,094px on an 844px
+ * screen. Closed with the × in the corner.
+ */
+.sheet__x {
+  display: none;
+}
+@media (max-width: 719px) {
+  .sheet__panel--fighter {
+    position: relative;
+    max-height: 94dvh;
+    padding: 14px 14px calc(16px + env(safe-area-inset-bottom));
+  }
+  .sheet__panel--fighter .sheet__x {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    z-index: 2;
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: rgb(255 255 255 / 8%);
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 22%);
+    color: var(--white);
+    font-size: 20px;
+    line-height: 1;
+    cursor: pointer;
+  }
+  .sheet__panel--fighter > .confirm__actions {
+    display: none;
+  }
+
+  .sheet__panel--fighter .fpanel {
+    display: grid;
+    grid-template-columns: 92px minmax(0, 1fr);
+    column-gap: 12px;
+    row-gap: 12px;
+    align-items: center;
+  }
+  .sheet__panel--fighter .portrait {
+    grid-column: 1;
+    width: 92px;
+    height: 92px;
+    margin: 0;
+    aspect-ratio: auto;
+    border-radius: 12px;
+  }
+  .sheet__panel--fighter .portrait__art {
+    object-fit: cover;
+    object-position: center 15%;
+  }
+  /* The level under the portrait's top edge, small enough for a square. */
+  .sheet__panel--fighter .portrait__level {
+    top: auto;
+    bottom: 4px;
+    right: 50%;
+    transform: translateX(50%);
+    padding: 1px 7px;
+    font-size: 9.5px;
+    white-space: nowrap;
+  }
+  .sheet__panel--fighter .recruit__head {
+    grid-column: 2;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+    margin: 0;
+    /* Clear of the ×. */
+    padding-right: 40px;
+  }
+  .sheet__panel--fighter .recruit__class {
+    font-size: 19px;
+  }
+  .sheet__panel--fighter .fstats,
+  .sheet__panel--fighter .abilities {
+    grid-column: 1 / -1;
+  }
+
+  /* Six stats, two to a row, each a chip: the label over the value, so a
+     range like "205 (±24)" has the chip's whole width. */
+  .sheet__panel--fighter .fstats__lines {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+  }
+  .sheet__panel--fighter .statline {
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 1px;
+    min-height: 44px;
+    padding: 4px 9px;
+    border: 0;
+    border-radius: 9px;
+    background: rgb(255 255 255 / 4%);
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 9%);
+    font-size: 11px;
+  }
+  .sheet__panel--fighter .statline__k {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    white-space: nowrap;
+  }
+  .sheet__panel--fighter .statline__icon {
+    width: 12px;
+    height: 12px;
+  }
+  .sheet__panel--fighter .statline__v {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    font-family: var(--font-display);
+    font-size: 13px;
+    font-weight: var(--fw-bold);
+    color: var(--white);
+    white-space: nowrap;
+    text-align: left;
+  }
+  .sheet__panel--fighter .statline__v .grade {
+    width: 12px;
+    height: 12px;
+  }
+
+  /* The six resistances in one row, icon over figure, no label. */
+  .sheet__panel--fighter .resgrid {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 4px;
+    margin-top: 8px;
+  }
+  .sheet__panel--fighter .resgrid__cell {
+    padding: 5px 0;
+    border-radius: 8px;
+  }
+  .sheet__panel--fighter .resgrid__cell img {
+    width: 17px;
+    height: 17px;
+  }
+  .sheet__panel--fighter .resgrid__label {
+    display: none;
+  }
+  .sheet__panel--fighter .resgrid__value {
+    display: grid;
+    justify-items: center;
+    font-size: 11px;
+  }
+  .sheet__panel--fighter .resgrid__value .grade {
+    width: 10px;
+    height: 10px;
+  }
+
+  .sheet__panel--fighter .abilities {
+    gap: 6px;
+    margin: 0;
+  }
+  .sheet__panel--fighter .ability {
+    padding: 7px 10px;
+    border-radius: 10px;
+    border-left-width: 3px;
+  }
+  .sheet__panel--fighter .ability__name {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 4px 7px;
+    font-family: var(--font-body);
+    font-size: 12.5px;
+  }
+  .sheet__panel--fighter .ability__desc {
+    margin-top: 2px;
+    font-size: 11.5px;
+    line-height: 1.35;
+  }
+}

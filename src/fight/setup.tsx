@@ -3164,6 +3164,12 @@ export function DetailSheet({
         ref={box}
         onClick={(e) => e.stopPropagation()}
       >
+        {/* First in the panel, so the modal's focus lands at the top: with
+            only the Close button to focus, the sheet opened scrolled to the
+            bottom, the fighter itself off screen. A phone closes here. */}
+        <button type="button" className="sheet__x" onClick={onClose} aria-label="Close">
+          ×
+        </button>
         <FighterPanel fighter={panel} template={template} />
         <div className="confirm__actions">
           <button type="button" className="btn btn--ghost" onClick={onClose}>

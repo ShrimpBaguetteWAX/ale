@@ -37,7 +37,7 @@ import { GameImg } from '@/components/GameImg'
  * Stats arrive either as min/max ranges (a roster fighter, not yet rolled for
  * this fight) or as settled values (a dungeon opponent, or the fighter a crew
  * and weapon pair combine into). Both are accepted; ranges show as
- * "29 (+-12)" with the arrow grading the midpoint, settled values show plain.
+ * "29 (±12)" with the arrow grading the midpoint, settled values show plain.
  */
 
 export interface PanelStat {

@@ -58,7 +58,7 @@ export function formatScaledExact(raw: number): string {
  * A stat as the game shows it: the midpoint, then how far the roll can swing.
  *
  * This is the original's presentation — floor of the mean, then floor of half
- * the width, rendered as "29 (+-12)". A recruit has not rolled yet, so a bare
+ * the width, rendered as "29 (±12)". A recruit has not rolled yet, so a bare
  * range would be honest but harder to compare between recruits; one number
  * plus a spread is what players are used to reading.
  */
@@ -71,7 +71,7 @@ export function statDisplay(min: number, max: number): { value: number; spread: 
 
 export function formatStat(min: number, max: number): string {
   const { value, spread } = statDisplay(min, max)
-  return spread > 0 ? value + ' (+-' + spread + ')' : String(value)
+  return spread > 0 ? value + ' (±' + spread + ')' : String(value)
 }
 
 export function formatResistance(raw: number): string {
