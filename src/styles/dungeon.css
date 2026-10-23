@@ -6266,3 +6266,12 @@ button.combatcard--empty:hover {
     color: var(--verdict);
   }
 }
+
+/* The tick strip is a slider: horizontal drags are ours, vertical ones the
+   page's. */
+.dstep__ticks {
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: pointer;
+}

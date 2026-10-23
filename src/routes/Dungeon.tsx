@@ -1537,6 +1537,33 @@ function DifficultyStepper({
   const go = (n: number) => onChange(Math.min(last, Math.max(first, n)))
   const joins = `From difficulty ${nftMinDifficulty} the dungeon fields its own NFT fighter as well`
 
+  /*
+     The ticks also slide: press anywhere on the strip and drag sideways, and
+     the difficulty follows the finger, the way a slider does. A tap still
+     lands on the tick under it. Vertical movement is left to the page, so a
+     thumb scrolling past the strip does not change it.
+  */
+  const sliding = useRef(false)
+  /* The tick nearest the finger, by the ticks' own boxes, so a drag and the
+     tap that ends it always agree on which one is under it. */
+  const at = (strip: HTMLElement, clientX: number) => {
+    let best = value
+    let gap = Infinity
+    Array.from(strip.children).forEach((tick, i) => {
+      const r = tick.getBoundingClientRect()
+      const d = Math.abs(clientX - (r.left + r.width / 2))
+      if (d < gap) {
+        gap = d
+        best = first + i
+      }
+    })
+    return best
+  }
+  const slideTo = (strip: HTMLElement, clientX: number) => {
+    const next = at(strip, clientX)
+    if (next !== value) onChange(next)
+  }
+
   return (
     <div className="dstep">
       <button
@@ -1573,6 +1600,21 @@ function DifficultyStepper({
           className="dstep__ticks"
           role="radiogroup"
           aria-label="Difficulty"
+          onPointerDown={(e) => {
+            if (e.button !== 0) return
+            sliding.current = true
+            e.currentTarget.setPointerCapture(e.pointerId)
+            slideTo(e.currentTarget, e.clientX)
+          }}
+          onPointerMove={(e) => {
+            if (sliding.current) slideTo(e.currentTarget, e.clientX)
+          }}
+          onPointerUp={() => {
+            sliding.current = false
+          }}
+          onPointerCancel={() => {
+            sliding.current = false
+          }}
           onKeyDown={(e) => {
             const step = { ArrowLeft: -1, ArrowDown: -1, ArrowRight: 1, ArrowUp: 1 }[e.key]
             if (!step) return
