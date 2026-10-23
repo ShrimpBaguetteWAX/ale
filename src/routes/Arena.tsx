@@ -46,20 +46,14 @@ import {
   myDefenders,
 } from '@/arena/rules'
 import {
-  abilityColor,
-  abilityName,
   formatScaled,
-  resolveAbilityDescription,
 } from '@/tavern/fighterStats'
 import {
   CardGrid,
-  CardSlot,
-  FoldingPanel,
   CombatCard,
   DetailSheet,
   enemyNftPanel,
   nftCards,
-  Elemental,
   MatchupReadout,
   CardsToolbar,
   FighterGrid,
@@ -68,8 +62,6 @@ import {
   POLL_INTERVAL_MS,
   RosterFilters,
   battlePanel,
-  elementIcon,
-  loadoutSummary,
   mid,
   rosterPanel,
   type Detail,
@@ -82,8 +74,6 @@ import { DIRTIES, playArena } from '@/wharf/actions'
 import { settle } from '@/wharf/settle'
 import { readableError } from '@/wharf/errors'
 import { asset } from '@/assets'
-import { FighterStats } from '@/components/FighterPanel'
-import { usePhone } from '@/components/usePhone'
 import { Loading } from '@/components/Loading'
 import { useConfig, useLazyConfig } from '@/state/useConfig'
 import { useChainQuery } from '@/chain/useChainQuery'
@@ -227,8 +217,6 @@ export default function Arena() {
       setShownCount((c) => (c && c.shown === shown && c.total === total ? c : { shown, total })),
     [],
   )
-  /* Folded by default, as the dungeon's is. */
-  const [loadoutOpen, setLoadoutOpen] = useState(false)
 
   const [busy, setBusy] = useState(false)
   const [status, setStatus] = useState<string | null>(null)
@@ -460,7 +448,6 @@ export default function Arena() {
      line-up reads best on the line that names it. A phone header has no
      spare width — the totals already wrap — so there it goes under the row.
   */
-  const phone = usePhone()
 
   /*
      Auto-pick with a choice of pool: Suggested, Levels, or by marker, and a
@@ -929,15 +916,14 @@ export default function Arena() {
               <span className="versus__totals mono">
                 {formatScaled(outlook.mine.damage)} DMG ·{' '}
                 {formatScaled(outlook.mine.health)} HP
-                {phone && <Elemental side={outlook.mine} against={outlook.theirs.bonuses} who="You" />}
+                
               </span>
             </header>
 
             {/*
-               Wider screens read the matchup under the name, as plain text;
-               a phone keeps the pills beside the totals.
+               The matchup under the name, as plain text.
             */}
-            {!phone && <MatchupReadout side={outlook.mine} who="You" />}
+            <MatchupReadout side={outlook.mine} who="You" />
 
             <div className="versus__row">
               {team.map((f, i) =>
@@ -1026,11 +1012,10 @@ export default function Arena() {
             </div>
 
             {/*
-               Under the line-up it fills, as a toolbar on wider screens and
-               full width on a phone, where the thumb is.
+               Under the line-up it fills, as a toolbar.
             */}
-            {phone ? autoPickButton : <div className="versus__pick">{autoPickButton}</div>}
-            {!phone && (
+            <div className="versus__pick">{autoPickButton}</div>
+            {(
               <div className="versus__cards">
                 <CardsToolbar
                   crew={crew}
@@ -1052,11 +1037,9 @@ export default function Arena() {
                Each side's share of the matchup as one bar under the odds,
                where wider screens used to draw an underline under each name.
             */}
-            {!phone && (
-              <div className="versus__tug" aria-hidden="true">
-                <i style={{ width: `${myShare * 100}%` }} />
-              </div>
-            )}
+            <div className="versus__tug" aria-hidden="true">
+              <i style={{ width: `${myShare * 100}%` }} />
+            </div>
           </div>
 
           <div className="versus__side versus__side--enemy">
@@ -1069,10 +1052,10 @@ export default function Arena() {
               <span className="versus__totals mono">
                 {formatScaled(outlook.theirs.damage)} DMG ·{' '}
                 {formatScaled(outlook.theirs.health)} HP
-                {phone && <Elemental side={outlook.theirs} against={outlook.mine.bonuses} who="They" />}
+                
               </span>
             </header>
-            {!phone && <MatchupReadout side={outlook.theirs} who="They" />}
+            <MatchupReadout side={outlook.theirs} who="They" />
 
             <div className="versus__row">
               {enemies.map((f, i) => (
@@ -1134,119 +1117,6 @@ export default function Arena() {
           knocks it out{xpPerWin ? `, and the win pays ${xpPerWin} XP` : ''}.
         </p>
 
-        {phone && <div className="loadoutauto">{autoPickCardsButton}</div>}
-
-        {/* Phones only: a wider screen has the cards toolbar in the line-up. */}
-        {phone && (
-        <FoldingPanel
-          className="loadout"
-          title="Loadout"
-          summary={loadoutSummary(crew, weapon, loadoutOpen)}
-          open={loadoutOpen}
-          onToggle={() => setLoadoutOpen((v) => !v)}
-        >
-          <div className="cardslots">
-            <CardSlot
-              label="Crew"
-              card={crew}
-              onClear={() => setCrew(null)}
-              onOpen={() => crew && showCard(crew)}
-            />
-            <CardSlot
-              label="Weapon"
-              card={weapon}
-              onClear={() => setWeapon(null)}
-              onOpen={() => weapon && showCard(weapon)}
-            />
-
-            <div className="loadout__result">
-              {nftFighter ? (
-                <>
-                  {/*
-                     The same stat presentation as everywhere else a fighter
-                     is shown: labelled rows with the stat’s own icon, and
-                     the six resistances under them. This was six bordered
-                     chips carrying an icon and a figure and no label, so
-                     which number was which lived in a tooltip — and the
-                     resistances, which decide how much of the damage on the
-                     other side actually lands, were not shown at all.
-                  */}
-                  <FighterStats fighter={nftFighter} />
-
-                  {/*
-                     The element is the loadout’s own line rather than the
-                     panel’s, because here it is a consequence of a choice
-                     still being made: the weapon sets it, and until one is
-                     picked there is nothing to attack as.
-                  */}
-                  <div className="statline loadout__element">
-                    <span className="statline__k">
-                      <img
-                        className="statline__icon"
-                        src={elementIcon(nftFighter.element)}
-                        alt=""
-                      />
-                      Attacks as
-                    </span>
-                    <span className="statline__v loadout__v--element">
-                      {weapon ? nftFighter.element : 'pick a weapon'}
-                    </span>
-                  </div>
-
-                  {/*
-                     What the abilities do, not just what they are called.
-
-                     They were chips with the description on a `title`, which
-                     is a tooltip no phone shows and nobody hovers while
-                     deciding. Two abilities is two lines of text, and they are
-                     the reason a particular pair of cards is worth fielding, so
-                     they go on the screen — in the shape the detail panel
-                     already uses: name over description, rarity colour on the
-                     left edge.
-                  */}
-                  {nftFighter.abilities.length > 0 && (
-                    <div className="abilities loadout__abilities">
-                      {nftFighter.abilities.map((a, i) => (
-                        <div
-                          className="ability"
-                          key={`${a.ability}-${i}`}
-                          style={{ borderLeftColor: abilityColor(a.displayname) }}
-                        >
-                          <div
-                            className="ability__name"
-                            style={{ color: abilityColor(a.displayname) }}
-                          >
-                            {abilityName(a.displayname)}
-                          </div>
-                          <div className="ability__desc">
-                            {resolveAbilityDescription(a)}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  <button
-                    type="button"
-                    className="btn btn--ghost btn--sm"
-                    onClick={() => setDetail({ kind: 'panel', panel: nftFighter })}
-                  >
-                    View fighter
-                  </button>
-                </>
-              ) : (
-                <p className="faint loadout__empty">
-                  Pick a crew card and a weapon card. Their stats add together,
-                  both sets of abilities carry over, and the weapon decides the
-                  element your sixth fighter attacks with.
-                </p>
-              )}
-            </div>
-
-
-          </div>
-        </FoldingPanel>
-        )}
 
         <section className="panel picker" ref={picker}>
           <div className="tabs" role="tablist">

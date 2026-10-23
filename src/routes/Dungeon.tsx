@@ -50,24 +50,18 @@ import { AutoPickSplit } from '@/fight/AutoPickSplit'
 import { AutoPickCards } from '@/fight/AutoPickCards'
 import { TEAM_SIZE, type BattleFighter, type RosterFighter } from '@/dungeon/types'
 import {
-  abilityColor,
-  abilityName,
   elementBackground,
   fighterArt,
   formatScaled,
-  resolveAbilityDescription,
 } from '@/tavern/fighterStats'
 import { useImagesReady } from '@/components/useImagesReady'
 import { Loading } from '@/components/Loading'
 import {
   CardGrid,
-  CardSlot,
-  FoldingPanel,
   CombatCard,
   DetailSheet,
   enemyNftPanel,
   nftCards,
-  Elemental,
   MatchupReadout,
   CardsToolbar,
   FighterGrid,
@@ -76,8 +70,6 @@ import {
   POLL_INTERVAL_MS,
   RosterFilters,
   battlePanel,
-  elementIcon,
-  loadoutSummary,
   mid,
   rosterPanel,
   type Detail,
@@ -87,7 +79,6 @@ import { DIRTIES, playDungeon } from '@/wharf/actions'
 import { settle } from '@/wharf/settle'
 import { readableError } from '@/wharf/errors'
 import { asset } from '@/assets'
-import { FighterStats } from '@/components/FighterPanel'
 import { usePhone } from '@/components/usePhone'
 import { useConfig, useLazyConfig } from '@/state/useConfig'
 import { useChainQuery } from '@/chain/useChainQuery'
@@ -214,8 +205,9 @@ export default function Dungeon() {
   const [difficulty, setDifficulty] = useState(1)
 
   const [tab, setTab] = useState<Tab>('fighters')
+  /* A phone keeps the roster in a sheet over the fight; see openPicker. */
+  const [sheet, setSheet] = useState(false)
   /* Scrolled to from the empty sixth slot, which is two panels above it. */
-  const loadout = useRef<HTMLElement>(null)
   /* And from the empty fighter slots, which are three panels above this. */
   const picker = useRef<HTMLElement>(null)
   const [filter, setFilter] = useState<RosterFilter>(EMPTY_FILTER)
@@ -233,7 +225,6 @@ export default function Dungeon() {
   )
   /* Folded by default: the pair is usually already chosen, and the slots
      pushed the fighter picker below the fold on every screen size. */
-  const [loadoutOpen, setLoadoutOpen] = useState(false)
 
   const [busy, setBusy] = useState(false)
   const [status, setStatus] = useState<string | null>(null)
@@ -482,6 +473,17 @@ export default function Dungeon() {
      spare width — the totals already wrap — so there it goes under the row.
   */
   const phone = usePhone()
+
+  /*
+     Where a fighter or a card gets chosen. A phone has the fight on one
+     screen and slides the roster up over it; a wider screen scrolls down to
+     where the roster stands under the line-up.
+  */
+  const openPicker = (next: Tab) => {
+    setTab(next)
+    if (phone) setSheet(true)
+    else picker.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
 
   /*
      Auto-pick with a choice of pool: Suggested, Levels, or by marker, and a
@@ -886,6 +888,16 @@ export default function Dungeon() {
             */}
             {phone && <WeatherPanel weather={weather} />}
           </div>
+          {/* A phone's way into the roster, which waits in a sheet. */}
+          {phone && (
+            <button
+              type="button"
+              className="btn btn--ghost btn--sm dungeon__roster"
+              onClick={() => openPicker('fighters')}
+            >
+              All fighters
+            </button>
+          )}
           {!phone && (
             <>
               <span className="spacer" />
@@ -907,7 +919,7 @@ export default function Dungeon() {
             </>
           )}
           <span className="spacer" />
-          <div className="dungeon__actions">
+          <div className={`dungeon__actions${phone ? ' dungeon__actions--dock' : ''}`}>
             <button
               type="button"
               className="btn btn--ghost"
@@ -952,15 +964,17 @@ export default function Dungeon() {
           </div>
         )}
 
-        {/* A desktop chooses it in the title line above. */}
+        {/* A desktop chooses it in the title line above; a phone just under it. */}
         {phone && (
-          <DifficultyPicker
-            value={difficulty}
-            onChange={setDifficulty}
-            difMods={difMods}
-            xpPerDifficulty={xpPerDifficulty}
-            nftMinDifficulty={nftMinDifficulty}
-          />
+          <div className="dungeon__phonestep">
+            <DifficultyStepper
+              value={difficulty}
+              onChange={setDifficulty}
+              difMods={difMods}
+              xpPerDifficulty={xpPerDifficulty}
+              nftMinDifficulty={nftMinDifficulty}
+            />
+          </div>
         )}
 
         {/*
@@ -988,15 +1002,14 @@ export default function Dungeon() {
               <span className="versus__totals mono">
                 {formatScaled(outlook.mine.damage)} DMG ·{' '}
                 {formatScaled(outlook.mine.health)} HP
-                {phone && <Elemental side={outlook.mine} against={outlook.theirs.bonuses} who="You" />}
+                
               </span>
             </header>
 
             {/*
-               Wider screens read the matchup under the name, as plain text;
-               a phone keeps the pills beside the totals.
+               The matchup under the name, as plain text.
             */}
-            {!phone && <MatchupReadout side={outlook.mine} who="You" />}
+            <MatchupReadout side={outlook.mine} who="You" />
 
             <div className="versus__row">
               {team.map((f, i) =>
@@ -1030,10 +1043,7 @@ export default function Dungeon() {
                     type="button"
                     className="combatcard combatcard--empty"
                     key={`empty-${i}`}
-                    onClick={() => {
-                      setTab('fighters')
-                      picker.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-                    }}
+                    onClick={() => openPicker('fighters')}
                     title="Choose a fighter for this slot"
                   >
                     <span className="combatcard__plus" aria-hidden="true">
@@ -1095,19 +1105,7 @@ export default function Dungeon() {
                 <button
                   type="button"
                   className="combatcard combatcard--empty combatcard--nft"
-                  onClick={() => {
-                    setTab('crew')
-                    if (phone) {
-                      /* Opened as well as scrolled to. The panel is folded by
-                         default, and landing on a shut one would answer the
-                         press with less than was there before it. */
-                      setLoadoutOpen(true)
-                      loadout.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-                    } else {
-                      /* No panel on a wider screen: straight to the cards. */
-                      picker.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-                    }
-                  }}
+                  onClick={() => openPicker('crew')}
                   title="Pick a crew card and a weapon card"
                 >
                   <span className="combatcard__plus" aria-hidden="true">
@@ -1122,11 +1120,10 @@ export default function Dungeon() {
             </div>
 
             {/*
-               Under the line-up it fills, as a toolbar on wider screens and
-               full width on a phone, where the thumb is.
+               Under the line-up it fills, as a toolbar.
             */}
-            {phone ? autoPickButton : <div className="versus__pick">{autoPickButton}</div>}
-            {!phone && (
+            <div className="versus__pick">{autoPickButton}</div>
+            {(
               <div className="versus__cards">
                 <CardsToolbar
                   crew={crew}
@@ -1134,10 +1131,7 @@ export default function Dungeon() {
                   autoPick={autoPickCardsButton}
                   onOpen={showCard}
                   onClear={(kind) => (kind === 'crew' ? setCrew(null) : setWeapon(null))}
-                  onChoose={(kind) => {
-                    setTab(kind)
-                    picker.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-                  }}
+                  onChoose={(kind) => openPicker(kind)}
                 />
               </div>
             )}
@@ -1150,11 +1144,9 @@ export default function Dungeon() {
                Each side's share of the matchup as one bar under the odds,
                where wider screens used to draw an underline under each name.
             */}
-            {!phone && (
-              <div className="versus__tug" aria-hidden="true">
-                <i style={{ width: `${myShare * 100}%` }} />
-              </div>
-            )}
+            <div className="versus__tug" aria-hidden="true">
+              <i style={{ width: `${myShare * 100}%` }} />
+            </div>
           </div>
 
           <div className="versus__side versus__side--enemy">
@@ -1173,10 +1165,10 @@ export default function Dungeon() {
               <span className="versus__totals mono">
                 {formatScaled(outlook.theirs.damage)} DMG ·{' '}
                 {formatScaled(outlook.theirs.health)} HP
-                {phone && <Elemental side={outlook.theirs} against={outlook.mine.bonuses} who="They" />}
+                
               </span>
             </header>
-            {!phone && <MatchupReadout side={outlook.theirs} who="They" />}
+            <MatchupReadout side={outlook.theirs} who="They" />
 
             <div className="versus__row">
               {/*
@@ -1251,135 +1243,33 @@ export default function Dungeon() {
           chosen once, not combatants being compared, and keeping them in the
           line-up crowded the cards the screen is actually about.
         */}
-        {phone && <div className="loadoutauto">{autoPickCardsButton}</div>}
 
-        {/* Phones only: a wider screen has the cards toolbar in the line-up. */}
-        {phone && (
-        <FoldingPanel
-          className="loadout"
-          panelRef={loadout}
-          title="Loadout"
-          summary={loadoutSummary(crew, weapon, loadoutOpen)}
-          open={loadoutOpen}
-          onToggle={() => setLoadoutOpen((v) => !v)}
-        >
-          <div className="cardslots">
-            <CardSlot
-              label="Crew"
-              card={crew}
-              onClear={() => setCrew(null)}
-              onOpen={() => crew && showCard(crew)}
-            />
-            <CardSlot
-              label="Weapon"
-              card={weapon}
-              onClear={() => setWeapon(null)}
-              onOpen={() => weapon && showCard(weapon)}
-            />
-
-            {/*
-              What the pair actually produces, spelled out where the row would
-              otherwise be empty. The split is not obvious — the stats add up,
-              but the element comes from the weapon alone and decides what your
-              damage gets resisted by — so it is worth stating rather than
-              leaving the player to infer it from the line-up.
-            */}
-            <div className="loadout__result">
-              {nftFighter ? (
-                <>
-                  {/*
-                     The same stat presentation as everywhere else a fighter
-                     is shown: labelled rows with the stat’s own icon, and
-                     the six resistances under them. This was six bordered
-                     chips carrying an icon and a figure and no label, so
-                     which number was which lived in a tooltip — and the
-                     resistances, which decide how much of the damage on the
-                     other side actually lands, were not shown at all.
-                  */}
-                  <FighterStats fighter={nftFighter} />
-
-                  {/*
-                     The element is the loadout’s own line rather than the
-                     panel’s, because here it is a consequence of a choice
-                     still being made: the weapon sets it, and until one is
-                     picked there is nothing to attack as.
-                  */}
-                  <div className="statline loadout__element">
-                    <span className="statline__k">
-                      <img
-                        className="statline__icon"
-                        src={elementIcon(nftFighter.element)}
-                        alt=""
-                      />
-                      Attacks as
-                    </span>
-                    <span className="statline__v loadout__v--element">
-                      {weapon ? nftFighter.element : 'pick a weapon'}
-                    </span>
-                  </div>
-
-                  {/*
-                    Both cards' abilities carry over to the combined fighter,
-                    and they are frequently the reason to prefer one card over
-                    a statistically better one — so they are named here in
-                    their rarity colours rather than counted.
-                  */}
-                  {/*
-                     What the abilities do, not just what they are called.
-
-                     They were chips with the description on a `title`, which
-                     is a tooltip no phone shows and nobody hovers while
-                     deciding. Two abilities is two lines of text, and they are
-                     the reason a particular pair of cards is worth fielding, so
-                     they go on the screen — in the shape the detail panel
-                     already uses: name over description, rarity colour on the
-                     left edge.
-                  */}
-                  {nftFighter.abilities.length > 0 && (
-                    <div className="abilities loadout__abilities">
-                      {nftFighter.abilities.map((a, i) => (
-                        <div
-                          className="ability"
-                          key={`${a.ability}-${i}`}
-                          style={{ borderLeftColor: abilityColor(a.displayname) }}
-                        >
-                          <div
-                            className="ability__name"
-                            style={{ color: abilityColor(a.displayname) }}
-                          >
-                            {abilityName(a.displayname)}
-                          </div>
-                          <div className="ability__desc">
-                            {resolveAbilityDescription(a)}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  <button
-                    type="button"
-                    className="btn btn--ghost btn--sm"
-                    onClick={() => setDetail({ kind: 'panel', panel: nftFighter })}
-                  >
-                    View fighter
-                  </button>
-                </>
-              ) : (
-                <p className="faint loadout__empty">
-                  Pick a crew card and a weapon card. Their stats add together,
-                  both sets of abilities carry over, and the weapon decides the
-                  element your sixth fighter attacks with.
-                </p>
-              )}
-            </div>
-
-
-          </div>
-        </FoldingPanel>
+        {phone && sheet && (
+          <div className="picker__scrim" onClick={() => setSheet(false)} aria-hidden="true" />
         )}
-
-        <section className="panel picker" ref={picker}>
+        <section
+          className={`panel picker${phone ? ' picker--sheet' : ''}${phone && sheet ? ' picker--open' : ''}`}
+          ref={picker}
+          aria-hidden={phone && !sheet ? true : undefined}
+        >
+          {phone && (
+            <div className="picker__sheethead">
+              <span className="picker__sheettitle">
+                {tab === 'fighters' ? 'Choose fighters' : tab === 'crew' ? 'Choose a crew card' : 'Choose a weapon'}
+              </span>
+              <span className="picker__sheetcount">
+                {picked.length}/{TEAM_SIZE}
+              </span>
+              <button
+                type="button"
+                className="picker__sheetclose"
+                onClick={() => setSheet(false)}
+                aria-label="Close"
+              >
+                ×
+              </button>
+            </div>
+          )}
           <div className="tabs" role="tablist">
             {(
               [
@@ -1454,6 +1344,11 @@ export default function Dungeon() {
               kind={tab}
             />
           )}
+          {phone && (
+            <button type="button" className="btn btn--primary picker__done" onClick={() => setSheet(false)}>
+              Done
+            </button>
+          )}
         </section>
       </div>
 
@@ -1471,115 +1366,8 @@ export default function Dungeon() {
 /* ---------- difficulty ---------- */
 
 /**
- * Twenty difficulties as a wheel rather than twenty buttons.
- *
- * As buttons they are a 44px grid, and on a phone that is four rows and
- * 200px of panel spent on one number - more room than the line-up it is
- * setting the difficulty for. They are also a poor fit for buttons: this is
- * one ordinal value, not twenty independent choices, and a player moves
- * through it by degrees rather than jumping to 17.
- *
- * So it scrolls, snaps, and reads whatever is under the marker. A flick
- * covers the range, a tap still picks an exact step for anyone who knows
- * which one they want, and the whole control is one row.
- */
-function DifficultyWheel({
-  value,
-  onChange,
-}: {
-  value: number
-  onChange: (n: number) => void
-}) {
-  const track = useRef<HTMLDivElement | null>(null)
-  const settling = useRef<number | null>(null)
-
-  /*
-     Bring the selected step under the marker.
-
-     `scrollIntoView` would do this in one line and would also scroll the
-     page to reach it, which on a phone means the panel jumps up the screen
-     every time the difficulty changes. Setting `scrollLeft` moves only the
-     strip.
-  */
-  useEffect(() => {
-    const el = track.current
-    if (!el) return
-    const step = el.children[value - 1] as HTMLElement | undefined
-    if (!step) return
-    const target = step.offsetLeft + step.offsetWidth / 2 - el.clientWidth / 2
-    /* Already there: a scroll started by the finger must not be fought. */
-    if (Math.abs(el.scrollLeft - target) < 2) return
-    /*
-       Assigned rather than `scrollTo({ behavior: ‘smooth’ })`, which is
-       animated on a frame timer and therefore does nothing at all when
-       frames are not being served — a background tab, a hidden pane, a
-       phone that has throttled the page. It ended at 0 every time in the
-       harness. The flick has the browser’s own snap animation; this is the
-       correction after a tap, and instant is the right answer for that
-       anyway.
-    */
-    el.scrollLeft = target
-  }, [value])
-
-  useEffect(
-    () => () => {
-      if (settling.current) window.clearTimeout(settling.current)
-    },
-    [],
-  )
-
-  /* Whichever step is nearest the middle when the strip stops moving. */
-  const settle = () => {
-    const el = track.current
-    if (!el) return
-    const centre = el.scrollLeft + el.clientWidth / 2
-    let best = value
-    let bestGap = Infinity
-    for (let i = 0; i < el.children.length; i++) {
-      const c = el.children[i] as HTMLElement
-      const gap = Math.abs(c.offsetLeft + c.offsetWidth / 2 - centre)
-      if (gap < bestGap) {
-        bestGap = gap
-        best = i + 1
-      }
-    }
-    if (best !== value) onChange(best)
-  }
-
-  return (
-    <div className="difficulty__wheel">
-      <div
-        className="difficulty__track"
-        ref={track}
-        role="radiogroup"
-        aria-label="Difficulty"
-        onScroll={() => {
-          if (settling.current) window.clearTimeout(settling.current)
-          settling.current = window.setTimeout(settle, 110)
-        }}
-      >
-        {DIFFICULTIES.map((d) => (
-          <button
-            type="button"
-            key={d}
-            role="radio"
-            aria-checked={d === value}
-            className="difficulty__notch"
-            onClick={() => onChange(d)}
-          >
-            {d}
-          </button>
-        ))}
-      </div>
-
-      {/* Where the value is read, so the strip has a place to stop. */}
-      <span className="difficulty__marker" aria-hidden="true" />
-    </div>
-  )
-}
-
-/**
- * The difficulty on a desktop: a stepper in the title line.
+ * The difficulty as a stepper: in the title line on a desktop, just under
+ * the title on a phone.
  *
  * It was a panel of its own, twenty 44px buttons and a line of figures, the
  * first thing under the title and 130px of page before the line-up. It is
@@ -1678,166 +1466,3 @@ function DifficultyStepper({
   )
 }
 
-function DifficultyPicker({
-  value,
-  onChange,
-  difMods,
-  xpPerDifficulty,
-  nftMinDifficulty,
-}: {
-  value: number
-  onChange: (n: number) => void
-  difMods: Map<number, number>
-  xpPerDifficulty: number
-  nftMinDifficulty: number
-}) {
-  const phone = usePhone()
-  const row = useRef<HTMLDivElement | null>(null)
-  /*
-     Whether the ladder runs past its box, and which end it is resting on.
-     The arrows are drawn from this: none at all when all twenty fit, and a
-     dead one at each end rather than a live one that does nothing.
-  */
-  const [reach, setReach] = useState({ over: false, start: true, end: false })
-
-  const readReach = useCallback(() => {
-    const el = row.current
-    if (!el) return
-    const slack = el.scrollWidth - el.clientWidth
-    setReach({
-      over: slack > 1,
-      start: el.scrollLeft <= 1,
-      end: el.scrollLeft >= slack - 1,
-    })
-  }, [])
-
-  useEffect(() => {
-    const el = row.current
-    if (!el) return
-    readReach()
-    const ro = new ResizeObserver(readReach)
-    ro.observe(el)
-    el.addEventListener('scroll', readReach, { passive: true })
-    return () => {
-      ro.disconnect()
-      el.removeEventListener('scroll', readReach)
-    }
-  }, [readReach, phone])
-
-  /*
-     Keep the chosen rung in sight.
-
-     It matters most on arrival: the difficulty is restored from the last run,
-     and a remembered 17 would otherwise open scrolled to 1 with the selection
-     off the right-hand end. Only moved when it is actually out of view, so a
-     click near the edge does not yank the strip.
-  */
-  useEffect(() => {
-    const el = row.current
-    if (!el) return
-    const step = el.children[value - 1] as HTMLElement | undefined
-    if (!step) return
-    const pad = 8
-
-    /*
-       Instantly, not smoothly — the same lesson `DifficultyWheel` records
-       above. A smooth scroll is animated on a frame timer and does nothing
-       at all where frames are not being served, and this runs on arrival,
-       which is exactly when the tab may not have been painted yet. The
-       arrows keep the smooth scroll; they are only ever pressed by somebody
-       watching.
-    */
-    const smooth = el.style.scrollBehavior
-    el.style.scrollBehavior = 'auto'
-    if (step.offsetLeft < el.scrollLeft) {
-      el.scrollLeft = step.offsetLeft - pad
-    } else if (
-      step.offsetLeft + step.offsetWidth >
-      el.scrollLeft + el.clientWidth
-    ) {
-      el.scrollLeft = step.offsetLeft + step.offsetWidth - el.clientWidth + pad
-    }
-    el.style.scrollBehavior = smooth
-  }, [value, phone])
-
-  /* Most of a box at a time, so the step you were reading stays on screen. */
-  const page = (dir: -1 | 1) => {
-    const el = row.current
-    if (!el) return
-    el.scrollLeft += dir * Math.max(120, el.clientWidth * 0.8)
-    readReach()
-  }
-
-  return (
-    <section className="panel difficulty">
-      <div className="panel__title">
-        Difficulty
-        <span className="faint dungeon__tally">
-          Enemy ×{powerAt(value, difMods).toFixed(2)} · Rewards ×
-          {rewardAt(value).toFixed(2)} · {xpFor(value, xpPerDifficulty)} XP
-        </span>
-      </div>
-      {phone ? (
-        <DifficultyWheel value={value} onChange={onChange} />
-      ) : (
-        <div className="difficulty__scroller">
-          {reach.over && (
-            <button
-              type="button"
-              className="difficulty__arrow"
-              onClick={() => page(-1)}
-              disabled={reach.start}
-              aria-label="Show lower difficulties"
-              tabIndex={-1}
-            >
-              ‹
-            </button>
-          )}
-          <div
-            className="difficulty__row"
-            role="radiogroup"
-            aria-label="Difficulty"
-            ref={row}
-          >
-            {DIFFICULTIES.map((d) => (
-              <button
-                type="button"
-                key={d}
-                role="radio"
-                aria-checked={d === value}
-                className="difficulty__step"
-                onClick={() => onChange(d)}
-              >
-                {d}
-              </button>
-            ))}
-          </div>
-          {reach.over && (
-            <button
-              type="button"
-              className="difficulty__arrow"
-              onClick={() => page(1)}
-              disabled={reach.end}
-              aria-label="Show higher difficulties"
-              tabIndex={-1}
-            >
-              ›
-            </button>
-          )}
-        </div>
-      )}
-      {/*
-         Desktop only. On a phone the panel is the ladder and the line above
-         it, and a two-line footnote about a threshold you have already
-         crossed is the largest thing in it. Removed rather than hidden, so
-         it is out of the reading order too and not just out of sight.
-      */}
-      {!phone && value >= nftMinDifficulty && (
-        <p className="hint">
-          From difficulty {nftMinDifficulty} the dungeon fields its own NFT fighter
-          as well.
-        </p>
-      )}
-    </section>
-  )
-}

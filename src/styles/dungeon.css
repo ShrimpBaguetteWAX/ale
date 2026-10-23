@@ -4869,7 +4869,7 @@ button.combatcard--empty:hover {
   display: none;
 }
 
-@media (min-width: 720px) {
+@media all {
   /* The names carry no underline any more; the bar under the odds does it. */
   .versus__head {
     padding-bottom: 0;
@@ -4978,6 +4978,10 @@ button.combatcard--empty:hover {
     top: calc(100% + 6px);
   }
 
+}
+
+/* Hover is a wider screen's; a phone keeps its remove bar and counts row. */
+@media (min-width: 720px) {
   /* ---- remove: a cross on the card, under the pointer ---- */
   .versus__side--mine .versus__row {
     --removerow: 0px;
@@ -5078,7 +5082,7 @@ button.combatcard--empty:hover {
   }
 }
 
-@media (min-width: 720px) {
+@media all {
   .versus__pick .autosplit .btn {
     white-space: nowrap;
   }
@@ -5290,7 +5294,7 @@ button.combatcard--empty:hover {
   background: #d8324f;
 }
 
-@media (min-width: 720px) {
+@media all {
   .versus {
     --switch-w: 168px;
   }
@@ -5356,5 +5360,334 @@ button.combatcard--empty:hover {
   .picker > .picker__countrow:not(:has(.showtabs[aria-label='Readout'])) {
     height: 0;
     margin-top: calc(-1 * var(--sp-3));
+  }
+}
+
+/* ---------- the dungeon on a phone: one screen, the roster in a sheet ---------- */
+
+@media (max-width: 719px) {
+  /* Room under the fight for the pinned Leave and Start Fight. */
+  .dungeon {
+    padding-bottom: 76px;
+  }
+  .dungeon__inner {
+    gap: var(--sp-2);
+  }
+  .dungeon__head {
+    gap: var(--sp-2);
+  }
+
+  /* The stepper under the title, the ticks taking whatever is left. */
+  .dungeon__phonestep .dstep {
+    width: 100%;
+    gap: 6px;
+  }
+  .dungeon__phonestep .dstep__side {
+    flex: 1;
+    min-width: 0;
+  }
+  .dungeon__phonestep .dstep__ticks {
+    display: flex;
+  }
+  .dungeon__phonestep .dstep__tick {
+    flex: 1;
+    width: auto;
+    min-width: 0;
+  }
+  .dungeon__phonestep .dstep__tally {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 10.5px;
+  }
+
+  /* Leave and Start Fight, pinned just above the tab bar. */
+  .dungeon__actions--dock {
+    position: fixed;
+    left: 12px;
+    right: 12px;
+    bottom: calc(65px + env(safe-area-inset-bottom));
+    z-index: 30;
+    display: flex;
+    gap: 8px;
+    padding: 8px 0 2px;
+  }
+  .dungeon__actions--dock .btn {
+    min-height: 46px;
+  }
+  .dungeon__actions--dock .btn--ghost {
+    flex: none;
+    --btn-bg: rgb(4 9 20 / 80%);
+    --btn-line: rgb(255 255 255 / 24%);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+  .dungeon__actions--dock .btn--danger {
+    flex: 1;
+  }
+
+  /* The line-up panel, tighter. */
+  .versus {
+    gap: 6px;
+    padding: 8px;
+  }
+  /* Never wider than the screen: the toolbar shrinks, the cards with it. */
+  .versus,
+  .versus > *,
+  .versus__side,
+  .versus__pick,
+  .versus__cards {
+    min-width: 0;
+  }
+  .dungeon__head > div:first-child {
+    flex: 1;
+    min-width: 0;
+  }
+  .dungeon__roster {
+    flex: none;
+    align-self: flex-start;
+    margin-top: 4px;
+    --btn-bg: rgb(0 186 255 / 16%);
+    --btn-line: rgb(0 186 255 / 60%);
+  }
+  .versus__divider {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    padding: 0;
+  }
+  .versus__tug {
+    flex: 1;
+    margin-top: 0;
+  }
+  /* Fill or replace as two icons; the words are a wider screen's. */
+  .versus {
+    --switch-w: auto;
+  }
+  .versus__pick .autosplit__word,
+  .versus__pick .autosplit__from {
+    display: none;
+  }
+  .versus__pick {
+    display: flex;
+    gap: 6px;
+  }
+  .versus__pick .autosplit {
+    flex: 1;
+    min-width: 0;
+  }
+  .versus__pick .autosplit .btn {
+    padding: 0 9px;
+    font-size: 11.5px;
+  }
+  .cardsbar__label {
+    display: none;
+  }
+  .cardsbar {
+    flex-wrap: wrap;
+  }
+  .cardsbar .cardsauto {
+    margin-right: 0;
+  }
+  .cardchip {
+    height: 32px;
+    font-size: 12px;
+  }
+
+  /* ---- the roster, as a sheet over the fight ---- */
+  .picker--sheet {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: calc(57px + env(safe-area-inset-bottom));
+    top: 12vh;
+    z-index: 40;
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-2);
+    margin: 0;
+    padding: 8px 12px 12px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    border-radius: 18px 18px 0 0;
+    background: linear-gradient(180deg, rgb(16 24 44 / 98%), rgb(8 12 26 / 99%));
+    box-shadow:
+      0 -14px 40px rgb(0 0 0 / 60%),
+      inset 0 1px 0 rgb(255 255 255 / 14%);
+    transform: translateY(110%);
+    visibility: hidden;
+    transition:
+      transform 280ms cubic-bezier(0.2, 0.8, 0.3, 1),
+      visibility 0s linear 280ms;
+  }
+  .picker--sheet.picker--open {
+    transform: none;
+    visibility: visible;
+    transition: transform 280ms cubic-bezier(0.2, 0.8, 0.3, 1);
+  }
+  .picker__scrim {
+    position: fixed;
+    inset: 0;
+    z-index: 35;
+    background: rgb(0 0 0 / 50%);
+  }
+  .picker__sheethead {
+    position: sticky;
+    top: -8px;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    margin: -8px -12px 0;
+    padding: 12px 12px 8px;
+    background: rgb(16 24 44 / 98%);
+  }
+  .picker__sheethead::before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 5px;
+    width: 40px;
+    height: 4px;
+    margin-left: -20px;
+    border-radius: 2px;
+    background: rgb(255 255 255 / 25%);
+  }
+  .picker__sheettitle {
+    flex: 1;
+    font-family: var(--font-display);
+    font-size: 13px;
+    font-weight: var(--fw-bold);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  .picker__sheetcount {
+    font-size: 12px;
+    color: var(--text-faint);
+  }
+  .picker__sheetclose {
+    width: 30px;
+    height: 30px;
+    border: 0;
+    border-radius: 50%;
+    background: rgb(255 255 255 / 8%);
+    color: var(--white);
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+  }
+  .picker__done {
+    position: sticky;
+    bottom: 0;
+    z-index: 2;
+    flex: none;
+    width: 100%;
+    margin-top: var(--sp-2);
+    box-shadow: 0 -8px 20px rgb(8 12 26 / 90%);
+  }
+}
+
+/* The phone's one screen, packed: everything above stays, in less height. */
+@media (max-width: 719px) {
+  .shell .main__inner .dungeon__head .page__title {
+    font-size: 22px;
+    white-space: nowrap;
+    padding-bottom: 6px;
+  }
+  .dungeon__head .weather {
+    margin-top: 6px;
+    font-size: 12px;
+  }
+  .dungeon__roster {
+    margin-top: 0;
+  }
+
+  /* Shorter portraits: the line-up has two rows of them to fit. */
+  .combatcard__art {
+    aspect-ratio: 5 / 6;
+    min-height: 0;
+  }
+  .versus__head {
+    min-height: 0;
+  }
+  .readout {
+    font-size: 11px;
+  }
+
+  /* The odds in one line beside the share bar. */
+  .versus__divider .oddscentre {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+  }
+  .versus__divider .oddscentre__pct {
+    font-size: 22px;
+  }
+
+  /* Fill or replace, as two icon buttons. */
+  .versus__pick .autosplit__switch button {
+    flex: none;
+    width: 30px;
+    padding: 0;
+  }
+
+  /* Auto-pick cards and undo, then the two chips sharing a line. */
+  .cardsbar {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .cardsbar .cardsauto {
+    flex: 1 0 100%;
+  }
+  .cardsbar .cardsauto__go {
+    padding: 0 8px;
+    font-size: 11.5px;
+  }
+  .cardchip {
+    min-width: 0;
+    flex: 1 1 0;
+    overflow: hidden;
+  }
+  .cardchip__open {
+    min-width: 0;
+  }
+  .cardchip__text {
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+}
+
+/*
+ * One line on a wide screen, whatever the weather. A long roll used to wrap
+ * the line and push Leave and Start Fight under the title; now the weather
+ * gives way instead, cut short with the whole of it on the hover. Narrower
+ * desktops still take the conditions onto a line of their own.
+ */
+@media (min-width: 1280px) {
+  .dungeon__head {
+    flex-wrap: nowrap;
+  }
+  .dungeon__head > .spacer {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+  .dungeon__conditions {
+    flex: 0 1 auto;
+  }
+  .weathertwin {
+    flex: 0 1 auto;
+  }
+  .dungeon__conditions .dstep {
+    flex: none;
+  }
+  .dungeon__head .dungeon__actions {
+    flex: none;
+  }
+  .dungeon__actions .btn {
+    white-space: nowrap;
+  }
+  .dungeon__conditions .weathertwin__line {
+    max-width: 100%;
   }
 }
