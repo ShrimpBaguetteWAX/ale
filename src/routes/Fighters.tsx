@@ -1285,7 +1285,66 @@ function RosterFilters({
 
   return (
     <>
-      <div className={`filters${open ? '' : ' filters--folded'}`}>
+      {/*
+        A phone's toolbar, the one the dungeon's fighter picker uses: a
+        Filter button that opens every filter (markers too) and clears them
+        with its end, and the sort as an icon over the native select. It
+        takes the place of the marker row and More filters.
+      */}
+      <div className="rtools">
+        <div className={`rtools__filter${active > 0 ? ' rtools__filter--on' : ''}`}>
+          <button
+            type="button"
+            className="rtools__main"
+            aria-expanded={open}
+            onClick={() => setOpen((v) => !v)}
+          >
+            <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+              <path d="M1.5 3h13l-5 6v4.5l-3-1.5V9z" />
+            </svg>
+            <span className="rtools__label">Filter</span>
+            <span className="rtools__hint">
+              {active > 0
+                ? `${active} on · ${open ? 'tap to close' : 'tap to change'}`
+                : 'Markers, element, class…'}
+            </span>
+          </button>
+          {active > 0 ? (
+            <button
+              type="button"
+              className="rtools__end"
+              aria-label="Clear filters"
+              onClick={() => onChange({ ...EMPTY_FILTER, sort: filter.sort })}
+            >
+              ✕
+            </button>
+          ) : (
+            <button
+              type="button"
+              className="rtools__end"
+              aria-hidden="true"
+              tabIndex={-1}
+              onClick={() => setOpen((v) => !v)}
+            >
+              {open ? '▴' : '▾'}
+            </button>
+          )}
+        </div>
+        <label className="rtools__icon" title="Sort by">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M5 2.5v11M2.5 11 5 13.5 7.5 11M11 13.5v-11M8.5 5 11 2.5 13.5 5" />
+          </svg>
+          <select aria-label="Sort by" value={filter.sort} onChange={(e) => set({ sort: e.target.value })}>
+            {SORTS.map((s) => (
+              <option key={s.value} value={s.value}>
+                {s.label}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+
+      <div className={`filters filters--roster${open ? '' : ' filters--folded'}`}>
       {/*
          The markers stay out of the fold, and are lifted clear of the facet
          row to do it: a player who has labelled a fighter is looking for that

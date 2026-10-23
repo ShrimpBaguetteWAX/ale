@@ -1315,3 +1315,247 @@
     height: 16px;
   }
 }
+
+/* ---------- a phone: the head, the action row, the filter toolbar ---------- */
+
+.rtools {
+  display: none;
+}
+
+/*
+ * The top of the roster in the shape of the other phone screens: the title
+ * with its counts on one line, the three modes as a segmented control, Payday
+ * and Level all on one row, then the fighter picker's toolbar — Filter and
+ * sort — in place of the marker row and More filters. It was about 470px
+ * before the first fighter; this is about 220.
+ */
+@media (max-width: 719px) {
+  .roster {
+    gap: 8px;
+  }
+  .roster__head {
+    align-items: center;
+    gap: 6px 10px;
+  }
+  .roster__head > div {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .roster__title {
+    font-size: 20px;
+    letter-spacing: 0.08em;
+  }
+  .roster__counts {
+    gap: 8px;
+    margin: 0;
+    font-size: 12px;
+  }
+
+  .roster__modes {
+    gap: 3px;
+    padding: 3px;
+    border: 0;
+    border-radius: 10px;
+    background: rgb(0 0 0 / 30%);
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 12%);
+  }
+  .roster__mode {
+    min-height: 30px;
+    border-radius: 7px;
+    background: none;
+    font-family: var(--font-body);
+    font-size: 12px;
+    font-weight: var(--fw-bold);
+    letter-spacing: 0;
+    color: var(--text-faint);
+  }
+  .roster__mode[aria-selected='true'] {
+    background: rgb(124 92 255 / 35%);
+    box-shadow: inset 0 0 0 1px #6f55ff;
+    color: var(--white);
+  }
+
+  /* Payday (with All / Unwilling) and Level all, one row, plain glass. */
+  .roster__bar {
+    flex-wrap: nowrap;
+    gap: 6px;
+    padding: 0;
+    border: 0;
+    background: none;
+    backdrop-filter: none;
+  }
+  .roster__bar--pinned {
+    padding: 6px;
+    border-radius: 10px;
+    background: rgb(8 14 30 / 96%);
+  }
+  .roster__bar > .spacer {
+    display: none;
+  }
+  .roster__bar .btn {
+    --btn-bg: rgb(255 255 255 / 6%);
+    --btn-line: rgb(255 255 255 / 18%);
+    min-height: 36px;
+    padding: 0 9px;
+    font-family: var(--font-body);
+    font-size: 12px;
+    letter-spacing: 0;
+    text-shadow: none;
+    white-space: nowrap;
+  }
+  .roster__bar .btn--primary {
+    --btn-bg: linear-gradient(180deg, #2ad0ff, #00a3e6);
+    --btn-line: transparent;
+    --btn-fg: #00131f;
+  }
+  .roster__bar .btn--danger {
+    --btn-fg: #fff;
+  }
+  /* Disabled stays glass, just quieter: the grey slab it was reads as a
+     different control rather than this one, off. */
+  .roster__bar .btn:disabled {
+    --btn-bg: rgb(255 255 255 / 4%);
+    --btn-line: rgb(255 255 255 / 10%);
+    color: var(--text-faint);
+    opacity: 0.8;
+  }
+  .paysplit {
+    flex: 1;
+    min-width: 0;
+  }
+  .paysplit__go {
+    flex: 1;
+    min-width: 0;
+    justify-content: flex-start;
+  }
+  .paysplit__go .cost {
+    margin-left: auto;
+  }
+  .paysplit__mode {
+    padding: 0 9px;
+    font-size: 11px;
+  }
+  .roster__bar .cost {
+    margin-left: 4px;
+    padding: 1px 5px;
+    font-size: 10.5px;
+  }
+  .roster__bar .cost img {
+    width: 13px;
+    height: 13px;
+  }
+  .roster__selected {
+    padding-left: 6px;
+  }
+  .roster__selectedName {
+    display: none;
+  }
+
+  /* The picker's toolbar. */
+  .rtools {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .rtools__filter {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    height: 36px;
+    border-radius: 9px;
+    background: rgb(255 255 255 / 5%);
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 16%);
+    overflow: hidden;
+  }
+  .rtools__filter--on {
+    background: rgb(0 186 255 / 10%);
+    box-shadow: inset 0 0 0 1px rgb(0 186 255 / 70%);
+  }
+  .rtools__main,
+  .rtools__end {
+    display: inline-flex;
+    align-items: center;
+    border: 0;
+    background: none;
+    color: #e3e9f4;
+    font: var(--fw-bold) 12px var(--font-body);
+    cursor: pointer;
+  }
+  .rtools__main {
+    flex: 1;
+    min-width: 0;
+    gap: 7px;
+    padding: 0 10px;
+    text-align: left;
+  }
+  .rtools__main svg {
+    flex: none;
+    width: 15px;
+    height: 15px;
+  }
+  .rtools__end {
+    flex: none;
+    width: 34px;
+    justify-content: center;
+    box-shadow: inset 1px 0 0 rgb(255 255 255 / 14%);
+    font-size: 11px;
+  }
+  .rtools__filter--on .rtools__main,
+  .rtools__filter--on .rtools__end {
+    color: #bff0ff;
+  }
+  .rtools__label {
+    flex: none;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+  }
+  .rtools__hint {
+    min-width: 0;
+    overflow: hidden;
+    font-weight: 600;
+    color: var(--text-faint);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .rtools__icon {
+    position: relative;
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 9px;
+    background: rgb(255 255 255 / 5%);
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 16%);
+    color: #dfe6f2;
+    cursor: pointer;
+  }
+  .rtools__icon svg {
+    width: 16px;
+    height: 16px;
+  }
+  .rtools__icon select {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+  }
+
+  /* Folded, the filters are only the toolbar; open, all of them. */
+  .filters--roster.filters--folded {
+    display: none;
+  }
+  .filters--roster .filters__toggle {
+    display: none;
+  }
+  /* The readout switch already sits above the cards. */
+  .filters--roster .field--tabs {
+    display: none;
+  }
+}
