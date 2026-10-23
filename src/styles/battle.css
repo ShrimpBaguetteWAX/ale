@@ -3763,6 +3763,8 @@
   }
   .result__stage {
     --verdict-size: 46px;
+    /* The word is placed above the flow; the tabs start under it. */
+    padding-top: calc(var(--verdict-size) * 1.12);
   }
 
   /* Each fighter as a small card: portrait, then name and one half. */
@@ -3853,10 +3855,21 @@
    * The reward dock: the minepower, the estimate and Mine pinned above the
    * tab bar, so the reason to stay on this screen never scrolls away.
    */
+  /*
+     Fixed rather than sticky: sticky only pins once the page is taller than
+     the screen, and a short result left the dock floating mid-screen. The
+     page keeps room under the cards for it.
+  */
+  .result {
+    padding-bottom: 230px;
+  }
   .minepower {
-    position: sticky;
-    /* Clear of the tab bar, whose height includes the safe area. */
-    bottom: 66px;
+    position: fixed;
+    left: 12px;
+    right: 12px;
+    width: auto;
+    /* Clear of the tab bar (57px and its safe-area padding). */
+    bottom: calc(65px + env(safe-area-inset-bottom));
     z-index: 5;
     grid-template-columns: minmax(0, 1fr);
     align-items: center;
