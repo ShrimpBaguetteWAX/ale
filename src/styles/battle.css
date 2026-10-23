@@ -3773,6 +3773,9 @@
   }
   .rescard {
     grid-template-columns: 44px minmax(0, 1fr);
+    /* From the top: a card with no level line (the NFT fighter) would
+       otherwise sit lower than the rest. */
+    align-content: start;
     align-items: start;
     gap: 8px;
     padding: 8px;
