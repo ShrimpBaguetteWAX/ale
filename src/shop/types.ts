@@ -85,3 +85,11 @@ export const LEGEND_BENEFITS = [
   'Boost your CPU for 24 hours, up to 25 times a week',
   'A larger free daily energy flask',
 ]
+
+/** The same four, short enough for a 2 × 2 on a phone. */
+export const LEGEND_BENEFITS_SHORT: [string, string][] = [
+  ['Free reveals', 'at every tavern'],
+  ['Full rewards', 'not the 10% trial cap'],
+  ['CPU boost', '24h, up to 25× a week'],
+  ['Bigger flask', 'free every day'],
+]

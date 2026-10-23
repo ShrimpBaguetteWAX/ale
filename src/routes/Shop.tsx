@@ -15,10 +15,12 @@ import {
   legendExpiry,
   priceOf,
   rewardOf,
+  valueBadges,
   waxAmount,
 } from '@/shop/rules'
 import {
   LEGEND_BENEFITS,
+  LEGEND_BENEFITS_SHORT,
   SHOP_CATEGORIES,
   type ShopCooldown,
   type ShopItem,
@@ -106,6 +108,8 @@ export default function Shop() {
         ),
     [items, category],
   )
+  /* "+22%", "save 17%": what each rung gives over the bottom one. */
+  const badges = useMemo(() => valueBadges(shown), [shown])
 
   const buy = (item: ShopItem) => {
     setConfirming(null)
@@ -142,7 +146,7 @@ export default function Shop() {
         <header className="shop__head">
           <div>
             <h1 className="page__title">Shop</h1>
-            <p className="faint" style={{ fontSize: 'var(--fs-sm)' }}>
+            <p className="faint shop__ladder" style={{ fontSize: 'var(--fs-sm)' }}>
               WAX buys gems · gems buy credits and Legend · credits buy energy
             </p>
           </div>
@@ -177,7 +181,7 @@ export default function Shop() {
           ))}
         </div>
 
-        <p className="hint" style={{ marginTop: 0 }}>
+        <p className="hint shop__blurb" style={{ marginTop: 0 }}>
           {active?.blurb}
         </p>
 
@@ -233,6 +237,9 @@ export default function Shop() {
                     <h2 className="pack__title">{item.title}</h2>
                     <div className="pack__offer">
                       <Amount label={reward.label} icon={reward.icon} />
+                      {badges.has(item.item) && (
+                        <span className="pack__value">{badges.get(item.item)}</span>
+                      )}
                     </div>
 
                     {/*
@@ -269,9 +276,19 @@ export default function Shop() {
         {category === 'account' && (
           <section className="panel legendcard">
             <div className="panel__title">Legend account benefits</div>
-            <ul className="benefits">
+            <ul className="benefits benefits--long">
               {LEGEND_BENEFITS.map((b) => (
                 <li key={b}>{b}</li>
+              ))}
+            </ul>
+            {/* A phone shows them as a 2 × 2 under the passes, so the tab
+                fits one screen. */}
+            <ul className="benefits benefits--short">
+              {LEGEND_BENEFITS_SHORT.map(([title, detail]) => (
+                <li key={title}>
+                  <b>{title}</b>
+                  {detail}
+                </li>
               ))}
             </ul>
             <p className="hint">

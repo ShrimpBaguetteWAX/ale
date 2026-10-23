@@ -198,6 +198,49 @@ export function rewardOf(item: ShopItem): Price {
   return { label: '—' }
 }
 
+/** What an item costs and gives as plain numbers, in its own units. */
+function costAmount(item: ShopItem): number {
+  if (isWaxPriced(item)) return waxAmount(item.cost_wax)
+  return item.cost_gem || item.cost_dust || item.cost_action_points || 0
+}
+function gainAmount(item: ShopItem): number {
+  return item.gain_gem || item.gain_dust || item.gain_action_points || item.gain_legend_acct_seconds || 0
+}
+
+/**
+ * How much better a rung of the ladder is than the bottom one, as a short
+ * badge: "+22%" more of the reward for the same money, or "save 17%" on a
+ * Legend pass, which is time and so reads as a price per day.
+ *
+ * Measured against the cheapest paid item in the same list and the same
+ * currency; free items and the bottom rung itself get nothing.
+ */
+export function valueBadges(items: ShopItem[]): Map<string, string> {
+  const badges = new Map<string, string>()
+  const paid = items.filter((i) => costAmount(i) > 0 && gainAmount(i) > 0)
+  const groups = new Map<string, ShopItem[]>()
+  for (const i of paid) {
+    const unit = isWaxPriced(i) ? 'wax' : i.cost_gem ? 'gem' : i.cost_dust ? 'dust' : 'ap'
+    groups.set(unit, [...(groups.get(unit) ?? []), i])
+  }
+  for (const group of groups.values()) {
+    const base = group.reduce((a, b) => (costAmount(b) < costAmount(a) ? b : a))
+    const baseRatio = gainAmount(base) / costAmount(base)
+    for (const i of group) {
+      if (i === base) continue
+      const ratio = gainAmount(i) / costAmount(i)
+      if (i.gain_legend_acct_seconds > 0) {
+        const save = Math.round((1 - baseRatio / ratio) * 100)
+        if (save >= 1) badges.set(i.item, `save ${save}%`)
+      } else {
+        const more = Math.round((ratio / baseRatio - 1) * 100)
+        if (more >= 1) badges.set(i.item, `+${more}%`)
+      }
+    }
+  }
+  return badges
+}
+
 export function itemArt(item: ShopItem): string {
   return asset(`/assets/shop/${item.item}.webp`)
 }

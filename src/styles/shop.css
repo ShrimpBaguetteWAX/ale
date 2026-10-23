@@ -514,3 +514,326 @@
 .confirm__sub {
   font-size: var(--fs-xs);
 }
+
+/* ---------- Value badges and the short benefits ---------- */
+
+/* "+22%", "save 17%": a phone's rows carry them; a desktop card does not. */
+.pack__value {
+  display: none;
+}
+
+.benefits--short {
+  display: none;
+}
+
+/*
+ * Alien Worlds shards on a price button.
+ *
+ * The shard is an amber coin, and on the shop's cyan buttons it sat beside
+ * the WAX and gem prices as if it were one of ours. A dark button with an
+ * amber edge and amber figures says "a different currency" before it is
+ * read, and the coin stands out on it instead of sinking into a gold fill.
+ */
+.btn--shards {
+  --btn-bg: linear-gradient(180deg, rgb(40 30 6 / 92%), rgb(20 14 2 / 96%));
+  --btn-line: #ffb800;
+  --btn-fg: #ffd36a;
+  box-shadow: 0 0 12px rgb(255 184 0 / 22%);
+  text-shadow: none;
+}
+
+/* ---------- A phone: rows, one screen per tab ---------- */
+
+@media (max-width: 719px) {
+  .shop__inner {
+    gap: 10px;
+  }
+
+  /* SHOP and the Legend tag on one line; the ladder line and the blurb go —
+     each row's button already says what it costs. */
+  .shop__head {
+    flex-wrap: nowrap;
+  }
+  .shop__ladder,
+  .shop__blurb {
+    display: none;
+  }
+  .shop__status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .waxbar {
+    flex-wrap: nowrap;
+    padding: 7px 12px;
+  }
+  .waxbar__label {
+    font-size: 12px;
+  }
+  .waxbar__value {
+    font-size: 15px;
+  }
+
+  .packgrid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 7px;
+  }
+
+  /* The card becomes a row: art, what you get, the price on the right. */
+  .pack {
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    padding: 6px;
+    border-radius: 11px;
+  }
+  .pack__art {
+    flex: none;
+    width: 58px;
+    height: 58px;
+    aspect-ratio: auto;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .pack__badge {
+    left: 2px;
+    top: 2px;
+    padding: 1px 3px;
+    font-size: 7px;
+    letter-spacing: 0.04em;
+  }
+  .pack__body {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    column-gap: 8px;
+    row-gap: 2px;
+    padding: 0;
+    flex: 1;
+    min-width: 0;
+  }
+  .pack__title {
+    grid-column: 1;
+    min-height: 0;
+    font-size: 11px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .pack__offer {
+    grid-column: 1;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 16px;
+  }
+  .pack__offer .amount {
+    gap: 5px;
+  }
+  .pack__offer .amount img {
+    width: 16px;
+    height: 16px;
+  }
+  .pack__value {
+    display: inline-block;
+    padding: 1px 6px;
+    border-radius: 5px;
+    font-family: var(--font-body);
+    font-size: 10px;
+    font-weight: var(--fw-bold);
+    letter-spacing: 0.02em;
+    color: #5ff0c9;
+    background: rgb(14 212 168 / 16%);
+    box-shadow: inset 0 0 0 1px rgb(14 212 168 / 40%);
+  }
+  .pack .btn {
+    grid-column: 2;
+    grid-row: 1 / span 3;
+    width: auto;
+    min-width: 92px;
+    height: 38px;
+    margin: 0;
+    padding: 0 12px;
+    font-size: 12.5px;
+  }
+  .pack .btn .amount img {
+    width: 15px;
+    height: 15px;
+  }
+
+  /* Outpost rows: the card's picture, zoomed past its frame. */
+  .outpost__card .pack__art img {
+    transform: scale(1.6);
+    transform-origin: center 30%;
+  }
+  /* Kind and time left on one line under the name: two lines of text,
+     not three, so seven offers fit a screen. */
+  .outpost__card {
+    padding: 4px 6px;
+  }
+  .outpost__card .pack__art {
+    width: 48px;
+    height: 48px;
+  }
+  .outpost__card .pack__badge {
+    display: none;
+  }
+  .outpost__card .pack__body {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 2px 0;
+  }
+  .outpost__card .pack__title {
+    grid-column: 1 / 3;
+  }
+  .outpost__meta,
+  .outpost__window {
+    grid-row: 2;
+    margin: 0;
+    padding: 0;
+    font-size: 10.5px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .outpost__meta {
+    grid-column: 1;
+    max-width: 130px;
+  }
+  .outpost__window {
+    grid-column: 2;
+  }
+  .outpost__window::before {
+    content: ' · ';
+    white-space: pre;
+  }
+  .outpost__card .btn,
+  .outpost__soon {
+    grid-column: 3;
+    grid-row: 1 / span 2;
+    margin-left: 8px;
+  }
+  .outpost__soon {
+    min-height: 38px;
+    padding: 0 10px;
+  }
+  .outpost {
+    gap: 8px;
+  }
+
+  /* Legend: the four benefits as a 2 × 2 under the passes. */
+  .legendcard {
+    padding: 0;
+    background: none;
+    border: 0;
+    box-shadow: none;
+  }
+  .legendcard .panel__title {
+    display: none;
+  }
+  .benefits--long {
+    display: none;
+  }
+  .benefits--short {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    margin: 0;
+  }
+  .benefits--short li {
+    display: block;
+    padding: 7px 9px;
+    border-radius: 9px;
+    background: rgb(124 92 255 / 10%);
+    box-shadow: inset 0 0 0 1px rgb(124 92 255 / 30%);
+    font-size: 11px;
+    line-height: 1.3;
+  }
+  .benefits--short li::before {
+    display: none;
+  }
+  .benefits--short b {
+    display: block;
+    color: var(--white);
+    font-size: 12px;
+  }
+  .legendcard .hint {
+    margin: 6px 0 0;
+    font-size: 11px;
+    text-align: center;
+  }
+}
+
+/* The Outpost's rarity chips and pager — a phone's only. */
+.outpost__rarities {
+  display: flex;
+  gap: 5px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.outpost__rarities::-webkit-scrollbar {
+  display: none;
+}
+.outpost__rarity {
+  --dot: var(--text-faint);
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 28px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 14px;
+  background: rgb(255 255 255 / 6%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 12%);
+  color: #cfd8e6;
+  font: var(--fw-bold) 11.5px var(--font-body);
+  cursor: pointer;
+}
+.outpost__rarity::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--dot);
+}
+.outpost__rarity i {
+  font-style: normal;
+  font-size: 10px;
+  opacity: 0.6;
+}
+.outpost__rarity[aria-selected='true'] {
+  color: var(--white);
+  background: rgb(0 186 255 / 16%);
+  box-shadow: inset 0 0 0 1px rgb(0 186 255 / 60%);
+}
+.outpost__rarity--rare { --dot: #4aa8ff; }
+.outpost__rarity--epic { --dot: #b06bff; }
+.outpost__rarity--legendary { --dot: #ffb23e; }
+.outpost__rarity--mythical { --dot: #ff4f8b; }
+
+.outpost__pager {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-size: 11.5px;
+  font-weight: var(--fw-bold);
+  color: var(--text-faint);
+}
+.outpost__pager button {
+  width: 32px;
+  height: 30px;
+  border: 0;
+  border-radius: 8px;
+  background: rgb(255 255 255 / 6%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 12%);
+  color: var(--white);
+  font-size: 15px;
+  cursor: pointer;
+}
+.outpost__pager button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}

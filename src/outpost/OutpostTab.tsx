@@ -17,6 +17,16 @@ import {
 } from './rules'
 import { fetchOutpostOffers, fetchPointOffers, fetchUserPoints } from './queries'
 import type { OutpostOffer } from './types'
+import { usePhone } from '@/components/usePhone'
+
+/*
+   A phone shows the offers as rows, a rarity at a time and seven to a page,
+   so the tab is one screen however many the Outpost has open. Rarest last,
+   the way Alien Worlds orders them.
+*/
+const PHONE_PAGE = 7
+const RARITY_ORDER = ['Abundant', 'Common', 'Rare', 'Epic', 'Legendary', 'Mythical']
+const SOON = 'Coming soon'
 
 /**
  * The Alien Worlds Outpost, inside our shop.
@@ -84,6 +94,49 @@ export function OutpostTab() {
     [board.data],
   )
 
+  const phone = usePhone()
+  /* The rarities on offer, in order, each with how many are open. */
+  const rarities = useMemo(() => {
+    const counts = new Map<string, number>()
+    for (const e of active) {
+      const r = e.template?.rarity || 'Other'
+      counts.set(r, (counts.get(r) ?? 0) + 1)
+    }
+    const rank = (r: string) => {
+      const i = RARITY_ORDER.indexOf(r)
+      return i < 0 ? RARITY_ORDER.length : i
+    }
+    return [...counts.entries()].sort((a, b) => rank(a[0]) - rank(b[0]))
+  }, [active])
+  const [rarity, setRarity] = useState<string | null>(null)
+  const [page, setPage] = useState(0)
+  const shownRarity =
+    rarity === SOON && upcoming.length > 0
+      ? SOON
+      : rarities.some(([r]) => r === rarity)
+        ? rarity!
+        : (rarities[0]?.[0] ?? null)
+  const inRarity =
+    shownRarity === SOON
+      ? upcoming
+      : active.filter((e) => (e.template?.rarity || 'Other') === shownRarity)
+  const pages = Math.max(1, Math.ceil(inRarity.length / PHONE_PAGE))
+  const onPage = Math.min(page, pages - 1)
+  const pickRarity = (r: string) => {
+    setRarity(r)
+    setPage(0)
+  }
+  const openShown = phone
+    ? shownRarity === SOON
+      ? []
+      : inRarity.slice(onPage * PHONE_PAGE, (onPage + 1) * PHONE_PAGE)
+    : active
+  const soonShown = phone
+    ? shownRarity === SOON
+      ? inRarity.slice(onPage * PHONE_PAGE, (onPage + 1) * PHONE_PAGE)
+      : []
+    : upcoming
+
   const redeem = (entry: OutpostOffer) => {
     setConfirming(null)
     return run(
@@ -146,16 +199,49 @@ export function OutpostTab() {
         </div>
       ) : (
         <>
+          {phone && rarities.length > 0 && (
+            <div className="outpost__rarities" role="tablist" aria-label="Rarity">
+              {rarities.map(([r, n]) => (
+                <button
+                  type="button"
+                  key={r}
+                  role="tab"
+                  className={`outpost__rarity outpost__rarity--${r.toLowerCase()}`}
+                  aria-selected={shownRarity === r}
+                  onClick={() => pickRarity(r)}
+                >
+                  {r}
+                  <i>{n}</i>
+                </button>
+              ))}
+              {upcoming.length > 0 && (
+                <button
+                  type="button"
+                  role="tab"
+                  className="outpost__rarity outpost__rarity--soon"
+                  aria-selected={shownRarity === SOON}
+                  onClick={() => pickRarity(SOON)}
+                >
+                  Soon
+                  <i>{upcoming.length}</i>
+                </button>
+              )}
+            </div>
+          )}
+
+          {!phone && (
           <h2 className="outpost__heading">
             Open now
             {active.length > 0 && <span className="outpost__count">{active.length}</span>}
           </h2>
+          )}
 
           {active.length === 0 ? (
             <p className="hint">The Outpost has no offers open at the moment.</p>
           ) : (
+            openShown.length > 0 && (
             <div className="packgrid">
-              {active.map((entry) => {
+              {openShown.map((entry) => {
                 const gate = canRedeem(entry, balance, registered)
                 const key = `outpost:${entry.offer.id}`
                 return (
@@ -166,7 +252,7 @@ export function OutpostTab() {
                   >
                     <button
                       type="button"
-                      className="btn btn--primary btn--block"
+                      className="btn btn--primary btn--block btn--shards"
                       onClick={() => setConfirming(entry)}
                       disabled={busy !== null || !gate.ok || !session}
                       title={
@@ -194,6 +280,7 @@ export function OutpostTab() {
                 )
               })}
             </div>
+            )
           )}
 
           {/*
@@ -202,18 +289,21 @@ export function OutpostTab() {
             date is the useful thing, because these are what a player saves
             shards for.
           */}
+          {!phone && (
           <h2 className="outpost__heading">
             Coming soon
             {upcoming.length > 0 && (
               <span className="outpost__count">{upcoming.length}</span>
             )}
           </h2>
+          )}
 
           {upcoming.length === 0 ? (
-            <p className="hint">Nothing scheduled beyond what is open now.</p>
+            !phone && <p className="hint">Nothing scheduled beyond what is open now.</p>
           ) : (
+            soonShown.length > 0 && (
             <div className="packgrid">
-              {upcoming.map((entry) => (
+              {soonShown.map((entry) => (
                 <OfferCard
                   key={entry.offer.id}
                   entry={entry}
@@ -225,6 +315,32 @@ export function OutpostTab() {
                   </div>
                 </OfferCard>
               ))}
+            </div>
+            )
+          )}
+
+          {phone && pages > 1 && (
+            <div className="outpost__pager">
+              <button
+                type="button"
+                aria-label="Previous page"
+                disabled={onPage === 0}
+                onClick={() => setPage(onPage - 1)}
+              >
+                ‹
+              </button>
+              <span>
+                {onPage * PHONE_PAGE + 1}–{Math.min((onPage + 1) * PHONE_PAGE, inRarity.length)} of{' '}
+                {inRarity.length} {shownRarity === SOON ? 'coming' : shownRarity}
+              </span>
+              <button
+                type="button"
+                aria-label="Next page"
+                disabled={onPage >= pages - 1}
+                onClick={() => setPage(onPage + 1)}
+              >
+                ›
+              </button>
             </div>
           )}
         </>
