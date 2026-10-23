@@ -169,6 +169,16 @@ const GRID_H = PLAY_MAX_Y - PLAY_MIN_Y + 1 // 20
 /** Native size of one tile inside the planet artwork. */
 const SRC_TILE = 50
 
+/*
+   The planet artwork, decoded, kept across visits. The map is unmounted
+   whenever another screen opens; without this, coming back drew a frame or
+   two of empty navy while the same picture decoded again.
+*/
+const planetArt = new Map<string, HTMLImageElement>()
+/* The same for the markers and the buildings drawn on it. */
+const markerArt = new Map<MarkerKey, HTMLImageElement>()
+const buildingArt = new Map<string, HTMLImageElement>()
+
 /**
  * The smallest scale the player may reach.
  *
@@ -592,10 +602,10 @@ export function MapCanvas({
   const sizeRef = useRef({ w: 0, h: 0, dpr: 1 })
   const frameRef = useRef(0)
   const indexRef = useRef(new Map<string, Land>())
-  const imgRef = useRef<HTMLImageElement | null>(null)
-  const markersRef = useRef(new Map<MarkerKey, HTMLImageElement>())
+  const imgRef = useRef<HTMLImageElement | null>(planetArt.get(mapSrc) ?? null)
+  const markersRef = useRef(markerArt)
   /* The buildings' pictures, by kind, and by kind + "-muted" for the greyed ones. */
-  const buildingsRef = useRef(new Map<string, HTMLImageElement>())
+  const buildingsRef = useRef(buildingArt)
   const pinRef = useRef<HTMLDivElement>(null)
   /* The trip's layer: one group, moved with the map like the pin. */
   const tripRef = useRef<SVGGElement>(null)
@@ -1178,16 +1188,24 @@ export function MapCanvas({
     draw()
   }, [draw])
 
-  // Load the planet artwork; redraw once it decodes.
+  // Load the planet artwork (or take the one already decoded); redraw once it decodes.
   useEffect(() => {
-    const img = new Image()
-    img.decoding = 'async'
-    img.src = mapSrc
+    let img = planetArt.get(mapSrc)
+    if (!img) {
+      img = new Image()
+      img.decoding = 'async'
+      img.src = mapSrc
+      planetArt.set(mapSrc, img)
+    }
     imgRef.current = img
     let alive = true
-    img
+    const art = img
+    art
       .decode()
-      .catch(() => {})
+      /* A failed load is not kept, so the next visit asks again. */
+      .catch(() => {
+        if (planetArt.get(mapSrc) === art) planetArt.delete(mapSrc)
+      })
       .then(() => {
         if (alive) drawNow()
       })
@@ -1209,7 +1227,12 @@ export function MapCanvas({
     ]
     for (const [planet, src] of Object.entries(PORTAL_SRC)) {
       const key = `portal-${planet}`
-      if (pictures.has(key)) continue
+      if (pictures.has(key)) {
+        /* Kept from an earlier visit; if it is still decoding, redraw when it lands. */
+        const kept = pictures.get(key)
+        if (kept && !kept.complete) kept.decode().catch(() => {}).then(() => alive && drawNow())
+        continue
+      }
       const img = new Image()
       img.decoding = 'async'
       img.src = src
@@ -1226,7 +1249,12 @@ export function MapCanvas({
         [kind, src.lit],
         [kind + '-muted', src.muted],
       ]) {
-        if (pictures.has(key)) continue
+        if (pictures.has(key)) {
+          /* Kept from an earlier visit; if it is still decoding, redraw when it lands. */
+          const kept = pictures.get(key)
+          if (kept && !kept.complete) kept.decode().catch(() => {}).then(() => alive && drawNow())
+          continue
+        }
         const img = new Image()
         img.decoding = 'async'
         img.src = url
@@ -1241,7 +1269,12 @@ export function MapCanvas({
     }
     const store = markersRef.current
     for (const [key, src] of Object.entries(MARKER_SRC) as [MarkerKey, string][]) {
-      if (store.has(key)) continue
+      if (store.has(key)) {
+        /* Kept from an earlier visit; if it is still decoding, redraw when it lands. */
+        const kept = store.get(key)
+        if (kept && !kept.complete) kept.decode().catch(() => {}).then(() => alive && drawNow())
+        continue
+      }
       const img = new Image()
       img.decoding = 'async'
       img.src = src
@@ -1563,15 +1596,27 @@ export function MapCanvas({
       /* A rotation or a resize can put the current scale under the new
          floor — most obviously turning a phone from portrait to landscape. */
       if (v.scale < floor) v.scale = floor
-      clamp()
-      drawNow()
+      /*
+         The first frame already stands on the player. The recentre request
+         only arrives in an effect after the first paint, so the map used to
+         be drawn once at the grid's corner and then jump onto the player —
+         and coming back from a page, over the picture the shell kept, that
+         reads as the whole map twitching sideways.
+      */
+      const p = first ? positionRef.current : null
+      if (p) {
+        centerOn(p.x, p.y)
+      } else {
+        clamp()
+        drawNow()
+      }
     }
 
     apply()
     const ro = new ResizeObserver(apply)
     ro.observe(host)
     return () => ro.disconnect()
-  }, [clamp, drawNow, lowFx, floorFor, readFrameInsets])
+  }, [clamp, drawNow, lowFx, floorFor, readFrameInsets, centerOn])
 
   /* The zoom, for the rail outside the canvas. */
   useEffect(() => {
