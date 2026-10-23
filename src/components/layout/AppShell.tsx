@@ -138,6 +138,12 @@ export function AppShell() {
   const location = useLocation()
   const navigate = useNavigate()
   const isMap = location.pathname === '/map'
+  /*
+     The screens a fight happens on: picking the team, the fight, the result.
+     A phone gives them the whole height and no tab bar; the way out is on
+     the screen itself (Leave, Skip, Back to map).
+  */
+  const fightScreen = /^\/(dungeon|arena|battle)(\/|$)/.test(location.pathname)
 
   /*
      The page's glass, and how pages come and go on a desktop.
@@ -248,7 +254,7 @@ export function AppShell() {
 
   return (
     <div
-      className={isMap ? 'shell shell--flush' : 'shell'}
+      className={`shell${isMap ? ' shell--flush' : ''}${fightScreen ? ' shell--notabs' : ''}`}
       style={{ '--shell-art': `url('${asset('/assets/background/bg-menu.jpeg')}')` } as React.CSSProperties}
     >
       <div className="shell__bg" aria-hidden="true">

@@ -3893,15 +3893,15 @@
      page keeps room under the cards for it.
   */
   .result {
-    padding-bottom: 230px;
+    padding-bottom: 170px;
   }
   .minepower {
     position: fixed;
     left: 12px;
     right: 12px;
     width: auto;
-    /* Clear of the tab bar (57px and its safe-area padding). */
-    bottom: calc(65px + env(safe-area-inset-bottom));
+    /* At the foot of the screen: the fight screens have no tab bar. */
+    bottom: calc(8px + env(safe-area-inset-bottom));
     z-index: 5;
     grid-template-columns: minmax(0, 1fr);
     align-items: center;
@@ -4107,7 +4107,7 @@
      the older blows inside the log do. Top bar, tab bar, page padding,
      the 16:9 picture and its control bar. */
   .bfwrap--bcast > .clog--live {
-    height: calc(100dvh - 56px - 57px - env(safe-area-inset-bottom) - 40px - (100vw - 32px) * 0.5625 - 46px - var(--sp-2));
+    height: calc(100dvh - 56px - env(safe-area-inset-bottom) - 40px - (100vw - 32px) * 0.5625 - 46px - var(--sp-2));
     min-height: 160px;
     max-height: none;
     background: linear-gradient(180deg, rgb(10 18 34 / 72%), rgb(4 9 20 / 82%));
@@ -4168,3 +4168,4 @@
   justify-self: center;
   white-space: nowrap;
 }
+
