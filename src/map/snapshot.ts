@@ -10,7 +10,8 @@ import { useSyncExternalStore } from 'react'
  * frame, which the shell paints behind the page. Nothing is encoded or
  * fetched; it is a canvas-to-canvas copy, and the next visit replaces it.
  *
- * Phones never show it, so they never make one.
+ * Phones show it as well, under glass that runs to the screen's edges (see
+ * app.css); the copy is the same, only the glass differs.
  */
 
 let picture: HTMLCanvasElement | null = null
@@ -21,7 +22,6 @@ const MAX_W = 1600
 
 export function keepMapPicture(from: HTMLCanvasElement | null): void {
   if (!from || !from.width || !from.height) return
-  if (!window.matchMedia('(min-width: 1024px)').matches) return
   const scale = Math.min(1, MAX_W / from.width)
   const copy = document.createElement('canvas')
   copy.width = Math.round(from.width * scale)

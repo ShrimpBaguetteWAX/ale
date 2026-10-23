@@ -627,6 +627,14 @@
     --btn-bg: rgb(8 13 28 / 80%);
     --btn-line: rgb(255 255 255 / 22%);
   }
+  /* The global disabled look is dark text on a grey slab; on this dark
+     button that left "Reroll" black on navy. Disabled stays the same
+     button, quieter. */
+  .qcard__action:disabled {
+    --btn-bg: rgb(8 13 28 / 70%);
+    --btn-line: rgb(255 255 255 / 12%);
+    color: var(--text-faint);
+  }
   .qcard__action .cost img {
     width: 13px;
     height: 13px;
