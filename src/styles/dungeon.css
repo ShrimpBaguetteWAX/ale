@@ -5863,3 +5863,32 @@ button.combatcard--empty:hover {
     padding: 0 10px;
   }
 }
+
+/* On a phone the cards stand straight, as in the mockup: no lean. */
+@media (max-width: 719px) {
+  .versus {
+    --lean: 0deg;
+    --lean-back: 0deg;
+  }
+  .versus .combatcard__hit {
+    width: 100%;
+    margin-left: 0;
+  }
+  .versus .combatcard__element {
+    left: 4px;
+    top: 4px;
+  }
+  .versus .combatcard__level,
+  .versus .combatcard__badge {
+    right: 4px;
+    top: 4px;
+  }
+  .versus .combatcard__plate {
+    padding-left: 3px;
+    padding-right: 3px;
+  }
+  .versus .combatcard__vs {
+    right: 0;
+    bottom: calc(100% + 2px);
+  }
+}
