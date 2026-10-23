@@ -172,6 +172,12 @@ const PICK_STATS: [string, string, boolean][] = [
 export type PickDensity = 'full' | 'compact'
 
 const DENSITY_KEY = 'al.pickdensity'
+/*
+   The phone's picker sheet keeps its own, and starts compact: it opens over
+   the fight to fill one slot, and six fighters to a row is what lets a
+   player see enough of the roster to choose without scrolling past it.
+*/
+const SHEET_DENSITY_KEY = 'al.pickdensity.sheet'
 
 /**
  * Remembered across visits, and across the two screens that offer it.
@@ -181,17 +187,18 @@ const DENSITY_KEY = 'al.pickdensity'
  * than a setting. Not keyed by wallet, for the same reason: it is about the
  * person looking at the screen, not the account they are looking at.
  */
-export function recallDensity(): PickDensity {
+export function recallDensity(sheet = false): PickDensity {
   try {
+    if (sheet) return localStorage.getItem(SHEET_DENSITY_KEY) === 'full' ? 'full' : 'compact'
     return localStorage.getItem(DENSITY_KEY) === 'compact' ? 'compact' : 'full'
   } catch {
-    return 'full'
+    return sheet ? 'compact' : 'full'
   }
 }
 
-export function rememberDensity(density: PickDensity): void {
+export function rememberDensity(density: PickDensity, sheet = false): void {
   try {
-    localStorage.setItem(DENSITY_KEY, density)
+    localStorage.setItem(sheet ? SHEET_DENSITY_KEY : DENSITY_KEY, density)
   } catch {
     /* A blocked localStorage costs the setting, not the screen. */
   }
@@ -1689,6 +1696,7 @@ export function FighterGrid({
   matchups,
   onToggle,
   onInspect,
+  sheet = false,
 }: {
   roster: RosterFighter[] | null
   filter: RosterFilter
@@ -1726,16 +1734,18 @@ export function FighterGrid({
   onCount?: (shown: number, total: number) => void
   onToggle: (f: RosterFighter) => void
   onInspect: (f: RosterFighter) => void
+  /** Drawn in the phone's picker sheet, which starts compact. */
+  sheet?: boolean
 }) {
   /* Which face every card shows, until one is turned over on its own. */
   const [view, setView] = useState<PickView>('combat')
   /* Read once here rather than in every card: a grid is 150 of them. */
   const phone = usePhone()
   /* How much of each fighter to draw, remembered from last time. */
-  const [density, setDensity] = useState<PickDensity>(recallDensity)
+  const [density, setDensity] = useState<PickDensity>(() => recallDensity(sheet))
   const chooseDensity = (next: PickDensity) => {
     setDensity(next)
-    rememberDensity(next)
+    rememberDensity(next, sheet)
   }
 
   const shown = useMemo(

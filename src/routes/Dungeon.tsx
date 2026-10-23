@@ -1399,6 +1399,7 @@ export default function Dungeon() {
                 onToggle={toggleFighter}
                 onCount={countFighters}
                 onInspect={showFighter}
+                sheet={phone}
               />
             </>
           ) : (
