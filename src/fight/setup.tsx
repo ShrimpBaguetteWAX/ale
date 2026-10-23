@@ -3158,7 +3158,7 @@ export function DetailSheet({
   const box = useModal(onClose)
 
   return (
-    <div className="sheet" role="dialog" aria-modal="true" onClick={onClose}>
+    <div className="sheet sheet--fighter" role="dialog" aria-modal="true" onClick={onClose}>
       <div
         className="sheet__panel panel sheet__panel--fighter"
         ref={box}
