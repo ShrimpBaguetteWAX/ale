@@ -83,8 +83,15 @@ import {
  * or skipped freely.
  */
 
-/** Milliseconds per blow at 1×, matching the original's pacing. */
-const BASE_TURN_MS = 1500
+/**
+ * Milliseconds per blow at 1×.
+ *
+ * One blow is told in three beats: the strike (the lunge, and the recoil
+ * that ends about 1.1 s in), then the next attacker is called, then half a
+ * second later they swing. Slower than the original's 1.5 s, so the pointer
+ * never appears while the last blow is still landing.
+ */
+const BASE_TURN_MS = 1700
 
 /**
  * When the swing connects, in milliseconds at 1×.
@@ -96,8 +103,8 @@ const BASE_TURN_MS = 1500
  */
 const IMPACT_MS = 580
 
-/** How long the next attacker is called before the blow, as on the tournament. */
-const AIM_LEAD_MS = 1000
+/** How long the next attacker is called before they swing. */
+const AIM_LEAD_MS = 500
 
 /**
  * How long the arena holds after the final blow lands.
@@ -332,9 +339,8 @@ function Arena({
   const current: TurnEvent | null = step > 0 ? replay.turns[step - 1] : null
 
   /*
-     Who swings next, called a beat before the blow, as the tournament's
-     broadcast does: half a second after a blow lands the next attacker is
-     picked out, and the pointer stays over them until they strike.
+     Who swings next, called once the last blow has played out and held for
+     AIM_LEAD_MS before they strike, as the tournament's broadcast does.
   */
   const [aimUid, setAimUid] = useState<string | null>(null)
   useEffect(() => {
@@ -342,7 +348,7 @@ function Arena({
     if (!playing || step >= total) return
     const at = window.setTimeout(
       () => setAimUid(replay.turns[step]?.attackerUid ?? null),
-      (step === 0 ? 0 : BASE_TURN_MS - AIM_LEAD_MS) / speed,
+      (BASE_TURN_MS - AIM_LEAD_MS) / speed,
     )
     return () => window.clearTimeout(at)
   }, [step, playing, total, speed, replay])
@@ -838,7 +844,7 @@ function Arena({
             the fighters stand. The log takes the right-hand column where the
             screen is wide enough, and sits underneath where it is not.
           */
-          <div className={`bfwrap${broadcast ? ' bfwrap--bcast' : ''}`}>
+          <div className={`bfwrap${broadcast ? ' bfwrap--bcast' : ''}${broadcast && showLog ? ' bfwrap--log' : ''}`}>
             <div className="bfmain">
               {/* On a phone the order sits above the field; on a desktop it is
                   part of the field, under the team names. */}
@@ -867,12 +873,6 @@ function Arena({
               />
               {broadcast && (
                 <>
-                  <LowerThirds
-                    current={landed ? current : null}
-                    step={step}
-                    nameOf={nameOf}
-                    next={replay.fighters.find((x) => x.uid === nextUp) ?? null}
-                  />
                   <div className="bcdeck">
                     <button
                       type="button"
@@ -1360,8 +1360,7 @@ function Battlefield({
       const [x, y, d] = wide
         ? FORMATION_WIDE[i % FORMATION_WIDE.length]
         : [...FORMATION[i % FORMATION.length], 1]
-      /* A broadcast keeps the foot of the picture for its captions. */
-      where.set(f.uid, [f.team === 1 ? x : 100 - x, broadcast ? y * 0.8 : y])
+      where.set(f.uid, [f.team === 1 ? x : 100 - x, y])
       depth.set(f.uid, d)
     })
   }
@@ -1475,62 +1474,6 @@ function Battlefield({
 }
 
 /** One fighter standing on the battlefield. */
-/**
- * The broadcast's lower thirds.
- *
- * The blow that just landed, written out at the foot of the picture on the
- * left, in the colours of the two sides; and on the right, who swings next.
- * Each caption slides in fresh when it changes.
- */
-function LowerThirds({
-  current,
-  step,
-  nameOf,
-  next,
-}: {
-  current: TurnEvent | null
-  step: number
-  nameOf: (uid: string) => string
-  next: SimFighter | null
-}) {
-  const side = (uid: string) => (uid.startsWith('1') ? 'mine' : 'enemy')
-  const nextNft = next ? Number(next.fighter_id) === NFT_FIGHTER_ID : false
-  return (
-    <div className="lowers" aria-live="polite">
-      {current && (
-        <div className="lower lower--blow" key={`blow-${step}`}>
-          <span className="lower__n mono">{step}</span>
-          <span className="lower__text">
-            <b className={`lower__who lower__who--${side(current.attackerUid)}`}>{nameOf(current.attackerUid)}</b> hit{' '}
-            <b className={`lower__who lower__who--${side(current.defenderUid)}`}>{nameOf(current.defenderUid)}</b> for
-          </span>
-          <span className="lower__dmg">{formatScaled(current.damage)}</span>
-          <span className="lower__meta">
-            {current.effectiveness}% landed · {formatScaled(current.defenderHealthBefore)} →{' '}
-            {formatScaled(current.defenderHealthAfter)} HP · {formatScaled(current.blocked)} blocked
-            {current.killed && <em className="lower__ko"> · Knocked out</em>}
-          </span>
-        </div>
-      )}
-      <span className="spacer" />
-      {next && (
-        <div className={`lower lower--next lower--${next.team === 1 ? 'mine' : 'enemy'}`} key={`next-${next.uid}`}>
-          <span className="lower__label">Next</span>
-          <GameImg
-            className="lower__art"
-            src={nextNft ? fighterArtFallback() : fighterArt({ classname: next.classname, racename: next.racename })}
-            alt=""
-            fallback={fighterArtFallback()}
-          />
-          <b className={`lower__who lower__who--${next.team === 1 ? 'mine' : 'enemy'}`}>
-            {nextNft ? 'NFT Fighter' : next.classname || next.racename || 'Fighter'}
-          </b>
-        </div>
-      )}
-    </div>
-  )
-}
-
 /** Milliseconds as a player's clock: 0:04, 1:12. */
 function clock(ms: number): string {
   const s = Math.floor(ms / 1000)
