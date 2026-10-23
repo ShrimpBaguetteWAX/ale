@@ -4120,7 +4120,8 @@
      it gets the rest of the screen. */
   .bfield--bcast {
     --ratio: 0.5625;
-    --unit: 9.5cqw;
+    /* Larger than desktop's 9.5: the columns are 14% apart, room to spare. */
+    --unit: 12.5cqw;
     aspect-ratio: 16 / 9;
   }
   .bfield--bcast .bunit__plate {
@@ -4150,4 +4151,20 @@
   .bfwrap--bcast > .clog--live .clog__body::-webkit-scrollbar {
     display: none;
   }
+}
+
+/*
+ * A fighter's size is its own, never its label's. The unit is a one-column
+ * grid, and an auto column grows to fit its widest child: on a phone the
+ * plate under the figure (level, element, and the threat mark that comes
+ * and goes with the fight) is wider than the figure, so every time the
+ * mark appeared the column widened and the figure, sized from that width,
+ * grew mid-fight. The column is the unit's width; the plate may overhang.
+ */
+.bunit {
+  grid-template-columns: minmax(0, 1fr);
+}
+.bunit__plate {
+  justify-self: center;
+  white-space: nowrap;
 }
