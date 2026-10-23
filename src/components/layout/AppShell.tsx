@@ -74,13 +74,21 @@ function MapBackdrop({ planet }: { planet?: string }) {
   )
 }
 
-/* Desktop only, and never for a player who asked for less motion. */
+/* Never for a player who asked for less motion. */
 function calm(): boolean {
   return (
-    !window.matchMedia('(min-width: 1024px)').matches ||
     window.matchMedia('(prefers-reduced-motion: reduce)').matches ||
     document.documentElement.dataset.fx === 'low'
   )
+}
+
+/*
+ * Which way a page arrives. A desktop slides it in from the right until it
+ * meets the menu; a phone has no menu beside the page, so it rises from the
+ * bottom, over the map, and sinks back down when the map is chosen.
+ */
+function sheetAxis(): 'x' | 'y' {
+  return window.matchMedia('(min-width: 1024px)').matches ? 'x' : 'y'
 }
 
 const SHEET_IN = { duration: 460, easing: 'cubic-bezier(.16, 1, .3, 1)' }
@@ -198,8 +206,9 @@ export function AppShell() {
 
     leaving.current?.finish()
 
+    const away = sheetAxis() === 'x' ? 'translateX(100%)' : 'translateY(100%)'
     if (from === '/map') {
-      const enter = [{ transform: 'translateX(100%)' }, { transform: 'none' }]
+      const enter = [{ transform: away }, { transform: 'none' }]
       glassRef.current?.animate(enter, SHEET_IN)
       mainRef.current?.animate(enter, SHEET_IN)
     } else if (to === '/map') {
@@ -215,7 +224,7 @@ export function AppShell() {
       })
       host.replaceChildren(page)
       host.classList.add('shell__leaving--on')
-      const out = host.animate([{ transform: 'none' }, { transform: 'translateX(100%)' }], SHEET_OUT)
+      const out = host.animate([{ transform: 'none' }, { transform: away }], SHEET_OUT)
       leaving.current = out
       out.onfinish = () => {
         host.classList.remove('shell__leaving--on')

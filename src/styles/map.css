@@ -2268,3 +2268,55 @@
 .mapview--bare .planetmenu {
   display: none;
 }
+
+/*
+ * Phones and tablets: the map runs under the top bar and the tab bar, which
+ * are glass here as on every other screen, so the world reaches the screen's
+ * edges. The map is told how much the bars cover (the --map-inset-* the
+ * canvas reads), so nothing is ever stranded under them, and the map's own
+ * controls keep their places just clear of the bars.
+ */
+@media (max-width: 1023px) {
+  .shell--flush {
+    --map-inset-top: var(--topbar-h);
+    --map-inset-bottom: calc(65px + env(safe-area-inset-bottom));
+  }
+  .shell--flush > .main {
+    grid-row: 1 / -1;
+    grid-column: 1 / -1;
+  }
+  .shell--flush > .topbar {
+    background: rgb(6 10 22 / 55%);
+    backdrop-filter: blur(14px) saturate(1.4);
+    -webkit-backdrop-filter: blur(14px) saturate(1.4);
+  }
+  .shell--flush > .tabbar {
+    background: rgb(6 10 22 / 55%);
+    border-top-color: rgb(255 255 255 / 10%);
+    backdrop-filter: blur(14px) saturate(1.4);
+    -webkit-backdrop-filter: blur(14px) saturate(1.4);
+  }
+  .shell--flush .planetmenu,
+  .shell--flush .maprail__toggle {
+    top: calc(var(--sp-3) + var(--map-inset-top));
+  }
+  .shell--flush .maprail {
+    top: calc(var(--sp-3) + var(--map-inset-top));
+  }
+  .shell--flush .mapfind,
+  .shell--flush .maptoast {
+    bottom: calc(var(--sp-3) + var(--map-inset-bottom));
+  }
+}
+@media (max-width: 719px) {
+  /* Under the menu button, which only a phone has. */
+  .shell--flush .maprail {
+    top: calc(56px + var(--map-inset-top));
+  }
+}
+:root[data-fx='low'] .shell--flush > .topbar,
+:root[data-fx='low'] .shell--flush > .tabbar {
+  background: rgb(5 16 30 / 96%);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}

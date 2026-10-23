@@ -1883,3 +1883,21 @@ a.res {
     -webkit-backdrop-filter: none;
   }
 }
+
+/*
+ * A phone's page on its way back down to the map: a layer of its own over
+ * the screen for the slide, between the bars, dropped when it ends.
+ */
+@media (max-width: 1023px) {
+  .shell__leaving--on {
+    display: block;
+    position: fixed;
+    top: var(--topbar-h);
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: calc(var(--z-sticky) - 1);
+    overflow: hidden;
+    pointer-events: none;
+  }
+}
