@@ -3977,3 +3977,22 @@
     white-space: nowrap;
   }
 }
+
+/* How many claims one Mine sends, when it is more than one. */
+.minepower__times {
+  margin-left: 8px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: rgb(0 0 0 / 22%);
+  font-size: 0.85em;
+  letter-spacing: 0.04em;
+}
+
+.minepower__done {
+  grid-column: 1 / -1;
+  justify-self: center;
+  margin: 0;
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-bold);
+  color: var(--teal);
+}

@@ -1375,8 +1375,24 @@ const SCALED_STATS = new Set([
 /** A pool is claimable at 10,000 banked power, which the game shows as 100%. */
 const FULL_POWER = 10_000
 
+/** The power as a percentage, past 100 when more than one claim is banked. */
 function poolPercent(power: number): number {
-  return power >= FULL_POWER ? 100 : power / 100
+  return power / 100
+}
+
+/**
+ * The most claims one Mine sends. Each `claimpreward` spends at most a full
+ * 100% and keeps the rest, so a pool at 250% has two claims in it; they go
+ * in one transaction, up to this many across both pools.
+ */
+const MAX_CLAIMS = 10
+
+/**
+ * What n claims in a row pay, against what one pays. Each takes one percent
+ * of what is left in the pool, so they shrink: 1 + 0.99 + 0.99² ...
+ */
+function claimsFactor(n: number): number {
+  return (1 - Math.pow(0.99, n)) / 0.01
 }
 
 /**
@@ -1417,7 +1433,6 @@ function Result({
   const [showWhy, setShowWhy] = useState(false)
   const [mining, setMining] = useState(false)
   const [mined, setMined] = useState(false)
-  const [notice, setNotice] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   const won = replay.winner === 1
@@ -1735,6 +1750,7 @@ function Result({
         return {
           pool: a.pool,
           type: a.type,
+          power,
           percent: poolPercent(power),
           addedPercent: a.power / 100,
           estimate,
@@ -1745,6 +1761,25 @@ function Result({
   )
 
   const claimable = pools.filter((p) => p.ready)
+
+  /*
+     The claims one Mine sends: every full 100% in every pool, taking turns
+     between the pools so a cap of ten never leaves one of them out.
+  */
+  const claims = useMemo(() => {
+    const left = new Map(claimable.map((p) => [p.pool, Math.floor(p.power / FULL_POWER)]))
+    const out: string[] = []
+    while (out.length < MAX_CLAIMS && [...left.values()].some((n) => n > 0)) {
+      for (const [pool, n] of left) {
+        if (n > 0 && out.length < MAX_CLAIMS) {
+          out.push(pool)
+          left.set(pool, n - 1)
+        }
+      }
+    }
+    return out
+  }, [claimable])
+  const claimsIn = (pool: string) => claims.filter((c) => c === pool).length
 
   /*
    * The bars open at the level the pools were at *before* this run and fill
@@ -1776,15 +1811,11 @@ function Result({
   const [minedRewards, setMinedRewards] = useState<MinedReward[]>([])
 
   const doMine = async () => {
-    if (!session || claimable.length === 0) return
+    if (!session || claims.length === 0) return
     setMining(true)
     setError(null)
     try {
-      await claimPoolRewards(
-        session,
-        claimable.map((p) => p.pool),
-        row.history_id,
-      )
+      await claimPoolRewards(session, claims, row.history_id)
       // The pools contract settles a beat after the transaction; poll the
       // player row so the bars show the drained pools rather than the old
       // full ones.
@@ -1793,7 +1824,6 @@ function Result({
         await refreshPlayer({ force: true })
       }
       setMined(true)
-      setNotice('Mined. The pools have been paid out and reset.')
 
       /*
          The Rewards dot means "you can mine a reward pool", and this claim
@@ -2132,7 +2162,7 @@ function Result({
                 <span
                   className={`minebar__fill minebar__fill--${p.type}`}
                   style={{
-                    width: `${poolsFilled ? p.percent : Math.max(0, p.percent - p.addedPercent)}%`,
+                    width: `${Math.min(100, poolsFilled ? p.percent : Math.max(0, p.percent - p.addedPercent))}%`,
                   }}
                 />
               </span>
@@ -2157,7 +2187,8 @@ function Result({
             {/* What Mine would bring, not something already won. */}
             <span className="minepower__estlabel">You'd mine about</span>
             {pools.map((p) => (
-              p.estimate === null ? null : (
+              /* Only what Mine will claim, once anything can be claimed. */
+              p.estimate === null || (claims.length > 0 && claimsIn(p.pool) === 0) ? null : (
               <span key={p.pool}>
                 <img
                   src={
@@ -2171,7 +2202,9 @@ function Result({
                 />
                 <span className="sr-only">{p.type === 'tlm' ? 'TLM' : 'Shard'}</span>
                 <strong>
-                  {p.estimate.toLocaleString('en-US', { maximumFractionDigits: 2 })}
+                  {(
+                    p.estimate * (claimsIn(p.pool) > 1 ? claimsFactor(claimsIn(p.pool)) : 1)
+                  ).toLocaleString('en-US', { maximumFractionDigits: 2 })}
                 </strong>
               </span>
               )
@@ -2191,16 +2224,29 @@ function Result({
             type="button"
             className="btn btn--primary minepower__mine"
             onClick={() => void doMine()}
-            disabled={mining || mined || !session || claimable.length === 0}
+            disabled={mining || !session || claims.length === 0}
             title={
-              claimable.length === 0
+              claims.length === 0
                 ? 'No pool has reached 100% yet'
-                : 'Claim the full pools'
+                : claims.length > 1
+                  ? `${claims.length} claims in one transaction, one for every full 100%`
+                  : 'Claim the full pool'
             }
           >
             {mining && <span className="spinner" />}
-            {mined ? 'Mined' : mining ? 'Mining' : 'Mine'}
+            {mining
+              ? 'Mining'
+              : claims.length === 0 && mined
+                ? 'Mined'
+                : 'Mine'}
+            {/* More than one claim: say how many the button sends. */}
+            {!mining && claims.length > 1 && (
+              <span className="minepower__times">×{claims.length}</span>
+            )}
           </button>
+
+          {/* Quietly, in the dock: the receipt says what it paid. */}
+          {mined && !mining && <p className="minepower__done">Mined successfully</p>}
 
           <p className={`minepower__foot${showWhy ? ' minepower__foot--open' : ''}`}>
             {/*
@@ -2222,7 +2268,6 @@ function Result({
         </section>
       )}
 
-      {notice && <div className="alert alert--ok">{notice}</div>}
       {error && <div className="alert alert--error">{error}</div>}
 
       {/*
