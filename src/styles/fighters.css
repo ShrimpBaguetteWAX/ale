@@ -1207,3 +1207,111 @@
   background: rgb(255 90 120 / 18%);
   color: var(--red);
 }
+
+/* ---------- a phone: one readout switch, tighter cards ---------- */
+
+.roster__readout {
+  display: none;
+}
+
+/*
+ * The card as it is — portrait, name and chips, the readout, the upkeep
+ * rail — at about two thirds of the height. The four tabs move off every
+ * card into one switch above the grid, so the whole roster shows the same
+ * readout and the card spends nothing on its own strip.
+ */
+@media (max-width: 719px) {
+  /* Pinned under the top bar while the roster scrolls; the band behind it
+     hides whatever passes underneath. */
+  .roster__readout {
+    position: sticky;
+    top: var(--topbar-h, 56px);
+    z-index: 4;
+    display: flex;
+    gap: 3px;
+    padding: 3px;
+    border-radius: 10px;
+    background: rgb(10 14 28);
+    box-shadow:
+      inset 0 0 0 1px rgb(255 255 255 / 12%),
+      0 0 0 6px rgb(6 10 22),
+      0 10px 14px rgb(6 10 22 / 90%);
+  }
+  .roster__readout button {
+    flex: 1;
+    height: 30px;
+    border: 0;
+    border-radius: 7px;
+    background: none;
+    color: var(--text-faint);
+    font: var(--fw-bold) 12px var(--font-body);
+    cursor: pointer;
+  }
+  .roster__readout button[aria-selected='true'] {
+    background: rgb(124 92 255 / 35%);
+    box-shadow: inset 0 0 0 1px #6f55ff;
+    color: var(--white);
+  }
+
+  .rostergrid {
+    gap: 6px;
+  }
+  .fcard {
+    grid-template-columns: 6px 104px minmax(0, 1fr);
+    grid-template-rows: minmax(0, auto) 20px;
+    border-width: 1px;
+    border-radius: 10px;
+  }
+  .fcard__tabs {
+    display: none;
+  }
+  .fcard__body {
+    grid-template-rows: auto minmax(0, 1fr);
+    gap: 5px;
+    padding: 6px 8px 7px;
+  }
+  .fcard__name {
+    font-size: 11.5px;
+  }
+  .fcard__chips {
+    gap: 3px;
+  }
+  .fcard__marker,
+  .fcard__check {
+    width: 26px;
+    height: 26px;
+  }
+  .fstats {
+    gap: 1px;
+  }
+  .fstats__row {
+    font-size: 11px;
+    line-height: 1.3;
+  }
+  .fstats__row dd {
+    font-size: 11.5px;
+  }
+  .fstats__row--total {
+    margin-top: 1px;
+    padding-top: 2px;
+  }
+  .fability {
+    gap: 5px;
+  }
+  .fability__desc {
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    font-size: 11px;
+  }
+  .fcard__value {
+    top: 5px;
+    left: 5px;
+    font-size: 9px;
+  }
+  .fcard__element {
+    top: 5px;
+    right: 5px;
+    width: 16px;
+    height: 16px;
+  }
+}

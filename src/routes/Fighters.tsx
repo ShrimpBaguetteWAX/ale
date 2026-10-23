@@ -849,6 +849,26 @@ export default function Fighters() {
           .
         </p>
       ) : (
+        <>
+        {/*
+          A phone's readout switch, out where it is used rather than behind
+          More filters: every card shows the same one of Stats, Res, Combat
+          and Abilities, so comparing the roster on any of them is one tap.
+          The cards drop their own tab strip on a phone for it.
+        */}
+        <div className="roster__readout" role="tablist" aria-label="Readout">
+          {CARD_TABS.map(([t, label]) => (
+            <button
+              type="button"
+              key={t}
+              role="tab"
+              aria-selected={tab === t}
+              onClick={() => setTab(t)}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
         <div className="rostergrid">
           {shown.map((f) => (
             <FighterCard
@@ -873,6 +893,7 @@ export default function Fighters() {
             />
           ))}
         </div>
+        </>
       )}
 
       {opened && (
