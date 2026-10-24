@@ -292,21 +292,9 @@ export default function Quests() {
                 </span>
               )}
             </span>
-            <span className="scopetab__meta">
-              {b.endsAt ? `resets in ${formatTimeLeft(b.endsAt - now)}` : '—'}
-            </span>
           </button>
         ))}
       </div>
-
-      {current?.endsAt && (
-        <p className="quests__reset">
-          <span>{current.label} quests</span>
-          <span>
-            New quests in <b>{formatTimeLeft(current.endsAt - now)}</b>
-          </span>
-        </p>
-      )}
 
       {data.loading ? (
         <div className="questgrid">
