@@ -48,6 +48,8 @@ import { formatNumber } from '@/format'
 import { ActionBanner } from '@/components/ActionBanner'
 import { asset, ipfsImage } from '@/assets'
 import { GameImg } from '@/components/GameImg'
+import { usePhone } from '@/components/usePhone'
+import { PhoneFarming, type FarmMode } from '@/farming/PhoneFarming'
 
 /**
  * Farming.
@@ -87,6 +89,8 @@ interface FarmData {
   staked: StakedCard[]
   /** This schema's designs and how many of each, not every schema's. */
   inventory: OwnedCard[]
+  /** This schema's design names, for the staked cards, which come without. */
+  names: ReadonlyMap<number, string>
   loading: boolean
   loadingInventory: boolean
   error: string | null
@@ -131,6 +135,8 @@ function useFarm(account: string | null, schema: FarmSchema): FarmData {
         fetchSchemaTemplates(schema),
       ])
       const rows: OwnedCard[] = []
+      const names = new Map<number, string>()
+      for (const [id, t] of catalogue) names.set(id, t.name)
       for (const [templateId, count] of owned) {
         const t = catalogue.get(templateId)
         if (!t || count <= 0) continue
@@ -143,7 +149,7 @@ function useFarm(account: string | null, schema: FarmSchema): FarmData {
           count,
         })
       }
-      return rows
+      return { rows, names }
     },
     { deps: ['farmStaked'] },
   )
@@ -154,7 +160,8 @@ function useFarm(account: string | null, schema: FarmSchema): FarmData {
     weights,
     user: farm.data?.user,
     staked: farm.data?.staked ?? EMPTY_STAKED,
-    inventory: inventory.data ?? EMPTY_CARDS,
+    inventory: inventory.data?.rows ?? EMPTY_CARDS,
+    names: inventory.data?.names ?? EMPTY_NAMES,
     loading: farm.loading,
     loadingInventory: inventory.loading,
     error: farm.error ?? inventory.error,
@@ -168,6 +175,7 @@ const EMPTY_POOLS: FarmPool[] = []
 const EMPTY_WEIGHTS: StakeWeight[] = []
 const EMPTY_STAKED: StakedCard[] = []
 const EMPTY_CARDS: OwnedCard[] = []
+const EMPTY_NAMES: ReadonlyMap<number, string> = new Map()
 
 /* ---------- the screen ---------- */
 
@@ -178,6 +186,9 @@ export default function Farming() {
 
   const [tab, setTab] = useState<Tab>('tool.worlds')
   const [mode, setMode] = useState<Mode>('inventory')
+  /* A phone starts on the claim and the pools, and opens one pool at a time. */
+  const phone = usePhone()
+  const [phonePool, setPhonePool] = useState<FarmSchema | null>(null)
   /*
      How many of each stack the player is taking, by stack key.
 
@@ -234,7 +245,7 @@ export default function Farming() {
     [staked, schema],
   )
 
-  const outStacks = useMemo(() => stakedStacks(stakedHere), [stakedHere])
+  const outStacks = useMemo(() => stakedStacks(stakedHere, data.names), [stakedHere, data.names])
 
   /* Whichever side is on screen is the side the amounts belong to. Only
      staked cards have their ids to hand; the wallet's are looked up when
@@ -297,6 +308,44 @@ export default function Farming() {
     run('claim', () => claimFarming(session!), 'Credits claimed.', opts('claimFarming'))
 
   if (!player) return null
+
+  if (phone) {
+    return (
+      <div className="farming">
+        <ActionBanner error={error ?? data.error} />
+        <PhoneFarming
+          schema={phonePool}
+          onOpen={(s, m?: FarmMode) => {
+            setPhonePool(s)
+            if (s) setTab(s)
+            if (m) setMode(m)
+          }}
+          mode={mode}
+          onMode={setMode}
+          board={board}
+          user={user}
+          config={config}
+          invStacks={invStacks}
+          outStacks={outStacks}
+          counts={counts}
+          onCount={setCount}
+          onAll={takeAll}
+          onNone={takeNone}
+          loadingInventory={data.loadingInventory}
+          hiddenCount={hiddenCount}
+          pickedCount={pickedCount}
+          stakeCost={stakeCost}
+          gems={gems}
+          busy={busy}
+          canAct={!!session}
+          onStake={() => void doStake()}
+          onUnstake={() => void doUnstake()}
+          onClaim={() => void doClaim()}
+          now={now}
+        />
+      </div>
+    )
+  }
 
   return (
     <div className="farming">

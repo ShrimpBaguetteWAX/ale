@@ -120,13 +120,19 @@ export function ownedStacks(cards: OwnedCard[], weights: StakeWeight[]): CardSta
   )
 }
 
-/** Stacks of what is already staked, which carries its own weight. */
+/**
+ * Stacks of what is already staked, which carries its own weight.
+ *
+ * The staked rows have no names, so they come from the design catalogue the
+ * screen reads anyway; a design missing from it falls back to its number.
+ */
 export function stakedStacks<T extends Groupable & { weight: number }>(
   cards: T[],
+  names?: ReadonlyMap<number, string>,
 ): CardStack[] {
   return stackCards(
     cards,
-    (c) => `#${c.template_id}`,
+    (c) => names?.get(c.template_id) ?? `#${c.template_id}`,
     (c) => c.weight,
   )
 }

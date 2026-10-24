@@ -469,3 +469,435 @@
   border-color: var(--cyan);
   outline: none;
 }
+
+/* ---------- Farming on a phone ---------- */
+
+.pfarm {
+  padding-bottom: 8px;
+}
+.pfarm--pool {
+  /* Room under the list for the docked button. */
+  padding-bottom: 92px;
+}
+.pfarm__warn {
+  display: grid;
+  gap: 2px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: rgb(246 168 0 / 12%);
+  box-shadow: inset 0 0 0 1px rgb(246 168 0 / 50%);
+  color: #ffd08a;
+}
+.pfarm__warn b {
+  font-size: var(--fs-xs);
+}
+.pfarm__warn small {
+  font-size: 11px;
+}
+
+/* The claim, first and large. */
+.pfarm__hero {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  padding: 8px 0 4px;
+  text-align: center;
+}
+.pfarm__hero > small {
+  font-family: var(--font-display);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.pfarm__hero > b {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-display);
+  font-size: 32px;
+  font-weight: 800;
+  color: #ffd979;
+}
+.pfarm__hero > b img {
+  width: 26px;
+  height: 26px;
+}
+.pfarm__hero .btn {
+  min-width: 220px;
+  min-height: 42px;
+}
+.pfarm__hero > span {
+  font-size: 11px;
+  color: var(--text-faint);
+}
+
+/* The three pools, filling towards their cap. */
+.pfarm__rings {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  padding: 12px 4px;
+  border-radius: 12px;
+  background: rgb(8 14 28 / 66%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 10%);
+}
+.pfarm__ring {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  border: 0;
+  background: none;
+  color: var(--white);
+}
+.pfarm__ring > b {
+  font-size: var(--fs-xs);
+}
+.pfarm__ring > small {
+  font-size: 10px;
+  color: var(--text-faint);
+}
+.pfring {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+}
+.pfring--big {
+  width: 104px;
+  height: 104px;
+}
+.pfring svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.pfring__track,
+.pfring__fill {
+  fill: none;
+  stroke-width: 7;
+}
+.pfring__track {
+  stroke: rgb(255 255 255 / 12%);
+}
+.pfring__fill {
+  stroke: var(--teal);
+  stroke-linecap: round;
+}
+.pfring--full .pfring__fill {
+  stroke: #f6a800;
+}
+.pfring > b {
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 800;
+}
+.pfring--big > b {
+  font-size: 19px;
+}
+
+.pfarm__list {
+  overflow: hidden;
+  border-radius: 12px;
+  background: rgb(8 14 28 / 66%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 10%);
+}
+.pfarm__pool {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 52px;
+  padding: 8px 12px;
+  border: 0;
+  background: none;
+  color: var(--white);
+  text-align: left;
+}
+.pfarm__pool + .pfarm__pool,
+.pcard + .pcard {
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 7%);
+}
+.pfarm__text {
+  display: grid;
+  flex: 1;
+  gap: 1px;
+  min-width: 0;
+}
+.pfarm__text b {
+  font-size: var(--fs-xs);
+}
+.pfarm__text small {
+  font-size: 10.5px;
+  color: var(--text-faint);
+}
+.pfarm__est {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 3px;
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 800;
+  color: #ffd979;
+}
+.pfarm__est img,
+.pfarm__facts img,
+.pfarm__cost img {
+  width: 14px;
+  height: 14px;
+}
+.pfarm__chev {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: var(--text-faint);
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.pfarm__note {
+  margin: 0;
+  font-size: 10.5px;
+  line-height: 1.4;
+  text-align: center;
+  color: var(--text-faint);
+}
+
+/* One pool's page. */
+.pfarm__back {
+  justify-self: start;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-size: 12px;
+  font-weight: var(--fw-bold);
+  color: var(--cyan);
+}
+.pfarm__title {
+  margin: -4px 0 0;
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.pfarm__sub {
+  margin: -6px 0 0;
+  font-size: 11px;
+  color: var(--text-faint);
+}
+.pfarm__pick {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 0 2px;
+  font-size: 11px;
+  color: var(--text-faint);
+}
+.pfarm__pick span {
+  flex: 1;
+}
+.pfarm__pick button {
+  padding: 0;
+  border: 0;
+  background: none;
+  font-size: 11.5px;
+  font-weight: var(--fw-bold);
+  color: var(--cyan);
+}
+.pfarm__pick button:disabled {
+  color: var(--text-faint);
+  opacity: 0.6;
+}
+
+.pcard {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px 6px 8px;
+}
+.pcard.is-on {
+  background: rgb(0 186 255 / 8%);
+}
+.pcard__hit {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--white);
+  text-align: left;
+}
+.pcard__art {
+  flex: none;
+  width: 34px;
+  height: 47px;
+  border-radius: 4px;
+  object-fit: cover;
+  box-shadow: 0 0 0 1px rgb(255 255 255 / 15%);
+}
+.pcard__text {
+  display: grid;
+  flex: 1;
+  gap: 1px;
+  min-width: 0;
+}
+.pcard__text b {
+  overflow: hidden;
+  font-size: var(--fs-xs);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.pcard__text small {
+  font-size: 10.5px;
+  color: var(--text-faint);
+}
+.pcard__text em {
+  font-style: normal;
+  font-weight: var(--fw-bold);
+}
+.pcard__shine--gold {
+  color: #ffd979;
+}
+.pcard__shine--stardust {
+  color: #9fe7ff;
+}
+.pcard__w {
+  flex: none;
+  min-width: 36px;
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 800;
+  text-align: right;
+  color: #cfd8e6;
+}
+.pcard__add,
+.pcard__step button {
+  display: grid;
+  place-items: center;
+  border: 0;
+  background: none;
+  font-size: 16px;
+  font-weight: var(--fw-bold);
+}
+.pcard__add {
+  flex: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 18%);
+  color: var(--text-faint);
+}
+.pcard__step {
+  display: flex;
+  flex: none;
+  align-items: center;
+  border-radius: 8px;
+  box-shadow: inset 0 0 0 1px rgb(0 186 255 / 55%);
+}
+.pcard__step button {
+  width: 26px;
+  height: 30px;
+  color: var(--cyan);
+}
+.pcard__step button:disabled {
+  color: var(--text-faint);
+}
+.pcard__step b {
+  min-width: 20px;
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 800;
+  text-align: center;
+}
+
+/* Stake or Unstake, docked above the tab bar while something is picked. */
+.pfarm__dock {
+  position: fixed;
+  right: 12px;
+  bottom: calc(var(--nav-h) + 10px + env(safe-area-inset-bottom));
+  left: 12px;
+  z-index: 30;
+  display: grid;
+  gap: 4px;
+  justify-items: center;
+}
+.pfarm__dock .btn {
+  width: 100%;
+  min-height: 46px;
+  box-shadow: 0 8px 18px rgb(0 0 0 / 45%);
+}
+.pfarm__dock .btn--ghost {
+  --btn-bg: rgb(4 9 20 / 88%);
+}
+.pfarm__dock small {
+  padding: 1px 8px;
+  border-radius: 6px;
+  font-size: 10.5px;
+  color: var(--text-faint);
+  background: rgb(4 9 20 / 80%);
+}
+.pfarm__dock small.pfarm__short {
+  color: #ff8fa0;
+}
+.pfarm__cost {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-left: 6px;
+  padding-left: 10px;
+  box-shadow: inset 1px 0 0 rgb(0 0 0 / 25%);
+}
+
+/* A pool's details, in a sheet. */
+.pfarm__detail {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.pfarm__detail > span {
+  display: grid;
+  gap: 3px;
+}
+.pfarm__detail b {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 800;
+}
+.pfarm__detail small {
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--text-faint);
+}
+.pfarm__facts {
+  display: grid;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgb(8 14 28 / 66%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 10%);
+}
+.pfarm__facts div {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11.5px;
+  color: var(--text-faint);
+}
+.pfarm__facts b {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: var(--fs-xs);
+  color: var(--white);
+}
+/* Disabled stays solid: a see-through bar over the list reads as part of it. */
+.prew.pfarm .pfarm__dock .btn:disabled {
+  --btn-bg: rgb(12 18 32 / 96%);
+}

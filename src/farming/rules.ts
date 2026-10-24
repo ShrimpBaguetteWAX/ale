@@ -174,7 +174,28 @@ export function formatToCap(ms: number): string {
 
   const hours = ms / 3_600_000
   if (hours < 48) return `in ${Math.max(1, Math.round(hours))} hours`
-  return `in ${Math.round(hours / 24)} days`
+  const days = hours / 24
+  /* A single light card can take years; a count of a thousand days reads as noise. */
+  if (days >= 730) return `in ${Math.round(days / 365)} years`
+  return `in ${Math.round(days)} days`
+}
+
+/**
+ * How much of the cap a day of this weight fills, in percent.
+ *
+ * Power grows by the weight once a day and stops at `max_power`, so this is
+ * the honest way to say what a weight is worth: 24,488 against a cap of
+ * 100,000 fills 24.5% a day, and the pool is full in about four.
+ */
+export function capPerDay(weight: number, config: FarmConfig | undefined): number {
+  const max = Number(config?.max_power ?? 0)
+  return max > 0 ? (weight / max) * 100 : 0
+}
+
+/** "24.5% a day", "0.09% a day" — enough places that a light pool is not 0. */
+export function formatPerDay(percent: number): string {
+  const places = percent >= 10 ? 1 : percent >= 1 ? 1 : 2
+  return `${percent.toFixed(places)}% a day`
 }
 
 /* ---------- sorting ---------- */
