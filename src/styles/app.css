@@ -2198,3 +2198,463 @@ a.res {
   transform-origin: left;
   animation: minetoast-time linear forwards;
 }
+
+/* ---------- Ascension on a phone: the altar ---------- */
+
+.pasc {
+  /* Fills the space between the header and the tab bar, so the altar can sit in its middle. */
+  min-height: calc(100dvh - var(--nav-h) - 150px);
+  grid-template-rows: auto auto 1fr;
+  padding-bottom: 92px;
+}
+.pasc__hint {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.45;
+  text-align: center;
+  color: var(--text-faint);
+}
+.pasc__needs {
+  display: grid;
+  gap: 4px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgb(8 14 28 / 72%);
+  box-shadow: inset 0 0 0 1px rgb(246 168 0 / 30%);
+}
+.pasc__needs b {
+  margin-bottom: 2px;
+  font-size: var(--fs-xs);
+}
+.pasc__needs span {
+  display: block;
+  font-size: 11.5px;
+  line-height: 20px;
+  color: #cfd8e6;
+}
+.pasc__needs em {
+  font-style: normal;
+  font-weight: 800;
+  color: var(--white);
+}
+.pasc__needs i {
+  display: inline-grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  margin-right: 8px;
+  vertical-align: -4px;
+  border-radius: 50%;
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 800;
+  color: #2a1700;
+  background: #f6a800;
+}
+.pasc__needs.is-done i {
+  color: #00131f;
+  background: var(--teal);
+}
+.pasc__needs small {
+  margin-top: 2px;
+  font-size: 10.5px;
+  color: #ffb3c0;
+}
+
+/* The altar, in the middle of what is left of the screen. */
+.pasc__stage {
+  display: grid;
+  place-items: center;
+  min-height: 330px;
+}
+.pasc__altar {
+  position: relative;
+  width: 330px;
+  max-width: 100%;
+  height: 330px;
+}
+.pasc__lines {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  fill: none;
+  stroke: rgb(246 168 0 / 35%);
+  stroke-width: 2;
+  stroke-dasharray: 4 5;
+}
+/* The portrait's own centre on the altar's centre; the name hangs below it. */
+.pasc__core {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  width: 190px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--white);
+  text-align: center;
+  transform: translate(-50%, -52px);
+}
+.pasc__core img,
+.pasc__core > i {
+  width: 104px;
+  height: 104px;
+  border-radius: 50%;
+  object-fit: cover;
+  object-position: center;
+}
+.pasc__core img {
+  box-shadow:
+    0 0 0 3px #f6a800,
+    0 0 30px rgb(246 168 0 / 45%);
+}
+.pasc__core > i {
+  display: grid;
+  place-items: center;
+  font-size: 30px;
+  font-style: normal;
+  color: var(--text-faint);
+  background: rgb(10 16 30);
+  box-shadow: inset 0 0 0 2px rgb(246 168 0 / 50%);
+}
+.pasc__core b {
+  margin-top: 6px;
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 800;
+}
+.pasc__core small,
+.pasc__sock small {
+  font-size: 10px;
+  color: var(--text-faint);
+}
+.pasc__sock {
+  position: absolute;
+  display: grid;
+  justify-items: center;
+  gap: 1px;
+  width: 104px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--white);
+  text-align: center;
+}
+.pasc__sock--top {
+  top: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+.pasc__sock--left {
+  bottom: 6px;
+  left: 0;
+}
+.pasc__sock--right {
+  right: 0;
+  bottom: 6px;
+}
+.pasc__sock img,
+.pasc__sock > i {
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  object-fit: cover;
+  object-position: center;
+}
+.pasc__sock > i {
+  display: grid;
+  place-items: center;
+  font-size: 22px;
+  font-style: normal;
+  color: var(--text-faint);
+  background: rgb(10 16 30);
+  box-shadow: inset 0 0 0 2px rgb(255 255 255 / 25%);
+}
+.pasc__sock img {
+  box-shadow: 0 0 0 2px #ff6d85;
+}
+.pasc__sock b {
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 800;
+}
+.pasc__sock:disabled {
+  opacity: 0.5;
+}
+
+/* Choose, or Ascend, docked above the tab bar. */
+.pasc__dock {
+  position: fixed;
+  right: 12px;
+  bottom: calc(var(--nav-h) + 10px + env(safe-area-inset-bottom));
+  left: 12px;
+  z-index: 30;
+  display: grid;
+  gap: 4px;
+  justify-items: center;
+}
+.pasc__dock .btn {
+  width: 100%;
+  min-height: 46px;
+  box-shadow: 0 8px 18px rgb(0 0 0 / 45%);
+}
+.prew.pasc .pasc__dock .btn:disabled {
+  --btn-bg: rgb(12 18 32 / 96%);
+}
+.pasc__dock small {
+  padding: 1px 8px;
+  border-radius: 6px;
+  font-size: 10.5px;
+  color: var(--text-faint);
+  background: rgb(4 9 20 / 80%);
+}
+.pasc__dock small.is-short {
+  color: #ff8fa0;
+}
+.pasc__coin {
+  width: 14px;
+  height: 14px;
+  margin-left: 4px;
+}
+
+/* The sheets: fighters as rows. */
+.pasc__chips {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.pasc__chips button {
+  flex: none;
+  padding: 5px 10px;
+  border: 0;
+  border-radius: 999px;
+  background: none;
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 16%);
+  font-size: 11px;
+  font-weight: var(--fw-bold);
+  color: var(--text-faint);
+}
+.pasc__chips button[aria-pressed='true'] {
+  color: var(--white);
+  background: rgb(0 186 255 / 14%);
+  box-shadow: inset 0 0 0 1px rgb(0 186 255 / 60%);
+}
+.pasc__list {
+  overflow: hidden;
+  border-radius: 12px;
+  background: rgb(8 14 28 / 66%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 10%);
+}
+.pasc__row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 56px;
+  padding: 6px 12px 6px 10px;
+  border: 0;
+  background: none;
+  color: var(--white);
+  text-align: left;
+}
+.pasc__row + .pasc__row,
+.pasc__odds + .pasc__odds {
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 7%);
+}
+.pasc__row.is-on {
+  background: rgb(0 186 255 / 8%);
+}
+.pasc__row.is-dim {
+  opacity: 0.6;
+}
+.pasc__port {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 9px;
+  object-fit: cover;
+  object-position: center;
+  box-shadow: 0 0 0 1px rgb(255 255 255 / 15%);
+}
+.pasc__rowtext {
+  display: grid;
+  flex: 1;
+  gap: 1px;
+  min-width: 0;
+}
+.pasc__rowtext b {
+  font-size: var(--fs-xs);
+}
+.pasc__rowtext small {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 10.5px;
+  color: var(--text-faint);
+}
+.pasc__rowtext small img {
+  width: 12px;
+  height: 12px;
+}
+.pasc__rowtext em {
+  font-size: 10px;
+  font-style: normal;
+  font-weight: var(--fw-bold);
+  color: #ffc56b;
+}
+.pasc__radio {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 2px rgb(255 255 255 / 30%);
+}
+.pasc__radio.is-on {
+  box-shadow: inset 0 0 0 5px var(--cyan);
+}
+
+/* After ascending: the three rolled upgrades. */
+.pasc__who {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.pasc__who img {
+  flex: none;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  object-fit: cover;
+  object-position: center;
+  box-shadow: 0 0 0 2px #f6a800;
+}
+.pasc__who span {
+  display: grid;
+  gap: 2px;
+}
+.pasc__who b {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 800;
+}
+.pasc__who small {
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--text-faint);
+}
+.pasc__cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+.pasc__card {
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  gap: 6px;
+  padding: 14px 6px 10px;
+  border-radius: 14px;
+  text-align: center;
+  background: linear-gradient(180deg, rgb(246 168 0 / 12%), rgb(8 14 28 / 82%));
+  box-shadow: inset 0 0 0 1px rgb(246 168 0 / 40%);
+}
+.pasc__card img {
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+}
+.pasc__card b {
+  font-family: var(--font-display);
+  font-size: 12.5px;
+  font-weight: 800;
+  line-height: 1.25;
+}
+.pasc__card small {
+  font-size: 10px;
+  font-weight: var(--fw-bold);
+}
+.pasc__card.is-good small {
+  color: var(--teal);
+}
+.pasc__card.is-bad small {
+  color: #ff8fa0;
+}
+.pasc__card.is-mixed small {
+  color: #ffc56b;
+}
+.pasc__card .btn {
+  align-self: end;
+  width: 100%;
+  margin-top: 4px;
+}
+/* Re-roll kept well away from the Take buttons: its own card, after a gap. */
+.pasc__reroll {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 14px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgb(8 14 28 / 72%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 12%);
+}
+.pasc__reroll span {
+  display: grid;
+  flex: 1;
+  gap: 1px;
+}
+.pasc__reroll b {
+  font-size: var(--fs-xs);
+}
+.pasc__reroll small {
+  font-size: 10.5px;
+  color: var(--text-faint);
+}
+.pasc__reroll .btn {
+  flex: none;
+}
+.pasc__odds {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 36px;
+  padding: 5px 12px;
+  font-size: 12px;
+}
+.pasc__odds img {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+}
+.pasc__odds span {
+  flex: 1;
+  font-weight: 600;
+}
+.pasc__odds em {
+  flex: none;
+  font-size: 11px;
+  font-style: normal;
+  font-weight: var(--fw-bold);
+  color: #cfd8e6;
+}
+.pasc__odds em.is-good {
+  color: var(--teal);
+}
+.pasc__odds em.is-bad {
+  color: #ff8fa0;
+}
+.pasc__odds b {
+  flex: none;
+  min-width: 42px;
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 800;
+  text-align: right;
+}

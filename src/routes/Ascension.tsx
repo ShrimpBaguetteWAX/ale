@@ -45,6 +45,7 @@ import { DIRTIES } from '@/wharf/actions'
 import { readableError } from '@/wharf/errors'
 import { formatNumber } from '@/format'
 import { useConfig, useLazyConfig } from '@/state/useConfig'
+import { PhoneAscension } from '@/ascension/PhoneAscension'
 
 /**
  * Ascension.
@@ -125,6 +126,7 @@ export default function Ascension() {
   */
   const [slots, setSlots] = useState<Partial<Record<Requirement, number>>>({})
   const [tab, setTab] = useState<Tab>('target')
+  const phone = usePhone()
 
   const alive = useRef(true)
   useEffect(() => {
@@ -240,6 +242,74 @@ export default function Ascension() {
         <div className="panel">
           <span className="spinner" /> Reading your roster…
         </div>
+      </div>
+    )
+  }
+
+  /* What the offers and the odds are quoted at: the fighter on screen, or the level cap. */
+  const factor =
+    pending ?? target
+      ? battleFactor((pending ?? target)!, levelMod, ageDecay).total
+      : levelFactor(ascendLevel, levelMod)
+
+  if (phone) {
+    return (
+      <div className="ascension">
+        {error && <div className="alert alert--error">{error}</div>}
+        <PhoneAscension
+          ready={ready}
+          target={target}
+          onPickTarget={(id) => {
+            if (id !== targetId) setSlots({})
+            setTargetId(id)
+          }}
+          byRequirement={byRequirement}
+          slots={slots}
+          onAssign={assign}
+          chosenFighters={chosenFighters}
+          check={check}
+          fee={fee}
+          credits={credits}
+          busy={busy}
+          canAct={!!session}
+          onAscend={() =>
+            void run(
+              'ascend',
+              () =>
+                ascendFighter(
+                  session!,
+                  target!.fighter_id,
+                  chosenFighters.map((f) => f.fighter_id),
+                  fee,
+                ),
+              'Ascended. Choose your upgrade.',
+              opts('ascendFighter'),
+            )
+          }
+          pending={pending}
+          rerollFee={rerollFee}
+          caps={config?.battle_stat_caps}
+          factor={factor}
+          onReroll={() =>
+            pending &&
+            void run(
+              'reroll',
+              () => rerollAscension(session!, pending.fighter_id, rerollFee),
+              'Offers re-rolled.',
+              opts('rerollAscension'),
+            )
+          }
+          onClaim={(stat, value, positive) =>
+            pending &&
+            void run(
+              'claim',
+              () => claimAscensionUpgrade(session!, pending.fighter_id, stat, value, positive),
+              'Ascension complete.',
+              opts('claimAscensionUpgrade'),
+            )
+          }
+          odds={odds}
+        />
       </div>
     )
   }
