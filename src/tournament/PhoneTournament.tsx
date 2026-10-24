@@ -1154,7 +1154,6 @@ function PastBrowser({ board, history, wallet, now, day, onWatch }: {
     <section className="ptour__past">
       <div className="ptour__rhead">
         <b>Last tournament{day ? ` · ${dayLabel(day)}` : ''}</b>
-        <small>every fight can be watched again until cleanup</small>
       </div>
       <Strip
         items={items}
@@ -1332,7 +1331,6 @@ function BeforeSignup(
         <>
           <div className="ptour__rhead">
             <b>Watch again</b>
-            <small>every fight is kept until cleanup</small>
           </div>
           <div className="ptour__list">
             {replays.map(({ m, round }) => (
