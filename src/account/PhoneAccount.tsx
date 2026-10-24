@@ -500,7 +500,7 @@ function PhoneCpu({
           <small>
             {formatCpuTime(free)} of {formatCpuTime(max)}
           </small>
-          <span className="pgauge__note">Refills by itself</span>
+          <span className="pgauge__note">Recovers by itself</span>
         </div>
       </div>
       {!legend && (
