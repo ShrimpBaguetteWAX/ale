@@ -3,6 +3,7 @@ import { Link, Navigate } from 'react-router-dom'
 import { fetchOwnedTemplates, resolveAssetIds } from '@/chain/atomic'
 import { landId } from '@/chain/landId'
 import { unrevealedTavernHere } from '@/tavern/rules'
+import { isLegend } from '@/shop/rules'
 import { byQuality } from '@/dungeon/nftFighter'
 import { useGame } from '@/state/useGame'
 import { showToast } from '@/components/toasts'
@@ -1010,6 +1011,24 @@ export default function Tavern() {
                 </span>
               </button>
             )}
+            {/* Without Legend the recruit has to be revealed first, for energy. */}
+            {!revealed && (
+              <button
+                type="button"
+                className="btn btn--primary tavdock__hire"
+                onClick={() => void doReveal()}
+                disabled={busy !== null || !canAffordReveal}
+              >
+                {busy === 'reveal' && <span className="spinner" />}
+                {busy === 'reveal' ? 'Revealing' : 'Reveal recruit'}
+                <span
+                  className={`tavdock__cost${canAffordReveal ? '' : ' tavdock__cost--short'}`}
+                >
+                  {revealCost}
+                  <img src={asset('/assets/icons/energy.png')} alt="energy" />
+                </span>
+              </button>
+            )}
           </div>
         )}
 
@@ -1020,7 +1039,49 @@ export default function Tavern() {
           <section className="panel tavern__fighter">
             <div className="panel__title">The recruit</div>
 
-            {!revealed ? (
+            {!revealed && phone ? (
+              /*
+                 The same page as after the reveal, with the recruit veiled:
+                 the readouts stand greyed so the player sees what they are
+                 about to learn, and the reveal is the docked button.
+              */
+              <>
+                <div className="recruithdr recruithdr--veiled">
+                  <div className="recruithdr__art">
+                    <img src={asset('/assets/fighter/unknown-fighter.jpeg')} alt="" />
+                  </div>
+                  <div className="recruithdr__text">
+                    <span className="recruithdr__level">Not revealed</span>
+                    <strong>{busy === 'reveal' ? 'Revealing…' : 'A recruit is waiting'}</strong>
+                    <small>
+                      {busy === 'reveal' ? 'Waiting for the chain' : 'Reveal to see who walked in'}
+                    </small>
+                  </div>
+                </div>
+                <div className="recruitveil" aria-hidden="true">
+                  <div className="recruitseg">
+                    <button type="button" aria-selected="true" tabIndex={-1}>
+                      Stats
+                    </button>
+                    <button type="button" tabIndex={-1}>
+                      Resistances
+                    </button>
+                    <button type="button" tabIndex={-1}>
+                      Abilities
+                    </button>
+                  </div>
+                  {['Damage', 'Health', 'Cooldown', 'Windup', 'Taunt'].map((label) => (
+                    <div className="recruitveil__row" key={label}>
+                      <span>{label}</span>
+                      <i />
+                    </div>
+                  ))}
+                </div>
+                <p className="recruitveil__note">
+                  Class, race, element, stats and abilities are rolled when you reveal.
+                </p>
+              </>
+            ) : !revealed ? (
               <div className="tavern__empty">
                 <img src={asset('/assets/fighter/unknown-fighter.jpeg')} alt="" />
                 <p className="muted">
@@ -1152,7 +1213,11 @@ export default function Tavern() {
             )}
           </section>
 
-          {phone && revealed && (
+          {/*
+            Before the reveal as well as after: what the tavern wants does not
+            depend on the roll, so the discount can be lined up before paying.
+          */}
+          {phone && (
             <div className="tavdisc">
               <button
                 type="button"
@@ -1165,7 +1230,7 @@ export default function Tavern() {
                   <small>
                     {breakdown.saved > 0
                       ? `${breakdown.saved} of ${maxSaving} energy off · ${picked.length}/${MAX_HIRE_CARDS} cards`
-                      : `Up to ${maxSaving} energy off with NFTs this tavern wants`}
+                      : `Up to ${maxSaving} energy off ${revealed ? 'with NFTs this tavern wants' : 'the hire with NFTs it wants'}`}
                   </small>
                 </span>
               </button>
@@ -1190,6 +1255,37 @@ export default function Tavern() {
                 </svg>
               </button>
             </div>
+          )}
+
+          {/*
+            Before the reveal: what is missing when the energy is short, or
+            else the one thing that skips this step altogether.
+          */}
+          {phone && !revealed && busy !== 'reveal' && !canAffordReveal && (
+            <div className="tavnote tavnote--short">
+              <span className="tavnote__text">
+                <strong>You need {revealCost} energy to reveal</strong>
+                <small>
+                  You have {player.activestats.action_points}. A free flask refills every day in
+                  the Shop.
+                </small>
+              </span>
+              <Link className="btn btn--sm" to="/shop?c=flasks">
+                Shop
+              </Link>
+            </div>
+          )}
+          {phone && !revealed && canAffordReveal && !isLegend(player) && (
+            <Link className="tavnote tavnote--legend" to="/shop?c=account">
+              <img src={asset('/assets/icons/account-legend.svg')} alt="" />
+              <span className="tavnote__text">
+                <strong>Legend reveals for free</strong>
+                <small>Every tavern you walk into shows its recruit straight away.</small>
+              </span>
+              <svg className="pchev" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M9 6l6 6-6 6" />
+              </svg>
+            </Link>
           )}
           {phone && discountsOpen && (
             <BottomSheet
