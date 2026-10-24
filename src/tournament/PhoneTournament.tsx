@@ -1375,7 +1375,9 @@ function BeforeSignup(
   if (!desk) {
     return (
       <>
-        <section className="ptour__spot">
+        {/* The whole screen: the champion at the top, the countdown and the
+            buttons docked at the foot, all over the one arena. */}
+        <section className="ptour__spot ptour__spot--phone">
           <div className="ptour__spottop">
             <span className="ptour__kick ptour__kick--gold">Reigning champion</span>
             <button type="button" className="ptour__pill ptour__pill--hof" onClick={p.onHof}>
@@ -1385,10 +1387,12 @@ function BeforeSignup(
           </div>
           {nameBlock}
           {stage}
+          <div className="ptour__spotdock">
+            <section className="ptour__spotcard ptour__spotglass">{countdown}</section>
+            {p.phase === 'preparing' && p.stage && <PotCard stage={p.stage} field={null} />}
+            {buttons}
+          </div>
         </section>
-        <section className="ptour__card ptour__spotcard">{countdown}</section>
-        {p.phase === 'preparing' && p.stage && <PotCard stage={p.stage} field={null} />}
-        {buttons}
       </>
     )
   }
