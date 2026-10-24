@@ -50,7 +50,7 @@ import type {
   TournamentStage,
 } from '@/tournament/types'
 import { formatDecimals, formatNumber } from '@/format'
-import { asset } from '@/assets'
+import { asset, ipfsImage } from '@/assets'
 
 const TLM_ICON = asset('/assets/icons/tlm.svg')
 const WAX_ICON = asset('/assets/icons/wax-coin.png')
@@ -98,10 +98,8 @@ export interface PhoneTournamentProps {
   canSign: boolean
   onEnter: () => void
   onPick: (tab: 'fighters' | 'crew' | 'weapon') => void
-  /** The picker itself, opened in a sheet. */
+  /** The roster sheet, slid over the screen when a team slot is tapped. */
   picker: ReactNode
-  pickerOpen: boolean
-  onClosePicker: () => void
   /* Moving between tournaments. */
   viewingPast: boolean
   onOpenPast?: () => void
@@ -375,19 +373,8 @@ export function PhoneTournament(p: PhoneTournamentProps) {
           </div>
         </BottomSheet>
       )}
-      {p.pickerOpen && (
-        <BottomSheet
-          title="Your team"
-          onClose={p.onClosePicker}
-          foot={
-            <button type="button" className="btn btn--gold" onClick={p.onClosePicker}>
-              Done
-            </button>
-          }
-        >
-          {p.picker}
-        </BottomSheet>
-      )}
+      {/* The roster sheet, as the dungeon has it; mounted always, slid in and out. */}
+      {p.phase === 'signup' && !p.mine && p.picker}
     </div>
   )
 }
@@ -618,7 +605,12 @@ function Conditions({ weather }: { weather: { planet: string; weather?: Weather 
   )
 }
 
-/** Five fighters and the card pair, as small squares. */
+/**
+ * Five fighters as squares, and the card pair under them.
+ *
+ * The crew card and the weapon each get their own tile at the card's own
+ * shape — split into one square they were two slivers nobody could read.
+ */
 function TeamSquares({
   faces,
   crew,
@@ -631,34 +623,65 @@ function TeamSquares({
   onSlot?: (tab: 'fighters' | 'crew' | 'weapon') => void
 }) {
   const Tag = onSlot ? 'button' : 'div'
+  /* Read-only with nothing to show: an entry whose cards the row does not carry. */
+  const showCards = !!onSlot || !!crew || !!weapon
   return (
-    <div className="ptour__team">
-      {faces.map((f, i) => (
-        <Tag
-          key={i}
-          type={onSlot ? 'button' : undefined}
-          className={`ptour__slot${f ? '' : ' is-empty'}`}
-          onClick={onSlot ? () => onSlot('fighters') : undefined}
-        >
-          {f ? (
-            <>
-              <GameImg src={fighterAvatar(f)} fallback={fighterArtFallback()} alt="" />
-              {f.level !== undefined && <small className="mono">{f.level}</small>}
-            </>
-          ) : (
-            '+'
-          )}
-        </Tag>
-      ))}
-      <Tag
-        type={onSlot ? 'button' : undefined}
-        className={`ptour__slot ptour__slot--nft${crew || weapon ? '' : ' is-empty'}`}
-        onClick={onSlot ? () => onSlot(crew ? 'weapon' : 'crew') : undefined}
-      >
-        {crew && <img src={asset(`/assets/cards/${crew.template_id}.webp`)} alt="" />}
-        {weapon && <img src={asset(`/assets/cards/${weapon.template_id}.webp`)} alt="" />}
-        {!crew && !weapon && (onSlot ? '+' : '')}
-      </Tag>
+    <div className="ptour__teamwrap">
+      <div className="ptour__team">
+        {faces.map((f, i) => (
+          <Tag
+            key={i}
+            type={onSlot ? 'button' : undefined}
+            className={`ptour__slot${f ? '' : ' is-empty'}`}
+            onClick={onSlot ? () => onSlot('fighters') : undefined}
+          >
+            {f ? (
+              <>
+                <GameImg src={fighterAvatar(f)} fallback={fighterArtFallback()} alt="" />
+                {f.level !== undefined && <small className="mono">{f.level}</small>}
+              </>
+            ) : (
+              '+'
+            )}
+          </Tag>
+        ))}
+      </div>
+      {showCards && (
+        <div className="ptour__cards">
+          {(
+            [
+              ['crew', 'Crew', crew],
+              ['weapon', 'Weapon', weapon],
+            ] as const
+          ).map(([kind, label, card]) => (
+            <Tag
+              key={kind}
+              type={onSlot ? 'button' : undefined}
+              className={`ptour__cardslot${card ? '' : ' is-empty'}`}
+              onClick={onSlot ? () => onSlot(kind) : undefined}
+            >
+              <span className="ptour__cardart">
+                {card ? (
+                  <GameImg
+                    src={asset(`/assets/cards/${card.template_id}.webp`)}
+                    /* Art the build does not ship: the card's own image, then the card back. */
+                    fallback={[ipfsImage(card.img), asset('/assets/default-card.png')].filter(
+                      (x): x is string => !!x,
+                    )}
+                    alt=""
+                  />
+                ) : (
+                  '+'
+                )}
+              </span>
+              <span className="ptour__cardtext">
+                <small>{label}</small>
+                <b>{card ? card.name : `Pick a ${label.toLowerCase()} card`}</b>
+              </span>
+            </Tag>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
@@ -1353,9 +1376,8 @@ function Draw(p: PhoneTournamentProps & { board: Board; onPrizes: () => void }) 
             </span>
           </div>
           <p className="ptour__sub">
-            Signup is closed and the seeds are set. The chain writes the{' '}
-            {board.name(0).toLowerCase()}'s pairings a few at a time — yours appears here as soon as it
-            is drawn.
+            Signup is closed and the seeds are set. The {board.name(0).toLowerCase()}'s matches are
+            being drawn.
           </p>
         </section>
       )}

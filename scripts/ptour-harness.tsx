@@ -310,8 +310,6 @@ function Harness() {
         onEnter={() => {}}
         onPick={() => {}}
         picker={null}
-        pickerOpen={false}
-        onClosePicker={() => {}}
         viewingPast={false}
         onOpenPast={past ? () => {} : undefined}
       />

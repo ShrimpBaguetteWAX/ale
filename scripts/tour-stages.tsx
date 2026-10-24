@@ -10,10 +10,15 @@
  * A fight the chain has not fought yet can still be "played" here: pick
  * who takes it, and every moment after it follows on.
  */
-import { StrictMode, useEffect, useMemo, useState } from 'react'
+import { StrictMode, useEffect, useMemo, useRef, useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import { useGame } from '../src/state/useGame'
-import { useConfigStore } from '../src/state/useConfig'
+import { useConfig, useConfigStore } from '../src/state/useConfig'
+import type { CardTemplate } from '../src/chain/atomic'
+import { fetchCrewCards, fetchRoster } from '../src/dungeon/queries'
+import { TEAM_SIZE, type RosterFighter } from '../src/dungeon/types'
+import type { Tab } from '../src/fight/setup'
+import { PickerSheet } from '../src/fight/PickerSheet'
 import { fetchPlayersPage } from '../src/chain/queries'
 import { fetchWeatherRow, type Weather } from '../src/fight/weather'
 import {
@@ -23,7 +28,7 @@ import {
   fetchTournamentPlan,
   fetchTournamentSignups,
 } from '../src/tournament/queries'
-import { bracketOf, chainTime, seedOrder, startedAt, timelineOf, winnerSide, type TournamentPhase } from '../src/tournament/rules'
+import { bracketOf, chainTime, seedOrder, startedAt, teamScore, timelineOf, winnerSide, type TournamentPhase } from '../src/tournament/rules'
 import { fightName, fightSlots, passesFrom, payoutOrder, replay, roundName, roundSizes } from '../src/tournament/standings'
 import { PhoneTournament } from '../src/tournament/PhoneTournament'
 import type {
@@ -36,10 +41,23 @@ import type {
 } from '../src/tournament/types'
 import '../src/styles/global.css'
 import '../src/styles/app.css'
+import '../src/styles/landing.css'
+import '../src/styles/map.css'
+import '../src/styles/tavern.css'
+import '../src/styles/shop.css'
+import '../src/styles/market.css'
+import '../src/styles/fighters.css'
+import '../src/styles/quests.css'
 import '../src/styles/tournament.css'
+import '../src/styles/lands.css'
+import '../src/styles/farming.css'
+import '../src/styles/leaderboard.css'
+import '../src/styles/candle.css'
 import '../src/styles/account.css'
 import '../src/styles/dungeon.css'
 import '../src/styles/battle.css'
+import '../src/styles/maintenance.css'
+import '../src/styles/briefing.css'
 
 const MIN = 60_000
 const HOUR = 60 * MIN
@@ -279,6 +297,8 @@ function moments(d: Loaded): Moment[] {
     { key: 'none', group: 'Before signup', label: 'No tournament running — the countdown', at: start('set_weather') - 6 * HOUR },
     { key: 'prep', group: 'Before signup', label: 'Preparing — the pot is collected', at: start('get_rewards') + HOUR },
     { key: 'open', group: 'Signup', label: 'Signup open', at: start('signup') + 30 * HOUR },
+    { key: 'open-empty', group: 'Signup', label: 'Signup open — not signed up, no team yet', at: start('signup') + 30 * HOUR },
+    { key: 'open-team', group: 'Signup', label: 'Signup open — not signed up, team picked', at: start('signup') + 30 * HOUR },
     { key: 'closing', group: 'Signup', label: 'Last half hour of signup', at: end('signup') - 30 * MIN },
     { key: 'drawing', group: 'The draw', label: 'The draw is being made', at: start('close_signup') + 5 * MIN },
     { key: 'drawn', group: 'The draw', label: 'Drawn — waiting for the first fight', at: start('create_matchups') + 40 * MIN },
@@ -426,7 +446,52 @@ function at(d: Loaded, now: number, picks: Record<string, 1 | 2>, key: string) {
 
 type Source = 'real' | number
 
-function Explorer({
+/** What the panel tells the phone: which tournament, which moment, as whom. */
+interface Shown {
+  source: Source
+  key: string
+  viewer: string
+  picks: Record<string, 1 | 2>
+  /** Bumped to open the fighter picker from the panel. */
+  picker: number
+}
+
+/* A wallet with fighters and cards, for picking a team as someone with none. */
+const ROSTER_WALLET = '5thba.wam'
+const IS_FRAME = new URLSearchParams(location.search).has('frame')
+
+/** Both halves read the same tournament: the real one, or one made up. */
+function useTournament(source: Source) {
+  const [real, setReal] = useState<Loaded | null>(null)
+  const [err, setErr] = useState<string | null>(null)
+  useEffect(() => {
+    load().then(setReal, (e) => setErr(String(e?.message ?? e)))
+  }, [])
+  /* The made-up ones borrow the real tournament's weather where there is one. */
+  const d = useMemo(
+    () => (source === 'real' ? real : fake(source, real?.weather ?? [])),
+    [source, real],
+  )
+  return { d, real, err }
+}
+
+/**
+ * The control panel, with the phone as an iframe beside it.
+ *
+ * The phone is a page of its own, 390 pixels wide, so the screen's phone
+ * rules — the picker sheet among them — apply exactly as they do on a phone.
+ */
+function Panel() {
+  const [source, setSource] = useState<Source>('real')
+  const { d, real, err } = useTournament(source)
+  useEffect(() => {
+    if (err && source === 'real') setSource(FAKE_SIZES[2])
+  }, [err, source])
+  if (!d) return <p className="ts__msg">{err ? `Could not read the tournament: ${err}` : 'Reading the tournament from the chain…'}</p>
+  return <Controls key={String(source)} d={d} source={source} onSource={setSource} realReady={!!real} realSize={real?.field.length ?? 0} />
+}
+
+function Controls({
   d,
   source,
   onSource,
@@ -452,16 +517,8 @@ function Explorer({
      so there is an opening fight to follow. */
   const [viewer, setViewer] = useState((source === 'real' ? d.field[0] : (d.field[4] ?? d.field[0]))?.wallet ?? VISITOR)
   const [picks, setPicks] = useState<Record<string, 1 | 2>>({})
+  const [picker, setPicker] = useState(0)
   const moment = list[i]
-  const [tick, setTick] = useState(0)
-  useEffect(() => {
-    const id = setInterval(() => setTick((t) => t + 1), 1000)
-    return () => clearInterval(id)
-  }, [])
-  /* The clock runs on from the moment picked, so countdowns move. */
-  const [pickedAt, setPickedAt] = useState(Date.now())
-  useEffect(() => setPickedAt(Date.now()), [i])
-  const now = moment.at + (Date.now() - pickedAt) + tick * 0
 
   useEffect(() => {
     const key = (e: KeyboardEvent) => {
@@ -472,14 +529,25 @@ function Explorer({
     return () => window.removeEventListener('keydown', key)
   }, [list.length])
 
-  const state = at(d, now, picks, moment.key)
-  const mine = state.field.find((s) => s.wallet === viewer)
-  /* Fights the chain has not fought yet: who takes them is up to you. */
+  /* Tell the phone, now and whenever it says it is listening. */
+  const frame = useRef<HTMLIFrameElement>(null)
+  const shown: Shown = { source, key: moment.key, viewer, picks, picker }
+  const post = () => frame.current?.contentWindow?.postMessage({ tsShown: shown }, '*')
+  useEffect(post)
+  useEffect(() => {
+    const ready = (e: MessageEvent) => {
+      if (e.data === 'ts-ready') post()
+    }
+    window.addEventListener('message', ready)
+    return () => window.removeEventListener('message', ready)
+  })
+
   const open = d.rounds.flatMap((round, r) =>
     round.filter((m) => !winnerSide(m) && m.wallet_player2).map((m) => ({ r, m })),
   )
   const groups = [...new Set(list.map((m) => m.group))]
   const names = d.rounds.map((_, r) => roundName(r, d.rounds.length, Number(d.stage.free_passes) > 0))
+  const signing = moment.key === 'open-empty' || moment.key === 'open-team'
 
   return (
     <div className="ts">
@@ -535,6 +603,19 @@ function Explorer({
           )}
         </div>
 
+        {signing && (
+          <div className="ts__block">
+            <b>The fighter picker</b>
+            <p className="ts__sub">
+              Tap any empty slot on the phone, or open it from here. It is the dungeon's own sheet, filled
+              with {ROSTER_WALLET}'s real fighters and cards.
+            </p>
+            <div className="ts__chips">
+              <button onClick={() => setPicker((n) => n + 1)}>Open the fighter picker</button>
+            </div>
+          </div>
+        )}
+
         {open.length > 0 && (
           <div className="ts__block">
             <b>Not fought on chain yet — who wins?</b>
@@ -568,7 +649,10 @@ function Explorer({
             </button>
           </div>
           <p className="ts__time">
-            Pretending it is <b>{new Date(moment.at).toLocaleString(undefined, { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</b>
+            Pretending it is{' '}
+            <b>
+              {new Date(moment.at).toLocaleString(undefined, { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+            </b>
           </p>
           {groups.map((g) => (
             <div key={g} className="ts__group">
@@ -587,61 +671,195 @@ function Explorer({
 
       <div className="ts__stage">
         <div className="ts__phone">
-          <div className="ts__bar">
-            <b>ALIEN LEGENDS</b>
-            <span>{moment.label}</span>
-          </div>
-          <div className="ts__scroll">
-            <PhoneTournament
-              key={`${moment.key}:${viewer}`}
-              phase={state.phase}
-              stage={state.phase === 'none' ? undefined : state.stage}
-              now={now}
-              timeline={state.timeline}
-              signupAt={chainTime(d.plan.find((s) => s.step_name === 'signup')?.time_start)}
-              field={state.field}
-              mine={mine}
-              wallet={viewer}
-              history={state.history}
-              payouts={state.payouts}
-              hof={state.hof}
-              weather={d.weather}
-              rolls={d.weather.map((w) => w.weather).filter((w): w is Weather => !!w)}
-              legend={new Map()}
-              past={null}
-              ringFighters={[
-                { fighter_id: 1, classname: 'juggernaut', racename: 'khaured' },
-                { fighter_id: 2, classname: 'arcanist', racename: 'altan' },
-                { fighter_id: 3, classname: 'astralknight', racename: 'lopati' },
-                { fighter_id: 4, classname: 'desperado', racename: 'human' },
-                { fighter_id: 5, classname: 'mindblade', racename: 'altan' },
-              ]}
-              team={[null, null, null, null, null]}
-              crew={null}
-              weapon={null}
-              score={0}
-              energyCost={100}
-              block={{ ready: false, reason: 'Pick 5 more fighters' }}
-              busy={false}
-              canSign={false}
-              onEnter={() => {}}
-              onPick={() => {}}
-              picker={null}
-              pickerOpen={false}
-              onClosePicker={() => {}}
-              viewingPast={false}
-            />
-            {state.openHof && <OpenHof />}
-          </div>
-          <nav className="ts__tabs">
-            <span>World Map</span>
-            <span>My Fighters</span>
-            <span>Quests</span>
-            <span>Shop</span>
-            <span className="on">More</span>
-          </nav>
+          <iframe ref={frame} className="ts__iframe" src="tour-stages.html?frame=1" title="The phone" />
         </div>
       </div>
+    </div>
+  )
+}
+
+/**
+ * The phone itself: the tournament screen at the moment the panel says.
+ *
+ * Signing up is live here — the slots open the dungeon's picker sheet over
+ * a real roster — so the screen before entering can be tried, not just seen.
+ */
+function Phone() {
+  const [shown, setShown] = useState<Shown | null>(null)
+  const [at0, setAt0] = useState(Date.now())
+  useEffect(() => {
+    const take = (e: MessageEvent) => {
+      const next = (e.data as { tsShown?: Shown })?.tsShown
+      if (!next) return
+      setShown((prev) => {
+        if (!prev || prev.key !== next.key || prev.source !== next.source) setAt0(Date.now())
+        return next
+      })
+    }
+    window.addEventListener('message', take)
+    window.parent.postMessage('ts-ready', '*')
+    return () => window.removeEventListener('message', take)
+  }, [])
+  const { d } = useTournament(shown?.source ?? 'real')
+  const [, setTick] = useState(0)
+  useEffect(() => {
+    const id = setInterval(() => setTick((t) => t + 1), 1000)
+    return () => clearInterval(id)
+  }, [])
+
+  if (!shown || !d) return <p className="ts__msg">Loading…</p>
+  const moment = moments(d).find((m) => m.key === shown.key)
+  if (!moment) return <p className="ts__msg">Loading…</p>
+  return <PhoneAt key={`${shown.source}:${shown.key}:${shown.viewer}`} d={d} moment={moment} shown={shown} now={moment.at + (Date.now() - at0)} />
+}
+
+function PhoneAt({ d, moment, shown, now }: { d: Loaded; moment: Moment; shown: Shown; now: number }) {
+  const { nftValues, levelMod, ageDecay } = useConfig()
+  const viewer = shown.viewer
+  const state = at(d, now, shown.picks, moment.key)
+  /* The two "not signed up" moments take whoever is looking out of the field. */
+  const notIn = moment.key === 'open-empty' || moment.key === 'open-team'
+  const field = notIn ? state.field.filter((s) => s.wallet !== viewer) : state.field
+  const mine = notIn ? undefined : field.find((s) => s.wallet === viewer)
+
+  /* A real roster to pick from: the viewer's own, if they are a real player. */
+  const [roster, setRoster] = useState<RosterFighter[] | null>(null)
+  const [cards, setCards] = useState<{ crew: CardTemplate[]; weapons: CardTemplate[] }>({ crew: [], weapons: [] })
+  const owner = d.field.some((s) => s.wallet === viewer) && !viewer.startsWith('fake') ? viewer : ROSTER_WALLET
+  useEffect(() => {
+    if (!notIn && state.phase !== 'signup') return
+    let live = true
+    Promise.all([fetchRoster(owner), fetchCrewCards(owner)]).then(([r, c]) => {
+      if (!live) return
+      setRoster(r.filter((f) => !f.in_use))
+      setCards(c)
+    })
+    return () => {
+      live = false
+    }
+  }, [owner, notIn, state.phase])
+  const usableCrew = useMemo(() => cards.crew.filter((c) => nftValues.has(c.template_id)), [cards, nftValues])
+  const usableWeapons = useMemo(() => cards.weapons.filter((c) => nftValues.has(c.template_id)), [cards, nftValues])
+
+  const [teamIds, setTeamIds] = useState<number[]>([])
+  const [crew, setCrew] = useState<CardTemplate | null>(null)
+  const [weapon, setWeapon] = useState<CardTemplate | null>(null)
+  const [tab, setTab] = useState<Tab>('fighters')
+  const [sheet, setSheet] = useState(false)
+  /* "Team picked": the strongest five and the first usable pair, ready to go. */
+  useEffect(() => {
+    if (moment.key !== 'open-team' || !roster) return
+    setTeamIds(
+      [...roster]
+        .sort((a, b) => (b.stats?.level ?? 0) - (a.stats?.level ?? 0))
+        .slice(0, TEAM_SIZE)
+        .map((f) => f.fighter_id),
+    )
+    setCrew(usableCrew[0] ?? null)
+    setWeapon(usableWeapons[0] ?? null)
+  }, [moment.key, roster, usableCrew, usableWeapons])
+  /* The panel's button. */
+  const first = useRef(shown.picker)
+  useEffect(() => {
+    if (shown.picker !== first.current) {
+      setTab('fighters')
+      setSheet(true)
+    }
+  }, [shown.picker])
+
+  const picked = (roster ?? [])
+    .filter((f) => teamIds.includes(f.fighter_id))
+    .sort((a, b) => teamIds.indexOf(a.fighter_id) - teamIds.indexOf(b.fighter_id))
+  const team: (RosterFighter | null)[] = Array.from({ length: TEAM_SIZE }, (_, k) => picked[k] ?? null)
+  const toggle = (f: RosterFighter) =>
+    setTeamIds((ids) =>
+      ids.includes(f.fighter_id) ? ids.filter((x) => x !== f.fighter_id) : ids.length >= TEAM_SIZE ? ids : [...ids, f.fighter_id],
+    )
+  const missing = TEAM_SIZE - picked.length
+  const block = missing > 0
+    ? { ready: false, reason: `Pick ${missing} more fighter${missing === 1 ? '' : 's'}` }
+    : !crew
+      ? { ready: false, reason: 'Pick a crew card' }
+      : !weapon
+        ? { ready: false, reason: 'Pick a weapon card' }
+        : { ready: true }
+
+  return (
+    <div className="tsf">
+      <div className="tsf__bar">
+        <b>ALIEN LEGENDS</b>
+        <span>{moment.label}</span>
+      </div>
+      <main className="tsf__main">
+        <PhoneTournament
+          phase={state.phase}
+          stage={state.phase === 'none' ? undefined : state.stage}
+          now={now}
+          timeline={state.timeline}
+          signupAt={chainTime(d.plan.find((s) => s.step_name === 'signup')?.time_start)}
+          field={field}
+          mine={mine}
+          wallet={viewer}
+          history={state.history}
+          payouts={state.payouts}
+          hof={state.hof}
+          weather={d.weather}
+          rolls={d.weather.map((w) => w.weather).filter((w): w is Weather => !!w)}
+          legend={new Map()}
+          past={null}
+          ringFighters={[
+            { fighter_id: 1, classname: 'juggernaut', racename: 'khaured' },
+            { fighter_id: 2, classname: 'arcanist', racename: 'altan' },
+            { fighter_id: 3, classname: 'astralknight', racename: 'lopati' },
+            { fighter_id: 4, classname: 'desperado', racename: 'human' },
+            { fighter_id: 5, classname: 'mindblade', racename: 'altan' },
+          ]}
+          team={team}
+          crew={crew}
+          weapon={weapon}
+          score={teamScore(picked)}
+          energyCost={100}
+          block={block}
+          busy={false}
+          canSign={block.ready}
+          onEnter={() => {}}
+          onPick={(t) => {
+            setTab(t)
+            setSheet(true)
+          }}
+          picker={
+            <PickerSheet
+              open={sheet}
+              onClose={() => setSheet(false)}
+              tab={tab}
+              onTab={setTab}
+              roster={roster}
+              teamIds={teamIds}
+              onToggle={toggle}
+              onInspect={() => {}}
+              levelMod={levelMod}
+              ageDecay={ageDecay}
+              crewCards={usableCrew}
+              weaponCards={usableWeapons}
+              values={nftValues}
+              crew={crew}
+              weapon={weapon}
+              onCrew={setCrew}
+              onWeapon={setWeapon}
+              onInspectCard={() => {}}
+            />
+          }
+          viewingPast={false}
+        />
+        {state.openHof && <OpenHof />}
+      </main>
+      <nav className="tsf__tabs">
+        <span>World Map</span>
+        <span>My Fighters</span>
+        <span>Quests</span>
+        <span>Shop</span>
+        <span className="on">More</span>
+      </nav>
     </div>
   )
 }
@@ -649,7 +867,7 @@ function Explorer({
 /* The Hall of Fame is a button on the screen; this presses it. */
 function OpenHof() {
   useEffect(() => {
-    const b = [...document.querySelectorAll('.ts__scroll button')].find((x) =>
+    const b = [...document.querySelectorAll('.tsf__main button')].find((x) =>
       x.textContent?.includes('Hall of Fame'),
     ) as HTMLButtonElement | undefined
     b?.click()
@@ -657,33 +875,8 @@ function OpenHof() {
   return null
 }
 
-function Page() {
-  const [real, setReal] = useState<Loaded | null>(null)
-  const [err, setErr] = useState<string | null>(null)
-  const [source, setSource] = useState<Source>('real')
-  useEffect(() => {
-    load().then(setReal, (e) => {
-      setErr(String(e?.message ?? e))
-      setSource(FAKE_SIZES[2])
-    })
-  }, [])
-  /* The made-up ones borrow the real tournament's weather where there is one. */
-  const d = useMemo(
-    () => (source === 'real' ? real : fake(source, real?.weather ?? [])),
-    [source, real],
-  )
-  if (!d) return <p className="ts__msg">{err ? `Could not read the tournament: ${err}` : 'Reading the tournament from the chain…'}</p>
-  return (
-    <Explorer
-      key={String(source)}
-      d={d}
-      source={source}
-      onSource={setSource}
-      realReady={!!real}
-      realSize={real?.field.length ?? 0}
-    />
-  )
-}
+const Page = IS_FRAME ? Phone : Panel
+
 
 async function boot() {
   /* Replays need the game config, and the config wants a player. */

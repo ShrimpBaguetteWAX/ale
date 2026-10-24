@@ -49,6 +49,16 @@
     .ts__tabs { position: absolute; left: 0; right: 0; bottom: 0; z-index: 20; display: flex; height: 60px; background: rgb(4 9 20 / 97%); box-shadow: inset 0 1px 0 rgb(255 255 255 / 10%); }
     .ts__tabs span { display: grid; flex: 1; place-items: center; font: 700 10.5px 'Titillium Web', system-ui, sans-serif; color: #8f9bb3; }
     .ts__tabs .on { color: #00baff; }
+    /* The phone is its own page in an iframe, so its phone rules apply. */
+    .ts__iframe { display: block; width: 390px; height: 844px; border: 0; border-radius: 34px; background: #05101e; }
+    .tsf { min-height: 100vh; background: radial-gradient(130% 50% at 50% 0%, rgb(0 120 200 / 18%), transparent 60%), #05101e; }
+    .tsf__bar { position: fixed; top: 0; left: 0; right: 0; z-index: 30; display: flex; align-items: center; justify-content: space-between; gap: 10px; height: 50px; padding: 0 16px; background: rgb(4 9 20 / 94%); box-shadow: inset 0 -1px 0 rgb(255 255 255 / 10%); }
+    .tsf__bar b { flex: none; font: 800 11px Orbitron, system-ui, sans-serif; letter-spacing: .14em; color: #fff; }
+    .tsf__bar span { overflow: hidden; font: 600 11px 'Titillium Web', system-ui, sans-serif; color: #9fe3ff; text-overflow: ellipsis; white-space: nowrap; }
+    .tsf__main { padding: 62px 12px calc(var(--nav-h) + 16px); }
+    .tsf__tabs { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; display: flex; height: var(--nav-h); background: rgb(4 9 20 / 97%); box-shadow: inset 0 1px 0 rgb(255 255 255 / 10%); }
+    .tsf__tabs span { display: grid; flex: 1; place-items: center; font: 700 10.5px 'Titillium Web', system-ui, sans-serif; color: #8f9bb3; }
+    .tsf__tabs .on { color: #00baff; }
     .ts__msg { padding: 40px; color: #dfe7f3; font: 15px 'Titillium Web', system-ui, sans-serif; }
   </style>
 </head>

@@ -43,6 +43,7 @@ import { usePhone } from '@/components/usePhone'
 import { WeatherPanel } from '@/fight/setup'
 import { fetchWeatherRow, fetchWeatherRows, weatherIsCalm, type Weather } from '@/fight/weather'
 import { PhoneTournament } from '@/tournament/PhoneTournament'
+import { PickerSheet } from '@/fight/PickerSheet'
 import { fetchPlayer } from '@/chain/queries'
 import { hasLegendAccess } from '@/account/rules'
 import {
@@ -2991,9 +2992,28 @@ export default function Tournament() {
           canSign={!!session}
           onEnter={() => void enter()}
           onPick={goPick}
-          picker={pickerBody}
-          pickerOpen={pickerOpen}
-          onClosePicker={() => setPickerOpen(false)}
+          picker={
+            <PickerSheet
+              open={pickerOpen}
+              onClose={() => setPickerOpen(false)}
+              tab={tab}
+              onTab={setTab}
+              roster={free}
+              teamIds={teamIds}
+              onToggle={toggleFighter}
+              onInspect={showFighter}
+              levelMod={levelMod}
+              ageDecay={ageDecay}
+              crewCards={usableCrew}
+              weaponCards={usableWeapons}
+              values={nftValues}
+              crew={crew}
+              weapon={weapon}
+              onCrew={setCrew}
+              onWeapon={setWeapon}
+              onInspectCard={showCard}
+            />
+          }
           viewingPast={!!chosen && viewingPrevious}
           onOpenPast={past ? () => setChosen(past.stage.tournament_name) : undefined}
           onBack={() => setChosen(null)}
