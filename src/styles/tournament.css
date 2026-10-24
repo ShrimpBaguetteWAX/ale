@@ -5814,3 +5814,94 @@
 .ptour__four > div.is-me b {
   color: #9fe3ff;
 }
+
+/* The prize sheet: the WAX places one roomy line each, and TLM by round. */
+.ptour__ladder {
+  gap: 6px;
+}
+.ptour__rung {
+  min-height: 42px;
+  padding: 0 14px;
+}
+.ptour__rung > b {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+.ptour__rung.is-top {
+  min-height: 50px;
+}
+.ptour__rung.is-top > b {
+  font-size: 15px;
+}
+.ptour__you {
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-family: var(--font-display);
+  font-size: 8.5px;
+  font-style: normal;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #04131c;
+  background: var(--cyan);
+}
+.ptour__tlmtable {
+  overflow: hidden;
+  border-radius: 12px;
+  background: rgb(0 0 0 / 28%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 10%);
+}
+.ptour__tlmrow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  min-height: 48px;
+  padding: 6px 14px;
+}
+.ptour__tlmrow.is-two,
+.ptour__tlmrow--head {
+  grid-template-columns: minmax(0, 1fr) 92px 92px;
+}
+.ptour__tlmrow + .ptour__tlmrow {
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 7%);
+}
+.ptour__tlmrow--head {
+  min-height: 34px;
+}
+.ptour__tlmrow--head small {
+  font-family: var(--font-display);
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  line-height: 1.3;
+  text-align: right;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.ptour__tlmlabel {
+  font-size: 13px;
+  font-weight: var(--fw-bold);
+  color: #e7eef8;
+}
+.ptour__tlmval {
+  display: grid;
+  justify-items: end;
+}
+.ptour__tlmval b {
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 800;
+  white-space: nowrap;
+  color: #ffd979;
+}
+.ptour__tlmval small {
+  font-size: 10.5px;
+  white-space: nowrap;
+  color: var(--text-faint);
+}
+.ptour__tlmval.is-none {
+  color: var(--text-faint);
+}

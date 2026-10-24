@@ -185,7 +185,6 @@ function dayTime(ms: number): string {
 }
 
 const wax = (v: number) => formatDecimals(v, 2)
-const pts = (n: number) => (n === 1 ? '1 pt' : `${n} pts`)
 const tlm = (v: number) => (v >= 100 ? formatNumber(Math.floor(v)) : formatDecimals(v, 2))
 
 function dayLabel(ms: number): string {
@@ -828,23 +827,19 @@ function LaterRounds({ board, from, now, onSelect }: { board: Board; from: numbe
   )
 }
 
+/** The WAX places, all sixteen, whatever the size of the field. */
 function PrizeLadder({ board, mark }: { board: Board; mark?: number }) {
-  const bands = waxBands(board.players)
-  const used = bands.reduce((s, b) => s + b.shares * (b.to - b.from + 1), 0)
   return (
     <div className="ptour__ladder">
-      {bands.map((b, i) => {
+      {waxBands(16).map((b, i) => {
         const here = !!mark && mark >= b.from && mark <= b.to
         const label = b.from === b.to ? place(b.from) : `${place(b.from)}–${place(b.to)}`
         return (
           <div key={b.from} className={`ptour__rung${i === 0 ? ' is-top' : ''}${here ? ' is-me' : ''}`}>
-            <span>
-              <b>{label}</b>
-              <small>
-                {b.shares} of 48 shares{b.to > b.from ? ' each' : ''}
-                {here ? ' · you, right now' : ''}
-              </small>
-            </span>
+            <b>
+              {label}
+              {here && <i className="ptour__you">You</i>}
+            </b>
             <em className="mono">
               {wax(waxFor(board.prizes, b.from))}
               <img src={WAX_ICON} alt="" />
@@ -852,46 +847,66 @@ function PrizeLadder({ board, mark }: { board: Board; mark?: number }) {
           </div>
         )
       })}
-      {used < 48 && (
-        <p className="ptour__fine">
-          {48 - used} of the 48 shares go back to the reward pools — the field is smaller than sixteen.
-        </p>
-      )}
     </div>
   )
 }
 
-function PerPoint({ board }: { board: Board }) {
-  return (
-    <div className="ptour__tlm">
-      <img src={TLM_ICON} alt="" />
-      <span>On top, every point you hold pays in TLM</span>
-      <b className="mono">{tlm(board.prizes.perPoint)} a point</b>
-    </div>
+/**
+ * What a run is worth in TLM, round by round: the total a player holds
+ * once they have won that far.
+ *
+ * Two ways in when seeds skip the opening round — through it, or past it
+ * on a free pass — and they are worth very different amounts, so a player
+ * in the tournament sees their own and anyone else sees both side by side.
+ */
+function TlmTable({ board, wallet }: { board: Board; wallet: string }) {
+  const run = board.runs.get(wallet)
+  const per = board.prizes.perPoint
+  const fromOpening = new Map(winsAhead(0, 0, board.rounds, board.sizes).map((s) => [s.round, s.points]))
+  const withPass = new Map(
+    board.opening ? winsAhead(10, 1, board.rounds, board.sizes).map((s) => [s.round, s.points]) : [],
   )
-}
-
-/** What each win from here adds, as points and as TLM. */
-function Path({ board, points, from, label }: { board: Board; points: number; from: number; label?: string }) {
-  const steps = winsAhead(points, from, board.rounds)
-  if (!steps.length) return null
-  const shown = steps.length > 4 ? steps.slice(-4) : steps
+  const both = board.opening && !run
+  const mine = run?.pass ? withPass : fromOpening
+  const cell = (p: number | undefined) =>
+    p === undefined ? (
+      <span className="ptour__tlmval is-none">—</span>
+    ) : (
+      <span className="ptour__tlmval">
+        <b className="mono">{tlm(p * per)} TLM</b>
+        <small className="mono">Trial {tlm((p * per) / 10)}</small>
+      </span>
+    )
+  const rows: { key: string; label: string; a: number | undefined; b?: number | undefined }[] = []
+  if (board.opening) {
+    rows.push({ key: 'pass', label: 'Free pass', a: both ? undefined : run?.pass ? 10 : undefined, b: 10 })
+  }
+  for (let r = 0; r < board.rounds; r++) {
+    rows.push({
+      key: String(r),
+      label: `Win ${board.name(r) === 'Final' ? 'the Final' : board.name(r)}`,
+      a: both ? fromOpening.get(r) : mine.get(r),
+      b: withPass.get(r),
+    })
+  }
   return (
-    <div className="ptour__path" style={{ ['--n' as string]: String(shown.length + (label ? 1 : 0)) }}>
-      {label && (
-        <div className="is-now">
-          <small>{label}</small>
-          <b className="mono">{pts(points)}</b>
-          <em className="mono">{tlm(points * board.prizes.perPoint)} TLM</em>
+    <div className="ptour__tlmtable">
+      {both && (
+        <div className="ptour__tlmrow ptour__tlmrow--head">
+          <span />
+          <small>From the {board.name(0).toLowerCase()}</small>
+          <small>With a free pass</small>
         </div>
       )}
-      {shown.map((s) => (
-        <div key={s.round}>
-          <small>Win {board.name(s.round, true)}</small>
-          <b className="mono">{pts(s.points)}</b>
-          <em className="mono">{tlm(s.points * board.prizes.perPoint)} TLM</em>
-        </div>
-      ))}
+      {rows
+        .filter((r) => both || r.a !== undefined)
+        .map((r) => (
+          <div key={r.key} className={`ptour__tlmrow${both ? ' is-two' : ''}`}>
+            <span className="ptour__tlmlabel">{r.label}</span>
+            {cell(r.a)}
+            {both && cell(r.b)}
+          </div>
+        ))}
     </div>
   )
 }
@@ -908,38 +923,22 @@ function PrizeSheet({ board, wallet, onClose }: { board: Board; wallet: string; 
               <img src={WAX_ICON} alt="" />
               {wax(board.prizes.wax)}
             </b>
-            <small>WAX by place</small>
+            <small>WAX (Top 16)</small>
           </div>
           <div className="ptour__potfig">
             <b className="mono">
               <img src={TLM_ICON} alt="" />
               {tlm(board.prizes.tlm)}
             </b>
-            <small>TLM by points</small>
+            <small>TLM</small>
           </div>
         </div>
-        <span className="ptour__kick ptour__kick--gold">WAX · by place</span>
+        <span className="ptour__kick ptour__kick--gold">WAX (Top 16)</span>
         <PrizeLadder board={board} mark={rank} />
-        <span className="ptour__kick ptour__kick--gold">TLM · by points</span>
-        <PerPoint board={board} />
-        {mine && mine.outIn === null && (
-          <>
-            <span className="ptour__kick">Your wins from here</span>
-            <Path board={board} points={mine.points} from={board.current} label="Now" />
-          </>
-        )}
-        {board.opening && (
-          <>
-            <span className="ptour__kick">From the {board.name(0).toLowerCase()}</span>
-            <Path board={board} points={0} from={0} />
-          </>
-        )}
-        <span className="ptour__kick">{board.opening ? 'With a free pass' : 'From the first round'}</span>
-        <Path board={board} points={board.opening ? 10 : 0} from={board.opening ? 1 : 0} label={board.opening ? 'Pass' : undefined} />
+        <span className="ptour__kick ptour__kick--gold">TLM</span>
+        <TlmTable board={board} wallet={wallet} />
         <p className="ptour__fine">
-          Places go by points, most first — not by the round you reach.
-          {board.opening && ' A free pass counts 10, so a top seed out early can finish above someone who got further from the opening round.'}{' '}
-          The last fight of each round scores one point more. Without Legend Access a prize pays a tenth. Paid right after the final.
+          Trial accounts receive 10% of every prize. Rewards are paid out after the tournament ends.
         </p>
       </div>
     </BottomSheet>
@@ -1332,7 +1331,6 @@ function Draw(p: PhoneTournamentProps & { board: Board; onPrizes: () => void }) 
   const drawing = board.drawing(0)
   const myFight = opening.find((m) => isIn(m, p.wallet))
   const myPass = board.passes.some((e) => e.wallet === p.wallet)
-  const mineRun = board.runs.get(p.wallet)
   const sizes = board.sizes
   const drawnCount = opening.length
 
@@ -1403,15 +1401,11 @@ function Draw(p: PhoneTournamentProps & { board: Board; onPrizes: () => void }) 
             All details ›
           </button>
         </div>
+        <span className="ptour__kick">WAX (Top 16)</span>
         <PrizeLadder board={board} />
-        <PerPoint board={board} />
-        <span className="ptour__kick">What your wins are worth</span>
-        <Path
-          board={board}
-          points={mineRun?.pass ? 10 : 0}
-          from={mineRun?.pass ? 1 : 0}
-          label={mineRun?.pass ? 'Pass' : undefined}
-        />
+        <span className="ptour__kick">TLM</span>
+        <TlmTable board={board} wallet={p.wallet} />
+        <p className="ptour__fine">Trial accounts receive 10% of every prize.</p>
       </section>
 
       <div className="ptour__rhead">
@@ -1641,7 +1635,7 @@ function MyRun({ board, wallet, history, now, onWatch }: {
         break
       }
     } else {
-      const ahead = winsAhead(points, r, board.rounds)[0]
+      const ahead = winsAhead(points, r, board.rounds, board.sizes)[0]
       legs.push(
         <Leg key={r} kind="next" mark={String(r + 1)} head={`${fightName(r, board.rounds, board.opening)} · ${when(at, now)}`} verdict={at > now ? `in ${inText(at - now)}` : 'due now'}>
           {foe && <PlayerAvatar id={foe.avatar} name={foe.tag} className="ptour__sideav" size={28} />}
@@ -1658,7 +1652,7 @@ function MyRun({ board, wallet, history, now, onWatch }: {
       )
       stillIn = false
       /* What would follow it. */
-      winsAhead(ahead?.points ?? points, r + 1, board.rounds).forEach((s) =>
+      winsAhead(ahead?.points ?? points, r + 1, board.rounds, board.sizes).forEach((s) =>
         legs.push(
           <Leg key={`if-${s.round}`} kind="if" mark={String(s.round + 1)} head={`${fightName(s.round, board.rounds, board.opening)} · ${when(board.slots[s.round]?.[0] ?? NaN, now)}`} verdict="if you win">
             <span>
@@ -1672,7 +1666,7 @@ function MyRun({ board, wallet, history, now, onWatch }: {
     }
   }
   if (stillIn && run.outIn === null && board.current < board.rounds) {
-    winsAhead(points, board.current, board.rounds).forEach((s) =>
+    winsAhead(points, board.current, board.rounds, board.sizes).forEach((s) =>
       legs.push(
         <Leg key={`if-${s.round}`} kind="if" mark={String(s.round + 1)} head={`${fightName(s.round, board.rounds, board.opening)} · ${when(board.slots[s.round]?.[0] ?? NaN, now)}`} verdict={s.round === board.current ? 'being drawn' : 'if you win'}>
           <span>

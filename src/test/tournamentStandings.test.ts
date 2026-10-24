@@ -78,8 +78,8 @@ describe('roundName', () => {
     expect(roundName(0, 4, true)).toBe('Opening round')
   })
   it('calls a first round with no free passes by its size', () => {
-    expect(roundName(0, 4, false)).toBe('Last 16')
-    expect(roundName(1, 7, false, true)).toBe('Last 64')
+    expect(roundName(0, 4, false)).toBe('Round of 16')
+    expect(roundName(1, 7, false, true)).toBe('R64')
   })
 })
 
@@ -156,8 +156,14 @@ describe('prizes', () => {
 
 describe('winsAhead', () => {
   it('doubles and adds the round, a win at a time', () => {
-    expect(winsAhead(10, 1, 4).map((s) => s.points)).toEqual([21, 44, 91])
-    expect(winsAhead(0, 0, 3).map((s) => s.points)).toEqual([0, 1, 4])
+    /* Twelve players: 4, 4, 2, 1 fights. Only the final is a round of one. */
+    expect(winsAhead(10, 1, 4, [4, 4, 2, 1]).map((s) => s.points)).toEqual([21, 44, 92])
+    expect(winsAhead(0, 0, 4, [4, 4, 2, 1]).map((s) => s.points)).toEqual([0, 1, 4, 12])
+  })
+  it('counts the extra point a round of one fight always gets', () => {
+    /* The first real tournament: a one-fight opening round and the final. */
+    expect(winsAhead(0, 0, 3, roundSizes(5)).map((s) => s.points)).toEqual([1, 3, 9])
+    expect(winsAhead(10, 1, 3, roundSizes(5)).map((s) => s.points)).toEqual([21, 45])
   })
 })
 

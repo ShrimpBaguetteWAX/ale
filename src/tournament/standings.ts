@@ -36,7 +36,7 @@ export function roundSizes(players: number): number[] {
  *
  * The opening round is only called that when it is one — when seeds skip
  * it. A field that is already a power of two starts straight in at the
- * last sixteen, or wherever its size puts it.
+ * round of sixteen, or wherever its size puts it.
  */
 export function roundName(round: number, rounds: number, opening: boolean, short = false): string {
   const fromEnd = rounds - round
@@ -45,14 +45,14 @@ export function roundName(round: number, rounds: number, opening: boolean, short
   if (round === 0 && opening) return short ? 'Opening' : 'Opening round'
   if (fromEnd === 2) return short ? 'Semis' : 'Semi-finals'
   if (fromEnd === 3) return short ? 'Quarters' : 'Quarter-finals'
-  return `Last ${2 ** fromEnd}`
+  return short ? `R${2 ** fromEnd}` : `Round of ${2 ** fromEnd}`
 }
 
 /** One round's fight in the singular: "Quarter-final", "Final". */
 export function fightName(round: number, rounds: number, opening: boolean): string {
   const name = roundName(round, rounds, opening)
   if (name === 'Opening round') return 'Opening fight'
-  if (name.startsWith('Last')) return `${name} fight`
+  if (name.startsWith('Round of')) return `${name} fight`
   return name.replace(/s$/, '')
 }
 
@@ -239,14 +239,20 @@ export function waxFor(prizes: Prizes, rank: number): number {
 /**
  * The points each win from here would bring.
  *
- * Doubled and the round added, as `reportmatch` does — without the extra
- * point the last fight of a round happens to get, which nobody can count on.
+ * Doubled and the round added, as `reportmatch` does. The last fight of a
+ * round scores one more, which nobody can count on — except in a round of
+ * one fight, the final always among them, where the one fight is the last.
  */
-export function winsAhead(points: number, fromRound: number, rounds: number): { round: number; points: number }[] {
+export function winsAhead(
+  points: number,
+  fromRound: number,
+  rounds: number,
+  sizes: number[] = [],
+): { round: number; points: number }[] {
   const out: { round: number; points: number }[] = []
   let p = points
   for (let r = fromRound; r < rounds; r++) {
-    p = 2 * p + r
+    p = 2 * p + r + ((sizes[r] ?? (r === rounds - 1 ? 1 : 0)) === 1 ? 1 : 0)
     out.push({ round: r, points: p })
   }
   return out
