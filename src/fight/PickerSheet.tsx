@@ -70,7 +70,8 @@ export function PickerSheet({
   const [cardQuery, setCardQuery] = useState('')
   const [shownCount, setShownCount] = useState<{ shown: number; total: number } | null>(null)
   /* A desktop starts on the full cards — their numbers and quality marks are the point of the room. */
-  const [density, setDensity] = useState<PickDensity>(() => (inline ? 'full' : recallDensity(true)))
+  /* Compact cards by default, on a desktop as on the phone. */
+  const [density, setDensity] = useState<PickDensity>(() => (inline ? 'compact' : recallDensity(true)))
   const chooseDensity = (next: PickDensity) => {
     setDensity(next)
     rememberDensity(next, true)
@@ -171,6 +172,7 @@ export function PickerSheet({
                  the rest sit behind the Filter button, as on the phone's sheet. */
               count={inline ? undefined : shownCount}
               sheet={{ density, onDensity: inline ? setDensity : chooseDensity }}
+              drop={inline}
             />
             <FighterGrid
               roster={roster}

@@ -1088,10 +1088,17 @@ export function RosterFilters({
   atLevelOne,
   onAtLevelOne,
   sheet,
+  drop = false,
 }: {
   filter: RosterFilter
   onChange: (f: RosterFilter) => void
   roster: RosterFighter[]
+  /**
+   * Open the filters as a panel floating over the cards, with Clear and
+   * Done at its foot — the desktop tournament's picker. Elsewhere they open
+   * in the page and push the cards down.
+   */
+  drop?: boolean
   /**
    * The level-1 lens, when the screen offers it.
    *
@@ -1289,6 +1296,9 @@ export function RosterFilters({
         </button>
       </div>
     )}
+    {drop && !folded && <div className="filters__dropshade" onClick={() => setOpen(false)} />}
+    {(!drop || !folded) && (
+    <div className={drop ? 'filters__drop' : 'filters__inpage'}>
     <div className={`filters${folded ? ' filters--folded' : ''}${sheet ? ' filters--sheet' : ''}`}>
 
       {/*
@@ -1597,6 +1607,20 @@ export function RosterFilters({
        the fold's CSS, which can only reach children of `.filters`.
     */}
     {!folded && <QualityFilters filter={filter} onChange={onChange} />}
+    {drop && (
+      <div className="filters__dropfoot">
+        {active > 0 && (
+          <button type="button" className="filters__dropclear" onClick={() => onChange({ ...EMPTY_FILTER, sort: filter.sort })}>
+            Clear
+          </button>
+        )}
+        <button type="button" className="btn btn--sm filters__dropdone" onClick={() => setOpen(false)}>
+          Done
+        </button>
+      </div>
+    )}
+    </div>
+    )}
     </>
   )
 }

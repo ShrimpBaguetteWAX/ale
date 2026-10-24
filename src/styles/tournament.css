@@ -7476,3 +7476,187 @@
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
 }
+
+/* ===================================================================
+   The desktop picker's filters: a panel dropping over the cards.
+   =================================================================== */
+
+/* The toolbar row, then the cards — and the panel over the cards' row,
+   so it covers them rather than pushing them down. */
+.picker--inline > .tabs { grid-row: 1; }
+.picker--inline > .sheetbar { grid-row: 2; }
+.picker--inline > .picker__countrow { grid-row: 2; }
+.picker--inline > .fightergrid,
+.picker--inline > .cardgrid { grid-row: 3; }
+.picker--inline > .filters__drop {
+  grid-row: 3;
+  grid-column: 1 / -1;
+  align-self: start;
+  justify-self: start;
+  z-index: 20;
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+  gap: 14px 22px;
+  width: min(860px, 100%);
+  padding: 16px 18px;
+  border-radius: 14px;
+  background: rgb(10 18 34 / 98%);
+  box-shadow:
+    inset 0 0 0 1px rgb(255 255 255 / 16%),
+    0 22px 50px rgb(0 0 0 / 65%);
+}
+.filters__dropshade {
+  position: fixed;
+  inset: 0;
+  z-index: 19;
+}
+.filters__drop > .filters {
+  display: contents;
+}
+.filters__drop .filters__foot,
+.filters__drop .filters__clear,
+.filters__drop .matchupbar {
+  display: none;
+}
+/* Left: the markers, a tight grid, borderless until on. */
+.filters__drop .filters__markers {
+  grid-column: 1;
+  grid-row: 1 / span 2;
+  align-content: start;
+  gap: 4px 6px;
+}
+.filters__drop .filters__markers::before {
+  content: 'Markers';
+  flex: 0 0 100%;
+  margin-bottom: 6px;
+  font: 700 10px var(--font-display);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.filters__drop .markbtn {
+  width: 34px;
+  height: 34px;
+  background: none;
+  border: 0;
+  border-radius: 8px;
+}
+.filters__drop .markbtn img {
+  width: 20px;
+  height: 20px;
+}
+.filters__drop .markbtn:hover:not(:disabled) {
+  background: rgb(255 255 255 / 6%);
+}
+.filters__drop .markbtn[aria-pressed='true'] {
+  background: rgb(0 186 255 / 16%);
+  box-shadow: inset 0 0 0 1.5px var(--cyan);
+}
+.filters__drop .markbtn__count {
+  top: -3px;
+  right: -2px;
+  bottom: auto;
+  min-width: 0;
+  padding: 0;
+  background: none;
+  font-size: 9px;
+  color: var(--text-dim);
+}
+/* Right: the elements, then the selects two by two. */
+.filters__drop .filters__elements {
+  grid-column: 2;
+  grid-row: 1;
+  gap: 4px;
+}
+.filters__drop .filters__elements::before {
+  content: 'Element';
+  flex: 0 0 100%;
+  margin-bottom: 6px;
+  font: 700 10px var(--font-display);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.filters__drop .elembtn {
+  width: 36px;
+  height: 36px;
+  background: none;
+  border: 0;
+  border-radius: 8px;
+}
+.filters__drop .elembtn img {
+  width: 22px;
+  height: 22px;
+}
+.filters__drop .elembtn:hover {
+  border: 0;
+  background: rgb(255 255 255 / 6%);
+}
+.filters__drop .elembtn[aria-pressed='true'] {
+  background: rgb(0 186 255 / 16%);
+  box-shadow: inset 0 0 0 1.5px var(--cyan);
+}
+.filters__drop .filters__row {
+  grid-column: 2;
+  grid-row: 2;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  align-items: end;
+}
+.filters__drop .field {
+  min-width: 0;
+  gap: 3px;
+}
+.filters__drop .field--grow {
+  grid-column: 1 / -1;
+}
+.filters__drop .field__label {
+  font-size: 9.5px;
+  letter-spacing: 0.12em;
+}
+.filters__drop .input,
+.filters__drop select.input {
+  height: 36px;
+  min-height: 36px;
+  border-color: rgb(255 255 255 / 16%);
+  background-color: rgb(255 255 255 / 4%);
+}
+.filters__drop .showtabs {
+  min-height: 36px;
+  border-color: rgb(255 255 255 / 16%);
+  border-radius: 8px;
+}
+/* The foot: roll quality on one line, then Clear and Done. */
+.filters__drop .qfilter {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: 12px 0 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 9%);
+}
+.filters__drop .qfilter .input {
+  width: auto;
+}
+.filters__dropfoot {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 14px;
+}
+.filters__dropclear {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: 700 13px var(--font-body);
+  color: var(--cyan);
+  cursor: pointer;
+}
+.filters__dropdone {
+  --btn-bg: rgb(0 186 255 / 16%);
+  --btn-line: rgb(0 186 255 / 60%);
+  min-width: 90px;
+}

@@ -1594,6 +1594,11 @@
 
 /* The filters' bottom line: the fold button, the sort, and what the two are
    letting through. */
+/* The wrapper the desktop tournament's drop-down panel needs; everywhere else it is not there. */
+.filters__inpage {
+  display: contents;
+}
+
 .filters__foot {
   display: flex;
   align-items: center;
