@@ -13,16 +13,12 @@ import { useChainQuery } from '@/chain/useChainQuery'
 import { resolveAssetIds, type CardTemplate } from '@/chain/atomic'
 import { fetchCrewCards, fetchRoster } from '@/dungeon/queries'
 import { fetchAssetTemplates } from '@/chain/atomic'
-import { EMPTY_FILTER, type RosterFilter } from '@/dungeon/filters'
 import { TEAM_SIZE, type RosterFighter } from '@/dungeon/types'
 import { combineNftFighter, nftAsPanel, type NftValue } from '@/dungeon/nftFighter'
 import { ageFactor, levelFactor } from '@/fight/scaling'
 import {
-  CardGrid,
   CombatCard,
   DetailSheet,
-  FighterGrid,
-  RosterFilters,
   mid,
   rosterPanel,
   type Detail,
@@ -59,8 +55,6 @@ import {
   fetchFightersByIds,
 } from '@/tournament/queries'
 import {
-  bracketOf,
-  freePassCount,
   canEnter,
   chainTime,
   currentStepEnd,
@@ -70,7 +64,6 @@ import {
   crewFaces,
   pretendTournamentWins,
   seedOrder,
-  seedingOf,
   startedAt,
   stripSteps,
   stripWindow,
@@ -2515,8 +2508,6 @@ export default function Tournament() {
   const stage = board.data?.stage
   /* The results, as soon as the last fight is in — not when cleanup comes. */
   const phase = phaseOf(stage) === 'battle' && fightingDone(stage) ? 'finish' : phaseOf(stage)
-  /* The two phases the gates are the screen. */
-  const waiting = phase === 'none' || phase === 'preparing'
   const signups = useMemo(() => board.data?.signups ?? [], [board.data])
   const entryOpen = !!stage?.allow_player_signup
 
@@ -2526,7 +2517,6 @@ export default function Tournament() {
   )
 
   const energyCost = Number(board.data?.config?.energy_cost_signup ?? 0)
-  const everySec = Number(board.data?.config?.tournament_every_sec ?? 0)
   const energy = player.activestats.action_points
 
   /*
@@ -2599,33 +2589,18 @@ export default function Tournament() {
   const [weapon, setWeapon] = useState<CardTemplate | null>(null)
   const [tab, setTab] = useState<Tab>('fighters')
   /*
-     An empty card is a long way above the roster it is filled from. Tapping
-     it opens the right tab and brings the picker up to the top of the
-     screen, so the gesture lands on the fighters rather than on a panel
-     that appears to have done nothing — the arena and the dungeon do the
-     same.
+     A phone picks in a sheet over the screen; a desktop picks on the page,
+     under the line-up, which brings the picker up to the top of the screen
+     itself.
   */
-  const picker = useRef<HTMLElement>(null)
-  /* A phone picks in a sheet over the screen rather than further down it. */
   const phone = usePhone()
   const [pickerOpen, setPickerOpen] = useState(false)
   const goPick = (t: Tab) => {
     setTab(t)
     if (phone) setPickerOpen(true)
-    else picker.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
-  const [filter, setFilter] = useState<RosterFilter>(EMPTY_FILTER)
-  const [atLevelOne, setAtLevelOne] = useState(false)
-  const [cardQuery, setCardQuery] = useState('')
   const [detail, setDetail] = useState<Detail>(null)
-  const [shownCount, setShownCount] = useState<{ shown: number; total: number } | null>(null)
   const [fault, setFault] = useState<string | null>(null)
-
-  const countFighters = useCallback(
-    (shown: number, total: number) =>
-      setShownCount((c) => (c && c.shown === shown && c.total === total ? c : { shown, total })),
-    [],
-  )
 
   const picked = useMemo(
     () =>
@@ -2730,22 +2705,7 @@ export default function Tournament() {
     () => timeline.find((s) => s.name === 'signup')?.startMs ?? NaN,
     [timeline],
   )
-  const fightAt = useMemo(
-    () => timeline.find((s) => s.name === 'battle')?.startMs ?? NaN,
-    [timeline],
-  )
   const field = useMemo(() => seedOrder(signups), [signups])
-  const entered = stage ? Number(stage.player_count ?? signups.length) : signups.length
-  const bracket = bracketOf(entered)
-  const seeding = stage ? seedingOf(signups, stage, mine?.wallet ?? player.wallet) : null
-  /*
-     Every pairing in the round, not only the player's own.
-
-     A tournament screen that showed you your one bout and nothing else was
-     a fixture list with one fixture on it — who else is still in is the
-     thing a bracket is for.
-  */
-  const pairings = board.data?.matchups ?? []
   const history = board.data?.history ?? []
   /* The rolls that landed, in the order the stage lists them. */
   const rolls = useMemo(
@@ -2756,13 +2716,6 @@ export default function Tournament() {
     [board.data],
   )
 
-  /* The seeds the draw spared, which is only ever the opening round. */
-  const passes = freePassCount(stage, entered)
-  const byes = useMemo(
-    () => (Number(stage?.current_round ?? 0) === 0 ? field.slice(0, passes) : []),
-    [stage, field, passes],
-  )
-  const payout = board.data?.payouts?.find((p) => p.wallet === player.wallet)
   const nextStart = chainTime(board.data?.tracking?.next_tournament_start)
   /* When signup opens for a tournament not started yet: its start, plus the
      preparation steps the template puts before signup. */
@@ -2904,333 +2857,84 @@ export default function Tournament() {
     )
   }
 
-  /*
-     What the picker shows: the roster or the cards, a tab each. Below the
-     team on a desktop; in a sheet over the screen on a phone.
-  */
-  const pickerBody = (
-    <>
-        <div className="tabs">
-          {(['fighters', 'crew', 'weapon'] as Tab[]).map((key) => (
-            <button
-              key={key}
-              type="button"
-              className={`tabs__tab${tab === key ? ' tabs__tab--on' : ''}`}
-              onClick={() => setTab(key)}
-            >
-              {key === 'fighters' ? 'Fighters' : key === 'crew' ? 'Crew' : 'Weapon'}
-              {key === 'fighters' && (
-                <span className="tabs__count">
-                  {picked.length}/{TEAM_SIZE}
-                </span>
-              )}
-            </button>
-          ))}
-        </div>
-  
-        {tab === 'fighters' ? (
-          <>
-            <RosterFilters
-              filter={filter}
-              onChange={setFilter}
-              roster={free ?? []}
-              atLevelOne={atLevelOne}
-              onAtLevelOne={setAtLevelOne}
-              count={shownCount}
-            />
-            <FighterGrid
-              roster={free}
-              filter={filter}
-              ageDecay={ageDecay}
-              levelMod={levelMod}
-              atLevelOne={atLevelOne}
-              teamIds={teamIds}
-              full={picked.length >= TEAM_SIZE}
-              onToggle={toggleFighter}
-              onCount={countFighters}
-              onInspect={showFighter}
-            />
-          </>
-        ) : (
-          <CardGrid
-            cards={tab === 'crew' ? usableCrew : usableWeapons}
-            values={nftValues}
-            query={cardQuery}
-            onQuery={setCardQuery}
-            selected={tab === 'crew' ? crew : weapon}
-            onPick={(c) => {
-              if (tab !== 'crew') {
-                setWeapon(c)
-                return
-              }
-              setCrew(c)
-              setTab('weapon')
-              setCardQuery('')
-            }}
-            onInspect={showCard}
-            kind={tab}
-          />
-        )}
-    </>
-  )
-
-  if (phone) {
-    /* Nothing running and nobody asked for the last one: the wait. */
-    const waitingPhone = !chosen && running.length === 0
-    const shownPhase = waitingPhone ? (phase === 'finish' ? 'none' : phase) : phase
-    const past =
-      board.data?.past ??
-      (waitingPhone && stage && isFinished(stage)
-        ? { stage, history, rolls }
-        : null)
-    return (
-      <div className="ptour-page">
-        {board.error && <div className="alert alert--error">{board.error}</div>}
-        {fault && <div className="alert alert--error">{fault}</div>}
-        {error && <div className="alert alert--error">{error}</div>}
-        <PhoneTournament
-          phase={shownPhase}
-          stage={waitingPhone && shownPhase === 'none' ? undefined : stage}
-          now={now}
-          timeline={timeline}
-          signupAt={shownPhase === 'none' ? signupOpensAt : signupAt}
-          schedule={shownPhase === 'none' ? nextScheduleSteps : nextSteps(timeline)}
-          finalAfterMs={finalAfterMs}
-          field={field}
-          mine={mine}
-          wallet={player.wallet}
-          history={history}
-          payouts={board.data?.payouts ?? []}
-          hof={board.data?.hof ?? []}
-          weather={board.data?.weather ?? []}
-          rolls={rolls}
-          legend={legendRead.data ?? EMPTY_LEGEND}
-          past={past}
-          ringFighters={ringFighters}
-          team={team}
-          crew={crew}
-          weapon={weapon}
-          score={score}
-          energyCost={energyCost}
-          block={block}
-          busy={busy === 'enter'}
-          canSign={!!session}
-          onEnter={() => void enter()}
-          onPick={goPick}
-          picker={
-            <PickerSheet
-              open={pickerOpen}
-              onClose={() => setPickerOpen(false)}
-              tab={tab}
-              onTab={setTab}
-              roster={free}
-              teamIds={teamIds}
-              onToggle={toggleFighter}
-              onInspect={showFighter}
-              levelMod={levelMod}
-              ageDecay={ageDecay}
-              crewCards={usableCrew}
-              weaponCards={usableWeapons}
-              values={nftValues}
-              crew={crew}
-              weapon={weapon}
-              onCrew={setCrew}
-              onWeapon={setWeapon}
-              onInspectCard={showCard}
-            />
-          }
-          viewingPast={!!chosen && viewingPrevious}
-          onOpenPast={past ? () => setChosen(past.stage.tournament_name) : undefined}
-          onBack={() => setChosen(null)}
-          onChooseAnother={running.length > 1 ? () => setChosen(null) : undefined}
-        />
-        {detail && (
-          <DetailSheet panel={detail.panel} template={detail.template} onClose={() => setDetail(null)} />
-        )}
-      </div>
-    )
-  }
-
+  /* Nothing running and nobody asked for the last one: the wait. */
+  const waitingPhone = !chosen && running.length === 0
+  const shownPhase = waitingPhone ? (phase === 'finish' ? 'none' : phase) : phase
+  const past =
+    board.data?.past ??
+    (waitingPhone && stage && isFinished(stage)
+      ? { stage, history, rolls }
+      : null)
   return (
-    <div className="tour">
-      {/*
-         The title and the pot, grouped so a phone can put them on one line.
-         `display: contents` on wider screens leaves both exactly where they
-         were — this wrapper only exists for the layout underneath it.
-      */}
-      {/*
-         No title over the gates.
-
-         A heading reading "Tournament" above a shut gate with a clock on it
-         is the same sentence twice, and it was the one thing standing
-         between the top of the screen and the picture. Everywhere else it
-         stays, because everywhere else the screen is a list of figures.
-      */}
-      {(running.length > 1 || (previous && running.length > 0)) && (
-        <div className="tourpick__switches">
-          {running.length > 1 && !viewingPrevious && (
-            <button type="button" className="tourpick__switch" onClick={() => setChosen(null)}>
-              Choose another tournament
-            </button>
-          )}
-          {/* The last finished tournament, behind one button: its results
-              are worth a look, but it is not a choice beside the live one. */}
-          {previous && running.length > 0 && (
-            <button
-              type="button"
-              className="tourpick__switch"
-              onClick={() => setChosen(viewingPrevious ? null : previous.tournament_name)}
-            >
-              {viewingPrevious ? 'Back to the current tournament' : 'Previous tournament'}
-            </button>
-          )}
-        </div>
-      )}
-
-      {(!waiting || stage) && (
-        <div className="tour__top">
-          {!waiting && <TournamentHead />}
-          {!waiting && stage && <PrizeBar stage={stage} weather={board.data?.shownWeather ?? []} />}
-        </div>
-      )}
-
-
+    <div className="ptour-page">
       {board.error && <div className="alert alert--error">{board.error}</div>}
       {fault && <div className="alert alert--error">{fault}</div>}
       {error && <div className="alert alert--error">{error}</div>}
-
-      {!waiting && stage && (
-        <div className="tour__band">
-          <DayStrip timeline={timeline} now={now} />
-          {phase === 'signup' && !mine && (
-            <EntryActions
-              score={score}
-              energyCost={energyCost}
-              block={block}
-              busy={busy === 'enter'}
-              canSign={!!session}
-              onEnter={() => void enter()}
-            />
-          )}
-        </div>
-      )}
-
-      {phase === 'none' && (
-        <NoTournament
-          nextStart={nextStart}
-          now={now}
-          everySec={everySec}
-          fighters={ringFighters}
-          onPrevious={previous ? () => setChosen(previous.tournament_name) : undefined}
-        />
-      )}
-
-      {phase === 'preparing' && (
-        <Preparing
-          fighters={ringFighters}
-          stage={stage}
-          weather={board.data?.shownWeather ?? []}
-          signupAt={signupAt}
-          now={now}
-          onPrevious={previous ? () => setChosen(previous.tournament_name) : undefined}
-        />
-      )}
-
-      {phase === 'signup' && stage && !mine && (
-        <EntryPanel
-          team={
-            <TeamRow
-              team={team}
-              levelMod={levelMod}
-              ageDecay={ageDecay}
-              onInspect={showFighter}
-              onRemove={toggleFighter}
-              onEmpty={() => goPick('fighters')}
-              sixth={
-                <NftSlot
-                  crew={crew}
-                  weapon={weapon}
-                  values={nftValues}
-                  onOpenCard={showCard}
-                  onClearCrew={() => setCrew(null)}
-                  onClearWeapon={() => setWeapon(null)}
-                  onPick={goPick}
-                  onOpen={() => {
-                    const fused = combineNftFighter(
-                      crew ? (nftValues.get(crew.template_id) ?? null) : null,
-                      weapon ? (nftValues.get(weapon.template_id) ?? null) : null,
-                    )
-                    if (fused) setDetail({ kind: 'panel', panel: fused })
-                    else goPick('crew')
-                  }}
-                />
-              }
-            />
-          }
-        >
-          <section className="tour__picker" ref={picker}>
-            {pickerBody}
-          </section>
-        </EntryPanel>
-      )}
-
-      {phase === 'battle' && stage && (
-        <Battle
-          stage={stage}
-          bracket={bracket}
-          pairings={pairings}
-          byes={byes}
-          /*
-             All of them.
-
-             `curstage` rolls one per planet and every one applies, so the
-             bout is fought under the lot — they compound in turn, each
-             asking for itself whether it reaches a given fighter.
-          */
-          weather={rolls}
-          mineWallet={mine?.wallet ?? null}
-          entered={!!mine}
-          now={now}
-        />
-      )}
-
-      {phase === 'finish' && (
-        <Results
-          history={history}
-          weather={rolls}
-          wallet={player.wallet}
-          mine={mine}
-          payout={payout}
-          nextStart={nextStart}
-          now={now}
-        />
-      )}
-
-      {/*
-        The fight card: the event, your line on it, and the field.
-
-        Not once the fighting starts. The field is the list of who entered,
-        seeded — the question the screen answers while entry is open and the
-        draw is being made. Once there are pairings it is the same names in
-        a worse arrangement, below a board that already says who is left and
-        who they drew — so only your own line survives into the battle.
-      */}
-      {phase !== 'battle' && phase !== 'finish' ? (
-        <section className="tour__poster">
-          <PosterHead fightAt={fightAt} now={now} />
-          {mine && <MyEntry mine={mine} seeding={seeding} bracket={bracket} />}
-          <Field
-            field={field}
-            mineWallet={mine?.wallet ?? null}
-            entryOpen={entryOpen}
-            freePasses={freePassCount(stage, entered)}
-            degenerate={bracket.degenerate}
+      <PhoneTournament
+        layout={phone ? 'phone' : 'desktop'}
+        phase={shownPhase}
+        stage={waitingPhone && shownPhase === 'none' ? undefined : stage}
+        now={now}
+        timeline={timeline}
+        signupAt={shownPhase === 'none' ? signupOpensAt : signupAt}
+        schedule={shownPhase === 'none' ? nextScheduleSteps : nextSteps(timeline)}
+        finalAfterMs={finalAfterMs}
+        field={field}
+        mine={mine}
+        wallet={player.wallet}
+        history={history}
+        payouts={board.data?.payouts ?? []}
+        hof={board.data?.hof ?? []}
+        weather={board.data?.weather ?? []}
+        rolls={rolls}
+        legend={legendRead.data ?? EMPTY_LEGEND}
+        past={past}
+        ringFighters={ringFighters}
+        team={team}
+        crew={crew}
+        weapon={weapon}
+        score={score}
+        energyCost={energyCost}
+        block={block}
+        busy={busy === 'enter'}
+        canSign={!!session}
+        onEnter={() => void enter()}
+        onPick={goPick}
+        onRemove={toggleFighter}
+        onClearTeam={() => {
+          setTeamIds([])
+          setCrew(null)
+          setWeapon(null)
+        }}
+        me={{ tag: player.playertag, avatar: Number(player.active_avatar) || 0 }}
+        picker={
+          <PickerSheet
+            open={pickerOpen}
+            onClose={() => setPickerOpen(false)}
+            tab={tab}
+            onTab={setTab}
+            roster={free}
+            teamIds={teamIds}
+            onToggle={toggleFighter}
+            onInspect={showFighter}
+            levelMod={levelMod}
+            ageDecay={ageDecay}
+            crewCards={usableCrew}
+            weaponCards={usableWeapons}
+            values={nftValues}
+            crew={crew}
+            weapon={weapon}
+            onCrew={setCrew}
+            onWeapon={setWeapon}
+            onInspectCard={showCard}
+            inline={!phone}
           />
-        </section>
-      ) : (
-        mine && <MyEntry mine={mine} seeding={seeding} bracket={bracket} />
-      )}
-
+        }
+        viewingPast={!!chosen && viewingPrevious}
+        onOpenPast={past ? () => setChosen(past.stage.tournament_name) : undefined}
+        onBack={() => setChosen(null)}
+        onChooseAnother={running.length > 1 ? () => setChosen(null) : undefined}
+      />
       {detail && (
         <DetailSheet panel={detail.panel} template={detail.template} onClose={() => setDetail(null)} />
       )}

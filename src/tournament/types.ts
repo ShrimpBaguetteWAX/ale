@@ -117,6 +117,9 @@ export interface TournamentSignup {
   fighter_class_race_element?: string[]
   crew_asset_id: number
   arms_asset_id: number
+  /** The designs of the two cards, kept by `signup` so they can be drawn without a read. */
+  crew_template_id?: number
+  arms_template_id?: number
   score: number
   battles_won: number
   reward_points: number

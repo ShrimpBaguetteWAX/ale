@@ -1,5 +1,5 @@
 import { createContext, Fragment, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
-import type { CardTemplate } from '@/chain/atomic'
+import { fetchSchemaTemplates, type CardTemplate } from '@/chain/atomic'
 import type { RosterFighter } from '@/dungeon/types'
 import { BottomSheet } from '@/components/BottomSheet'
 import { GameImg } from '@/components/GameImg'
@@ -103,9 +103,6 @@ export interface PhoneTournamentProps {
   /** Takes one picked fighter off the team, and clears it all — for the desktop's line-up. */
   onRemove?: (f: RosterFighter) => void
   onClearTeam?: () => void
-  /** The two cards the player entered with, once read, for the desktop's stage. */
-  mineCrew?: CardTemplate | null
-  mineWeapon?: CardTemplate | null
   /** Who is looking, for their row among the entrants before they enter. */
   me?: { tag: string; avatar: number }
   /** The roster sheet, slid over the screen when a team slot is tapped. */
@@ -1612,29 +1609,46 @@ function LineupStage({ team, crew, weapon, onSlot, onRemove, onClear }: {
   )
 }
 
+/**
+ * The two card designs an entry went in with, named.
+ *
+ * The signup row keeps only the template ids; the name and the artwork come
+ * from the schema catalogues, which every player shares and which cache hard.
+ */
+function useEntryCards(crewId?: number, armsId?: number) {
+  const [cards, setCards] = useState<{ crew: CardTemplate | null; weapon: CardTemplate | null }>({ crew: null, weapon: null })
+  useEffect(() => {
+    if (!crewId && !armsId) return
+    let live = true
+    Promise.all([fetchSchemaTemplates('crew.worlds'), fetchSchemaTemplates('arms.worlds')])
+      .then(([crew, arms]) => {
+        if (live) setCards({ crew: (crewId && crew.get(crewId)) || null, weapon: (armsId && arms.get(armsId)) || null })
+      })
+      .catch(() => {})
+    return () => {
+      live = false
+    }
+  }, [crewId, armsId])
+  return cards
+}
+
 /** The same five pedestals, for a team already entered: nothing on it can be changed. */
-function EnteredStage({ faces, crew, weapon }: { faces: CrewFace[]; crew: CardTemplate | null; weapon: CardTemplate | null }) {
-  const card = (label: string, c: CardTemplate | null) =>
-    c ? (
+function EnteredStage({ faces, crewId, armsId }: { faces: CrewFace[]; crewId?: number; armsId?: number }) {
+  const { crew, weapon } = useEntryCards(crewId, armsId)
+  const card = (label: string, id: number | undefined, c: CardTemplate | null) =>
+    id ? (
       <div className="ptour__lucard">
         <GameImg
-          src={asset(`/assets/cards/${c.template_id}.webp`)}
-          fallback={[ipfsImage(c.img), asset('/assets/default-card.png')].filter((x): x is string => !!x)}
+          src={asset(`/assets/cards/${id}.webp`)}
+          fallback={[ipfsImage(c?.img), asset('/assets/default-card.png')].filter((x): x is string => !!x)}
           alt=""
         />
         <span>
           <small>{label}</small>
-          <b>{c.name}</b>
+          <b>{c?.name ?? ' '}</b>
         </span>
       </div>
-    ) : (
-      <div className="ptour__lucard ptour__lucard--in">
-        <span>
-          <small>{label}</small>
-          <b>Entered</b>
-        </span>
-      </div>
-    )
+    ) : null
   return (
     <section className="ptour__lineup ptour__lineup--in">
       <div className="ptour__lutop">
@@ -1662,8 +1676,8 @@ function EnteredStage({ faces, crew, weapon }: { faces: CrewFace[]; crew: CardTe
           </div>
         ))}
         <div className="ptour__lucards">
-          {card('Crew card', crew)}
-          {card('Weapon', weapon)}
+          {card('Crew card', crewId, crew)}
+          {card('Weapon', armsId, weapon)}
         </div>
       </div>
     </section>
@@ -1702,7 +1716,7 @@ function DeskEntered(
       <Strip items={preDrawItems(p.timeline, p.now)} focus={0} />
       <Cols
         items={[
-          [<EnteredStage faces={crewFaces(mine)} crew={p.mineCrew ?? null} weapon={p.mineWeapon ?? null} />, 'main'],
+          [<EnteredStage faces={crewFaces(mine)} crewId={mine.crew_template_id} armsId={mine.arms_template_id} />, 'main'],
           [
             <section className="ptour__card ptour__card--teal ptour__inrow">
               <div className="ptour__status">

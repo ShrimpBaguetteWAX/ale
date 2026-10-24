@@ -120,6 +120,8 @@ async function load(): Promise<Loaded> {
       tag: one ? m.gamertag_player1 : m.gamertag_player2,
       avatar: one ? m.avatar_player1 : m.avatar_player2,
       ids: one ? m.fighter_ids_player1 : m.fighter_ids_player2,
+      crew: one ? m.crew_template_id_player1 : m.crew_template_id_player2,
+      arms: one ? m.arms_template_id_player1 : m.arms_template_id_player2,
     }
   }
   const signupStart = chainTime(plan.find((s) => s.step_name === 'signup')?.time_start)
@@ -137,6 +139,8 @@ async function load(): Promise<Loaded> {
         fighter_class_race_element: fighters.map((f) => `${f.classname}:${f.racename}:${f.element}`),
         crew_asset_id: 0,
         arms_asset_id: 0,
+        crew_template_id: side.crew,
+        arms_template_id: side.arms,
         /* Not on chain any more: a stand-in that keeps the seed order. */
         score: 100 - i,
         battles_won: 0,
@@ -206,6 +210,9 @@ function fake(n: number, weather: Loaded['weather']): Loaded {
     fighter_class_race_element: Array.from({ length: 5 }, (_, k) => CREWS[(i * 4 + k * 2) % CREWS.length]),
     crew_asset_id: 0,
     arms_asset_id: 0,
+    /* Real designs, so the cards on an entered stage have art and a name. */
+    crew_template_id: [141525, 141549, 141561, 19633, 235644, 28422][i % 6],
+    arms_template_id: [141416, 141440, 141488, 19597, 19621, 20974, 56042][i % 7],
     score: 400 - i * 3 - Math.floor(rand() * 3),
     battles_won: 0,
     reward_points: 0,
@@ -241,10 +248,10 @@ function fake(n: number, weather: Loaded['weather']): Loaded {
         avatar_player2: c.avatar,
         fighter_ids_player1: a.fighter_ids,
         fighter_ids_player2: c.fighter_ids,
-        crew_template_id_player1: 0,
-        crew_template_id_player2: 0,
-        arms_template_id_player1: 0,
-        arms_template_id_player2: 0,
+        crew_template_id_player1: a.crew_template_id ?? 0,
+        crew_template_id_player2: c.crew_template_id ?? 0,
+        arms_template_id_player1: a.arms_template_id ?? 0,
+        arms_template_id_player2: c.arms_template_id ?? 0,
         play_time: iso(slots[r][i]),
         winner: upset ? 'player2' : 'player1',
       })
