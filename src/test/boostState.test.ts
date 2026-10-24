@@ -11,20 +11,20 @@ const config = { disable_building_boost_score: 0 } as unknown as LandsConfig
 const x = (n: number) => n * 100_000
 
 describe('needsBoost', () => {
-  it('flags 1.0x and below, by the multiplier the player is shown', () => {
-    expect(needsBoost(x(1.0) / 10_000)).toBe(true)
-    /* 1.04x shows as 1.0x */
-    expect(needsBoost(x(1.04) / 10_000)).toBe(true)
-    /* 1.05x shows as 1.1x */
-    expect(needsBoost(x(1.05) / 10_000)).toBe(false)
-    expect(needsBoost(x(1.5) / 10_000)).toBe(false)
+  it('flags 2.0x and below, by the multiplier the player is shown', () => {
+    expect(needsBoost(x(2.0) / 10_000)).toBe(true)
+    /* 2.04x shows as 2.0x */
+    expect(needsBoost(204_000 / 10_000)).toBe(true)
+    /* 2.05x shows as 2.1x */
+    expect(needsBoost(205_000 / 10_000)).toBe(false)
+    expect(needsBoost(x(2.5) / 10_000)).toBe(false)
   })
 })
 
 describe('boostState', () => {
   it('runs from fine to closed', () => {
-    expect(boostState(x(1.5), config)).toBe('ok')
-    expect(boostState(x(0.5), config)).toBe('low')
+    expect(boostState(x(2.5), config)).toBe('ok')
+    expect(boostState(x(1.5), config)).toBe('low')
     expect(boostState(x(0.04), config)).toBe('hidden')
     expect(boostState(0, config)).toBe('closed')
   })

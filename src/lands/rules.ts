@@ -197,12 +197,12 @@ export function formatSpan(ms: number): string {
 }
 
 /**
- * Where a building starts asking for another boost: 1.0x and below, read off
+ * Where a building starts asking for another boost: 2.0x and below, read off
  * the multiplier the player is shown (as `boostRank` is), so the warning and
  * the label beside it never disagree at the edge. Briefing and the chores
  * flag the same buildings.
  */
-export const BOOST_SOON = 10
+export const BOOST_SOON = 20
 
 export function needsBoost(percent: number): boolean {
   return Math.round(percent) <= BOOST_SOON

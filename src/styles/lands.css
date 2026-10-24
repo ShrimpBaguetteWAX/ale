@@ -743,7 +743,7 @@
   text-align: right;
 }
 
-/* Due a boost: amber at 1.0x and below, red once it is off the map or out. */
+/* Due a boost: amber at 2.0x and below, red once it is off the map or out. */
 .plands__bar.is-low i {
   background: #ffb648;
 }
