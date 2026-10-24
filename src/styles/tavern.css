@@ -913,58 +913,258 @@
   }
 }
 
-/*
- * Hire and Leave, following the page down on a phone.
- *
- * They are the only two things this screen is for, and a tavern runs to
- * several screens of recruit, cards and objectives — so by the time a player
- * had read enough to decide, both were off the top. Sticking the heading
- * instead would cost 160px of an 844px screen, most of it the tavern's name
- * and coordinates: worth reading once, never again.
- *
- * Under the top bar rather than the window, since that one is sticky too;
- * `--topbar-h` is the height the shell's grid reserves for it. Opaque,
- * because the page now passes behind it.
- */
-.tavernbar {
-  position: sticky;
-  top: var(--topbar-h);
-  /* Below the top bar, above the panels sliding under it. */
-  z-index: calc(var(--z-sticky) - 1);
-  display: flex;
-  align-items: center;
-  gap: var(--sp-2);
-  padding: var(--sp-2);
-  background: rgb(8 14 30 / 96%);
-  backdrop-filter: blur(6px);
-  border: 1px solid var(--line-soft);
-  border-radius: var(--radius-sm);
-}
+/* ---------- the tavern on a phone: the fighter sheet, as the page ---------- */
 
-/*
- * Hire takes the room left over, so the pair reads as one control: the cost
- * and the marker are as wide as their contents, Leave is as wide as its word,
- * and the button that does the thing fills the rest rather than leaving a gap
- * in the middle of the bar.
- */
-.tavernbar .hire {
-  flex: 1;
-  min-width: 0;
-}
+@media (max-width: 719px) {
+  /* Room under the page for the docked Leave and Hire. */
+  .tavern {
+    padding-bottom: 76px;
+  }
+  .tavern__fighter {
+    padding: 12px;
+  }
+  .tavern__fighter > .panel__title {
+    display: none;
+  }
 
-/*
- * Room for the words rather than a fixed share of the bar.
- *
- * `flex: 1` gave Hire 90px of a 390px screen and "Hire recruit" wrapped
- * onto two lines inside it, which is what made the bar 63px tall. The
- * buttons size to their text now, the cost and the marker keep the left of
- * the row, and the tighter padding is what buys the space for all three.
- */
-.tavernbar .btn {
-  white-space: nowrap;
-  padding-inline: var(--sp-3);
-}
+  .recruithdr {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .recruithdr__art {
+    flex: none;
+    width: 84px;
+    height: 84px;
+    overflow: hidden;
+    border-radius: 12px;
+    background-position: center;
+    background-size: cover;
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 12%);
+  }
+  .recruithdr__art img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: top;
+  }
+  .recruithdr__text {
+    display: grid;
+    flex: 1;
+    gap: 1px;
+    min-width: 0;
+    text-transform: capitalize;
+  }
+  .recruithdr__level {
+    font-family: var(--font-display);
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--cyan);
+  }
+  .recruithdr__text strong {
+    font-family: var(--font-display);
+    font-size: 18px;
+    font-weight: 800;
+  }
+  .recruithdr__text small {
+    font-size: var(--fs-xs);
+    color: var(--text-faint);
+  }
 
-.tavernbar .hire .btn {
-  margin-left: auto;
+  /* The same switch as Rewards and My Fighters. */
+  .recruitseg {
+    display: flex;
+    gap: 3px;
+    margin-top: 12px;
+    padding: 3px;
+    border-radius: 10px;
+    background: rgb(0 0 0 / 30%);
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 12%);
+  }
+  .recruitseg button {
+    flex: 1;
+    min-height: 32px;
+    border: 0;
+    border-radius: 7px;
+    background: none;
+    font-size: var(--fs-xs);
+    font-weight: var(--fw-bold);
+    color: var(--text-faint);
+  }
+  .recruitseg button[aria-selected='true'] {
+    background: rgb(0 186 255 / 18%);
+    box-shadow: inset 0 0 0 1px rgb(0 186 255 / 55%);
+    color: var(--white);
+  }
+  .recruitpane {
+    margin-top: 6px;
+  }
+  .recruitpane .statline:last-child {
+    border-bottom: 0;
+  }
+  .recruitpane .abilities {
+    margin-top: 6px;
+  }
+
+  /* Discounts: one row, with Best pick on it. */
+  .tavdisc {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 6px 6px 10px;
+    border-radius: 12px;
+    background: rgb(8 14 28 / 66%);
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 10%);
+  }
+  .tavdisc__open {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    min-height: 44px;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--white);
+    text-align: left;
+  }
+  .tavdisc__open img {
+    flex: none;
+    width: 22px;
+    height: 22px;
+  }
+  .tavdisc__text {
+    display: grid;
+    min-width: 0;
+  }
+  .tavdisc__text strong {
+    font-size: var(--fs-xs);
+  }
+  .tavdisc__text small {
+    overflow: hidden;
+    font-size: 10.5px;
+    color: var(--text-faint);
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+  .tavdisc .btn {
+    --btn-bg: rgb(255 255 255 / 8%);
+    --btn-line: rgb(255 255 255 / 22%);
+    flex: none;
+    min-height: 34px;
+    padding: 0 12px;
+    font-size: 11px;
+    box-shadow: none;
+  }
+  .tavdisc .btn:disabled {
+    --btn-bg: rgb(255 255 255 / 4%);
+    --btn-line: rgb(255 255 255 / 12%);
+    color: var(--text-faint);
+  }
+  .tavdisc__chev {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 28px;
+    height: 34px;
+    padding: 0;
+    border: 0;
+    background: none;
+  }
+
+  /* The discounts and NFTs, inside the sheet: no panel within a panel. */
+  /* min-width 0: the one-line row of NFT kinds would otherwise widen the sheet. */
+  .tavsheet,
+  .tavsheet .panel {
+    min-width: 0;
+  }
+  .tavsheet {
+    display: grid;
+    gap: 16px;
+    --line-bright: rgb(255 255 255 / 22%);
+  }
+  .tavsheet .panel {
+    padding: 0;
+    border: 0;
+    background: none;
+    box-shadow: none;
+  }
+  /* The NFT kinds as one scrolling row of chips, in the quiet palette. */
+  .tavsheet .tabs {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 6px;
+    overflow-x: auto;
+  }
+  .tavsheet .tabs__tab {
+    flex: none;
+    min-height: 32px;
+    padding: 0 12px;
+    border: 0;
+    border-radius: 999px;
+    background: none;
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 16%);
+    font-family: var(--font-body);
+    font-size: 11px;
+    font-weight: var(--fw-bold);
+    letter-spacing: 0;
+    color: var(--text-faint);
+  }
+  .tavsheet .tabs__tab[aria-selected='true'] {
+    background: rgb(0 186 255 / 14%);
+    box-shadow: inset 0 0 0 1px rgb(0 186 255 / 60%);
+    color: var(--white);
+  }
+  /* The sheet is already called Discounts; its count stays. */
+  .tavsheet .tavern__objectives .panel__title {
+    display: none;
+  }
+  .tavsheet .btn:not(.btn--primary) {
+    --btn-bg: rgb(255 255 255 / 8%);
+    --btn-line: rgb(255 255 255 / 22%);
+    box-shadow: none;
+  }
+
+  /* Leave and Hire, docked above the tab bar. */
+  .tavdock {
+    position: fixed;
+    right: 12px;
+    bottom: calc(var(--nav-h) + 10px + env(safe-area-inset-bottom));
+    left: 12px;
+    z-index: 30;
+    display: flex;
+    gap: 8px;
+  }
+  .tavdock .btn {
+    min-height: 46px;
+    box-shadow: 0 8px 18px rgb(0 0 0 / 45%);
+  }
+  .tavdock .btn--ghost {
+    flex: none;
+    --btn-bg: rgb(4 9 20 / 80%);
+    --btn-line: rgb(255 255 255 / 24%);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+  .tavdock__hire {
+    flex: 1;
+  }
+  .tavdock__cost {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    margin-left: 4px;
+    padding-left: 10px;
+    box-shadow: inset 1px 0 0 rgb(0 0 0 / 25%);
+  }
+  .tavdock__cost img {
+    width: 15px;
+    height: 15px;
+  }
+  .tavdock__cost--short {
+    color: #ff8fa0;
+  }
 }

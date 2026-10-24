@@ -1,11 +1,4 @@
-import {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Link, Navigate } from 'react-router-dom'
 import { fetchOwnedTemplates, resolveAssetIds } from '@/chain/atomic'
 import { landId } from '@/chain/landId'
@@ -20,11 +13,7 @@ import {
   objectiveLabel,
   suggestCards,
 } from '@/tavern/hireCost'
-import {
-  SCHEMA_TABS,
-  type OwnedTemplate,
-  type TavernTemplate,
-} from '@/tavern/types'
+import { SCHEMA_TABS, type OwnedTemplate, type TavernTemplate } from '@/tavern/types'
 import {
   GRADE_ICON,
   GRADE_LABEL,
@@ -48,17 +37,13 @@ import { fetchRoster } from '@/dungeon/queries'
 import { useChainQuery } from '@/chain/useChainQuery'
 import { useConfig, useLazyConfig } from '@/state/useConfig'
 import { MARKERS, markerIcon } from '@/dungeon/filters'
-import {
-  DIRTIES,
-  hireFighter,
-  revealFighter,
-  setFighterMarker,
-} from '@/wharf/actions'
+import { DIRTIES, hireFighter, revealFighter, setFighterMarker } from '@/wharf/actions'
 import { settle } from '@/wharf/settle'
 import { readableError } from '@/wharf/errors'
 import { asset } from '@/assets'
 import { GameImg } from '@/components/GameImg'
 import { usePhone } from '@/components/usePhone'
+import { BottomSheet } from '@/components/BottomSheet'
 
 /**
  * Card art, keyed by template id.
@@ -186,9 +171,8 @@ function MarkerPick({
               `crtfighter` while the hire is running — so there is nothing to
               mark until it has finished.
             */}
-            A label for the roster. The fighter does not exist until the hire
-            goes through, so this is set straight after it — one more
-            signature.
+            A label for the roster. The fighter does not exist until the hire goes through, so this
+            is set straight after it — one more signature.
           </p>
           <div className="markpick__grid">
             {MARKERS.map((m) => (
@@ -254,9 +238,7 @@ function Objective({
   */
   const seen = useRef(done)
   /** The turn in progress, if any: which way it went and how many have run. */
-  const [turn, setTurn] = useState<{ n: number; dir: 'claimed' | 'dropped' } | null>(
-    null,
-  )
+  const [turn, setTurn] = useState<{ n: number; dir: 'claimed' | 'dropped' } | null>(null)
 
   useEffect(() => {
     if (seen.current === done) return
@@ -273,11 +255,7 @@ function Objective({
          remounts the row, and a row with no state of its own can afford that.
       */
       key={turn?.n ?? 0}
-      className={[
-        'objective',
-        done ? 'objective--done' : '',
-        turn ? `objective--${turn.dir}` : '',
-      ]
+      className={['objective', done ? 'objective--done' : '', turn ? `objective--${turn.dir}` : '']
         .filter(Boolean)
         .join(' ')}
       style={{ ['--i' as string]: index }}
@@ -363,6 +341,9 @@ export default function Tavern() {
      remembered and applied to whatever the roster gained.
   */
   const [marker, setMarker] = useState('')
+  /* A phone shows the recruit's readouts one at a time, and the discounts in a sheet. */
+  const [recruitTab, setRecruitTab] = useState<'stats' | 'res' | 'abilities'>('stats')
+  const [discountsOpen, setDiscountsOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const { classes, fighters: fightersConfig } = useConfig()
   const classTemplate = classes.get(player.last_tavern_fighter?.classname ?? '')
@@ -403,34 +384,31 @@ export default function Tavern() {
      belongs to whichever tavern was revealed before. */
   const pendingTavern = unrevealedTavernHere(player)
   const tavern = frozen?.tavern ?? pendingTavern ?? player.last_tavern
-  const fighter =
-    frozen?.fighter ?? (pendingTavern ? undefined : player.last_tavern_fighter)
+  const fighter = frozen?.fighter ?? (pendingTavern ? undefined : player.last_tavern_fighter)
   // The contract requires the player to still be standing on the tavern's
   // land, so the screen is only valid while that holds.
   const onTavernLand = !!tavern?.land_id && tavern.land_id === landId(player.x, player.y)
   const revealed = !!fighter && fighter.level > 0
 
   /* Which of those cards this wallet holds, and how many of each. */
-  const ownedQuery = useChainQuery(
-    player.wallet && `tavern-owned:${player.wallet}`,
-    () => fetchOwnedTemplates(player.wallet),
+  const ownedQuery = useChainQuery(player.wallet && `tavern-owned:${player.wallet}`, () =>
+    fetchOwnedTemplates(player.wallet),
   )
   const owned = ownedQuery.data ?? null
 
   /** Whitelisted templates the player actually holds. */
   const inventory: OwnedTemplate[] = useMemo(() => {
     if (!templates || !owned) return []
-    return templates
-      .filter((t) => owned.has(t.templateid))
-      .map((t) => ({ ...t, count: owned.get(t.templateid) ?? 0 }))
-      /* Best first, the same order the fight pickers use. */
-      .sort(byQuality)
+    return (
+      templates
+        .filter((t) => owned.has(t.templateid))
+        .map((t) => ({ ...t, count: owned.get(t.templateid) ?? 0 }))
+        /* Best first, the same order the fight pickers use. */
+        .sort(byQuality)
+    )
   }, [templates, owned])
 
-  const byId = useMemo(
-    () => new Map(inventory.map((t) => [t.templateid, t])),
-    [inventory],
-  )
+  const byId = useMemo(() => new Map(inventory.map((t) => [t.templateid, t])), [inventory])
 
   const objectives = useMemo(() => tavern?.objectives ?? [], [tavern])
 
@@ -439,15 +417,9 @@ export default function Tavern() {
     [picked, byId],
   )
 
-  const breakdown = useMemo(
-    () => calculateHire(objectives, pickedCards),
-    [objectives, pickedCards],
-  )
+  const breakdown = useMemo(() => calculateHire(objectives, pickedCards), [objectives, pickedCards])
 
-  const maxSaving = useMemo(
-    () => objectives.reduce((sum, o) => sum + o.mod_value, 0),
-    [objectives],
-  )
+  const maxSaving = useMemo(() => objectives.reduce((sum, o) => sum + o.mod_value, 0), [objectives])
 
   const canAfford = player.activestats.action_points >= breakdown.cost
   const phone = usePhone()
@@ -456,9 +428,7 @@ export default function Tavern() {
 
   const tabbed = useMemo(() => {
     const known = new Set(SCHEMA_TABS.map((s) => s.key))
-    return inventory.filter((t) =>
-      tab === 'other' ? !known.has(t.schema) : t.schema === tab,
-    )
+    return inventory.filter((t) => (tab === 'other' ? !known.has(t.schema) : t.schema === tab))
   }, [inventory, tab])
 
   const toggle = useCallback((templateId: number) => {
@@ -546,9 +516,7 @@ export default function Tavern() {
       }
 
       const resolved = await resolveAssetIds(player.wallet, picked)
-      const assetIds = picked
-        .map((id) => resolved.get(id))
-        .filter((id): id is string => !!id)
+      const assetIds = picked.map((id) => resolved.get(id)).filter((id): id is string => !!id)
 
       if (assetIds.length !== picked.length) {
         throw new Error(
@@ -679,7 +647,7 @@ export default function Tavern() {
 
      On a desktop they sit on the heading line, where the cost reads next to
      the button that spends it. A phone puts them in a bar of their own that
-     follows the page down — see `.tavernbar`.
+     is docked above the tab bar — see `.tavdock`.
   */
   const hireControls = revealed && (
     <div className="hire">
@@ -720,6 +688,277 @@ export default function Tavern() {
     </div>
   )
 
+  /*
+     The recruit's three readouts, written once: a desktop shows them side
+     by side, a phone one at a time behind a switch.
+  */
+  const statsList = revealed && (
+    <>
+      {/*
+         Damage, then health, then the two timings together, then
+         taunt and who it goes for.
+
+         Damage leads because it is what a recruit is bought for;
+         health says how long it keeps doing it. Cooldown and
+         wind-up are one question in two halves - how often it
+         swings and how long before the first one - so they sit
+         together rather than either side of taunt.
+
+         Cooldown and wind-up, not "attack speed" and "initiative":
+         the contract's numbers are delays, so lower is better and
+         the old labels told the player the opposite.
+      */}
+      <StatRow
+        field="damage"
+        min={fighter.damage_min}
+        max={fighter.damage_max}
+        template={classTemplate}
+      />
+      <StatRow
+        field="health"
+        min={fighter.health_min}
+        max={fighter.health_max}
+        template={classTemplate}
+      />
+      <StatRow
+        field="attackspeed"
+        min={fighter.attackspeed_min}
+        max={fighter.attackspeed_max}
+        template={classTemplate}
+      />
+      <StatRow
+        field="initiative"
+        min={fighter.initiative_min}
+        max={fighter.initiative_max}
+        template={classTemplate}
+      />
+      <StatRow
+        field="taunt"
+        min={fighter.taunt_min}
+        max={fighter.taunt_max}
+        template={classTemplate}
+      />
+      <div className="statline">
+        <span className="statline__k">
+          <img className="statline__icon" src={statIcon('target')} alt="" />
+          Targets
+        </span>
+        <span className="statline__v">{formatTarget(fighter.target)}</span>
+      </div>
+      <div className="statline">
+        <span className="statline__k">Credits</span>
+        <span className="statline__v mono">{fighter.credits}</span>
+      </div>
+    </>
+  )
+  const resList =
+    revealed &&
+    RESISTANCES.map(([key, label]) => {
+      const raw = (fighter as unknown as Record<string, number>)[key]
+      return (
+        <div className="statline" key={key}>
+          <span className="statline__k">
+            <img
+              className="statline__icon"
+              src={asset(`/assets/icons/elements/${label.toLowerCase()}.png`)}
+              alt=""
+            />
+            {label}
+          </span>
+          <span className="statline__v mono">
+            {formatResistance(raw)}
+            <Grade field={key} raw={raw} template={classTemplate} />
+          </span>
+        </div>
+      )
+    })
+  const abilityList = revealed && fighter.abilities.length > 0 && (
+    <div className="abilities">
+      {fighter.abilities.map((a, i) => {
+        const rarity = abilityRarity(a.displayname)
+        /*
+                         The recruit's last ability does not work yet.
+
+                         This is the screen where a player decides whether the
+                         roll is worth the energy, and an ability they cannot
+                         use for several ascensions was reading as one of the
+                         reasons to hire — which is the most expensive place
+                         in the game to overstate a fighter.
+                      */
+        const locked = !!a.locked
+        return (
+          <div
+            className={`ability${locked ? ' ability--locked' : ''}`}
+            key={`${a.ability}-${i}`}
+            style={{ borderLeftColor: abilityColor(a.displayname) }}
+          >
+            <div className="ability__name" style={{ color: abilityColor(a.displayname) }}>
+              {abilityName(a.displayname)}
+              {rarity && <span className="ability__rarity">{rarity}</span>}
+              {locked && (
+                <span className="ability__locked">
+                  <img src={asset('/assets/icons/lock.svg')} alt="" width={11} height={11} />
+                  {unlockLevel ? `Unlocks at ascension ${unlockLevel}` : 'Unlocks on ascension'}
+                </span>
+              )}
+            </div>
+            <div className="ability__desc">{resolveAbilityDescription(a)}</div>
+          </div>
+        )
+      })}
+    </div>
+  )
+
+  const discountsPanel = (
+    <section className="panel tavern__objectives">
+      <div className="row" style={{ marginBottom: 'var(--sp-2)' }}>
+        <span className="panel__title">Discounts</span>
+        <span className="spacer" />
+        <span className="faint" style={{ fontSize: 'var(--fs-xs)' }}>
+          {breakdown.saved} / {maxSaving} claimed
+        </span>
+      </div>
+      <p className="hint" style={{ marginTop: 0 }}>
+        Show this tavern Alien Worlds NFTs matching what it wants and it takes energy off the hire.
+        Your NFTs are not spent — they only need to be in your wallet.
+      </p>
+
+      <div className="objectives">
+        {objectives.map((o, i) => (
+          <Objective
+            key={`${o.objective_type}-${o.objective_string}-${o.objective_value}-${i}`}
+            label={objectiveLabel(o)}
+            mod={o.mod_value}
+            done={breakdown.matched.has(i)}
+            index={i}
+          />
+        ))}
+        {objectives.length === 0 && (
+          <p className="muted">This tavern is asking for nothing today.</p>
+        )}
+      </div>
+    </section>
+  )
+  const inventoryPanel = (
+    <section className="panel tavern__inventory">
+      <div className="row row--wrap" style={{ marginBottom: 'var(--sp-3)' }}>
+        <span className="panel__title">Your NFTs</span>
+        <span className="spacer" />
+        <button
+          type="button"
+          className="btn btn--ghost btn--sm"
+          onClick={autoPick}
+          disabled={inventory.length === 0 || objectives.length === 0}
+          title="Pick the cards that take the most energy off"
+        >
+          Best pick
+        </button>
+        {picked.length > 0 && (
+          <button type="button" className="btn btn--ghost btn--sm" onClick={() => setPicked([])}>
+            Clear
+          </button>
+        )}
+      </div>
+
+      {/*
+              Selected cards live above the tabs, not inside them: "Best pick"
+              routinely chooses cards from three different schemas, and
+              without this the player sees the price drop with nothing to
+              show for it.
+            */}
+      {pickedCards.length > 0 && (
+        <div className="picked">
+          <span className="picked__label">Selected</span>
+          <div className="picked__row">
+            {pickedCards.map((t, i) => {
+              const gain = (breakdown.matchedByCard[i] ?? []).reduce(
+                (sum, oi) => sum + (objectives[oi]?.mod_value ?? 0),
+                0,
+              )
+              return (
+                <button
+                  type="button"
+                  key={t.templateid}
+                  className="pickedcard"
+                  onClick={() => toggle(t.templateid)}
+                  title={`${t.cardname} — click to remove`}
+                >
+                  <GameImg src={cardArt(t)} alt="" fallback={CARD_FALLBACK} />
+                  <span
+                    className={'pickedcard__gain' + (gain > 0 ? '' : ' pickedcard__gain--none')}
+                  >
+                    {gain > 0 ? '-' + gain : '0'}
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
+      <div className="tabs" role="tablist">
+        {SCHEMA_TABS.map((s) => {
+          const count = inventory.filter((t) => t.schema === s.key).length
+          return (
+            <button
+              key={s.key}
+              type="button"
+              role="tab"
+              className="tabs__tab"
+              aria-selected={tab === s.key}
+              onClick={() => setTab(s.key)}
+            >
+              {s.label}
+              <span className="tabs__count">{count}</span>
+            </button>
+          )
+        })}
+      </div>
+
+      {!templates || !owned ? (
+        <div className="cardgrid">
+          {Array.from({ length: 8 }, (_, i) => (
+            <div className="skeleton cardtile cardtile--loading" key={i} />
+          ))}
+        </div>
+      ) : tabbed.length === 0 ? (
+        <p className="muted" style={{ padding: 'var(--sp-5) 0' }}>
+          No eligible NFTs of this type in your wallet.
+        </p>
+      ) : (
+        <div className="cardgrid">
+          {tabbed.map((t) => {
+            const index = picked.indexOf(t.templateid)
+            const claims = index >= 0 ? (breakdown.matchedByCard[index] ?? []) : []
+            const gain = claims.reduce((sum, oi) => sum + (objectives[oi]?.mod_value ?? 0), 0)
+            return (
+              <button
+                type="button"
+                key={t.templateid}
+                className={`cardtile${index >= 0 ? ' cardtile--picked' : ''}`}
+                onClick={() => toggle(t.templateid)}
+                title={`${t.cardname} · ${t.rarity} ${t.schema}`}
+              >
+                <GameImg
+                  src={cardArt(t)}
+                  alt=""
+                  loading="lazy"
+                  decoding="async"
+                  fallback={CARD_FALLBACK}
+                />
+                <span className="cardtile__name">{t.cardname}</span>
+                {t.count > 1 && <span className="cardtile__count">×{t.count}</span>}
+                {index >= 0 && (
+                  <span className="cardtile__gain">{gain > 0 ? `−${gain}` : 'no match'}</span>
+                )}
+              </button>
+            )
+          })}
+        </div>
+      )}
+    </section>
+  )
+
   const leaveLink = (
     <Link className="btn btn--ghost" to="/map">
       Leave
@@ -728,20 +967,14 @@ export default function Tavern() {
 
   return (
     <div className="tavern">
-      <img className="tavern__art" src={asset("/assets/background/bg-tavern.png")} alt="" />
+      <img className="tavern__art" src={asset('/assets/background/bg-tavern.png')} alt="" />
       <div className="tavern__scrim" />
 
       <div className="tavern__inner">
         <header className="tavern__head">
           <div>
+            {/* Its name only: the map put the player here, so where is known. */}
             <h1 className="tavern__title">{tavern.displayname || 'Tavern'}</h1>
-            <p className="faint" style={{ fontSize: 'var(--fs-sm)' }}>
-              <span style={{ textTransform: 'capitalize' }}>{tavern.planet}</span>{' '}
-              <span className="mono">
-                {tavern.x}:{tavern.y}
-              </span>{' '}
-              · <span className="mono">{tavern.land_id}</span>
-            </p>
           </div>
           <span className="spacer" />
 
@@ -755,19 +988,28 @@ export default function Tavern() {
         </header>
 
         {/*
-           On a phone the pair follows the page down instead.
-
-           Hire and Leave are the only two things this screen is for, and a
-           tavern runs to several screens of recruit, cards and objectives — so
-           both were off the top by the time a player had read enough to
-           decide. The heading is not what sticks: at 390px it is 160px of an
-           844px screen, most of it the tavern's name and coordinates, which
-           are worth reading once and never again.
+          On a phone the pair is docked above the tab bar, the way Start Fight
+          is in a dungeon: the cost on the button that spends it, as a number
+          of energy rather than a subtraction.
         */}
         {phone && (
-          <div className="tavernbar">
-            {hireControls}
+          <div className="tavdock">
             {leaveLink}
+            {revealed && (
+              <button
+                type="button"
+                className="btn btn--primary tavdock__hire"
+                onClick={() => void doHire()}
+                disabled={busy !== null || !canAfford}
+              >
+                {(busy === 'hire' || busy === 'marker') && <span className="spinner" />}
+                {busy === 'hire' ? 'Hiring' : busy === 'marker' ? 'Marking' : 'Hire recruit'}
+                <span className={`tavdock__cost${canAfford ? '' : ' tavdock__cost--short'}`}>
+                  {breakdown.cost}
+                  <img src={asset('/assets/icons/energy.png')} alt="energy" />
+                </span>
+              </button>
+            )}
           </div>
         )}
 
@@ -780,10 +1022,9 @@ export default function Tavern() {
 
             {!revealed ? (
               <div className="tavern__empty">
-                <img src={asset("/assets/fighter/unknown-fighter.jpeg")} alt="" />
+                <img src={asset('/assets/fighter/unknown-fighter.jpeg')} alt="" />
                 <p className="muted">
-                  Nobody has stepped forward yet. Reveal to see who this tavern
-                  has on offer.
+                  Nobody has stepped forward yet. Reveal to see who this tavern has on offer.
                 </p>
                 <button
                   type="button"
@@ -794,10 +1035,63 @@ export default function Tavern() {
                   {busy === 'reveal' && <span className="spinner" />}
                   {busy === 'reveal' ? 'Revealing' : `Reveal — ${revealCost} energy`}
                 </button>
-                {!canAffordReveal && (
-                  <p className="hint hint--error">Not enough energy.</p>
-                )}
+                {!canAffordReveal && <p className="hint hint--error">Not enough energy.</p>}
               </div>
+            ) : phone ? (
+              /*
+                 A phone: the recruit as the fighter details sheet has it —
+                 portrait, name, race and element in a header with the marker
+                 beside them, then one readout at a time behind a switch, so
+                 the whole recruit is one screen.
+              */
+              <>
+                <div className="recruithdr">
+                  <div
+                    className="recruithdr__art"
+                    style={{ backgroundImage: `url('${elementBackground(fighter.element)}')` }}
+                  >
+                    <GameImg
+                      src={fighterArt(fighter)}
+                      alt={`${fighter.classname} ${fighter.racename}`}
+                      fallback={fighterArtFallback()}
+                    />
+                  </div>
+                  <div className="recruithdr__text">
+                    <span className="recruithdr__level">Level {fighter.level}</span>
+                    <strong>{fighter.classname}</strong>
+                    <small>
+                      {fighter.racename} · {fighter.element}
+                    </small>
+                  </div>
+                  <MarkerPick value={marker} onChange={setMarker} disabled={busy !== null} />
+                </div>
+                <div className="recruitseg" role="tablist" aria-label="Show">
+                  {(
+                    [
+                      ['stats', 'Stats'],
+                      ['res', 'Resistances'],
+                      ['abilities', 'Abilities'],
+                    ] as const
+                  ).map(([key, label]) => (
+                    <button
+                      type="button"
+                      key={key}
+                      role="tab"
+                      aria-selected={recruitTab === key}
+                      onClick={() => setRecruitTab(key)}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+                <div className={`recruitpane recruitpane--${recruitTab}`}>
+                  {recruitTab === 'stats'
+                    ? statsList
+                    : recruitTab === 'res'
+                      ? resList
+                      : abilityList || <p className="muted">No abilities.</p>}
+                </div>
+              </>
             ) : (
               <>
                 {/* Class art over its elemental backdrop, as the original. */}
@@ -836,69 +1130,9 @@ export default function Tavern() {
                   where side-by-side would just be two cramped columns.
                 */}
                 <div className="recruit__cols">
-                <div className="recruit__stats">
+                  <div className="recruit__stats">{statsList}</div>
+
                   {/*
-                     Damage, then health, then the two timings together, then
-                     taunt and who it goes for.
-
-                     Damage leads because it is what a recruit is bought for;
-                     health says how long it keeps doing it. Cooldown and
-                     wind-up are one question in two halves - how often it
-                     swings and how long before the first one - so they sit
-                     together rather than either side of taunt.
-
-                     Cooldown and wind-up, not "attack speed" and "initiative":
-                     the contract's numbers are delays, so lower is better and
-                     the old labels told the player the opposite.
-                  */}
-                  <StatRow
-                    field="damage"
-                    min={fighter.damage_min}
-                    max={fighter.damage_max}
-                    template={classTemplate}
-                  />
-                  <StatRow
-                    field="health"
-                    min={fighter.health_min}
-                    max={fighter.health_max}
-                    template={classTemplate}
-                  />
-                  <StatRow
-                    field="attackspeed"
-                    min={fighter.attackspeed_min}
-                    max={fighter.attackspeed_max}
-                    template={classTemplate}
-                  />
-                  <StatRow
-                    field="initiative"
-                    min={fighter.initiative_min}
-                    max={fighter.initiative_max}
-                    template={classTemplate}
-                  />
-                  <StatRow
-                    field="taunt"
-                    min={fighter.taunt_min}
-                    max={fighter.taunt_max}
-                    template={classTemplate}
-                  />
-                  <div className="statline">
-                    <span className="statline__k">
-                      <img
-                        className="statline__icon"
-                        src={statIcon('target')}
-                        alt=""
-                      />
-                      Targets
-                    </span>
-                    <span className="statline__v">{formatTarget(fighter.target)}</span>
-                  </div>
-                  <div className="statline">
-                    <span className="statline__k">Credits</span>
-                    <span className="statline__v mono">{fighter.credits}</span>
-                  </div>
-                </div>
-
-                {/*
                   Resistances as stat rows, not tiles.
 
                   Beside the main stats they are the same kind of thing —
@@ -910,243 +1144,82 @@ export default function Tavern() {
                   FighterPanel uses in the dungeon, the arena and the market
                   and which the loadout restyles again.
                 */}
-                <div className="recruit__res">
-                  {RESISTANCES.map(([key, label]) => {
-                    const raw = (fighter as unknown as Record<string, number>)[key]
-                    return (
-                      <div className="statline" key={key}>
-                        <span className="statline__k">
-                          <img
-                            className="statline__icon"
-                            src={asset(`/assets/icons/elements/${label.toLowerCase()}.png`)}
-                            alt=""
-                          />
-                          {label}
-                        </span>
-                        <span className="statline__v mono">
-                          {formatResistance(raw)}
-                          <Grade field={key} raw={raw} template={classTemplate} />
-                        </span>
-                      </div>
-                    )
-                  })}
-                </div>
+                  <div className="recruit__res">{resList}</div>
                 </div>
 
-                {fighter.abilities.length > 0 && (
-                  <div className="abilities">
-                    {fighter.abilities.map((a, i) => {
-                      const rarity = abilityRarity(a.displayname)
-                      /*
-                         The recruit's last ability does not work yet.
-
-                         This is the screen where a player decides whether the
-                         roll is worth the energy, and an ability they cannot
-                         use for several ascensions was reading as one of the
-                         reasons to hire — which is the most expensive place
-                         in the game to overstate a fighter.
-                      */
-                      const locked = !!a.locked
-                      return (
-                        <div
-                          className={`ability${locked ? ' ability--locked' : ''}`}
-                          key={`${a.ability}-${i}`}
-                          style={{ borderLeftColor: abilityColor(a.displayname) }}
-                        >
-                          <div
-                            className="ability__name"
-                            style={{ color: abilityColor(a.displayname) }}
-                          >
-                            {abilityName(a.displayname)}
-                            {rarity && <span className="ability__rarity">{rarity}</span>}
-                            {locked && (
-                              <span className="ability__locked">
-                                <img
-                                  src={asset('/assets/icons/lock.svg')}
-                                  alt=""
-                                  width={11}
-                                  height={11}
-                                />
-                                {unlockLevel
-                                  ? `Unlocks at ascension ${unlockLevel}`
-                                  : 'Unlocks on ascension'}
-                              </span>
-                            )}
-                          </div>
-                          <div className="ability__desc">
-                            {resolveAbilityDescription(a)}
-                          </div>
-                        </div>
-                      )
-                    })}
-                  </div>
-                )}
-
+                {abilityList}
               </>
             )}
           </section>
 
-          {/* ---- Objectives ---- */}
-          <section className="panel tavern__objectives">
-            <div className="row" style={{ marginBottom: 'var(--sp-2)' }}>
-              <span className="panel__title">Discounts</span>
-              <span className="spacer" />
-              <span className="faint" style={{ fontSize: 'var(--fs-xs)' }}>
-                {breakdown.saved} / {maxSaving} claimed
-              </span>
-            </div>
-            <p className="hint" style={{ marginTop: 0 }}>
-              Show this tavern Alien Worlds NFTs matching what it wants and it
-              takes energy off the hire. Your NFTs are not spent — they only
-              need to be in your wallet.
-            </p>
-
-            <div className="objectives">
-              {objectives.map((o, i) => (
-                <Objective
-                  key={`${o.objective_type}-${o.objective_string}-${o.objective_value}-${i}`}
-                  label={objectiveLabel(o)}
-                  mod={o.mod_value}
-                  done={breakdown.matched.has(i)}
-                  index={i}
-                />
-              ))}
-              {objectives.length === 0 && (
-                <p className="muted">This tavern is asking for nothing today.</p>
-              )}
-            </div>
-          </section>
-
-          {/* ---- Inventory ---- */}
-          <section className="panel tavern__inventory">
-            <div className="row row--wrap" style={{ marginBottom: 'var(--sp-3)' }}>
-              <span className="panel__title">Your NFTs</span>
-              <span className="spacer" />
+          {phone && revealed && (
+            <div className="tavdisc">
               <button
                 type="button"
-                className="btn btn--ghost btn--sm"
+                className="tavdisc__open"
+                onClick={() => setDiscountsOpen(true)}
+              >
+                <img src={asset('/assets/icons/energy.png')} alt="" />
+                <span className="tavdisc__text">
+                  <strong>Discounts</strong>
+                  <small>
+                    {breakdown.saved > 0
+                      ? `${breakdown.saved} of ${maxSaving} energy off · ${picked.length}/${MAX_HIRE_CARDS} cards`
+                      : `Up to ${maxSaving} energy off with NFTs this tavern wants`}
+                  </small>
+                </span>
+              </button>
+              {/* The desktop's Best pick, one tap from the recruit. */}
+              <button
+                type="button"
+                className="btn btn--sm"
                 onClick={autoPick}
                 disabled={inventory.length === 0 || objectives.length === 0}
                 title="Pick the cards that take the most energy off"
               >
                 Best pick
               </button>
-              {picked.length > 0 && (
-                <button
-                  type="button"
-                  className="btn btn--ghost btn--sm"
-                  onClick={() => setPicked([])}
-                >
-                  Clear
-                </button>
-              )}
+              <button
+                type="button"
+                className="tavdisc__chev"
+                onClick={() => setDiscountsOpen(true)}
+                aria-label="Show discounts"
+              >
+                <svg className="pchev" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M9 6l6 6-6 6" />
+                </svg>
+              </button>
             </div>
-
-            {/*
-              Selected cards live above the tabs, not inside them: "Best pick"
-              routinely chooses cards from three different schemas, and
-              without this the player sees the price drop with nothing to
-              show for it.
-            */}
-            {pickedCards.length > 0 && (
-              <div className="picked">
-                <span className="picked__label">Selected</span>
-                <div className="picked__row">
-                  {pickedCards.map((t, i) => {
-                    const gain = (breakdown.matchedByCard[i] ?? []).reduce(
-                      (sum, oi) => sum + (objectives[oi]?.mod_value ?? 0),
-                      0,
-                    )
-                    return (
-                      <button
-                        type="button"
-                        key={t.templateid}
-                        className="pickedcard"
-                        onClick={() => toggle(t.templateid)}
-                        title={`${t.cardname} — click to remove`}
-                      >
-                        <GameImg src={cardArt(t)} alt="" fallback={CARD_FALLBACK} />
-                        <span
-                          className={
-                            'pickedcard__gain' +
-                            (gain > 0 ? '' : ' pickedcard__gain--none')
-                          }
-                        >
-                          {gain > 0 ? '-' + gain : '0'}
-                        </span>
-                      </button>
-                    )
-                  })}
-                </div>
-              </div>
-            )}
-
-            <div className="tabs" role="tablist">
-              {SCHEMA_TABS.map((s) => {
-                const count = inventory.filter((t) => t.schema === s.key).length
-                return (
+          )}
+          {phone && discountsOpen && (
+            <BottomSheet
+              title="Discounts"
+              onClose={() => setDiscountsOpen(false)}
+              foot={
+                <div className="rsheet__actions">
                   <button
-                    key={s.key}
                     type="button"
-                    role="tab"
-                    className="tabs__tab"
-                    aria-selected={tab === s.key}
-                    onClick={() => setTab(s.key)}
+                    className="btn btn--primary"
+                    onClick={() => setDiscountsOpen(false)}
                   >
-                    {s.label}
-                    <span className="tabs__count">{count}</span>
+                    Done{breakdown.saved > 0 ? ` · ${breakdown.saved} energy off` : ''}
                   </button>
-                )
-              })}
-            </div>
+                </div>
+              }
+            >
+              <div className="tavsheet">
+                {discountsPanel}
+                {inventoryPanel}
+              </div>
+            </BottomSheet>
+          )}
 
-            {!templates || !owned ? (
-              <div className="cardgrid">
-                {Array.from({ length: 8 }, (_, i) => (
-                  <div className="skeleton cardtile cardtile--loading" key={i} />
-                ))}
-              </div>
-            ) : tabbed.length === 0 ? (
-              <p className="muted" style={{ padding: 'var(--sp-5) 0' }}>
-                No eligible NFTs of this type in your wallet.
-              </p>
-            ) : (
-              <div className="cardgrid">
-                {tabbed.map((t) => {
-                  const index = picked.indexOf(t.templateid)
-                  const claims = index >= 0 ? breakdown.matchedByCard[index] ?? [] : []
-                  const gain = claims.reduce(
-                    (sum, oi) => sum + (objectives[oi]?.mod_value ?? 0),
-                    0,
-                  )
-                  return (
-                    <button
-                      type="button"
-                      key={t.templateid}
-                      className={`cardtile${index >= 0 ? ' cardtile--picked' : ''}`}
-                      onClick={() => toggle(t.templateid)}
-                      title={`${t.cardname} · ${t.rarity} ${t.schema}`}
-                    >
-                      <GameImg
-                        src={cardArt(t)}
-                        alt=""
-                        loading="lazy"
-                        decoding="async"
-                        fallback={CARD_FALLBACK}
-                      />
-                      <span className="cardtile__name">{t.cardname}</span>
-                      {t.count > 1 && <span className="cardtile__count">×{t.count}</span>}
-                      {index >= 0 && (
-                        <span className="cardtile__gain">
-                          {gain > 0 ? `−${gain}` : 'no match'}
-                        </span>
-                      )}
-                    </button>
-                  )
-                })}
-              </div>
-            )}
-          </section>
+          {/*
+            The discounts and the NFTs that earn them: side by side on a
+            desktop, in a sheet on a phone (opened from the row above).
+          */}
+          {!phone && discountsPanel}
+          {!phone && inventoryPanel}
         </div>
       </div>
     </div>

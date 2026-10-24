@@ -27,8 +27,7 @@ import {
 } from '@/pools/rules'
 import { byQuality } from '@/dungeon/nftFighter'
 import { useChainQuery } from '@/chain/useChainQuery'
-import { useModal } from '@/components/useModal'
-import { useSwipeToClose } from '@/components/useSwipeToClose'
+import { BottomSheet } from '@/components/BottomSheet'
 import { GameImg } from '@/components/GameImg'
 import { formatDecimals, formatNumber, formatStat } from '@/format'
 import { asset } from '@/assets'
@@ -159,37 +158,6 @@ export function PhoneRewards({
   )
 }
 
-/* ---------- a bottom sheet ---------- */
-
-function Sheet({
-  title,
-  onClose,
-  children,
-  foot,
-}: {
-  title: string
-  onClose: () => void
-  children: ReactNode
-  foot?: ReactNode
-}) {
-  const panel = useModal(onClose)
-  const { grip } = useSwipeToClose(onClose, panel)
-  return (
-    <div className="rsheet" role="dialog" aria-modal="true" aria-label={title} onClick={onClose}>
-      <div className="rsheet__panel" ref={panel} onClick={(e) => e.stopPropagation()}>
-        <div className="rsheet__head" {...grip}>
-          <span className="rsheet__grip" aria-hidden="true" />
-          <h2 className="rsheet__title">{title}</h2>
-          <button type="button" className="rsheet__x" onClick={onClose} aria-label="Close">
-            ×
-          </button>
-        </div>
-        <div className="rsheet__body">{children}</div>
-        {foot && <div className="rsheet__foot">{foot}</div>}
-      </div>
-    </div>
-  )
-}
 
 function Chevron() {
   return (
@@ -479,7 +447,7 @@ function ToolsSheet({
     )
 
   return (
-    <Sheet
+    <BottomSheet
       title="Change tools"
       onClose={onClose}
       foot={
@@ -616,7 +584,7 @@ function ToolsSheet({
           )}
         </div>
       )}
-    </Sheet>
+    </BottomSheet>
   )
 }
 
@@ -641,7 +609,7 @@ function LandSheet({
 }) {
   const [share, setShare] = useState(stored)
   return (
-    <Sheet
+    <BottomSheet
       title="Landowner settings"
       onClose={onClose}
       foot={
@@ -710,7 +678,7 @@ function LandSheet({
           </button>
         ))}
       </div>
-    </Sheet>
+    </BottomSheet>
   )
 }
 
@@ -758,7 +726,7 @@ function AllToolsSheet({
   }, [templates, query, sort, mineOnly, held])
 
   return (
-    <Sheet title="All tools" onClose={onClose}>
+    <BottomSheet title="All tools" onClose={onClose}>
       <input
         type="search"
         className="input"
@@ -818,7 +786,7 @@ function AllToolsSheet({
           })}
         </div>
       )}
-    </Sheet>
+    </BottomSheet>
   )
 }
 
@@ -1020,7 +988,7 @@ function PoolSheet({
   const pays = entry.anyAmount ? entry.payout : poolPayout(entry.balance, MINE_POWER)
   const link = earnLink(entry.pool)
   return (
-    <Sheet
+    <BottomSheet
       title={`${entry.label} · ${symbol}`}
       onClose={onClose}
       foot={
@@ -1111,7 +1079,7 @@ function PoolSheet({
           Power you earn.
         </p>
       )}
-    </Sheet>
+    </BottomSheet>
   )
 }
 
