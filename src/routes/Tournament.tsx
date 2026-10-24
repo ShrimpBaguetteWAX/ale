@@ -42,7 +42,7 @@ import { BoutBroadcast } from '@/tournament/BoutBroadcast'
 import { usePhone } from '@/components/usePhone'
 import { WeatherPanel } from '@/fight/setup'
 import { fetchWeatherRow, fetchWeatherRows, weatherIsCalm, type Weather } from '@/fight/weather'
-import { PhoneTournament } from '@/tournament/PhoneTournament'
+import { PhoneTournament, nextSteps } from '@/tournament/PhoneTournament'
 import { PickerSheet } from '@/fight/PickerSheet'
 import { fetchPlayer } from '@/chain/queries'
 import { hasLegendAccess } from '@/account/rules'
@@ -2766,6 +2766,29 @@ export default function Tournament() {
   const nextStart = chainTime(board.data?.tracking?.next_tournament_start)
   /* When signup opens for a tournament not started yet: its start, plus the
      preparation steps the template puts before signup. */
+  /* The next tournament's steps, laid out from its start as the template has them. */
+  const nextScheduleSteps = useMemo(() => {
+    if (!Number.isFinite(nextStart)) return []
+    let at = nextStart
+    const laid = [...(board.data?.template ?? [])]
+      .sort((a, b) => a.index - b.index)
+      .map((t) => {
+        at += Number(t.delay_sec ?? 0) * 1000
+        const startMs = at
+        at += Number(t.duration_sec ?? 0) * 1000
+        return { name: t.step_name, startMs, endMs: at }
+      })
+    return nextSteps(laid)
+  }, [board.data, nextStart])
+  /* From a tournament's start to the end of its fighting, by the template. */
+  const finalAfterMs = useMemo(() => {
+    let at = 0
+    for (const t of [...(board.data?.template ?? [])].sort((a, b) => a.index - b.index)) {
+      at += (Number(t.delay_sec ?? 0) + Number(t.duration_sec ?? 0)) * 1000
+      if (t.step_name === 'battle') return at
+    }
+    return 0
+  }, [board.data])
   const signupOpensAt = useMemo(() => {
     const window = signupWindow(board.data?.template ?? [])
     return Number.isFinite(nextStart) ? nextStart + (window?.opensAfterSec ?? 0) * 1000 : NaN
@@ -2971,6 +2994,8 @@ export default function Tournament() {
           now={now}
           timeline={timeline}
           signupAt={shownPhase === 'none' ? signupOpensAt : signupAt}
+          schedule={shownPhase === 'none' ? nextScheduleSteps : nextSteps(timeline)}
+          finalAfterMs={finalAfterMs}
           field={field}
           mine={mine}
           wallet={player.wallet}

@@ -1,4 +1,4 @@
-import { createContext, Fragment, useContext, useMemo, useState, type ReactNode } from 'react'
+import { createContext, Fragment, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import type { CardTemplate } from '@/chain/atomic'
 import type { RosterFighter } from '@/dungeon/types'
 import { BottomSheet } from '@/components/BottomSheet'
@@ -7,18 +7,19 @@ import { PlayerAvatar } from '@/components/PlayerAvatar'
 import { WeatherPanel } from '@/fight/setup'
 import { weatherTargets, type Weather } from '@/fight/weather'
 import {
+  fighterArt,
   fighterArtFallback,
   fighterAvatar,
   fighterSilhouette,
   fighterSilhouetteFallback,
 } from '@/tavern/fighterStats'
 import { BoutBroadcast } from '@/tournament/BoutBroadcast'
+import { fetchFightersByIds } from '@/tournament/queries'
 import {
   bracketOf,
   chainTime,
   crewFaces,
   freePassCount,
-  startedAt,
   type EntryBlock,
   type TimelineStep,
   type TournamentPhase,
@@ -100,6 +101,10 @@ export interface PhoneTournamentProps {
   onPick: (tab: 'fighters' | 'crew' | 'weapon') => void
   /** The roster sheet, slid over the screen when a team slot is tapped. */
   picker: ReactNode
+  /** The next tournament's steps, for the schedule between tournaments. */
+  schedule?: NextStep[]
+  /** How long after a tournament's start its final is over — to date the Hall of Fame by its final. */
+  finalAfterMs?: number
   /** A phone's single column, or the desktop's two. */
   layout?: 'phone' | 'desktop'
   /* Moving between tournaments. */
@@ -308,7 +313,15 @@ export function PhoneTournament(p: PhoneTournamentProps) {
 
   let body: ReactNode
   if (hof) {
-    body = <HallOfFame rows={p.hof} wallet={p.wallet} onBack={() => setHof(false)} />
+    body = (
+      <HallOfFame
+        rows={p.hof}
+        wallet={p.wallet}
+        nextFinal={p.schedule?.find((x) => x.key === 'fights')?.endMs}
+        finalAfterMs={p.finalAfterMs}
+        onBack={() => setHof(false)}
+      />
+    )
   } else if (p.phase === 'none' || p.phase === 'preparing') {
     body = (
       <BeforeSignup
@@ -1124,255 +1137,322 @@ function VsCard({ a, b, aSub, bSub }: { a: Entrant; b: Entrant | null; aSub?: st
   )
 }
 
-/* ---------- before signup ---------- */
+/* ---------- before signup: the champion's spotlight ---------- */
 
-const EMPTY_TIMELINE: TimelineStep[] = []
-const EMPTY_FIELD: TournamentSignup[] = []
-const EMPTY_HISTORY: TournamentMatchup[][] = []
-const EMPTY_PAYOUTS: TournamentPayout[] = []
+/** One step of the next tournament, for the spotlight's schedule. */
+export interface NextStep {
+  key: 'preparing' | 'signup' | 'draw' | 'fights'
+  startMs: number
+  endMs: number
+}
+
+const NEXT_STEP_TEXT: Record<NextStep['key'], [string, string]> = {
+  preparing: ['Preparing', 'weather rolled, pot collected'],
+  signup: ['Signup opens', 'pick five fighters, a crew card and a weapon'],
+  draw: ['Signup closes · the draw', 'seeds set, free passes handed out'],
+  fights: ['The fights', 'every round live, every fight to watch'],
+}
 
 /**
- * The last tournament, round by round, between tournaments.
- *
- * A desktop has the room the wait leaves empty, so the previous
- * tournament is laid out under the countdown: its strip, every round a tap
- * away, and every fight in it to watch again — until cleanup takes them.
+ * The next tournament's four steps, from its schedule — the template's steps
+ * laid out from its start, or a plan's own times.
  */
-function PastBrowser({ board, history, wallet, now, day, onWatch }: {
-  board: Board
-  history: TournamentMatchup[][]
-  wallet: string
-  now: number
+export function nextSteps(steps: { name: string; startMs: number; endMs: number }[]): NextStep[] {
+  const at = (n: string) => steps.find((s) => s.name === n)
+  const out: NextStep[] = []
+  const prep = at('set_weather') ?? at('get_rewards')
+  if (prep) out.push({ key: 'preparing', startMs: prep.startMs, endMs: at('get_rewards')?.endMs ?? prep.endMs })
+  const signup = at('signup')
+  if (signup) out.push({ key: 'signup', startMs: signup.startMs, endMs: signup.endMs })
+  const draw = at('close_signup')
+  if (draw) out.push({ key: 'draw', startMs: draw.startMs, endMs: at('create_matchups')?.endMs ?? draw.endMs })
+  const fights = at('battle')
+  if (fights) out.push({ key: 'fights', startMs: fights.startMs, endMs: fights.endMs })
+  return out
+}
+
+/** A step's time, as the schedule shows it: "Tue 23:00", or a range for the fights. */
+function stepTime(s: NextStep, now: number): string {
+  if (s.key === 'fights') return `${when(s.startMs, now)} – ${timeOf(s.endMs)}`
+  if (s.key === 'preparing') return `from ${when(s.startMs, now)}`
+  return when(s.startMs, now)
+}
+
+/** The last tournament's champion, from its fights or, once they are gone, the Hall of Fame. */
+interface Champion {
+  who: Entrant
+  /** Who they beat in the final, where the fights still say. */
+  beat: Entrant | null
   day: number | null
-  onWatch: (m: TournamentMatchup, round: number) => void
-}) {
-  const last = board.rounds - 1
-  const [picked, setPicked] = useState(last)
-  const items = drawnItems(board, history, 'finish', now)
-  const rows = history[picked] ?? []
+  players: number
+  /** What they were paid, where the tournament is still on chain to work it out. */
+  wax: number | null
+  tlm: number | null
+  /** The five they brought, for the spotlight. */
+  fighterIds: number[]
+  final: { m: TournamentMatchup; round: number } | null
+}
+
+function useChampion(past: PastTournament | null, hof: TournamentHof[], finalAfterMs = 0): Champion | null {
+  return useMemo(() => {
+    if (past) {
+      const rounds = Number(past.stage.rounds ?? 0)
+      const last = past.history[rounds - 1] ?? past.history[past.history.length - 1] ?? []
+      const final = last[0]
+      const w = final ? winnerSide(final) : 0
+      if (final && w) {
+        const players = Number(past.stage.player_count ?? 0)
+        const runs = replay(past.history, passesFrom(past.history, []), roundSizes(players))
+        const who = sideOf(final, w as 1 | 2)
+        const prizes = prizesOf(past.stage)
+        const points = runs.get(who.wallet)?.points ?? 0
+        return {
+          who,
+          beat: sideOf(final, w === 1 ? 2 : 1),
+          day: chainTime(final.play_time),
+          players,
+          wax: waxFor(prizes, 1),
+          tlm: points * prizes.perPoint,
+          fighterIds: w === 1 ? final.fighter_ids_player1 : final.fighter_ids_player2,
+          final: { m: final, round: past.history.indexOf(last) },
+        }
+      }
+    }
+    const byName = new Map<string, TournamentHof[]>()
+    for (const r of hof) byName.set(r.tournament_name, [...(byName.get(r.tournament_name) ?? []), r])
+    const latest = [...byName.values()].sort(
+      (a, b) => chainTime(b[0].tournament_date) - chainTime(a[0].tournament_date),
+    )[0]
+    const top = latest?.find((r) => r.rank === 1)
+    if (!top) return null
+    const second = latest.find((r) => r.rank === 2)
+    return {
+      who: { wallet: top.wallet, tag: top.gamertag, avatar: top.avatar },
+      beat: second ? { wallet: second.wallet, tag: second.gamertag, avatar: second.avatar } : null,
+      day: chainTime(top.tournament_date) + finalAfterMs,
+      players: 0,
+      wax: null,
+      tlm: null,
+      fighterIds: [],
+      final: null,
+    }
+  }, [past, hof, finalAfterMs])
+}
+
+/** The champion's five, read back by id once — they are the spotlight's picture. */
+function useChampionTeam(ids: number[]) {
+  const [team, setTeam] = useState<{ classname: string; racename: string }[]>([])
+  const key = ids.join(',')
+  useEffect(() => {
+    if (!ids.length) {
+      setTeam([])
+      return
+    }
+    let live = true
+    fetchFightersByIds(ids)
+      .then((rows) => live && setTeam(rows.map((f) => ({ classname: f.classname, racename: f.racename }))))
+      .catch(() => live && setTeam([]))
+    return () => {
+      live = false
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key])
+  return team
+}
+
+/**
+ * Between tournaments: the champion's spotlight.
+ *
+ * The screen belongs to whoever won the last tournament — their own five in
+ * a gold spotlight, their name and what they took home — beside the
+ * countdown, the next tournament's schedule, the Hall of Fame, the final to
+ * watch again and the full results. With no champion to show, the gate hall.
+ */
+function BeforeSignup(
+  p: PhoneTournamentProps & { onHof: () => void; onWatch: (m: TournamentMatchup, round: number) => void },
+) {
+  const desk = useContext(Desk)
+  const champ = useChampion(p.past, p.hof, p.finalAfterMs)
+  const team = useChampionTeam(champ?.fighterIds ?? [])
+  const opens = p.signupAt
+  const steps = p.schedule ?? []
+  const nowKey: NextStep['key'] = p.phase === 'preparing' ? 'preparing' : 'signup'
+
+  const countdown = (
+    <div className="ptour__spotclock">
+      <div className="ptour__board">
+        <small>{Number.isFinite(opens) ? 'Signup opens in' : 'Next tournament'}</small>
+        <b className="mono">{Number.isFinite(opens) ? boardClock(opens - p.now) : 'Not scheduled'}</b>
+        {Number.isFinite(opens) && <span>{dayTime(opens)}</span>}
+      </div>
+    </div>
+  )
+
+  if (!champ) {
+    /* No tournament has finished yet: the gate hall, as before. */
+    const crowd = p.ringFighters.slice(0, 5)
+    return (
+      <>
+        <Head sub={Number.isFinite(opens) ? `Next one opens ${dayLabel(opens)}` : 'Between tournaments'} chip={<HofChip onClick={p.onHof} />} />
+        <div className="ptour__hero">
+          <div className="ptour__board">
+            <small>{Number.isFinite(opens) ? 'Signup opens in' : 'Next tournament'}</small>
+            <b className="mono">{Number.isFinite(opens) ? boardClock(opens - p.now) : 'Not scheduled'}</b>
+            {Number.isFinite(opens) && <span>{dayTime(opens)}</span>}
+          </div>
+          <div className="ptour__crowd" aria-hidden="true">
+            {crowd.map((f) => (
+              <GameImg key={f.fighter_id} src={fighterSilhouette(f)} fallback={fighterSilhouetteFallback()} alt="" />
+            ))}
+          </div>
+        </div>
+        {p.phase === 'preparing' && p.stage && <PotCard stage={p.stage} field={null} />}
+      </>
+    )
+  }
+
+  const shown = team.length ? team : p.ringFighters.slice(0, 5)
+  const silhouettes = !team.length
+  const figures = desk ? shown : shown.slice(0, 3)
+  const watchFinal = champ.final ? () => p.onWatch(champ.final!.m, champ.final!.round) : undefined
+
+  const nameBlock = (
+    <div className="ptour__spotname">
+      <PlayerAvatar id={champ.who.avatar} name={champ.who.tag} className="ptour__spotav" size={desk ? 96 : 52} />
+      <span className="ptour__kick ptour__kick--gold">
+        Reigning champion{champ.day && desk ? ` · ${dayLabel(champ.day)}` : ''}
+      </span>
+      <h1 className="ptour__spottag">{champ.who.tag || champ.who.wallet}</h1>
+      {champ.beat && (
+        <p className="ptour__sub">
+          Beat <b>{champ.beat.tag || champ.beat.wallet}</b> in the final
+          {champ.players ? ` · ${formatNumber(champ.players)} players` : ''}
+        </p>
+      )}
+      {champ.wax !== null && (
+        <span className="ptour__spotpaid mono">
+          <span>
+            <img src={WAX_ICON} alt="" />
+            {wax(champ.wax)}
+          </span>
+          <span>
+            <img src={TLM_ICON} alt="" />
+            {tlm(champ.tlm ?? 0)}
+          </span>
+        </span>
+      )}
+    </div>
+  )
+
+  const stage = (
+    <div className="ptour__spotstage" aria-hidden="true">
+      <span className="ptour__spotlight" />
+      <div className={`ptour__spotteam${silhouettes ? ' is-sil' : ''}`}>
+        {figures.map((f, i) => (
+          <GameImg
+            key={i}
+            src={silhouettes ? fighterSilhouette(f) : fighterArt(f)}
+            fallback={silhouettes ? fighterSilhouetteFallback() : fighterArtFallback()}
+            alt=""
+          />
+        ))}
+      </div>
+    </div>
+  )
+
+  const buttons = (
+    <div className="ptour__two">
+      <button type="button" className="btn btn--gold" disabled={!watchFinal} onClick={watchFinal}>
+        <span className="ptour__playicon" />
+        {desk ? 'Watch the final' : 'The final'}
+      </button>
+      <button type="button" className="btn" disabled={!p.onOpenPast} onClick={p.onOpenPast}>
+        {desk ? 'Full results' : 'Results'}
+      </button>
+    </div>
+  )
+
+  if (!desk) {
+    return (
+      <>
+        <section className="ptour__spot">
+          <div className="ptour__spottop">
+            <span className="ptour__kick ptour__kick--gold">Reigning champion</span>
+            <button type="button" className="ptour__pill ptour__pill--hof" onClick={p.onHof}>
+              <img src={TROPHY} alt="" />
+              Hall of Fame
+            </button>
+          </div>
+          {nameBlock}
+          {stage}
+        </section>
+        <section className="ptour__card ptour__spotcard">{countdown}</section>
+        {p.phase === 'preparing' && p.stage && <PotCard stage={p.stage} field={null} />}
+        {buttons}
+      </>
+    )
+  }
+
   return (
-    <section className="ptour__past">
-      <div className="ptour__rhead">
-        <b>Last tournament{day ? ` · ${dayLabel(day)}` : ''}</b>
+    <section className="ptour__spot">
+      <div className="ptour__spotleft">
+        {nameBlock}
+        {stage}
       </div>
-      <Strip
-        items={items}
-        focus={items.findIndex((i) => i.round === picked)}
-        selected={picked}
-        onSelect={setPicked}
-      />
-      <div className="ptour__rhead">
-        <b>{board.name(picked)}</b>
-        <small>
-          {rows.length} fight{rows.length === 1 ? '' : 's'}
-        </small>
+      <div className="ptour__spotright">
+        <section className="ptour__card ptour__spotcard">{countdown}</section>
+        {steps.length > 0 && (
+          <section className="ptour__card ptour__spotcard">
+            <span className="ptour__kick">The next tournament</span>
+            <div className="ptour__sched">
+              {steps.map((s) => (
+                <div key={s.key} className={`ptour__schedstep${s.key === nowKey ? ' is-now' : ''}`}>
+                  <i />
+                  <span>
+                    <b>{NEXT_STEP_TEXT[s.key][0]}</b>
+                    <small>{NEXT_STEP_TEXT[s.key][1]}</small>
+                  </span>
+                  <em className="mono">{stepTime(s, p.now)}</em>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+        {p.phase === 'preparing' && p.stage && <PotCard stage={p.stage} field={null} />}
+        <span className="ptour__spotgap" />
+        <button type="button" className="ptour__card ptour__spothof" onClick={p.onHof}>
+          <img src={TROPHY} alt="" className="ptour__spotcup" />
+          <span>
+            <span className="ptour__kick ptour__kick--gold">Hall of Fame</span>
+            <b>Every tournament's top four</b>
+            <span className="ptour__faces">
+              {hofFaces(p.hof).map((r) => (
+                <PlayerAvatar key={r.index} id={r.avatar} name={r.gamertag} className="ptour__face" size={26} />
+              ))}
+              <span>{hofCount(p.hof)}</span>
+            </span>
+          </span>
+          <span className="btn btn--sm">Open ›</span>
+        </button>
+        {buttons}
       </div>
-      <RoundList
-        board={board}
-        round={picked}
-        rows={rows}
-        wallet={wallet}
-        now={now}
-        mineOnly={false}
-        current={false}
-        onWatch={(m) => onWatch(m, picked)}
-      />
     </section>
   )
 }
 
-function BeforeSignup(
-  p: PhoneTournamentProps & { onHof: () => void; onWatch: (m: TournamentMatchup, round: number) => void },
-) {
-  const crowd = p.ringFighters.slice(0, 5)
-  const past = p.past
-  const pastRounds = past?.history.filter((r) => r.length) ?? []
-  const desk = useContext(Desk)
-  /* The last tournament as a board of its own, for browsing its rounds. */
-  const pastFull = useBoard(past?.stage, EMPTY_TIMELINE, EMPTY_FIELD, past?.history ?? EMPTY_HISTORY, EMPTY_PAYOUTS)
-  const pastBoard = useMemo(() => {
-    if (!past) return null
-    const players = Number(past.stage.player_count ?? 0)
-    const rounds = Number(past.stage.rounds ?? 0)
-    const sizes = roundSizes(players)
-    const passes = passesFrom(past.history, [])
-    const runs = replay(past.history, passes, sizes)
-    const order = payoutOrder([...runs.values()])
-    return { rounds, opening: Number(past.stage.free_passes ?? 0) > 0, runs, order, prizes: prizesOf(past.stage) }
-  }, [past])
+/** "3 tournaments so far", or what happens when there are none yet. */
+function hofCount(rows: TournamentHof[]): string {
+  const n = new Set(rows.map((r) => r.tournament_name)).size
+  return n ? `${formatNumber(n)} tournament${n === 1 ? '' : 's'} so far` : 'The first top four is written after a final'
+}
 
-  /* The last four from the Hall of Fame, when there is no fight history. */
-  const lastHof = useMemo(() => {
-    const byName = new Map<string, TournamentHof[]>()
-    for (const r of p.hof) byName.set(r.tournament_name, [...(byName.get(r.tournament_name) ?? []), r])
-    const latest = [...byName.values()].sort(
-      (a, b) => chainTime(b[0].tournament_date) - chainTime(a[0].tournament_date),
-    )[0]
-    return latest ? [...latest].sort((a, b) => a.rank - b.rank || a.index - b.index) : null
-  }, [p.hof])
-
-  const lastDay =
-    (past ? startedAt(past.stage.tournament_name) : null) ??
-    (lastHof ? chainTime(lastHof[0].tournament_date) : null)
-  const final = pastRounds[pastRounds.length - 1]?.[0]
-  const champion = final && winnerSide(final) ? sideOf(final, winnerSide(final) as 1 | 2) : null
-  const runnerUp = final && winnerSide(final) ? sideOf(final, winnerSide(final) === 1 ? 2 : 1) : null
-  const myRun = pastBoard?.runs.get(p.wallet)
-  const myRank = myRun ? pastBoard!.order.findIndex((r) => r.wallet === p.wallet) + 1 : 0
-
-  /* Worth watching again: the final, the semi-finals, and your own. */
-  const replays: { m: TournamentMatchup; round: number }[] = []
-  if (past) {
-    const n = past.history.length
-    for (let r = n - 1; r >= 0 && replays.length < 3; r--) {
-      for (const m of [...past.history[r]].reverse()) {
-        if (replays.length < 3 && winnerSide(m) && (r >= n - 2 || isIn(m, p.wallet))) replays.push({ m, round: r })
-      }
-    }
-  }
-
-  const opens = p.signupAt
-  return (
-    <>
-      <Head sub={Number.isFinite(opens) ? `Next one opens ${dayLabel(opens)}` : 'Between tournaments'} chip={<HofChip onClick={p.onHof} />} />
-
-      <div className="ptour__hero">
-        <div className="ptour__board">
-          <small>{Number.isFinite(opens) ? 'Signup opens in' : 'Next tournament'}</small>
-          <b className="mono">{Number.isFinite(opens) ? boardClock(opens - p.now) : 'Not scheduled'}</b>
-          {Number.isFinite(opens) && <span>{dayTime(opens)}</span>}
-        </div>
-        <div className="ptour__crowd" aria-hidden="true">
-          {crowd.map((f) => (
-            <GameImg
-              key={f.fighter_id}
-              src={fighterSilhouette(f)}
-              fallback={fighterSilhouetteFallback()}
-              alt=""
-            />
-          ))}
-        </div>
-      </div>
-
-      <Cols
-        items={[
-          [
-            desk && past && pastFull.rounds > 0 && (
-              <PastBrowser board={pastFull} history={past.history} wallet={p.wallet} now={p.now} day={lastDay} onWatch={p.onWatch} />
-            ),
-            'main',
-          ],
-          [p.phase === 'preparing' && p.stage && <PotCard stage={p.stage} field={null} />, 'side'],
-          [
-      (champion || lastHof) && (
-        <section className="ptour__card">
-          <div className="ptour__cardhead">
-            <span className="ptour__kick">
-              Last tournament
-              {lastDay ? ` · ${dayLabel(lastDay)}` : ''}
-            </span>
-            {p.onOpenPast && (
-              <button type="button" className="ptour__link" onClick={p.onOpenPast}>
-                Results ›
-              </button>
-            )}
-          </div>
-          {(() => {
-            const champ = champion ?? (lastHof ? { wallet: lastHof[0].wallet, tag: lastHof[0].gamertag, avatar: lastHof[0].avatar } : null)
-            if (!champ) return null
-            /* One source for the whole card: the fights while they are on chain,
-               the Hall of Fame once they are gone — never a mix of the two. */
-            const semiLosers = (pastRounds[pastRounds.length - 2] ?? [])
-              .filter((m) => winnerSide(m))
-              .map((m) => sideOf(m, winnerSide(m) === 1 ? 2 : 1))
-            const rest: { key: string; tag: string; avatar: number; place: string }[] = champion
-              ? [
-                  ...(runnerUp ? [{ key: runnerUp.wallet, tag: runnerUp.tag || runnerUp.wallet, avatar: runnerUp.avatar, place: '2nd' }] : []),
-                  ...semiLosers.map((e) => ({ key: e.wallet, tag: e.tag || e.wallet, avatar: e.avatar, place: '3rd' })),
-                ]
-              : (lastHof ?? []).slice(1).map((r) => ({
-                  key: String(r.index),
-                  tag: r.gamertag || r.wallet,
-                  avatar: r.avatar,
-                  place: r.rank === 2 ? '2nd' : '3rd',
-                }))
-            return (
-              <>
-                <div className="ptour__status">
-                  <PlayerAvatar id={champ.avatar} name={champ.tag} className="ptour__statusav ptour__statusav--gold" size={56} />
-                  <div>
-                    <span className="ptour__kick ptour__kick--gold">Champion</span>
-                    <div className="ptour__big">{champ.tag || champ.wallet}</div>
-                    {runnerUp && (
-                      <p className="ptour__sub">
-                        Beat <b>{runnerUp.tag || runnerUp.wallet}</b> in the final
-                        {past ? ` · ${formatNumber(Number(past.stage.player_count ?? 0))} players` : ''}
-                      </p>
-                    )}
-                  </div>
-                </div>
-                {rest.length > 0 && (
-                  <div className="ptour__faces">
-                    {rest.map((r) => (
-                      <PlayerAvatar key={r.key} id={r.avatar} name={r.tag} className="ptour__face" size={26} />
-                    ))}
-                    <span>{rest.map((r) => `${r.tag} ${r.place}`).join(' · ')}</span>
-                  </div>
-                )}
-              </>
-            )
-          })()}
-        </section>
-      ),
-            'side',
-          ],
-          [
-      !desk && replays.length > 0 && pastBoard && (
-        <>
-          <div className="ptour__rhead">
-            <b>Watch again</b>
-          </div>
-          <div className="ptour__list">
-            {replays.map(({ m, round }) => (
-              <FightRow
-                key={`${round}-${m.index}`}
-                m={m}
-                slot={NaN}
-                wallet={p.wallet}
-                now={p.now}
-                live={false}
-                onWatch={() => p.onWatch(m, round)}
-              />
-            ))}
-          </div>
-        </>
-      ),
-            'main',
-          ],
-          [
-      myRun && pastBoard && (
-        <section className="ptour__card">
-          <div className="ptour__cardhead">
-            <span className="ptour__kick">Your last tournament</span>
-          </div>
-          <p className="ptour__sub">
-            {myRun.outIn === null ? (
-              <b>Champion</b>
-            ) : (
-              <>
-                Out in the <b>{roundName(myRun.outIn, pastBoard.rounds, pastBoard.opening).toLowerCase()}</b>
-              </>
-            )}{' '}
-            · {place(myRank)} · <b>{myRun.points}</b> point{myRun.points === 1 ? '' : 's'}
-          </p>
-        </section>
-      ),
-            'side',
-          ],
-        ]}
-      />
-    </>
-  )
+/** The newest tournament's four, for the Hall of Fame card. */
+function hofFaces(rows: TournamentHof[]): TournamentHof[] {
+  const newest = [...rows].sort((a, b) => chainTime(b.tournament_date) - chainTime(a.tournament_date))[0]
+  if (!newest) return []
+  return rows
+    .filter((r) => r.tournament_name === newest.tournament_name)
+    .sort((a, b) => a.rank - b.rank || a.index - b.index)
 }
 
 /* ---------- signup ---------- */
@@ -2244,7 +2324,15 @@ function Results(p: PhoneTournamentProps & {
 
 /* ---------- hall of fame ---------- */
 
-function HallOfFame({ rows, wallet, onBack }: { rows: TournamentHof[]; wallet: string; onBack: () => void }) {
+function HallOfFame({ rows, wallet, nextFinal, finalAfterMs = 0, onBack }: {
+  rows: TournamentHof[]
+  wallet: string
+  finalAfterMs?: number
+  /** When the next champion is decided, for the empty slot at the top. */
+  nextFinal?: number
+  onBack: () => void
+}) {
+  const desk = useContext(Desk)
   const cups = useMemo(() => {
     const byName = new Map<string, TournamentHof[]>()
     for (const r of rows) byName.set(r.tournament_name, [...(byName.get(r.tournament_name) ?? []), r])
@@ -2252,7 +2340,8 @@ function HallOfFame({ rows, wallet, onBack }: { rows: TournamentHof[]; wallet: s
       .map((four) => [...four].sort((a, b) => a.rank - b.rank || a.index - b.index))
       .sort((a, b) => chainTime(b[0].tournament_date) - chainTime(a[0].tournament_date))
   }, [rows])
-  const best = useMemo(() => {
+  /* Titles first, then podiums: the order a hall of fame is read in. */
+  const ranking = useMemo(() => {
     const tally = new Map<string, { tag: string; avatar: number; titles: number; podiums: number }>()
     for (const r of rows) {
       const t = tally.get(r.wallet) ?? { tag: r.gamertag, avatar: r.avatar, titles: 0, podiums: 0 }
@@ -2260,81 +2349,104 @@ function HallOfFame({ rows, wallet, onBack }: { rows: TournamentHof[]; wallet: s
       if (r.rank === 1) t.titles++
       tally.set(r.wallet, t)
     }
-    return [...tally.entries()]
-      .sort((a, b) => b[1].titles - a[1].titles || b[1].podiums - a[1].podiums)
-      .slice(0, 3)
+    return [...tally.entries()].sort((a, b) => b[1].titles - a[1].titles || b[1].podiums - a[1].podiums)
   }, [rows])
-  const mine = rows.filter((r) => r.wallet === wallet).sort((a, b) => a.rank - b.rank)[0]
+  const king = ranking[0]
+  const plural = (n: number, w: string) => `${n} ${w}${n === 1 ? '' : 's'}`
+  const placeOf = (rank: number) => (rank === 1 ? '1st' : rank === 2 ? '2nd' : '3rd')
+
+  const head = (
+    <div className="ptour__head">
+      <h1 className="ptour__title">
+        Hall of Fame
+        <small>Every tournament's top four</small>
+      </h1>
+      <button type="button" className="ptour__pill" onClick={onBack}>
+        ‹ Back
+      </button>
+    </div>
+  )
+
+  if (!cups.length) {
+    return (
+      <>
+        {head}
+        <section className="ptour__card ptour__hofempty">
+          <img src={TROPHY} alt="" />
+          <span className="ptour__kick ptour__kick--gold">Nobody yet</span>
+          <p className="ptour__sub">The first tournament's top four are written here as soon as its final is fought.</p>
+        </section>
+      </>
+    )
+  }
+
+  const best = (
+    <section className="ptour__card ptour__hofbest">
+      <span className="ptour__kick ptour__kick--gold">Most titles</span>
+      <div className="ptour__hofking">
+        <PlayerAvatar id={king[1].avatar} name={king[1].tag} className="ptour__hofkingav" size={desk ? 120 : 72} />
+        <b>{king[1].tag || king[0]}</b>
+        <small>
+          {plural(king[1].titles, 'title').toUpperCase()} · {plural(king[1].podiums, 'podium').toUpperCase()}
+        </small>
+      </div>
+      {desk && (
+        <div className="ptour__hofrank">
+          {ranking.slice(0, 10).map(([w, t], i) => (
+            <div key={w} className={w === wallet ? 'is-me' : ''}>
+              <b className="mono">{i + 1}</b>
+              <PlayerAvatar id={t.avatar} name={t.tag} className="ptour__sideav" size={40} />
+              <span>{t.tag || w}</span>
+              <em>{t.titles ? plural(t.titles, 'title') : ''}</em>
+              <small>{plural(t.podiums, 'podium')}</small>
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
+  )
+
+  const weeks = (
+    <div className="ptour__hofweeks">
+      {Number.isFinite(nextFinal) && (
+        <div className="ptour__hofnext">
+          <b>{dayLabel(nextFinal!)}</b>
+          <span>The next champion is written here after the final.</span>
+        </div>
+      )}
+      {cups.map((four) => (
+        <section key={four[0].tournament_name} className="ptour__card ptour__hofweek">
+          <b className="ptour__cupname">{dayLabel(chainTime(four[0].tournament_date) + finalAfterMs)}</b>
+          <div className="ptour__four">
+            {four.map((r) => (
+              <div key={r.index} className={`${r.rank === 1 ? 'is-top' : ''}${r.wallet === wallet ? ' is-me' : ''}`}>
+                <PlayerAvatar id={r.avatar} name={r.gamertag} className="ptour__sideav" size={r.rank === 1 ? 44 : 36} />
+                <span>
+                  <b>{r.gamertag || r.wallet}</b>
+                  <small>{placeOf(r.rank)}</small>
+                </span>
+              </div>
+            ))}
+          </div>
+        </section>
+      ))}
+    </div>
+  )
 
   return (
-    <>
-      <div className="ptour__head">
-        <button type="button" className="ptour__pill" onClick={onBack}>
-          ‹ Back
-        </button>
-        <h1 className="ptour__title ptour__title--right">
-          Hall of Fame
-          <small>Every tournament's top four</small>
-        </h1>
-      </div>
-
-      {cups.length === 0 ? (
-        <section className="ptour__card">
-          <span className="ptour__kick ptour__kick--gold">Nobody yet</span>
-          <p className="ptour__sub">
-            The first tournament's top four are written here as soon as its final is fought.
-          </p>
-        </section>
+    <div className="ptour__hof">
+      {head}
+      {desk ? (
+        <div className="ptour__hofcols">
+          {best}
+          {weeks}
+        </div>
       ) : (
         <>
-          <section className="ptour__card ptour__card--gold">
-            <span className="ptour__kick ptour__kick--gold">Most titles</span>
-            <div className="ptour__best">
-              {best.map(([w, t]) => (
-                <div key={w}>
-                  <PlayerAvatar id={t.avatar} name={t.tag} className="ptour__sideav" size={44} />
-                  <b>{t.tag || w}</b>
-                  {t.titles > 0 && (
-                    <em>
-                      {t.titles} title{t.titles === 1 ? '' : 's'}
-                    </em>
-                  )}
-                  <small>
-                    {t.podiums} podium{t.podiums === 1 ? '' : 's'}
-                  </small>
-                </div>
-              ))}
-            </div>
-          </section>
-          {mine && (
-            <section className="ptour__card ptour__card--teal">
-              <span className="ptour__kick ptour__kick--teal">Your best</span>
-              <p className="ptour__sub">
-                <b>{mine.rank === 1 ? 'Champion' : mine.rank === 2 ? '2nd' : '3rd'}</b> on{' '}
-                {dayLabel(chainTime(mine.tournament_date))}
-              </p>
-            </section>
-          )}
-          <div className="ptour__cups">
-          {cups.map((four) => (
-            <section key={four[0].tournament_name} className="ptour__card">
-              <div className="ptour__cardhead">
-                <b className="ptour__cupname">{dayLabel(chainTime(four[0].tournament_date))}</b>
-              </div>
-              <div className="ptour__four">
-                {four.map((r) => (
-                  <div key={r.index} className={`${r.rank === 1 ? 'is-top' : ''}${r.wallet === wallet ? ' is-me' : ''}`}>
-                    <PlayerAvatar id={r.avatar} name={r.gamertag} className="ptour__sideav" size={r.rank === 1 ? 44 : 36} />
-                    <b>{r.gamertag || r.wallet}</b>
-                    <small>{r.rank === 1 ? '1st' : r.rank === 2 ? '2nd' : '3rd'}</small>
-                  </div>
-                ))}
-              </div>
-            </section>
-          ))}
-          </div>
+          {best}
+          {weeks}
         </>
       )}
-    </>
+    </div>
   )
 }

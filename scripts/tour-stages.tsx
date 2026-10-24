@@ -30,7 +30,7 @@ import {
 } from '../src/tournament/queries'
 import { bracketOf, chainTime, seedOrder, startedAt, teamScore, timelineOf, winnerSide, type TournamentPhase } from '../src/tournament/rules'
 import { fightName, fightSlots, passesFrom, payoutOrder, replay, roundName, roundSizes } from '../src/tournament/standings'
-import { PhoneTournament } from '../src/tournament/PhoneTournament'
+import { PhoneTournament, nextSteps } from '../src/tournament/PhoneTournament'
 import type {
   TournamentHof,
   TournamentMatchup,
@@ -462,6 +462,7 @@ interface Shown {
 const ROSTER_WALLET = '5thba.wam'
 const IS_FRAME = new URLSearchParams(location.search).has('frame')
 /* A Full HD screen, 16:9 — the desktop most players have — scaled to fit. */
+const WEEK = 7 * 86_400_000
 const DESK_W = 1920
 const DESK_H = 1080
 
@@ -866,6 +867,17 @@ function PhoneAt({ d, moment, shown, now }: { d: Loaded; moment: Moment; shown: 
           now={now}
           timeline={state.timeline}
           signupAt={chainTime(d.plan.find((s) => s.step_name === 'signup')?.time_start)}
+          /* The plan is the next tournament before it starts; once it is over,
+             the next one is a week on. */
+          schedule={nextSteps(
+            timelineOf(d.plan, now).map((x) =>
+              moment.key === 'hof' ? { ...x, startMs: x.startMs + WEEK, endMs: x.endMs + WEEK } : x,
+            ),
+          )}
+          finalAfterMs={(() => {
+            const b = d.plan.find((x) => x.step_name === 'battle')
+            return b ? chainTime(b.time_start) + b.duration_sec * 1000 - chainTime(d.plan[0]?.time_start) : 0
+          })()}
           field={field}
           mine={mine}
           wallet={viewer}

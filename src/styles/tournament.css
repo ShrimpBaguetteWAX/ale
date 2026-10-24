@@ -6435,3 +6435,536 @@
   display: grid;
   gap: 12px;
 }
+
+/* ===================================================================
+   Between tournaments: the champion's spotlight, and the Hall of Fame.
+   =================================================================== */
+
+.ptour__spot {
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  height: 470px;
+  padding: 14px;
+  border-radius: 16px;
+  background:
+    radial-gradient(70% 60% at 50% 72%, rgb(246 168 0 / 20%), transparent 70%),
+    linear-gradient(180deg, rgb(4 7 14 / 35%), rgb(4 7 14 / 92%)),
+    url('/assets/background/bg-arena.png') center / cover;
+  box-shadow: inset 0 0 0 1px rgb(246 168 0 / 30%);
+}
+.ptour__spottop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.ptour__pill--hof {
+  height: 30px;
+  padding: 0 12px;
+  font-size: 11.5px;
+  background: rgb(8 14 28 / 80%);
+  box-shadow: inset 0 0 0 1px rgb(246 168 0 / 45%);
+}
+.ptour__spotname {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: 12px;
+  align-items: center;
+}
+.ptour__spotname > .ptour__kick {
+  display: none;
+}
+.ptour__spotav {
+  grid-row: span 3;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  object-fit: cover;
+  box-shadow:
+    0 0 0 3px #f6a800,
+    0 0 26px rgb(246 168 0 / 45%);
+}
+.ptour__spottag {
+  margin: 0;
+  overflow: hidden;
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 900;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--white);
+  text-shadow: 0 4px 18px rgb(0 0 0 / 70%);
+}
+.ptour__spotname .ptour__sub {
+  font-size: 12px;
+}
+.ptour__spotpaid {
+  display: flex;
+  gap: 14px;
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 800;
+  color: #ffd979;
+}
+.ptour__spotpaid > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.ptour__spotpaid img {
+  width: 15px;
+  height: 15px;
+}
+/* The team, standing in the light at the foot of the panel. */
+.ptour__spotstage {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 330px;
+  pointer-events: none;
+}
+.ptour__spotlight {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  width: 92%;
+  height: 70px;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgb(246 168 0 / 55%), transparent);
+  transform: translateX(-50%);
+}
+.ptour__spotteam {
+  position: absolute;
+  bottom: 22px;
+  left: 50%;
+  display: flex;
+  align-items: flex-end;
+  transform: translateX(-50%);
+}
+.ptour__spotteam img {
+  height: 210px;
+  margin: 0 -30px;
+  filter: drop-shadow(0 14px 18px rgb(0 0 0 / 70%));
+}
+.ptour__spotteam img:nth-child(2) {
+  z-index: 1;
+  height: 250px;
+}
+.ptour__spotteam.is-sil img {
+  filter: brightness(0) drop-shadow(0 0 12px rgb(0 186 255 / 70%));
+}
+.ptour__spotcard {
+  justify-items: center;
+}
+.ptour__spotclock .ptour__board {
+  position: static;
+  transform: none;
+}
+
+/* ---------- the spotlight on a desktop: the whole screen ---------- */
+.ptour--desk .ptour__spot {
+  grid-template-columns: minmax(0, 1fr) clamp(420px, 34%, 560px);
+  gap: 32px;
+  height: auto;
+  min-height: calc(100vh - 150px);
+  padding: 36px 40px;
+  border-radius: 20px;
+  background:
+    radial-gradient(55% 70% at 28% 75%, rgb(246 168 0 / 22%), transparent 70%),
+    linear-gradient(180deg, rgb(4 7 14 / 25%), rgb(4 7 14 / 90%)),
+    url('/assets/background/bg-arena.png') center / cover;
+}
+.ptour__spotleft {
+  position: relative;
+  min-height: 560px;
+}
+.ptour--desk .ptour__spotname {
+  display: grid;
+  grid-template-columns: none;
+  justify-items: start;
+  gap: 8px;
+}
+.ptour--desk .ptour__spotname > .ptour__kick {
+  display: inline-flex;
+  margin-top: 6px;
+  font-size: 12px;
+}
+.ptour--desk .ptour__spotav {
+  grid-row: auto;
+  width: 96px;
+  height: 96px;
+  box-shadow:
+    0 0 0 4px #f6a800,
+    0 0 40px rgb(246 168 0 / 50%);
+}
+.ptour--desk .ptour__spottag {
+  font-size: clamp(40px, 4vw, 64px);
+}
+.ptour--desk .ptour__spotname .ptour__sub {
+  font-size: 17px;
+}
+.ptour--desk .ptour__spotpaid {
+  gap: 22px;
+  margin-top: 4px;
+  font-size: 22px;
+}
+.ptour--desk .ptour__spotpaid img {
+  width: 22px;
+  height: 22px;
+}
+.ptour--desk .ptour__spotstage {
+  height: 62%;
+}
+.ptour--desk .ptour__spotlight {
+  width: 88%;
+  height: 110px;
+}
+.ptour--desk .ptour__spotteam {
+  bottom: 36px;
+}
+.ptour--desk .ptour__spotteam img {
+  height: clamp(240px, 30vh, 340px);
+  margin: 0 -40px;
+}
+.ptour--desk .ptour__spotteam img:nth-child(2),
+.ptour--desk .ptour__spotteam img:nth-child(4) {
+  z-index: 1;
+  height: clamp(240px, 30vh, 340px);
+}
+.ptour--desk .ptour__spotteam img:nth-child(3) {
+  z-index: 2;
+  height: clamp(290px, 37vh, 420px);
+}
+.ptour__spotright {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+.ptour__spotgap {
+  flex: 1;
+}
+.ptour--desk .ptour__spotcard {
+  background: rgb(8 14 28 / 74%);
+  backdrop-filter: blur(8px);
+}
+.ptour--desk .ptour__spotclock .ptour__board b {
+  font-size: 40px;
+}
+.ptour__spotright > .ptour__spotcard:not(:first-child) {
+  justify-items: stretch;
+}
+/* The next tournament's schedule, a step a line. */
+.ptour__sched {
+  display: grid;
+}
+.ptour__schedstep {
+  position: relative;
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  min-height: 54px;
+}
+.ptour__schedstep::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 11px;
+  width: 2px;
+  background: rgb(255 255 255 / 12%);
+}
+.ptour__schedstep:first-child::before {
+  top: 50%;
+}
+.ptour__schedstep:last-child::before {
+  bottom: 50%;
+}
+.ptour__schedstep i {
+  position: relative;
+  z-index: 1;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #0b1324;
+  box-shadow: inset 0 0 0 2px rgb(255 255 255 / 25%);
+}
+.ptour__schedstep.is-now i {
+  box-shadow:
+    inset 0 0 0 2px #f6a800,
+    0 0 0 5px rgb(246 168 0 / 18%);
+}
+.ptour__schedstep b {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 14px;
+  color: var(--white);
+}
+.ptour__schedstep small {
+  font-size: 12.5px;
+  color: var(--text-faint);
+}
+.ptour__schedstep em {
+  font-size: 13.5px;
+  font-style: normal;
+  font-weight: var(--fw-bold);
+  white-space: nowrap;
+  color: var(--text-dim);
+}
+/* The way into the Hall of Fame. */
+.ptour__spothof {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 18px;
+  width: 100%;
+  border: 0;
+  text-align: left;
+  color: inherit;
+  cursor: pointer;
+  background:
+    radial-gradient(80% 140% at 0% 50%, rgb(246 168 0 / 14%), transparent 70%),
+    rgb(8 14 28 / 74%) !important;
+  box-shadow: inset 0 0 0 1px rgb(246 168 0 / 38%) !important;
+}
+.ptour__spotcup {
+  width: 50px;
+  height: 50px;
+  filter: drop-shadow(0 0 14px rgb(246 168 0 / 45%));
+}
+.ptour__spothof b {
+  display: block;
+  margin: 4px 0 8px;
+  font-family: var(--font-display);
+  font-size: 17px;
+  color: var(--white);
+}
+.ptour--desk .ptour__spotright .ptour__two .btn {
+  min-height: 48px;
+}
+
+/* ---------- the Hall of Fame ---------- */
+.ptour__hof {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+}
+.ptour__hofempty {
+  justify-items: center;
+  text-align: center;
+}
+.ptour__hofempty img {
+  width: 48px;
+  height: 48px;
+}
+.ptour__hofbest {
+  background:
+    radial-gradient(70% 60% at 50% 0%, rgb(246 168 0 / 26%), transparent 70%),
+    rgb(8 14 28 / 80%);
+  box-shadow: inset 0 0 0 1px rgb(246 168 0 / 40%);
+  justify-items: center;
+  text-align: center;
+}
+.ptour__hofking {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+}
+.ptour__hofkingav {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  object-fit: cover;
+  box-shadow:
+    0 0 0 3px #f6a800,
+    0 0 30px rgb(246 168 0 / 50%);
+}
+.ptour__hofking b {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 900;
+  color: var(--white);
+}
+.ptour__hofking small {
+  font-family: var(--font-display);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: #ffd979;
+}
+.ptour__hofweeks {
+  display: grid;
+  gap: 10px;
+  align-content: start;
+}
+.ptour__hofnext {
+  display: grid;
+  gap: 2px;
+  padding: 12px 14px;
+  border: 1px dashed rgb(246 168 0 / 35%);
+  border-radius: 14px;
+  font-size: 12.5px;
+  color: var(--text-faint);
+}
+.ptour__hofnext b {
+  font-family: var(--font-display);
+  font-size: 14px;
+  color: #ffd979;
+}
+.ptour__hofweek {
+  gap: 10px;
+}
+.ptour__four > div > span {
+  display: grid;
+  justify-items: center;
+  min-width: 0;
+  max-width: 100%;
+}
+.ptour__four > div > span b {
+  max-width: 100%;
+}
+.ptour__four > div:not(.is-top) .ptour__sideav {
+  width: 32px;
+  height: 32px;
+}
+.ptour__four > div.is-top .ptour__sideav {
+  width: 38px;
+  height: 38px;
+  box-shadow: 0 0 0 2px #f6a800;
+}
+
+/* The Hall of Fame on a desktop: the best on the left, the weeks on the right. */
+.ptour--desk .ptour__hofcols {
+  display: grid;
+  grid-template-columns: clamp(380px, 34%, 520px) minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+.ptour--desk .ptour__hofbest {
+  position: sticky;
+  top: 16px;
+  padding: 28px;
+  gap: 18px;
+}
+.ptour--desk .ptour__hofkingav {
+  width: 120px;
+  height: 120px;
+  box-shadow:
+    0 0 0 4px #f6a800,
+    0 0 50px rgb(246 168 0 / 50%);
+}
+.ptour--desk .ptour__hofking b {
+  font-size: 30px;
+}
+.ptour--desk .ptour__hofking small {
+  font-size: 14px;
+}
+.ptour__hofrank {
+  display: grid;
+  width: 100%;
+  text-align: left;
+}
+.ptour__hofrank > div {
+  display: grid;
+  grid-template-columns: 30px 40px minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 12px;
+  min-height: 54px;
+  padding: 0 8px;
+}
+.ptour__hofrank > div + div {
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 7%);
+}
+.ptour__hofrank > div.is-me {
+  background: linear-gradient(90deg, rgb(0 186 255 / 12%), transparent);
+  box-shadow: inset 3px 0 0 var(--cyan);
+}
+.ptour__hofrank b {
+  font-family: var(--font-display);
+  font-size: 14px;
+  text-align: center;
+  color: var(--text-faint);
+}
+.ptour__hofrank span {
+  overflow: hidden;
+  font-size: 15px;
+  font-weight: var(--fw-bold);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--white);
+}
+.ptour__hofrank em {
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-style: normal;
+  font-weight: 800;
+  color: #ffd979;
+}
+.ptour__hofrank small {
+  font-size: 12.5px;
+  color: var(--text-faint);
+}
+.ptour--desk .ptour__hofnext {
+  grid-template-columns: 200px 1fr;
+  align-items: center;
+  padding: 18px 24px;
+  font-size: 15px;
+}
+.ptour--desk .ptour__hofnext b {
+  font-size: 19px;
+}
+.ptour--desk .ptour__hofweek {
+  grid-template-columns: 200px minmax(0, 1fr);
+  align-items: center;
+  padding: 18px 24px;
+}
+.ptour--desk .ptour__hofweek .ptour__cupname {
+  font-size: 19px;
+}
+.ptour--desk .ptour__hofweek .ptour__four {
+  grid-template-columns: 1.35fr 1fr 1fr 1fr;
+  gap: 12px;
+}
+.ptour--desk .ptour__hofweek .ptour__four > div {
+  display: flex;
+  align-items: center;
+  justify-items: start;
+  gap: 12px;
+  padding: 10px 14px;
+  text-align: left;
+}
+.ptour--desk .ptour__hofweek .ptour__four > div > span {
+  justify-items: start;
+}
+.ptour--desk .ptour__hofweek .ptour__four > div .ptour__sideav {
+  width: 42px;
+  height: 42px;
+}
+.ptour--desk .ptour__hofweek .ptour__four > div.is-top .ptour__sideav {
+  width: 50px;
+  height: 50px;
+}
+
+/* The team sizes to itself and centres on the light, whatever the panel's width. */
+.ptour__spotteam {
+  width: max-content;
+}
+.ptour--desk .ptour__spot {
+  align-content: stretch;
+}
+.ptour--desk .ptour__spotteam img,
+.ptour--desk .ptour__spotteam img:nth-child(2),
+.ptour--desk .ptour__spotteam img:nth-child(4) {
+  height: clamp(200px, 25vh, 290px);
+  margin: 0 -36px;
+}
+.ptour--desk .ptour__spotteam img:nth-child(3) {
+  height: clamp(250px, 31vh, 360px);
+}
