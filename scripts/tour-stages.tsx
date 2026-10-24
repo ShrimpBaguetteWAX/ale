@@ -454,11 +454,15 @@ interface Shown {
   picks: Record<string, 1 | 2>
   /** Bumped to open the fighter picker from the panel. */
   picker: number
+  /** A phone's screen, or a desktop's. */
+  view: 'phone' | 'desktop'
 }
 
 /* A wallet with fighters and cards, for picking a team as someone with none. */
 const ROSTER_WALLET = '5thba.wam'
 const IS_FRAME = new URLSearchParams(location.search).has('frame')
+const DESK_W = 1280
+const DESK_H = 820
 
 /** Both halves read the same tournament: the real one, or one made up. */
 function useTournament(source: Source) {
@@ -483,12 +487,14 @@ function useTournament(source: Source) {
  */
 function Panel() {
   const [source, setSource] = useState<Source>('real')
+  /* Up here, so changing tournament does not drop it back to the phone. */
+  const [view, setView] = useState<'phone' | 'desktop'>('phone')
   const { d, real, err } = useTournament(source)
   useEffect(() => {
     if (err && source === 'real') setSource(FAKE_SIZES[2])
   }, [err, source])
   if (!d) return <p className="ts__msg">{err ? `Could not read the tournament: ${err}` : 'Reading the tournament from the chain…'}</p>
-  return <Controls key={String(source)} d={d} source={source} onSource={setSource} realReady={!!real} realSize={real?.field.length ?? 0} />
+  return <Controls key={String(source)} d={d} source={source} onSource={setSource} realReady={!!real} realSize={real?.field.length ?? 0} view={view} setView={setView} />
 }
 
 function Controls({
@@ -497,12 +503,16 @@ function Controls({
   onSource,
   realReady,
   realSize,
+  view,
+  setView,
 }: {
   d: Loaded
   source: Source
   onSource: (s: Source) => void
   realReady: boolean
   realSize: number
+  view: 'phone' | 'desktop'
+  setView: (v: 'phone' | 'desktop') => void
 }) {
   const list = useMemo(() => moments(d), [d])
   const [i, setI] = useState(() => {
@@ -519,6 +529,16 @@ function Controls({
   const [picks, setPicks] = useState<Record<string, 1 | 2>>({})
   const [picker, setPicker] = useState(0)
   const moment = list[i]
+  /* The desktop window is 1280 wide, scaled to whatever room the page has. */
+  const box = useRef<HTMLDivElement>(null)
+  const [scale, setScale] = useState(1)
+  useEffect(() => {
+    const el = box.current
+    if (!el || typeof ResizeObserver === 'undefined') return
+    const ro = new ResizeObserver(() => setScale(Math.min(1, el.clientWidth / DESK_W)))
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
 
   useEffect(() => {
     const key = (e: KeyboardEvent) => {
@@ -531,7 +551,7 @@ function Controls({
 
   /* Tell the phone, now and whenever it says it is listening. */
   const frame = useRef<HTMLIFrameElement>(null)
-  const shown: Shown = { source, key: moment.key, viewer, picks, picker }
+  const shown: Shown = { source, key: moment.key, viewer, picks, picker, view }
   const post = () => frame.current?.contentWindow?.postMessage({ tsShown: shown }, '*')
   useEffect(post)
   useEffect(() => {
@@ -550,7 +570,7 @@ function Controls({
   const signing = moment.key === 'open-empty' || moment.key === 'open-team'
 
   return (
-    <div className="ts">
+    <div className={`ts${view === 'desktop' ? ' ts--desk' : ''}`}>
       <aside className="ts__panel">
         <h1>Tournament stages</h1>
         <p className="ts__sub">
@@ -563,6 +583,18 @@ function Controls({
           )}{' '}
           — {d.field.length} players — wound back to the moment you pick. Arrow keys step through.
         </p>
+
+        <div className="ts__block">
+          <b>View</b>
+          <div className="ts__chips">
+            <button className={view === 'phone' ? 'on' : ''} onClick={() => setView('phone')}>
+              Phone
+            </button>
+            <button className={view === 'desktop' ? 'on' : ''} onClick={() => setView('desktop')}>
+              Desktop
+            </button>
+          </div>
+        </div>
 
         <div className="ts__block">
           <b>Tournament</b>
@@ -669,9 +701,15 @@ function Controls({
         </div>
       </aside>
 
-      <div className="ts__stage">
-        <div className="ts__phone">
-          <iframe ref={frame} className="ts__iframe" src="tour-stages.html?frame=1" title="The phone" />
+      <div className="ts__stage" ref={box}>
+        {/* One iframe in both views — the same tree, so switching resizes it rather than reloading. */}
+        <div
+          className={view === 'phone' ? 'ts__phone' : 'ts__deskbox'}
+          style={view === 'desktop' ? { height: DESK_H * scale } : undefined}
+        >
+          <div className="ts__scaler" style={view === 'desktop' ? { transform: `scale(${scale})` } : undefined}>
+            <iframe ref={frame} className="ts__iframe" src="tour-stages.html?frame=1" title="The screen" />
+          </div>
         </div>
       </div>
     </div>
@@ -784,14 +822,26 @@ function PhoneAt({ d, moment, shown, now }: { d: Loaded; moment: Moment; shown: 
         ? { ready: false, reason: 'Pick a weapon card' }
         : { ready: true }
 
+  const desk = shown.view === 'desktop'
   return (
-    <div className="tsf">
+    <div className={`tsf${desk ? ' tsf--desk' : ''}`}>
+      {desk && (
+        <aside className="tsf__rail">
+          <b>ALIEN LEGENDS</b>
+          {['World Map', 'My Fighters', 'Quests', 'Shop', 'Tournament', 'Leaderboards', 'Rewards'].map((n) => (
+            <span key={n} className={n === 'Tournament' ? 'on' : ''}>
+              {n}
+            </span>
+          ))}
+        </aside>
+      )}
       <div className="tsf__bar">
-        <b>ALIEN LEGENDS</b>
+        <b>{desk ? '' : 'ALIEN LEGENDS'}</b>
         <span>{moment.label}</span>
       </div>
       <main className="tsf__main">
         <PhoneTournament
+          layout={desk ? 'desktop' : 'phone'}
           phase={state.phase}
           stage={state.phase === 'none' ? undefined : state.stage}
           now={now}
@@ -847,19 +897,20 @@ function PhoneAt({ d, moment, shown, now }: { d: Loaded; moment: Moment; shown: 
               onCrew={setCrew}
               onWeapon={setWeapon}
               onInspectCard={() => {}}
+              inline={desk}
             />
           }
           viewingPast={false}
         />
         {state.openHof && <OpenHof />}
       </main>
-      <nav className="tsf__tabs">
+      {!desk && <nav className="tsf__tabs">
         <span>World Map</span>
         <span>My Fighters</span>
         <span>Quests</span>
         <span>Shop</span>
         <span className="on">More</span>
-      </nav>
+      </nav>}
     </div>
   )
 }

@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from 'react'
+import { createContext, Fragment, useContext, useMemo, useState, type ReactNode } from 'react'
 import type { CardTemplate } from '@/chain/atomic'
 import type { RosterFighter } from '@/dungeon/types'
 import { BottomSheet } from '@/components/BottomSheet'
@@ -100,6 +100,8 @@ export interface PhoneTournamentProps {
   onPick: (tab: 'fighters' | 'crew' | 'weapon') => void
   /** The roster sheet, slid over the screen when a team slot is tapped. */
   picker: ReactNode
+  /** A phone's single column, or the desktop's two. */
+  layout?: 'phone' | 'desktop'
   /* Moving between tournaments. */
   viewingPast: boolean
   onOpenPast?: () => void
@@ -333,8 +335,10 @@ export function PhoneTournament(p: PhoneTournamentProps) {
     )
   }
 
+  const desk = p.layout === 'desktop'
   return (
-    <div className={`prew ptour${p.phase === 'signup' && !p.mine && !hof ? ' ptour--dock' : ''}`}>
+    <Desk.Provider value={desk}>
+    <div className={`prew ptour${desk ? ' ptour--desk' : p.phase === 'signup' && !p.mine && !hof ? ' ptour--dock' : ''}`}>
       {(p.viewingPast || p.onChooseAnother) && !hof && (
         <div className="ptour__switch">
           {p.viewingPast && p.onBack && (
@@ -357,7 +361,7 @@ export function PhoneTournament(p: PhoneTournamentProps) {
       )}
       {sheet?.kind === 'withdraw' && <WithdrawSheet onClose={() => setSheet(null)} />}
       {sheet?.kind === 'watch' && (
-        <BottomSheet title={fightName(sheet.round, board.rounds || sheet.round + 1, board.opening)} onClose={() => setSheet(null)}>
+        <Sheet title={fightName(sheet.round, board.rounds || sheet.round + 1, board.opening)} onClose={() => setSheet(null)}>
           <div className="ptour__watch">
             <BoutBroadcast
               key={`${sheet.round}:${sheet.m.index}`}
@@ -371,15 +375,106 @@ export function PhoneTournament(p: PhoneTournamentProps) {
               now={p.now}
             />
           </div>
-        </BottomSheet>
+        </Sheet>
       )}
       {/* The roster sheet, as the dungeon has it; mounted always, slid in and out. */}
-      {p.phase === 'signup' && !p.mine && p.picker}
+      {!desk && p.phase === 'signup' && !p.mine && p.picker}
     </div>
+    </Desk.Provider>
   )
 }
 
 /* ---------- pieces ---------- */
+
+/** Whether the screen is laid out for a desktop. */
+const Desk = createContext(false)
+
+/**
+ * A screen's cards, in the order a phone stacks them, each marked for the
+ * column it takes on a desktop: the main one for what is happening, the
+ * side one for what it is worth and what it is fought under.
+ */
+function Cols({ items }: { items: [ReactNode, 'main' | 'side'][] }) {
+  const desk = useContext(Desk)
+  const all = (col?: 'main' | 'side') =>
+    items
+      .filter(([el, c]) => !!el && (!col || c === col))
+      .map(([el], i) => <Fragment key={i}>{el}</Fragment>)
+  if (!desk) return <>{all()}</>
+  /* Nothing for the side: the main column takes the width. */
+  if (!items.some(([el, c]) => !!el && c === 'side')) return <div className="ptour__col">{all('main')}</div>
+  return (
+    <div className="ptour__cols">
+      <div className="ptour__col">{all('main')}</div>
+      <div className="ptour__col ptour__col--side">{all('side')}</div>
+    </div>
+  )
+}
+
+/** A bottom sheet on a phone; a window in the middle of the screen on a desktop. */
+function Sheet({ title, onClose, children }: { title: string; onClose: () => void; children: ReactNode }) {
+  const desk = useContext(Desk)
+  if (!desk) {
+    return (
+      <BottomSheet title={title} onClose={onClose}>
+        {children}
+      </BottomSheet>
+    )
+  }
+  return (
+    <div className="ptour__modal" role="dialog" aria-modal="true" aria-label={title} onClick={onClose}>
+      <div className="ptour__modalpanel" onClick={(e) => e.stopPropagation()}>
+        <header className="ptour__modalhead">
+          <b>{title}</b>
+          <button type="button" onClick={onClose} aria-label="Close">
+            ×
+          </button>
+        </header>
+        <div className="ptour__modalbody">{children}</div>
+      </div>
+    </div>
+  )
+}
+
+/** The prizes, always in view beside the fights on a desktop. */
+function SidePrizes({ board, wallet, onPrizes }: { board: Board; wallet: string; onPrizes: () => void }) {
+  const run = board.runs.get(wallet)
+  return (
+    <section className="ptour__card ptour__card--gold">
+      <div className="ptour__cardhead">
+        <span className="ptour__kick ptour__kick--gold">Prizes</span>
+        <button type="button" className="ptour__link" onClick={onPrizes}>
+          All details ›
+        </button>
+      </div>
+      <PrizeLadder board={board} mark={run ? board.rankOf(wallet) : 0} />
+    </section>
+  )
+}
+
+/** Who has entered so far, best seed first — the desktop's side column at signup. */
+function Entrants({ field, wallet }: { field: TournamentSignup[]; wallet: string }) {
+  if (!field.length) return null
+  return (
+    <section className="ptour__card">
+      <div className="ptour__cardhead">
+        <span className="ptour__kick">Entered so far</span>
+        <small className="ptour__fine">{formatNumber(field.length)}</small>
+      </div>
+      <div className="ptour__entrants">
+        {field.slice(0, 12).map((s, i) => (
+          <div key={s.wallet} className={`ptour__entrant${s.wallet === wallet ? ' is-me' : ''}`}>
+            <b className="mono">{i + 1}</b>
+            <PlayerAvatar id={s.avatar} name={s.playertag} className="ptour__sideav" size={28} />
+            <span>{s.playertag || s.wallet}</span>
+            <small className="mono">{formatNumber(s.score)}</small>
+          </div>
+        ))}
+        {field.length > 12 && <p className="ptour__fine">and {formatNumber(field.length - 12)} more</p>}
+      </div>
+    </section>
+  )
+}
 
 function Head({ sub, chip }: { sub: string; chip?: ReactNode }) {
   return (
@@ -943,7 +1038,7 @@ function PrizeSheet({ board, wallet, onClose }: { board: Board; wallet: string; 
   const mine = board.runs.get(wallet)
   const rank = mine ? board.rankOf(wallet) : 0
   return (
-    <BottomSheet title="Prizes" onClose={onClose}>
+    <Sheet title="Prizes" onClose={onClose}>
       <div className="ptour__sheet">
         <div className="ptour__pot">
           <div className="ptour__potfig">
@@ -969,13 +1064,13 @@ function PrizeSheet({ board, wallet, onClose }: { board: Board; wallet: string; 
           Trial accounts receive 10% of every prize. Rewards are paid out after the tournament ends.
         </p>
       </div>
-    </BottomSheet>
+    </Sheet>
   )
 }
 
 function WithdrawSheet({ onClose }: { onClose: () => void }) {
   return (
-    <BottomSheet title="Withdraw?" onClose={onClose}>
+    <Sheet title="Withdraw?" onClose={onClose}>
       <div className="ptour__sheet">
         <p className="ptour__sub">
           Withdrawing would take your team back out before signup closes, and you could enter again
@@ -994,7 +1089,7 @@ function WithdrawSheet({ onClose }: { onClose: () => void }) {
           </button>
         </div>
       </div>
-    </BottomSheet>
+    </Sheet>
   )
 }
 
@@ -1079,6 +1174,9 @@ function BeforeSignup(
     <>
       <Head sub={Number.isFinite(opens) ? `Next one opens ${dayLabel(opens)}` : 'Between tournaments'} chip={<HofChip onClick={p.onHof} />} />
 
+      <Cols
+        items={[
+          [
       <div className="ptour__hero">
         <div className="ptour__board">
           <small>{Number.isFinite(opens) ? 'Signup opens in' : 'Next tournament'}</small>
@@ -1095,11 +1193,12 @@ function BeforeSignup(
             />
           ))}
         </div>
-      </div>
-
-      {p.phase === 'preparing' && p.stage && <PotCard stage={p.stage} field={null} />}
-
-      {(champion || lastHof) && (
+      </div>,
+            'main',
+          ],
+          [p.phase === 'preparing' && p.stage && <PotCard stage={p.stage} field={null} />, 'side'],
+          [
+      (champion || lastHof) && (
         <section className="ptour__card">
           <div className="ptour__cardhead">
             <span className="ptour__kick">
@@ -1158,9 +1257,11 @@ function BeforeSignup(
             )
           })()}
         </section>
-      )}
-
-      {replays.length > 0 && pastBoard && (
+      ),
+            'side',
+          ],
+          [
+      replays.length > 0 && pastBoard && (
         <>
           <div className="ptour__rhead">
             <b>Watch again</b>
@@ -1180,9 +1281,11 @@ function BeforeSignup(
             ))}
           </div>
         </>
-      )}
-
-      {myRun && pastBoard && (
+      ),
+            'main',
+          ],
+          [
+      myRun && pastBoard && (
         <section className="ptour__card">
           <div className="ptour__cardhead">
             <span className="ptour__kick">Your last tournament</span>
@@ -1198,7 +1301,11 @@ function BeforeSignup(
             · {place(myRank)} · <b>{myRun.points}</b> points
           </p>
         </section>
-      )}
+      ),
+            'side',
+          ],
+        ]}
+      />
     </>
   )
 }
@@ -1217,13 +1324,17 @@ function Signup(
   const seedIfEntered = p.mine
     ? p.field.findIndex((s) => s.wallet === p.mine!.wallet) + 1
     : p.field.filter((s) => s.score >= p.score).length + 1
+  const desk = useContext(Desk)
 
   return (
     <>
       <Head sub={Number.isFinite(closes) ? `Signup closes ${when(closes, p.now)}` : 'Signup open'} chip={<HofChip onClick={p.onHof} />} />
       <Strip items={items} focus={0} />
 
-      {p.mine && (
+      <Cols
+        items={[
+          [
+      p.mine && (
         <section className="ptour__card ptour__card--teal">
           <div className="ptour__status">
             <PlayerAvatar id={p.mine.avatar} name={p.mine.playertag} className="ptour__statusav ptour__statusav--me" size={56} />
@@ -1263,12 +1374,13 @@ function Signup(
             Withdraw
           </button>
         </section>
-      )}
-
-      <PotCard stage={p.stage} field={p.field} />
-      <Conditions weather={p.weather} />
-
-      {!p.mine && (
+      ),
+            'main',
+          ],
+          [<PotCard stage={p.stage} field={p.field} />, 'side'],
+          [<Conditions weather={p.weather} />, 'side'],
+          [
+      !p.mine && (
         <>
           <section className="ptour__card">
             <div className="ptour__cardhead">
@@ -1319,8 +1431,15 @@ function Signup(
               {p.block.ready ? `Team score ${formatNumber(p.score)}` : p.block.reason}
             </small>
           </div>
+          {/* A desktop picks below the team, on the page; a phone in its sheet. */}
+          {desk && p.picker}
         </>
-      )}
+      ),
+            'main',
+          ],
+          [desk && <Entrants field={p.field} wallet={p.wallet} />, 'side'],
+        ]}
+      />
     </>
   )
 }
@@ -1370,7 +1489,10 @@ function Draw(p: PhoneTournamentProps & { board: Board; onPrizes: () => void }) 
       />
       <Strip items={items} focus={1} />
 
-      {drawing && (
+      <Cols
+        items={[
+          [
+      drawing && (
         <section className="ptour__card">
           <div className="ptour__cardhead">
             <span className="ptour__kick ptour__kick--cyan">The draw is being made</span>
@@ -1383,9 +1505,11 @@ function Draw(p: PhoneTournamentProps & { board: Board; onPrizes: () => void }) 
             being drawn.
           </p>
         </section>
-      )}
-
-      {p.mine && (myFight || myPass) && (
+      ),
+            'main',
+          ],
+          [
+      p.mine && (myFight || myPass) && (
         <section className="ptour__card ptour__card--teal">
           <div className="ptour__cardhead">
             <span className="ptour__kick ptour__kick--teal">Your draw</span>
@@ -1413,14 +1537,19 @@ function Draw(p: PhoneTournamentProps & { board: Board; onPrizes: () => void }) 
             </p>
           )}
         </section>
-      )}
-      {p.mine && !myFight && !myPass && drawing && (
+      ),
+            'main',
+          ],
+          [
+      p.mine && !myFight && !myPass && drawing && (
         <section className="ptour__card ptour__card--teal">
           <span className="ptour__kick ptour__kick--teal">Your draw</span>
           <p className="ptour__sub">Not drawn yet — your opponent and your slot appear here.</p>
         </section>
-      )}
-
+      ),
+            'main',
+          ],
+          [
       <section className="ptour__card ptour__card--gold">
         <div className="ptour__cardhead">
           <span className="ptour__kick ptour__kick--gold">Prizes</span>
@@ -1433,8 +1562,11 @@ function Draw(p: PhoneTournamentProps & { board: Board; onPrizes: () => void }) 
         <span className="ptour__kick">TLM</span>
         <TlmTable board={board} wallet={p.wallet} />
         <p className="ptour__fine">Trial accounts receive 10% of every prize.</p>
-      </section>
-
+      </section>,
+            'side',
+          ],
+          [
+      <>
       <div className="ptour__rhead">
         <b>{board.name(0)}</b>
         <small>
@@ -1470,6 +1602,11 @@ function Draw(p: PhoneTournamentProps & { board: Board; onPrizes: () => void }) 
         <small>each round is drawn when the one before ends</small>
       </div>
       <LaterRounds board={board} from={1} now={p.now} onSelect={() => {}} />
+      </>,
+            'main',
+          ],
+        ]}
+      />
     </>
   )
 }
@@ -1748,13 +1885,17 @@ function Fighting(p: PhoneTournamentProps & {
   const entered = !!p.mine || board.runs.has(p.wallet)
   const myCount = p.history.flat().filter((m) => isIn(m, p.wallet)).length + (board.runs.get(p.wallet)?.pass ? 1 : 0)
   const current = round === board.current
+  const desk = useContext(Desk)
 
   return (
     <>
       <Head sub={`${board.name(board.current)} · ${formatNumber(board.players)} players`} chip={<PrizesChip onClick={p.onPrizes} />} />
       <Strip items={items} focus={focus} selected={round} onSelect={(r) => { setPicked(r); setMineOnly(false) }} />
 
-      {entered && (
+      <Cols
+        items={[
+          [
+      entered && (
         <StatusCard
           board={board}
           mine={p.mine}
@@ -1763,12 +1904,19 @@ function Fighting(p: PhoneTournamentProps & {
           now={p.now}
           onSeeFights={() => setMineOnly(true)}
         />
-      )}
-
-      {current && !mineOnly && (
+      ),
+            'side',
+          ],
+          [
+      current && !mineOnly && (
         <LiveCard board={board} round={board.current} rows={p.history[board.current] ?? []} now={p.now} onWatch={(m) => p.onWatch(m, board.current)} />
-      )}
-
+      ),
+            'main',
+          ],
+          [desk && <SidePrizes board={board} wallet={p.wallet} onPrizes={p.onPrizes} />, 'side'],
+          [desk && <Conditions weather={p.weather} />, 'side'],
+          [
+      <>
       {entered && (
         <div className="prew__tabs ptour__seg" role="tablist">
           <button type="button" role="tab" className="prew__tab" aria-selected={!mineOnly} onClick={() => setMineOnly(false)}>
@@ -1829,6 +1977,11 @@ function Fighting(p: PhoneTournamentProps & {
           )}
         </>
       )}
+      </>,
+            'main',
+          ],
+        ]}
+      />
     </>
   )
 }
@@ -1902,7 +2055,10 @@ function Results(p: PhoneTournamentProps & {
       <Head sub={`Finished · ${formatNumber(started)} players`} chip={<PrizesChip onClick={p.onPrizes} />} />
       <Strip items={items} focus={items.findIndex((i) => i.round === round)} selected={round} onSelect={setPicked} />
 
-      {champion && (
+      <Cols
+        items={[
+          [
+      champion && (
         <section className="ptour__champ">
           <img className="ptour__crown" src={TROPHY} alt="" />
           <PlayerAvatar id={champion.avatar} name={champion.tag} className="ptour__champav" size={84} />
@@ -1925,17 +2081,21 @@ function Results(p: PhoneTournamentProps & {
             </button>
           )}
         </section>
-      )}
-
-      {(runnerUp || semis.length > 0) && (
+      ),
+            'main',
+          ],
+          [
+      (runnerUp || semis.length > 0) && (
         <div className="ptour__podium">
           {semis[0] ? <Pod e={semis[0]} step={3} label="Semis" /> : <span />}
           {runnerUp ? <Pod e={runnerUp} step={2} label="Final" /> : <span />}
           {semis[1] ? <Pod e={semis[1]} step={3} label="Semis" /> : <span />}
         </div>
-      )}
-
-      {me && mePaid && (
+      ),
+            'main',
+          ],
+          [
+      me && mePaid && (
         <section className="ptour__card ptour__card--teal ptour__mine">
           <span className="ptour__place mono">
             {place(mePaid.rank)}
@@ -1951,8 +2111,11 @@ function Results(p: PhoneTournamentProps & {
             </p>
           </div>
         </section>
-      )}
-
+      ),
+            'side',
+          ],
+          [
+      <>
       <div className="ptour__rhead">
         <b>Everyone</b>
         <small>by points · as paid</small>
@@ -1979,7 +2142,11 @@ function Results(p: PhoneTournamentProps & {
           )
         })}
       </div>
-
+      </>,
+            'main',
+          ],
+          [
+      <>
       <div className="ptour__rhead">
         <b>{board.name(round)}</b>
         <small>
@@ -2001,6 +2168,11 @@ function Results(p: PhoneTournamentProps & {
         <img src={TROPHY} alt="" />
         Hall of Fame
       </button>
+      </>,
+            'side',
+          ],
+        ]}
+      />
     </>
   )
 }
@@ -2078,6 +2250,7 @@ function HallOfFame({ rows, wallet, onBack }: { rows: TournamentHof[]; wallet: s
               </p>
             </section>
           )}
+          <div className="ptour__cups">
           {cups.map((four) => (
             <section key={four[0].tournament_name} className="ptour__card">
               <div className="ptour__cardhead">
@@ -2094,6 +2267,7 @@ function HallOfFame({ rows, wallet, onBack }: { rows: TournamentHof[]; wallet: s
               </div>
             </section>
           ))}
+          </div>
         </>
       )}
     </>

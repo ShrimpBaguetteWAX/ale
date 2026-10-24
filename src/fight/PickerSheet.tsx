@@ -42,6 +42,7 @@ export function PickerSheet({
   onCrew,
   onWeapon,
   onInspectCard,
+  inline = false,
 }: {
   open: boolean
   onClose: () => void
@@ -61,6 +62,8 @@ export function PickerSheet({
   onCrew: (c: CardTemplate) => void
   onWeapon: (c: CardTemplate) => void
   onInspectCard: (c: CardTemplate) => void
+  /** On the page, as a desktop has it: the panel with its tabs, no sheet. */
+  inline?: boolean
 }) {
   const [filter, setFilter] = useState<RosterFilter>(EMPTY_FILTER)
   const [atLevelOne, setAtLevelOne] = useState(false)
@@ -82,12 +85,39 @@ export function PickerSheet({
 
   return (
     <>
-      {open && <div className="picker__scrim" onClick={onClose} aria-hidden="true" />}
+      {open && !inline && <div className="picker__scrim" onClick={onClose} aria-hidden="true" />}
       <section
-        className={`panel picker picker--sheet${open ? ' picker--open' : ''}`}
+        className={inline ? 'panel picker' : `panel picker picker--sheet${open ? ' picker--open' : ''}`}
         ref={sheet}
-        aria-hidden={open ? undefined : true}
+        aria-hidden={open || inline ? undefined : true}
       >
+        {inline ? (
+          <div className="tabs" role="tablist">
+            {(
+              [
+                ['fighters', 'Fighters'],
+                ['crew', 'Crew'],
+                ['weapon', 'Weapons'],
+              ] as [Tab, string][]
+            ).map(([key, label]) => (
+              <button
+                type="button"
+                key={key}
+                role="tab"
+                className="tabs__tab"
+                aria-selected={tab === key}
+                onClick={() => onTab(key)}
+              >
+                {label}
+                <span className="tabs__count">
+                  {key === 'fighters'
+                    ? `${picked}/${TEAM_SIZE}`
+                    : (key === 'crew' ? crewCards : weaponCards).length}
+                </span>
+              </button>
+            ))}
+          </div>
+        ) : (
         <div className="picker__sheethead" {...grip}>
           {/* The tabs are the title: they already say what is being chosen. */}
           <div className="picker__sheettabs" role="tablist">
@@ -126,6 +156,7 @@ export function PickerSheet({
             ×
           </button>
         </div>
+        )}
 
         {tab === 'fighters' ? (
           <>
@@ -136,7 +167,7 @@ export function PickerSheet({
               atLevelOne={atLevelOne}
               onAtLevelOne={setAtLevelOne}
               count={shownCount}
-              sheet={{ density, onDensity: chooseDensity }}
+              sheet={inline ? undefined : { density, onDensity: chooseDensity }}
             />
             <FighterGrid
               roster={roster}
@@ -149,8 +180,8 @@ export function PickerSheet({
               onToggle={onToggle}
               onCount={countFighters}
               onInspect={onInspect}
-              density={density}
-              onDensity={chooseDensity}
+              density={inline ? undefined : density}
+              onDensity={inline ? undefined : chooseDensity}
             />
           </>
         ) : (
@@ -174,9 +205,11 @@ export function PickerSheet({
             kind={tab}
           />
         )}
-        <button type="button" className="btn btn--primary picker__done" onClick={onClose}>
-          Done
-        </button>
+        {!inline && (
+          <button type="button" className="btn btn--primary picker__done" onClick={onClose}>
+            Done
+          </button>
+        )}
       </section>
     </>
   )

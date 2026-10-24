@@ -6087,3 +6087,335 @@
   z-index: 1000;
   border-radius: inherit;
 }
+
+/* ---------- the player's frame while the fight is put together ---------- */
+.boutstage--wait .bfield {
+  display: grid;
+  place-items: center;
+}
+/* The control bar's own height, so nothing moves when the fight arrives. */
+.boutstage--wait .bcdeck {
+  min-height: 47px;
+}
+.ptour--desk .boutstage--wait .bcdeck {
+  min-height: 51px;
+}
+.boutstage__spin {
+  width: 28px;
+  height: 28px;
+}
+
+/* ===================================================================
+   The tournament on a desktop: the same cards as the phone, laid out
+   for the width — the moment across the top, what is happening in the
+   main column and what it is worth in the side one.
+   =================================================================== */
+
+.ptour--desk {
+  gap: 18px;
+  width: 100%;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 8px 0 40px;
+}
+.ptour--desk .ptour__title {
+  font-size: 26px;
+}
+.ptour--desk .ptour__title small {
+  font-size: 13px;
+}
+.ptour--desk .ptour__pill {
+  height: 36px;
+  padding: 0 16px;
+  font-size: 13px;
+}
+
+/* The strip, with the room to breathe. */
+.ptour--desk .ptour__strip {
+  padding: 14px 10px 12px;
+}
+.ptour--desk .ptour__strip::before,
+.ptour--desk .ptour__stripfill {
+  top: 27px;
+  left: calc(10px + (100% - 20px) / var(--cols) / 2);
+}
+.ptour--desk .ptour__strip::before {
+  right: calc(10px + (100% - 20px) / var(--cols) / 2);
+}
+.ptour--desk .ptour__stripfill {
+  width: calc((100% - 20px) * (var(--cols) - 1) / var(--cols) * var(--fill));
+}
+.ptour--desk .ptour__step {
+  gap: 5px;
+  padding: 0 4px 6px;
+}
+.ptour--desk .ptour__dot {
+  width: 26px;
+  height: 26px;
+}
+.ptour--desk .ptour__step b {
+  font-size: 11px;
+}
+.ptour--desk .ptour__step small {
+  font-size: 12px;
+}
+.ptour--desk .ptour__pips i {
+  width: 8px;
+  height: 8px;
+}
+
+/* Two columns: what is happening, and what it is worth. */
+.ptour__cols {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: 20px;
+  align-items: start;
+}
+.ptour__col {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 14px;
+  align-content: start;
+}
+.ptour__col--side {
+  position: sticky;
+  top: 16px;
+}
+.ptour--desk .ptour__card {
+  padding: 18px;
+  gap: 12px;
+}
+.ptour--desk .ptour__rhead {
+  margin: 4px 2px -2px;
+}
+
+/* The hero, wide. */
+.ptour--desk .ptour__hero {
+  height: 340px;
+}
+.ptour--desk .ptour__crowd img {
+  height: 190px;
+  margin: 0 -10px;
+}
+.ptour--desk .ptour__crowd img:nth-child(3) {
+  height: 230px;
+}
+.ptour--desk .ptour__board {
+  top: 26px;
+  padding: 14px 28px 16px;
+}
+.ptour--desk .ptour__board b {
+  font-size: 36px;
+}
+
+/* Fights: both names on one line, the time and the action either side. */
+.ptour--desk .ptour__fight {
+  grid-template-columns: 64px minmax(0, 1fr) auto;
+  min-height: 60px;
+  padding: 10px 16px 10px 12px;
+}
+/* Both names on one line, facing each other — where the column is wide. */
+.ptour--desk .ptour__col:not(.ptour__col--side) .ptour__sides {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 16px;
+}
+.ptour--desk .ptour__col:not(.ptour__col--side) .ptour__side:nth-child(2) {
+  flex-direction: row-reverse;
+  text-align: right;
+}
+.ptour--desk .ptour__col:not(.ptour__col--side) .ptour__side:nth-child(2) em {
+  margin-right: auto;
+  margin-left: 0;
+}
+.ptour--desk .ptour__side.is-tbd {
+  grid-column: 1 / -1;
+}
+.ptour--desk .ptour__sideav {
+  width: 32px;
+  height: 32px;
+}
+.ptour--desk .ptour__when b {
+  font-size: 13px;
+}
+
+/* The fight on now: the two corners further apart. */
+.ptour--desk .ptour__live {
+  padding: 22px 26px;
+  gap: 14px;
+}
+.ptour--desk .ptour__live .btn {
+  justify-self: center;
+  min-width: 260px;
+}
+.ptour--desk .ptour__cornerav {
+  width: 84px;
+  height: 84px;
+}
+.ptour--desk .ptour__corner b {
+  font-size: 18px;
+}
+
+/* Your team: larger squares, and the entry button in place, not docked. */
+.ptour--desk .ptour__team {
+  gap: 10px;
+}
+.ptour--desk .ptour__cards {
+  grid-template-columns: 1fr 1fr;
+}
+.ptour--desk .ptour__dock {
+  position: static;
+  justify-items: start;
+}
+.ptour--desk .ptour__dock .btn {
+  width: auto;
+  min-width: 300px;
+  box-shadow: 0 8px 20px rgb(246 168 0 / 25%);
+}
+.ptour--desk .ptour__dock small {
+  background: none;
+  padding: 0;
+}
+/* The roster, on the page under the team rather than in a sheet. */
+.ptour--desk .picker {
+  margin: 0;
+}
+.ptour--desk .picker__sheetclose,
+.ptour--desk .picker__done {
+  display: none;
+}
+
+/* Who has entered, beside the team. */
+.ptour__entrants {
+  display: grid;
+}
+.ptour__entrant {
+  display: grid;
+  grid-template-columns: 22px 28px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  min-height: 40px;
+}
+.ptour__entrant + .ptour__entrant {
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 7%);
+}
+.ptour__entrant b {
+  font-size: 12px;
+  text-align: center;
+  color: var(--text-faint);
+}
+.ptour__entrant span {
+  overflow: hidden;
+  font-size: 13.5px;
+  font-weight: var(--fw-bold);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #e7eef8;
+}
+.ptour__entrant small {
+  font-size: 12px;
+  color: var(--text-faint);
+}
+.ptour__entrant.is-me span {
+  color: #9fe3ff;
+}
+
+/* Results: the champion and the podium side by side. */
+.ptour--desk .ptour__champ {
+  padding: 26px 20px 20px;
+}
+.ptour--desk .ptour__podium {
+  max-width: 560px;
+  width: 100%;
+  justify-self: center;
+}
+.ptour--desk .ptour__tr {
+  min-height: 52px;
+  padding: 6px 16px 6px 12px;
+}
+
+/* The Hall of Fame: tournaments two to a row. */
+.ptour__cups {
+  display: grid;
+  gap: 12px;
+}
+.ptour--desk .ptour__cups {
+  grid-template-columns: 1fr 1fr;
+}
+
+/* A desktop's sheet: a window in the middle of the screen. */
+.ptour__modal {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal, 1000);
+  display: grid;
+  place-items: center;
+  padding: 32px;
+  background: rgb(0 0 0 / 62%);
+}
+.ptour__modalpanel {
+  display: flex;
+  flex-direction: column;
+  width: min(920px, 100%);
+  max-height: calc(100vh - 64px);
+  overflow: hidden;
+  border-radius: 18px;
+  background: rgb(10 16 30 / 98%);
+  box-shadow:
+    0 24px 60px rgb(0 0 0 / 60%),
+    inset 0 0 0 1px rgb(255 255 255 / 14%);
+}
+.ptour__modalhead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px 12px;
+}
+.ptour__modalhead b {
+  font-family: var(--font-display);
+  font-size: 15px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--white);
+}
+.ptour__modalhead button {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: 50%;
+  font-size: 20px;
+  color: var(--text-faint);
+  background: rgb(255 255 255 / 6%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 16%);
+  cursor: pointer;
+}
+.ptour__modalbody {
+  display: grid;
+  gap: 12px;
+  min-height: 0;
+  padding: 0 20px 20px;
+  overflow-y: auto;
+}
+
+/* Skip on a desktop's tournament player: the phone's chip, at desktop size. */
+.boutstage .bcdeck__skip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 32px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 7px;
+  background: rgb(255 255 255 / 9%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 24%);
+  color: var(--white);
+  font-size: 12.5px;
+  font-weight: var(--fw-bold);
+  white-space: nowrap;
+  cursor: pointer;
+}
+.boutstage .bcdeck__skip svg {
+  width: 13px;
+  height: 13px;
+}

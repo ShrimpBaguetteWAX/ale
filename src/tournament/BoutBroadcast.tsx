@@ -231,6 +231,13 @@ export function BoutBroadcast({
     return <BoutStage key={runs} replay={replay} a={tagA} b={tagB} />
   }
 
+  /*
+     Opened to watch, and still reading the two teams: a frame of the
+     player's own size, so the sheet opens at the size it will stay rather
+     than at the poster's and then shrinking.
+  */
+  if (autoPlay && !locked && !crews.error) return <StageWaiting />
+
   return (
     <section
       className={
@@ -310,6 +317,26 @@ function BoutStage({ replay, a, b }: { replay: Replay; a: string; b: string }) {
         broadcast
         overlay={pb.finished ? <Result replay={replay} a={a} b={b} onAgain={pb.restart} /> : null}
       />
+    </div>
+  )
+}
+
+/** The player's frame, empty, while the fight is put together. */
+function StageWaiting() {
+  const phone = usePhone()
+  return (
+    <div className="boutstage boutstage--wait">
+      <div className="bfwrap bfwrap--bcast">
+        <div className="bfmain">
+          <div
+            className={`bfield bfield--bcast${phone ? '' : ' bfield--wide'}`}
+            style={{ ['--bf-bg' as string]: `url('${asset('/assets/background/bg-fight.png')}')` }}
+          >
+            <span className="spinner boutstage__spin" />
+          </div>
+          <div className="bcdeck" />
+        </div>
+      </div>
     </div>
   )
 }
@@ -700,10 +727,6 @@ function Result({
 }) {
   const won = replay.winner
   const team = replay.fighters.filter((f) => f.team === (won === 2 ? 2 : 1))
-  const closing = stateAt(replay, replay.turns.length)
-  const standing = team.filter(
-    (f) => (closing.find((s) => s.uid === f.uid)?.health ?? 0) > 0,
-  ).length
 
   const mid = (team.length - 1) / 2
 
@@ -734,11 +757,7 @@ function Result({
       <div className="bcast__panel">
         <span className="bcast__kick">{won === null ? 'DRAW' : 'WINNER'}</span>
         <span className="bcast__win">{won === null ? 'Nobody' : won === 1 ? a : b}</span>
-        <span className="bcast__margin">
-          {won === null
-            ? 'Neither side could finish it'
-            : `with ${standing} of ${team.length} still standing`}
-        </span>
+        {won === null && <span className="bcast__margin">Neither side could finish it</span>}
       </div>
 
       <button type="button" className="bcast__again" onClick={onAgain}>

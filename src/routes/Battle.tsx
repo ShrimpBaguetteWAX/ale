@@ -651,6 +651,15 @@ export function FightStage({
                 Combat log
               </button>
             )}
+            {/* A window has no title line to carry Skip, so a desktop gets it here too. */}
+            {!phone && logHidden && (
+              <button type="button" className="bcdeck__skip" onClick={pb.skip}>
+                Skip
+                <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <path d="M4 5v14l8-7zM12 5v14l8-7z" />
+                </svg>
+              </button>
+            )}
           </div>
         )}
         {overlay}
