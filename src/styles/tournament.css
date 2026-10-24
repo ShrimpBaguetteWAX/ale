@@ -6058,3 +6058,9 @@
   width: 14px;
   height: 14px;
 }
+
+/* The gold trophy vanished into the gold pill: drawn in the label's dark ink instead. */
+.ptour__pill--gold img {
+  filter: brightness(0);
+  opacity: 0.82;
+}
