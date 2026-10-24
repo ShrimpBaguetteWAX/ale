@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { dailyFlasks, valueBadges } from '@/shop/rules'
+import { dailyFlasks, legendLeft, valueBadges } from '@/shop/rules'
 import type { ShopItem } from '@/shop/types'
 
 /* Just enough of a shop row to price it. */
@@ -68,5 +68,20 @@ describe('the daily flasks', () => {
 
   it('says nothing when either flask is missing', () => {
     expect(dailyFlasks([item({ item: 'nrg.free', gain_action_points: 100 })])).toBeNull()
+  })
+})
+
+describe('the Legend time left', () => {
+  const H = 3_600_000
+  it('counts whole days while there are any', () => {
+    expect(legendLeft(157 * 24 * H + 5 * H)).toBe('157 days left')
+    expect(legendLeft(24 * H + 1)).toBe('1 day left')
+  })
+  it('counts hours and minutes on the last day', () => {
+    expect(legendLeft(5 * H + 12 * 60_000)).toBe('5h 12m left')
+    expect(legendLeft(40 * 60_000)).toBe('40m left')
+  })
+  it('says so once it has run out', () => {
+    expect(legendLeft(0)).toBe('Ended')
   })
 })

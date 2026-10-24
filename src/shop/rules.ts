@@ -267,3 +267,17 @@ export function itemArt(item: ShopItem): string {
 export function formatWax(amount: number): string {
   return Math.floor(amount).toLocaleString(NUM_LOCALE)
 }
+
+/**
+ * What is left on a Legend pass, the way a player counts it: whole days
+ * while there are any ("157 days left"), then hours and minutes for the
+ * last one ("5h 12m left").
+ */
+export function legendLeft(ms: number): string {
+  if (ms <= 0) return 'Ended'
+  const days = Math.floor(ms / 86_400_000)
+  if (days >= 1) return `${days} day${days === 1 ? '' : 's'} left`
+  const h = Math.floor(ms / 3_600_000)
+  const m = Math.floor((ms % 3_600_000) / 60_000)
+  return h > 0 ? `${h}h ${m}m left` : `${m}m left`
+}

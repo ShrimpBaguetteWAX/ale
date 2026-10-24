@@ -15,6 +15,7 @@ import {
   legendExpiry,
   dailyFlasks,
   priceOf,
+  legendLeft,
   rewardOf,
   valueBadges,
   waxAmount,
@@ -35,6 +36,7 @@ import { NUM_LOCALE } from '@/format'
 import { OutpostTab } from '@/outpost/OutpostTab'
 
 const EMPTY_COOLDOWNS: ShopCooldown[] = []
+
 
 function Amount({ label, icon }: { label: string; icon?: string }) {
   return (
@@ -161,9 +163,7 @@ export default function Shop() {
               {legend ? 'Legend' : 'Trial'}
             </span>
             <span className="faint" style={{ fontSize: 'var(--fs-xs)' }}>
-              {legend && expiry
-                ? `until ${expiry.toISOString().slice(0, 10)}`
-                : 'Trial account'}
+              {legend && expiry ? legendLeft(expiry.getTime() - Date.now()) : 'Trial account'}
             </span>
           </div>
         </header>
