@@ -1115,133 +1115,6 @@
   }
 }
 
-/*
- * The receipt for a mine.
- *
- * A claim spends a run's worth of Reward Power and the screen used to say
- * "Mined." — the number the player was mining for went into a balance in the
- * top bar and was never named. This names it, once, and gets out of the way.
- *
- * Read from the reward ledger rather than computed: the pool moves between
- * the estimate beside the bar and the transaction, so the projection and the
- * payout are not the same number, and only one of them is what happened.
- */
-.minecheer {
-  position: fixed;
-  inset: 0;
-  z-index: var(--z-modal);
-  display: grid;
-  place-items: center;
-  padding: var(--sp-4);
-  background: rgb(0 0 0 / 72%);
-}
-
-.minecheer__panel {
-  position: relative;
-  display: grid;
-  gap: var(--sp-3);
-  width: min(420px, 100%);
-  padding: var(--sp-5) var(--sp-4) var(--sp-4);
-  text-align: center;
-  background: linear-gradient(180deg, var(--surface-2), var(--surface-1));
-  border: 1px solid var(--line-bright);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow);
-  transform: scale(0.94);
-  opacity: 0;
-  transition:
-    transform var(--dur) var(--ease),
-    opacity var(--dur) var(--ease);
-}
-
-.minecheer__panel--in {
-  transform: scale(1);
-  opacity: 1;
-}
-
-/* A glow behind the panel, so the moment reads as a payout rather than a dialog. */
-.minecheer__burst {
-  position: absolute;
-  inset: -40% -20% auto;
-  height: 200px;
-  background: radial-gradient(closest-side, rgb(246 168 0 / 30%), transparent);
-  pointer-events: none;
-}
-
-.minecheer__title {
-  margin: 0;
-  font-family: var(--font-display);
-  font-size: var(--fs-3xl);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--text-heading);
-}
-
-.minecheer__sub {
-  margin: 0;
-  font-size: var(--fs-sm);
-  color: var(--text-faint);
-}
-
-.minecheer__rewards {
-  display: grid;
-  gap: var(--sp-2);
-}
-
-.minecheer__reward {
-  display: grid;
-  grid-template-columns: auto auto auto 1fr;
-  align-items: center;
-  gap: var(--sp-2);
-  padding: var(--sp-2) var(--sp-3);
-  text-align: left;
-  background: rgb(0 0 0 / 32%);
-  border: 1px solid var(--line-soft);
-  border-radius: var(--radius-sm);
-}
-
-.minecheer__icon {
-  object-fit: contain;
-}
-
-.minecheer__amount {
-  font-family: var(--font-display);
-  font-size: var(--fs-xl);
-  font-weight: var(--fw-bold);
-  color: var(--white);
-}
-
-.minecheer__ticker {
-  font-size: var(--fs-sm);
-  color: var(--text-dim);
-}
-
-/* Which pool paid it, since a claim can settle several at once. */
-.minecheer__pool {
-  justify-self: end;
-  font-size: var(--fs-xs);
-  color: var(--text-faint);
-  text-align: right;
-}
-
-:root[data-fx='low'] .minecheer__panel {
-  transition: none;
-  transform: none;
-  opacity: 1;
-}
-
-@media (max-width: 719px) {
-  .minecheer__reward {
-    grid-template-columns: auto auto 1fr;
-  }
-
-  .minecheer__pool {
-    grid-column: 1 / -1;
-    justify-self: start;
-    text-align: left;
-  }
-}
-
 /* The menu's chore dot, on the tab that explains it. */
 .accounttab__dot {
   position: absolute;
@@ -2045,7 +1918,6 @@ button.prew__row:hover:not(:disabled) {
 /* Landowner settings */
 .landsheet__range {
   width: 100%;
-  accent-color: var(--white);
 }
 .landsheet__presets,
 .alltools__chips {
@@ -2197,4 +2069,213 @@ button.prew__row:hover:not(:disabled) {
 }
 .poolsheet__bar.is-ready i {
   background: var(--gold);
+}
+
+/* ---------- what a mine paid: a toast ---------- */
+
+/*
+ * Above the tab bar on a phone, where a thumb is; bottom right on a desktop.
+ * On the victory screen it sits above that screen's own dock instead, which
+ * is where its buttons are.
+ */
+.minetoast {
+  position: fixed;
+  right: 12px;
+  bottom: calc(var(--nav-h) + 12px + env(safe-area-inset-bottom));
+  left: 12px;
+  z-index: var(--z-toast);
+  display: grid;
+  gap: 0;
+  padding: 8px 12px 10px;
+  overflow: hidden;
+  border-radius: 14px;
+  background: rgb(10 16 30 / 92%);
+  box-shadow:
+    0 0 0 1px rgb(255 255 255 / 14%),
+    0 10px 24px rgb(0 0 0 / 50%);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  touch-action: none;
+  animation: minetoast-in 260ms cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+.minetoast--done {
+  box-shadow:
+    0 0 0 1px rgb(246 168 0 / 45%),
+    0 10px 24px rgb(0 0 0 / 50%);
+}
+@keyframes minetoast-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+}
+:root[data-fx='low'] .minetoast {
+  animation: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+.result .minetoast {
+  bottom: calc(var(--dock, 0px) + 12px + env(safe-area-inset-bottom));
+}
+@media (min-width: 1024px) {
+  .minetoast,
+  .result .minetoast {
+    right: 24px;
+    bottom: 24px;
+    left: auto;
+    width: 340px;
+  }
+}
+
+.minetoast__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 4px;
+}
+.minetoast__head strong {
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.minetoast__x {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  margin: -4px -6px -4px 0;
+  border: 0;
+  background: none;
+  font-size: 16px;
+  color: var(--text-faint);
+}
+.minetoast__row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 28px;
+  font-size: var(--fs-xs);
+}
+.minetoast__row img {
+  flex: none;
+  width: 18px;
+  height: 18px;
+}
+.minetoast__what {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text-dim);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.minetoast__amount {
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 800;
+  color: #ffd979;
+  white-space: nowrap;
+}
+/* The time it has left, running down along the bottom edge. */
+.minetoast__time {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 2px;
+  background: #ffd979;
+  transform-origin: left;
+  animation: minetoast-time linear forwards;
+}
+@keyframes minetoast-time {
+  to {
+    transform: scaleX(0);
+  }
+}
+
+/*
+ * The phone Rewards page and its sheets in the quiet palette the other phone
+ * screens use: no purple. The game's default button is a dark gradient with
+ * a purple edge, and the edge colour (--line-bright) is also what outlines
+ * inputs — so both are reset here, once, for everything inside. Cyan stays
+ * for go, gold for collect; everything else is glass.
+ */
+.prew,
+.rsheet {
+  --line-bright: rgb(255 255 255 / 22%);
+}
+.prew .btn:not(.btn--primary):not(.btn--gold),
+.rsheet .btn:not(.btn--primary):not(.btn--gold) {
+  --btn-bg: rgb(255 255 255 / 8%);
+  --btn-line: rgb(255 255 255 / 22%);
+  box-shadow: none;
+}
+/* Disabled reads as quiet, not as a pale slab with dark text on it. */
+.prew .btn:disabled,
+.rsheet .btn:disabled {
+  --btn-bg: rgb(255 255 255 / 4%);
+  --btn-line: rgb(255 255 255 / 12%);
+  color: var(--text-faint);
+  box-shadow: none;
+}
+.rsheet .input:focus {
+  border-color: rgb(0 186 255 / 70%);
+}
+
+/* The split, in white and glass like the rest of the sheet. */
+.rsheet .splitbar {
+  height: 12px;
+  border-color: rgb(255 255 255 / 12%);
+}
+.rsheet .splitbar__tlm {
+  background: rgb(255 255 255 / 85%);
+}
+.rsheet .splitbar__shards {
+  background: rgb(255 255 255 / 14%);
+}
+.rsheet .splitlabels {
+  color: var(--white);
+}
+
+.landsheet__range {
+  appearance: none;
+  -webkit-appearance: none;
+  height: 28px;
+  margin: 0;
+  background: none;
+}
+.landsheet__range::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 2px;
+  background: rgb(255 255 255 / 18%);
+}
+.landsheet__range::-moz-range-track {
+  height: 4px;
+  border-radius: 2px;
+  background: rgb(255 255 255 / 18%);
+}
+.landsheet__range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 20px;
+  height: 20px;
+  margin-top: -8px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--white);
+  box-shadow: 0 2px 6px rgb(0 0 0 / 50%);
+}
+.landsheet__range::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--white);
+  box-shadow: 0 2px 6px rgb(0 0 0 / 50%);
+}
+.landsheet__presets button:disabled,
+.alltools__chips button:disabled {
+  opacity: 0.5;
 }

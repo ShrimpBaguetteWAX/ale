@@ -49,11 +49,8 @@ import { ActionBanner } from '@/components/ActionBanner'
 import { settle } from '@/wharf/settle'
 import { readableError } from '@/wharf/errors'
 import { refreshChore } from '@/chores/signal'
-import {
-  MineCelebration,
-  readMinedRewards,
-  type MinedReward,
-} from '@/pools/MineCelebration'
+import { readMinedRewards } from '@/pools/MineCelebration'
+import { MineToast, type MineToastState } from '@/pools/MineToast'
 import { NUM_LOCALE } from '@/format'
 import { rememberWinPower } from '@/briefing/winPower'
 import { GameImg } from '@/components/GameImg'
@@ -1838,12 +1835,18 @@ function Result({
   }, [mine, statOf])
 
   /* The receipt, once the ledger has it. */
-  const [minedRewards, setMinedRewards] = useState<MinedReward[]>([])
+  const [mineToast, setMineToast] = useState<MineToastState | null>(null)
 
   const doMine = async () => {
     if (!session || claims.length === 0) return
     setMining(true)
     setError(null)
+    /* The toast from the tap on, so the wait for the chain is not silence. */
+    setMineToast({
+      label: claims.some((p) => /arena/i.test(p)) ? 'Arena Wins' : 'Dungeon Wins',
+      times: claims.length,
+      rewards: null,
+    })
     try {
       await claimPoolRewards(session, claims, row.history_id)
       // The pools contract settles a beat after the transaction; poll the
@@ -1870,8 +1873,10 @@ function Result({
          quoting the projection back as the result would be wrong exactly
          when the player cares most.
       */
-      setMinedRewards(await readMinedRewards(row.history_id))
+      const rewards = await readMinedRewards(row.history_id)
+      setMineToast((t) => (t ? { ...t, rewards } : t))
     } catch (err) {
+      setMineToast(null)
       setError(readableError(err))
     } finally {
       setMining(false)
@@ -2340,10 +2345,10 @@ function Result({
         </p>
       )}
 
-      {minedRewards.length > 0 && (
-        <MineCelebration
-          rewards={minedRewards}
-          onClose={() => setMinedRewards([])}
+      {mineToast && (
+        <MineToast
+          state={mineToast}
+          onClose={() => setMineToast(null)}
         />
       )}
 

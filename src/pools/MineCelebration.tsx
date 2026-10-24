@@ -1,7 +1,5 @@
-import { useEffect, useState } from 'react'
-import { useModal } from '@/components/useModal'
 import { fetchMineHistory } from '@/pools/queries'
-import { CURRENCY_ICON, CURRENCY_LABEL, type Currency } from '@/account/rules'
+import type { Currency } from '@/account/rules'
 
 /**
  * What a mine paid, celebrated.
@@ -67,71 +65,4 @@ export async function readMinedRewards(historyId: string): Promise<MinedReward[]
   }
 
   return []
-}
-
-export function MineCelebration({
-  rewards,
-  onClose,
-}: {
-  rewards: MinedReward[]
-  onClose: () => void
-}) {
-  /*
-     Held back a frame so the panel animates in rather than appearing already
-     placed, which is the difference between a reward and a dialog.
-  */
-  const [shown, setShown] = useState(false)
-  useEffect(() => {
-    const id = setTimeout(() => setShown(true), 20)
-    return () => clearTimeout(id)
-  }, [])
-
-  /* Escape closes it: it is a celebration, not a decision. */
-  const panel = useModal(onClose)
-
-  return (
-    <div
-      className="minecheer"
-      role="dialog"
-      aria-modal="true"
-      aria-label="Mining rewards"
-      onClick={onClose}
-    >
-      <div
-        className={`minecheer__panel${shown ? ' minecheer__panel--in' : ''}`}
-        ref={panel}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <span className="minecheer__burst" aria-hidden="true" />
-
-        <h2 className="minecheer__title">Mined</h2>
-        <p className="minecheer__sub">Paid out to your balance</p>
-
-        {/*
-          The figure and its token, and nothing else. Which pool it came from
-          is on the screen behind this one either way, and a player who has
-          just mined wants to know how much.
-        */}
-        <div className="minecheer__rewards">
-          {rewards.map((r) => (
-            <div className="minecheer__reward" key={r.currency}>
-              <img
-                className="minecheer__icon"
-                src={CURRENCY_ICON[r.currency]}
-                alt=""
-                width={28}
-                height={28}
-              />
-              <span className="minecheer__amount mono">{r.amount}</span>
-              <span className="minecheer__ticker">{CURRENCY_LABEL[r.currency]}</span>
-            </div>
-          ))}
-        </div>
-
-        <button type="button" className="btn btn--primary btn--block" onClick={onClose}>
-          Close
-        </button>
-      </div>
-    </div>
-  )
 }

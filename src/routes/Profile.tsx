@@ -90,10 +90,9 @@ import { useModal } from '@/components/useModal'
 import { useLazyConfig } from '@/state/useConfig'
 import { DIRTIES } from '@/wharf/actions'
 import {
-  MineCelebration,
   readMinedRewards,
-  type MinedReward,
 } from '@/pools/MineCelebration'
+import { MineToast, type MineToastState } from '@/pools/MineToast'
 import { readableError } from '@/wharf/errors'
 import { formatAsset, formatNumber, formatDecimals, formatStat } from '@/format'
 import { asset } from '@/assets'
@@ -280,7 +279,8 @@ export default function Profile({ section = 'account' }: { section?: Section }) 
   const { busy: busyKey, error, notice, run } = useAction()
   const busy = busyKey as Busy
   /* Which pool the running mine belongs to, so only its button spins. */
-  const [minedRewards, setMinedRewards] = useState<MinedReward[]>([])
+  /* The mine in progress, then what it paid: a toast, from the tap on. */
+  const [mineToast, setMineToast] = useState<MineToastState | null>(null)
   const [minedPool, setMinedPool] = useState<string | null>(null)
 
   /*
@@ -385,22 +385,38 @@ export default function Profile({ section = 'account' }: { section?: Section }) 
        what this claim paid, and the only way to ask afterwards.
     */
     const historyId = randomHistoryId()
+    const label =
+      poolBoard(currencyTab, player, tlmPools, shardPools, poolNames).find((e) => e.pool === pool)
+        ?.label ?? 'Reward pool'
+    setMineToast({ label, times, rewards: null })
+    /* Only a mine that went through has a receipt to wait for. */
+    let mined = false
     void run(
       'mine',
       () => mineRewardPool(session!, pool, historyId, times),
-      /* No banner: what the mine paid is shown on its own just after. */
+      /* No banner: the toast says what the mine paid. */
       '',
-      mineOpts,
+      {
+        ...mineOpts,
+        onSettled: () => {
+          mined = true
+        },
+      },
     ).then(async () => {
+      setMinedPool(null)
+      if (!mined) {
+        setMineToast(null)
+        return
+      }
       /* The mine writes a ledger row, so drop the cached page. */
       setLogs((prev) => ({ ...prev, [currencyTab]: undefined }))
-      setMinedPool(null)
       /*
          And show what it paid. Read from the chain rather than taken
          from the bar: the pool moves between the two, so the figure
          beside the bar is a projection and this is not.
       */
-      setMinedRewards(await readMinedRewards(historyId))
+      const rewards = await readMinedRewards(historyId)
+      setMineToast((t) => (t ? { ...t, rewards } : t))
     })
   }
   const onSaveTools = (ids: string[]) =>
@@ -632,10 +648,10 @@ export default function Profile({ section = 'account' }: { section?: Section }) 
 
       {tab === 'stats' && <StatsTab player={player} />}
 
-      {minedRewards.length > 0 && (
-        <MineCelebration
-          rewards={minedRewards}
-          onClose={() => setMinedRewards([])}
+      {mineToast && (
+        <MineToast
+          state={mineToast}
+          onClose={() => setMineToast(null)}
         />
       )}
     </div>
