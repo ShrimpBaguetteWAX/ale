@@ -461,8 +461,9 @@ interface Shown {
 /* A wallet with fighters and cards, for picking a team as someone with none. */
 const ROSTER_WALLET = '5thba.wam'
 const IS_FRAME = new URLSearchParams(location.search).has('frame')
-const DESK_W = 1280
-const DESK_H = 820
+/* A Full HD screen, 16:9 — the desktop most players have — scaled to fit. */
+const DESK_W = 1920
+const DESK_H = 1080
 
 /** Both halves read the same tournament: the real one, or one made up. */
 function useTournament(source: Source) {

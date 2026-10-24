@@ -6114,7 +6114,8 @@
 .ptour--desk {
   gap: 18px;
   width: 100%;
-  max-width: 1180px;
+  /* The game's own content width: a 16:9 screen used to its edges. */
+  max-width: var(--maxw);
   margin: 0 auto;
   padding: 8px 0 40px;
 }
@@ -6167,8 +6168,8 @@
 /* Two columns: what is happening, and what it is worth. */
 .ptour__cols {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 360px;
-  gap: 20px;
+  grid-template-columns: minmax(0, 1fr) clamp(340px, 30%, 440px);
+  gap: 24px;
   align-items: start;
 }
 .ptour__col {
