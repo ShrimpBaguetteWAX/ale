@@ -2388,3 +2388,508 @@ button.prew__row:hover:not(:disabled) {
   color: #ffd979;
   font-weight: var(--fw-bold);
 }
+
+/* ---------- Account on a phone ---------- */
+
+.pacc__head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.pacc__av {
+  flex: none;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  object-fit: cover;
+  box-shadow: 0 0 0 2px rgb(0 186 255 / 60%);
+}
+.pacc__who {
+  display: grid;
+  flex: 1;
+  gap: 1px;
+  min-width: 0;
+}
+.pacc__who b {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 800;
+}
+.pacc__who small {
+  overflow: hidden;
+  font-size: 11px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--text-faint);
+}
+.pacc__who em {
+  font-style: normal;
+  color: #ffd979;
+}
+.pacc__pen,
+.pacc__leave {
+  display: grid;
+  flex: none;
+  place-items: center;
+  border: 0;
+  border-radius: 8px;
+  background: rgb(255 255 255 / 8%);
+  color: var(--text-faint);
+}
+.pacc__pen {
+  width: 24px;
+  height: 22px;
+}
+.pacc__leave {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 14%);
+}
+.pacc__pen svg,
+.pacc__leave svg {
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.pacc__leave svg {
+  width: 17px;
+  height: 17px;
+}
+.pacc__warn {
+  color: #ff8fa0;
+}
+
+/* Something to claim, in the gold the claim strips use. */
+.pacc__claim {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px 8px 12px;
+  border-radius: 12px;
+  background: rgb(8 14 28 / 66%);
+  box-shadow: inset 0 0 0 1px rgb(246 168 0 / 35%);
+}
+.pacc__claim span {
+  display: grid;
+  flex: 1;
+}
+.pacc__claim b {
+  font-size: var(--fs-xs);
+}
+.pacc__claim small {
+  font-size: 10.5px;
+  color: var(--text-faint);
+}
+.pacc__list {
+  overflow: hidden;
+  border-radius: 12px;
+  background: rgb(8 14 28 / 66%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 10%);
+}
+
+/* One avatar track per row. */
+.ptrack {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 10px;
+  border: 0;
+  background: none;
+  color: var(--white);
+  text-align: left;
+}
+.ptrack + .ptrack,
+.pstat + .pstat {
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 7%);
+}
+.ptrack__icon {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+}
+.ptrack__text {
+  display: grid;
+  flex: 1;
+  gap: 4px;
+  min-width: 0;
+}
+.ptrack__text b {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: var(--fs-xs);
+}
+.ptrack__text b em {
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 800;
+  color: #cfd8e6;
+}
+.ptrack__pips {
+  display: flex;
+  gap: 3px;
+}
+.ptrack__pips i {
+  flex: 1;
+  height: 5px;
+  border-radius: 2px;
+  background: rgb(255 255 255 / 14%);
+}
+.ptrack__pips i.is-unlocked,
+.ptrack__pips i.is-active {
+  background: var(--cyan);
+}
+.ptrack__pips i.is-ready {
+  background: #f6a800;
+}
+.ptrack__text small {
+  font-size: 10.5px;
+  color: var(--text-faint);
+}
+.ptrack__gold {
+  font-weight: var(--fw-bold);
+  color: #ffd979;
+}
+.ptrack__next {
+  flex: none;
+  width: 38px;
+  height: 38px;
+  border-radius: 9px;
+  object-fit: cover;
+  opacity: 0.75;
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 20%);
+}
+
+/* The tiers of one track, in its sheet. */
+.ptiers {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+.ptier {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  padding: 8px 6px 10px;
+  border-radius: 12px;
+  background: rgb(8 14 28 / 66%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 10%);
+}
+.ptier.is-active {
+  box-shadow: inset 0 0 0 2px var(--cyan);
+}
+.ptier.is-ready {
+  box-shadow: inset 0 0 0 2px #f6a800;
+}
+.ptier__art {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 9px;
+  object-fit: cover;
+}
+.ptier.is-locked .ptier__art {
+  opacity: 0.55;
+}
+.ptier__need {
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 800;
+}
+.ptier .btn {
+  width: 100%;
+  min-height: 28px;
+}
+.ptier__badge {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  min-height: 28px;
+  border-radius: 8px;
+  font-family: var(--font-display);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  background: rgb(0 186 255 / 85%);
+  color: #00131f;
+}
+.ptier__badge--ready {
+  background: linear-gradient(180deg, #ffd979, #f6a800);
+  color: #2a1700;
+}
+.ptier__bar {
+  display: block;
+  width: 100%;
+  height: 5px;
+  margin: 11px 0 12px;
+  overflow: hidden;
+  border-radius: 3px;
+  background: rgb(255 255 255 / 14%);
+}
+.ptier__bar i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: rgb(255 255 255 / 85%);
+}
+
+/* CPU: two gauges side by side. */
+.pacc__gauges {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.pgauge {
+  display: grid;
+  justify-items: center;
+  gap: 3px;
+  padding: 12px 8px;
+  border-radius: 12px;
+  background: rgb(8 14 28 / 66%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 10%);
+  text-align: center;
+}
+.pgauge > b {
+  font-size: var(--fs-xs);
+}
+.pgauge > small {
+  font-size: 10.5px;
+  color: var(--text-faint);
+}
+.pgauge .btn,
+.pgauge__note {
+  width: 100%;
+  min-height: 30px;
+  margin-top: 4px;
+}
+.pgauge__note {
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  font-size: 10.5px;
+  font-weight: var(--fw-bold);
+  color: var(--text-faint);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 12%);
+}
+.pring2 {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 92px;
+  height: 92px;
+}
+.pring2 svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.pring2__track,
+.pring2__fill {
+  fill: none;
+  stroke-width: 8;
+}
+.pring2__track {
+  stroke: rgb(255 255 255 / 12%);
+}
+.pring2__fill {
+  stroke-linecap: round;
+}
+.pring2--go .pring2__fill {
+  stroke: var(--cyan);
+}
+.pring2--ok .pring2__fill {
+  stroke: var(--teal);
+}
+.pring2--low .pring2__fill {
+  stroke: #ff6d85;
+}
+.pring2__in {
+  display: grid;
+  justify-items: center;
+  line-height: 1.1;
+}
+.pring2__in b {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 800;
+}
+.pring2__in small {
+  font-size: 9.5px;
+  font-weight: var(--fw-bold);
+  color: var(--text-faint);
+}
+
+/* Stats, grouped, with where you rank. */
+.pacc__group {
+  display: grid;
+  gap: 8px;
+}
+.pstat {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 40px;
+  padding: 6px 12px;
+  border: 0;
+  background: none;
+  color: var(--white);
+  text-align: left;
+}
+.pstat__icon {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+}
+.pstat__name {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--fs-xs);
+  font-weight: 600;
+}
+.pstat__rank {
+  display: inline-flex;
+  flex: none;
+  align-items: baseline;
+  gap: 3px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  font-family: var(--font-display);
+  font-size: 10.5px;
+  font-weight: 800;
+  color: #cfd8e6;
+  background: rgb(255 255 255 / 7%);
+}
+.pstat__rank em {
+  font-family: var(--font-body);
+  font-size: 9px;
+  font-style: normal;
+  font-weight: 600;
+  color: var(--text-faint);
+}
+.pstat__rank.is-top {
+  color: #2a1700;
+  background: linear-gradient(180deg, #ffd979, #f6a800);
+}
+.pstat__rank.is-top em {
+  color: #5a3a00;
+}
+.pstat__v {
+  flex: none;
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+/* Auto-sign on a phone: three choices, the switches only under Custom. */
+.pauto {
+  display: grid;
+  gap: 8px;
+}
+.pauto__on {
+  padding: 1px 6px;
+  border-radius: 5px;
+  font-family: var(--font-display);
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  color: #00131f;
+  background: var(--teal);
+}
+.pauto__opt {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 11px 12px;
+  border: 0;
+  border-radius: 12px;
+  background: rgb(8 14 28 / 66%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 10%);
+  color: var(--white);
+  text-align: left;
+}
+.pauto__opt.is-on {
+  background: rgb(0 186 255 / 8%);
+  box-shadow: inset 0 0 0 2px var(--cyan);
+}
+.pauto__radio {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 2px rgb(255 255 255 / 35%);
+}
+.pauto__opt.is-on .pauto__radio {
+  box-shadow: inset 0 0 0 5px var(--cyan);
+}
+.pauto__text {
+  display: grid;
+  flex: 1;
+  gap: 1px;
+}
+.pauto__text b {
+  font-size: var(--fs-xs);
+}
+.pauto__text small {
+  font-size: 10.5px;
+  line-height: 1.35;
+  color: var(--text-faint);
+}
+.pauto__opt em {
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 800;
+  color: var(--text-faint);
+}
+.pauto__groups {
+  display: grid;
+  gap: 6px;
+}
+.pauto__groups .autosign__group {
+  padding: 10px 12px;
+}
+.pauto__groups .autosign__text strong {
+  font-family: var(--font-body);
+  font-size: var(--fs-xs);
+  letter-spacing: 0;
+}
+.pauto__groups .autosign__text span {
+  font-size: 10.5px;
+  line-height: 1.35;
+}
+.pauto__never,
+.pauto__hint {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.4;
+  text-align: center;
+  color: var(--text-faint);
+}
+.pauto__never {
+  color: #ffd08a;
+}
+.pauto__hint--warn {
+  color: #ff8fa0;
+}
+
+/* The board in a phone sheet: the rows a little tighter, the hint centred. */
+.statboard--sheet .statline {
+  padding-inline: 4px;
+}
+.statboard--sheet .hint {
+  text-align: center;
+}

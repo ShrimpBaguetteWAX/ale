@@ -19,17 +19,11 @@ import {
 } from '@/pools/rules'
 import { useGame } from '@/state/useGame'
 import { kvToRecord, type Avatar, type Player } from '@/chain/types'
-import {
-  fetchAllPlayerStats,
-  rankBy,
-  type StatRank,
-} from '@/account/statboard'
-/* The same medal colours the dungeon and arena boards use. */
-import { rankClass } from '@/leaderboard/rules'
 import { landId } from '@/chain/landId'
 import { byQuality } from '@/dungeon/nftFighter'
-import { PlayerAvatar } from '@/components/PlayerAvatar'
 import { AutoSign } from '@/components/AutoSign'
+import { prettyStat, statIconFor } from '@/account/stats'
+import { StatBoard } from '@/account/StatLeaderboard'
 import { landThumbStyle } from '@/map/terrain'
 import type { MiningTool } from '@/chain/atomic'
 import {
@@ -87,14 +81,12 @@ import {
 import { randomHistoryId } from '@/dungeon/queries'
 import { useAction } from '@/wharf/useAction'
 import { useChainQuery } from '@/chain/useChainQuery'
-import { useModal } from '@/components/useModal'
 import { useLazyConfig } from '@/state/useConfig'
 import { DIRTIES } from '@/wharf/actions'
 import {
   readMinedRewards,
 } from '@/pools/MineCelebration'
 import { MineToast, type MineToastState } from '@/pools/MineToast'
-import { readableError } from '@/wharf/errors'
 import { formatAsset, formatNumber, formatDecimals, formatStat } from '@/format'
 import { asset } from '@/assets'
 import { GameImg } from '@/components/GameImg'
@@ -102,6 +94,7 @@ import { usePhone } from '@/components/usePhone'
 import { MAX_TOOLS } from '@/rewards/rules'
 import { useMiningTools } from '@/rewards/useMiningTools'
 import { PhoneRewards } from '@/rewards/PhoneRewards'
+import { PhoneAccount, type AccountTab } from '@/account/PhoneAccount'
 
 /**
  * Account.
@@ -161,82 +154,6 @@ type Busy =
   | 'cpu'
   | 'mine'
   | null
-
-/*
- * Stat keys that do not read as English once the underscores are gone.
- *
- * `alf` is the farming contract's own prefix — nothing in the game is called
- * that, and "Alf credits earned" reads as a name rather than a section.
- */
-const STAT_RENAMES: [RegExp, string][] = [[/^alf_credits/, 'Farming Credits']]
-
-function prettyStat(key: string): string {
-  for (const [pattern, name] of STAT_RENAMES) {
-    if (pattern.test(key)) return key.replace(pattern, name).replace(/_/g, ' ')
-  }
-  return key.replace(/_/g, ' ').replace(/^./, (c) => c.toUpperCase())
-}
-
-/**
- * An icon for a tracked stat, where one is unambiguous.
- *
- * Matched on the stat's own words rather than a key-by-key table: the
- * contract adds `permstats` entries as features ship, and a table would show
- * a bare row for every new one until somebody remembered to extend it. The
- * order matters — `energy_saved_recruiting` is about energy, not recruits,
- * so the currencies are tested before the activities.
- *
- * Anything unmatched simply has no icon, which is the honest answer for a
- * stat nobody has given a meaning yet.
- */
-const STAT_ICONS: [RegExp, string][] = [
-  /* Currencies first: several activity words appear in currency stats. */
-  [/^credits/, '/assets/icons/credits.png'],
-  [/^gems/, '/assets/icons/gems.png'],
-  [/^energy/, '/assets/icons/energy.png'],
-  [/^shards/, '/assets/icons/shards.svg'],
-  [/^tlm/, '/assets/icons/tlm.svg'],
-  [/^wax/, '/assets/icons/wax-coin.png'],
-  /*
-     Two currency stats that do not start with the currency's own name, so
-     the rules above cannot reach them. Both are checked against the
-     contract rather than guessed from the wording: `market.cpp` pays
-     `market_earned` out of `gem_payout` and charges `market_spent` in gems,
-     and `nftstake.cpp` hands `alf_credits_claimed` to `inline_gaincur` in
-     the same argument slot that `sellfighter` fills with credits.
-  */
-  [/^market_(earned|spent)/, '/assets/icons/gems.png'],
-  [/^alf_credits/, '/assets/icons/credits.png'],
-
-  /* Places and activities. */
-  [/^arenas/, '/assets/icons/arena.svg'],
-  [/dungeon/, '/assets/icons/dungeons.svg'],
-  [/^taverns/, '/assets/markers/tavern.svg'],
-  [/^buildings/, '/assets/icons/build.png'],
-  [/^portals/, '/assets/old-markers/portal.svg'],
-  [/^quests/, '/assets/icons/menu/quests.png'],
-  [/^recruits/, '/assets/icons/add-fighter.svg'],
-  [/^nfts_staked/, '/assets/icons/menu/card.png'],
-  [/^premium/, '/assets/icons/account-legend.svg'],
-  [/travel/, '/assets/icons/menu/world.png'],
-  [/^level_ups/, '/assets/icons/medal.svg'],
-  [/^ascensions/, '/assets/icons/menu/ascension.png'],
-  /*
-     The game's own "raised" mark, which is what boosting does: `maps.cpp`
-     records the distance a top-up moves a building's boost score, so the
-     figure is a lift rather than a place or a currency.
-  */
-  [/^boosting/, '/assets/icons/arrows/green-duble-up.png'],
-
-  /* Combat. */
-  [/^knockouts/, '/assets/icons/swords.svg'],
-  [/^damage_dealt/, '/assets/icons/stats/damage.svg'],
-  [/^damage_(taken|blocked)/, '/assets/icons/shield.svg'],
-]
-
-export function statIconFor(key: string): string | undefined {
-  return STAT_ICONS.find(([re]) => re.test(key))?.[1]
-}
 
 
 
@@ -377,6 +294,11 @@ export default function Profile({ section = 'account' }: { section?: Section }) 
   */
   const phone = usePhone()
   const phoneRewards = phone && section === 'rewards'
+  const phoneAccount = phone && section === 'account'
+  const leave = async () => {
+    await disconnect()
+    navigate('/', { replace: true })
+  }
   const onMine = (pool: string, times: number) => {
     if (!currencyTab) return
     setMinedPool(pool)
@@ -462,7 +384,7 @@ export default function Profile({ section = 'account' }: { section?: Section }) 
 
   return (
     <div className="account">
-      {!phoneRewards && (
+      {!phoneRewards && !phoneAccount && (
       <header className="account__head">
         <span
           className="account__avatar"
@@ -503,7 +425,7 @@ export default function Profile({ section = 'account' }: { section?: Section }) 
          on the line you already read to move around this screen, at the
          opposite end so it is never the thing a thumb reaches first.
       */}
-      {!phoneRewards && (
+      {!phoneRewards && !phoneAccount && (
       <div className="accounthead">
       <div
         className="accounttabs"
@@ -538,10 +460,7 @@ export default function Profile({ section = 'account' }: { section?: Section }) 
           className="btn btn--ghost accounthead__leave"
           title="Disconnect wallet"
           aria-label="Disconnect wallet"
-          onClick={async () => {
-            await disconnect()
-            navigate('/', { replace: true })
-          }}
+          onClick={leave}
         >
           {/* The glyph carries it on a phone, where the words would push the
               tabs onto a line of their own. */}
@@ -556,7 +475,30 @@ export default function Profile({ section = 'account' }: { section?: Section }) 
       </div>
       )}
 
-      {tab === 'avatar' && (
+      {phoneAccount && (
+        <PhoneAccount
+          tab={(['avatar', 'cpu', 'autosign', 'stats'].includes(tab) ? tab : 'avatar') as AccountTab}
+          onTab={setTab}
+          player={player}
+          board={board}
+          busy={busy}
+          canAct={!!session}
+          cpu={{ config: cpuCfg, usage: cpuUse, account: accountCpu }}
+          onTag={(tag) =>
+            void run('tag', () => setPlayertag(session!, tag), 'Gamertag saved.', opts('setPlayertag'))
+          }
+          onSelect={(id) =>
+            void run('avatar', () => setAvatarId(session!, id), 'Avatar selected !', opts('setAvatarId'))
+          }
+          onUnlock={(ids) =>
+            void run('unlock', () => unlockAvatars(session!, ids), 'Avatar unlocked !', opts('unlockAvatars'))
+          }
+          onClaimCpu={() => void run('cpu', () => claimCpu(session!), 'CPU claimed.', cpuOpts)}
+          onDisconnect={() => void leave()}
+        />
+      )}
+
+      {tab === 'avatar' && !phoneAccount && (
         <AvatarTab
           board={board}
           player={player}
@@ -632,7 +574,7 @@ export default function Profile({ section = 'account' }: { section?: Section }) 
         />
       )}
 
-      {tab === 'cpu' && (
+      {tab === 'cpu' && !phoneAccount && (
         <CpuTab
           player={player}
           config={cpuCfg}
@@ -678,9 +620,9 @@ export default function Profile({ section = 'account' }: { section?: Section }) 
         />
       )}
 
-      {tab === 'autosign' && <AutoSign />}
+      {tab === 'autosign' && !phoneAccount && <AutoSign />}
 
-      {tab === 'stats' && <StatsTab player={player} />}
+      {tab === 'stats' && !phoneAccount && <StatsTab player={player} />}
 
       {mineToast && (
         <MineToast
@@ -1958,146 +1900,6 @@ export function CpuTab({
 }
 
 /* ---------- stats ---------- */
-
-/**
- * Where one stat puts you against everybody else.
- *
- * Opened from a row in All stats. The read behind it covers every stat at
- * once, so the first board a player opens pays for the rest of them.
- *
- * The player's own row is pinned below the top of the board when they are not
- * already in it — a leaderboard you cannot find yourself on is a list of
- * strangers, and "you are 47th of 61" is the thing most people opened it to
- * learn.
- */
-function StatBoard({
-  statKey,
-  label,
-  icon,
-  wallet,
-  onClose,
-}: {
-  statKey: string
-  label: string
-  icon?: string
-  wallet: string
-  onClose: () => void
-}) {
-  const [ranks, setRanks] = useState<StatRank[] | null>(null)
-  const [error, setError] = useState<string | null>(null)
-
-  useEffect(() => {
-    let live = true
-    fetchAllPlayerStats()
-      .then((players) => live && setRanks(rankBy(players, statKey)))
-      .catch((err) => live && setError(readableError(err)))
-    return () => {
-      live = false
-    }
-  }, [statKey])
-
-  const TOP = 25
-  const mine = ranks?.find((r) => r.wallet === wallet)
-  const shown = ranks?.slice(0, TOP) ?? []
-  const minePinned = mine && mine.rank > TOP ? mine : undefined
-  const panel = useModal(onClose)
-
-  return (
-    <div
-      className="sheet"
-      role="dialog"
-      aria-modal="true"
-      aria-label={`${label} leaderboard`}
-      onClick={onClose}
-    >
-      <div
-        className="sheet__panel"
-        ref={panel}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="row" style={{ marginBottom: 'var(--sp-3)' }}>
-          <span className="panel__title statboard__title">
-            {icon && <img className="statline__icon" src={asset(icon)} alt="" />}
-            {label}
-          </span>
-          <span className="spacer" />
-          <button type="button" className="btn btn--ghost btn--sm" onClick={onClose}>
-            Close
-          </button>
-        </div>
-
-        {error && <div className="alert alert--error">{error}</div>}
-
-        {!ranks && !error && <p className="muted">Reading every player…</p>}
-
-        {ranks && ranks.length === 0 && (
-          <p className="muted">Nobody has recorded this yet.</p>
-        )}
-
-        {ranks && ranks.length > 0 && (
-          <>
-            {shown.map((r) => (
-              <StatBoardRow
-                key={r.wallet}
-                row={r}
-                statKey={statKey}
-                you={r.wallet === wallet}
-              />
-            ))}
-
-            {minePinned && (
-              <>
-                <div className="statboard__gap">
-                  <span>
-                    {minePinned.rank - TOP - 1} more
-                  </span>
-                </div>
-                <StatBoardRow row={minePinned} statKey={statKey} you />
-              </>
-            )}
-
-            <p className="hint" style={{ marginTop: 'var(--sp-3)' }}>
-              {ranks.length} player{ranks.length === 1 ? '' : 's'} have recorded this.
-            </p>
-          </>
-        )}
-      </div>
-    </div>
-  )
-}
-
-export function StatBoardRow({
-  row,
-  statKey,
-  you,
-}: {
-  row: StatRank
-  statKey: string
-  you: boolean
-}) {
-  return (
-    <div className={`statline statboard__row${you ? ' statboard__row--you' : ''}`}>
-      <span className="statline__k">
-        <span className={`rank ${rankClass(row.rank)}`}>{row.rank}</span>
-        {/*
-          The same face the leaderboards show. These boards rank the same
-          people off the same field, and a row of wallet addresses is what the
-          avatars were unlocked to replace.
-        */}
-        <PlayerAvatar
-          id={row.avatar}
-          name={row.playertag || row.wallet}
-          className="statboard__avatar"
-          size={22}
-        />
-        {row.playertag || row.wallet}
-      </span>
-      <span className="statline__v mono">
-        {formatStat(statKey, row.value)}
-      </span>
-    </div>
-  )
-}
 
 export function StatsTab({ player }: { player: Player }) {
   const [showAll, setShowAll] = useState(false)

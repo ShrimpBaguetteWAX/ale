@@ -92,6 +92,51 @@ export function claimableAvatars(board: AvatarEntry[]): number[] {
   return board.filter((e) => e.state === 'ready').map((e) => Number(e.avatar.avatar_id))
 }
 
+/**
+ * The avatars as tracks: every tier of one `permstats` counter, cheapest
+ * first — Arenas Won at 40, 125, 500, 1,500, 3,000 and 6,000.
+ *
+ * Ninety-odd avatars are really eighteen ladders, and a ladder answers what
+ * a grid cannot: how far up it you are and what the next rung costs.
+ */
+export interface AvatarTrack {
+  /** The counter every tier of it reads. */
+  stat: string
+  label: string
+  have: number
+  tiers: AvatarEntry[]
+  /** Earned but not claimed yet. */
+  ready: number
+  /** The cheapest tier still out of reach. */
+  next?: AvatarEntry
+}
+
+/**
+ * Tracks with something to claim first, then the ones closest to their next
+ * avatar, and finished tracks last.
+ */
+export function avatarTracks(board: AvatarEntry[]): AvatarTrack[] {
+  const byStat = new Map<string, AvatarEntry[]>()
+  for (const entry of board) {
+    const key = entry.avatar.permstats_requirement
+    byStat.set(key, [...(byStat.get(key) ?? []), entry])
+  }
+  const progress = (t: AvatarTrack) => (t.next ? t.have / Math.max(1, t.next.need) : -1)
+  return [...byStat.entries()]
+    .map(([stat, entries]): AvatarTrack => {
+      const tiers = [...entries].sort((a, b) => a.need - b.need)
+      return {
+        stat,
+        label: tiers[0].avatar.avatar_name,
+        have: Math.max(...tiers.map((t) => t.have)),
+        tiers,
+        ready: tiers.filter((t) => t.state === 'ready').length,
+        next: tiers.find((t) => t.state === 'locked'),
+      }
+    })
+    .sort((a, b) => Number(b.ready > 0) - Number(a.ready > 0) || progress(b) - progress(a))
+}
+
 export function avatarArt(id: number | string): string {
   return asset(`/assets/avatar/${id}.webp`)
 }
