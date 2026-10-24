@@ -405,3 +405,50 @@ export function mineEstimate(power: number, current: number): number {
   const used = Math.min(Math.max(0, power), MAX_MINE_POWER)
   return Math.floor((current * used) / 1_000_000)
 }
+
+/* ---------- mining everything that is ready ---------- */
+
+/** One pool's share of a "mine everything" signature. */
+export interface QueuedMine {
+  entry: PoolEntry
+  times: number
+  /** What those mines should pay, in the pool's smallest unit. */
+  estimate: number
+}
+
+/**
+ * Every ready mine in a set of pools, as one signature can take them.
+ *
+ * Capped at `MAX_BATCH_MINES` and handed out in turns — one from each pool
+ * that has one, then round again — so a pool with many banked never crowds
+ * the others out of the batch. A pool with no minimum is mined once: it
+ * spends everything there in one go. `claims` is the order the actions go
+ * in, one pool name per mine, which is what `claimPoolRewards` sends.
+ */
+export function mineQueue(
+  board: PoolEntry[],
+  max = MAX_BATCH_MINES,
+): { claims: string[]; byPool: QueuedMine[]; total: number; banked: number } {
+  const left = new Map(
+    board
+      .filter((e) => e.ready)
+      .map((e) => [e, e.anyAmount ? 1 : e.mines] as [PoolEntry, number]),
+  )
+  const banked = [...left.values()].reduce((a, b) => a + b, 0)
+  const claims: string[] = []
+  const counts = new Map<PoolEntry, number>()
+  while (claims.length < max && [...left.values()].some((n) => n > 0)) {
+    for (const [entry, n] of left) {
+      if (n <= 0 || claims.length >= max) continue
+      claims.push(entry.pool)
+      counts.set(entry, (counts.get(entry) ?? 0) + 1)
+      left.set(entry, n - 1)
+    }
+  }
+  const byPool = [...counts].map(([entry, times]) => ({
+    entry,
+    times,
+    estimate: entry.anyAmount ? entry.payout : batchPayout(entry.balance, MINE_POWER, times),
+  }))
+  return { claims, byPool, total: byPool.reduce((s, q) => s + q.estimate, 0), banked }
+}

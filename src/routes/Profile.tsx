@@ -82,6 +82,7 @@ import {
   claimCurrencies,
   unlockRewardRows,
   mineRewardPool,
+  claimPoolRewards,
 } from '@/wharf/actions'
 import { randomHistoryId } from '@/dungeon/queries'
 import { useAction } from '@/wharf/useAction'
@@ -419,6 +420,35 @@ export default function Profile({ section = 'account' }: { section?: Section }) 
       setMineToast((t) => (t ? { ...t, rewards } : t))
     })
   }
+  /*
+     Every ready mine in this currency, in one signature: the same action the
+     victory screen sends, one `claimpreward` per mine under a shared receipt.
+  */
+  const onMineAll = (claims: string[], label: string) => {
+    if (!currencyTab || claims.length === 0) return
+    const historyId = randomHistoryId()
+    setMineToast({ label, times: claims.length, rewards: null })
+    let mined = false
+    void run(
+      'mine',
+      () => claimPoolRewards(session!, claims, historyId),
+      '',
+      {
+        ...opts('claimPoolRewards'),
+        onSettled: () => {
+          mined = true
+        },
+      },
+    ).then(async () => {
+      if (!mined) {
+        setMineToast(null)
+        return
+      }
+      setLogs((prev) => ({ ...prev, [currencyTab]: undefined }))
+      const rewards = await readMinedRewards(historyId)
+      setMineToast((t) => (t ? { ...t, rewards } : t))
+    })
+  }
   const onSaveTools = (ids: string[]) =>
     void run('mining', () => setMiningNfts(session!, ids), 'Mining settings saved !', opts('setMiningNfts'))
   const onShare = (share: number) =>
@@ -565,6 +595,7 @@ export default function Profile({ section = 'account' }: { section?: Section }) 
                   trial: trialPenalty(player.legend_access_expiry, usersCfg?.trial_rewpow_mod),
                   minedPool,
                   onMine,
+                  onMineAll,
                   onClaim,
                   onUnlock: onUnlockRows,
                 }

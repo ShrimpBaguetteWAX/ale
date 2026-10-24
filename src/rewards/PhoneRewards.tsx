@@ -17,7 +17,14 @@ import {
   type Currency,
   type LogCapacity,
 } from '@/account/rules'
-import { batchableMines, poolAmount, poolPayout, MINE_POWER, type PoolEntry } from '@/pools/rules'
+import {
+  batchableMines,
+  mineQueue,
+  poolAmount,
+  poolPayout,
+  MINE_POWER,
+  type PoolEntry,
+} from '@/pools/rules'
 import { byQuality } from '@/dungeon/nftFighter'
 import { useChainQuery } from '@/chain/useChainQuery'
 import { useModal } from '@/components/useModal'
@@ -46,6 +53,8 @@ export interface PhoneCurrencyData {
   trial: number | null
   minedPool: string | null
   onMine: (pool: string, times: number) => void
+  /** Every ready mine at once: one pool name per mine, and what to call it. */
+  onMineAll: (claims: string[], label: string) => void
   onClaim: () => void
   onUnlock: (rows: number) => void
 }
@@ -814,21 +823,117 @@ function earnLink(pool: string): { label: string; to: string } | null {
   return null
 }
 
-function Ring({
-  entry,
-  symbol,
+/* A pool's picture: where its power is earned, or the currency it pays. */
+function poolIcon(pool: string, currency: Currency): string {
+  if (/arena/i.test(pool)) return asset('/assets/icons/arena.svg')
+  if (/dung/i.test(pool)) return asset('/assets/icons/dungeons.svg')
+  return CURRENCY_ICON[currency]
+}
+
+/**
+ * The top of a currency with pools: one Mine for everything that is ready.
+ *
+ * Before the tap it lists what the tap spends — which pool, how many mines,
+ * about what each pays — because with up to ten mines in one signature
+ * there should be no surprise. More than ten banked takes ten, in turns
+ * between the pools, and says how many are left for the next tap. With
+ * nothing ready it shows the pool closest to a mine instead. Its footer
+ * carries the other number this tab used to lead with.
+ */
+function MineCard({
+  board,
+  currency,
   busy,
-  disabled,
-  onOpen,
-  onMine,
+  canAct,
+  onMineAll,
+  footer,
 }: {
-  entry: PoolEntry
-  symbol: string
-  busy: boolean
-  disabled: boolean
-  onOpen: () => void
-  onMine: () => void
+  board: PoolEntry[]
+  currency: Currency
+  busy: string | null
+  canAct: boolean
+  onMineAll: (claims: string[], label: string) => void
+  footer: ReactNode
 }) {
+  const places = CURRENCY_PRECISION[currency]
+  const symbol = CURRENCY_LABEL[currency]
+  const queue = useMemo(() => mineQueue(board), [board])
+  const ready = queue.claims.length > 0
+  const later = queue.banked - queue.claims.length
+  /* The pool nearest a mine, for when nothing is ready yet. */
+  const next = board.filter((e) => !e.anyAmount).sort((a, b) => b.progress - a.progress)[0]
+  const link = next ? earnLink(next.pool) : null
+
+  return (
+    <div className={`minecard${ready ? ' minecard--ready' : ''}`}>
+      <div className="minecard__head">
+        <strong>{ready ? 'Ready to mine' : 'Next mine'}</strong>
+        {ready && (
+          <span>
+            {later > 0
+              ? `${queue.claims.length} of ${queue.banked} in this signature`
+              : 'one signature'}
+          </span>
+        )}
+      </div>
+
+      {ready ? (
+        <>
+          {queue.byPool.map((q) => (
+            <div className="minecard__line" key={q.entry.pool}>
+              <img src={poolIcon(q.entry.pool, currency)} alt="" />
+              <span>{q.entry.label}</span>
+              <i>×{q.times}</i>
+              <b className="mono">~{poolAmount(q.estimate, places)}</b>
+            </div>
+          ))}
+          <button
+            type="button"
+            className="btn btn--gold minecard__go"
+            disabled={!canAct || busy !== null}
+            onClick={() =>
+              onMineAll(queue.claims, queue.byPool.map((q) => q.entry.label).join(' · '))
+            }
+          >
+            {busy === 'mine' && <span className="spinner" />}
+            {/* The word, not the icon: a gold coin vanishes on a gold button. */}
+            Mine {queue.claims.length} · ~{poolAmount(queue.total, places)} {symbol}
+          </button>
+        </>
+      ) : next ? (
+        <div className="minecard__next">
+          <div className="minecard__line">
+            <img src={poolIcon(next.pool, currency)} alt="" />
+            <span>{next.label}</span>
+            <b className="mono">{Math.floor(next.progress * 100)}%</b>
+          </div>
+          <div className="poolsheet__bar">
+            <i style={{ width: `${Math.min(100, Math.round(next.progress * 100))}%` }} />
+          </div>
+          <div className="minecard__nextfoot">
+            <small>{formatNumber(Math.max(0, MINE_POWER - next.power))} power to go</small>
+            {link && (
+              <Link className="btn btn--sm" to={link.to}>
+                {link.label}
+              </Link>
+            )}
+          </div>
+        </div>
+      ) : (
+        <p className="minecard__none">No reward power banked yet.</p>
+      )}
+
+      <div className="minecard__foot">
+        {later > 0 && (
+          <span className="minecard__later">{formatNumber(later)} more after this ·</span>
+        )}
+        {footer}
+      </div>
+    </div>
+  )
+}
+
+function Ring({ entry, symbol, onOpen }: { entry: PoolEntry; symbol: string; onOpen: () => void }) {
   const r = 31
   const around = 2 * Math.PI * r
   const fill = Math.min(1, entry.anyAmount ? (entry.power > 0 ? 1 : 0) : entry.progress)
@@ -862,16 +967,11 @@ function Ring({
         </span>
       </button>
       <strong className="pring__name">{ringLabel(entry.label)}</strong>
+      {/* The Mine on top does the mining; a ring says what it holds. */}
       {entry.ready ? (
-        <button
-          type="button"
-          className="btn btn--sm btn--gold pring__mine"
-          disabled={disabled}
-          onClick={onMine}
-        >
-          {busy && <span className="spinner" />}
-          Mine
-        </button>
+        <small className="pring__togo pring__togo--ready">
+          {entry.anyAmount ? 'Ready' : `${formatNumber(entry.mines)} ready`}
+        </small>
       ) : (
         <small className="pring__togo">
           {entry.anyAmount
@@ -1013,7 +1113,8 @@ function PhoneCurrency({
   canAct: boolean
   data: PhoneCurrencyData
 }) {
-  const { currency, log, capacity, board, trial, minedPool, onMine, onClaim, onUnlock } = data
+  const { currency, log, capacity, board, trial, minedPool, onMine, onMineAll, onClaim, onUnlock } =
+    data
   const places = CURRENCY_PRECISION[currency]
   const symbol = CURRENCY_LABEL[currency]
   const pending = unclaimed(player, currency)
@@ -1041,48 +1142,96 @@ function PhoneCurrency({
     return values.map((v) => Math.max(0.06, Math.sqrt(v / top)))
   }, [rows])
 
+  /*
+     A currency with pools leads with the mine. What used to lead — the TLM
+     waiting to be claimed, or what Shards have earned — is its footer.
+  */
+  const earnedSoFar = formatStat(EARNED_STAT[currency], earned(player, currency))
+  const mineFooter = pays ? (
+    pending > 0 ? (
+      <>
+        <span>
+          Also waiting:{' '}
+          <b className="mono">
+            {heroAmount(pending)} {symbol}
+          </b>
+        </span>
+        <button
+          type="button"
+          className="btn btn--sm"
+          disabled={!canAct || busy !== null}
+          onClick={onClaim}
+        >
+          {busy === 'claim' && <span className="spinner" />}
+          Claim
+        </button>
+      </>
+    ) : (
+      <span>Nothing waiting to claim</span>
+    )
+  ) : (
+    <span>
+      Earned so far:{' '}
+      <b className="mono">
+        {earnedSoFar} {symbol}
+      </b>
+    </span>
+  )
+
   return (
     <>
-      <div className="prew__hero">
-        <img src={CURRENCY_ICON[currency]} alt="" className="prew__heroicon" />
-        {/*
+      {board.length > 0 && (
+        <MineCard
+          board={board}
+          currency={currency}
+          busy={busy}
+          canAct={canAct}
+          onMineAll={onMineAll}
+          footer={mineFooter}
+        />
+      )}
+      {board.length === 0 && (
+        <div className="prew__hero">
+          <img src={CURRENCY_ICON[currency]} alt="" className="prew__heroicon" />
+          {/*
           Only TLM waits to be claimed. Shards and WAX are paid straight out,
           so for them the one number is what this account has earned in all,
           from the game's own lifetime counter.
         */}
-        <span className="prew__herolabel">{pays ? 'Waiting to claim' : 'Earned so far'}</span>
-        <strong className={`prew__heronum mono${pays && pending > 0 ? ' is-gold' : ''}`}>
-          {pays
-            ? heroAmount(pending)
-            : formatStat(EARNED_STAT[currency], earned(player, currency))}
-        </strong>
-        {!pays ? (
-          <small className="prew__heronote">Paid straight to your wallet</small>
-        ) : pending > 0 ? (
-          <button
-            type="button"
-            className="btn btn--gold prew__claim"
-            disabled={!canAct || busy !== null}
-            onClick={onClaim}
-          >
-            {busy === 'claim' && <span className="spinner" />}
-            Claim
-          </button>
-        ) : (
-          <small className="prew__heronote">Nothing to claim</small>
-        )}
-        {/*
+          <span className="prew__herolabel">{pays ? 'Waiting to claim' : 'Earned so far'}</span>
+          <strong className={`prew__heronum mono${pays && pending > 0 ? ' is-gold' : ''}`}>
+            {pays
+              ? heroAmount(pending)
+              : formatStat(EARNED_STAT[currency], earned(player, currency))}
+          </strong>
+          {!pays ? (
+            <small className="prew__heronote">Paid straight to your wallet</small>
+          ) : pending > 0 ? (
+            <button
+              type="button"
+              className="btn btn--gold prew__claim"
+              disabled={!canAct || busy !== null}
+              onClick={onClaim}
+            >
+              {busy === 'claim' && <span className="spinner" />}
+              Claim
+            </button>
+          ) : (
+            <small className="prew__heronote">Nothing to claim</small>
+          )}
+          {/*
           `claimcur` zeroes unclaimed shards and WAX without sending them, so
           a balance there is named rather than offered a button that would
           destroy it.
         */}
-        {!pays && pending > 0 && (
-          <p className="rsheet__hint rsheet__hint--error">
-            The game holds {formatDecimals(pending, places)} {symbol} against your account, but the
-            claim action clears it without paying it out. Nothing here can release it.
-          </p>
-        )}
-      </div>
+          {!pays && pending > 0 && (
+            <p className="rsheet__hint rsheet__hint--error">
+              The game holds {formatDecimals(pending, places)} {symbol} against your account, but
+              the claim action clears it without paying it out. Nothing here can release it.
+            </p>
+          )}
+        </div>
+      )}
 
       {board.length > 0 && (
         <>
@@ -1094,12 +1243,8 @@ function PhoneCurrency({
               <Ring
                 key={entry.pool}
                 entry={entry}
-
                 symbol={symbol}
-                busy={busy === 'mine' && minedPool === entry.pool}
-                disabled={!canAct || busy !== null}
                 onOpen={() => setOpenPool(entry.pool)}
-                onMine={() => onMine(entry.pool, 1)}
               />
             ))}
           </div>
