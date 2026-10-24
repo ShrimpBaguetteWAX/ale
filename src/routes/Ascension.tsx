@@ -109,7 +109,7 @@ export default function Ascension() {
   const odds = useLazyConfig('upgrades') ?? EMPTY_ODDS
   /* Narrowed where it enters the screen, so the offer panel keeps taking
      `Busy` and every comparison still has to name a real button. */
-  const { busy: busyKey, error, notice, run, setError } = useAction()
+  const { busy: busyKey, error, run, setError } = useAction()
   const busy = busyKey as Busy
 
   const [targetId, setTargetId] = useState<number | null>(null)
@@ -251,7 +251,6 @@ export default function Ascension() {
       </header>
 
       {error && <div className="alert alert--error">{error}</div>}
-      {notice && <div className="alert alert--ok">{notice}</div>}
 
       {pending ? (
         <OfferPanel

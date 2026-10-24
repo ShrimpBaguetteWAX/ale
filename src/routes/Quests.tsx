@@ -119,7 +119,7 @@ export default function Quests() {
   const { active, scopes, config } = data
 
   const [scope, setScope] = useState<Scope>('day')
-  const { busy: rawBusy, error, notice, run } = useAction()
+  const { busy: rawBusy, error, run } = useAction()
   /*
      The map is rebuilt from the hook's single key.
 
@@ -254,7 +254,6 @@ export default function Quests() {
         )}
       </header>
 
-      {notice && <div className="alert alert--ok">{notice}</div>}
       {(error || data.error) && (
         <div className="alert alert--error">
           {error ?? data.error}

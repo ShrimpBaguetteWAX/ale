@@ -181,7 +181,7 @@ export default function Leaderboard() {
   const [tab, setTab] = useState<Tab>('dungeons')
   const [showLede, setShowLede] = useState(false)
   /* A boolean here: this screen has one button. */
-  const { busy: busyKey, error, notice, run } = useAction()
+  const { busy: busyKey, error, run } = useAction()
   const busy = busyKey !== null
 
   const [now, setNow] = useState(() => Date.now())
@@ -284,7 +284,7 @@ export default function Leaderboard() {
         )}
       </header>
 
-      <ActionBanner notice={notice} error={error ?? data.error} />
+      <ActionBanner error={error ?? data.error} />
 
       <div className="lbtabs" role="tablist" aria-label="Leaderboard">
         {(

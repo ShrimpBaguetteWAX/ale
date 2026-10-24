@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, Navigate } from 'react-router-dom'
 import { useGame } from '@/state/useGame'
+import { showToast } from '@/components/toasts'
 import { GameLogo } from '@/components/GameLogo'
 import { SwitchWallet } from '@/components/SwitchWallet'
 import { readableError } from '@/wharf/errors'
@@ -42,7 +43,6 @@ export default function Signup() {
   const [touched, setTouched] = useState(false)
   const [busy, setBusy] = useState<'fee' | 'signup' | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const [notice, setNotice] = useState<string | null>(null)
 
   useEffect(() => {
     document.title = 'Create your commander | Alien Legends'
@@ -59,10 +59,9 @@ export default function Signup() {
     if (!session || !config) return
     setBusy('fee')
     setError(null)
-    setNotice(null)
     try {
       await paySignupFee(session, config)
-      setNotice('Fee received. Now pick your commander name.')
+      showToast('Fee received. Now pick your commander name.')
       // The transfer's side effects need a block to land before the
       // signupstat row is readable, so poll briefly instead of guessing.
       for (let i = 0; i < 6; i++) {
@@ -156,11 +155,6 @@ export default function Signup() {
           </div>
         </div>
 
-        {notice && (
-          <div className="alert alert--ok" style={{ marginBottom: 'var(--sp-4)' }}>
-            {notice}
-          </div>
-        )}
         {error && (
           <div className="alert alert--error" style={{ marginBottom: 'var(--sp-4)' }}>
             {error}

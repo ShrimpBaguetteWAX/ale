@@ -2,6 +2,7 @@ import { describe, expect, it, beforeEach } from 'vitest'
 import { act, renderHook } from '@testing-library/react'
 import { useGame } from '@/state/useGame'
 import { useAction } from '@/wharf/useAction'
+import { useToasts } from '@/components/toasts'
 import { DIRTIES } from '@/wharf/actions'
 import { cacheDropTable, onTableDrop } from '@/chain/tables'
 import { onChoreRefresh } from '@/chores/signal'
@@ -185,7 +186,7 @@ describe('useAction', () => {
        The signature was accepted. A node that then fails to answer is not
        the player's problem and must not be reported as one — before this,
        a single failed re-read turned a successful action into an error
-       banner and no notice at all.
+       banner and no toast at all.
     */
     useGame.setState({
       player: { activestats: { credits: 100 } } as never,
@@ -204,7 +205,7 @@ describe('useAction', () => {
     })
 
     expect(result.current.error).toBeNull()
-    expect(result.current.notice).toBe('Claimed.')
+    expect(useToasts.getState().toasts.map((t) => t.message)).toContain('Claimed.')
   })
 
   it('re-reads past the cache on every round, not just the first', async () => {
@@ -388,6 +389,7 @@ describe('useAction', () => {
   })
 
   it('reports the failure and puts the button back', async () => {
+    useToasts.setState({ toasts: [] })
     const { result } = renderHook(() => useAction())
     await act(async () => {
       await result.current.run(
@@ -401,7 +403,7 @@ describe('useAction', () => {
     })
 
     expect(result.current.busy).toBeNull()
-    expect(result.current.notice).toBeNull()
+    expect(useToasts.getState().toasts).toEqual([])
     expect(result.current.error).toBeTruthy()
   })
 })

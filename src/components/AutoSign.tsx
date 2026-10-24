@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { showToast } from '@/components/toasts'
 import { useGame } from '@/state/useGame'
 import { AUTO_SIGN_GROUPS, savedGroups, type AutoSignGroup } from '@/wharf/autoSign'
 import { applyAutoSign, autoSignState } from '@/wharf/autoSignSetup'
@@ -20,7 +21,6 @@ export function AutoSign() {
   const [elsewhere, setElsewhere] = useState(false)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [notice, setNotice] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
@@ -51,13 +51,12 @@ export function AutoSign() {
   async function save() {
     setSaving(true)
     setError(null)
-    setNotice(null)
     try {
       await applyAutoSign(session, chosen)
       setLive(chosen)
       setActive(chosen.length > 0)
       setElsewhere(false)
-      setNotice(chosen.length ? 'Auto-signing updated.' : 'Auto-signing turned off.')
+      showToast(chosen.length ? 'Auto-signing updated.' : 'Auto-signing turned off.')
     } catch (err) {
       if (!isUserCancel(err)) setError(readableError(err))
     } finally {
@@ -129,7 +128,6 @@ export function AutoSign() {
         {!loading && !session && (
           <span className="autosign__hint">Connect your wallet to set this up.</span>
         )}
-        {notice && <span className="autosign__hint autosign__hint--ok">{notice}</span>}
         {error && <span className="autosign__hint autosign__hint--warn">{error}</span>}
       </div>
     </section>

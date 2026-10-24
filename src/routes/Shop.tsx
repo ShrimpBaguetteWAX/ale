@@ -80,7 +80,7 @@ export default function Shop() {
   const setCategory = (key: string) =>
     setParams(key === SHOP_CATEGORIES[0].key ? {} : { c: key }, { replace: true })
   const [confirming, setConfirming] = useState<ShopItem | null>(null)
-  const { busy, error, notice, run } = useAction()
+  const { busy, error, run } = useAction()
   // Ticks once a second so the cooldown countdowns stay honest.
   const [, setTick] = useState(0)
 
@@ -169,7 +169,6 @@ export default function Shop() {
         </header>
 
         {error && <div className="alert alert--error">{error}</div>}
-        {notice && <div className="alert alert--ok">{notice}</div>}
 
         <div className="tabs" role="tablist">
           {SHOP_CATEGORIES.map((c) => (

@@ -189,7 +189,7 @@ export default function Lands() {
   const { lands, costs, discounts, config } = data
 
   const [selectedKey, setSelectedKey] = useState<string | null>(null)
-  const { busy: rawBusy, error, notice, run } = useAction()
+  const { busy: rawBusy, error, run } = useAction()
   const busy = parseBusy(rawBusy)
 
   /* Boost decays by the hour, so a minute is plenty and costs nothing. */
@@ -280,7 +280,7 @@ export default function Lands() {
         )}
       </header>
 
-      <ActionBanner notice={notice} error={error ?? data.error} />
+      <ActionBanner error={error ?? data.error} />
 
       {data.loading ? (
         <div className="landlist">

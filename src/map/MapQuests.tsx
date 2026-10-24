@@ -56,7 +56,7 @@ export function QuestClaims({
   reload: () => Promise<ActiveQuests | undefined>
 }) {
   const session = useGame((s) => s.session)
-  const { busy, error, notice, run } = useAction()
+  const { busy, error, run } = useAction()
 
   const claim = (quest: Quest) => {
     const r = rewardOf(quest)
@@ -106,7 +106,6 @@ export function QuestClaims({
       })}
       {quests.length === 0 && <p className="hint">Nothing left to claim.</p>}
       {error && <div className="alert alert--error">{error}</div>}
-      {notice && <div className="alert alert--ok">{notice}</div>}
     </div>
   )
 }

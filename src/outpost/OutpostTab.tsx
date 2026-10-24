@@ -57,7 +57,7 @@ function Shards({ raw, className }: { raw: number; className?: string }) {
 export function OutpostTab() {
   const player = useGame((s) => s.player)!
   const session = useGame((s) => s.session)
-  const { busy, error, notice, run } = useAction()
+  const { busy, error, run } = useAction()
   const [confirming, setConfirming] = useState<OutpostOffer | null>(null)
 
   /*
@@ -144,7 +144,7 @@ export function OutpostTab() {
   return (
     <div className="outpost">
       {error && <div className="alert alert--error">{error}</div>}
-      <ActionBanner notice={notice} error={null} />
+      <ActionBanner error={null} />
 
       {/*
         The balance sits above the prices for the same reason the WAX balance

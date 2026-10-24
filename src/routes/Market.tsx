@@ -165,7 +165,7 @@ export default function Market() {
   const [detail, setDetail] = useState<Detail>(null)
   const [dialog, setDialog] = useState<Dialog>(null)
 
-  const { busy, error, notice, run } = useAction()
+  const { busy, error, run } = useAction()
 
   /* A second hand, so the countdowns move without re-reading the chain. */
   const [now, setNow] = useState(() => Date.now())
@@ -307,7 +307,6 @@ export default function Market() {
         </header>
 
         {error && <div className="alert alert--error">{error}</div>}
-        {notice && <div className="alert">{notice}</div>}
 
         <section className="panel">
           <div className="tabs" role="tablist">

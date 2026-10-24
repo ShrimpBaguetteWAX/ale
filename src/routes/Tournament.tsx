@@ -2633,7 +2633,7 @@ export default function Tournament() {
     return () => clearInterval(id)
   }, [])
 
-  const { busy, error, notice, run } = useAction()
+  const { busy, error, run } = useAction()
 
   const enter = async () => {
     if (!session || !stage || !crew || !weapon) return
@@ -2853,11 +2853,6 @@ export default function Tournament() {
       {board.error && <div className="alert alert--error">{board.error}</div>}
       {fault && <div className="alert alert--error">{fault}</div>}
       {error && <div className="alert alert--error">{error}</div>}
-      {notice && (
-        <div className="alert alert--note" role="status">
-          {notice}
-        </div>
-      )}
 
       {!waiting && stage && (
         <div className="tour__band">

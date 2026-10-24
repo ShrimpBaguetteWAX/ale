@@ -7,6 +7,7 @@ import {
   type LazyExoticComponent,
   type ReactNode,
 } from 'react'
+import { Toasts } from '@/components/ToastStack'
 import {
   HashRouter,
   Navigate,
@@ -282,6 +283,8 @@ export default function App() {
        giving way to the spinner for a moment.
     */
     <HashRouter future={{ v7_startTransition: true }}>
+      {/* What just went through, over whichever screen is up. */}
+      <Toasts />
       <Boot>
         <ScreenBoundary>
           <MaintenanceGate>

@@ -261,7 +261,7 @@ export default function Fighters() {
   const [checked, setChecked] = useState<number[]>([])
   const [openedId, setOpenedId] = useState<number | null>(null)
 
-  const { busy, error, notice, run, setError } = useAction()
+  const { busy, error, run, setError } = useAction()
   const [confirmSell, setConfirmSell] = useState(false)
   const [confirmList, setConfirmList] = useState(false)
 
@@ -823,7 +823,7 @@ export default function Fighters() {
         )}
       </div>
 
-      <ActionBanner notice={notice} error={error ?? data.error} />
+      <ActionBanner error={error ?? data.error} />
 
       <RosterFilters
         filter={filter}

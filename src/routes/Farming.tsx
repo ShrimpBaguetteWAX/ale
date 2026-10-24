@@ -189,7 +189,7 @@ export default function Farming() {
   const [counts, setCounts] = useState<Record<string, number>>({})
   /* Narrowed where it enters the screen, so every comparison below still has
      to name one of this screen's three buttons. */
-  const { busy: busyKey, error, notice, run } = useAction()
+  const { busy: busyKey, error, run } = useAction()
   const busy = busyKey as Busy
 
   const schema: FarmSchema = tab === 'rewards' ? 'tool.worlds' : tab
@@ -368,7 +368,7 @@ export default function Farming() {
         </div>
       )}
 
-      <ActionBanner notice={notice} error={error ?? data.error} />
+      <ActionBanner error={error ?? data.error} />
 
       <div className="farmtabs" role="tablist" aria-label="Card type">
         {FARM_SCHEMAS.map((s) => {

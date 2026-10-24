@@ -192,7 +192,7 @@ export default function Candle() {
      to name which campaign it belongs to: one signature at a time still
      disables them all, while only the one that was pressed spins.
   */
-  const { busy, error, notice, run } = useAction()
+  const { busy, error, run } = useAction()
 
   /*
      Player tags and faces, read once for the whole screen.
@@ -288,7 +288,7 @@ export default function Candle() {
         />
       </header>
 
-      <ActionBanner notice={notice} error={error ?? data.error} />
+      <ActionBanner error={error ?? data.error} />
 
       <div className="candle__cols">
         <div>

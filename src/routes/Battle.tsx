@@ -1537,7 +1537,7 @@ function Result({
      Levelling from here, which is where the player finds out they can. The
      dot and every other screen hear about it through `dirties`.
   */
-  const { busy: levelBusy, error: levelError, notice: levelNotice, run } = useAction()
+  const { busy: levelBusy, error: levelError, run } = useAction()
   const doLevelUp = (f: RosterFighter) => {
     const id = Number(f.fighter_id)
     const was = f.stats.level
@@ -2180,7 +2180,7 @@ function Result({
           })}
         </div>
 
-        <ActionBanner notice={levelNotice} error={levelError} />
+        <ActionBanner error={levelError} />
       </div>
 
       {/*

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useGame } from '@/state/useGame'
 import { wakeChores } from '@/wharf/settle'
 import { readableError } from '@/wharf/errors'
+import { showToast } from '@/components/toasts'
 import { announceTableDrop, cacheDropTable, type TableKey } from '@/chain/tables'
 import { confirmThen, CONFIRM_ATTEMPTS, CONFIRM_INTERVAL_MS } from '@/chain/confirm'
 
@@ -9,7 +10,7 @@ import { confirmThen, CONFIRM_ATTEMPTS, CONFIRM_INTERVAL_MS } from '@/chain/conf
  * Signing something, and everything that has to happen around it.
  *
  * Seven screens had written the same twenty lines: guard on a session, mark
- * which button is working, clear the last error and the last notice, sign,
+ * which button is working, clear the last error, sign,
  * wait for the chain to catch up, tell the chore dot, say what happened, and
  * put the button back whatever the outcome. Forty-four pieces of state
  * between them for one idea.
@@ -51,7 +52,7 @@ export interface RunOptions<T> {
    */
   dirties?: readonly TableKey[]
   /**
-   * Ran once after the chain has caught up, before the notice is shown.
+   * Ran once after the chain has caught up, before the toast is shown.
    *
    * Awaited, because some screens have a second read to make that is not
    * worth repeating on every attempt — the shop's cooldowns move once and
@@ -99,7 +100,6 @@ export interface ActionState {
    */
   busy: string | null
   error: string | null
-  notice: string | null
   run: <T>(
     key: string,
     act: () => Promise<unknown>,
@@ -108,7 +108,6 @@ export interface ActionState {
   ) => Promise<void>
   /** For a screen that raises its own errors — a failed check before signing. */
   setError: (message: string | null) => void
-  setNotice: (message: string | null) => void
 }
 
 export function useAction(): ActionState {
@@ -117,7 +116,6 @@ export function useAction(): ActionState {
 
   const [busy, setBusy] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const [notice, setNotice] = useState<string | null>(null)
 
   /*
      A signature can outlive the screen that asked for it — the wallet dialog
@@ -152,7 +150,6 @@ export function useAction(): ActionState {
 
       setBusy(key)
       setError(null)
-      setNotice(null)
 
       try {
         await act()
@@ -250,7 +247,7 @@ export function useAction(): ActionState {
         await onSettled?.()
         if (!alive.current) return
         /* An empty message is no banner: the change on screen says it. */
-        setNotice(done || null)
+        if (done) showToast(done)
       } catch (err) {
         if (alive.current) setError(readableError(err))
       } finally {
@@ -260,5 +257,5 @@ export function useAction(): ActionState {
     [session, refreshPlayer],
   )
 
-  return { busy, error, notice, run, setError, setNotice }
+  return { busy, error, run, setError }
 }

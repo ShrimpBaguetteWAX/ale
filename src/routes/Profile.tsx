@@ -277,7 +277,7 @@ export default function Profile({ section = 'account' }: { section?: Section }) 
     setTab(askedTab())
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [section, params])
-  const { busy: busyKey, error, notice, run } = useAction()
+  const { busy: busyKey, error, run } = useAction()
   const busy = busyKey as Busy
   /* Which pool the running mine belongs to, so only its button spins. */
   /* The mine in progress, then what it paid: a toast, from the tap on. */
@@ -490,7 +490,6 @@ export default function Profile({ section = 'account' }: { section?: Section }) 
       </header>
       )}
 
-      {notice && <div className="alert alert--ok">{notice}</div>}
       {(error ?? own.error) && (
         <div className="alert alert--error">{error ?? own.error}</div>
       )}

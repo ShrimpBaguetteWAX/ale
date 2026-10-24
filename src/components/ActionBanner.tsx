@@ -14,18 +14,8 @@
  * own error, because "the action failed" and "the page could not be read" are
  * the same thing to a player looking at an empty panel.
  */
-export function ActionBanner({
-  notice,
-  error,
-}: {
-  notice?: string | null
-  error?: string | null
-}) {
-  if (!notice && !error) return null
-  return (
-    <>
-      {notice && <div className="alert alert--ok">{notice}</div>}
-      {error && <div className="alert alert--error">{error}</div>}
-    </>
-  )
+export function ActionBanner({ error }: { error?: string | null }) {
+  /* What went through is a toast now (see toasts.ts); only errors stay here. */
+  if (!error) return null
+  return <div className="alert alert--error">{error}</div>
 }

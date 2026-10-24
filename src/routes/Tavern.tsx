@@ -12,6 +12,7 @@ import { landId } from '@/chain/landId'
 import { unrevealedTavernHere } from '@/tavern/rules'
 import { byQuality } from '@/dungeon/nftFighter'
 import { useGame } from '@/state/useGame'
+import { showToast } from '@/components/toasts'
 import {
   HIRE_BASE_AP,
   MAX_HIRE_CARDS,
@@ -363,7 +364,6 @@ export default function Tavern() {
   */
   const [marker, setMarker] = useState('')
   const [error, setError] = useState<string | null>(null)
-  const [notice, setNotice] = useState<string | null>(null)
   const { classes, fighters: fightersConfig } = useConfig()
   const classTemplate = classes.get(player.last_tavern_fighter?.classname ?? '')
   /*
@@ -492,7 +492,6 @@ export default function Tavern() {
     if (!session) return
     setBusy('reveal')
     setError(null)
-    setNotice(null)
     try {
       await revealFighter(session)
       for (let i = 0; i < 8; i++) {
@@ -505,7 +504,7 @@ export default function Tavern() {
         if (f && f.level > 0 && p.last_tavern?.land_id === landId(p.x, p.y)) break
       }
       settle(DIRTIES.revealFighter)
-      setNotice('A new recruit steps forward.')
+      showToast('A new recruit steps forward.')
     } catch (err) {
       setError(readableError(err))
     } finally {
@@ -517,7 +516,6 @@ export default function Tavern() {
     if (!session) return
     setBusy('hire')
     setError(null)
-    setNotice(null)
     /* Snapshot before anything can empty the row underneath the screen. */
     setFrozen({ tavern: player.last_tavern, fighter: player.last_tavern_fighter })
     /* Whether the hire itself went through, which decides the cleanup below. */
@@ -573,7 +571,7 @@ export default function Tavern() {
       settle(DIRTIES.hireFighter)
 
       if (!marker || !before) {
-        setNotice('Recruit hired. They have joined your roster.')
+        showToast('Recruit hired. They have joined your roster.')
         return
       }
 
@@ -601,7 +599,7 @@ export default function Tavern() {
         await setFighterMarker(session, hired, marker)
         settle(DIRTIES.setFighterMarker)
         setMarker('')
-        setNotice(`Recruit hired and marked ${marker}.`)
+        showToast(`Recruit hired and marked ${marker}.`)
       } catch (err) {
         /*
            Reported as a notice, not an error.
@@ -611,7 +609,7 @@ export default function Tavern() {
            recruit had not been taken on, which is the opposite of what
            happened.
         */
-        setNotice(
+        showToast(
           `Recruit hired. The marker did not go on (${readableError(err)}) — ` +
             'you can set it from My Fighters.',
         )
@@ -774,7 +772,6 @@ export default function Tavern() {
         )}
 
         {error && <div className="alert alert--error">{error}</div>}
-        {notice && <div className="alert alert--ok">{notice}</div>}
 
         <div className="tavern__grid">
           {/* ---- The recruit ---- */}

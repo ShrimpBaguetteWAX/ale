@@ -2104,3 +2104,97 @@ a.res {
     text-shadow: none;
   }
 }
+
+/* ---------- toasts: what just went through ---------- */
+
+/*
+ * At the top of the screen, under the top bar — where the eye already is
+ * after tapping a button on the page — and top right on a desktop. The same
+ * glass as the mining toast; a teal tick says it went through.
+ */
+.toasts {
+  position: fixed;
+  top: calc(var(--topbar-h, 0px) + 10px + env(safe-area-inset-top));
+  right: 12px;
+  left: 12px;
+  z-index: var(--z-toast);
+  display: grid;
+  gap: 8px;
+  pointer-events: none;
+}
+@media (min-width: 1024px) {
+  .toasts {
+    top: 20px;
+    right: 24px;
+    left: auto;
+    width: 340px;
+  }
+}
+.toast {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 10px 10px 12px;
+  overflow: hidden;
+  border-radius: 14px;
+  background: rgb(10 16 30 / 92%);
+  box-shadow:
+    0 0 0 1px rgb(255 255 255 / 14%),
+    0 10px 24px rgb(0 0 0 / 50%);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  pointer-events: auto;
+  touch-action: none;
+  animation: toast-in 240ms cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(-14px);
+  }
+}
+:root[data-fx='low'] .toast {
+  animation: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+.toast__tick {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgb(14 212 168 / 18%);
+  font-size: 12px;
+  color: var(--teal, #0ed4a8);
+}
+.toast__text {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--fs-sm);
+  line-height: 1.35;
+  color: var(--white);
+}
+.toast__x {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  background: none;
+  font-size: 16px;
+  color: var(--text-faint);
+}
+.toast__time {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 2px;
+  background: var(--teal, #0ed4a8);
+  transform-origin: left;
+  animation: minetoast-time linear forwards;
+}
