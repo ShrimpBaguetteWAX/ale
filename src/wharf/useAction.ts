@@ -249,7 +249,8 @@ export function useAction(): ActionState {
 
         await onSettled?.()
         if (!alive.current) return
-        setNotice(done)
+        /* An empty message is no banner: the change on screen says it. */
+        setNotice(done || null)
       } catch (err) {
         if (alive.current) setError(readableError(err))
       } finally {

@@ -192,7 +192,8 @@ export default function Quests() {
     return run(
       busyKey('refill', REFILL),
       () => getQuests(session!),
-      'New quests issued, with their rewards set aside.',
+      /* No banner: the new quests appearing on the board is the answer. */
+      '',
       {
         ...opts('getQuests'),
         /* A refill replaces whichever slots were empty or expired, so the
