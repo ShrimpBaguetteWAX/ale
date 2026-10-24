@@ -554,19 +554,24 @@ function drawnItems(board: Board, history: TournamentMatchup[][], phase: Tournam
   return items
 }
 
-function PotCard({ stage, field }: { stage: TournamentStage | undefined; field: TournamentSignup[] }) {
+/**
+ * The pot. `field` is who has entered, or null before signup opens — when
+ * nobody can have, so no count is shown at all.
+ */
+function PotCard({ stage, field }: { stage: TournamentStage | undefined; field: TournamentSignup[] | null }) {
   const prizes = prizesOf(stage)
-  const count = Number(stage?.player_count ?? field.length)
   return (
     <section className="ptour__card ptour__card--gold">
       <div className="ptour__cardhead">
         <span className="ptour__kick ptour__kick--gold">Prize pool</span>
-        <span className="ptour__faces">
-          {field.slice(0, 5).map((s) => (
-            <PlayerAvatar key={s.wallet} id={s.avatar} name={s.playertag} className="ptour__face" size={26} />
-          ))}
-          <span>{formatNumber(count)} entered</span>
-        </span>
+        {field && (
+          <span className="ptour__faces">
+            {field.slice(0, 5).map((s) => (
+              <PlayerAvatar key={s.wallet} id={s.avatar} name={s.playertag} className="ptour__face" size={26} />
+            ))}
+            <span>{formatNumber(field.length)} entered</span>
+          </span>
+        )}
       </div>
       {prizes.wax > 0 || prizes.tlm > 0 ? (
         <div className="ptour__pot">
@@ -575,22 +580,19 @@ function PotCard({ stage, field }: { stage: TournamentStage | undefined; field: 
               <img src={WAX_ICON} alt="" />
               {wax(prizes.wax)}
             </b>
-            <small>WAX · the top 16 share it</small>
+            <small>WAX (Top 16)</small>
           </div>
           <div className="ptour__potfig">
             <b className="mono">
               <img src={TLM_ICON} alt="" />
               {tlm(prizes.tlm)}
             </b>
-            <small>TLM · shared by points</small>
+            <small>TLM</small>
           </div>
         </div>
       ) : (
         <p className="ptour__fine">The pool is still being collected.</p>
       )}
-      <p className="ptour__fine">
-        What each place and each win pays is set when signup closes — it depends on how many enter.
-      </p>
     </section>
   )
 }
@@ -1069,7 +1071,7 @@ function BeforeSignup(
         </div>
       </div>
 
-      {p.phase === 'preparing' && p.stage && <PotCard stage={p.stage} field={[]} />}
+      {p.phase === 'preparing' && p.stage && <PotCard stage={p.stage} field={null} />}
 
       {(champion || lastHof) && (
         <section className="ptour__card">
