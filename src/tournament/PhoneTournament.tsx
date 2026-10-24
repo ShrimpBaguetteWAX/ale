@@ -20,6 +20,7 @@ import {
   chainTime,
   crewFaces,
   freePassCount,
+  type CrewFace,
   type EntryBlock,
   type TimelineStep,
   type TournamentPhase,
@@ -102,6 +103,9 @@ export interface PhoneTournamentProps {
   /** Takes one picked fighter off the team, and clears it all — for the desktop's line-up. */
   onRemove?: (f: RosterFighter) => void
   onClearTeam?: () => void
+  /** The two cards the player entered with, once read, for the desktop's stage. */
+  mineCrew?: CardTemplate | null
+  mineWeapon?: CardTemplate | null
   /** Who is looking, for their row among the entrants before they enter. */
   me?: { tag: string; avatar: number }
   /** The roster sheet, slid over the screen when a team slot is tapped. */
@@ -1489,33 +1493,31 @@ function spread(n: number, seed: number): number[] {
 }
 
 /**
- * A fighter's element, as a little weather around it on its pedestal.
+ * A fighter's element, as a hearth on its pedestal.
  *
- * Embers for fire, motes on the wind for air, fireflies for nature, facets
- * for gem, a sheen across the armour for metal and floating dust for
- * neutral. CSS only — a handful of small shapes moved by transform and
- * opacity — and still for anyone who asks for less motion.
+ * A soft glow in the element's colour breathes under the feet (drawn by the
+ * stylesheet, behind the art) and a few specks rise slowly from it: embers,
+ * motes, pollen, facets, glints or dust. CSS only, moved by transform and
+ * opacity, and gone for anyone who asks for less motion.
  */
-function ElementFx({ element, art, seed }: { element: string; art: string; seed: number }) {
-  const r = spread(40, seed + 7)
+function ElementFx({ element, seed }: { element: string; seed: number }) {
+  if (!['fire', 'air', 'nature', 'gem', 'metal', 'neutral'].includes(element)) return null
+  const r = spread(16, seed + 7)
   const at = (i: number, a: number, b: number) => (a + r[i % r.length] * (b - a)).toFixed(2)
-  const style = (v: Record<string, string>) => v as React.CSSProperties
-  if (element === 'metal') {
-    return <img className="ptour__fx ptour__fx--sheen" src={art} alt="" aria-hidden="true" style={style({ '--del': `-${at(0, 0, 2.8)}s` })} />
-  }
-  const kinds: Record<string, { cls: string; n: number; vars: (i: number) => Record<string, string> }> = {
-    fire: { cls: 'ember', n: 11, vars: (i) => ({ '--x': `${at(i, 15, 85)}%`, '--dx': `${at(i + 9, -25, 25)}px`, '--dur': `${at(i + 3, 2.2, 3.6)}s`, '--del': `-${at(i + 5, 0, 3.6)}s` }) },
-    air: { cls: 'mote', n: 10, vars: (i) => ({ '--x': `${at(i, 0, 60)}%`, '--y': `${at(i + 4, 10, 90)}%`, '--dur': `${at(i + 2, 3, 5)}s`, '--del': `-${at(i + 6, 0, 5)}s` }) },
-    nature: { cls: 'fly', n: 6, vars: (i) => ({ '--x': `${at(i, 8, 85)}%`, '--y': `${at(i + 3, 15, 75)}%`, '--dx': `${at(i + 5, -25, 25)}px`, '--dy': `${at(i + 7, -25, 25)}px`, '--dur': `${at(i + 1, 3, 5)}s`, '--del': `-${at(i + 8, 0, 2)}s` }) },
-    gem: { cls: 'facet', n: 8, vars: (i) => ({ '--x': `${at(i, 18, 82)}%`, '--dx': `${at(i + 9, -22, 22)}px`, '--dur': `${at(i + 3, 2.6, 3.8)}s`, '--del': `-${at(i + 5, 0, 3.8)}s` }) },
-    neutral: { cls: 'dust', n: 9, vars: (i) => ({ '--x': `${at(i, 8, 88)}%`, '--y': `${at(i + 3, 12, 85)}%`, '--dx': `${at(i + 5, -18, 18)}px`, '--dy': `${at(i + 7, -18, 18)}px`, '--dur': `${at(i + 1, 4, 6)}s`, '--del': `-${at(i + 8, 0, 3)}s` }) },
-  }
-  const k = kinds[element]
-  if (!k) return null
   return (
-    <span className="ptour__fx" aria-hidden="true">
-      {Array.from({ length: k.n }, (_, i) => (
-        <i key={i} className={`ptour__fx-${k.cls}`} style={style(k.vars(i))} />
+    <span className={`ptour__fx ptour__fx--${element}`} aria-hidden="true">
+      {Array.from({ length: 4 }, (_, i) => (
+        <i
+          key={i}
+          style={
+            {
+              '--x': `${at(i, 22, 78)}%`,
+              '--dx': `${at(i + 4, -22, 22)}px`,
+              '--dur': `${at(i + 8, 8, 11)}s`,
+              '--del': `-${at(i + 12, 0, 11)}s`,
+            } as React.CSSProperties
+          }
+        />
       ))}
     </span>
   )
@@ -1584,7 +1586,7 @@ function LineupStage({ team, crew, weapon, onSlot, onRemove, onClear }: {
                   </button>
                 )}
                 <GameImg src={fighterArt(f)} fallback={fighterArtFallback()} alt={f.classname} />
-                <ElementFx element={f.element} art={fighterArt(f)} seed={f.fighter_id} />
+                <ElementFx element={f.element} seed={f.fighter_id} />
               </div>
             ) : (
               <button type="button" className="ptour__luslot" onClick={() => onSlot('fighters')}>
@@ -1607,6 +1609,148 @@ function LineupStage({ team, crew, weapon, onSlot, onRemove, onClear }: {
         </div>
       </div>
     </section>
+  )
+}
+
+/** The same five pedestals, for a team already entered: nothing on it can be changed. */
+function EnteredStage({ faces, crew, weapon }: { faces: CrewFace[]; crew: CardTemplate | null; weapon: CardTemplate | null }) {
+  const card = (label: string, c: CardTemplate | null) =>
+    c ? (
+      <div className="ptour__lucard">
+        <GameImg
+          src={asset(`/assets/cards/${c.template_id}.webp`)}
+          fallback={[ipfsImage(c.img), asset('/assets/default-card.png')].filter((x): x is string => !!x)}
+          alt=""
+        />
+        <span>
+          <small>{label}</small>
+          <b>{c.name}</b>
+        </span>
+      </div>
+    ) : (
+      <div className="ptour__lucard ptour__lucard--in">
+        <span>
+          <small>{label}</small>
+          <b>Entered</b>
+        </span>
+      </div>
+    )
+  return (
+    <section className="ptour__lineup ptour__lineup--in">
+      <div className="ptour__lutop">
+        <span className="ptour__kick ptour__kick--teal">Your team · entered</span>
+        <small className="ptour__luhint">Held until the tournament is done</small>
+      </div>
+      <div className="ptour__lurow">
+        {Array.from({ length: 5 }, (_, i) => faces[i] ?? null).map((f, i) => (
+          <div key={i} className={`ptour__ped${f ? ' is-full' : ''}`} data-el={f?.element || undefined}>
+            {f ? (
+              <div className="ptour__pedfig">
+                <GameImg src={fighterArt(f)} fallback={fighterArtFallback()} alt={f.classname} />
+                <ElementFx element={f.element} seed={i * 97 + f.classname.length * 13 + f.racename.length} />
+              </div>
+            ) : (
+              <div className="ptour__pedfig" />
+            )}
+            <span className="ptour__pedglow" />
+            <b className="ptour__pedname">
+              {f?.element && (
+                <img className="ptour__pedel" src={asset(`/assets/icons/elements/${f.element}.png`)} alt={f.element} title={f.element} />
+              )}
+              {f ? f.classname : ' '}
+            </b>
+          </div>
+        ))}
+        <div className="ptour__lucards">
+          {card('Crew card', crew)}
+          {card('Weapon', weapon)}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function SignupClock({ closes, now }: { closes: number; now: number }) {
+  return (
+    <section className="ptour__card ptour__spotcard">
+      <div className="ptour__spotclock">
+        <div className="ptour__board">
+          <small>Signup closes in</small>
+          <b className="mono">{Number.isFinite(closes) ? boardClock(closes - now) : '—'}</b>
+          {Number.isFinite(closes) && <span>{dayTime(closes)}</span>}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+/**
+ * Signup on a desktop, entered: the team on its stage as it went in, where
+ * it stands in the field so far, and the way back out.
+ */
+function DeskEntered(
+  p: PhoneTournamentProps & { board: Board; onHof: () => void; onWithdraw: () => void; closes: number; passesNow: number },
+) {
+  const mine = p.mine!
+  const seed = p.field.findIndex((s) => s.wallet === mine.wallet) + 1
+  return (
+    <>
+      <Head
+        sub={`You're in · signup closes ${Number.isFinite(p.closes) ? when(p.closes, p.now) : 'soon'}`}
+        chip={<HofChip onClick={p.onHof} />}
+      />
+      <Strip items={preDrawItems(p.timeline, p.now)} focus={0} />
+      <Cols
+        items={[
+          [<EnteredStage faces={crewFaces(mine)} crew={p.mineCrew ?? null} weapon={p.mineWeapon ?? null} />, 'main'],
+          [
+            <section className="ptour__card ptour__card--teal ptour__inrow">
+              <div className="ptour__status">
+                <PlayerAvatar id={mine.avatar} name={mine.playertag} className="ptour__statusav ptour__statusav--me" size={56} />
+                <div>
+                  <h2 className="ptour__state is-in">You're in</h2>
+                  <p className="ptour__sub">
+                    Entered {when(chainTime(mine.signup_timestamp), p.now)} · fights start{' '}
+                    {when(p.timeline.find((s) => s.name === 'battle')?.startMs ?? NaN, p.now)}
+                  </p>
+                </div>
+              </div>
+              <div className="ptour__stats">
+                <div>
+                  <small>Score</small>
+                  <b className="mono">{formatNumber(mine.score)}</b>
+                </div>
+                <div>
+                  <small>Seed now</small>
+                  <b className="mono">
+                    {seed} / {p.field.length}
+                  </b>
+                </div>
+                <div>
+                  <small>Free pass</small>
+                  <b className={seed <= p.passesNow ? 'is-gold' : ''}>
+                    {p.passesNow > 0 ? (seed <= p.passesNow ? 'For now' : 'Not now') : 'None'}
+                  </b>
+                </div>
+              </div>
+              <p className="ptour__fine">
+                {p.passesNow > 0
+                  ? `Right now the top ${p.passesNow} skip the opening round with 10 points. Seeds are fixed when signup closes.`
+                  : 'Right now the field is a power of two, so nobody skips the opening round.'}
+              </p>
+              <button type="button" className="btn btn--sm ptour__btnred ptour__withdraw" onClick={p.onWithdraw}>
+                Withdraw
+              </button>
+            </section>,
+            'main',
+          ],
+          [<SignupClock closes={p.closes} now={p.now} />, 'side'],
+          [<PotCard stage={p.stage} field={p.field} />, 'side'],
+          [<Conditions weather={p.weather} />, 'side'],
+          [<Entrants field={p.field} wallet={p.wallet} />, 'side'],
+        ]}
+      />
+    </>
   )
 }
 
@@ -1650,15 +1794,7 @@ function DeskLineup(
           ],
           [<div ref={pickerAt} className="ptour__lupicker">{p.picker}</div>, 'main'],
           [
-            <section className="ptour__card ptour__spotcard">
-              <div className="ptour__spotclock">
-                <div className="ptour__board">
-                  <small>Signup closes in</small>
-                  <b className="mono">{Number.isFinite(p.closes) ? boardClock(p.closes - p.now) : '—'}</b>
-                  {Number.isFinite(p.closes) && <span>{dayTime(p.closes)}</span>}
-                </div>
-              </div>
-            </section>,
+            <SignupClock closes={p.closes} now={p.now} />,
             'side',
           ],
           [<PotCard stage={p.stage} field={null} />, 'side'],
@@ -1705,6 +1841,7 @@ function Signup(
     : p.field.filter((s) => s.score >= p.score).length + 1
   const desk = useContext(Desk)
   if (desk && !p.mine) return <DeskLineup {...p} closes={closes} passesNow={passesNow} />
+  if (desk) return <DeskEntered {...p} closes={closes} passesNow={passesNow} />
 
   return (
     <>
