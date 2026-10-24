@@ -1477,6 +1477,51 @@ function hofFaces(rows: TournamentHof[]): TournamentHof[] {
 
 /* ---------- signup on a desktop, not entered: the line-up stage ---------- */
 
+/** The same spread every render, so particles do not jump about when the screen redraws. */
+function spread(n: number, seed: number): number[] {
+  const out: number[] = []
+  let x = seed
+  for (let i = 0; i < n; i++) {
+    x = (x * 9301 + 49297) % 233280
+    out.push(x / 233280)
+  }
+  return out
+}
+
+/**
+ * A fighter's element, as a little weather around it on its pedestal.
+ *
+ * Embers for fire, motes on the wind for air, fireflies for nature, facets
+ * for gem, a sheen across the armour for metal and floating dust for
+ * neutral. CSS only — a handful of small shapes moved by transform and
+ * opacity — and still for anyone who asks for less motion.
+ */
+function ElementFx({ element, art, seed }: { element: string; art: string; seed: number }) {
+  const r = spread(40, seed + 7)
+  const at = (i: number, a: number, b: number) => (a + r[i % r.length] * (b - a)).toFixed(2)
+  const style = (v: Record<string, string>) => v as React.CSSProperties
+  if (element === 'metal') {
+    return <img className="ptour__fx ptour__fx--sheen" src={art} alt="" aria-hidden="true" style={style({ '--del': `-${at(0, 0, 2.8)}s` })} />
+  }
+  const kinds: Record<string, { cls: string; n: number; vars: (i: number) => Record<string, string> }> = {
+    fire: { cls: 'ember', n: 11, vars: (i) => ({ '--x': `${at(i, 15, 85)}%`, '--dx': `${at(i + 9, -25, 25)}px`, '--dur': `${at(i + 3, 2.2, 3.6)}s`, '--del': `-${at(i + 5, 0, 3.6)}s` }) },
+    air: { cls: 'mote', n: 10, vars: (i) => ({ '--x': `${at(i, 0, 60)}%`, '--y': `${at(i + 4, 10, 90)}%`, '--dur': `${at(i + 2, 3, 5)}s`, '--del': `-${at(i + 6, 0, 5)}s` }) },
+    nature: { cls: 'fly', n: 6, vars: (i) => ({ '--x': `${at(i, 8, 85)}%`, '--y': `${at(i + 3, 15, 75)}%`, '--dx': `${at(i + 5, -25, 25)}px`, '--dy': `${at(i + 7, -25, 25)}px`, '--dur': `${at(i + 1, 3, 5)}s`, '--del': `-${at(i + 8, 0, 2)}s` }) },
+    gem: { cls: 'facet', n: 8, vars: (i) => ({ '--x': `${at(i, 18, 82)}%`, '--dx': `${at(i + 9, -22, 22)}px`, '--dur': `${at(i + 3, 2.6, 3.8)}s`, '--del': `-${at(i + 5, 0, 3.8)}s` }) },
+    neutral: { cls: 'dust', n: 9, vars: (i) => ({ '--x': `${at(i, 8, 88)}%`, '--y': `${at(i + 3, 12, 85)}%`, '--dx': `${at(i + 5, -18, 18)}px`, '--dy': `${at(i + 7, -18, 18)}px`, '--dur': `${at(i + 1, 4, 6)}s`, '--del': `-${at(i + 8, 0, 3)}s` }) },
+  }
+  const k = kinds[element]
+  if (!k) return null
+  return (
+    <span className="ptour__fx" aria-hidden="true">
+      {Array.from({ length: k.n }, (_, i) => (
+        <i key={i} className={`ptour__fx-${k.cls}`} style={style(k.vars(i))} />
+      ))}
+    </span>
+  )
+}
+
+
 /**
  * The team about to be fielded, on a stage.
  *
@@ -1539,6 +1584,7 @@ function LineupStage({ team, crew, weapon, onSlot, onRemove, onClear }: {
                   </button>
                 )}
                 <GameImg src={fighterArt(f)} fallback={fighterArtFallback()} alt={f.classname} />
+                <ElementFx element={f.element} art={fighterArt(f)} seed={f.fighter_id} />
               </div>
             ) : (
               <button type="button" className="ptour__luslot" onClick={() => onSlot('fighters')}>
