@@ -33,6 +33,8 @@ import { PlayerAvatar } from '@/components/PlayerAvatar'
 import { rankClass } from '@/leaderboard/rules'
 import { ActionBanner } from '@/components/ActionBanner'
 import { asset } from '@/assets'
+import { usePhone } from '@/components/usePhone'
+import { PhoneCandle } from '@/candle/PhoneCandle'
 
 /**
  * The Candle.
@@ -170,6 +172,7 @@ export default function Candle() {
   const session = useGame((s) => s.session)
 
   const data = useCandle(account)
+  const phone = usePhone()
   const { offers, boards, claim, tracking } = data
 
   /*
@@ -255,6 +258,35 @@ export default function Candle() {
 
   const doClaim = () =>
     run('claim', () => claimCandle(session!), 'Rewards claimed successfully!', opts('claimCandle'))
+
+  if (phone) {
+    return (
+      <div className="candle candle--phone">
+        <img className="candle__art" src={asset('/assets/background/bg-candle.png')} alt="" />
+        <div className="candle__scrim" />
+        <ActionBanner error={error ?? data.error} />
+        <PhoneCandle
+          running={running}
+          upcoming={upcoming}
+          boards={boards}
+          player={player}
+          now={now}
+          balance={balance}
+          draft={gems}
+          onDraft={setGemsFor}
+          busy={busy}
+          canAct={!!session}
+          onContribute={(offer) => void doContribute(offer)}
+          claim={claim}
+          onClaim={() => void doClaim()}
+          tracking={tracking}
+          loading={data.loading}
+          tags={names.tags}
+          avatars={names.avatars}
+        />
+      </div>
+    )
+  }
 
   return (
     <div className="candle">

@@ -174,6 +174,18 @@ export function eligibility(offer: CandleOffer, player: Player): Eligibility {
   return { qualified: have >= need, have, need, short: Math.max(0, need - have) }
 }
 
+/**
+ * The mission a phone opens on: the first running one the player can enter,
+ * else the first running one, else the next to open.
+ */
+export function firstMission(
+  running: CandleOffer[],
+  upcoming: CandleOffer[],
+  player: Player,
+): CandleOffer | undefined {
+  return running.find((o) => eligibility(o, player).qualified) ?? running[0] ?? upcoming[0]
+}
+
 /* ---------- the split ---------- */
 
 export interface Share {

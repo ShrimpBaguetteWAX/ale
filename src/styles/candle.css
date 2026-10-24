@@ -871,3 +871,421 @@
     animation: none;
   }
 }
+
+/* ---------- the Candle on a phone ---------- */
+
+.pcandle {
+  position: relative;
+  padding-bottom: 96px;
+}
+.pcandle__claim {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: rgb(8 14 28 / 72%);
+  box-shadow: inset 0 0 0 1px rgb(246 168 0 / 40%);
+}
+.pcandle__claim > img {
+  width: 22px;
+  height: 22px;
+}
+.pcandle__claim > span {
+  display: grid;
+  flex: 1;
+}
+.pcandle__claim small {
+  font-family: var(--font-display);
+  font-size: 8.5px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.pcandle__claim b {
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 800;
+  color: #ffd979;
+}
+.pcandle__note {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.45;
+  text-align: center;
+  color: var(--text-faint);
+}
+.pcandle__note--left {
+  text-align: left;
+}
+.pcandle__warn {
+  color: #ff8fa0;
+}
+
+/* One tab per mission: reward, time, and whether the player can get in. */
+.pcandle__tabs {
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  padding: 3px;
+  border-radius: 12px;
+  background: rgb(0 0 0 / 34%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 12%);
+  scrollbar-width: none;
+}
+.pcandle__tabs::-webkit-scrollbar {
+  display: none;
+}
+.pcandle__tab {
+  position: relative;
+  display: grid;
+  flex: 1 0 96px;
+  justify-items: center;
+  gap: 1px;
+  padding: 6px 4px;
+  border: 0;
+  border-radius: 9px;
+  background: none;
+  color: var(--text-faint);
+}
+.pcandle__tab[aria-selected='true'] {
+  background: rgb(0 186 255 / 16%);
+  box-shadow: inset 0 0 0 1px rgb(0 186 255 / 55%);
+  color: var(--white);
+}
+.pcandle__tab > img {
+  width: 18px;
+  height: 18px;
+}
+.pcandle__tab > b {
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 800;
+}
+.pcandle__tab > small {
+  font-size: 9.5px;
+  font-weight: 600;
+}
+.pcandle__tab.is-locked > img,
+.pcandle__tab.is-locked > b {
+  opacity: 0.55;
+}
+.pcandle__gate {
+  position: absolute;
+  top: 5px;
+  right: 6px;
+  display: grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  color: #ff8fa0;
+  background: rgb(255 109 133 / 16%);
+}
+.pcandle__gate.is-ok {
+  color: var(--teal);
+  background: rgb(14 212 168 / 16%);
+}
+.pcandle__gate svg,
+.pcandle__chip svg {
+  width: 10px;
+  height: 10px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* The mission itself. */
+.pcandle__page {
+  display: grid;
+  gap: 10px;
+}
+.pcandle__hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 4px 2px;
+}
+.pcandle__pot {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.pcandle__pot img {
+  width: 30px;
+  height: 30px;
+}
+.pcandle__pot b {
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 800;
+}
+.pcandle__pot em {
+  font-size: 11px;
+  font-style: normal;
+  font-weight: var(--fw-bold);
+  color: var(--text-faint);
+}
+.pcandle__clock {
+  display: grid;
+  flex: none;
+  justify-items: end;
+}
+.pcandle__clock small {
+  font-family: var(--font-display);
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.pcandle__clock b {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 800;
+}
+.pcandle__req {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: var(--fw-bold);
+  color: #cfd8e6;
+}
+.pcandle__chip {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  font-weight: 800;
+  color: #ff8fa0;
+  box-shadow: inset 0 0 0 1px rgb(255 109 133 / 50%);
+}
+.pcandle__chip.is-ok {
+  color: var(--teal);
+  box-shadow: inset 0 0 0 1px rgb(14 212 168 / 50%);
+}
+.pcandle__bar {
+  display: flex;
+  gap: 2px;
+  height: 12px;
+  overflow: hidden;
+  border-radius: 4px;
+  background: rgb(255 255 255 / 8%);
+}
+.pcandle__bar i {
+  display: block;
+  min-width: 2px;
+  background: rgb(207 216 230 / 55%);
+}
+.pcandle__bar i:nth-child(2n) {
+  background: rgb(207 216 230 / 38%);
+}
+.pcandle__bar i.is-you,
+.pcandle__bar i.is-add {
+  background: var(--teal);
+}
+.pcandle__bar i.is-add {
+  opacity: 0.7;
+}
+.pcandle__under {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--text-faint);
+}
+.pcandle__under b {
+  color: var(--white);
+}
+.pcandle__under button {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-size: 11px;
+  font-weight: var(--fw-bold);
+  color: var(--cyan);
+}
+.pcandle__under button:disabled {
+  color: var(--text-faint);
+}
+.pcandle__under img,
+.pcandle__gem,
+.pcandle__gems img {
+  width: 13px;
+  height: 13px;
+  vertical-align: -2px;
+}
+.pcandle__locked {
+  display: grid;
+  gap: 2px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: rgb(255 109 133 / 10%);
+  box-shadow: inset 0 0 0 1px rgb(255 109 133 / 45%);
+  color: #ffb3c0;
+}
+.pcandle__locked b {
+  font-size: var(--fs-xs);
+}
+.pcandle__locked small {
+  font-size: 11px;
+  line-height: 1.4;
+}
+.pcandle__range {
+  width: 100%;
+}
+.pcandle__presets {
+  display: flex;
+  gap: 6px;
+}
+.pcandle__presets button {
+  flex: 1;
+  min-height: 32px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 16%);
+  font-size: 11.5px;
+  font-weight: var(--fw-bold);
+  color: var(--text-faint);
+}
+.pcandle__presets button[aria-pressed='true'] {
+  color: var(--white);
+  background: rgb(14 212 168 / 14%);
+  box-shadow: inset 0 0 0 1px rgb(14 212 168 / 60%);
+}
+.pcandle__share {
+  display: grid;
+  gap: 6px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgb(8 14 28 / 72%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 10%);
+}
+.pcandle__share div {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 11.5px;
+  color: var(--text-faint);
+}
+.pcandle__share b {
+  font-size: var(--fs-xs);
+  color: var(--white);
+}
+
+/* Contribute, docked above the tab bar. */
+.pcandle__dock {
+  position: fixed;
+  right: 12px;
+  bottom: calc(var(--nav-h) + 10px + env(safe-area-inset-bottom));
+  left: 12px;
+  z-index: 30;
+  display: grid;
+  gap: 4px;
+  justify-items: center;
+}
+.pcandle__dock .btn {
+  width: 100%;
+  min-height: 46px;
+  box-shadow: 0 8px 18px rgb(0 0 0 / 45%);
+}
+.prew.pcandle .pcandle__dock .btn:disabled {
+  --btn-bg: rgb(12 18 32 / 96%);
+}
+.pcandle__dock small {
+  padding: 1px 8px;
+  border-radius: 6px;
+  font-size: 10.5px;
+  color: var(--text-faint);
+  background: rgb(4 9 20 / 80%);
+}
+
+/* Who is in, in a sheet. */
+.pcandle__who {
+  overflow: hidden;
+  border-radius: 12px;
+  background: rgb(8 14 28 / 66%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 10%);
+}
+.pcandle__whorow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 42px;
+  padding: 6px 10px;
+}
+.pcandle__whorow + .pcandle__whorow {
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 7%);
+}
+.pcandle__whorow.is-you {
+  background: rgb(14 212 168 / 12%);
+}
+.pcandle__rank {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: 800;
+  background: rgb(255 255 255 / 8%);
+}
+.pcandle__rank.is-top {
+  color: #ffd979;
+  background: rgb(246 168 0 / 25%);
+}
+.pcandle__avatar {
+  flex: none;
+}
+.pcandle__name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-bold);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.pcandle__name em {
+  font-style: normal;
+  color: var(--teal);
+}
+.pcandle__cut {
+  flex: none;
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 800;
+  color: #cfd8e6;
+}
+.pcandle__gems {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 3px;
+  min-width: 58px;
+  font-size: 11px;
+  font-weight: var(--fw-bold);
+}
+.pcandle .rsheet__cap span {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  white-space: nowrap;
+}
