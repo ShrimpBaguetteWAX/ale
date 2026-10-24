@@ -22,7 +22,7 @@ import {
 } from '@/shop/rules'
 import {
   LEGEND_BENEFITS,
-  LEGEND_BENEFITS_SHORT,
+  LEGEND_VS_TRIAL,
   SHOP_CATEGORIES,
   type ShopCooldown,
   type ShopItem,
@@ -290,18 +290,27 @@ export default function Shop() {
                 </li>
               ))}
             </ul>
-            {/* A phone shows them as a 2 × 2 under the passes, so the tab
-                fits one screen. */}
-            <ul className="benefits benefits--short">
-              {LEGEND_BENEFITS_SHORT.map(([title, detail], i) => (
-                <li key={title}>
-                  <b>{title}</b>
-                  {flasks && i === 3
-                    ? `${energy(flasks.legend)} energy a day, not ${energy(flasks.trial)}`
-                    : detail}
-                </li>
+            {/* A phone compares instead: Trial against Legend. */}
+            <div className="legendvs" role="table" aria-label="Trial against Legend">
+              <div className="legendvs__row legendvs__row--head" role="row">
+                <span role="columnheader" />
+                <span role="columnheader">Trial</span>
+                <span role="columnheader" className="legendvs__legend">
+                  Legend
+                </span>
+              </div>
+              {LEGEND_VS_TRIAL.map(([what, trial, legendHas], i) => (
+                <div className="legendvs__row" role="row" key={what}>
+                  <span role="rowheader">{what}</span>
+                  <span role="cell" className="legendvs__trial">
+                    {flasks && i === 3 ? energy(flasks.trial) : trial}
+                  </span>
+                  <span role="cell" className="legendvs__legend">
+                    {flasks && i === 3 ? energy(flasks.legend) : legendHas}
+                  </span>
+                </div>
               ))}
-            </ul>
+            </div>
             <p className="hint">
               A pass extends whatever time you already have — buying again while
               active adds to it.

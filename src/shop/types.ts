@@ -86,10 +86,14 @@ export const LEGEND_BENEFITS = [
   'A larger free daily energy flask',
 ]
 
-/** The same four, short enough for a 2 × 2 on a phone. */
-export const LEGEND_BENEFITS_SHORT: [string, string][] = [
-  ['Free reveals', 'at every tavern'],
-  ['Full rewards', 'not the 10% trial cap'],
-  ['CPU boost', '24h, up to 25× a week'],
-  ['Bigger flask', 'a larger free energy flask every day'],
+/**
+ * The same four as a comparison, for a phone: what a trial account gets and
+ * what Legend gets, side by side — the difference is the reason to buy. The
+ * flask row is filled from the shop's own free flasks where it can be.
+ */
+export const LEGEND_VS_TRIAL: [string, string, string][] = [
+  ['Tavern reveals', 'Paid', 'Free'],
+  ['Rewards', '10%', '100%'],
+  ['CPU boost', '—', '25× a week'],
+  ['Daily flask', 'Smaller', 'Larger'],
 ]

@@ -527,7 +527,7 @@
   display: none;
 }
 
-.benefits--short {
+.legendvs {
   display: none;
 }
 
@@ -724,28 +724,45 @@
   .benefits--long {
     display: none;
   }
-  .benefits--short {
+  /* Trial against Legend, three columns, the Legend one in gold. */
+  .legendvs {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    padding: 6px 12px 4px;
+    border-radius: 12px;
+    background: rgb(8 14 28 / 62%);
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 10%);
+  }
+  .legendvs__row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 72px 92px;
+    align-items: center;
     gap: 6px;
-    margin: 0;
+    padding: 7px 0;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: #dfe6f2;
   }
-  .benefits--short li {
-    display: block;
-    padding: 7px 9px;
-    border-radius: 9px;
-    background: rgb(124 92 255 / 10%);
-    box-shadow: inset 0 0 0 1px rgb(124 92 255 / 30%);
-    font-size: 11px;
-    line-height: 1.3;
+  .legendvs__row + .legendvs__row {
+    border-top: 1px solid rgb(255 255 255 / 7%);
   }
-  .benefits--short li::before {
-    display: none;
+  .legendvs__row--head {
+    padding: 4px 0 6px;
+    font-family: var(--font-display);
+    font-size: 9.5px;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-faint);
   }
-  .benefits--short b {
-    display: block;
-    color: var(--white);
-    font-size: 12px;
+  .legendvs__row > span:nth-child(n + 2) {
+    text-align: center;
+  }
+  .legendvs__trial {
+    color: var(--text-faint);
+  }
+  .legendvs__legend {
+    font-weight: var(--fw-bold);
+    color: #ffcf4d;
   }
   .legendcard .hint {
     margin: 6px 0 0;
