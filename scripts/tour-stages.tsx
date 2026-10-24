@@ -760,6 +760,24 @@ function PhoneAt({ d, moment, shown, now }: { d: Loaded; moment: Moment; shown: 
   const notIn = moment.key === 'open-empty' || moment.key === 'open-team'
   const field = notIn ? state.field.filter((s) => s.wallet !== viewer) : state.field
   const mine = notIn ? undefined : field.find((s) => s.wallet === viewer)
+  /*
+     Before this tournament starts, the screen shows the last one. There is
+     no earlier tournament in the data, so this one, played to the end,
+     stands in for it.
+  */
+  const lastOne = useMemo(
+    () => ({
+      stage: { ...d.stage, current_round: d.rounds.length },
+      history: d.rounds.map((round, r) =>
+        round.map((m) => ({
+          ...m,
+          winner: m.winner || (shown.picks[`${r}:${m.index}`] === 2 ? 'player2' : 'player1'),
+        })),
+      ),
+      rolls: d.weather.map((w) => w.weather).filter((w): w is Weather => !!w),
+    }),
+    [d, shown.picks],
+  )
 
   /* A real roster to pick from: the viewer's own, if they are a real player. */
   const [roster, setRoster] = useState<RosterFighter[] | null>(null)
@@ -857,7 +875,7 @@ function PhoneAt({ d, moment, shown, now }: { d: Loaded; moment: Moment; shown: 
           weather={d.weather}
           rolls={d.weather.map((w) => w.weather).filter((w): w is Weather => !!w)}
           legend={new Map()}
-          past={null}
+          past={moment.key === 'none' || moment.key === 'prep' ? lastOne : null}
           ringFighters={[
             { fighter_id: 1, classname: 'juggernaut', racename: 'khaured' },
             { fighter_id: 2, classname: 'arcanist', racename: 'altan' },

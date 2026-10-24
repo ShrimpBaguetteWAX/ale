@@ -627,7 +627,11 @@ function drawnItems(board: Board, history: TournamentMatchup[][], phase: Tournam
     items.push({
       key: `r${r}`,
       label: board.name(r, true),
-      sub: when(board.slots[r]?.[0] ?? NaN, now),
+      /* The slot; for a tournament with no schedule left, its first fight's own time. */
+      sub: when(
+        Number.isFinite(board.slots[r]?.[0]) ? board.slots[r][0] : chainTime(rows[0]?.play_time),
+        now,
+      ),
       state,
       round: r,
       fights,
@@ -1122,12 +1126,71 @@ function VsCard({ a, b, aSub, bSub }: { a: Entrant; b: Entrant | null; aSub?: st
 
 /* ---------- before signup ---------- */
 
+const EMPTY_TIMELINE: TimelineStep[] = []
+const EMPTY_FIELD: TournamentSignup[] = []
+const EMPTY_HISTORY: TournamentMatchup[][] = []
+const EMPTY_PAYOUTS: TournamentPayout[] = []
+
+/**
+ * The last tournament, round by round, between tournaments.
+ *
+ * A desktop has the room the wait leaves empty, so the previous
+ * tournament is laid out under the countdown: its strip, every round a tap
+ * away, and every fight in it to watch again — until cleanup takes them.
+ */
+function PastBrowser({ board, history, wallet, now, day, onWatch }: {
+  board: Board
+  history: TournamentMatchup[][]
+  wallet: string
+  now: number
+  day: number | null
+  onWatch: (m: TournamentMatchup, round: number) => void
+}) {
+  const last = board.rounds - 1
+  const [picked, setPicked] = useState(last)
+  const items = drawnItems(board, history, 'finish', now)
+  const rows = history[picked] ?? []
+  return (
+    <section className="ptour__past">
+      <div className="ptour__rhead">
+        <b>Last tournament{day ? ` · ${dayLabel(day)}` : ''}</b>
+        <small>every fight can be watched again until cleanup</small>
+      </div>
+      <Strip
+        items={items}
+        focus={items.findIndex((i) => i.round === picked)}
+        selected={picked}
+        onSelect={setPicked}
+      />
+      <div className="ptour__rhead">
+        <b>{board.name(picked)}</b>
+        <small>
+          {rows.length} fight{rows.length === 1 ? '' : 's'}
+        </small>
+      </div>
+      <RoundList
+        board={board}
+        round={picked}
+        rows={rows}
+        wallet={wallet}
+        now={now}
+        mineOnly={false}
+        current={false}
+        onWatch={(m) => onWatch(m, picked)}
+      />
+    </section>
+  )
+}
+
 function BeforeSignup(
   p: PhoneTournamentProps & { onHof: () => void; onWatch: (m: TournamentMatchup, round: number) => void },
 ) {
   const crowd = p.ringFighters.slice(0, 5)
   const past = p.past
   const pastRounds = past?.history.filter((r) => r.length) ?? []
+  const desk = useContext(Desk)
+  /* The last tournament as a board of its own, for browsing its rounds. */
+  const pastFull = useBoard(past?.stage, EMPTY_TIMELINE, EMPTY_FIELD, past?.history ?? EMPTY_HISTORY, EMPTY_PAYOUTS)
   const pastBoard = useMemo(() => {
     if (!past) return null
     const players = Number(past.stage.player_count ?? 0)
@@ -1174,9 +1237,6 @@ function BeforeSignup(
     <>
       <Head sub={Number.isFinite(opens) ? `Next one opens ${dayLabel(opens)}` : 'Between tournaments'} chip={<HofChip onClick={p.onHof} />} />
 
-      <Cols
-        items={[
-          [
       <div className="ptour__hero">
         <div className="ptour__board">
           <small>{Number.isFinite(opens) ? 'Signup opens in' : 'Next tournament'}</small>
@@ -1193,7 +1253,14 @@ function BeforeSignup(
             />
           ))}
         </div>
-      </div>,
+      </div>
+
+      <Cols
+        items={[
+          [
+            desk && past && pastFull.rounds > 0 && (
+              <PastBrowser board={pastFull} history={past.history} wallet={p.wallet} now={p.now} day={lastDay} onWatch={p.onWatch} />
+            ),
             'main',
           ],
           [p.phase === 'preparing' && p.stage && <PotCard stage={p.stage} field={null} />, 'side'],
@@ -1261,7 +1328,7 @@ function BeforeSignup(
             'side',
           ],
           [
-      replays.length > 0 && pastBoard && (
+      !desk && replays.length > 0 && pastBoard && (
         <>
           <div className="ptour__rhead">
             <b>Watch again</b>
@@ -1298,7 +1365,7 @@ function BeforeSignup(
                 Out in the <b>{roundName(myRun.outIn, pastBoard.rounds, pastBoard.opening).toLowerCase()}</b>
               </>
             )}{' '}
-            · {place(myRank)} · <b>{myRun.points}</b> points
+            · {place(myRank)} · <b>{myRun.points}</b> point{myRun.points === 1 ? '' : 's'}
           </p>
         </section>
       ),

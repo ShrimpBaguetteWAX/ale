@@ -6420,3 +6420,18 @@
   width: 13px;
   height: 13px;
 }
+
+/* Between tournaments on a desktop: a taller hall, and the last tournament under it. */
+.ptour--desk .ptour__hero {
+  height: clamp(360px, 42vh, 500px);
+}
+.ptour--desk .ptour__crowd img {
+  height: clamp(190px, 24vh, 270px);
+}
+.ptour--desk .ptour__crowd img:nth-child(3) {
+  height: clamp(230px, 29vh, 320px);
+}
+.ptour__past {
+  display: grid;
+  gap: 12px;
+}
