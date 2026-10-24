@@ -561,3 +561,444 @@
   font-size: var(--fs-sm);
   color: var(--white);
 }
+
+/* ---------- My Lands on a phone: by building, each land in a sheet ---------- */
+
+.plands {
+  display: grid;
+  gap: 10px;
+  align-content: start;
+}
+.plands__tlm,
+.plands__coin {
+  width: 14px;
+  height: 14px;
+  margin-left: 3px;
+  vertical-align: -2px;
+  object-fit: contain;
+}
+
+.plands__claim {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: rgb(8 14 28 / 66%);
+  box-shadow: inset 0 0 0 1px rgb(246 168 0 / 30%);
+}
+.plands__claim > .plands__tlm {
+  width: 24px;
+  height: 24px;
+  margin: 0;
+}
+.plands__claimtext {
+  display: grid;
+  flex: 1;
+}
+.plands__claimtext small {
+  font-family: var(--font-display);
+  font-size: 8.5px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.plands__claimtext b {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 800;
+  color: #ffd979;
+}
+
+/* The same switch as Rewards and the tavern. */
+.plands__tabs {
+  display: flex;
+  gap: 3px;
+  padding: 3px;
+  border-radius: 10px;
+  background: rgb(0 0 0 / 30%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 12%);
+}
+.plands__tabs button {
+  flex: 1;
+  min-height: 32px;
+  padding: 0 4px;
+  border: 0;
+  border-radius: 7px;
+  background: none;
+  font-size: 11px;
+  font-weight: var(--fw-bold);
+  white-space: nowrap;
+  color: var(--text-faint);
+}
+.plands__tabs button[aria-selected='true'] {
+  background: rgb(0 186 255 / 18%);
+  box-shadow: inset 0 0 0 1px rgb(0 186 255 / 55%);
+  color: var(--white);
+}
+
+.plands__list {
+  overflow: hidden;
+  border-radius: 12px;
+  background: rgb(8 14 28 / 66%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 10%);
+}
+.plands__row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 58px;
+  padding: 8px 10px;
+  border: 0;
+  background: none;
+  color: var(--white);
+  text-align: left;
+}
+.plands__row + .plands__row {
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 7%);
+}
+.plands__row:hover {
+  background: rgb(255 255 255 / 4%);
+}
+.plands__row--empty {
+  background: rgb(0 186 255 / 5%);
+}
+.plands__thumb {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border: 2px solid;
+  border-radius: 8px;
+}
+.plands__text {
+  display: grid;
+  flex: 1;
+  gap: 1px;
+  min-width: 0;
+}
+.plands__text strong {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  overflow: hidden;
+  font-size: var(--fs-xs);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.plands__bicon {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+}
+.plands__text small {
+  font-size: 10.5px;
+  color: var(--text-faint);
+}
+.plands__text em {
+  font-style: normal;
+}
+.plands__bar {
+  display: block;
+  height: 4px;
+  margin-top: 3px;
+  overflow: hidden;
+  border-radius: 2px;
+  background: rgb(255 255 255 / 12%);
+}
+.plands__bar i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: rgb(255 255 255 / 85%);
+}
+.plands__boost {
+  flex: none;
+  width: 36px;
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 800;
+  text-align: right;
+}
+.plands__amount {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: flex-end;
+  min-width: 56px;
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 800;
+  color: #ffd979;
+}
+.plands__build {
+  flex: none;
+  min-height: 30px;
+  padding: 0 12px;
+  font-size: 11px;
+}
+.plands__sum {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgb(8 14 28 / 66%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 10%);
+}
+.plands__sum b {
+  font-size: var(--fs-xs);
+}
+.plands__sum small {
+  font-size: 10.5px;
+  color: var(--text-faint);
+}
+
+/* ---- the land sheet ---- */
+.lsheet__head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.lsheet__thumb {
+  flex: none;
+  width: 72px;
+  height: 72px;
+  border: 2px solid;
+  border-radius: 12px;
+}
+.lsheet__text {
+  display: grid;
+  flex: 1;
+  gap: 3px;
+  min-width: 0;
+}
+.lsheet__text small {
+  font-size: 10.5px;
+  line-height: 1.35;
+  color: var(--text-faint);
+}
+.lsheet__text em {
+  font-style: normal;
+}
+.lsheet__text b {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 800;
+}
+.lsheet__text b img {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+}
+.lsheet__income {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr) auto;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgb(8 14 28 / 66%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 10%);
+}
+.lsheet__income span {
+  display: grid;
+}
+.lsheet__income small {
+  font-family: var(--font-display);
+  font-size: 8.5px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.lsheet__income b {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 800;
+}
+.lsheet__income b.is-gold {
+  color: #ffd979;
+}
+.lsheet__income .btn {
+  min-height: 32px;
+  padding: 0 12px;
+  font-size: 11px;
+}
+.lsheet__boost {
+  display: grid;
+  gap: 6px;
+  padding: 8px 12px 12px;
+  border-radius: 12px;
+  background: rgb(8 14 28 / 66%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 10%);
+}
+.lsheet__to {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 10px;
+}
+.lsheet__to span {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--text-faint);
+}
+.lsheet__to em {
+  font-style: normal;
+  color: var(--text-faint);
+}
+.lsheet__to b {
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 800;
+}
+.lsheet__line {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11.5px;
+  color: var(--text-faint);
+}
+.lsheet__line b {
+  display: inline-flex;
+  align-items: center;
+  font-size: var(--fs-xs);
+  color: var(--white);
+}
+.lsheet__cost {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 6px;
+  padding-left: 10px;
+  box-shadow: inset 1px 0 0 rgb(0 0 0 / 25%);
+}
+.lsheet__cost.is-short,
+.bopt__price b.is-short,
+.lsheet__lines b.is-short {
+  color: #ff8fa0;
+}
+.lsheet__destroy {
+  align-self: center;
+  justify-self: center;
+  padding: 4px 8px;
+  border: 0;
+  background: none;
+  font-size: 11px;
+  font-weight: var(--fw-bold);
+  color: #ff8fa0;
+}
+
+/* Build: one card per building, the chosen one outlined. */
+.bopt {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: 12px;
+  background: rgb(8 14 28 / 66%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 10%);
+  color: var(--white);
+  text-align: left;
+}
+.bopt.is-on {
+  background: rgb(0 186 255 / 8%);
+  box-shadow: inset 0 0 0 2px var(--cyan);
+}
+.bopt:disabled {
+  opacity: 0.45;
+}
+.bopt > img {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+}
+.bopt__text {
+  display: grid;
+  flex: 1;
+  gap: 2px;
+  min-width: 0;
+}
+.bopt__text b {
+  font-size: var(--fs-sm);
+}
+.bopt__text small {
+  font-size: 10.5px;
+  line-height: 1.35;
+  color: var(--text-faint);
+}
+.bopt__price {
+  display: grid;
+  flex: none;
+  justify-items: end;
+}
+.bopt__price s {
+  font-size: 10px;
+  color: var(--text-faint);
+}
+.bopt__price b {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+/* Destroy: what is lost, and what it costs. */
+.lsheet__warn {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+.lsheet__warn img {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+}
+.lsheet__warn span {
+  display: grid;
+  gap: 4px;
+}
+.lsheet__warn b {
+  font-size: var(--fs-sm);
+}
+.lsheet__warn small {
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: #ffb3c0;
+}
+.lsheet__lines {
+  display: grid;
+  gap: 6px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgb(8 14 28 / 66%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 10%);
+}
+.lsheet__lines div {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11.5px;
+  color: var(--text-faint);
+}
+.lsheet__lines b {
+  display: inline-flex;
+  align-items: center;
+  color: var(--white);
+}
+.rsheet .btn--danger {
+  --btn-bg: rgb(216 50 79 / 22%);
+  --btn-line: rgb(255 109 133 / 70%);
+  color: #ffd0d8;
+}

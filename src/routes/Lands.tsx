@@ -39,6 +39,8 @@ import { DIRTIES } from '@/wharf/actions'
 import { formatNumber, formatDecimals } from '@/format'
 import { ActionBanner } from '@/components/ActionBanner'
 import { asset } from '@/assets'
+import { usePhone } from '@/components/usePhone'
+import { BottomSheet } from '@/components/BottomSheet'
 
 /**
  * My Lands.
@@ -260,6 +262,56 @@ export default function Lands() {
       opts('claimLandRewards'),
     )
 
+  /* Build, boost and destroy, for whichever land asks: the desktop's panel
+     and the phone's sheet both call these. */
+  const doBuild = (land: OwnedLand, opt: ReturnType<typeof buildOptions>[number]) =>
+    void run(
+      busyKey('build', landKey(land)),
+      () =>
+        buildBuilding(session!, {
+          planet: land.planet,
+          x: land.x,
+          y: land.y,
+          building: opt.building,
+          level: opt.level,
+          costGem: opt.gems,
+          costCredits: opt.credits,
+        }),
+      `${buildingLabel(opt.building, costs)} built.`,
+      opts('buildBuilding'),
+    )
+  const doBoost = (land: OwnedLand, building: Building, target: number, cost: number) =>
+    void run(
+      busyKey('boost', landKey(land)),
+      () =>
+        boostBuilding(session!, {
+          planet: land.planet,
+          building: String(building.building_name),
+          x: land.x,
+          y: land.y,
+          costCredits: cost,
+          target,
+        }),
+      'Boost raised.',
+      opts('boostBuilding'),
+    )
+  const doDestroy = (land: OwnedLand, building: Building) =>
+    void run(
+      busyKey('destroy', landKey(land)),
+      () =>
+        destroyBuilding(session!, {
+          planet: land.planet,
+          x: land.x,
+          y: land.y,
+          building: String(building.building_name),
+          costGems: Number(config?.delete_building_gems_cost ?? 0),
+        }),
+      'Building destroyed successfully!',
+      opts('destroyBuilding'),
+    )
+
+  const phone = usePhone()
+
   if (!player) return null
 
   return (
@@ -267,7 +319,7 @@ export default function Lands() {
       <header className="lands__head">
         <h1 className="lands__title">My Lands</h1>
 
-        {lands.length > 0 && (
+        {lands.length > 0 && !phone && (
           <button
             type="button"
             className="btn btn--primary lands__claimAll"
@@ -293,6 +345,25 @@ export default function Lands() {
           You do not own any land yet. Land is an Alien Worlds NFT — buy a plot
           on the Alien Worlds market and it will appear here, ready to build on.
         </p>
+      ) : phone ? (
+        <PhoneLands
+          lands={lands}
+          costs={costs}
+          discounts={discounts}
+          config={config}
+          now={now}
+          busy={busy}
+          credits={player.activestats.credits}
+          gems={player.activestats.gems}
+          canAct={!!session}
+          claimableCount={claimable.length}
+          totalTlm={totals.tlm}
+          onClaimAll={() => void doClaimAll()}
+          onClaim={(land) => void doClaim(land)}
+          onBuild={doBuild}
+          onBoost={doBoost}
+          onDestroy={doDestroy}
+        />
       ) : (
         <div className="lands__cols">
           {/*
@@ -376,54 +447,9 @@ export default function Lands() {
                 credits={player.activestats.credits}
                 gems={player.activestats.gems}
                 canAct={!!session}
-                onBuild={(opt) =>
-                  void run(
-                    busyKey('build', landKey(selected)),
-                    () =>
-                      buildBuilding(session!, {
-                        planet: selected.planet,
-                        x: selected.x,
-                        y: selected.y,
-                        building: opt.building,
-                        level: opt.level,
-                        costGem: opt.gems,
-                        costCredits: opt.credits,
-                      }),
-                    `${buildingLabel(opt.building, costs)} built.`,
-                    opts('buildBuilding'),
-                  )
-                }
-                onBoost={(building, target, cost) =>
-                  void run(
-                    busyKey('boost', landKey(selected)),
-                    () =>
-                      boostBuilding(session!, {
-                        planet: selected.planet,
-                        building: String(building.building_name),
-                        x: selected.x,
-                        y: selected.y,
-                        costCredits: cost,
-                        target,
-                      }),
-                    'Boost raised.',
-                    opts('boostBuilding'),
-                  )
-                }
-                onDestroy={(building) =>
-                  void run(
-                    busyKey('destroy', landKey(selected)),
-                    () =>
-                      destroyBuilding(session!, {
-                        planet: selected.planet,
-                        x: selected.x,
-                        y: selected.y,
-                        building: String(building.building_name),
-                        costGems: Number(config?.delete_building_gems_cost ?? 0),
-                      }),
-                    'Building destroyed successfully!',
-                    opts('destroyBuilding'),
-                  )
-                }
+                onBuild={(opt) => doBuild(selected, opt)}
+                onBoost={(building, target, cost) => doBoost(selected, building, target, cost)}
+                onDestroy={(building) => doDestroy(selected, building)}
               />
               ) : (
                 <div className="landside__empty">
@@ -910,5 +936,581 @@ function BuildingPanel({
         Destroy Building
       </button>
     </>
+  )
+}
+
+/* ---------- a phone: the lands by building, each one in a sheet ---------- */
+
+type PhoneTab = 'all' | BuildingName
+
+/* "Methane Swampland on Eyeke" reads as "Methane Swampland": the planet has its own line. */
+function shortName(name: string): string {
+  return name.split(' on ')[0] || name
+}
+
+function cap(s: string): string {
+  return s ? s[0].toUpperCase() + s.slice(1) : s
+}
+
+function landBuilding(land: OwnedLand): string {
+  return String(land.buildings[0]?.building_name ?? '').toLowerCase()
+}
+
+/* The multiplier the player reads, with a proper times sign. */
+function boostLabel(percent: number): string {
+  return formatBoost(percent).replace('x', '×')
+}
+
+function TlmIcon() {
+  return <img className="plands__tlm" src={asset('/assets/icons/tlm.svg')} alt="TLM" />
+}
+
+function CreditIcon() {
+  return <img className="plands__coin" src={asset('/assets/icons/credits.png')} alt="Credits" />
+}
+
+function GemIcon() {
+  return <img className="plands__coin" src={asset('/assets/icons/gems.png')} alt="Gems" />
+}
+
+type BuildOption = ReturnType<typeof buildOptions>[number]
+
+/**
+ * My Lands on a phone.
+ *
+ * What is ready to claim across every land first, with one Claim all, then
+ * the lands themselves behind a switch — all of them, or one kind of
+ * building at a time — each a quiet row with its boost and its TLM. A land
+ * opens as a bottom sheet rather than as a panel under the whole list: to
+ * build on it when it is empty, or to claim, boost or destroy what stands
+ * on it.
+ */
+export function PhoneLands({
+  lands,
+  costs,
+  discounts,
+  config,
+  now,
+  busy,
+  credits: playerCredits,
+  gems,
+  canAct,
+  claimableCount,
+  totalTlm,
+  onClaimAll,
+  onClaim,
+  onBuild,
+  onBoost,
+  onDestroy,
+}: {
+  lands: OwnedLand[]
+  costs: Map<string, BuildingCost[]>
+  discounts: Map<string, number>
+  config?: LandsConfig
+  now: number
+  busy: Busy
+  credits: number
+  gems: number
+  canAct: boolean
+  claimableCount: number
+  totalTlm: number
+  onClaimAll: () => void
+  onClaim: (land: OwnedLand) => void
+  onBuild: (land: OwnedLand, opt: BuildOption) => void
+  onBoost: (land: OwnedLand, building: Building, target: number, cost: number) => void
+  onDestroy: (land: OwnedLand, building: Building) => void
+}) {
+  const [tab, setTab] = useState<PhoneTab>('all')
+  const [openKey, setOpenKey] = useState<string | null>(null)
+  const open = lands.find((l) => landKey(l) === openKey) ?? null
+  const decay = Number(config?.boost_decay_per_hour ?? 0)
+
+  const count = (name: BuildingName) => lands.filter((l) => landBuilding(l) === name).length
+  const shown = tab === 'all' ? lands : lands.filter((l) => landBuilding(l) === tab)
+  const tabTlm = shown.reduce((sum, l) => sum + incomeOf(l.buildings).tlm, 0)
+  const tabs: [PhoneTab, string][] = [
+    ['all', `All ${lands.length}`],
+    /* Fights first, then recruiting. */
+    ...(['dungeon', 'arena', 'tavern'] as BuildingName[]).map(
+      (b) => [b, `${buildingLabel(b, costs)}s ${count(b)}`] as [PhoneTab, string],
+    ),
+  ]
+
+  return (
+    <div className="plands">
+      <div className="plands__claim">
+        <TlmIcon />
+        <span className="plands__claimtext">
+          <small>Ready to claim</small>
+          <b className="mono">{tlm(totalTlm)} TLM</b>
+        </span>
+        <button
+          type="button"
+          className="btn btn--gold btn--sm"
+          disabled={!canAct || busy !== null || claimableCount === 0}
+          onClick={onClaimAll}
+        >
+          {busy?.kind === 'claim-all' && <span className="spinner" />}
+          Claim all
+        </button>
+      </div>
+
+      <div className="plands__tabs" role="tablist" aria-label="Buildings">
+        {tabs.map(([key, label]) => (
+          <button
+            type="button"
+            key={key}
+            role="tab"
+            aria-selected={tab === key}
+            onClick={() => setTab(key)}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      <div className="plands__list">
+        {shown.map((land) => {
+          const building = land.buildings[0]
+          const name = landBuilding(land)
+          const score = building
+            ? liveBoostScore(
+                Number(building.boost_score ?? 0),
+                String(building.boost_score_update ?? ''),
+                decay,
+                now,
+              )
+            : 0
+          const percent = score / 10_000
+          const income = incomeOf(land.buildings)
+          return (
+            <button
+              type="button"
+              className={`plands__row${building ? '' : ' plands__row--empty'}`}
+              key={landKey(land)}
+              onClick={() => setOpenKey(landKey(land))}
+            >
+              <span
+                className="plands__thumb"
+                style={{
+                  ...landThumbStyle(land.planet, land.x, land.y, 40),
+                  borderColor: rarityColor(land.rarity),
+                }}
+              />
+              <span className="plands__text">
+                <strong>
+                  {building && tab === 'all' && (
+                    <img className="plands__bicon" src={buildingIcon(name)} alt={name} />
+                  )}
+                  {shortName(land.name)}
+                </strong>
+                <small>
+                  {cap(land.planet)} {land.x}:{land.y} ·{' '}
+                  <em style={{ color: rarityColor(land.rarity) }}>
+                    {cap(land.rarity || 'common')}
+                  </em>
+                  {!building && ' · no building'}
+                </small>
+                {building && (
+                  <span className="plands__bar">
+                    <i style={{ width: `${Math.min(100, percent)}%` }} />
+                  </span>
+                )}
+              </span>
+              {building ? (
+                <>
+                  <span className="plands__boost mono">{boostLabel(percent)}</span>
+                  <span className="plands__amount mono">
+                    {tlm(income.tlm)}
+                    <TlmIcon />
+                  </span>
+                </>
+              ) : (
+                <span className="btn btn--primary btn--sm plands__build">Build</span>
+              )}
+            </button>
+          )
+        })}
+      </div>
+
+      {tab !== 'all' && shown.length > 0 && (
+        <p className="plands__sum">
+          <b>
+            {shown.length} {buildingLabel(tab, costs).toLowerCase()}
+            {shown.length === 1 ? '' : 's'} · {tlm(tabTlm)} <TlmIcon /> ready
+          </b>
+          <small>{tlm(tabTlm / shown.length)} TLM each on average</small>
+        </p>
+      )}
+      {tab !== 'all' && shown.length === 0 && (
+        <p className="plands__sum">
+          <small>No {buildingLabel(tab, costs).toLowerCase()} on your lands yet.</small>
+        </p>
+      )}
+
+      {open && (
+        <LandSheet
+          key={landKey(open)}
+          land={open}
+          costs={costs}
+          discounts={discounts}
+          config={config}
+          now={now}
+          busy={busy}
+          credits={playerCredits}
+          gems={gems}
+          canAct={canAct}
+          onClose={() => setOpenKey(null)}
+          onClaim={() => onClaim(open)}
+          onBuild={(opt) => onBuild(open, opt)}
+          onBoost={(b, target, cost) => onBoost(open, b, target, cost)}
+          onDestroy={(b) => onDestroy(open, b)}
+        />
+      )}
+    </div>
+  )
+}
+
+function LandSheet({
+  land,
+  costs,
+  discounts,
+  config,
+  now,
+  busy,
+  credits: playerCredits,
+  gems,
+  canAct,
+  onClose,
+  onClaim,
+  onBuild,
+  onBoost,
+  onDestroy,
+}: {
+  land: OwnedLand
+  costs: Map<string, BuildingCost[]>
+  discounts: Map<string, number>
+  config?: LandsConfig
+  now: number
+  busy: Busy
+  credits: number
+  gems: number
+  canAct: boolean
+  onClose: () => void
+  onClaim: () => void
+  onBuild: (opt: BuildOption) => void
+  onBoost: (building: Building, target: number, cost: number) => void
+  onDestroy: (building: Building) => void
+}) {
+  const building = land.buildings[0]
+  const name = String(building?.building_name ?? '').toLowerCase()
+  const working = busy !== null && 'key' in busy && busy.key === landKey(land)
+  const decay = Number(config?.boost_decay_per_hour ?? 0)
+  const current = building
+    ? liveBoostScore(
+        Number(building.boost_score ?? 0),
+        String(building.boost_score_update ?? ''),
+        decay,
+        now,
+      )
+    : 0
+  /* One step above where it is: the contract refuses a target at or below it. */
+  const floor = Math.min(BOOST_MAX, Math.floor(current / 10_000) * 10_000 + 10_000)
+  const [target, setTarget] = useState(floor)
+  const [confirm, setConfirm] = useState(false)
+  const options = useMemo(
+    () => buildOptions(land, costs, discounts, BUILDINGS as readonly BuildingName[]),
+    [land, costs, discounts],
+  )
+  const [pick, setPick] = useState<string | null>(
+    () => options.find((o) => !o.blocked)?.building ?? null,
+  )
+  const chosen = options.find((o) => o.building === pick)
+  const discount = discounts.get(land.rarity) ?? 0
+  const income = incomeOf(land.buildings)
+  const cost = boostCost(current, target, config)
+  const destroyCost = Number(config?.delete_building_gems_cost ?? 0)
+  /* A day of decay, in the multiplier the player reads: score / 100,000. */
+  const perDay = (decay * 24) / 100_000
+
+  const head = (
+    <div className="lsheet__head">
+      <span
+        className="lsheet__thumb"
+        style={{
+          ...landThumbStyle(land.planet, land.x, land.y, 72),
+          borderColor: rarityColor(land.rarity),
+        }}
+      />
+      <span className="lsheet__text">
+        <small>
+          {cap(land.planet)} {land.x}:{land.y} ·{' '}
+          <em style={{ color: rarityColor(land.rarity) }}>{cap(land.rarity || 'common')}</em>
+        </small>
+        {building ? (
+          <>
+            <b>
+              <img src={buildingIcon(name)} alt="" />
+              {buildingLabel(name, costs)} · {boostLabel(current / 10_000)}
+            </b>
+            <span className="plands__bar">
+              <i style={{ width: `${Math.min(100, current / 10_000)}%` }} />
+            </span>
+            <small>
+              Fades about {perDay.toFixed(2)}× a day, faster the more it is used. Below 1% nobody
+              can use it.
+            </small>
+          </>
+        ) : (
+          <>
+            <b>No building yet</b>
+            <small>One building per land. Players use it, and you earn from every use.</small>
+          </>
+        )}
+      </span>
+    </div>
+  )
+
+  /* ---- an empty land: build ---- */
+  if (!building) {
+    return (
+      <BottomSheet
+        title={shortName(land.name)}
+        onClose={onClose}
+        foot={
+          <div className="rsheet__actions">
+            <button type="button" className="btn btn--ghost" onClick={onClose}>
+              Cancel
+            </button>
+            <button
+              type="button"
+              className="btn btn--primary"
+              disabled={
+                !canAct ||
+                busy !== null ||
+                !chosen ||
+                !!chosen.blocked ||
+                chosen.credits > playerCredits ||
+                chosen.gems > gems
+              }
+              onClick={() => chosen && onBuild(chosen)}
+            >
+              {working && busy?.kind === 'build' && <span className="spinner" />}
+              {chosen ? `Build ${buildingLabel(chosen.building, costs)}` : 'Build'}
+              {chosen && (
+                <span className="lsheet__cost mono">
+                  {formatNumber(chosen.credits)}
+                  <CreditIcon />
+                </span>
+              )}
+            </button>
+          </div>
+        }
+      >
+        {head}
+        <div className="rsheet__cap">
+          Build
+          {discount > 0 && (
+            <span>
+              {cap(land.rarity)} land: {formatNumber(discount)} off
+            </span>
+          )}
+        </div>
+        {options.map((opt) => {
+          const tooPoor = opt.credits > playerCredits || opt.gems > gems
+          return (
+            <button
+              type="button"
+              key={opt.building}
+              className={`bopt${pick === opt.building ? ' is-on' : ''}`}
+              disabled={!!opt.blocked}
+              aria-pressed={pick === opt.building}
+              onClick={() => setPick(opt.building)}
+            >
+              <img src={buildingIcon(opt.building)} alt="" />
+              <span className="bopt__text">
+                <b>{buildingLabel(opt.building, costs)}</b>
+                <small>{opt.blocked ?? BUILDING_BLURB[opt.building]}</small>
+              </span>
+              <span className="bopt__price">
+                {discount > 0 && opt.cost && (
+                  <s className="mono">{formatNumber(opt.cost.cost_credits)}</s>
+                )}
+                <b className={`mono${tooPoor ? ' is-short' : ''}`}>
+                  {formatNumber(opt.credits)}
+                  <CreditIcon />
+                </b>
+              </span>
+            </button>
+          )
+        })}
+      </BottomSheet>
+    )
+  }
+
+  /* ---- a building: destroy, after asking ---- */
+  if (confirm) {
+    return (
+      <BottomSheet
+        title={`Destroy the ${buildingLabel(name, costs).toLowerCase()}?`}
+        onClose={onClose}
+        foot={
+          <div className="rsheet__actions">
+            <button type="button" className="btn btn--ghost" onClick={() => setConfirm(false)}>
+              Keep it
+            </button>
+            <button
+              type="button"
+              className="btn btn--danger"
+              disabled={!canAct || busy !== null || destroyCost > gems}
+              onClick={() => onDestroy(building)}
+            >
+              {working && busy?.kind === 'destroy' && <span className="spinner" />}
+              Destroy
+              <span className="lsheet__cost mono">
+                {formatNumber(destroyCost)}
+                <GemIcon />
+              </span>
+            </button>
+          </div>
+        }
+      >
+        <div className="lsheet__warn">
+          <img src={buildingIcon(name)} alt="" />
+          <span>
+            <b>
+              {shortName(land.name)} · {cap(land.planet)} {land.x}:{land.y}
+            </b>
+            <small>
+              This cannot be undone. The {buildingLabel(name, costs).toLowerCase()} and its{' '}
+              {boostLabel(current / 10_000)} boost are gone for good, and the land is empty again.
+            </small>
+          </span>
+        </div>
+        {/* `delbuilding` pays out what the building holds before it removes it. */}
+        <div className="lsheet__lines">
+          <div>
+            <span>Its ready TLM is paid out to you</span>
+            <b className="mono">
+              {tlm(income.tlm)}
+              <TlmIcon />
+            </b>
+          </div>
+          <div>
+            <span>Destroying costs</span>
+            <b className={`mono${destroyCost > gems ? ' is-short' : ''}`}>
+              {formatNumber(destroyCost)}
+              <GemIcon />
+            </b>
+          </div>
+        </div>
+      </BottomSheet>
+    )
+  }
+
+  /* ---- a building: claim and boost ---- */
+  return (
+    <BottomSheet
+      title={shortName(land.name)}
+      onClose={onClose}
+      foot={
+        <>
+          <div className="rsheet__actions">
+            <button
+              type="button"
+              className="btn btn--primary"
+              disabled={
+                !canAct ||
+                busy !== null ||
+                current >= BOOST_MAX ||
+                target <= current ||
+                cost > playerCredits
+              }
+              onClick={() => onBoost(building, target, cost)}
+            >
+              {working && busy?.kind === 'boost' && <span className="spinner" />}
+              Boost to {boostLabel(target / 10_000)}
+              <span className={`lsheet__cost mono${cost > playerCredits ? ' is-short' : ''}`}>
+                {credits(cost)}
+                <CreditIcon />
+              </span>
+            </button>
+          </div>
+          <button type="button" className="lsheet__destroy" onClick={() => setConfirm(true)}>
+            Destroy building
+          </button>
+        </>
+      }
+    >
+      {head}
+      <div className="lsheet__income">
+        <span>
+          <small>Ready</small>
+          <b className="mono is-gold">
+            {tlm(income.tlm)}
+            <TlmIcon />
+          </b>
+        </span>
+        <span>
+          <small>Credits</small>
+          <b className="mono">{formatNumber(income.credits)}</b>
+        </span>
+        <span>
+          <small>Gems</small>
+          <b className="mono">{formatNumber(income.gems)}</b>
+        </span>
+        <button
+          type="button"
+          className="btn btn--gold btn--sm"
+          disabled={!canAct || busy !== null || !hasClaimable(income)}
+          onClick={onClaim}
+        >
+          {working && busy?.kind === 'claim' && <span className="spinner" />}
+          Claim
+        </button>
+      </div>
+      {income.shards > 0 && (
+        <p className="rsheet__hint">
+          It also holds {shards(income.shards)} shards. Claiming clears them without paying them
+          out.
+        </p>
+      )}
+      <div className="rsheet__cap">
+        Boost<span>now {boostLabel(current / 10_000)}</span>
+      </div>
+      <div className="lsheet__boost">
+        {current >= BOOST_MAX ? (
+          <p className="rsheet__hint">This building is at the highest boost there is.</p>
+        ) : (
+          <>
+            <div className="lsheet__to">
+              <span className="mono">{boostLabel(current / 10_000)}</span>
+              <em>→</em>
+              <b className="mono">{boostLabel(target / 10_000)}</b>
+            </div>
+            <input
+              type="range"
+              className="landsheet__range"
+              min={floor}
+              max={BOOST_MAX}
+              step={10_000}
+              value={target}
+              aria-label="Boost to"
+              onChange={(e) => setTarget(Number(e.target.value))}
+            />
+            <div className="lsheet__line">
+              <span>Each 0.1× costs a little more than the last</span>
+            </div>
+            <div className="lsheet__line">
+              <span>Total</span>
+              <b className="mono">
+                {credits(cost)}
+                <CreditIcon />
+              </b>
+            </div>
+          </>
+        )}
+      </div>
+    </BottomSheet>
   )
 }
