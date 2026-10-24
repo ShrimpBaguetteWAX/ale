@@ -903,10 +903,13 @@ function TlmTable({ board, wallet }: { board: Board; wallet: string }) {
       </span>
     )
   const rows: { key: string; label: string; a: number | undefined; b?: number | undefined }[] = []
-  if (board.opening) {
-    rows.push({ key: 'pass', label: 'Free pass', a: both ? undefined : run?.pass ? 10 : undefined, b: 10 })
+  if (board.opening && both) {
+    /* The first step either way: through the opening round, or past it on seed. */
+    rows.push({ key: 'first', label: `Win ${board.name(0)} or free pass`, a: fromOpening.get(0), b: 10 })
+  } else if (board.opening && run?.pass) {
+    rows.push({ key: 'pass', label: 'Free pass', a: 10 })
   }
-  for (let r = 0; r < board.rounds; r++) {
+  for (let r = both ? 1 : 0; r < board.rounds; r++) {
     rows.push({
       key: String(r),
       label: `Win ${board.name(r) === 'Final' ? 'the Final' : board.name(r)}`,
@@ -1420,7 +1423,7 @@ function Draw(p: PhoneTournamentProps & { board: Board; onPrizes: () => void }) 
 
       <section className="ptour__card ptour__card--gold">
         <div className="ptour__cardhead">
-          <span className="ptour__kick ptour__kick--gold">Prizes · now exact</span>
+          <span className="ptour__kick ptour__kick--gold">Prizes</span>
           <button type="button" className="ptour__link" onClick={p.onPrizes}>
             All details ›
           </button>
