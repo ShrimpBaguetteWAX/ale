@@ -6064,3 +6064,9 @@
   filter: brightness(0);
   opacity: 0.82;
 }
+
+/* The play button keeps its circle: the row's text span stretches, it must not. */
+.ptour__legline > .ptour__play {
+  flex: none;
+  min-width: 0;
+}
