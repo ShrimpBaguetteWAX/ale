@@ -74,6 +74,10 @@ function Res({
         <span className="res__socket">
           <img className="res__icon" src={icon} alt="" width={22} height={22} />
         </span>
+        {/* Shown by the phone's top bar, which names each figure. */}
+        <span className="res__label" aria-hidden="true">
+          {tone === 'energy' ? 'Energy' : label}
+        </span>
         <span className="res__value">{formatCompact(value)}</span>
       </span>
       <span className="sr-only">{label} - open the Shop</span>

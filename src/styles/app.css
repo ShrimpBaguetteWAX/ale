@@ -1901,3 +1901,68 @@ a.res {
     pointer-events: none;
   }
 }
+
+/*
+ * The phone's top bar: each currency labelled.
+ *
+ * No chips: a tiny GEMS, CREDITS or ENERGY over each figure, the icon small
+ * beside the number, straight on the glass. Nothing for a new player to
+ * decode, still one line of bar. The desktop menu keeps its chips.
+ */
+.res__label {
+  display: none;
+}
+@media (max-width: 1023px) {
+  .topbar .resources {
+    gap: 14px;
+    padding: 0;
+  }
+  .topbar .res {
+    padding: 0;
+    border: 0;
+    background: none;
+    box-shadow: none;
+    transform: none;
+  }
+  .topbar .res::after {
+    display: none;
+  }
+  .topbar .res__inner {
+    display: grid;
+    grid-template-columns: auto auto;
+    grid-template-areas: 'label label' 'icon value';
+    justify-items: end;
+    align-items: center;
+    column-gap: 4px;
+    row-gap: 0;
+    transform: none;
+  }
+  .topbar .res__label {
+    grid-area: label;
+    display: block;
+    font-size: 8px;
+    font-weight: var(--fw-bold);
+    letter-spacing: 0.12em;
+    line-height: 1.1;
+    text-transform: uppercase;
+    color: var(--text-faint);
+  }
+  .topbar .res__socket {
+    grid-area: icon;
+    width: auto;
+    height: auto;
+    background: none;
+    box-shadow: none;
+  }
+  .topbar .res__icon {
+    width: 14px;
+    height: 14px;
+    filter: none;
+  }
+  .topbar .res__value {
+    grid-area: value;
+    font-size: 13px;
+    line-height: 1.15;
+    text-shadow: none;
+  }
+}
