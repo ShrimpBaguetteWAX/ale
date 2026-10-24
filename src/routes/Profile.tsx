@@ -388,7 +388,8 @@ export default function Profile({ section = 'account' }: { section?: Section }) 
     void run(
       'mine',
       () => mineRewardPool(session!, pool, historyId, times),
-      times > 1 ? `Mined ${times} times.` : 'Mined.',
+      /* No banner: what the mine paid is shown on its own just after. */
+      '',
       mineOpts,
     ).then(async () => {
       /* The mine writes a ledger row, so drop the cached page. */
