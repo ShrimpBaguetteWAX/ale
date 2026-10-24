@@ -3,6 +3,8 @@ import { useChainQuery } from '@/chain/useChainQuery'
 import { useConfig, useLazyConfig } from '@/state/useConfig'
 import { fetchFightersByIds } from '@/tournament/queries'
 import { dayClock } from '@/routes/Tournament'
+import { FightStage, useFightPlayback } from '@/routes/Battle'
+import { usePhone } from '@/components/usePhone'
 import { simulateBout, type BoutSide } from '@/tournament/bout'
 import { combineNftFlat } from '@/dungeon/nftFighter'
 import { stateAt } from '@/dungeon/standing'
@@ -200,10 +202,13 @@ export function BoutBroadcast({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoPlay, m.index, locked])
 
+  /* Each watch is a fresh run of the stage, from the first blow. */
+  const [runs, setRuns] = useState(0)
   const again = () => {
     setStep(0)
     setAiming(true)
     setPaused(false)
+    setRuns((n) => n + 1)
     setPhase('live')
   }
 
@@ -216,6 +221,23 @@ export function BoutBroadcast({
 
   const tagA = m.gamertag_player1 || 'Unnamed'
   const tagB = m.gamertag_player2 || 'Unnamed'
+
+  /*
+     The fight itself plays on the dungeon's and the arena's stage — the same
+     fighters, swings, numbers and knockouts a player already knows — between
+     the tournament's own poster and its own result.
+  */
+  if (replay && phase === 'live') {
+    return (
+      <BoutStage
+        key={runs}
+        replay={replay}
+        a={tagA}
+        b={tagB}
+        onDone={() => setPhase('done')}
+      />
+    )
+  }
 
   return (
     <section
@@ -267,6 +289,47 @@ export function BoutBroadcast({
 
       <span className="bcast__wipe" />
     </section>
+  )
+}
+
+/**
+ * The bout on the battle stage.
+ *
+ * Player one stands on the left and player two on the right, each under
+ * their own name, and the stage hands back to the broadcast's result the
+ * moment the fight is over — or skipped.
+ */
+function BoutStage({
+  replay,
+  a,
+  b,
+  onDone,
+}: {
+  replay: Replay
+  a: string
+  b: string
+  onDone: () => void
+}) {
+  const phone = usePhone()
+  const pb = useFightPlayback(replay, true)
+  useEffect(() => {
+    if (pb.finished) onDone()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pb.finished])
+  return (
+    <div className="boutstage" style={{ ['--beat' as string]: String(1 / pb.speed) }}>
+      <FightStage
+        replay={replay}
+        pb={pb}
+        playertag={a}
+        mineLabel={a}
+        enemyLabel={b}
+        enemyOwner={b}
+        live="Tournament"
+        phone={phone}
+        broadcast
+      />
+    </div>
   )
 }
 

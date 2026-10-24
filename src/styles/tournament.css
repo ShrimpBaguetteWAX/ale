@@ -5581,11 +5581,15 @@
   font-weight: var(--fw-bold);
   color: var(--white);
 }
+/* Icon and amount on one line: images are blocks everywhere else in the game. */
+.ptour__paid > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
 .ptour__paid img {
-  width: 14px;
-  height: 14px;
-  margin-right: 3px;
-  vertical-align: -2px;
+  width: 16px;
+  height: 16px;
 }
 .ptour__podium {
   display: grid;

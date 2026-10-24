@@ -236,22 +236,16 @@ export default function Battle() {
 
 /* ---------- the arena ---------- */
 
-function Arena({
-  replay,
-  row,
-  playertag,
-  onLeave,
-  onRetry,
-  venue,
-}: {
-  replay: Replay
-  row: FightRow
-  playertag: string
-  onLeave: () => void
-  /** Back to the screen the fight was started from, where that is known. */
-  onRetry?: () => void
-  venue: Venue
-}) {
+/**
+ * A fight, played: the clock, the beats, and everything on the field as of
+ * the blow that has landed.
+ *
+ * The dungeon and the arena watch their fights through this, and so does the
+ * tournament — so a fight looks and moves the same wherever a player sees
+ * one. `ticking` keeps the running clock live, which only the broadcast
+ * layouts show.
+ */
+export function useFightPlayback(replay: Replay, ticking: boolean) {
   const total = replay.turns.length
 
   /** How many blows have landed. 0 is the opening line-up, `total` the end. */
@@ -263,30 +257,6 @@ function Arena({
      named thing rather than a 1 sprinkled through four expressions.
   */
   const [speed, setSpeed] = useState<Speed>(1)
-  const logRef = useRef<HTMLDivElement>(null)
-
-  const phone = usePhone()
-  /*
-     On a desktop the battlefield plays as a broadcast on the glass, with the
-     map behind it: a window with a scorebar and a transport bar under the
-     picture. The log opens in a column beside it on request.
-  */
-  const wide = useWide()
-  /* A phone gets the player too: a taller one, the log always under it. */
-  const broadcast = wide || phone
-  /* Open unless this player has closed it; their choice is remembered. */
-  const [showLog, setShowLogState] = useState(readShowLog)
-  const setShowLog = useCallback((next: boolean | ((v: boolean) => boolean)) => {
-    setShowLogState((v) => {
-      const value = typeof next === 'function' ? next(v) : next
-      try {
-        localStorage.setItem(LOG_KEY, value ? '1' : '0')
-      } catch {
-        /* Private mode: the choice lasts until the page is left. */
-      }
-      return value
-    })
-  }, [])
   /*
    * Playback is a chain of timeouts rather than an interval: the delay has to
    * change with the speed control mid-fight, and a timeout that reschedules
@@ -305,14 +275,6 @@ function Arena({
   useEffect(() => {
     if (step >= total) setPlaying(false)
   }, [step, total])
-
-  /** The log follows the fight, as the original's does. */
-  useEffect(() => {
-    const el = logRef.current
-    if (!el) return
-    /* A phone lists the newest blow first, so that is where it stays. */
-    el.scrollTo({ top: phone ? 0 : el.scrollHeight, behavior: 'smooth' })
-  }, [step])
 
   /** The blow just played, which drives every animation on screen. */
   const current: TurnEvent | null = step > 0 ? replay.turns[step - 1] : null
@@ -344,10 +306,10 @@ function Arena({
   }, [step, playing, speed])
   const [, setTicks] = useState(0)
   useEffect(() => {
-    if (!broadcast || !playing || step >= total) return
+    if (!ticking || !playing || step >= total) return
     const id = window.setInterval(() => setTicks((n) => n + 1), 250)
     return () => window.clearInterval(id)
-  }, [broadcast, playing, step, total])
+  }, [ticking, playing, step, total])
   const into =
     playing && step < total
       ? Math.min(BASE_TURN_MS, (performance.now() - turnStartedAt.current) * speed)
@@ -459,20 +421,6 @@ function Arena({
 
   const finished = settled || skipped
 
-  /*
-     A fight pays XP, and enough of it levels a fighter up.
-
-     The nav dot for My Fighters means "a fighter is ready to level up",
-     and it re-checks on its own every three minutes through the cache -
-     so after a run that earned the last XP a fighter needed, the dot
-     could be three minutes late and then still answer from a roster read
-     before the fight. `refreshChore` forces the read, and the moment the
-     result screen appears is when the chain has just been written to.
-  */
-  useEffect(() => {
-    if (finished) refreshChore('fighters')
-  }, [finished])
-
   /**
    * Who swings next.
    *
@@ -510,6 +458,258 @@ function Arena({
     setPlaying(true)
   }, [])
 
+  return {
+    total,
+    step,
+    setStep,
+    playing,
+    setPlaying,
+    speed,
+    setSpeed,
+    current,
+    aimUid,
+    elapsedMs,
+    state,
+    abilityDelta,
+    standing,
+    team1,
+    team2,
+    finished,
+    nextUp,
+    skip,
+    restart,
+  }
+}
+
+export type FightPlayback = ReturnType<typeof useFightPlayback>
+
+/**
+ * The fight on screen: both teams on the field, the turn order, the
+ * transport bar and the live log — the battle the dungeon and the arena
+ * show, for anywhere a fight is watched.
+ */
+export function FightStage({
+  replay,
+  pb,
+  playertag,
+  mineLabel = 'Your team',
+  enemyLabel,
+  enemyOwner = 'The dungeon',
+  live,
+  phone,
+  broadcast,
+}: {
+  replay: Replay
+  pb: FightPlayback
+  playertag: string
+  /** What the left-hand team is called on the field. */
+  mineLabel?: string
+  enemyLabel: string
+  /** Who the right-hand fighters belong to, in the turn order. */
+  enemyOwner?: string
+  /** The venue's name on the LIVE tag. */
+  live: string
+  phone: boolean
+  /** The broadcast layout, with the transport bar under the picture. */
+  broadcast: boolean
+}) {
+  const { step, total, speed, playing } = pb
+  const logRef = useRef<HTMLDivElement>(null)
+  /* Open unless this player has closed it; their choice is remembered. */
+  const [showLog, setShowLogState] = useState(readShowLog)
+  const setShowLog = useCallback((next: boolean | ((v: boolean) => boolean)) => {
+    setShowLogState((v) => {
+      const value = typeof next === 'function' ? next(v) : next
+      try {
+        localStorage.setItem(LOG_KEY, value ? '1' : '0')
+      } catch {
+        /* Private mode: the choice lasts until the page is left. */
+      }
+      return value
+    })
+  }, [])
+
+  /** The log follows the fight, as the original's does. */
+  useEffect(() => {
+    const el = logRef.current
+    if (!el) return
+    /* A phone lists the newest blow first, so that is where it stays. */
+    el.scrollTo({ top: phone ? 0 : el.scrollHeight, behavior: 'smooth' })
+  }, [step, phone])
+
+  return (
+    <div className={`bfwrap${broadcast ? ' bfwrap--bcast' : ''}${broadcast && showLog && !phone ? ' bfwrap--log' : ''}`}>
+      <div className="bfmain">
+        {/* The turn order is part of the picture, under the scorebar. */}
+        <Battlefield
+          wide={!phone}
+          queue={<TurnQueue replay={replay} step={step} speed={speed} playertag={playertag} enemyOwner={enemyOwner} />}
+          team1={pb.team1}
+          team2={pb.team2}
+          state={pb.state}
+          current={pb.current}
+          turn={step}
+          abilityDelta={pb.abilityDelta}
+          standing={pb.standing}
+          nextUp={pb.nextUp}
+          playertag={playertag}
+          mineLabel={mineLabel}
+          enemyLabel={enemyLabel}
+          broadcast={broadcast ? live : undefined}
+          aimUid={pb.aimUid}
+        />
+        {broadcast && (
+          <div className="bcdeck">
+            <button
+              type="button"
+              className="bcdeck__btn"
+              onClick={() => (step >= total ? pb.restart() : pb.setPlaying((p) => !p))}
+              aria-label={playing ? 'Pause' : 'Play'}
+              title={playing ? 'Pause' : 'Play'}
+            >
+              {playing ? (
+                <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <path d="M6 5h4v14H6zM14 5h4v14h-4z" />
+                </svg>
+              ) : (
+                <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <path d="M7 5v14l12-7z" />
+                </svg>
+              )}
+            </button>
+            <span className="bcdeck__count mono">
+              {clock(pb.elapsedMs)} <small>/ {clock(total * BASE_TURN_MS)}</small>
+            </span>
+            {/* The fight's progress, and a way to any point of it. */}
+            <div
+              className="bcdeck__rail"
+              role="slider"
+              tabIndex={0}
+              aria-label="Fight progress"
+              aria-valuemin={0}
+              aria-valuemax={total}
+              aria-valuenow={step}
+              aria-valuetext={`${clock(pb.elapsedMs)} of ${clock(total * BASE_TURN_MS)}, blow ${step} of ${total}`}
+              onClick={(e) => {
+                const r = e.currentTarget.getBoundingClientRect()
+                pb.setStep(Math.round(Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)) * total))
+              }}
+              onKeyDown={(e) => {
+                const by = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0
+                if (!by) return
+                e.preventDefault()
+                pb.setStep((v) => Math.min(total, Math.max(0, v + by)))
+              }}
+            >
+              <i style={{ width: `${total ? (pb.elapsedMs / (total * BASE_TURN_MS)) * 100 : 0}%` }} />
+            </div>
+            <button
+              type="button"
+              className="bcdeck__speed"
+              onClick={() => pb.setSpeed((v) => SPEEDS[(SPEEDS.indexOf(v) + 1) % SPEEDS.length])}
+              title="Playback speed"
+            >
+              {speed}×
+            </button>
+            {phone ? (
+              /* The title line is a wider screen's; a phone skips from here. */
+              <button type="button" className="bcdeck__skip" onClick={pb.skip}>
+                Skip
+                <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <path d="M4 5v14l8-7zM12 5v14l8-7z" />
+                </svg>
+              </button>
+            ) : (
+              <button
+                type="button"
+                className="bcdeck__log"
+                aria-pressed={showLog}
+                onClick={() => setShowLog((v) => !v)}
+              >
+                Combat log
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/*
+        The live log, in the combat log sheet's own layout, and there
+        from the first frame so the field does not shift when the first
+        blow lands.
+      */}
+      {(!broadcast || showLog || phone) && (
+        <section className="panel clog clog--live" aria-label="Combat log">
+          <header className="clog__head">
+            <div className="clog__heading">
+              <span className="panel__title">Combat log</span>
+              <p className="clog__sub">
+                {step} of {total} blow{total === 1 ? '' : 's'}
+              </p>
+            </div>
+          </header>
+          <div className="clog__body" ref={logRef}>
+            {step === 0 ? (
+              <p className="muted clog__waiting">The fight is about to begin.</p>
+            ) : (
+              <CombatLogEntries
+                replay={replay}
+                playertag={playertag}
+                turns={
+                  phone
+                    ? Array.from({ length: step }, (_, i) => step - 1 - i)
+                    : Array.from({ length: step }, (_, i) => i)
+                }
+              />
+            )}
+          </div>
+        </section>
+      )}
+    </div>
+  )
+}
+
+function Arena({
+  replay,
+  row,
+  playertag,
+  onLeave,
+  onRetry,
+  venue,
+}: {
+  replay: Replay
+  row: FightRow
+  playertag: string
+  onLeave: () => void
+  /** Back to the screen the fight was started from, where that is known. */
+  onRetry?: () => void
+  venue: Venue
+}) {
+  const phone = usePhone()
+  /*
+     On a desktop the battlefield plays as a broadcast on the glass, with the
+     map behind it: a window with a scorebar and a transport bar under the
+     picture. The log opens in a column beside it on request.
+  */
+  const wide = useWide()
+  /* A phone gets the player too: a taller one, the log always under it. */
+  const broadcast = wide || phone
+  const pb = useFightPlayback(replay, broadcast)
+  const { step, total, speed, finished, skip, restart } = pb
+
+  /*
+     A fight pays XP, and enough of it levels a fighter up.
+
+     The nav dot for My Fighters means "a fighter is ready to level up",
+     and it re-checks on its own every three minutes through the cache -
+     so after a run that earned the last XP a fighter needed, the dot
+     could be three minutes late and then still answer from a roster read
+     before the fight. `refreshChore` forces the read, and the moment the
+     result screen appears is when the chain has just been written to.
+  */
+  useEffect(() => {
+    if (finished) refreshChore('fighters')
+  }, [finished])
 
   /*
      Still here, and still offered - on the result screen, where a player
@@ -611,135 +811,15 @@ function Arena({
           the fighters stand. The log takes the right-hand column where the
           screen is wide enough, and sits underneath where it is not.
         */}
-          <div className={`bfwrap${broadcast ? ' bfwrap--bcast' : ''}${broadcast && showLog && !phone ? ' bfwrap--log' : ''}`}>
-            <div className="bfmain">
-              {/* The turn order is part of the picture, under the scorebar. */}
-              <Battlefield
-                wide={!phone}
-                queue={<TurnQueue replay={replay} step={step} speed={speed} playertag={playertag} />}
-                team1={team1}
-                team2={team2}
-                state={state}
-                current={current}
-                turn={step}
-                abilityDelta={abilityDelta}
-                standing={standing}
-                nextUp={nextUp}
-                playertag={playertag}
-                enemyLabel={venue === 'arena' ? 'The defenders' : 'The dungeon'}
-                broadcast={broadcast ? (venue === 'arena' ? 'Arena' : 'Dungeon') : undefined}
-                aimUid={aimUid}
-              />
-              {broadcast && (
-                <>
-                  <div className="bcdeck">
-                    <button
-                      type="button"
-                      className="bcdeck__btn"
-                      onClick={() => (step >= total ? restart() : setPlaying((p) => !p))}
-                      aria-label={playing ? 'Pause' : 'Play'}
-                      title={playing ? 'Pause' : 'Play'}
-                    >
-                      {playing ? (
-                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                          <path d="M6 5h4v14H6zM14 5h4v14h-4z" />
-                        </svg>
-                      ) : (
-                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                          <path d="M7 5v14l12-7z" />
-                        </svg>
-                      )}
-                    </button>
-                    <span className="bcdeck__count mono">
-                      {clock(elapsedMs)} <small>/ {clock(total * BASE_TURN_MS)}</small>
-                    </span>
-                    {/* The fight's progress, and a way to any point of it. */}
-                    <div
-                      className="bcdeck__rail"
-                      role="slider"
-                      tabIndex={0}
-                      aria-label="Fight progress"
-                      aria-valuemin={0}
-                      aria-valuemax={total}
-                      aria-valuenow={step}
-                      aria-valuetext={`${clock(elapsedMs)} of ${clock(total * BASE_TURN_MS)}, blow ${step} of ${total}`}
-                      onClick={(e) => {
-                        const r = e.currentTarget.getBoundingClientRect()
-                        setStep(Math.round(Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)) * total))
-                      }}
-                      onKeyDown={(e) => {
-                        const by = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0
-                        if (!by) return
-                        e.preventDefault()
-                        setStep((v) => Math.min(total, Math.max(0, v + by)))
-                      }}
-                    >
-                      <i style={{ width: `${total ? (elapsedMs / (total * BASE_TURN_MS)) * 100 : 0}%` }} />
-                    </div>
-                    <button
-                      type="button"
-                      className="bcdeck__speed"
-                      onClick={() => setSpeed((v) => SPEEDS[(SPEEDS.indexOf(v) + 1) % SPEEDS.length])}
-                      title="Playback speed"
-                    >
-                      {speed}×
-                    </button>
-                    {phone ? (
-                      /* The title line is a wider screen's; a phone skips from here. */
-                      <button type="button" className="bcdeck__skip" onClick={skip}>
-                        Skip
-                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                          <path d="M4 5v14l8-7zM12 5v14l8-7z" />
-                        </svg>
-                      </button>
-                    ) : (
-                      <button
-                        type="button"
-                        className="bcdeck__log"
-                        aria-pressed={showLog}
-                        onClick={() => setShowLog((v) => !v)}
-                      >
-                        Combat log
-                      </button>
-                    )}
-                  </div>
-                </>
-              )}
-            </div>
-
-            {/*
-              The live log, in the combat log sheet's own layout, and there
-              from the first frame so the field does not shift when the first
-              blow lands.
-            */}
-            {(!broadcast || showLog || phone) && (
-            <section className="panel clog clog--live" aria-label="Combat log">
-              <header className="clog__head">
-                <div className="clog__heading">
-                  <span className="panel__title">Combat log</span>
-                  <p className="clog__sub">
-                    {step} of {total} blow{total === 1 ? '' : 's'}
-                  </p>
-                </div>
-              </header>
-              <div className="clog__body" ref={logRef}>
-                {step === 0 ? (
-                  <p className="muted clog__waiting">The fight is about to begin.</p>
-                ) : (
-                  <CombatLogEntries
-                    replay={replay}
-                    playertag={playertag}
-                    turns={
-                      phone
-                        ? Array.from({ length: step }, (_, i) => step - 1 - i)
-                        : Array.from({ length: step }, (_, i) => i)
-                    }
-                  />
-                )}
-              </div>
-            </section>
-            )}
-          </div>
+        <FightStage
+          replay={replay}
+          pb={pb}
+          playertag={playertag}
+          enemyLabel={venue === 'arena' ? 'The defenders' : 'The dungeon'}
+          live={venue === 'arena' ? 'Arena' : 'Dungeon'}
+          phone={phone}
+          broadcast={broadcast}
+        />
       </div>
       )}
 
@@ -836,6 +916,7 @@ function Battlefield({
   standing,
   nextUp,
   playertag,
+  mineLabel = 'Your team',
   enemyLabel,
   wide,
   queue,
@@ -851,6 +932,8 @@ function Battlefield({
   standing: Map<string, Standing>
   nextUp: string | null
   playertag: string
+  /** What the left-hand team is called: "Your team", or a player's name. */
+  mineLabel?: string
   enemyLabel: string
   /** The desktop layout: fighters on the arena floor, the order inside. */
   wide: boolean
@@ -909,7 +992,7 @@ function Battlefield({
     >
       <div className="bfield__labels">
         <span className="bfield__label bfield__label--mine">
-          Your team{' '}
+          {mineLabel}{' '}
           <span className="mono">
             {alive(team1)}/{team1.length}
           </span>
@@ -1282,11 +1365,13 @@ function TurnQueue({
   step,
   speed,
   playertag,
+  enemyOwner = 'The dungeon',
 }: {
   replay: Replay
   step: number
   speed: number
   playertag: string
+  enemyOwner?: string
 }) {
   /*
      The attack that has just been consumed, held for one collapse so the
@@ -1324,7 +1409,7 @@ function TurnQueue({
           const f = byUid.get(q.uid)
           if (!f) return null
           const mine = f.team === 1
-          const owner = mine ? f.gamertag || playertag || 'You' : 'The dungeon'
+          const owner = mine ? f.gamertag || playertag || 'You' : enemyOwner
           const isLeaving = leaving?.turn === q.turn
           return (
             <li
