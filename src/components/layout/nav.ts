@@ -24,6 +24,8 @@ export interface NavItem {
    * bar is the only thing this flag moves.
    */
   primary?: boolean
+  /** What the section is for, in a line: the phone's More page shows it. */
+  line?: string
 }
 
 /**
@@ -57,13 +59,14 @@ export const NAV_ITEMS: NavItem[] = [
      player who has not been told does not click a wordmark to find out what
      is waiting for them.
   */
-  { to: '/briefing', label: 'Briefing', icon: asset('/assets/icons/menu/briefing.png') },
+  { to: '/briefing', label: 'Briefing', icon: asset('/assets/icons/menu/briefing.png'), line: 'Check what you can do right now' },
   { to: '/map', label: 'World Map', icon: asset('/assets/icons/menu/world.png'), primary: true },
   { to: '/shop', label: 'Shop', icon: asset('/assets/icons/menu/coin.png'), primary: true },
   {
     to: '/leaderboard',
     label: 'Leaderboards',
     icon: asset('/assets/icons/menu/leaderboard.png'),
+    line: 'Dungeon, arena and tournament ranks',
   },
   {
     to: '/fighters',
@@ -75,9 +78,10 @@ export const NAV_ITEMS: NavItem[] = [
     to: '/ascension',
     label: 'Ascension',
     icon: asset('/assets/icons/menu/ascension.png'),
+    line: 'Sacrifice fighters to raise one',
   },
   { to: '/quests', label: 'Quests', icon: asset('/assets/icons/menu/quests.png'), primary: true },
-  { to: '/candle', label: 'Candle', icon: asset('/assets/icons/menu/candle.png') },
+  { to: '/candle', label: 'Candle', icon: asset('/assets/icons/menu/candle.png'), line: 'Burn gems for a share of the pot' },
   {
     to: '/tournament',
     label: 'Tournament',
@@ -85,9 +89,10 @@ export const NAV_ITEMS: NavItem[] = [
     /* The screen is built and everything behind it stays where it is; only
        the way in is closed while it is not ready to be found. */
     soon: true,
+    line: 'Fight other players for the prize pot',
   },
-  { to: '/market', label: 'Market', icon: asset('/assets/icons/menu/market.png') },
-  { to: '/lands', label: 'My Lands', icon: asset('/assets/icons/menu/my-land.png') },
+  { to: '/market', label: 'Market', icon: asset('/assets/icons/menu/market.png'), line: 'Buy and sell fighters' },
+  { to: '/lands', label: 'My Lands', icon: asset('/assets/icons/menu/my-land.png'), line: 'Your lands and what they earn' },
   /*
      Rewards is everything the account screen held that pays out — the
      mine and the three ledgers — and Account is what is left: who you
@@ -96,9 +101,9 @@ export const NAV_ITEMS: NavItem[] = [
      three were a profile, and the dot on it could only ever mean one of
      those things at a time.
   */
-  { to: '/rewards', label: 'Rewards', icon: asset('/assets/icons/menu/rewards.png') },
-  { to: '/profile', label: 'Account', icon: asset('/assets/icons/menu/settings.png') },
-  { to: '/farming', label: 'Farming', icon: asset('/assets/icons/menu/card.png') },
+  { to: '/rewards', label: 'Rewards', icon: asset('/assets/icons/menu/rewards.png'), line: 'Mine your reward pools' },
+  { to: '/profile', label: 'Account', icon: asset('/assets/icons/menu/settings.png'), line: 'Avatar, wallet and settings' },
+  { to: '/farming', label: 'Farming', icon: asset('/assets/icons/menu/card.png'), line: 'Stake cards for rewards' },
 ]
 
 /**
@@ -111,6 +116,24 @@ export const NAV_ITEMS: NavItem[] = [
  * second in the menu.
  */
 export const TABBAR_ORDER = ['/map', '/fighters', '/quests', '/shop']
+
+/**
+ * The phone's More page, top to bottom: what to do now, then the places that
+ * are about fighting, then fighters, then what pays, and the account last.
+ * The groups have no headings on the page; the order is enough to carry them.
+ */
+export const MORE_ORDER = [
+  '/briefing',
+  '/leaderboard',
+  '/tournament',
+  '/ascension',
+  '/market',
+  '/rewards',
+  '/candle',
+  '/farming',
+  '/lands',
+  '/profile',
+]
 
 /** Screens that actually exist, keyed by label, for the ComingSoon copy. */
 export const SECTION_BLURBS: Record<string, string> = {

@@ -6,7 +6,7 @@ import { NetworkStatus } from '../NetworkStatus'
 import { useChores } from '@/chores/useChores'
 import { CHORE_CHECKS } from '@/chores/checks'
 import { ResourceStrip } from '../ResourceStrip'
-import { NAV_ITEMS, TABBAR_ORDER, type NavItem } from './nav'
+import { MORE_ORDER, NAV_ITEMS, TABBAR_ORDER, type NavItem } from './nav'
 import { asset } from '@/assets'
 import { planetMapSrc } from '@/map/terrain'
 import { useMapPicture } from '@/map/snapshot'
@@ -94,45 +94,59 @@ function sheetAxis(): 'x' | 'y' {
 const SHEET_IN = { duration: 460, easing: 'cubic-bezier(.16, 1, .3, 1)' }
 const SHEET_OUT = { duration: 320, easing: 'cubic-bezier(.4, 0, 1, 1)' }
 
-/** Bottom-sheet menu holding everything that doesn't fit the tab bar. */
-function MoreSheet({ items, onClose }: { items: NavItem[]; onClose: () => void }) {
+/**
+ * Everything that doesn't fit the tab bar, as a page of its own: it rises
+ * over the map like every other screen, between the two bars, with More lit
+ * in the tab bar while it is open. One list, each section with what it is
+ * for, so a player who has not been everywhere yet can tell where to go.
+ */
+function MorePage({
+  items,
+  dots,
+  layer,
+  onClose,
+}: {
+  items: NavItem[]
+  dots: Record<string, string | undefined>
+  layer: React.RefObject<HTMLDivElement>
+  onClose: () => void
+}) {
   const panel = useModal(onClose)
 
   return (
-    <div
-      className="sheet"
-      role="dialog"
-      aria-modal="true"
-      aria-label="More sections"
-      onClick={onClose}
-    >
-      <div
-        className="sheet__panel"
-        ref={panel}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="row">
-          <span className="panel__title">All sections</span>
-          <span className="spacer" />
-          <button type="button" className="btn btn--ghost btn--sm" onClick={onClose}>
-            Close
-          </button>
-        </div>
-
-        <div className="sheet__grid">
-          {items.map((item) =>
-            item.soon ? (
-              <span className="sheet__item sheet__item--soon" key={item.to}>
-                <MenuArt item={item} size={34} />
-                {item.label}
+    <div className="more" role="dialog" aria-modal="true" aria-label="More" ref={layer}>
+      <div className="more__inner" ref={panel}>
+        <h1 className="more__title">More</h1>
+        <div className="more__list">
+          {items.map((item) => {
+            const body = (
+              <>
+                <span className="more__art">
+                  <MenuArt item={item} size={30} />
+                  {dots[item.to] && <span className="more__dot" aria-label={dots[item.to]} />}
+                </span>
+                <span className="more__text">
+                  <span className="more__name">
+                    {item.label}
+                    {item.soon && <span className="more__soon">SOON</span>}
+                  </span>
+                  <span className="more__line">{item.soon ? 'Coming soon' : item.line}</span>
+                </span>
+                <svg className="more__chev" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M9 6l6 6-6 6" />
+                </svg>
+              </>
+            )
+            return item.soon ? (
+              <span className="more__row more__row--soon" key={item.to} aria-disabled="true">
+                {body}
               </span>
             ) : (
-              <NavLink className="sheet__item" key={item.to} to={item.to} onClick={onClose}>
-                <MenuArt item={item} size={34} />
-                {item.label}
+              <NavLink className="more__row" key={item.to} to={item.to}>
+                {body}
               </NavLink>
-            ),
-          )}
+            )
+          })}
         </div>
       </div>
     </div>
@@ -245,13 +259,27 @@ export function AppShell() {
   // Any navigation closes the sheet, including the browser back button.
   useEffect(() => setSheetOpen(false), [location.pathname])
 
-  const closeSheet = useCallback(() => setSheetOpen(false), [])
+  /* More sinks back down the way it came, as a page does going back to the map. */
+  const moreRef = useRef<HTMLDivElement>(null)
+  const closeSheet = useCallback(() => {
+    const el = moreRef.current
+    if (!el || calm()) return setSheetOpen(false)
+    el.animate([{ transform: 'none' }, { transform: 'translateY(100%)' }], SHEET_OUT).onfinish =
+      () => setSheetOpen(false)
+  }, [])
+  useLayoutEffect(() => {
+    if (sheetOpen && !calm()) {
+      moreRef.current?.animate([{ transform: 'translateY(100%)' }, { transform: 'none' }], SHEET_IN)
+    }
+  }, [sheetOpen])
 
   /* Ordered for the thumb, not for the rail. See TABBAR_ORDER. */
   const primary = NAV_ITEMS.filter((i) => i.primary).sort(
     (x, y) => TABBAR_ORDER.indexOf(x.to) - TABBAR_ORDER.indexOf(y.to),
   )
-  const secondary = NAV_ITEMS.filter((i) => !i.primary)
+  const secondary = NAV_ITEMS.filter((i) => !i.primary).sort(
+    (x, y) => MORE_ORDER.indexOf(x.to) - MORE_ORDER.indexOf(y.to),
+  )
 
   /*
      One dot per section with something waiting in it. The scheduler behind
@@ -260,6 +288,9 @@ export function AppShell() {
   */
   const chores = useChores(player, location.pathname)
   const choreFor = (to: string) => CHORE_CHECKS.find((c) => c.to === to)
+  const moreDots = Object.fromEntries(
+    secondary.map((i) => [i.to, chores[choreFor(i.to)?.key as never] ? choreFor(i.to)?.hint : undefined]),
+  )
 
   return (
     <div
@@ -369,7 +400,7 @@ export function AppShell() {
         )}
       </main>
 
-      <nav className="tabbar" aria-label="Sections">
+      <nav className={`tabbar${sheetOpen ? ' tabbar--more' : ''}`} aria-label="Sections">
         {primary.map((item) =>
           item.soon ? (
             <span className="tab" key={item.to} aria-disabled="true" style={{ opacity: 0.4 }}>
@@ -377,7 +408,7 @@ export function AppShell() {
               {item.label}
             </span>
           ) : (
-            <NavLink className="tab" key={item.to} to={item.to}>
+            <NavLink className="tab" key={item.to} to={item.to} onClick={() => setSheetOpen(false)}>
               <MenuArt item={item} size={26} />
               {item.label}
               {chores[choreFor(item.to)?.key as never] && (
@@ -389,8 +420,8 @@ export function AppShell() {
 
         <button
           type="button"
-          className="tab"
-          onClick={() => setSheetOpen(true)}
+          className={`tab${sheetOpen ? ' tab--on' : ''}`}
+          onClick={() => (sheetOpen ? closeSheet() : setSheetOpen(true))}
           aria-haspopup="dialog"
           aria-expanded={sheetOpen}
         >
@@ -405,7 +436,9 @@ export function AppShell() {
 
       <div className="shell__leaving" ref={leavingRef} aria-hidden="true" />
 
-      {sheetOpen && <MoreSheet items={secondary} onClose={closeSheet} />}
+      {sheetOpen && (
+        <MorePage items={secondary} dots={moreDots} layer={moreRef} onClose={closeSheet} />
+      )}
 
       <span className="sr-only">Signed in as {account}</span>
     </div>

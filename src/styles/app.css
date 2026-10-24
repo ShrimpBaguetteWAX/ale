@@ -828,6 +828,141 @@
   cursor: not-allowed;
 }
 
+/* ---------- "More" page ---------- */
+
+/*
+ * More is a page of its own on a phone, over the map between the two bars,
+ * on the same glass as every other screen. While it is open it is the lit
+ * tab, and the screen underneath stops being.
+ */
+.tabbar--more .tab[aria-current='page'] {
+  color: var(--text-faint);
+}
+.tab--on {
+  color: var(--cyan);
+}
+
+.more {
+  position: fixed;
+  top: var(--topbar-h);
+  left: 0;
+  right: 0;
+  bottom: calc(var(--nav-h) + env(safe-area-inset-bottom));
+  z-index: calc(var(--z-sticky) - 1);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: rgb(6 10 22 / 62%);
+  backdrop-filter: blur(8px) saturate(1.3);
+  -webkit-backdrop-filter: blur(8px) saturate(1.3);
+}
+:root[data-fx='low'] .more {
+  background: rgb(5 16 30 / 97%);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+.more__inner {
+  padding: var(--sp-4);
+}
+.more__inner:focus {
+  outline: none;
+}
+.more__title {
+  margin-bottom: var(--sp-3);
+}
+
+.more__list {
+  border-radius: 12px;
+  background: rgb(8 14 28 / 66%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 10%);
+  overflow: hidden;
+}
+.more__row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 54px;
+  padding: 8px 12px;
+  color: var(--white);
+}
+.more__row + .more__row {
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 7%);
+}
+.more__row:hover {
+  text-decoration: none;
+  background: rgb(255 255 255 / 4%);
+}
+.more__row:active {
+  background: rgb(0 186 255 / 10%);
+}
+.more__row--soon {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.more__art {
+  position: relative;
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+}
+.more__art img {
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+}
+.more__dot {
+  position: absolute;
+  top: -1px;
+  right: -2px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--gold);
+  box-shadow: 0 0 8px rgb(246 168 0 / 90%);
+  animation: chore-pulse 2.4s ease-in-out infinite;
+}
+:root[data-fx='low'] .more__dot {
+  animation: none;
+}
+.more__text {
+  display: grid;
+  min-width: 0;
+}
+.more__name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-bold);
+}
+.more__soon {
+  padding: 0 5px;
+  border-radius: 3px;
+  font-size: 8.5px;
+  letter-spacing: 0.1em;
+  color: var(--text-faint);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 20%);
+}
+.more__line {
+  overflow: hidden;
+  font-size: var(--fs-xs);
+  color: var(--text-faint);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.more__chev {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  margin-left: auto;
+  fill: none;
+  stroke: var(--text-faint);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
 /* ---------- Main ---------- */
 
 .main {
@@ -870,7 +1005,8 @@
   --text-heading: var(--white);
 }
 .shell .main__inner h1:not(.tour__title),
-.shell__leaving h1:not(.tour__title) {
+.shell__leaving h1:not(.tour__title),
+.more__title {
   position: relative;
   margin-top: 0;
   padding-bottom: 10px;
@@ -884,7 +1020,8 @@
   text-shadow: 0 0 18px rgb(0 186 255 / 35%);
 }
 .shell .main__inner h1:not(.tour__title)::after,
-.shell__leaving h1:not(.tour__title)::after {
+.shell__leaving h1:not(.tour__title)::after,
+.more__title::after {
   content: '';
   position: absolute;
   left: 0;
@@ -896,7 +1033,8 @@
 }
 @media (max-width: 719px) {
   .shell .main__inner h1:not(.tour__title),
-  .shell__leaving h1:not(.tour__title) {
+  .shell__leaving h1:not(.tour__title),
+  .more__title {
     font-size: var(--fs-2xl);
   }
 }
