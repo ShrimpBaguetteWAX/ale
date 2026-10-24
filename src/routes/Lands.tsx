@@ -6,8 +6,11 @@ import type { Building, Land, LandsConfig } from '@/chain/types'
 import type { Planet } from '@/chain/config'
 import {
   BOOST_MAX,
+  BUILDING_SRC,
+  RANKED_SRC,
   buildingIcon,
   boostGradient,
+  boostRank,
   formatBoost,
   landThumbStyle,
   liveBoostScore,
@@ -17,9 +20,14 @@ import { BUILDINGS, type BuildingName } from '@/lands/queries'
 import type { BuildingCost, OwnedLand } from '@/lands/types'
 import {
   boostCost,
+  boostState,
   buildOptions,
   buildingLabel,
   claimAllTargets,
+  formatSpan,
+  hoursToSmallerLook,
+  msUntilDisabled,
+  type BoostState,
   stepCosts,
   hasClaimable,
   incomeOf,
@@ -762,7 +770,7 @@ function BuildingPanel({
    * contract rejects any target at or below the current boost, so opening on
    * "no change" would be opening on an error.
    */
-  const floor = Math.min(BOOST_MAX, Math.floor(current / 10_000) * 10_000 + 10_000)
+  const floor = Math.min(BOOST_MAX, (Math.round(current / 10_000) + 1) * 10_000)
   const [target, setTarget] = useState(floor)
   useEffect(() => {
     setTarget(floor)
@@ -961,6 +969,36 @@ function boostLabel(percent: number): string {
   return formatBoost(percent).replace('x', '×')
 }
 
+/*
+   The building as the world map draws it at this boost: the hydra grows
+   heads and the arena its walls, rank by rank. A tavern has one look.
+*/
+function buildingArt(name: string, score: number, muted = false): string {
+  const tone = muted ? 'muted' : 'lit'
+  if (name === 'arena' || name === 'dungeon') {
+    return RANKED_SRC[name][boostRank(score / 10_000) - 1][tone]
+  }
+  if (name === 'tavern') return BUILDING_SRC.tavern[tone]
+  return buildingIcon(name)
+}
+
+/* Where the look changes, one step past each rank's top: 2.1x, 4.1x, 6.1x, 8.1x. */
+const LOOK_STEPS = [210_000, 410_000, 610_000, 810_000]
+
+/* How far ahead a drop to a smaller look is worth showing. */
+const LOOK_WARNING_HOURS = 14 * 24
+
+/* Off the map is under 0.1x, which rounds up to "0.1x" — say so instead. */
+function stateLabel(score: number, state: BoostState): string {
+  return state === 'hidden' ? '<0.1×' : boostLabel(score / 10_000)
+}
+
+const BOOST_LINE: Record<Exclude<BoostState, 'ok'>, string> = {
+  low: 'Running low — boost soon',
+  hidden: 'Off the map — boost it',
+  closed: 'Closed — out of boost',
+}
+
 function TlmIcon() {
   return <img className="plands__tlm" src={asset('/assets/icons/tlm.svg')} alt="TLM" />
 }
@@ -1025,6 +1063,14 @@ export function PhoneLands({
   const open = lands.find((l) => landKey(l) === openKey) ?? null
   const decay = Number(config?.boost_decay_per_hour ?? 0)
 
+  const scoreOf = (land: OwnedLand) => {
+    const b = land.buildings[0]
+    return b
+      ? liveBoostScore(Number(b.boost_score ?? 0), String(b.boost_score_update ?? ''), decay, now)
+      : 0
+  }
+  const due = (land: OwnedLand) =>
+    !!land.buildings[0] && boostState(scoreOf(land), config) !== 'ok'
   const count = (name: BuildingName) => lands.filter((l) => landBuilding(l) === name).length
   const shown = tab === 'all' ? lands : lands.filter((l) => landBuilding(l) === tab)
   const tabTlm = shown.reduce((sum, l) => sum + incomeOf(l.buildings).tlm, 0)
@@ -1065,6 +1111,9 @@ export function PhoneLands({
             onClick={() => setTab(key)}
           >
             {label}
+            {lands.some((l) => (key === 'all' || landBuilding(l) === key) && due(l)) && (
+              <i className="plands__dot" aria-label="needs a boost" />
+            )}
           </button>
         ))}
       </div>
@@ -1073,16 +1122,14 @@ export function PhoneLands({
         {shown.map((land) => {
           const building = land.buildings[0]
           const name = landBuilding(land)
-          const score = building
-            ? liveBoostScore(
-                Number(building.boost_score ?? 0),
-                String(building.boost_score_update ?? ''),
-                decay,
-                now,
-              )
-            : 0
+          const score = scoreOf(land)
           const percent = score / 10_000
           const income = incomeOf(land.buildings)
+          const state = building ? boostState(score, config) : 'ok'
+          const drop =
+            building && state === 'ok' && name !== 'tavern'
+              ? hoursToSmallerLook(score, decay)
+              : null
           return (
             <button
               type="button"
@@ -1093,33 +1140,52 @@ export function PhoneLands({
               <span
                 className="plands__thumb"
                 style={{
-                  ...landThumbStyle(land.planet, land.x, land.y, 40),
+                  ...landThumbStyle(land.planet, land.x, land.y, 44),
                   borderColor: rarityColor(land.rarity),
                 }}
-              />
+              >
+                {building && (
+                  <img
+                    src={buildingArt(name, score, state === 'hidden' || state === 'closed')}
+                    alt={buildingLabel(name, costs)}
+                  />
+                )}
+              </span>
               <span className="plands__text">
-                <strong>
-                  {building && tab === 'all' && (
-                    <img className="plands__bicon" src={buildingIcon(name)} alt={name} />
-                  )}
-                  {shortName(land.name)}
-                </strong>
+                <strong>{shortName(land.name)}</strong>
                 <small>
-                  {cap(land.planet)} {land.x}:{land.y} ·{' '}
-                  <em style={{ color: rarityColor(land.rarity) }}>
-                    {cap(land.rarity || 'common')}
-                  </em>
-                  {!building && ' · no building'}
+                  {state !== 'ok' ? (
+                    <span className={`plands__flag is-${state}`}>{BOOST_LINE[state]}</span>
+                  ) : drop !== null && drop < LOOK_WARNING_HOURS ? (
+                    <span
+                      className="plands__drop"
+                      aria-label={`Drops to a smaller look in about ${formatSpan(drop * 3_600_000)}`}
+                    >
+                      <img src={buildingArt(name, score)} alt="" />→
+                      <img src={buildingArt(name, score - 200_000)} alt="" />
+                      in ~{formatSpan(drop * 3_600_000)}
+                    </span>
+                  ) : (
+                    <>
+                      {cap(land.planet)} {land.x}:{land.y} ·{' '}
+                      <em style={{ color: rarityColor(land.rarity) }}>
+                        {cap(land.rarity || 'common')}
+                      </em>
+                      {!building && ' · no building'}
+                    </>
+                  )}
                 </small>
                 {building && (
-                  <span className="plands__bar">
-                    <i style={{ width: `${Math.min(100, percent)}%` }} />
+                  <span className={`plands__bar is-${state}`}>
+                    <i style={{ width: `${Math.max(1.5, Math.min(100, percent))}%` }} />
                   </span>
                 )}
               </span>
               {building ? (
                 <>
-                  <span className="plands__boost mono">{boostLabel(percent)}</span>
+                  <span className={`plands__boost mono is-${state}`}>
+                    {stateLabel(score, state)}
+                  </span>
                   <span className="plands__amount mono">
                     {tlm(income.tlm)}
                     <TlmIcon />
@@ -1214,8 +1280,8 @@ function LandSheet({
         now,
       )
     : 0
-  /* One step above where it is: the contract refuses a target at or below it. */
-  const floor = Math.min(BOOST_MAX, Math.floor(current / 10_000) * 10_000 + 10_000)
+  /* One shown step above where it is, so the target never reads as the boost it already has. */
+  const floor = Math.min(BOOST_MAX, (Math.round(current / 10_000) + 1) * 10_000)
   const [target, setTarget] = useState(floor)
   const [confirm, setConfirm] = useState(false)
   const options = useMemo(
@@ -1230,16 +1296,22 @@ function LandSheet({
   const income = incomeOf(land.buildings)
   const cost = boostCost(current, target, config)
   const destroyCost = Number(config?.delete_building_gems_cost ?? 0)
+  const state = building ? boostState(current, config) : 'ok'
+  const muted = state === 'hidden' || state === 'closed'
+  const tavern = name === 'tavern'
+  const newLook = !tavern && boostRank(target / 10_000) !== boostRank(current / 10_000)
 
   const head = (
     <div className="lsheet__head">
       <span
         className="lsheet__thumb"
         style={{
-          ...landThumbStyle(land.planet, land.x, land.y, 72),
+          ...landThumbStyle(land.planet, land.x, land.y, 84),
           borderColor: rarityColor(land.rarity),
         }}
-      />
+      >
+        {building && <img src={buildingArt(name, current, muted)} alt="" />}
+      </span>
       <span className="lsheet__text">
         <small>
           {cap(land.planet)} {land.x}:{land.y} ·{' '}
@@ -1248,11 +1320,11 @@ function LandSheet({
         {building ? (
           <>
             <b>
-              <img src={buildingIcon(name)} alt="" />
-              {buildingLabel(name, costs)} · {boostLabel(current / 10_000)}
+              {buildingLabel(name, costs)} ·{' '}
+              <span className={`lsheet__now is-${state}`}>{stateLabel(current, state)}</span>
             </b>
-            <span className="plands__bar">
-              <i style={{ width: `${Math.min(100, current / 10_000)}%` }} />
+            <span className={`plands__bar is-${state}`}>
+              <i style={{ width: `${Math.max(1.5, Math.min(100, current / 10_000))}%` }} />
             </span>
             <small>Boost decays over time, faster the more it is used.</small>
           </>
@@ -1438,6 +1510,18 @@ function LandSheet({
       }
     >
       {head}
+      {state !== 'ok' && (
+        <div className={`lsheet__alert is-${state}`}>
+          <b>{state === 'low' ? 'Running low' : state === 'hidden' ? 'Off the map' : 'Closed'}</b>
+          <small>
+            {state === 'low'
+              ? `Lasts ${formatSpan(msUntilDisabled(building, config, now))} at most — use wears it down faster. Under 0.1× players stop seeing it on the map.`
+              : state === 'hidden'
+                ? 'Players cannot see it on the map any more. Boost it to bring it back.'
+                : 'Its boost has run out, so nobody can use it.'}
+          </small>
+        </div>
+      )}
       <div className="lsheet__income">
         <span>
           <small>Ready</small>
@@ -1470,17 +1554,26 @@ function LandSheet({
         </button>
       </div>
       <div className="rsheet__cap">
-        Boost<span>now {boostLabel(current / 10_000)}</span>
+        Boost<span>now {stateLabel(current, state)}</span>
       </div>
       <div className="lsheet__boost">
         {current >= BOOST_MAX ? (
           <p className="rsheet__hint">This building is at the highest boost there is.</p>
         ) : (
           <>
-            <div className="lsheet__to">
-              <span className="mono">{boostLabel(current / 10_000)}</span>
-              <em>→</em>
-              <b className="mono">{boostLabel(target / 10_000)}</b>
+            <div className="lsheet__looks">
+              <span className="lsheet__look">
+                <img src={buildingArt(name, current, muted)} alt="" />
+                <b className="mono">{stateLabel(current, state)}</b>
+                <small>Now</small>
+              </span>
+              <em aria-hidden="true">→</em>
+              <span className={`lsheet__look is-to${newLook ? ' is-new' : ''}`}>
+                {/* Keyed by the art, so a new look pops in rather than just swapping. */}
+                <img key={buildingArt(name, target)} src={buildingArt(name, target)} alt="" />
+                <b className="mono">{boostLabel(target / 10_000)}</b>
+                <small>{newLook ? 'New look' : 'Same look'}</small>
+              </span>
             </div>
             <input
               type="range"
@@ -1492,6 +1585,21 @@ function LandSheet({
               aria-label="Boost to"
               onChange={(e) => setTarget(Number(e.target.value))}
             />
+            {tavern ? (
+              <p className="lsheet__onelook">
+                A tavern has one look at any boost. Taverns with a higher boost are available to
+                players more often.
+              </p>
+            ) : (
+              <div className="lsheet__ticks" aria-hidden="true">
+                {LOOK_STEPS.filter((t) => t >= floor && floor < BOOST_MAX).map((t) => (
+                  <span key={t} style={{ left: `${((t - floor) / (BOOST_MAX - floor)) * 100}%` }}>
+                    <img src={buildingArt(name, t)} alt="" />
+                    <em>{boostLabel(t / 10_000)}</em>
+                  </span>
+                ))}
+              </div>
+            )}
             <div className="lsheet__line">
               <span>Each 0.1× costs a little more than the last</span>
             </div>

@@ -27,9 +27,8 @@ import { FARM_SCHEMAS, fetchFarmConfig, fetchFarmUser } from '@/farming/queries'
 import { farmBoard } from '@/farming/rules'
 import { avatarBoard, claimableAvatars, cpuLow, cpuStatus } from '@/account/rules'
 import { fetchAccountCpu, fetchCpuConfig, fetchCpuUsage } from '@/account/queries'
-import { incomeOf } from '@/lands/rules'
+import { incomeOf, needsBoost } from '@/lands/rules'
 import { liveBoostPercent } from '@/map/terrain'
-import { LAND_BOOST_WARNING } from '@/chores/checks'
 import { formatNumber } from '@/format'
 import { recallWinPower } from './winPower'
 import { buildBriefing, LEVELING_BELOW, type BriefingInput } from './rules'
@@ -202,8 +201,9 @@ const LOADERS: Record<string, (player: Player) => Promise<Parts>> = {
       tlmWaiting += incomeOf(buildings).tlm
       fading += buildings.filter(
         (b) =>
-          liveBoostPercent(Number(b.boost_score ?? 0), String(b.boost_score_update ?? ''), decay) <
-          LAND_BOOST_WARNING,
+          needsBoost(
+            liveBoostPercent(Number(b.boost_score ?? 0), String(b.boost_score_update ?? ''), decay),
+          ),
       ).length
     }
     return { lands: { owned: owned.length, empty, tlmWaiting, fading } }

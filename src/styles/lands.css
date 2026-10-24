@@ -621,6 +621,7 @@
   box-shadow: inset 0 0 0 1px rgb(255 255 255 / 12%);
 }
 .plands__tabs button {
+  position: relative;
   flex: 1;
   min-height: 32px;
   padding: 0 4px;
@@ -636,6 +637,16 @@
   background: rgb(0 186 255 / 18%);
   box-shadow: inset 0 0 0 1px rgb(0 186 255 / 55%);
   color: var(--white);
+}
+/* A building on that tab is due a boost. */
+.plands__dot {
+  position: absolute;
+  top: 4px;
+  right: 5px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #ffb648;
 }
 
 .plands__list {
@@ -665,12 +676,27 @@
 .plands__row--empty {
   background: rgb(0 186 255 / 5%);
 }
-.plands__thumb {
+/* The land under it, darkened a little, with the building as the map draws it. */
+.plands__thumb,
+.lsheet__thumb {
+  position: relative;
   flex: none;
-  width: 40px;
-  height: 40px;
   border: 2px solid;
-  border-radius: 8px;
+  box-shadow: inset 0 0 0 100px rgb(4 8 18 / 30%);
+}
+.plands__thumb {
+  width: 44px;
+  height: 44px;
+  border-radius: 9px;
+}
+.plands__thumb img,
+.lsheet__thumb img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 3px rgb(0 0 0 / 70%));
 }
 .plands__text {
   display: grid;
@@ -686,12 +712,6 @@
   font-size: var(--fs-xs);
   white-space: nowrap;
   text-overflow: ellipsis;
-}
-.plands__bicon {
-  flex: none;
-  width: 18px;
-  height: 18px;
-  object-fit: contain;
 }
 .plands__text small {
   font-size: 10.5px;
@@ -721,6 +741,43 @@
   font-size: 11px;
   font-weight: 800;
   text-align: right;
+}
+
+/* Due a boost: amber at 1.0x and below, red once it is off the map or out. */
+.plands__bar.is-low i {
+  background: #ffb648;
+}
+.plands__bar.is-hidden i,
+.plands__bar.is-closed i {
+  background: #ff6d85;
+}
+.plands__boost.is-low,
+.plands__flag.is-low,
+.lsheet__now.is-low {
+  color: #ffc56b;
+}
+.plands__boost.is-hidden,
+.plands__boost.is-closed,
+.plands__flag.is-hidden,
+.plands__flag.is-closed,
+.lsheet__now.is-hidden,
+.lsheet__now.is-closed {
+  color: #ff8fa0;
+}
+.plands__flag {
+  font-weight: var(--fw-bold);
+}
+/* The look it is about to lose, and when. */
+.plands__drop {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: #cfd8e6;
+}
+.plands__drop img {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
 }
 .plands__amount {
   display: inline-flex;
@@ -763,11 +820,9 @@
   gap: 12px;
 }
 .lsheet__thumb {
-  flex: none;
-  width: 72px;
-  height: 72px;
-  border: 2px solid;
-  border-radius: 12px;
+  width: 84px;
+  height: 84px;
+  border-radius: 14px;
 }
 .lsheet__text {
   display: grid;
@@ -791,10 +846,33 @@
   font-size: 15px;
   font-weight: 800;
 }
-.lsheet__text b img {
-  width: 24px;
-  height: 24px;
-  object-fit: contain;
+.lsheet__text .plands__bar {
+  height: 6px;
+  border-radius: 3px;
+}
+.lsheet__alert {
+  display: grid;
+  gap: 2px;
+  padding: 8px 12px;
+  border-radius: 12px;
+}
+.lsheet__alert b {
+  font-size: var(--fs-xs);
+}
+.lsheet__alert small {
+  font-size: 11px;
+  line-height: 1.4;
+}
+.lsheet__alert.is-low {
+  background: rgb(255 182 72 / 10%);
+  box-shadow: inset 0 0 0 1px rgb(255 182 72 / 45%);
+  color: #ffd08a;
+}
+.lsheet__alert.is-hidden,
+.lsheet__alert.is-closed {
+  background: rgb(255 109 133 / 10%);
+  box-shadow: inset 0 0 0 1px rgb(255 109 133 / 45%);
+  color: #ffb3c0;
 }
 .lsheet__income {
   display: flex;
@@ -840,26 +918,113 @@
   background: rgb(8 14 28 / 66%);
   box-shadow: inset 0 0 0 1px rgb(255 255 255 / 10%);
 }
-.lsheet__to {
+/* The building now and after the boost, as the map will draw it. */
+.lsheet__looks {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: 14px;
 }
-.lsheet__to span {
-  font-family: var(--font-display);
-  font-size: 16px;
-  font-weight: 800;
-  color: var(--text-faint);
-}
-.lsheet__to em {
+.lsheet__looks > em {
+  font-size: 18px;
   font-style: normal;
   color: var(--text-faint);
 }
-.lsheet__to b {
+.lsheet__look {
+  display: grid;
+  justify-items: center;
+  gap: 1px;
+  width: 96px;
+  padding: 4px 0 6px;
+  border-radius: 12px;
+}
+.lsheet__look img {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+  filter: drop-shadow(0 3px 5px rgb(0 0 0 / 60%));
+}
+.lsheet__look b {
   font-family: var(--font-display);
-  font-size: 24px;
+  font-size: 15px;
   font-weight: 800;
+  color: var(--text-faint);
+}
+.lsheet__look.is-to b {
+  font-size: 18px;
+  color: var(--white);
+}
+.lsheet__look small {
+  font-family: var(--font-display);
+  font-size: 8.5px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.lsheet__look.is-new {
+  background: rgb(0 186 255 / 9%);
+  box-shadow: inset 0 0 0 1px rgb(0 186 255 / 45%);
+}
+.lsheet__look.is-new small {
+  color: var(--cyan);
+}
+.lsheet__look.is-new img {
+  animation: lsheet-pop 0.35s ease-out;
+}
+@keyframes lsheet-pop {
+  0% {
+    transform: scale(0.7);
+  }
+  70% {
+    transform: scale(1.08);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lsheet__look.is-new img {
+    animation: none;
+  }
+}
+/* Where each look starts, under the slider: inset by half its 20px thumb. */
+.lsheet__ticks {
+  position: relative;
+  height: 38px;
+  margin: -4px 10px 0;
+}
+.lsheet__ticks span {
+  position: absolute;
+  top: 0;
+  display: grid;
+  justify-items: center;
+  transform: translateX(-50%);
+}
+.lsheet__ticks span::before {
+  content: '';
+  width: 1px;
+  height: 5px;
+  background: rgb(255 255 255 / 35%);
+}
+.lsheet__ticks img {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+}
+.lsheet__ticks em {
+  margin-top: -2px;
+  font-size: 8.5px;
+  font-style: normal;
+  font-weight: var(--fw-bold);
+  color: var(--text-faint);
+}
+.lsheet__onelook {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.4;
+  text-align: center;
+  color: var(--text-faint);
 }
 .lsheet__line {
   display: flex;

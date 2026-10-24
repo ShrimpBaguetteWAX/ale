@@ -1,5 +1,5 @@
 import type { Building, LandsConfig } from '@/chain/types'
-import { liveBoostScore, BOOST_MAX } from '@/map/terrain'
+import { liveBoostScore, BOOST_MAX, boostRank, boostShown } from '@/map/terrain'
 import type { BuildingCost, LandIncome, OwnedLand } from './types'
 import type { BuildingName } from './queries'
 
@@ -194,6 +194,50 @@ export function formatSpan(ms: number): string {
   if (days < 60) return `${Math.round(days)} days`
 
   return `${Math.round(days / 30)} months`
+}
+
+/**
+ * Where a building starts asking for another boost: 1.0x and below, read off
+ * the multiplier the player is shown (as `boostRank` is), so the warning and
+ * the label beside it never disagree at the edge. Briefing and the chores
+ * flag the same buildings.
+ */
+export const BOOST_SOON = 10
+
+export function needsBoost(percent: number): boolean {
+  return Math.round(percent) <= BOOST_SOON
+}
+
+/**
+ * How a building is doing, worst first: out of boost, gone from the map,
+ * due another boost, or fine.
+ *
+ * `closed` is the contract's own floor (`disable_building_boost_score`);
+ * `hidden` is where the map stops drawing it (`boostShown`), so players can
+ * no longer find it.
+ */
+export type BoostState = 'closed' | 'hidden' | 'low' | 'ok'
+
+export function boostState(score: number, config: LandsConfig | undefined): BoostState {
+  if (score <= Number(config?.disable_building_boost_score ?? 0)) return 'closed'
+  const percent = score / 10_000
+  if (!boostShown(percent)) return 'hidden'
+  if (needsBoost(percent)) return 'low'
+  return 'ok'
+}
+
+/**
+ * Hours until a dungeon or arena slips to the next look down on the map, by
+ * time alone — use wears it faster. Null on the lowest look.
+ *
+ * `boostRank` rounds the shown multiplier, so rank 2 holds down to 2.05x
+ * (205,000), rank 3 to 4.05x, and so on.
+ */
+export function hoursToSmallerLook(score: number, decayPerHour: number): number | null {
+  const rank = boostRank(score / 10_000)
+  if (rank === 1 || decayPerHour <= 0) return null
+  const edge = (rank - 1) * 200_000 + 5_000
+  return Math.max(0, (score - edge) / decayPerHour)
 }
 
 /* ---------- building ---------- */

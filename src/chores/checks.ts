@@ -6,6 +6,7 @@ import { fetchLandsConfig, fetchPlanetLands } from '@/chain/queries'
 import { fetchOwnedLands } from '@/chain/atomic'
 import type { Planet } from '@/chain/config'
 import { liveBoostPercent } from '@/map/terrain'
+import { needsBoost } from '@/lands/rules'
 import { fetchShopCooldowns, fetchShopItems } from '@/shop/queries'
 import { canBuy, isFree } from '@/shop/rules'
 import { fetchFighterLevels } from '@/fighters/queries'
@@ -51,9 +52,6 @@ export type ChoreKey =
   | 'farming'
   | 'rewards'
   | 'account'
-
-/** How faint a building's boost has to get before it is worth flagging. */
-export const LAND_BOOST_WARNING = 7
 
 /** How much of the free CPU allowance may be spent before it is flagged. */
 export const CPU_WARNING = 0.75
@@ -226,11 +224,13 @@ export const CHORE_CHECKS: ChoreCheck[] = [
         if (!mine.has(String(land.asset_id))) return false
         return (land.buildings ?? []).some(
           (b) =>
-            liveBoostPercent(
-              Number(b.boost_score ?? 0),
-              String(b.boost_score_update ?? ''),
-              decay,
-            ) < LAND_BOOST_WARNING,
+            needsBoost(
+              liveBoostPercent(
+                Number(b.boost_score ?? 0),
+                String(b.boost_score_update ?? ''),
+                decay,
+              ),
+            ),
         )
       })
     },
