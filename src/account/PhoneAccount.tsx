@@ -504,12 +504,6 @@ function PhoneCpu({
           <span className="pgauge__note">Refills by itself</span>
         </div>
       </div>
-
-      <p className="rsheet__hint">
-        A claim buys {Number(status.waxPerClaim.toFixed(4))} WAX of network CPU for your wallet,
-        paid by the game — up to {formatNumber(status.allowance)} a week. Your wallet&apos;s own
-        CPU refills over about a day.
-      </p>
       {!legend && (
         <p className="rsheet__hint">
           Claiming needs <Link to="/shop?c=account">Legend Access</Link>.
