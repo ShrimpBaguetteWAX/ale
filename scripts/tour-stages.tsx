@@ -906,8 +906,18 @@ function PhoneAt({ d, moment, shown, now }: { d: Loaded; moment: Moment; shown: 
           onEnter={() => {}}
           onPick={(t) => {
             setTab(t)
-            setSheet(true)
+            if (!desk) setSheet(true)
           }}
+          onRemove={toggle}
+          onClearTeam={() => {
+            setTeamIds([])
+            setCrew(null)
+            setWeapon(null)
+          }}
+          me={(() => {
+            const s = d.field.find((x) => x.wallet === viewer)
+            return s ? { tag: s.playertag, avatar: s.avatar } : undefined
+          })()}
           picker={
             <PickerSheet
               open={sheet}

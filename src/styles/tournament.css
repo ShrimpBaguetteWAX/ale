@@ -7008,3 +7008,376 @@
 .ptour__spotdock .btn {
   min-height: 46px;
 }
+
+/* ===================================================================
+   Signup on a desktop, not entered: the line-up stage.
+   =================================================================== */
+
+/* The roster's filters behind one Filter button on a desktop too — the
+   phone sheet's toolbar, re-scoped from dungeon.css. */
+.picker--inline .sheetbar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.picker--inline .sheetbar__filter {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  height: 38px;
+  border-radius: 9px;
+  background: rgb(255 255 255 / 5%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 16%);
+  overflow: hidden;
+}
+.picker--inline .sheetbar__filter--on {
+  background: rgb(0 186 255 / 10%);
+  box-shadow: inset 0 0 0 1px rgb(0 186 255 / 70%);
+}
+.sheetbar__main,
+.picker--inline .sheetbar__end {
+  display: inline-flex;
+  align-items: center;
+  border: 0;
+  background: none;
+  color: #e3e9f4;
+  font: var(--fw-bold) 12.5px var(--font-body);
+  cursor: pointer;
+}
+.picker--inline .sheetbar__main {
+  flex: 1;
+  min-width: 0;
+  gap: 7px;
+  padding: 0 10px;
+  text-align: left;
+}
+.picker--inline .sheetbar__main svg {
+  flex: none;
+  width: 15px;
+  height: 15px;
+}
+.picker--inline .sheetbar__end {
+  flex: none;
+  width: 34px;
+  justify-content: center;
+  box-shadow: inset 1px 0 0 rgb(255 255 255 / 14%);
+  font-size: 11px;
+}
+.sheetbar__filter--on .sheetbar__main,
+.picker--inline .sheetbar__filter--on .sheetbar__end {
+  color: #bff0ff;
+}
+.picker--inline .sheetbar__label {
+  flex: none;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.sheetbar__hint,
+.picker--inline .sheetbar__what {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.picker--inline .sheetbar__hint {
+  font-weight: 600;
+  color: var(--text-faint);
+}
+.picker--inline .sheetbar__icon {
+  position: relative;
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border: 0;
+  border-radius: 9px;
+  background: rgb(255 255 255 / 5%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 16%);
+  color: #dfe6f2;
+  cursor: pointer;
+}
+.picker--inline .sheetbar__icon svg {
+  width: 16px;
+  height: 16px;
+}
+.picker--inline .sheetbar__icon--on {
+  background: rgb(124 92 255 / 25%);
+  box-shadow: inset 0 0 0 1px #6f55ff;
+}
+/* The real select, invisible over the icon, so a tap opens it. */
+.picker--inline .sheetbar__icon select {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+/* The list the phone or browser opens for it: dark, like the rest of the
+   game. Without this it took the icon's light text on the browser's white
+   list, which is unreadable. */
+.picker--inline .sheetbar__icon select {
+  color-scheme: dark;
+  color: var(--white);
+  background: #0b1324;
+}
+.sheetbar__icon select option,
+.picker--inline .sheetbar__icon select optgroup {
+  color: var(--white);
+  background: #0b1324;
+}
+
+/* The filters themselves open under the toolbar, and only from it. */
+.picker--inline .filters--sheet.filters--folded {
+  display: none;
+}
+.picker--inline .sheetbar {
+  margin-bottom: 4px;
+}
+.picker--inline .sheetbar__filter,
+.picker--inline .sheetbar__icon {
+  height: 42px;
+}
+.picker--inline .sheetbar__icon {
+  width: 42px;
+}
+
+.ptour__lineup {
+  position: relative;
+  overflow: hidden;
+  height: 400px;
+  border-radius: 16px;
+  background:
+    radial-gradient(60% 50% at 50% 100%, rgb(246 168 0 / 20%), transparent 70%),
+    linear-gradient(180deg, rgb(4 7 14 / 30%), rgb(4 7 14 / 90%)),
+    url('/assets/background/bg-arena.png') center / cover;
+  box-shadow: inset 0 0 0 1px rgb(246 168 0 / 30%);
+}
+.ptour__lutop {
+  position: absolute;
+  top: 16px;
+  left: 22px;
+  right: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.ptour__lurow {
+  position: absolute;
+  left: 24px;
+  right: 24px;
+  bottom: 16px;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr)) minmax(0, 0.95fr);
+  gap: 14px;
+  align-items: end;
+}
+.ptour__ped {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.ptour__luslot {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 250px;
+  padding: 0;
+  border: 0;
+  border-radius: 14px;
+  color: var(--text-faint);
+  background: rgb(0 0 0 / 35%);
+  box-shadow: inset 0 0 0 1.5px rgb(255 255 255 / 14%);
+  cursor: pointer;
+}
+.ptour__luslot::before {
+  content: '';
+  position: absolute;
+  inset: 10px;
+  border: 1.5px dashed rgb(255 255 255 / 14%);
+  border-radius: 10px;
+}
+.ptour__luslot i {
+  font-size: 40px;
+  font-style: normal;
+  font-weight: 300;
+  color: rgb(255 255 255 / 40%);
+  transform: translateY(-10px);
+}
+.ptour__luslot small {
+  position: absolute;
+  right: 0;
+  bottom: 16px;
+  left: 0;
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.ptour__luslot:hover {
+  box-shadow: inset 0 0 0 1.5px rgb(255 255 255 / 30%);
+}
+.ptour__ped.is-next .ptour__luslot {
+  box-shadow:
+    inset 0 0 0 2px var(--cyan),
+    0 0 0 4px rgb(0 186 255 / 18%);
+}
+.ptour__luslot--card {
+  height: 117px;
+  background: rgb(246 168 0 / 5%);
+  box-shadow: inset 0 0 0 1.5px rgb(246 168 0 / 30%);
+}
+.ptour__luslot--card::before {
+  border-color: rgb(246 168 0 / 25%);
+}
+.ptour__pedfig {
+  position: relative;
+  width: 100%;
+  height: 250px;
+}
+.ptour__pedfig img {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  height: 100%;
+  transform: translateX(-50%);
+  filter: drop-shadow(0 14px 18px rgb(0 0 0 / 70%));
+}
+.ptour__pedlv {
+  position: absolute;
+  top: 0;
+  left: 4px;
+  z-index: 1;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 800;
+  color: #04131c;
+  background: var(--cyan);
+}
+.ptour__pedx {
+  position: absolute;
+  top: 0;
+  right: 4px;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  font-size: 16px;
+  color: var(--white);
+  background: rgb(0 0 0 / 60%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 25%);
+  cursor: pointer;
+}
+.ptour__pedglow {
+  width: 90%;
+  height: 14px;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgb(246 168 0 / 35%), transparent);
+}
+.ptour__ped.is-next .ptour__pedglow {
+  background: radial-gradient(closest-side, rgb(0 186 255 / 70%), transparent);
+}
+.ptour__ped.is-full .ptour__pedglow {
+  background: radial-gradient(closest-side, rgb(246 168 0 / 75%), transparent);
+}
+.ptour__pedname {
+  max-width: 100%;
+  overflow: hidden;
+  font-family: var(--font-display);
+  font-size: 12.5px;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  text-transform: capitalize;
+  white-space: nowrap;
+  color: var(--white);
+}
+.ptour__lucards {
+  display: grid;
+  gap: 12px;
+  padding-bottom: 38px;
+}
+.ptour__lucard {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  height: 117px;
+  padding: 10px;
+  border: 0;
+  border-radius: 14px;
+  text-align: left;
+  color: inherit;
+  background: rgb(246 168 0 / 8%);
+  box-shadow: inset 0 0 0 1.5px rgb(246 168 0 / 40%);
+  cursor: pointer;
+}
+.ptour__lucard img {
+  width: 52px;
+  height: 74px;
+  border-radius: 6px;
+  object-fit: contain;
+}
+.ptour__lucard small {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #ffd979;
+}
+.ptour__lucard b {
+  display: block;
+  overflow: hidden;
+  font-size: 13.5px;
+  text-overflow: ellipsis;
+  color: var(--white);
+}
+.ptour__lupicker {
+  scroll-margin-top: 80px;
+}
+.ptour__lupicker .picker {
+  margin: 0;
+}
+/* Enter in the side column, with what is missing — or where the team seeds — under it. */
+.ptour--desk .ptour__dock--side {
+  justify-items: stretch;
+}
+.ptour--desk .ptour__dock--side .btn {
+  width: 100%;
+  min-width: 0;
+  min-height: 56px;
+}
+.ptour--desk .ptour__dock--side small {
+  justify-self: center;
+  font-size: 13px;
+}
+.ptour__dock small.is-ok {
+  color: var(--teal);
+}
+.ptour__entrant.is-you {
+  background: linear-gradient(90deg, rgb(0 186 255 / 12%), transparent);
+  box-shadow: inset 3px 0 0 var(--cyan) !important;
+}
+.ptour__entrant.is-you span {
+  font-style: italic;
+  color: #9fe3ff;
+}
+
+/* Conditions read in white on a desktop: the icons carry the colour. */
+.ptour--desk .ptour__condrow .weather__name {
+  color: var(--white) !important;
+}

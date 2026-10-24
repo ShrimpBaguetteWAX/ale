@@ -1,4 +1,4 @@
-import { createContext, Fragment, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { createContext, Fragment, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import type { CardTemplate } from '@/chain/atomic'
 import type { RosterFighter } from '@/dungeon/types'
 import { BottomSheet } from '@/components/BottomSheet'
@@ -99,6 +99,11 @@ export interface PhoneTournamentProps {
   canSign: boolean
   onEnter: () => void
   onPick: (tab: 'fighters' | 'crew' | 'weapon') => void
+  /** Takes one picked fighter off the team, and clears it all — for the desktop's line-up. */
+  onRemove?: (f: RosterFighter) => void
+  onClearTeam?: () => void
+  /** Who is looking, for their row among the entrants before they enter. */
+  me?: { tag: string; avatar: number }
   /** The roster sheet, slid over the screen when a team slot is tapped. */
   picker: ReactNode
   /** The next tournament's steps, for the schedule between tournaments. */
@@ -466,8 +471,15 @@ function SidePrizes({ board, wallet, onPrizes }: { board: Board; wallet: string;
 }
 
 /** Who has entered so far, best seed first — the desktop's side column at signup. */
-function Entrants({ field, wallet }: { field: TournamentSignup[]; wallet: string }) {
-  if (!field.length) return null
+function Entrants({ field, wallet, you }: {
+  field: TournamentSignup[]
+  wallet: string
+  /** The player, not entered yet: where their team would seed, or 0 with no team. */
+  you?: { wallet: string; playertag: string; avatar: number; score: number; seed: number }
+}) {
+  if (!field.length && !you) return null
+  const rows: (TournamentSignup | (NonNullable<typeof you> & { you: true }))[] = [...field]
+  if (you) rows.splice(you.seed ? you.seed - 1 : rows.length, 0, { ...you, you: true })
   return (
     <section className="ptour__card">
       <div className="ptour__cardhead">
@@ -475,15 +487,19 @@ function Entrants({ field, wallet }: { field: TournamentSignup[]; wallet: string
         <small className="ptour__fine">{formatNumber(field.length)}</small>
       </div>
       <div className="ptour__entrants">
-        {field.slice(0, 12).map((s, i) => (
-          <div key={s.wallet} className={`ptour__entrant${s.wallet === wallet ? ' is-me' : ''}`}>
-            <b className="mono">{i + 1}</b>
-            <PlayerAvatar id={s.avatar} name={s.playertag} className="ptour__sideav" size={28} />
-            <span>{s.playertag || s.wallet}</span>
-            <small className="mono">{formatNumber(s.score)}</small>
-          </div>
-        ))}
-        {field.length > 12 && <p className="ptour__fine">and {formatNumber(field.length - 12)} more</p>}
+        {rows.slice(0, 12).map((s, i) => {
+          const isYou = 'you' in s
+          const unseeded = isYou && !(s as { seed: number }).seed
+          return (
+            <div key={isYou ? '~you' : s.wallet} className={`ptour__entrant${s.wallet === wallet ? ' is-me' : ''}${isYou ? ' is-you' : ''}`}>
+              <b className="mono">{unseeded ? '?' : i + 1}</b>
+              <PlayerAvatar id={s.avatar} name={s.playertag} className="ptour__sideav" size={28} />
+              <span>{unseeded ? 'You — not entered' : s.playertag || s.wallet}</span>
+              <small className="mono">{unseeded ? '—' : formatNumber(s.score)}</small>
+            </div>
+          )
+        })}
+        {rows.length > 12 && <p className="ptour__fine">and {formatNumber(rows.length - 12)} more</p>}
       </div>
     </section>
   )
@@ -1459,6 +1475,165 @@ function hofFaces(rows: TournamentHof[]): TournamentHof[] {
     .sort((a, b) => a.rank - b.rank || a.index - b.index)
 }
 
+/* ---------- signup on a desktop, not entered: the line-up stage ---------- */
+
+/**
+ * The team about to be fielded, on a stage.
+ *
+ * Five pedestals across the arena, each pick standing on the next one at full
+ * height with its level and a way off, and the card pair at the end of the
+ * line. An empty pedestal or card opens that tab of the roster below it.
+ */
+function LineupStage({ team, crew, weapon, onSlot, onRemove, onClear }: {
+  team: (RosterFighter | null)[]
+  crew: CardTemplate | null
+  weapon: CardTemplate | null
+  onSlot: (tab: 'fighters' | 'crew' | 'weapon') => void
+  onRemove?: (f: RosterFighter) => void
+  onClear?: () => void
+}) {
+  const picked = team.filter(Boolean).length
+  const nextAt = team.findIndex((f) => !f)
+  const card = (kind: 'crew' | 'weapon', label: string, c: CardTemplate | null) =>
+    c ? (
+      <button type="button" className="ptour__lucard" onClick={() => onSlot(kind)}>
+        <GameImg
+          src={asset(`/assets/cards/${c.template_id}.webp`)}
+          fallback={[ipfsImage(c.img), asset('/assets/default-card.png')].filter((x): x is string => !!x)}
+          alt=""
+        />
+        <span>
+          <small>{label}</small>
+          <b>{c.name}</b>
+        </span>
+      </button>
+    ) : (
+      <button type="button" className="ptour__luslot ptour__luslot--card" onClick={() => onSlot(kind)}>
+        <i>+</i>
+        <small>{label}</small>
+      </button>
+    )
+  return (
+    <section className="ptour__lineup">
+      <div className="ptour__lutop">
+        <span className="ptour__kick ptour__kick--gold">Your team · {picked} of 5</span>
+        {picked > 0 && onClear && (
+          <button type="button" className="ptour__pill" onClick={onClear}>
+            Clear team
+          </button>
+        )}
+      </div>
+      <div className="ptour__lurow">
+        {team.map((f, i) => (
+          <div key={i} className={`ptour__ped${f ? ' is-full' : i === nextAt ? ' is-next' : ''}`}>
+            {f ? (
+              <div className="ptour__pedfig">
+                <span className="ptour__pedlv mono">L{f.stats?.level ?? 1}</span>
+                {onRemove && (
+                  <button type="button" className="ptour__pedx" aria-label="Take off the team" onClick={() => onRemove(f)}>
+                    ×
+                  </button>
+                )}
+                <GameImg src={fighterArt(f)} fallback={fighterArtFallback()} alt={f.classname} />
+              </div>
+            ) : (
+              <button type="button" className="ptour__luslot" onClick={() => onSlot('fighters')}>
+                <i>+</i>
+                <small>Fighter {i + 1}</small>
+              </button>
+            )}
+            <span className="ptour__pedglow" />
+            <b className="ptour__pedname">{f ? f.classname : ' '}</b>
+          </div>
+        ))}
+        <div className="ptour__lucards">
+          {card('crew', 'Crew card', crew)}
+          {card('weapon', 'Weapon', weapon)}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function DeskLineup(
+  p: PhoneTournamentProps & { board: Board; onHof: () => void; closes: number; passesNow: number },
+) {
+  const pickerAt = useRef<HTMLDivElement>(null)
+  const open = (tab: 'fighters' | 'crew' | 'weapon') => {
+    p.onPick(tab)
+    pickerAt.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+  const picked = p.team.filter(Boolean).length
+  /* Where this team would seed, among those already in. */
+  const seed = p.field.filter((s) => s.score >= p.score).length + 1
+  const you = {
+    wallet: p.wallet,
+    playertag: p.me?.tag || 'You',
+    avatar: p.me?.avatar ?? 0,
+    score: p.score,
+  }
+  return (
+    <>
+      <Head
+        sub={`Build your team · signup closes ${Number.isFinite(p.closes) ? when(p.closes, p.now) : 'soon'}`}
+        chip={<HofChip onClick={p.onHof} />}
+      />
+      {/* The whole tournament ahead, as on every other screen of it. */}
+      <Strip items={preDrawItems(p.timeline, p.now)} focus={0} />
+      <Cols
+        items={[
+          [
+            <LineupStage
+              team={p.team}
+              crew={p.crew}
+              weapon={p.weapon}
+              onSlot={open}
+              onRemove={p.onRemove}
+              onClear={p.onClearTeam}
+            />,
+            'main',
+          ],
+          [<div ref={pickerAt} className="ptour__lupicker">{p.picker}</div>, 'main'],
+          [
+            <section className="ptour__card ptour__spotcard">
+              <div className="ptour__spotclock">
+                <div className="ptour__board">
+                  <small>Signup closes in</small>
+                  <b className="mono">{Number.isFinite(p.closes) ? boardClock(p.closes - p.now) : '—'}</b>
+                  {Number.isFinite(p.closes) && <span>{dayTime(p.closes)}</span>}
+                </div>
+              </div>
+            </section>,
+            'side',
+          ],
+          [<PotCard stage={p.stage} field={null} />, 'side'],
+          [<Conditions weather={p.weather} />, 'side'],
+          [<Entrants field={p.field} wallet={p.wallet} you={picked > 0 ? { ...you, seed } : { ...you, seed: 0 }} />, 'side'],
+          [
+            <div className="ptour__dock ptour__dock--side">
+              <button
+                type="button"
+                className="btn btn--gold"
+                disabled={!p.block.ready || p.busy || !p.canSign}
+                onClick={p.onEnter}
+              >
+                {p.busy ? <span className="spinner" /> : <img src={ENERGY} alt="" />}
+                Enter · {formatNumber(p.energyCost)} energy
+              </button>
+              <small className={p.block.ready ? 'is-ok' : 'is-short'}>
+                {p.block.ready
+                  ? `Team score ${formatNumber(p.score)} · you would seed ${seed} of ${p.field.length + 1}`
+                  : p.block.reason}
+              </small>
+            </div>,
+            'side',
+          ],
+        ]}
+      />
+    </>
+  )
+}
+
 /* ---------- signup ---------- */
 
 function Signup(
@@ -1474,6 +1649,7 @@ function Signup(
     ? p.field.findIndex((s) => s.wallet === p.mine!.wallet) + 1
     : p.field.filter((s) => s.score >= p.score).length + 1
   const desk = useContext(Desk)
+  if (desk && !p.mine) return <DeskLineup {...p} closes={closes} passesNow={passesNow} />
 
   return (
     <>
@@ -1580,8 +1756,7 @@ function Signup(
               {p.block.ready ? `Team score ${formatNumber(p.score)}` : p.block.reason}
             </small>
           </div>
-          {/* A desktop picks below the team, on the page; a phone in its sheet. */}
-          {desk && p.picker}
+
         </>
       ),
             'main',

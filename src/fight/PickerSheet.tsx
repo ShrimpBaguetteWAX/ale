@@ -69,7 +69,8 @@ export function PickerSheet({
   const [atLevelOne, setAtLevelOne] = useState(false)
   const [cardQuery, setCardQuery] = useState('')
   const [shownCount, setShownCount] = useState<{ shown: number; total: number } | null>(null)
-  const [density, setDensity] = useState<PickDensity>(() => recallDensity(true))
+  /* A desktop starts on the full cards — their numbers and quality marks are the point of the room. */
+  const [density, setDensity] = useState<PickDensity>(() => (inline ? 'full' : recallDensity(true)))
   const chooseDensity = (next: PickDensity) => {
     setDensity(next)
     rememberDensity(next, true)
@@ -87,7 +88,7 @@ export function PickerSheet({
     <>
       {open && !inline && <div className="picker__scrim" onClick={onClose} aria-hidden="true" />}
       <section
-        className={inline ? 'panel picker' : `panel picker picker--sheet${open ? ' picker--open' : ''}`}
+        className={inline ? 'panel picker picker--inline' : `panel picker picker--sheet${open ? ' picker--open' : ''}`}
         ref={sheet}
         aria-hidden={open || inline ? undefined : true}
       >
@@ -166,8 +167,10 @@ export function PickerSheet({
               roster={roster ?? []}
               atLevelOne={atLevelOne}
               onAtLevelOne={setAtLevelOne}
-              count={shownCount}
-              sheet={inline ? undefined : { density, onDensity: chooseDensity }}
+              /* No "showing n of m" on a desktop: the grid says it. The markers and
+                 the rest sit behind the Filter button, as on the phone's sheet. */
+              count={inline ? undefined : shownCount}
+              sheet={{ density, onDensity: inline ? setDensity : chooseDensity }}
             />
             <FighterGrid
               roster={roster}
@@ -180,8 +183,8 @@ export function PickerSheet({
               onToggle={onToggle}
               onCount={countFighters}
               onInspect={onInspect}
-              density={inline ? undefined : density}
-              onDensity={inline ? undefined : chooseDensity}
+              density={density}
+              onDensity={inline ? setDensity : chooseDensity}
             />
           </>
         ) : (
