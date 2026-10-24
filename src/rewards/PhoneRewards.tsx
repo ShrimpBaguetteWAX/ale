@@ -99,6 +99,7 @@ export function PhoneRewards({
   onSaveTools,
   onShare,
   currency,
+  mineReady,
 }: {
   tab: RewardsTab
   onTab: (tab: RewardsTab) => void
@@ -109,7 +110,16 @@ export function PhoneRewards({
   onSaveTools: (ids: string[]) => void
   onShare: (share: number) => void
   currency: PhoneCurrencyData | null
+  /** Which currencies have a pool ready to mine, for the dots on the tabs. */
+  mineReady: Partial<Record<Currency, boolean>>
 }) {
+  /*
+     A dot means there is something to do on that tab: a pool ready to mine,
+     or — TLM only, the one currency that waits to be claimed — a balance to
+     claim. It used to mean the claim alone, so Shards never had one.
+  */
+  const hasNews = (key: Currency) =>
+    !!mineReady[key] || (claimPays(key) && unclaimed(player, key) > 0)
   return (
     <div className="prew">
       <div className="prew__tabs" role="tablist" aria-label="Rewards">
@@ -123,8 +133,11 @@ export function PhoneRewards({
             onClick={() => onTab(key)}
           >
             {label}
-            {key !== 'mining' && claimPays(key) && unclaimed(player, key) > 0 && (
-              <span className="prew__tabdot" aria-label="Something to claim" />
+            {key !== 'mining' && hasNews(key) && (
+              <span
+                className="prew__tabdot"
+                aria-label={mineReady[key] ? 'Ready to mine' : 'Something to claim'}
+              />
             )}
           </button>
         ))}

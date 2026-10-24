@@ -585,6 +585,10 @@ export default function Profile({ section = 'account' }: { section?: Section }) 
           canAct={!!session}
           onSaveTools={onSaveTools}
           onShare={onShare}
+          mineReady={{
+            tlm: poolBoard('tlm', player, tlmPools, shardPools, poolNames).some((e) => e.ready),
+            shrds: poolBoard('shrds', player, tlmPools, shardPools, poolNames).some((e) => e.ready),
+          }}
           currency={
             currencyTab
               ? {
