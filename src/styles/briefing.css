@@ -532,3 +532,217 @@ a.brief__chip:hover {
     grid-template-columns: 1fr 1fr;
   }
 }
+
+/* ---------- phone: what is waiting first ---------- */
+
+.pbrief {
+  display: grid;
+  gap: 10px;
+  align-content: start;
+}
+
+.pbrief__hello {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.pbrief__avatar {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px var(--cyan);
+}
+.pbrief__who {
+  display: grid;
+  min-width: 0;
+}
+/* A greeting, not a page title: none of the big title's glow and line. */
+.shell .main__inner .pbrief h1.pbrief__name {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  font-size: var(--fs-md);
+  letter-spacing: 0.06em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-shadow: none;
+}
+.shell .main__inner .pbrief h1.pbrief__name::after {
+  display: none;
+}
+.pbrief__line {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--fs-xs);
+  color: var(--text-faint);
+}
+
+.pbrief__part {
+  display: grid;
+  gap: 6px;
+}
+.shell .main__inner .pbrief .pbrief__cap {
+  display: flex;
+  justify-content: space-between;
+  margin: 2px 2px 0;
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: var(--fw-bold);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.pbrief__cap span {
+  font-family: var(--font-body);
+  letter-spacing: 0.04em;
+  color: var(--text-dim);
+}
+.pbrief__clear {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgb(8 14 28 / 66%);
+  font-size: var(--fs-xs);
+  color: var(--text-faint);
+}
+
+/* A warning: one slim bar, the whole of it the way in. */
+.pwarn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: linear-gradient(90deg, rgb(255 1 255 / 14%), rgb(8 14 28 / 66%) 70%);
+  box-shadow: inset 0 0 0 1px rgb(255 1 255 / 38%);
+  color: var(--white);
+}
+.pwarn:hover {
+  text-decoration: none;
+}
+.pwarn__icon,
+.prow__icon {
+  flex: none;
+  width: 26px;
+  height: 26px;
+  object-fit: contain;
+}
+.pwarn__text,
+.prow__text {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+}
+.pwarn__text strong,
+.prow__text strong {
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-bold);
+  line-height: 1.3;
+}
+.pwarn__text small {
+  font-size: 10.5px;
+  font-weight: var(--fw-bold);
+  color: var(--magenta);
+}
+
+/* What can be collected: the amount large, its button under it. */
+.ptiles {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 7px;
+}
+.ptile {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: 3px;
+  min-width: 0;
+  padding: 9px 10px 10px;
+  border-radius: 12px;
+  background: linear-gradient(160deg, rgb(246 168 0 / 14%), rgb(8 14 28 / 70%) 55%);
+  box-shadow: inset 0 0 0 1px rgb(246 168 0 / 32%);
+}
+.ptile__top {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.ptile__top img {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+}
+.ptile__amount {
+  overflow: hidden;
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 800;
+  color: #ffd979;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.ptile__amount small {
+  margin-left: 4px;
+  font-family: var(--font-body);
+  font-size: 10px;
+  font-weight: var(--fw-bold);
+}
+.ptile__label {
+  font-size: 10.5px;
+  line-height: 1.3;
+  color: var(--text-faint);
+}
+/* With no amount above it, the title is the headline. */
+.ptile__label--only {
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-bold);
+  color: var(--white);
+}
+.ptile__go {
+  width: 100%;
+  margin-top: 4px;
+}
+
+/* What today holds, and the slower things: quiet rows. */
+.prows {
+  overflow: hidden;
+  border-radius: 12px;
+  background: rgb(8 14 28 / 66%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 10%);
+}
+.prow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 50px;
+  padding: 7px 10px;
+  color: var(--white);
+}
+.prow + .prow {
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 7%);
+}
+.prow:hover {
+  text-decoration: none;
+  background: rgb(255 255 255 / 4%);
+}
+.prow__text small {
+  overflow: hidden;
+  font-size: 10.5px;
+  color: var(--text-faint);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.pchev {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: var(--text-faint);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}

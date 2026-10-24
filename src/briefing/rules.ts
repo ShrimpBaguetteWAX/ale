@@ -567,7 +567,7 @@ export function buildBriefing(input: BriefingInput): BriefItem[] {
         rank: 2,
         tone: 'play',
         icon: ICON.candle,
-        title: 'A Candle mission is running',
+        title: `A Candle mission for ${offer.reward}`,
         figure: `${spanLabel(offer.msLeft)} left`,
         body:
           `Put gems in before it closes and take a share of ${offer.reward}. ` +
@@ -581,7 +581,7 @@ export function buildBriefing(input: BriefingInput): BriefItem[] {
         rank: 6,
         tone: 'grow',
         icon: ICON.candle,
-        title: 'A Candle mission is running without you',
+        title: `A Candle mission for ${offer.reward}, without you`,
         figure: `${spanLabel(offer.msLeft)} left`,
         body:
           `It pays out ${offer.reward}, but only to players with at least ${formatNumber(offer.need)} ${offer.requirements.toLowerCase()} — you have ${formatNumber(offer.have)}. ` +
@@ -801,3 +801,22 @@ export const JOURNEY_STATS: { key: string; label: string; icon: string }[] = [
   { key: 'tlm_earned', label: 'TLM earned', icon: ICON.tlm },
   { key: 'shards_earned', label: 'Shards earned', icon: ICON.shards },
 ]
+
+/**
+ * A "waiting" item as a phone's tile: the amount large, the rest small.
+ *
+ * Read from the figure where it is an amount ("1,509 TLM"), or else from a
+ * count leading the title ("4 fighters can level up"). An item with neither —
+ * a free flask, an ascension pick — has no amount and keeps its title whole.
+ */
+export function tileOf(item: Pick<BriefItem, 'title' | 'figure'>): {
+  amount?: string
+  unit?: string
+  label: string
+} {
+  const fig = item.figure?.match(/^(~?\d[\d,.]*[kKMB]?)\s+(\S.*)$/)
+  if (fig) return { amount: fig[1], unit: fig[2], label: item.title }
+  const lead = item.title.match(/^(\d[\d,.]*)\s+(\S.*)$/)
+  if (lead) return { amount: lead[1], label: lead[2][0].toUpperCase() + lead[2].slice(1) }
+  return { label: item.title }
+}
