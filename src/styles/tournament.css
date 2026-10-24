@@ -6070,3 +6070,10 @@
   flex: none;
   min-width: 0;
 }
+
+/* The Log switch on a tournament fight's control bar: lit while the log is open. */
+.boutstage .bcdeck__skip[aria-pressed='true'] {
+  color: #04131c;
+  background: var(--cyan);
+  box-shadow: none;
+}

@@ -326,6 +326,7 @@ function BoutStage({
         enemyLabel={b}
         enemyOwner={b}
         live="Tournament"
+        logHidden
         phone={phone}
         broadcast
       />

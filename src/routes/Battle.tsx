@@ -498,6 +498,7 @@ export function FightStage({
   live,
   phone,
   broadcast,
+  logHidden = false,
 }: {
   replay: Replay
   pb: FightPlayback
@@ -512,14 +513,22 @@ export function FightStage({
   phone: boolean
   /** The broadcast layout, with the transport bar under the picture. */
   broadcast: boolean
+  /**
+   * Start with the log shut, on a phone too, behind a Log button.
+   *
+   * The tournament's choice: a fight there is watched rather than studied,
+   * and the field wants the room. Not remembered — every fight starts shut.
+   */
+  logHidden?: boolean
 }) {
   const { step, total, speed, playing } = pb
   const logRef = useRef<HTMLDivElement>(null)
   /* Open unless this player has closed it; their choice is remembered. */
-  const [showLog, setShowLogState] = useState(readShowLog)
+  const [showLog, setShowLogState] = useState(() => (logHidden ? false : readShowLog()))
   const setShowLog = useCallback((next: boolean | ((v: boolean) => boolean)) => {
     setShowLogState((v) => {
       const value = typeof next === 'function' ? next(v) : next
+      if (logHidden) return value
       try {
         localStorage.setItem(LOG_KEY, value ? '1' : '0')
       } catch {
@@ -527,7 +536,7 @@ export function FightStage({
       }
       return value
     })
-  }, [])
+  }, [logHidden])
 
   /** The log follows the fight, as the original's does. */
   useEffect(() => {
@@ -611,6 +620,16 @@ export function FightStage({
             >
               {speed}×
             </button>
+            {phone && logHidden && (
+              <button
+                type="button"
+                className="bcdeck__skip"
+                aria-pressed={showLog}
+                onClick={() => setShowLog((v) => !v)}
+              >
+                Log
+              </button>
+            )}
             {phone ? (
               /* The title line is a wider screen's; a phone skips from here. */
               <button type="button" className="bcdeck__skip" onClick={pb.skip}>
@@ -638,7 +657,7 @@ export function FightStage({
         from the first frame so the field does not shift when the first
         blow lands.
       */}
-      {(!broadcast || showLog || phone) && (
+      {(!broadcast || showLog || (phone && !logHidden)) && (
         <section className="panel clog clog--live" aria-label="Combat log">
           <header className="clog__head">
             <div className="clog__heading">
