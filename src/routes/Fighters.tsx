@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useGame } from '@/state/useGame'
 import { FighterPanel, type PanelFighter } from '@/components/FighterPanel'
@@ -226,6 +226,28 @@ export default function Fighters() {
 
   const [mode, setMode] = useState<Mode>('inventory')
   const [tab, setTab] = useState<CardTab>('primary')
+  /*
+     Whether the phone's readout switch is pinned under the top bar. Pinned,
+     it joins the bar — the same glass, edge to edge — rather than floating
+     over the cards; at rest it is the plain switch.
+  */
+  const readoutRef = useRef<HTMLDivElement>(null)
+  const [readoutStuck, setReadoutStuck] = useState(false)
+  useEffect(() => {
+    const check = () => {
+      const el = readoutRef.current
+      if (!el || getComputedStyle(el).position !== 'sticky') return setReadoutStuck(false)
+      const pin = parseFloat(getComputedStyle(el).top) || 0
+      setReadoutStuck(el.getBoundingClientRect().top <= pin + 0.5)
+    }
+    check()
+    window.addEventListener('scroll', check, { passive: true })
+    window.addEventListener('resize', check)
+    return () => {
+      window.removeEventListener('scroll', check)
+      window.removeEventListener('resize', check)
+    }
+  }, [])
   /*
      A lens on the roster rather than part of the filter.
 
@@ -856,18 +878,23 @@ export default function Fighters() {
           and Abilities, so comparing the roster on any of them is one tap.
           The cards drop their own tab strip on a phone for it.
         */}
-        <div className="roster__readout" role="tablist" aria-label="Readout">
-          {CARD_TABS.map(([t, label]) => (
-            <button
-              type="button"
-              key={t}
-              role="tab"
-              aria-selected={tab === t}
-              onClick={() => setTab(t)}
-            >
-              {label}
-            </button>
-          ))}
+        <div
+          className={`roster__readout${readoutStuck ? ' roster__readout--stuck' : ''}`}
+          ref={readoutRef}
+        >
+          <div className="roster__readoutSeg" role="tablist" aria-label="Readout">
+            {CARD_TABS.map(([t, label]) => (
+              <button
+                type="button"
+                key={t}
+                role="tab"
+                aria-selected={tab === t}
+                onClick={() => setTab(t)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
         </div>
         <div className="rostergrid">
           {shown.map((f) => (
