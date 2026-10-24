@@ -3,7 +3,6 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import {
   fetchShardPools,
   fetchTlmPools,
-  fetchToolTemplates,
   type PoolDescription,
   type ShardPool,
   type TlmPool,
@@ -32,7 +31,7 @@ import { byQuality } from '@/dungeon/nftFighter'
 import { PlayerAvatar } from '@/components/PlayerAvatar'
 import { AutoSign } from '@/components/AutoSign'
 import { landThumbStyle } from '@/map/terrain'
-import { fetchMiningTools, type MiningTool } from '@/chain/atomic'
+import type { MiningTool } from '@/chain/atomic'
 import {
   fetchCpuUsage,
   fetchAccountCpu,
@@ -99,6 +98,10 @@ import { readableError } from '@/wharf/errors'
 import { formatAsset, formatNumber, formatDecimals, formatStat } from '@/format'
 import { asset } from '@/assets'
 import { GameImg } from '@/components/GameImg'
+import { usePhone } from '@/components/usePhone'
+import { MAX_TOOLS } from '@/rewards/rules'
+import { useMiningTools } from '@/rewards/useMiningTools'
+import { PhoneRewards } from '@/rewards/PhoneRewards'
 
 /**
  * Account.
@@ -366,8 +369,53 @@ export default function Profile({ section = 'account' }: { section?: Section }) 
 
   const board = useMemo(() => avatarBoard(avatars, player), [avatars, player])
 
+  /*
+     A phone gets its own Rewards: one number first on every tab, the pools
+     as rings, the payments folded by source, and the tool and landowner
+     settings in sheets. Same data, same actions — only the layout differs.
+  */
+  const phone = usePhone()
+  const phoneRewards = phone && section === 'rewards'
+  const onMine = (pool: string, times: number) => {
+    if (!currencyTab) return
+    setMinedPool(pool)
+    /*
+       Made here rather than inside the action, because it is the key
+       to `pools.ale` / `rwrdhistory` — the contract's own record of
+       what this claim paid, and the only way to ask afterwards.
+    */
+    const historyId = randomHistoryId()
+    void run(
+      'mine',
+      () => mineRewardPool(session!, pool, historyId, times),
+      times > 1 ? `Mined ${times} times.` : 'Mined.',
+      mineOpts,
+    ).then(async () => {
+      /* The mine writes a ledger row, so drop the cached page. */
+      setLogs((prev) => ({ ...prev, [currencyTab]: undefined }))
+      setMinedPool(null)
+      /*
+         And show what it paid. Read from the chain rather than taken
+         from the bar: the pool moves between the two, so the figure
+         beside the bar is a projection and this is not.
+      */
+      setMinedRewards(await readMinedRewards(historyId))
+    })
+  }
+  const onSaveTools = (ids: string[]) =>
+    void run('mining', () => setMiningNfts(session!, ids), 'Mining settings saved !', opts('setMiningNfts'))
+  const onShare = (share: number) =>
+    void run('share', () => setLandownerShare(session!, share), 'Mining settings saved !', opts('setLandownerShare'))
+  const onClaim = () =>
+    void run('claim', () => claimCurrencies(session!), 'Rewards claimed.', opts('claimCurrencies'))
+  const onUnlockRows = (rows: number) => {
+    if (!currencyTab) return
+    void run('rows', () => unlockRewardRows(session!, currencyTab, rows), 'History unlocked.', opts('unlockRewardRows'))
+  }
+
   return (
     <div className="account">
+      {!phoneRewards && (
       <header className="account__head">
         <span
           className="account__avatar"
@@ -393,6 +441,7 @@ export default function Profile({ section = 'account' }: { section?: Section }) 
           </p>
         </div>
       </header>
+      )}
 
       {notice && <div className="alert alert--ok">{notice}</div>}
       {(error ?? own.error) && (
@@ -408,6 +457,7 @@ export default function Profile({ section = 'account' }: { section?: Section }) 
          on the line you already read to move around this screen, at the
          opposite end so it is never the thing a thumb reaches first.
       */}
+      {!phoneRewards && (
       <div className="accounthead">
       <div
         className="accounttabs"
@@ -458,6 +508,7 @@ export default function Profile({ section = 'account' }: { section?: Section }) 
         </button>
       )}
       </div>
+      )}
 
       {tab === 'avatar' && (
         <AvatarTab
@@ -477,7 +528,35 @@ export default function Profile({ section = 'account' }: { section?: Section }) 
         />
       )}
 
-      {tab === 'mining' && (
+      {phoneRewards && (
+        <PhoneRewards
+          tab={tab === 'mining' || currencyTab ? (tab as 'mining' | Currency) : 'mining'}
+          onTab={setTab}
+          player={player}
+          account={account ?? ''}
+          busy={busy}
+          canAct={!!session}
+          onSaveTools={onSaveTools}
+          onShare={onShare}
+          currency={
+            currencyTab
+              ? {
+                  currency: currencyTab,
+                  log: logs[currencyTab],
+                  capacity: logCapacity(currencyTab, logCap, logCfg),
+                  board: poolBoard(currencyTab, player, tlmPools, shardPools, poolNames),
+                  trial: trialPenalty(player.legend_access_expiry, usersCfg?.trial_rewpow_mod),
+                  minedPool,
+                  onMine,
+                  onClaim,
+                  onUnlock: onUnlockRows,
+                }
+              : null
+          }
+        />
+      )}
+
+      {tab === 'mining' && !phoneRewards && (
         <MiningTab
           account={account ?? ''}
           player={player}
@@ -516,7 +595,7 @@ export default function Profile({ section = 'account' }: { section?: Section }) 
         />
       )}
 
-      {currencyTab && (
+      {currencyTab && !phoneRewards && (
         <CurrencyTab
           currency={currencyTab}
           player={player}
@@ -544,31 +623,7 @@ export default function Profile({ section = 'account' }: { section?: Section }) 
           )}
           trial={trialPenalty(player.legend_access_expiry, usersCfg?.trial_rewpow_mod)}
           minedPool={minedPool}
-          onMine={(pool, times) => {
-            setMinedPool(pool)
-            /*
-               Made here rather than inside the action, because it is the key
-               to `pools.ale` / `rwrdhistory` — the contract's own record of
-               what this claim paid, and the only way to ask afterwards.
-            */
-            const historyId = randomHistoryId()
-            void run(
-              'mine',
-              () => mineRewardPool(session!, pool, historyId, times),
-              times > 1 ? `Mined ${times} times.` : 'Mined.',
-              mineOpts,
-            ).then(async () => {
-              /* The mine writes a ledger row, so drop the cached page. */
-              setLogs((prev) => ({ ...prev, [currencyTab]: undefined }))
-              setMinedPool(null)
-              /*
-                 And show what it paid. Read from the chain rather than taken
-                 from the bar: the pool moves between the two, so the figure
-                 beside the bar is a projection and this is not.
-              */
-              setMinedRewards(await readMinedRewards(historyId))
-            })
-          }}
+          onMine={onMine}
         />
       )}
 
@@ -764,11 +819,7 @@ export function MiningTab({
   onSave: (ids: string[]) => void
   onShare: (share: number) => void
 }) {
-  const [tools, setTools] = useState<MiningTool[]>([])
-  const [templates, setTemplates] = useState<ToolTemplate[]>([])
-  const [loading, setLoading] = useState(true)
-  /* How many tools have arrived so far, for a wallet big enough to wait on. */
-  const [loadedSoFar, setLoadedSoFar] = useState(0)
+  const { tools, templates, loading, loadedSoFar, powerOf } = useMiningTools(account)
   /*
      How many spare tools are drawn.
 
@@ -784,41 +835,6 @@ export function MiningTab({
   const [share, setShare] = useState(Number(player.landowner_tlm_share ?? 0))
   /* Rarity and shine, the way every other NFT list in the game opens. */
   const [sort, setSort] = useState<PowerSort>('quality')
-
-  useEffect(() => {
-    let cancelled = false
-    if (!account) return
-    setLoading(true)
-    setLoadedSoFar(0)
-    Promise.all([
-      fetchMiningTools(account, (n) => {
-        if (!cancelled) setLoadedSoFar(n)
-      }),
-      fetchToolTemplates(),
-    ])
-      .then(([rows, temps]) => {
-        if (cancelled) return
-        setTools(rows)
-        setTemplates(temps)
-      })
-      .catch(() => {})
-      .finally(() => {
-        if (!cancelled) setLoading(false)
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [account])
-
-  /*
-     Mining power lives on the template, not the asset — the contract looks it
-     up by `template_id` and never reads the NFT's own stats — so every tool
-     is joined to `templatemp` before anything is shown, sorted or summed.
-   */
-  const powerOf = useMemo(() => {
-    const byTemplate = new Map(templates.map((t) => [t.template_id, t]))
-    return (templateId: number) => byTemplate.get(templateId)
-  }, [templates])
 
   const stored = useMemo(
     () => (player.mine_nfts ?? []).map(String),
@@ -900,8 +916,15 @@ export function MiningTab({
     [equipped, powerOf],
   )
 
+  /* Three at most: a fourth pick is refused rather than sent to the chain. */
   const toggle = (id: string) =>
-    setPicked((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]))
+    setPicked((prev) =>
+      prev.includes(id)
+        ? prev.filter((x) => x !== id)
+        : prev.length >= MAX_TOOLS
+          ? prev
+          : [...prev, id],
+    )
 
   return (
     <div className="stack">
@@ -937,7 +960,9 @@ export function MiningTab({
           empty, and the numbers above are a sum of exactly these cards.
         */}
         <div className="row row--wrap subhead">
-          <h3 className="panel__sub">Currently equipped ({equipped.length})</h3>
+          <h3 className="panel__sub">
+            Currently equipped ({equipped.length} of {MAX_TOOLS})
+          </h3>
 
           {/* The sum of exactly the cards below, so it sits with them. */}
           <dl className="bagtotals" title="The bag's combined mining power">
@@ -1032,7 +1057,7 @@ export function MiningTab({
                 power={powerOf(t.template_id)}
                 picked={false}
                 unsaved={unsaved(t.asset_id)}
-                disabled={!canAct || busy !== null}
+                disabled={!canAct || busy !== null || picked.length >= MAX_TOOLS}
                 onClick={() => toggle(t.asset_id)}
               />
             ))}
