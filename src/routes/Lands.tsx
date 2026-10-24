@@ -26,7 +26,6 @@ import {
   claimAllTargets,
   formatSpan,
   hoursToSmallerLook,
-  msUntilDisabled,
   type BoostState,
   stepCosts,
   hasClaimable,
@@ -1515,7 +1514,7 @@ function LandSheet({
           <b>{state === 'low' ? 'Running low' : state === 'hidden' ? 'Off the map' : 'Closed'}</b>
           <small>
             {state === 'low'
-              ? `Lasts ${formatSpan(msUntilDisabled(building, config, now))} at most — use wears it down faster. Under 0.1× players stop seeing it on the map.`
+              ? 'Under 0.1× players stop seeing it on the map.'
               : state === 'hidden'
                 ? 'Players cannot see it on the map any more. Boost it to bring it back.'
                 : 'Its boost has run out, so nobody can use it.'}
