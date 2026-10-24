@@ -1784,11 +1784,6 @@ export function CpuTab({
         <div className="row row--wrap">
           <div className="miningintro">
             <h2 className="panel__title">Free CPU</h2>
-            <p className="hint">
-              The game buys network CPU for you out of its own funds —{' '}
-              {formatDecimals(status.waxPerClaim, 4)} WAX a time, up to{' '}
-              {formatNumber(status.allowance)} times a week.
-            </p>
           </div>
           <span className="spacer" />
           <button

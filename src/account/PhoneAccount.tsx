@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { kvToRecord, type Player } from '@/chain/types'
 import type { AccountCpu, CpuConfig, CpuUsage } from '@/account/queries'
@@ -17,7 +17,6 @@ import {
   type AvatarEntry,
   type AvatarTrack,
 } from '@/account/rules'
-import { fetchAllPlayerStats, rankBy } from '@/account/statboard'
 import { STAT_GROUP_ORDER, prettyStat, statGroup, statIconFor } from '@/account/stats'
 import { StatBoardSheet } from '@/account/StatLeaderboard'
 import { PhoneAutoSign } from '@/components/AutoSign'
@@ -528,35 +527,11 @@ function PhoneCpu({
 
 function PhoneStats({ player }: { player: Player }) {
   const stats = useMemo(() => Object.entries(kvToRecord(player.permstats)), [player.permstats])
-  const [ranks, setRanks] = useState<Record<string, { rank: number; of: number }>>({})
   const [board, setBoard] = useState<string | null>(null)
-
-  /* One read covers every stat; the board a row opens reuses it. */
-  useEffect(() => {
-    let live = true
-    fetchAllPlayerStats()
-      .then((players) => {
-        if (!live) return
-        const out: Record<string, { rank: number; of: number }> = {}
-        for (const [key] of stats) {
-          const ranked = rankBy(players, key)
-          const mine = ranked.find((r) => r.wallet === player.wallet)
-          if (mine) out[key] = { rank: mine.rank, of: ranked.length }
-        }
-        setRanks(out)
-      })
-      .catch(() => {})
-    return () => {
-      live = false
-    }
-  }, [stats, player.wallet])
 
   if (stats.length === 0) return <p className="rsheet__hint">Nothing recorded yet. Go do something.</p>
 
-  /* Best placed first within each group, then the rest by name. */
-  const order = (a: string, b: string) =>
-    (ranks[a]?.rank ?? Infinity) - (ranks[b]?.rank ?? Infinity) ||
-    prettyStat(a).localeCompare(prettyStat(b))
+  const order = (a: string, b: string) => prettyStat(a).localeCompare(prettyStat(b))
 
   return (
     <>
@@ -569,7 +544,6 @@ function PhoneStats({ player }: { player: Player }) {
             <div className="pacc__list">
               {rows.map(([k, v]) => {
                 const icon = statIconFor(k)
-                const rank = ranks[k]
                 return (
                   <button
                     type="button"
@@ -584,12 +558,6 @@ function PhoneStats({ player }: { player: Player }) {
                       <span className="pstat__icon" />
                     )}
                     <span className="pstat__name">{prettyStat(k)}</span>
-                    {rank && (
-                      <span className={`pstat__rank${rank.rank <= 3 ? ' is-top' : ''}`}>
-                        #{rank.rank}
-                        <em>of {rank.of}</em>
-                      </span>
-                    )}
                     <span className="pstat__v mono">{formatStat(k, Number(v))}</span>
                   </button>
                 )
