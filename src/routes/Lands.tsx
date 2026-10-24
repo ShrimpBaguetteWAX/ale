@@ -1230,8 +1230,6 @@ function LandSheet({
   const income = incomeOf(land.buildings)
   const cost = boostCost(current, target, config)
   const destroyCost = Number(config?.delete_building_gems_cost ?? 0)
-  /* A day of decay, in the multiplier the player reads: score / 100,000. */
-  const perDay = (decay * 24) / 100_000
 
   const head = (
     <div className="lsheet__head">
@@ -1256,10 +1254,7 @@ function LandSheet({
             <span className="plands__bar">
               <i style={{ width: `${Math.min(100, current / 10_000)}%` }} />
             </span>
-            <small>
-              Fades about {perDay.toFixed(2)}× a day, faster the more it is used. Below 1% nobody
-              can use it.
-            </small>
+            <small>Boost decays over time, faster the more it is used.</small>
           </>
         ) : (
           <>
@@ -1451,14 +1446,19 @@ function LandSheet({
             <TlmIcon />
           </b>
         </span>
-        <span>
-          <small>Credits</small>
-          <b className="mono">{formatNumber(income.credits)}</b>
-        </span>
-        <span>
-          <small>Gems</small>
-          <b className="mono">{formatNumber(income.gems)}</b>
-        </span>
+        {/* A claim pays these too, but no building has ever earned any: only when there are some. */}
+        {income.credits > 0 && (
+          <span>
+            <small>Credits</small>
+            <b className="mono">{formatNumber(income.credits)}</b>
+          </span>
+        )}
+        {income.gems > 0 && (
+          <span>
+            <small>Gems</small>
+            <b className="mono">{formatNumber(income.gems)}</b>
+          </span>
+        )}
         <button
           type="button"
           className="btn btn--gold btn--sm"
@@ -1469,12 +1469,6 @@ function LandSheet({
           Claim
         </button>
       </div>
-      {income.shards > 0 && (
-        <p className="rsheet__hint">
-          It also holds {shards(income.shards)} shards. Claiming clears them without paying them
-          out.
-        </p>
-      )}
       <div className="rsheet__cap">
         Boost<span>now {boostLabel(current / 10_000)}</span>
       </div>
