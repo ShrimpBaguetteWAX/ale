@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tournament stages</title>
+  <!--
+    The current tournament, wound back to any moment, on the phone screen.
+
+      npm run dev
+      open http://localhost:5273/scripts/tour-stages.html
+
+    Pick a moment on the left (or use the arrow keys), and who you are
+    looking as. Nothing is signed; it only reads.
+  -->
+  <style>
+    body { margin: 0; background: #03070f; }
+    .ts { display: flex; gap: 32px; align-items: flex-start; max-width: 1200px; margin: 0 auto; padding: 24px; }
+    .ts__panel { flex: 1; min-width: 0; display: grid; gap: 16px; color: #dfe7f3; font: 14px/1.5 'Titillium Web', system-ui, sans-serif; }
+    .ts__panel h1 { margin: 0; font: 800 22px Orbitron, system-ui, sans-serif; color: #ffd979; }
+    .ts__sub { margin: 0; color: #a9b6c9; }
+    .ts__sub code { color: #9fe3ff; }
+    .ts__block { display: grid; gap: 8px; padding: 14px; border-radius: 14px; background: rgb(8 14 28 / 80%); box-shadow: inset 0 0 0 1px rgb(255 255 255 / 11%); }
+    .ts__block > b { font: 700 11px Orbitron, system-ui, sans-serif; letter-spacing: .14em; text-transform: uppercase; color: #a8b2c6; }
+    .ts__chips { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+    .ts__lbl { min-width: 110px; font-size: 12.5px; color: #a8b2c6; }
+    .ts__panel button { padding: 7px 12px; border: 0; border-radius: 9px; font: 600 13px 'Titillium Web', system-ui, sans-serif; color: #dfe7f3; background: rgb(255 255 255 / 6%); box-shadow: inset 0 0 0 1px rgb(255 255 255 / 16%); cursor: pointer; text-align: left; }
+    .ts__panel button.on { color: #fff; background: rgb(0 186 255 / 18%); box-shadow: inset 0 0 0 1px rgb(0 186 255 / 60%); }
+    .ts__panel button:disabled { opacity: .4; cursor: default; }
+    .ts__select { padding: 8px 10px; border: 0; border-radius: 9px; font: 600 13px 'Titillium Web', system-ui, sans-serif; color: #fff; background: #0e1626; box-shadow: inset 0 0 0 1px rgb(255 255 255 / 16%); }
+    .ts__nav { display: flex; align-items: center; justify-content: space-between; }
+    .ts__nav span { font-size: 12px; color: #a8b2c6; }
+    .ts__time { margin: 0; font-size: 13px; color: #a9b6c9; }
+    .ts__time b { color: #fff; }
+    .ts__group { display: grid; gap: 4px; }
+    .ts__group small { margin-top: 6px; font: 700 10px Orbitron, system-ui, sans-serif; letter-spacing: .14em; text-transform: uppercase; color: #ffd979; }
+    .ts__group button { padding: 6px 10px; font-size: 12.5px; }
+    .ts__stage { position: sticky; top: 24px; flex: none; }
+    /* The phone. `transform` makes it the box fixed children sit in, so the
+       docked button and the sheets stay inside the frame. */
+    .ts__phone { --nav-h: 60px; position: relative; width: 390px; height: 844px; overflow: hidden; border-radius: 34px; transform: translateZ(0);
+      background: radial-gradient(130% 50% at 50% 0%, rgb(0 120 200 / 18%), transparent 60%), #05101e;
+      box-shadow: 0 0 0 9px #161d2b, 0 0 0 10px #2a3346, 0 24px 60px rgb(0 0 0 / 60%); }
+    .ts__bar { position: absolute; top: 0; left: 0; right: 0; z-index: 20; display: flex; align-items: center; justify-content: space-between; gap: 10px; height: 50px; padding: 0 16px; background: rgb(4 9 20 / 94%); box-shadow: inset 0 -1px 0 rgb(255 255 255 / 10%); }
+    .ts__bar b { flex: none; font: 800 11px Orbitron, system-ui, sans-serif; letter-spacing: .14em; color: #fff; }
+    .ts__bar span { overflow: hidden; font: 600 11px 'Titillium Web', system-ui, sans-serif; color: #9fe3ff; text-overflow: ellipsis; white-space: nowrap; }
+    .ts__scroll { position: absolute; inset: 50px 0 60px 0; overflow-y: auto; padding: 12px 12px 24px; scrollbar-width: none; }
+    .ts__scroll::-webkit-scrollbar { display: none; }
+    .ts__tabs { position: absolute; left: 0; right: 0; bottom: 0; z-index: 20; display: flex; height: 60px; background: rgb(4 9 20 / 97%); box-shadow: inset 0 1px 0 rgb(255 255 255 / 10%); }
+    .ts__tabs span { display: grid; flex: 1; place-items: center; font: 700 10.5px 'Titillium Web', system-ui, sans-serif; color: #8f9bb3; }
+    .ts__tabs .on { color: #00baff; }
+    .ts__msg { padding: 40px; color: #dfe7f3; font: 15px 'Titillium Web', system-ui, sans-serif; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="module" src="./tour-stages.tsx"></script>
+</body>
+</html>

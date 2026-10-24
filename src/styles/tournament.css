@@ -4233,6 +4233,9 @@
 }
 
 .ptour {
+  /* One column the width of the screen: a long name or a row of pips
+     shrinks inside it rather than widening the whole page. */
+  grid-template-columns: minmax(0, 1fr);
   gap: 12px;
   padding-bottom: 12px;
 }

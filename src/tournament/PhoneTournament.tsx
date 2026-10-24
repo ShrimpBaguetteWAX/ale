@@ -2024,9 +2024,11 @@ function HallOfFame({ rows, wallet, onBack }: { rows: TournamentHof[]; wallet: s
                 <div key={w}>
                   <PlayerAvatar id={t.avatar} name={t.tag} className="ptour__sideav" size={44} />
                   <b>{t.tag || w}</b>
-                  <em>
-                    {t.titles} title{t.titles === 1 ? '' : 's'}
-                  </em>
+                  {t.titles > 0 && (
+                    <em>
+                      {t.titles} title{t.titles === 1 ? '' : 's'}
+                    </em>
+                  )}
                   <small>
                     {t.podiums} podium{t.podiums === 1 ? '' : 's'}
                   </small>
