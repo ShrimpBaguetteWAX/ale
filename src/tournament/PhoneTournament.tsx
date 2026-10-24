@@ -1525,7 +1525,11 @@ function LineupStage({ team, crew, weapon, onSlot, onRemove, onClear }: {
       </div>
       <div className="ptour__lurow">
         {team.map((f, i) => (
-          <div key={i} className={`ptour__ped${f ? ' is-full' : i === nextAt ? ' is-next' : ''}`}>
+          <div
+            key={i}
+            className={`ptour__ped${f ? ' is-full' : i === nextAt ? ' is-next' : ''}`}
+            data-el={f?.element || undefined}
+          >
             {f ? (
               <div className="ptour__pedfig">
                 <span className="ptour__pedlv mono">L{f.stats?.level ?? 1}</span>
@@ -1543,7 +1547,12 @@ function LineupStage({ team, crew, weapon, onSlot, onRemove, onClear }: {
               </button>
             )}
             <span className="ptour__pedglow" />
-            <b className="ptour__pedname">{f ? f.classname : ' '}</b>
+            <b className="ptour__pedname">
+              {f?.element && (
+                <img className="ptour__pedel" src={asset(`/assets/icons/elements/${f.element}.png`)} alt={f.element} title={f.element} />
+              )}
+              {f ? f.classname : ' '}
+            </b>
           </div>
         ))}
         <div className="ptour__lucards">

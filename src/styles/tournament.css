@@ -5951,14 +5951,9 @@
   text-overflow: ellipsis;
   color: #e7eef8;
 }
-.ptour__condrow .weather--good .weather__name {
-  color: var(--teal);
-}
-.ptour__condrow .weather--bad .weather__name {
-  color: #ff8fa0;
-}
-.ptour__condrow .weather--mixed .weather__name {
-  color: #ffd979;
+/* The roll in white, on a phone as on a desktop: the icon carries the colour. */
+.ptour__condrow .weather__name {
+  color: var(--white);
 }
 .ptour__condrow {
   min-height: 46px;
@@ -7431,4 +7426,53 @@
 }
 .picker--inline > .picker__countrow .spacer {
   display: none;
+}
+
+/* Each fighter's element: its icon before the name, and the light it stands in. */
+.ptour__pedname {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.ptour__pedel {
+  flex: none;
+  width: 20px;
+  height: 20px;
+}
+.ptour__ped[data-el] { --el: 246 168 0; }
+.ptour__ped[data-el='fire'] { --el: 255 112 64; }
+.ptour__ped[data-el='nature'] { --el: 98 214 96; }
+.ptour__ped[data-el='gem'] { --el: 214 92 255; }
+.ptour__ped[data-el='metal'] { --el: 196 206 222; }
+.ptour__ped[data-el='air'] { --el: 0 186 255; }
+.ptour__ped[data-el='neutral'] { --el: 246 168 0; }
+.ptour__ped.is-full .ptour__pedglow {
+  background: radial-gradient(closest-side, rgb(var(--el) / 80%), transparent);
+}
+
+/* The card pair: room for its names, two lines at most, whole words. */
+.ptour__lurow {
+  grid-template-columns: repeat(5, minmax(0, 1fr)) minmax(170px, 1.3fr);
+}
+.ptour__lucard {
+  grid-template-columns: 46px minmax(0, 1fr);
+  gap: 12px;
+}
+.ptour__lucard img {
+  width: 46px;
+  height: 66px;
+}
+.ptour__lucard small {
+  white-space: nowrap;
+}
+.ptour__lucard b {
+  display: -webkit-box;
+  margin-top: 3px;
+  overflow: hidden;
+  font-size: 14px;
+  line-height: 1.25;
+  overflow-wrap: normal;
+  word-break: normal;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
