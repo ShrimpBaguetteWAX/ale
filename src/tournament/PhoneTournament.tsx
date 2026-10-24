@@ -1517,15 +1517,21 @@ function StatusCard({ board, mine, wallet, history, now, onSeeFights }: {
             <small>Place now</small>
             <b className="mono">{rank ? place(rank) : '—'}</b>
           </div>
-          <div>
-            <small>WAX now</small>
-            <b className="mono is-gold">{wax(waxFor(board.prizes, rank))}</b>
+          {/* What this place pays: the WAX when it pays any, and the TLM either way. */}
+          <div className="ptour__rewards">
+            <small>Rewards</small>
+            {waxFor(board.prizes, rank) > 0 && (
+              <b className="mono">
+                <img src={WAX_ICON} alt="" />
+                {wax(waxFor(board.prizes, rank))}
+              </b>
+            )}
+            <b className="mono">
+              <img src={TLM_ICON} alt="" />
+              {tlm(points * board.prizes.perPoint)}
+            </b>
           </div>
         </div>
-        <p className="ptour__fine">
-          Plus {tlm(points * board.prizes.perPoint)} TLM. Your points are final; your place can only drop
-          if others pass you. Paid after the final.
-        </p>
       </section>
     )
   }

@@ -6040,3 +6040,21 @@
   font-weight: 600;
   color: var(--text-faint);
 }
+
+/* The out card's rewards: each currency on its own line, icon beside it. */
+.ptour__stats > .ptour__rewards {
+  align-content: start;
+  gap: 2px;
+}
+.ptour__rewards b {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 13px;
+  color: #ffd979;
+}
+.ptour__rewards b img {
+  flex: none;
+  width: 14px;
+  height: 14px;
+}
