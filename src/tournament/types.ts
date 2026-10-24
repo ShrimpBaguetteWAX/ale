@@ -163,8 +163,33 @@ export interface TournamentMatchup {
   winner: string
 }
 
-/** What a wallet is owed once the payout step has run. */
+/**
+ * A player who is out, with the points they went out on. Scope: the
+ * tournament's name.
+ *
+ * `reportmatch` writes the loser here as each fight lands, and the battle
+ * step adds the champion after the final. `reward_payout` then erases the
+ * rows as it pays them, so the table is only whole between the final and
+ * the payout.
+ */
 export interface TournamentPayout {
   wallet: string
   reward_points: number
+  wax_reward_points?: number
+  gamertag?: string
+  avatar?: number
+}
+
+/**
+ * One line of the Hall of Fame: four a tournament, written by its
+ * `hall_of_fame` step from the top of the payout table — ranks 1, 2, 3, 3.
+ */
+export interface TournamentHof {
+  index: number
+  tournament_date: string
+  tournament_name: string
+  rank: number
+  wallet: string
+  gamertag: string
+  avatar: number
 }

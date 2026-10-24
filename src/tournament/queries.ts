@@ -5,6 +5,7 @@ import { nameToUint64 } from '@/dungeon/queries'
 import type { RosterFighter } from '@/dungeon/types'
 import type {
   TournamentConfig,
+  TournamentHof,
   TournamentMatchup,
   TournamentPayout,
   TournamentPlanStep,
@@ -117,11 +118,26 @@ export function fetchTournamentMatchups(
   )
 }
 
-/** What each wallet is owed once the payout step has run. */
-export function fetchTournamentPayouts(refresh = false): Promise<TournamentPayout[]> {
+/**
+ * Everyone who is out, with their points. Scoped by the tournament's name —
+ * `reportmatch` writes it there, so the contract's own scope is always
+ * empty.
+ */
+export function fetchTournamentPayouts(
+  tournamentName: string,
+  refresh = false,
+): Promise<TournamentPayout[]> {
   return getAllRows<TournamentPayout>(
-    { code: CONTRACTS.tournament, scope: CONTRACTS.tournament, table: 'payout' },
-    { ttl: TTL.short, refresh },
+    { code: CONTRACTS.tournament, scope: tournamentName, table: 'payout' },
+    { ttl: TTL.live, refresh },
+  )
+}
+
+/** Every tournament's top four, as the `hall_of_fame` step keeps them. */
+export function fetchHallOfFame(refresh = false): Promise<TournamentHof[]> {
+  return getAllRows<TournamentHof>(
+    { code: CONTRACTS.tournament, scope: CONTRACTS.tournament, table: 'hof' },
+    { ttl: TTL.medium, refresh },
   )
 }
 

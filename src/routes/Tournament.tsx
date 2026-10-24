@@ -42,7 +42,11 @@ import { BoutBroadcast } from '@/tournament/BoutBroadcast'
 import { usePhone } from '@/components/usePhone'
 import { WeatherPanel } from '@/fight/setup'
 import { fetchWeatherRow, fetchWeatherRows, weatherIsCalm, type Weather } from '@/fight/weather'
+import { PhoneTournament } from '@/tournament/PhoneTournament'
+import { fetchPlayer } from '@/chain/queries'
+import { hasLegendAccess } from '@/account/rules'
 import {
+  fetchHallOfFame,
   fetchLiveTournaments,
   fetchTournamentConfig,
   fetchTournamentMatchups,
@@ -69,6 +73,7 @@ import {
   startedAt,
   stripSteps,
   stripWindow,
+  signupWindow,
   teamScore,
   timelineOf,
   type Bracket,
@@ -124,6 +129,7 @@ import { asset, ipfsImage } from '@/assets'
  */
 
 const EMPTY_CARDS: CardTemplate[] = []
+const EMPTY_LEGEND = new Map<string, boolean>()
 
 /** A countdown, as the rest of the game writes them. */
 export function untilText(ms: number): string {
@@ -2408,8 +2414,32 @@ export default function Tournament() {
 
       const stage = pickTournament(live, entered, chosen)
       const at = stage ? live.indexOf(stage) : -1
+      /*
+         The last finished tournament, when it is not the one on screen.
 
-      const [plan, matchups, payouts, weather, history] = await Promise.all([
+         A phone shows it on the screen before signup — its champion and its
+         fights to watch again — so its rounds and rolls are read alongside.
+         Only while it is still on `curstage`: cleanup takes its fights.
+      */
+      const past = [...live]
+        .filter(isFinished)
+        .sort((a, b) => (startedAt(b.tournament_name) ?? 0) - (startedAt(a.tournament_name) ?? 0))[0]
+      const readPast = !!past && past !== stage
+      const roundsOf = (s: TournamentStage, upTo: number) =>
+        Promise.all(
+          Array.from({ length: Math.max(0, upTo) }, (_, r) =>
+            fetchTournamentMatchups(s.tournament_name, r, fresh),
+          ),
+        )
+      const rollsOf = (s: TournamentStage | undefined) =>
+        Promise.all(
+          (s?.weather_effects ?? []).map(async (w) => ({
+            planet: w.planet,
+            weather: await fetchWeatherRow(w.planet, w.weather_id),
+          })),
+        )
+
+      const [plan, matchups, payouts, weather, history, hof, pastHistory, pastWeather] = await Promise.all([
         stage ? fetchTournamentPlan(stage.tournament_name, fresh) : Promise.resolve([]),
         /* Per round, so this is the round the tournament is on. Earlier
            rounds live in their own scopes and are not read here. */
@@ -2420,7 +2450,7 @@ export default function Tournament() {
               fresh,
             )
           : Promise.resolve([]),
-        fetchTournamentPayouts(),
+        stage ? fetchTournamentPayouts(stage.tournament_name, fresh) : Promise.resolve([]),
         /*
            The rolls, resolved.
 
@@ -2430,28 +2460,27 @@ export default function Tournament() {
            the same way the dungeon and the arena fetch theirs. Three reads
            at most, and a weather row is cached for half a day.
         */
-        Promise.all(
-          (stage?.weather_effects ?? []).map(async (w) => ({
-            planet: w.planet,
-            weather: await fetchWeatherRow(w.planet, w.weather_id),
-          })),
-        ),
+        rollsOf(stage),
         /*
-           Every round, for the results.
+           Every round so far: all of them for the results, and up to the
+           one being fought while the fighting is on, so a player can go
+           back through the rounds already played.
 
            Once the fighting is over the signups are already gone — cleanup
            erases them before it erases the stage — so the matchups are all
            that is left of what happened, and they are what a player comes
-           back to watch. Read only then: while the fighting is on, the
-           current round is the board.
+           back to watch.
         */
         stage && (phaseOf(stage) === 'finish' || fightingDone(stage))
-          ? Promise.all(
-              Array.from({ length: Number(stage.rounds ?? 0) }, (_, r) =>
-                fetchTournamentMatchups(stage.tournament_name, r, fresh),
-              ),
-            )
-          : Promise.resolve([] as TournamentMatchup[][]),
+          ? roundsOf(stage, Number(stage.rounds ?? 0))
+          : stage && phaseOf(stage) === 'battle'
+            ? roundsOf(stage, Math.min(Number(stage.current_round ?? 0), Number(stage.rounds ?? 1) - 1) + 1)
+            : stage && phaseOf(stage) === 'creation'
+              ? roundsOf(stage, 1)
+              : Promise.resolve([] as TournamentMatchup[][]),
+        fetchHallOfFame(),
+        readPast ? roundsOf(past, Number(past.rounds ?? 0)) : Promise.resolve([] as TournamentMatchup[][]),
+        readPast ? rollsOf(past) : Promise.resolve([]),
       ])
 
       return {
@@ -2469,6 +2498,14 @@ export default function Tournament() {
         /* What the Conditions strip draws: the rolls, topped up to four. */
         shownWeather: await withStandIns(weather),
         signups: at >= 0 ? fields[at] : [],
+        hof,
+        past: readPast
+          ? {
+              stage: past,
+              history: pastHistory,
+              rolls: pastWeather.map((w) => w.weather).filter((w): w is Weather => !!w),
+            }
+          : null,
       }
     },
     { deps: ['tournament', 'tournamentSignups', 'fighters'] },
@@ -2568,9 +2605,13 @@ export default function Tournament() {
      same.
   */
   const picker = useRef<HTMLElement>(null)
+  /* A phone picks in a sheet over the screen rather than further down it. */
+  const phone = usePhone()
+  const [pickerOpen, setPickerOpen] = useState(false)
   const goPick = (t: Tab) => {
     setTab(t)
-    picker.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    if (phone) setPickerOpen(true)
+    else picker.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
   const [filter, setFilter] = useState<RosterFilter>(EMPTY_FILTER)
   const [atLevelOne, setAtLevelOne] = useState(false)
@@ -2722,6 +2763,12 @@ export default function Tournament() {
   )
   const payout = board.data?.payouts?.find((p) => p.wallet === player.wallet)
   const nextStart = chainTime(board.data?.tracking?.next_tournament_start)
+  /* When signup opens for a tournament not started yet: its start, plus the
+     preparation steps the template puts before signup. */
+  const signupOpensAt = useMemo(() => {
+    const window = signupWindow(board.data?.template ?? [])
+    return Number.isFinite(nextStart) ? nextStart + (window?.opensAfterSec ?? 0) * 1000 : NaN
+  }, [board.data, nextStart])
 
   /*
      Waiting for a clock nobody on this screen is winding.
@@ -2753,6 +2800,33 @@ export default function Tournament() {
     const id = setInterval(ask, 15_000)
     return () => clearInterval(id)
   }, [overdue, reload])
+
+  /*
+     Who has Legend Access, for the results on a phone.
+
+     A prize pays a tenth without it, so "what each player received" needs
+     it per player. One keyed read each, for the players of one finished
+     tournament, and only when its results are on screen.
+  */
+  const resultWallets = useMemo(() => {
+    if (!phone || phase !== 'finish') return []
+    const set = new Set<string>()
+    for (const m of history.flat()) {
+      if (m.wallet_player1) set.add(m.wallet_player1)
+      if (m.wallet_player2) set.add(m.wallet_player2)
+    }
+    return [...set].sort()
+  }, [phone, phase, history])
+  const legendRead = useChainQuery(
+    `tournament-legend:${stage?.tournament_name ?? ''}:${resultWallets.length}`,
+    async () => {
+      const rows = await Promise.all(resultWallets.map((w) => fetchPlayer(w)))
+      return new Map(
+        resultWallets.map((w, i) => [w, rows[i] ? hasLegendAccess(rows[i]!.legend_access_expiry) : true]),
+      )
+    },
+    { enabled: resultWallets.length > 0 },
+  )
 
   const live = useMemo(() => board.data?.live ?? [], [board.data])
   const enteredNames = useMemo(() => board.data?.entered ?? [], [board.data])
@@ -2802,6 +2876,132 @@ export default function Tournament() {
       <div className="tour">
         {board.error && <div className="alert alert--error">{board.error}</div>}
         <TournamentPicker live={running} entered={enteredNames} onPick={setChosen} />
+      </div>
+    )
+  }
+
+  /*
+     What the picker shows: the roster or the cards, a tab each. Below the
+     team on a desktop; in a sheet over the screen on a phone.
+  */
+  const pickerBody = (
+    <>
+        <div className="tabs">
+          {(['fighters', 'crew', 'weapon'] as Tab[]).map((key) => (
+            <button
+              key={key}
+              type="button"
+              className={`tabs__tab${tab === key ? ' tabs__tab--on' : ''}`}
+              onClick={() => setTab(key)}
+            >
+              {key === 'fighters' ? 'Fighters' : key === 'crew' ? 'Crew' : 'Weapon'}
+              {key === 'fighters' && (
+                <span className="tabs__count">
+                  {picked.length}/{TEAM_SIZE}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+  
+        {tab === 'fighters' ? (
+          <>
+            <RosterFilters
+              filter={filter}
+              onChange={setFilter}
+              roster={free ?? []}
+              atLevelOne={atLevelOne}
+              onAtLevelOne={setAtLevelOne}
+              count={shownCount}
+            />
+            <FighterGrid
+              roster={free}
+              filter={filter}
+              ageDecay={ageDecay}
+              levelMod={levelMod}
+              atLevelOne={atLevelOne}
+              teamIds={teamIds}
+              full={picked.length >= TEAM_SIZE}
+              onToggle={toggleFighter}
+              onCount={countFighters}
+              onInspect={showFighter}
+            />
+          </>
+        ) : (
+          <CardGrid
+            cards={tab === 'crew' ? usableCrew : usableWeapons}
+            values={nftValues}
+            query={cardQuery}
+            onQuery={setCardQuery}
+            selected={tab === 'crew' ? crew : weapon}
+            onPick={(c) => {
+              if (tab !== 'crew') {
+                setWeapon(c)
+                return
+              }
+              setCrew(c)
+              setTab('weapon')
+              setCardQuery('')
+            }}
+            onInspect={showCard}
+            kind={tab}
+          />
+        )}
+    </>
+  )
+
+  if (phone) {
+    /* Nothing running and nobody asked for the last one: the wait. */
+    const waitingPhone = !chosen && running.length === 0
+    const shownPhase = waitingPhone ? (phase === 'finish' ? 'none' : phase) : phase
+    const past =
+      board.data?.past ??
+      (waitingPhone && stage && isFinished(stage)
+        ? { stage, history, rolls }
+        : null)
+    return (
+      <div className="ptour-page">
+        {board.error && <div className="alert alert--error">{board.error}</div>}
+        {fault && <div className="alert alert--error">{fault}</div>}
+        {error && <div className="alert alert--error">{error}</div>}
+        <PhoneTournament
+          phase={shownPhase}
+          stage={waitingPhone && shownPhase === 'none' ? undefined : stage}
+          now={now}
+          timeline={timeline}
+          signupAt={shownPhase === 'none' ? signupOpensAt : signupAt}
+          field={field}
+          mine={mine}
+          wallet={player.wallet}
+          history={history}
+          payouts={board.data?.payouts ?? []}
+          hof={board.data?.hof ?? []}
+          weather={board.data?.weather ?? []}
+          rolls={rolls}
+          legend={legendRead.data ?? EMPTY_LEGEND}
+          past={past}
+          ringFighters={ringFighters}
+          team={team}
+          crew={crew}
+          weapon={weapon}
+          score={score}
+          energyCost={energyCost}
+          block={block}
+          busy={busy === 'enter'}
+          canSign={!!session}
+          onEnter={() => void enter()}
+          onPick={goPick}
+          picker={pickerBody}
+          pickerOpen={pickerOpen}
+          onClosePicker={() => setPickerOpen(false)}
+          viewingPast={!!chosen && viewingPrevious}
+          onOpenPast={past ? () => setChosen(past.stage.tournament_name) : undefined}
+          onBack={() => setChosen(null)}
+          onChooseAnother={running.length > 1 ? () => setChosen(null) : undefined}
+        />
+        {detail && (
+          <DetailSheet panel={detail.panel} template={detail.template} onClose={() => setDetail(null)} />
+        )}
       </div>
     )
   }
@@ -2924,67 +3124,7 @@ export default function Tournament() {
           }
         >
           <section className="tour__picker" ref={picker}>
-            <div className="tabs">
-              {(['fighters', 'crew', 'weapon'] as Tab[]).map((key) => (
-                <button
-                  key={key}
-                  type="button"
-                  className={`tabs__tab${tab === key ? ' tabs__tab--on' : ''}`}
-                  onClick={() => setTab(key)}
-                >
-                  {key === 'fighters' ? 'Fighters' : key === 'crew' ? 'Crew' : 'Weapon'}
-                  {key === 'fighters' && (
-                    <span className="tabs__count">
-                      {picked.length}/{TEAM_SIZE}
-                    </span>
-                  )}
-                </button>
-              ))}
-            </div>
-
-            {tab === 'fighters' ? (
-              <>
-                <RosterFilters
-                  filter={filter}
-                  onChange={setFilter}
-                  roster={free ?? []}
-                  atLevelOne={atLevelOne}
-                  onAtLevelOne={setAtLevelOne}
-                  count={shownCount}
-                />
-                <FighterGrid
-                  roster={free}
-                  filter={filter}
-                  ageDecay={ageDecay}
-                  levelMod={levelMod}
-                  atLevelOne={atLevelOne}
-                  teamIds={teamIds}
-                  full={picked.length >= TEAM_SIZE}
-                  onToggle={toggleFighter}
-                  onCount={countFighters}
-                  onInspect={showFighter}
-                />
-              </>
-            ) : (
-              <CardGrid
-                cards={tab === 'crew' ? usableCrew : usableWeapons}
-                values={nftValues}
-                query={cardQuery}
-                onQuery={setCardQuery}
-                selected={tab === 'crew' ? crew : weapon}
-                onPick={(c) => {
-                  if (tab !== 'crew') {
-                    setWeapon(c)
-                    return
-                  }
-                  setCrew(c)
-                  setTab('weapon')
-                  setCardQuery('')
-                }}
-                onInspect={showCard}
-                kind={tab}
-              />
-            )}
+            {pickerBody}
           </section>
         </EntryPanel>
       )}
