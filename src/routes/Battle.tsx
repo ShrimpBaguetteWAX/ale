@@ -499,6 +499,7 @@ export function FightStage({
   phone,
   broadcast,
   logHidden = false,
+  overlay,
 }: {
   replay: Replay
   pb: FightPlayback
@@ -520,6 +521,8 @@ export function FightStage({
    * and the field wants the room. Not remembered — every fight starts shut.
    */
   logHidden?: boolean
+  /** Drawn over the picture and its control bar — a result, say — at their size. */
+  overlay?: React.ReactNode
 }) {
   const { step, total, speed, playing } = pb
   const logRef = useRef<HTMLDivElement>(null)
@@ -650,6 +653,7 @@ export function FightStage({
             )}
           </div>
         )}
+        {overlay}
       </div>
 
       {/*

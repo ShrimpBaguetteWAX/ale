@@ -227,16 +227,8 @@ export function BoutBroadcast({
      fighters, swings, numbers and knockouts a player already knows — between
      the tournament's own poster and its own result.
   */
-  if (replay && phase === 'live') {
-    return (
-      <BoutStage
-        key={runs}
-        replay={replay}
-        a={tagA}
-        b={tagB}
-        onDone={() => setPhase('done')}
-      />
-    )
+  if (replay && (phase === 'live' || phase === 'done')) {
+    return <BoutStage key={runs} replay={replay} a={tagA} b={tagB} />
   }
 
   return (
@@ -296,26 +288,13 @@ export function BoutBroadcast({
  * The bout on the battle stage.
  *
  * Player one stands on the left and player two on the right, each under
- * their own name, and the stage hands back to the broadcast's result the
- * moment the fight is over — or skipped.
+ * their own name. When the fight is over — or skipped — the broadcast's
+ * winner screen comes up inside the player, at the player's size, and
+ * Watch again runs it from the first blow.
  */
-function BoutStage({
-  replay,
-  a,
-  b,
-  onDone,
-}: {
-  replay: Replay
-  a: string
-  b: string
-  onDone: () => void
-}) {
+function BoutStage({ replay, a, b }: { replay: Replay; a: string; b: string }) {
   const phone = usePhone()
   const pb = useFightPlayback(replay, true)
-  useEffect(() => {
-    if (pb.finished) onDone()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pb.finished])
   return (
     <div className="boutstage" style={{ ['--beat' as string]: String(1 / pb.speed) }}>
       <FightStage
@@ -329,6 +308,7 @@ function BoutStage({
         logHidden
         phone={phone}
         broadcast
+        overlay={pb.finished ? <Result replay={replay} a={a} b={b} onAgain={pb.restart} /> : null}
       />
     </div>
   )

@@ -6077,3 +6077,13 @@
   background: var(--cyan);
   box-shadow: none;
 }
+
+/* The winner screen sits inside the player, over the field and its controls. */
+.boutstage .bfmain {
+  position: relative;
+}
+.boutstage .bcast__result {
+  /* Over every fighter: the ones in a blow stand at 300. */
+  z-index: 1000;
+  border-radius: inherit;
+}
