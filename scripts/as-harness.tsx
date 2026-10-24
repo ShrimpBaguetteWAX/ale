@@ -30,6 +30,8 @@ import '../src/styles/battle.css'
 import '../src/styles/maintenance.css'
 import '../src/styles/briefing.css'
 
+import { landCoords } from '../src/chain/landId'
+
 document.documentElement.dataset.fx = 'full'
 
 const as = new URLSearchParams(location.search).get('as')
@@ -49,6 +51,26 @@ async function boot() {
     useGame.setState({ session: null, account: as, player: null, playerLoaded: false })
     await useGame.getState().refreshPlayer({ force: true })
     if (!useGame.getState().player) badge.textContent = `${as} has no player row — showing signup`
+  }
+
+  /*
+     `&at=planet:landid` stands the spectated player somewhere else, so a
+     screen that needs a building underfoot (an arena, a dungeon) can be seen
+     without that wallet travelling there. Re-applied on every player refresh.
+  */
+  const at = new URLSearchParams(location.search).get('at')
+  const coords = at ? landCoords(at.split(':')[1] ?? '') : null
+  if (at && coords) {
+    const planet = at.split(':')[0]
+    const place = () => {
+      const p = useGame.getState().player
+      if (p && (p.x !== coords.x || p.y !== coords.y || p.planet !== planet)) {
+        useGame.setState({ player: { ...p, ...coords, planet: planet as typeof p.planet } })
+      }
+    }
+    place()
+    useGame.subscribe(place)
+    badge.textContent += ` · standing at ${at}`
   }
 
   createRoot(document.getElementById('root')!).render(

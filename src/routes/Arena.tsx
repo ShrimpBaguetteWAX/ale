@@ -64,17 +64,22 @@ import {
   battlePanel,
   mid,
   rosterPanel,
+  recallDensity,
+  rememberDensity,
   type Detail,
+  type PickDensity,
   type Tab,
 } from '@/fight/setup'
 import { fieldedStats, levelFactor, ageFactor } from '@/fight/scaling'
 import { oddsTitle, teamOdds } from '@/fight/odds'
-import { OddsCentre } from '@/fight/OddsCentre'
+import { OddsCentre, WinChance } from '@/fight/OddsCentre'
 import { DIRTIES, playArena } from '@/wharf/actions'
 import { settle } from '@/wharf/settle'
 import { readableError } from '@/wharf/errors'
 import { asset } from '@/assets'
 import { Loading } from '@/components/Loading'
+import { usePhone } from '@/components/usePhone'
+import { useSwipeToClose } from '@/components/useSwipeToClose'
 import { useConfig, useLazyConfig } from '@/state/useConfig'
 import { useChainQuery } from '@/chain/useChainQuery'
 
@@ -202,8 +207,25 @@ export default function Arena() {
   const [weapon, setWeapon] = useState<CardTemplate | null>(null)
 
   const [tab, setTab] = useState<Tab>('fighters')
+  /* A phone keeps the roster in a sheet over the fight, as the dungeon does. */
+  const [sheet, setSheet] = useState(false)
+  /* The sheet's card size: the same setting as the dungeon's sheet. */
+  const [sheetDensity, setSheetDensity] = useState<PickDensity>(() => recallDensity(true))
+  const chooseSheetDensity = (next: PickDensity) => {
+    setSheetDensity(next)
+    rememberDensity(next, true)
+  }
+  /*
+     A phone has no hover and no room for a remove bar under every card, so
+     a tap picks a fighter out and the toolbar under the line becomes that
+     fighter's: details, change, remove. A number is a roster fighter;
+     'nft' is the crew-and-weapon sixth.
+  */
+  const [focus, setFocus] = useState<number | 'nft' | null>(null)
   /* Scrolled to from the empty fighter slots, three panels above it. */
   const picker = useRef<HTMLElement>(null)
+  /* The phone's sheet closes on a swipe down from its head, too. */
+  const { grip: sheetGrip } = useSwipeToClose(() => setSheet(false), picker)
   const [filter, setFilter] = useState<RosterFilter>(EMPTY_FILTER)
   /* A lens on the roster rather than a filter: it hides nothing, and Clear
      restores `EMPTY_FILTER`, which this is deliberately not part of. */
@@ -457,6 +479,19 @@ export default function Arena() {
      they are taken out of the pool so none is placed twice, and the picks
      fill the slots left over.
   */
+  const phone = usePhone()
+
+  /*
+     Where a fighter or a card gets chosen. A phone has the fight on one
+     screen and slides the roster up over it; a wider screen scrolls down to
+     where the roster stands under the line-up.
+  */
+  const openPicker = (next: Tab) => {
+    setTab(next)
+    if (phone) setSheet(true)
+    else picker.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+
   const autoPickButton = (
     <AutoPickSplit
       roster={roster}
@@ -631,6 +666,66 @@ export default function Arena() {
     },
     [nftValues],
   )
+
+  /* The phone's toolbar for a tapped card in the line-up — as the dungeon's. */
+  const focused =
+    focus === 'nft'
+      ? nftFighter
+        ? { name: 'NFT Fighter' }
+        : null
+      : (() => {
+          const f = team.find((x) => x && x.fighter_id === focus)
+          return f ? { name: f.classname, fighter: f } : null
+        })()
+  const focusBar =
+    phone && focused ? (
+      <div className="lineupfocus">
+        <span className="lineupfocus__name">{focused.name}</span>
+        <button
+          type="button"
+          className="btn btn--ghost btn--sm"
+          onClick={() =>
+            'fighter' in focused && focused.fighter
+              ? showFighter(focused.fighter)
+              : nftFighter && setDetail({ kind: 'panel', panel: nftFighter })
+          }
+        >
+          Details
+        </button>
+        <button
+          type="button"
+          className="btn btn--ghost btn--sm"
+          onClick={() => {
+            setFocus(null)
+            openPicker(focus === 'nft' ? 'crew' : 'fighters')
+          }}
+        >
+          Change
+        </button>
+        <button
+          type="button"
+          className="btn btn--sm lineupfocus__remove"
+          onClick={() => {
+            if ('fighter' in focused && focused.fighter) toggleFighter(focused.fighter)
+            else {
+              setCrew(null)
+              setWeapon(null)
+            }
+            setFocus(null)
+          }}
+        >
+          Remove
+        </button>
+        <button
+          type="button"
+          className="lineupfocus__close"
+          onClick={() => setFocus(null)}
+          aria-label="Done"
+        >
+          ×
+        </button>
+      </div>
+    ) : null
 
   /*
      Your own five, in the shape the matchup reads and the cards print.
@@ -826,15 +921,21 @@ export default function Arena() {
               on a tile does not need to be told which tile — the map put them
               here — but the roll they are about to fight under changes what
               team they should bring, and it belongs where they read the
-              heading rather than further down the page.
+              heading rather than further down the page. A phone has it beside
+              the title, as the dungeon does, and the defenders' strength on
+              the line under it, where the dungeon has its difficulty.
             */}
-            <div className="titlebadges">
+            {phone ? (
               <WeatherPanel weather={weather} />
-              <ArenaStanding power={arenaPower} />
-            </div>
+            ) : (
+              <div className="titlebadges">
+                <WeatherPanel weather={weather} />
+                <ArenaStanding power={arenaPower} />
+              </div>
+            )}
           </div>
           <span className="spacer" />
-          <div className="dungeon__actions">
+          <div className={`dungeon__actions${phone ? ' dungeon__actions--dock' : ''}`}>
             <button
               type="button"
               className="btn btn--ghost"
@@ -899,6 +1000,14 @@ export default function Arena() {
           </div>
         )}
 
+        {phone && (
+          <div className="dungeon__phonestep">
+            <ArenaReadout power={arenaPower} />
+          </div>
+        )}
+
+        {/* A phone opens the matchup with the odds, above your team. */}
+        {phone && <WinChance odds={odds} />}
 
         <section className="versus">
           <div className="versus__side versus__side--mine">
@@ -942,13 +1051,18 @@ export default function Arena() {
                     damage={myFlat[i]?.damage ?? 0}
                     side="mine"
                     abilities={enemies.length ? mySlots[i] : undefined}
-                    onOpen={() => showFighter(f)}
+                    onOpen={() =>
+                      phone
+                        ? setFocus((v) => (v === f.fighter_id ? null : f.fighter_id))
+                        : showFighter(f)
+                    }
+                    selected={phone && focus === f.fighter_id}
                     marker={f.marker}
                     preview={() => ({
                       panel: rosterPanel(f, levelMod, ageDecay),
                       template: classes.get(f.classname),
                     })}
-                    onRemove={() => toggleFighter(f)}
+                    onRemove={phone ? undefined : () => toggleFighter(f)}
                   />
                 ) : (
                   /* An empty slot takes you to where it gets filled: a plus
@@ -959,10 +1073,7 @@ export default function Arena() {
                     type="button"
                     className="combatcard combatcard--empty"
                     key={`empty-${i}`}
-                    onClick={() => {
-                      setTab('fighters')
-                      picker.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-                    }}
+                    onClick={() => openPicker('fighters')}
                     title="Choose a fighter for this slot"
                   >
                     <span className="combatcard__plus" aria-hidden="true">
@@ -981,9 +1092,19 @@ export default function Arena() {
                   health={nftFighter.health.min}
                   damage={nftFighter.damage.min}
                   side="mine"
+                  abilities={
+                    enemies.length && mySlots.length > picked.length
+                      ? mySlots[mySlots.length - 1]
+                      : undefined
+                  }
                   art={NFT_FIGHTER_ART}
                   badge="NFT"
-                  onOpen={() => setDetail({ kind: 'panel', panel: nftFighter })}
+                  onOpen={() =>
+                    phone
+                      ? setFocus((v) => (v === 'nft' ? null : 'nft'))
+                      : setDetail({ kind: 'panel', panel: nftFighter })
+                  }
+                  selected={phone && focus === 'nft'}
                   preview={() => ({
                     panel: nftFighter,
                     cards: [crew, weapon].filter((c): c is CardTemplate => !!c),
@@ -993,13 +1114,23 @@ export default function Arena() {
                      roster fighter, it is the crew and the weapon fused, so
                      removing it puts both cards back.
                   */
-                  onRemove={() => {
-                    setCrew(null)
-                    setWeapon(null)
-                  }}
+                  onRemove={
+                    phone
+                      ? undefined
+                      : () => {
+                          setCrew(null)
+                          setWeapon(null)
+                        }
+                  }
                 />
               ) : (
-                <div className="combatcard combatcard--empty combatcard--nft">
+                /* The empty sixth opens the crew cards, which fill it. */
+                <button
+                  type="button"
+                  className="combatcard combatcard--empty combatcard--nft"
+                  onClick={() => openPicker('crew')}
+                  title="Pick a crew card and a weapon card"
+                >
                   <span className="combatcard__plus" aria-hidden="true">
                     +
                   </span>
@@ -1007,15 +1138,15 @@ export default function Arena() {
                     NFT Fighter
                     <em>crew + weapon</em>
                   </span>
-                </div>
+                </button>
               )}
             </div>
 
             {/*
                Under the line-up it fills, as a toolbar.
             */}
-            <div className="versus__pick">{autoPickButton}</div>
-            {(
+            <div className="versus__pick">{focusBar ?? autoPickButton}</div>
+            {!phone && (
               <div className="versus__cards">
                 <CardsToolbar
                   crew={crew}
@@ -1023,14 +1154,12 @@ export default function Arena() {
                   autoPick={autoPickCardsButton}
                   onOpen={showCard}
                   onClear={(kind) => (kind === 'crew' ? setCrew(null) : setWeapon(null))}
-                  onChoose={(kind) => {
-                    setTab(kind)
-                    picker.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-                  }}
+                  onChoose={(kind) => openPicker(kind)}
                 />
               </div>
             )}
           </div>
+        {!phone && (
         <div className="versus__divider">
             <OddsCentre odds={odds} />
             {/*
@@ -1041,6 +1170,7 @@ export default function Arena() {
               <i style={{ width: `${myShare * 100}%` }} />
             </div>
           </div>
+        )}
 
           <div className="versus__side versus__side--enemy">
             <header
@@ -1105,20 +1235,94 @@ export default function Arena() {
 
           </section>
 
+        {/* Crew and weapon, under the matchup on a phone, as in the dungeon. */}
+        {phone && (
+          <div className="versus__cards versus__cards--phone">
+            <CardsToolbar
+              crew={crew}
+              weapon={weapon}
+              autoPick={autoPickCardsButton}
+              onOpen={showCard}
+              onClear={(kind) => (kind === 'crew' ? setCrew(null) : setWeapon(null))}
+              onChoose={(kind) => openPicker(kind)}
+            />
+          </div>
+        )}
+
         {/*
           What a win costs, stated where the team is chosen rather than in the
           result screen where it would be a surprise. `battle.cpp` picks one of
           the five at random — not the weakest, not the survivor — and hands it
           to `fighterchg`, which marks it in use and stands it in the arena.
         */}
-        <p className="hint arena__stake">
-          Win and one of your five, chosen at random, stays here to defend the
-          arena along with your NFT fighter. It is marked in use until somebody
-          knocks it out{xpPerWin ? `, and the win pays ${xpPerWin} XP` : ''}.
-        </p>
+        {phone ? (
+          <p className="hint arena__stake">
+            Win and one of your five, picked at random, stays to defend this
+            arena{xpPerWin ? `. +${xpPerWin} XP` : ''}.
+          </p>
+        ) : (
+          <p className="hint arena__stake">
+            Win and one of your five, chosen at random, stays here to defend the
+            arena along with your NFT fighter. It is marked in use until somebody
+            knocks it out{xpPerWin ? `, and the win pays ${xpPerWin} XP` : ''}.
+          </p>
+        )}
 
 
-        <section className="panel picker" ref={picker}>
+        {phone && sheet && (
+          <div className="picker__scrim" onClick={() => setSheet(false)} aria-hidden="true" />
+        )}
+        <section
+          className={`panel picker${phone ? ' picker--sheet' : ''}${phone && sheet ? ' picker--open' : ''}`}
+          ref={picker}
+          aria-hidden={phone && !sheet ? true : undefined}
+        >
+          {phone && (
+            <div className="picker__sheethead" {...sheetGrip}>
+              {/* The tabs are the title: they already say what is being chosen. */}
+              <div className="picker__sheettabs" role="tablist">
+                {(
+                  [
+                    ['fighters', 'Fighters'],
+                    ['crew', 'Crew'],
+                    ['weapon', 'Weapons'],
+                  ] as [Tab, string][]
+                ).map(([key, label]) => (
+                  <button
+                    type="button"
+                    key={key}
+                    role="tab"
+                    className="picker__sheettab"
+                    aria-selected={tab === key}
+                    onClick={() => setTab(key)}
+                  >
+                    {label}
+                    {key === 'fighters' && (
+                      <i>
+                        {picked.length}/{TEAM_SIZE}
+                      </i>
+                    )}
+                  </button>
+                ))}
+              </div>
+              <span className="picker__sheetcount">
+                {tab === 'fighters' && shownCount
+                  ? shownCount.shown < shownCount.total
+                    ? `${shownCount.shown}/${shownCount.total}`
+                    : shownCount.total
+                  : null}
+              </span>
+              <button
+                type="button"
+                className="picker__sheetclose"
+                onClick={() => setSheet(false)}
+                aria-label="Close"
+              >
+                ×
+              </button>
+            </div>
+          )}
+          {!phone && (
           <div className="tabs" role="tablist">
             {(
               [
@@ -1140,6 +1344,7 @@ export default function Arena() {
               </button>
             ))}
           </div>
+          )}
 
           {tab === 'fighters' ? (
             <>
@@ -1151,6 +1356,7 @@ export default function Arena() {
                 atLevelOne={atLevelOne}
                 onAtLevelOne={setAtLevelOne}
                 count={shownCount}
+                sheet={phone ? { density: sheetDensity, onDensity: chooseSheetDensity } : undefined}
               />
               <FighterGrid
                 roster={roster}
@@ -1164,6 +1370,8 @@ export default function Arena() {
                 onToggle={toggleFighter}
                 onCount={countFighters}
                 onInspect={showFighter}
+                density={phone ? sheetDensity : undefined}
+                onDensity={phone ? chooseSheetDensity : undefined}
               />
             </>
           ) : (
@@ -1192,6 +1400,11 @@ export default function Arena() {
               onInspect={showCard}
               kind={tab}
             />
+          )}
+          {phone && (
+            <button type="button" className="btn btn--primary picker__done" onClick={() => setSheet(false)}>
+              Done
+            </button>
           )}
         </section>
       </div>
@@ -1246,6 +1459,25 @@ function ArenaStanding({ power }: { power: number }) {
       />
       <span className="arenastanding__label">Defender strength</span>
       <span className="arenastanding__value mono">{percent.toFixed(0)}%</span>
+    </div>
+  )
+}
+
+/**
+ * The same figure on a phone, in the place and the voice of the dungeon's
+ * difficulty: a quiet label, the number, and a white hairline for how much of
+ * full strength is left — a reading rather than a coloured badge.
+ */
+function ArenaReadout({ power }: { power: number }) {
+  const percent = arenaPowerPercent(power)
+  return (
+    <div className="arenaread" title="Arena power scales every defender’s health and damage. It falls each time a challenger fails and snaps back to full the moment somebody wins.">
+      <span className="dstep__label">Defender strength</span>
+      <span className="arenaread__value mono">{percent.toFixed(0)}%</span>
+      <span className="arenaread__note">Falls with every failed challenge</span>
+      <span className="arenaread__track" aria-hidden="true">
+        <i style={{ width: `${Math.max(0, Math.min(100, percent))}%` }} />
+      </span>
     </div>
   )
 }
