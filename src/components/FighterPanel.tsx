@@ -143,31 +143,56 @@ function Grade({
   )
 }
 
+/**
+ * One stat lit, with the figure it would become: an upgrade being weighed,
+ * shown on the line it changes. `tone` colours it; `note` says what is lost
+ * when it stops short of the roll.
+ */
+export interface StatHighlight {
+  field: string
+  to: string
+  tone: 'good' | 'bad' | 'mixed' | 'cap'
+  note?: string
+}
+
 function StatLine({
   field,
   stat,
   template,
+  highlight,
 }: {
   field: string
   stat: PanelStat
   template: ClassTemplate | undefined
+  highlight?: StatHighlight
 }) {
   const ranged = stat.max !== undefined && stat.max !== stat.min
+  const now = ranged ? formatStat(stat.min, stat.max!) : formatScaled(stat.min)
+  const lit = highlight?.field === field ? highlight : undefined
   return (
-    <div className="statline">
-      <span className="statline__k">
-        <img className="statline__icon" src={statIcon(field)} alt="" />
-        {STAT_LABEL[field] ?? field}
-      </span>
-      <span className="statline__v mono">
-        {ranged ? formatStat(stat.min, stat.max!) : formatScaled(stat.min)}
-        <Grade
-          field={field}
-          raw={stat.grade ?? (ranged ? midpoint(stat.min, stat.max!) : stat.min)}
-          template={template}
-        />
-      </span>
-    </div>
+    <>
+      <div className={`statline${lit ? ` is-lit is-${lit.tone}` : ''}`}>
+        <span className="statline__k">
+          <img className="statline__icon" src={statIcon(field)} alt="" />
+          {STAT_LABEL[field] ?? field}
+        </span>
+        <span className="statline__v mono">
+          {lit ? (
+            <>
+              {lit.to} <s>{now}</s>
+            </>
+          ) : (
+            now
+          )}
+          <Grade
+            field={field}
+            raw={stat.grade ?? (ranged ? midpoint(stat.min, stat.max!) : stat.min)}
+            template={template}
+          />
+        </span>
+      </div>
+      {lit?.note && <div className="statline__note">{lit.note}</div>}
+    </>
   )
 }
 
@@ -185,11 +210,14 @@ export function FighterStats({
   fighter,
   template,
   resistances = true,
+  highlight,
 }: {
   fighter: PanelFighter
   template?: ClassTemplate
   /** Dropped for a side-by-side comparison, where they do not fit. */
   resistances?: boolean
+  /** One stat lit with the figure it would become. */
+  highlight?: StatHighlight
 }) {
   return (
     <div className="fstats">
@@ -200,6 +228,7 @@ export function FighterStats({
             field={field}
             stat={fighter[field] as PanelStat}
             template={template}
+            highlight={highlight}
           />
         ))}
         <div className="statline">
@@ -229,12 +258,17 @@ export function FighterStats({
         <div className="resgrid">
           {RESISTANCES.map(([key, label]) => {
             const raw = (fighter as unknown as Record<string, number>)[key]
+            const lit = highlight?.field === key ? highlight : undefined
             return (
-              <div className="resgrid__cell" key={key}>
+              <div
+                className={`resgrid__cell${lit ? ` is-lit is-${lit.tone}` : ''}`}
+                key={key}
+                title={lit?.note}
+              >
                 <img src={asset(`/assets/icons/elements/${label.toLowerCase()}.png`)} alt="" />
                 <span className="resgrid__label">{label}</span>
                 <span className="resgrid__value mono">
-                  {formatResistance(raw)}
+                  {lit ? lit.to : formatResistance(raw)}
                   <Grade field={key} raw={raw} template={template} />
                 </span>
               </div>
@@ -251,6 +285,7 @@ export function FighterPanel({
   template,
   compact = false,
   abilityUnlockLevel,
+  highlight,
 }: {
   fighter: PanelFighter
   /**
@@ -265,6 +300,8 @@ export function FighterPanel({
    * name the ascension that frees it instead of just saying "locked".
    */
   abilityUnlockLevel?: number
+  /** One stat lit with the figure it would become. */
+  highlight?: StatHighlight
 }) {
   const art =
     fighter.art ??
@@ -315,7 +352,7 @@ export function FighterPanel({
         )}
       </div>
 
-      <FighterStats fighter={fighter} template={template} resistances={!compact} />
+      <FighterStats fighter={fighter} template={template} resistances={!compact} highlight={highlight} />
 
       {!compact && fighter.abilities.length > 0 && (
         <FighterAbilities

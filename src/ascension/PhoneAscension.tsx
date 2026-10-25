@@ -4,14 +4,14 @@ import type { StatCaps, UpgradeOdds } from '@/ascension/queries'
 import {
   REQUIREMENTS,
   SACRIFICE_COUNT,
-  appliedValue,
   isAmbiguous,
   isBenefit,
   requirementsMet,
   statLabel,
   upgradeIcon,
-  upgradeLabel,
+  upgradeOutcome,
   upgradeRange,
+  upgradeText,
   type Requirement,
   type SacrificeCheck,
 } from '@/ascension/rules'
@@ -516,10 +516,52 @@ function Offers({
 }) {
   const offers = fighter.ascension_upgrades ?? []
   const [taking, setTaking] = useState<number | null>(null)
+  /* The offer whose limit is being confirmed. */
+  const [asking, setAsking] = useState<number | null>(null)
   const sorted = useMemo(() => [...odds].sort((a, b) => b.chance - a.chance), [odds])
+  const asked = asking !== null ? offers[asking] : undefined
+  const askedText = asked
+    ? upgradeText(
+        asked.stat_name,
+        asked.value,
+        !!asked.positive,
+        upgradeOutcome(asked.stat_name, asked.value, !!asked.positive, fighter, caps),
+        factor,
+      )
+    : null
 
   return (
     <div className="prew pasc">
+      {asked && askedText && (
+        <BottomSheet
+          title={`Take ${askedText.applied}?`}
+          onClose={() => setAsking(null)}
+          foot={
+            <div className="rsheet__actions">
+              <button type="button" className="btn btn--ghost" onClick={() => setAsking(null)}>
+                Back
+              </button>
+              <button
+                type="button"
+                className="btn btn--primary"
+                disabled={!canAct || busy !== null}
+                onClick={() => {
+                  setTaking(asking)
+                  setAsking(null)
+                  onClaim(asked.stat_name, asked.value, !!asked.positive)
+                }}
+              >
+                Take it
+              </button>
+            </div>
+          }
+        >
+          <p className="pasc__capnote">
+            <b>{askedText.tag}</b>
+            {askedText.confirm}
+          </p>
+        </BottomSheet>
+      )}
       <h1 className="pasc__title">Ascension</h1>
       <div className="pasc__who">
         <GameImg src={fighterArt(fighter)} fallback={fighterArtFallback()} alt="" />
@@ -539,31 +581,35 @@ function Offers({
             const positive = !!o.positive
             const good = isBenefit(o.stat_name, positive)
             const mixed = isAmbiguous(o.stat_name)
-            const applied = appliedValue(o.stat_name, o.value, positive, fighter, caps)
-            const capped = applied < o.value
+            /* What taking it really does, by the contract's own limits. */
+            const text = upgradeText(
+              o.stat_name,
+              o.value,
+              positive,
+              upgradeOutcome(o.stat_name, o.value, positive, fighter, caps),
+              factor,
+            )
             return (
               <div
-                className={`pasc__card is-${mixed ? 'mixed' : good ? 'good' : 'bad'}`}
+                className={`pasc__card is-${mixed ? 'mixed' : good ? 'good' : 'bad'}${text.tag ? ' is-capped' : ''}`}
                 key={`${o.stat_name}-${o.value}-${i}`}
               >
                 <img src={upgradeIcon(o.stat_name)} alt="" />
-                <b>{upgradeLabel(o.stat_name, applied, positive, factor)}</b>
-                <small>
-                  {capped
-                    ? `Capped — ${statLabel(o.stat_name).toLowerCase()} cannot go lower`
-                    : mixed
-                      ? positive
-                        ? 'Draws more attacks'
-                        : 'Draws fewer attacks'
-                      : good
-                        ? 'Improvement'
-                        : 'Penalty'}
-                </small>
+                <b>
+                  {text.tag && text.applied !== text.rolled && <s>{text.rolled}</s>}
+                  {text.applied}
+                </b>
+                <small>{text.tag ?? text.kind}</small>
                 <button
                   type="button"
                   className="btn btn--ghost btn--sm"
                   disabled={!canAct || busy !== null}
                   onClick={() => {
+                    /* A roll that stops short asks once more; the rest take at once. */
+                    if (text.confirm) {
+                      setAsking(i)
+                      return
+                    }
                     setTaking(i)
                     onClaim(o.stat_name, o.value, positive)
                   }}

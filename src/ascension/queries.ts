@@ -11,13 +11,14 @@ import { TTL } from '@/chain/cache'
  * what the screen quotes.
  */
 /**
- * The floors and ceilings a fighter's stats are held between.
+ * The floors and ceilings a fighter's stats are held between — the
+ * contract's `battle_stat_caps`, a whole `Fighterstats`.
  *
- * Only the floors matter to an ascension: `ascupgrade` adds health, damage
- * and resistances with no ceiling check at all, and clamps only when it is
- * *subtracting* from taunt, wind-up or cooldown — a roll that would take one
- * of those under its floor drops it to the floor instead, so the player gets
- * less than the number on the offer.
+ * `ascupgrade` stops health and damage at their `_max` and each resistance at
+ * its own field, and drops taunt, wind-up or cooldown to their `_min` when a
+ * downward roll is bigger than the stat. `upgradeOutcome` in
+ * `ascension/rules` is the one place that turns these into what a roll
+ * really does.
  */
 export interface StatCaps {
   health_min: number
@@ -30,6 +31,13 @@ export interface StatCaps {
   initiative_max: number
   attackspeed_min: number
   attackspeed_max: number
+  /** Each resistance's ceiling, by element. */
+  res_gem?: number
+  res_metal?: number
+  res_air?: number
+  res_fire?: number
+  res_nature?: number
+  res_neutral?: number
 }
 
 export interface AscensionConfig {

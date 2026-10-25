@@ -229,39 +229,204 @@ function isResistance(stat: string): boolean {
   return stat.startsWith('res_')
 }
 
-/**
- * The three the contract clamps, and only when subtracting.
- *
- * `ascupgrade` adds health, damage and every resistance with no ceiling check
- * at all — the `_max` caps are not consulted. What it does check is the floor
- * on a *downward* roll of taunt, wind-up or cooldown: if the subtraction
- * would take the stat under its floor it sets the stat to the floor instead,
- * so the player gets less than the offer says.
- */
-const FLOORED = new Set(['taunt', 'initiative', 'attackspeed'])
+/** The three with a range that a roll can take up or down. */
+const TWO_WAY = new Set(['taunt', 'initiative', 'attackspeed'])
 
 /**
- * How much of a rolled upgrade the contract would actually apply.
+ * What taking a rolled upgrade would really do to this fighter.
  *
- * In raw units, like the offer itself. Equal to the offer except where a
- * subtraction runs into a floor, in which case the stat lands on the floor
- * and the difference is lost.
+ * In raw units, like the offer and the stats. Each branch is `ascupgrade` in
+ * `ascend.ale`, case for case:
+ *
+ * - Health and damage: each end of the range gains the roll, unless it would
+ *   reach the `_max` ceiling, in which case that end is set to the ceiling.
+ *   Near the top the range narrows, or both ends stop at the ceiling.
+ * - A resistance: gains the roll unless it would reach its own ceiling, and
+ *   then stops at it.
+ * - Taunt, wind-up, cooldown going up: both ends gain the roll; no ceiling.
+ * - Taunt, wind-up, cooldown going down: both ends lose the roll *if the roll
+ *   is no bigger than the stat* — even when that lands under the `_min` floor.
+ *   A roll bigger than the stat sets both ends to the floor instead, so the
+ *   ± range is lost with it. (The contract's check is `value <= stat ||
+ *   stat - value >= floor`; with unsigned stats promoted to int, the second
+ *   half can only be true when the first already is.)
+ *
+ * The contract ignores `positive` for health, damage and resistances — they
+ * are only ever added — and so does this.
  */
-export function appliedValue(
+export interface UpgradeOutcome {
+  /** How far the stat (its low end, for a range) really moves: the roll, or less. */
+  applied: number
+  /** Where it stops short: at the highest value, at the lowest, or not at all. */
+  limit: 'ceiling' | 'floor' | null
+  /** The value it stops at, raw. */
+  at: number
+  /** The stat before and after, raw: the range's middle where it has one. */
+  before: number
+  after: number
+  /** The range before and after, for health, damage and the two-way three. */
+  range?: { before: [number, number]; after: [number, number] }
+  /** Only the top of the range stops at the ceiling; the low end gets the whole roll. */
+  narrows: boolean
+  /** Both ends set to the floor: the ± range is gone. */
+  collapses: boolean
+}
+
+export function upgradeOutcome(
   stat: string,
   value: number,
   positive: boolean,
-  fighter: RosterFighter | undefined,
+  fighter: RosterFighter,
   caps: StatCaps | undefined,
-): number {
-  if (positive || !FLOORED.has(stat) || !fighter || !caps) return value
+): UpgradeOutcome {
+  const s = fighter.stats as unknown as Record<string, number>
+  const c = caps as unknown as Record<string, number | undefined> | undefined
+  const mid = (lo: number, hi: number) => (lo + hi) / 2
 
-  const current = Number(
-    (fighter.stats as unknown as Record<string, number>)[`${stat}_min`] ?? 0,
-  )
-  const floor = Number((caps as unknown as Record<string, number>)[`${stat}_min`] ?? 0)
+  if (isResistance(stat)) {
+    const cur = Number(s[stat] ?? 0)
+    const cap = c?.[stat]
+    const next = cap === undefined || cur + value < cap ? cur + value : cap
+    return {
+      applied: next - cur,
+      limit: next !== cur + value ? 'ceiling' : null,
+      at: cap ?? 0,
+      before: cur,
+      after: next,
+      narrows: false,
+      collapses: false,
+    }
+  }
 
-  return current - value >= floor ? value : Math.max(0, current - floor)
+  const lo = Number(s[`${stat}_min`] ?? 0)
+  const hi = Number(s[`${stat}_max`] ?? lo)
+
+  if (!TWO_WAY.has(stat)) {
+    /* Health and damage: each end against the ceiling on its own. */
+    const cap = c?.[`${stat}_max`]
+    const up = (v: number) => (cap === undefined || v + value < cap ? v + value : cap)
+    const nlo = up(lo)
+    const nhi = up(hi)
+    const loShort = nlo !== lo + value
+    const hiShort = nhi !== hi + value
+    return {
+      applied: nlo - lo,
+      limit: loShort || hiShort ? 'ceiling' : null,
+      at: cap ?? 0,
+      before: mid(lo, hi),
+      after: mid(nlo, nhi),
+      range: { before: [lo, hi], after: [nlo, nhi] },
+      narrows: hiShort && !loShort,
+      collapses: false,
+    }
+  }
+
+  if (positive || value <= lo) {
+    const d = positive ? value : -value
+    return {
+      applied: value,
+      limit: null,
+      at: 0,
+      before: mid(lo, hi),
+      after: mid(lo + d, hi + d),
+      range: { before: [lo, hi], after: [lo + d, hi + d] },
+      narrows: false,
+      collapses: false,
+    }
+  }
+
+  const floor = Number(c?.[`${stat}_min`] ?? 0)
+  return {
+    applied: lo - floor,
+    limit: 'floor',
+    at: floor,
+    before: mid(lo, hi),
+    after: floor,
+    range: { before: [lo, hi], after: [floor, floor] },
+    narrows: false,
+    collapses: true,
+  }
+}
+
+/**
+ * A stat's value as the fighter panel prints it: health and damage as fought
+ * with (the level and age factor applied), resistances as a percentage.
+ */
+export function statValue(stat: string, raw: number, factor = 1): string {
+  if (isResistance(stat)) return `${trimmed(raw / 10)}%`
+  if (SCALED_BY_LEVEL.has(stat)) return Math.round((raw * factor) / 10).toLocaleString(NUM_LOCALE)
+  return trimmed(raw / 10)
+}
+
+/** "Stops at 80%", "Stops at 0". */
+export function limitLabel(stat: string, outcome: UpgradeOutcome, factor = 1): string {
+  return `Stops at ${statValue(stat, outcome.at, factor)}`
+}
+
+/**
+ * Everything an offer says, the same on the phone's cards and the desktop's
+ * rows: what applies, what kind of change it is, where the stat goes, and —
+ * when it stops short — what is lost, in the words the confirmation uses.
+ */
+export function upgradeText(
+  stat: string,
+  value: number,
+  positive: boolean,
+  outcome: UpgradeOutcome,
+  factor = 1,
+): {
+  /** The offer as rolled: "+4.8% Gem resistance". */
+  rolled: string
+  /** What applies: the same, or less where it stops short. */
+  applied: string
+  /** "Improvement", "Draws fewer attacks", "Penalty". */
+  kind: string
+  /** "Gem resistance 22% → 26.8%", or what stopping short costs. */
+  note: string
+  /** "Stops at 80%", when it does. */
+  tag: string | null
+  /** The one-more-time question a limited roll asks before it is taken. */
+  confirm: string | null
+} {
+  const name = statLabel(stat)
+  const rolled = upgradeLabel(stat, value, positive, factor)
+  const applied = outcome.narrows ? rolled : upgradeLabel(stat, outcome.applied, positive, factor)
+  const kind = isAmbiguous(stat)
+    ? positive
+      ? 'Draws more attacks'
+      : 'Draws fewer attacks'
+    : isBenefit(stat, positive)
+      ? 'Improvement'
+      : 'Penalty'
+  const from = statValue(stat, outcome.before, factor)
+  const to = statValue(stat, outcome.after, factor)
+  const at = statValue(stat, outcome.at, factor)
+
+  if (!outcome.limit) {
+    return { rolled, applied, kind, note: `${name} ${from} → ${to}`, tag: null, confirm: null }
+  }
+  if (outcome.narrows) {
+    return {
+      rolled,
+      applied,
+      kind,
+      note: `The top of its range stops at ${at}; the range narrows`,
+      tag: limitLabel(stat, outcome, factor),
+      confirm: `${name} takes the whole roll at the low end, but the top of its range stops at ${at}, so the range narrows. The other two upgrades are gone either way.`,
+    }
+  }
+  /* A floored stat loses its range too: both ends land on the floor. */
+  const range = outcome.collapses ? `, and the top of its range drops to ${at} with it` : ''
+  return {
+    rolled,
+    applied,
+    kind,
+    note: outcome.collapses
+      ? `${name} drops to ${at} · the top of its range too`
+      : `${name} ${from} → ${at} · the rest is lost`,
+    tag: limitLabel(stat, outcome, factor),
+    confirm: `The roll is ${rolled}, but ${name} stops at ${at}: only ${applied} applies${range}. The other two upgrades are gone either way.`,
+  }
 }
 
 /**

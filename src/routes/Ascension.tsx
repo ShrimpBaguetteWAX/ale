@@ -3,12 +3,9 @@ import { useGame } from '@/state/useGame'
 import { fetchRoster } from '@/dungeon/queries'
 import { battleFactor } from '@/fighters/rules'
 import { levelFactor } from '@/fight/scaling'
-import { Cost, FighterCard } from './Fighters'
 import { usePhone } from '@/components/usePhone'
 import type { RosterFighter } from '@/dungeon/types'
-import type { StatCaps, UpgradeOdds } from '@/ascension/queries'
-import type { FighterLevel, FightersConfig } from '@/fighters/types'
-import type { ClassTemplate } from '@/tavern/fighterStats'
+import type { UpgradeOdds } from '@/ascension/queries'
 import {
   REQUIREMENTS,
   canAscend,
@@ -18,10 +15,8 @@ import {
   isAmbiguous,
   isBenefit,
   requirementsMet,
-  appliedValue,
   statLabel,
   upgradeIcon,
-  upgradeLabel,
   upgradeRange,
   type Requirement,
 } from '@/ascension/rules'
@@ -33,10 +28,10 @@ import {
 import { useAction } from '@/wharf/useAction'
 import { DIRTIES } from '@/wharf/actions'
 import { readableError } from '@/wharf/errors'
-import { formatNumber } from '@/format'
 import { useConfig, useLazyConfig } from '@/state/useConfig'
 import { PhoneAscension } from '@/ascension/PhoneAscension'
 import { DeskAscension } from '@/ascension/DeskAscension'
+import { DeskOffers } from '@/ascension/DeskOffers'
 
 /**
  * Ascension.
@@ -67,15 +62,11 @@ export default function Ascension() {
   const [loading, setLoading] = useState(true)
 
   /*
-     What the roster card needs to draw a fighter the way My Fighters does,
-     from the same store My Fighters now reads. Both screens print the same
-     fighter and used to disagree about its damage while the config was in
-     flight — one fell back to a level multiplier of 1.15, the other to 1.
+     The level and age figures the screen quotes health and damage with, from
+     the same store My Fighters reads, so the two never disagree about a
+     fighter's damage while the config is in flight.
   */
   const {
-    levels,
-    fighters: fighterConfig,
-    classes: templates,
     levelMod,
     ageDecay,
     loaded: configLoaded,
@@ -298,10 +289,10 @@ export default function Ascension() {
     figure, and showed it to exactly the player still deciding whether
     the errand is worth doing.
   */
-  const oddsPanel = (open: boolean) => (
+  const oddsPanel = (
     <OddsPanel
       odds={odds}
-      open={open}
+      open
       factor={
         pending ?? target
           ? battleFactor((pending ?? target)!, levelMod, ageDecay).total
@@ -319,18 +310,15 @@ export default function Ascension() {
       {error && <div className="alert alert--error">{error}</div>}
 
       {pending ? (
-        <OfferPanel
+        <DeskOffers
           fighter={pending}
-          levels={levels}
-          fighterConfig={fighterConfig}
-          template={templates.get(pending.classname)}
-          levelMod={levelMod}
-          ageDecay={ageDecay}
           rerollFee={rerollFee}
           credits={credits}
           busy={busy}
           canAct={!!session}
           caps={config?.battle_stat_caps}
+          factor={battleFactor(pending, levelMod, ageDecay).total}
+          extra={oddsPanel}
           onReroll={() =>
             void run(
               'reroll',
@@ -377,7 +365,7 @@ export default function Ascension() {
           credits={credits}
           busy={busy}
           canAct={!!session}
-          extra={oddsPanel(true)}
+          extra={oddsPanel}
           onAscend={() =>
             void run(
               'ascend',
@@ -395,224 +383,7 @@ export default function Ascension() {
         />
       )}
 
-      {pending && oddsPanel(false)}
     </div>
-  )
-}
-
-/* ---------- the three offers ---------- */
-
-/**
- * The reward, once the three have been spent.
- *
- * The fighter first, then the three rolls to choose between. It is the same
- * card My Fighters shows — the decision is "which of these three does this
- * fighter want", and answering it means reading the stats it already has, so
- * the screen puts them there rather than asking the player to remember them
- * from another page.
- */
-function OfferPanel({
-  fighter,
-  levels,
-  fighterConfig,
-  template,
-  levelMod,
-  ageDecay,
-  rerollFee,
-  credits,
-  busy,
-  canAct,
-  caps,
-  onReroll,
-  onClaim,
-}: {
-  fighter: RosterFighter
-  levels: FighterLevel[]
-  fighterConfig?: FightersConfig
-  template?: ClassTemplate
-  levelMod: number
-  ageDecay: number
-  rerollFee: number
-  credits: number
-  busy: Busy
-  canAct: boolean
-  onReroll: () => void
-  caps?: StatCaps
-  onClaim: (stat: string, value: number, positive: boolean) => void
-}) {
-  const offers = fighter.ascension_upgrades ?? []
-  /*
-     Which row is being signed, so only that button says so.
-
-     `busy` alone would put "Working…" on all three at once. Nothing has to
-     clear this: the label only reads it while `busy === 'claim'`, so a
-     failed signature reverts every button on its own.
-   */
-  const [taking, setTaking] = useState<number | null>(null)
-  /*
-     What the roll is worth to *this* fighter.
-
-     The contract grows health and damage by `level_mod ^ level * age_decay`
-     before a fight and leaves the rest alone, so the same rolled number means
-     four times as much on a level 10 fighter for two of the eleven stats.
-  */
-  const factor = battleFactor(fighter, levelMod, ageDecay).total
-
-  return (
-    <>
-      <section className="panel ascoffer">
-        <div className="row row--wrap">
-          <div className="miningintro">
-            <h2 className="panel__title">Permanently improve your fighter</h2>
-            <p className="hint">
-              Three upgrades were rolled. Taking one applies it and ends the
-              ascension — the other two are gone.
-            </p>
-          </div>
-          <span className="spacer" />
-          <button
-            type="button"
-            className="btn btn--ghost"
-            disabled={!canAct || busy !== null || credits < rerollFee}
-            onClick={onReroll}
-            title={
-              credits < rerollFee
-                ? `Needs ${formatNumber(rerollFee)} credits`
-                : 'Roll three new offers'
-            }
-          >
-            {busy === 'reroll' && <span className="spinner" />}
-            {/*
-              The figure carries its own currency, the way every other price
-              in the game does. "Re-roll for 499" named no unit at all, and
-              this screen spends credits on one button and hands out stat
-              points on the next three.
-            */}
-            Re-roll
-            <Cost value={rerollFee} icon="credits" short={credits} />
-          </button>
-        </div>
-
-        <h3 className="ascoffer__pickTitle">Pick one of these improvements</h3>
-
-        <div className="ascoffer__body">
-          {/*
-            The roster's own card, not a summary of it. Same fighter, same
-            three readouts, same place the numbers sit — so what a rolled
-            "+3.63 Damage" is being added to is on the screen beside it.
-          */}
-          <div className="ascoffer__fighter">
-            <FighterCard
-              fighter={fighter}
-              levels={levels}
-              config={fighterConfig}
-              template={template}
-              levelMod={levelMod}
-              ageDecay={ageDecay}
-              now={Date.now()}
-              mode="inventory"
-              tab="primary"
-              selected={false}
-              checked={false}
-              onSelect={() => {}}
-              onCheck={() => {}}
-              onOpen={() => {}}
-            />
-          </div>
-
-          <div className="ascoffer__picks">
-            {/*
-              The heading sits over the card as well as the list, so the two
-              columns start on the same line. Inside the right column it put
-              the first roll a heading's height below the card's top edge and
-              left the pair looking dropped.
-            */}
-            {offers.length === 0 ? (
-              <p className="muted">No offers on this fighter yet.</p>
-            ) : (
-              <ul className="offerlist">
-                {offers.map((o, i) => {
-                  const positive = !!o.positive
-                  const good = isBenefit(o.stat_name, positive)
-                  const mixed = isAmbiguous(o.stat_name)
-                  /* What the contract would really apply, floors included. */
-                  const applied = appliedValue(o.stat_name, o.value, positive, fighter, caps)
-                  const short = applied < o.value
-                  return (
-                    <li key={`${o.stat_name}-${o.value}-${i}`}>
-                      {/*
-                        The row is a row, not a control. Making the whole
-                        thing clickable meant a stray tap anywhere on it
-                        spent the ascension and threw the other two rolls
-                        away — the reading surface and the irreversible
-                        action have to be separate things.
-                      */}
-                      <div
-                        className={
-                          'offerrow offerrow--' +
-                          (mixed ? 'mixed' : good ? 'good' : 'bad')
-                        }
-                      >
-                        <img
-                          className="offerrow__icon"
-                          src={upgradeIcon(o.stat_name)}
-                          alt=""
-                          width={20}
-                          height={20}
-                        />
-                        <span className="offerrow__label">
-                          {upgradeLabel(o.stat_name, applied, positive, factor)}
-                        </span>
-                        {/*
-                          Direction is not the same as benefit. Cooldown and
-                          wind-up are timers, so a subtraction is an
-                          improvement; taunt is genuinely two-sided and
-                          depends on the squad.
-                        */}
-                        <span className="offerrow__note">
-                          {short
-                            ? 'Capped — ' + statLabel(o.stat_name).toLowerCase() + ' cannot go lower'
-                            : mixed
-                            ? positive
-                              ? 'Draws more attacks'
-                              : 'Draws fewer attacks'
-                            : good
-                              ? 'Improvement'
-                              : 'Penalty'}
-                        </span>
-                        {/*
-                          Naming the consequence, not the gesture. Taking one
-                          roll spends the ascension and discards the other
-                          two, which "Take this" did not say.
-                        */}
-                        <button
-                          type="button"
-                          className="offerrow__take"
-                          disabled={!canAct || busy !== null}
-                          onClick={() => {
-                            setTaking(i)
-                            onClaim(o.stat_name, o.value, positive)
-                          }}
-                        >
-                          {busy === 'claim' && taking === i ? (
-                            <>
-                              <span className="spinner" />
-                              Working…
-                            </>
-                          ) : (
-                            'Choose this and ascend'
-                          )}
-                        </button>
-                      </div>
-                    </li>
-                  )
-                })}
-              </ul>
-            )}
-          </div>
-        </div>
-      </section>
-    </>
   )
 }
 

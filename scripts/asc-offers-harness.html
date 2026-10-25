@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ascension offers — live harness</title>
+  <!--
+    The upgrade step of an ascension, mounted for real.
+
+      npm run dev
+      open http://localhost:5273/scripts/asc-offers-harness.html          (desktop)
+      open http://localhost:5273/scripts/asc-offers-harness.html?phone    (the phone's)
+
+    The real screen only appears for a fighter mid-ascension, which no
+    wallet has on demand. This page takes a real roster fighter and gives
+    it three offers that exercise the contract's limits: a resistance that
+    stops at its ceiling, a wind-up roll bigger than the stat (it drops to
+    the floor, range and all), and one that applies in full.
+  -->
+</head>
+<body>
+  <div id="root"></div>
+  <script type="module" src="./asc-offers-harness.tsx"></script>
+</body>
+</html>
