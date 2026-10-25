@@ -2680,7 +2680,7 @@ button.prew__row:hover:not(:disabled) {
 .drew__landtext {
   display: grid;
   gap: 2px;
-  max-width: 260px;
+  max-width: 320px;
 }
 .drew__landtext b {
   font-family: var(--font-display);

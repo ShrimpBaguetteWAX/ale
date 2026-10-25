@@ -492,10 +492,11 @@ function DeskMining({
 }
 
 /**
- * The landowner split, on the page: the bar, a slider, three presets and a
- * Save. It belongs to the land, not the miner — `pools.cpp` reads the
- * owner's `landowner_tlm_share` to split the power earned on their land —
- * so without land it stays dimmed with a way to get some.
+ * Landowner rewards, on the page: the bar, a slider, three presets and a
+ * Save. When a player gains reward power or recruits a fighter on someone's
+ * land, the landowner gets rewards too; `pools.cpp` reads the owner's
+ * `landowner_tlm_share` to decide how much of that is TLM and how much
+ * Shards. Without land it stays dimmed with a way to get some.
  */
 function LandCut({
   player,
@@ -519,15 +520,15 @@ function LandCut({
   const off = !owns || !canAct || busy !== null
 
   return (
-    <section className={`drew__land${owns ? '' : ' is-off'}`} aria-label="Your land's cut">
+    <section className={`drew__land${owns ? '' : ' is-off'}`} aria-label="Landowner rewards">
       <span className="drew__landtext">
-        <b>Your land's cut</b>
+        <b>Landowner rewards</b>
         <small>
           {lands.data === undefined
             ? 'Checking your land…'
             : owns
-              ? `Other players' mines on your ${count === 1 ? 'land' : `${formatNumber(count)} lands`} pay you a cut of their power`
-              : 'Own land and you earn a cut of everyone who mines on it'}
+              ? `When players gain reward power or recruit a fighter on your ${count === 1 ? 'land' : `${formatNumber(count)} lands`}, you get rewards too`
+              : 'Landowners get rewards too when players gain reward power or recruit a fighter on their land'}
         </small>
       </span>
       <span className="drew__landbar">
