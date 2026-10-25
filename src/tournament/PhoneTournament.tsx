@@ -2573,28 +2573,7 @@ function Results(p: PhoneTournamentProps & {
         items={items}
       />
     )
-  const me = board.runs.get(p.wallet)
-  const mePaid = me ? paid(p.wallet) : null
   const started = Number(p.stage?.player_count ?? 0)
-
-  const Pod = ({ e, step, label }: { e: Entrant; step: 2 | 3; label: string }) => {
-    const x = paid(e.wallet)
-    return (
-      <div className="ptour__pod">
-        <PlayerAvatar id={e.avatar} name={e.tag} className="ptour__podav" size={52} />
-        <b>{e.tag || e.wallet}</b>
-        <span className="mono">
-          {wax(x.wax)} WAX
-          <br />
-          {tlm(x.tlm)} TLM
-        </span>
-        <div className={`ptour__podstep is-${step}`}>
-          {step}
-          <small>{label}</small>
-        </div>
-      </div>
-    )
-  }
 
   return (
     <>
@@ -2604,61 +2583,17 @@ function Results(p: PhoneTournamentProps & {
       <Cols
         items={[
           [
-      champion && (
-        <section className="ptour__champ">
-          <img className="ptour__crown" src={TROPHY} alt="" />
-          <PlayerAvatar id={champion.avatar} name={champion.tag} className="ptour__champav" size={84} />
-          <b>{champion.tag || champion.wallet}</b>
-          <small>Champion{champion.wallet === p.wallet ? ' · you' : ''}</small>
-          <span className="ptour__paid mono">
-            <span>
-              <img src={WAX_ICON} alt="" />
-              {wax(paid(champion.wallet).wax)}
-            </span>
-            <span>
-              <img src={TLM_ICON} alt="" />
-              {tlm(paid(champion.wallet).tlm)}
-            </span>
-          </span>
-          {final && (
-            <button type="button" className="btn btn--sm" onClick={() => p.onWatch(final, last)}>
-              <span className="ptour__playicon" />
-              Watch the final
-            </button>
-          )}
-        </section>
-      ),
+            <PhoneRun
+              board={board}
+              history={p.history}
+              wallet={p.wallet}
+              champion={champion}
+              runnerUp={runnerUp}
+              semis={semis}
+              paid={paid}
+              onWatch={p.onWatch}
+            />,
             'main',
-          ],
-          [
-      (runnerUp || semis.length > 0) && (
-        <div className="ptour__podium">
-          {semis[0] ? <Pod e={semis[0]} step={3} label="Semis" /> : <span />}
-          {runnerUp ? <Pod e={runnerUp} step={2} label="Final" /> : <span />}
-          {semis[1] ? <Pod e={semis[1]} step={3} label="Semis" /> : <span />}
-        </div>
-      ),
-            'main',
-          ],
-          [
-      me && mePaid && (
-        <section className="ptour__card ptour__card--teal ptour__mine">
-          <span className="ptour__place mono">
-            {place(mePaid.rank)}
-            <small>place</small>
-          </span>
-          <div>
-            <span className="ptour__kick ptour__kick--teal">Your result</span>
-            <p className="ptour__sub">
-              {reached(p.wallet)} · <b>{mePaid.points}</b> point{mePaid.points === 1 ? '' : 's'}
-              <br />
-              Paid <b>{wax(mePaid.wax)} WAX</b> + <b>{tlm(mePaid.tlm)} TLM</b>
-              {mePaid.tenth ? ' (a tenth, without Legend Access)' : ''}
-            </p>
-          </div>
-        </section>
-      ),
-            'side',
           ],
           [
       <>
@@ -3050,6 +2985,169 @@ function RoadResults({ p, champion, runnerUp, semis, final, paid, round, onRound
           ],
         ]}
       />
+    </>
+  )
+}
+
+/* ---------- results on a phone: the podium on top, a run as a stepper ---------- */
+
+/**
+ * The top of a finished tournament on a phone, for whoever is looking.
+ *
+ * A small podium first — the champion on the gold step, the runner-up on
+ * silver, both semi-finalists sharing bronze — then the player's own place
+ * and pay as a ribbon, then a run a round at a time: their own, or with the
+ * switch the champion's. Everything a run fought can be watched again.
+ */
+function PhoneRun({ board, history, wallet, champion, runnerUp, semis, paid, onWatch }: {
+  board: Board
+  history: TournamentMatchup[][]
+  wallet: string
+  champion: Entrant | null
+  runnerUp: Entrant | null
+  semis: Entrant[]
+  paid: (w: string) => { rank: number; points: number; wax: number; tlm: number; tenth: boolean }
+  onWatch: (m: TournamentMatchup, round: number) => void
+}) {
+  const me = board.runs.get(wallet)
+  const meChamp = !!me && champion?.wallet === wallet
+  const [mode, setMode] = useState<'me' | 'champion'>(me && !meChamp ? 'me' : 'champion')
+  const shown = mode === 'me' && me ? me : champion ? board.runs.get(champion.wallet) : undefined
+  const gold = !shown || shown.wallet === champion?.wallet
+  const stops = shown ? roadOf(shown.wallet, history, board.rounds, shown.pass) : []
+  const mine = me ? paid(wallet) : null
+  const thirds = semis.map((e) => ({ e, x: paid(e.wallet) }))
+  const sameThird = thirds.length > 1 && thirds.every((t) => t.x.wax === thirds[0].x.wax)
+
+  return (
+    <>
+      {champion && (
+        <section className="ptour__mpod">
+          <div className="ptour__mpodcol">
+            {runnerUp && (
+              <>
+                <PlayerAvatar id={runnerUp.avatar} name={runnerUp.tag} className="ptour__mpodav" size={40} />
+                <b>{runnerUp.tag || runnerUp.wallet}</b>
+                <small className="mono">{wax(paid(runnerUp.wallet).wax)}</small>
+              </>
+            )}
+            <span className="ptour__mpodstep is-2">2</span>
+          </div>
+          <div className="ptour__mpodcol">
+            <span className="ptour__mpodcrown">
+              <img src={TROPHY} alt="" />
+              <PlayerAvatar id={champion.avatar} name={champion.tag} className="ptour__mpodchamp" size={50} />
+            </span>
+            <b className="is-gold">{champion.tag || champion.wallet}</b>
+            <small className="mono">{wax(paid(champion.wallet).wax)} WAX</small>
+            <span className="ptour__mpodstep is-1">1</span>
+          </div>
+          <div className="ptour__mpodcol">
+            {thirds.length > 0 && (
+              <>
+                <span className="ptour__mpodthirds">
+                  {thirds.map(({ e }) => (
+                    <PlayerAvatar key={e.wallet} id={e.avatar} name={e.tag} className="ptour__mpodav is-small" size={30} />
+                  ))}
+                </span>
+                <b>{thirds.map(({ e }) => e.tag || e.wallet).join(' · ')}</b>
+                {sameThird ? (
+                  <small className="mono">{wax(thirds[0].x.wax)} each</small>
+                ) : thirds.length === 1 ? (
+                  <small className="mono">{wax(thirds[0].x.wax)}</small>
+                ) : null}
+              </>
+            )}
+            <span className="ptour__mpodstep is-3">3</span>
+          </div>
+        </section>
+      )}
+
+      {me && mine && (
+        <section className={`ptour__ribbon${meChamp ? ' is-champ' : ''}`}>
+          <PlayerAvatar id={me.avatar} name={me.tag} className="ptour__ribbonav" size={36} />
+          <div>
+            <span className={`ptour__kick ${meChamp ? 'ptour__kick--gold' : 'ptour__kick--cyan'}`}>
+              {meChamp ? 'You are the champion' : 'You'}
+            </span>
+            <b className="mono">{place(mine.rank)}</b>
+          </div>
+          <div className="ptour__ribbonpay">
+            <span className="mono">
+              <img src={TLM_ICON} alt="" />
+              {tlm(mine.tlm)}
+            </span>
+            <small>
+              {mine.wax > 0 ? `${wax(mine.wax)} WAX` : 'no WAX'} · {mine.points} pt{mine.points === 1 ? '' : 's'}
+              {mine.tenth ? ' · a tenth' : ''}
+            </small>
+          </div>
+        </section>
+      )}
+
+      {me && !meChamp && (
+        <div className="ptour__runsw" role="tablist">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={mode === 'me'}
+            className={mode === 'me' ? 'is-on is-me' : ''}
+            onClick={() => setMode('me')}
+          >
+            <PlayerAvatar id={me.avatar} name={me.tag} className="ptour__runswav" size={20} />
+            Your run
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={mode === 'champion'}
+            className={mode === 'champion' ? 'is-on is-champ' : ''}
+            onClick={() => setMode('champion')}
+          >
+            <img src={TROPHY} alt="" />
+            Champion
+          </button>
+        </div>
+      )}
+
+      {shown && (
+        <section className="ptour__stepper" style={{ '--run': gold ? '#ffd979' : '#00baff' } as React.CSSProperties}>
+          {stops.map((s) => {
+            const fought = s.kind === 'win' || s.kind === 'loss'
+            return (
+              <div key={s.round} className={`ptour__sr is-${s.kind}`}>
+                <span className="ptour__srring">
+                  {fought ? (
+                    <PlayerAvatar id={s.opp.avatar} name={s.opp.tag} className="ptour__srav" size={38} />
+                  ) : s.kind === 'pass' ? (
+                    'PASS'
+                  ) : null}
+                </span>
+                <span className="ptour__srwho">
+                  <small>
+                    {board.name(s.round)}
+                    {fought ? ` · ${timeOf(chainTime(s.m.play_time))}` : ''}
+                  </small>
+                  <b>{fought ? s.opp.tag || s.opp.wallet : s.kind === 'pass' ? 'Free pass' : 'Not reached'}</b>
+                </span>
+                <em className="mono">
+                  {s.kind === 'win' ? 'Won' : s.kind === 'loss' ? 'Lost' : s.kind === 'pass' ? '+10' : ''}
+                </em>
+                {fought ? (
+                  <button
+                    type="button"
+                    className="ptour__srplay"
+                    aria-label={`Watch the ${board.name(s.round)} against ${s.opp.tag || s.opp.wallet}`}
+                    onClick={() => onWatch(s.m, s.round)}
+                  />
+                ) : (
+                  <span />
+                )}
+              </div>
+            )
+          })}
+        </section>
+      )}
     </>
   )
 }
