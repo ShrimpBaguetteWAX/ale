@@ -441,7 +441,8 @@ function stateLabel(score: number, state: BoostState): string {
 const BOOST_LINE: Record<Exclude<BoostState, 'ok'>, string> = {
   low: 'Running low — boost soon',
   hidden: 'Off the map — boost it',
-  closed: 'Closed — out of boost',
+  /* Closed reads as off the map: to a player they are the same thing. */
+  closed: 'Off the map — boost it',
 }
 
 function TlmIcon() {
@@ -612,7 +613,15 @@ function DeskLands({
 
       {group('Needs a boost', 'players cannot see or use these, or soon will not', needs)}
       {group('Empty land', 'build a tavern, dungeon or arena and earn from every use', empty)}
-      {group('Running fine', 'nothing to do here for now', fine)}
+      {/*
+        Open, but never finished: a higher boost is more players and bigger
+        rewards, so the heading says so rather than that there is nothing to do.
+      */}
+      {group(
+        'Open for players',
+        'boost higher for bigger rewards and more players',
+        fine,
+      )}
       {inTab.length === 0 && (
         <p className="plands__sum">
           <small>No {tab === 'all' ? 'lands' : buildingLabel(tab, costs).toLowerCase() + 's'} yet.</small>
@@ -647,7 +656,6 @@ function DeskLands({
 const BOOST_BADGE: Record<Exclude<BoostState, 'ok'>, string> = {
   low: 'Running low',
   hidden: 'Off the map',
-  /* Closed is off the map too, as far as a player can tell: one word for both. */
   closed: 'Off the map',
 }
 
@@ -1171,14 +1179,12 @@ function LandSheet({
       {head}
       {state !== 'ok' && (
         <div className={`lsheet__alert is-${state}`}>
-          {/* A desktop says closed and off the map the same way; a phone still tells them apart. */}
-          <b>{state === 'low' ? 'Running low' : state === 'hidden' || side ? 'Off the map' : 'Closed'}</b>
+          {/* Closed and off the map are one thing to a player: both say Off the map. */}
+          <b>{state === 'low' ? 'Running low' : 'Off the map'}</b>
           <small>
             {state === 'low'
               ? 'Under 0.1× players stop seeing it on the map.'
-              : state === 'hidden' || side
-                ? 'Players cannot see it on the map any more. Boost it to bring it back.'
-                : 'Its boost has run out, so nobody can use it.'}
+              : 'Players cannot see it on the map any more. Boost it to bring it back.'}
           </small>
         </div>
       )}
