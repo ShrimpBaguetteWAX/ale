@@ -2526,6 +2526,7 @@ function Results(p: PhoneTournamentProps & {
 }) {
   const { board } = p
   const [picked, setPicked] = useState<number | null>(null)
+  const desk = useContext(Desk)
   const last = board.rounds - 1
   const final = (p.history[last] ?? [])[0]
   const fw = final ? winnerSide(final) : 0
@@ -2557,6 +2558,22 @@ function Results(p: PhoneTournamentProps & {
     if (r.outIn === last) return 'Runner-up'
     return board.name(r.outIn)
   }
+  /* A desktop tells it as a road, the player's own first. */
+  if (desk)
+    return (
+      <RoadResults
+        p={p}
+        champion={champion}
+        runnerUp={runnerUp}
+        semis={semis}
+        final={final}
+        paid={paid}
+        reached={reached}
+        round={round}
+        onRound={setPicked}
+        items={items}
+      />
+    )
   const me = board.runs.get(p.wallet)
   const mePaid = me ? paid(p.wallet) : null
   const started = Number(p.stage?.player_count ?? 0)
@@ -2699,6 +2716,345 @@ function Results(p: PhoneTournamentProps & {
         Hall of Fame
       </button>
       </>,
+            'side',
+          ],
+        ]}
+      />
+    </>
+  )
+}
+
+/* ---------- results on a desktop: the road to the crown ---------- */
+
+type Fought = { kind: 'win' | 'loss'; round: number; m: TournamentMatchup; opp: Entrant }
+type Stop =
+  | Fought
+  | { kind: 'pass'; round: number }
+  | { kind: 'ahead'; round: number }
+
+/** One player's way through the bracket: a stop a round, the rounds after their exit left ahead. */
+function roadOf(wallet: string, history: TournamentMatchup[][], rounds: number, pass: boolean): Stop[] {
+  let out = false
+  return Array.from({ length: rounds }, (_, round): Stop => {
+    if (out) return { kind: 'ahead', round }
+    const m = (history[round] ?? []).find((x) => isIn(x, wallet))
+    if (!m) return round === 0 && pass ? { kind: 'pass', round } : { kind: 'ahead', round }
+    const mine = m.wallet_player1 === wallet ? 1 : 2
+    const won = winnerSide(m) === mine
+    if (!won) out = true
+    return { kind: won ? 'win' : 'loss', round, m, opp: sideOf(m, mine === 1 ? 2 : 1) }
+  })
+}
+
+/** How a run ended, in a line: the wins before it and how far the one who stopped it went. */
+function exitLine(board: Board, stops: Stop[], exit: { opp: Entrant }): string {
+  const wins = stops.filter((x) => x.kind === 'win').length
+  const opp = board.runs.get(exit.opp.wallet)
+  const went = !opp
+    ? ''
+    : opp.outIn === null
+      ? ', who went on to win it all'
+      : opp.outIn === board.rounds - 1
+        ? ', who went on to reach the final'
+        : ''
+  const who = exit.opp.tag || exit.opp.wallet
+  return `${wins ? `${wins} win${wins === 1 ? '' : 's'}, then ${who}` : `Beaten by ${who}`}${went}.`
+}
+
+/**
+ * The finished tournament on a desktop, told as a road.
+ *
+ * The player's own way through the bracket comes first: a stop a round, lit
+ * up to where they went out, with the champion's crown at the end of it, and
+ * their fights underneath to watch again. A switch puts the champion's road
+ * there instead. Their own result and the podium stay on the right whichever
+ * road is shown.
+ */
+function RoadResults({ p, champion, runnerUp, semis, final, paid, reached, round, onRound, items }: {
+  p: PhoneTournamentProps & {
+    board: Board
+    onPrizes: () => void
+    onHof: () => void
+    onWatch: (m: TournamentMatchup, round: number) => void
+  }
+  champion: Entrant | null
+  runnerUp: Entrant | null
+  semis: Entrant[]
+  final: TournamentMatchup | undefined
+  paid: (w: string) => { rank: number; points: number; wax: number; tlm: number; tenth: boolean }
+  reached: (w: string) => string
+  round: number
+  onRound: (r: number) => void
+  items: StripItem[]
+}) {
+  const { board } = p
+  const me = board.runs.get(p.wallet)
+  const meChamp = !!me && champion?.wallet === p.wallet
+  const [mode, setMode] = useState<'me' | 'champion'>(me && !meChamp ? 'me' : 'champion')
+  const shown = mode === 'me' && me ? me : champion ? board.runs.get(champion.wallet) : undefined
+  const gold = !shown || shown.wallet === champion?.wallet
+  const road = { '--road': gold ? '#ffd979' : '#00baff' } as React.CSSProperties
+  const stops = shown ? roadOf(shown.wallet, p.history, board.rounds, shown.pass) : []
+  const reachedAt = stops.reduce((at, s, i) => (s.kind === 'ahead' ? at : i), -1)
+  const crowned = !!shown && shown.wallet === champion?.wallet
+  const exit = stops.find((s): s is Fought => s.kind === 'loss')
+  const mePaid = me ? paid(p.wallet) : null
+  const started = Number(p.stage?.player_count ?? board.players)
+
+  /* The road, in percent of its box: a stop a round across, gently waving, then the crown. */
+  const n = Math.max(1, board.rounds)
+  const xAt = (i: number) => 5 + (i * 80) / n
+  const yAt = (i: number) => (i % 2 ? 60 : 44)
+  const crownX = 92
+  const points = (to: number) =>
+    [...stops.slice(0, to + 1).map((_, i) => `${xAt(i)},${yAt(i)}`), ...(to >= n ? [`${crownX},52`] : [])].join(' ')
+
+  const podium: [Entrant, 'gold' | 'silver' | 'bronze', string][] = []
+  if (champion) podium.push([champion, 'gold', 'Champion'])
+  if (runnerUp) podium.push([runnerUp, 'silver', 'Runner-up'])
+  for (const e of semis) podium.push([e, 'bronze', board.name(board.rounds - 2)])
+
+  return (
+    <>
+      <Head
+        sub={`Finished · ${formatNumber(started)} players · ${board.rounds} rounds`}
+        chip={<PrizesChip onClick={p.onPrizes} />}
+      />
+      <Strip items={items} focus={items.findIndex((i) => i.round === round)} selected={round} onSelect={onRound} />
+      <Cols
+        items={[
+          [
+            <section className="ptour__road" style={road}>
+              <div className="ptour__roadhead">
+                <div>
+                  <span className="ptour__kick ptour__kick--gold">Road to the crown</span>
+                  <h3>
+                    {meChamp
+                      ? 'Your road to the crown'
+                      : gold
+                        ? `${champion?.tag || 'The champion'}'s road to the crown`
+                        : 'Your road'}
+                  </h3>
+                </div>
+                {meChamp ? (
+                  <span className="ptour__roadsolo">
+                    <PlayerAvatar id={me.avatar} name={me.tag} className="ptour__roadswav" size={22} />
+                    Your run · Champion
+                  </span>
+                ) : me ? (
+                  <div className="ptour__roadswitch" role="tablist">
+                    <button
+                      type="button"
+                      role="tab"
+                      aria-selected={mode === 'me'}
+                      className={mode === 'me' ? 'is-on is-me' : ''}
+                      onClick={() => setMode('me')}
+                    >
+                      <PlayerAvatar id={me.avatar} name={me.tag} className="ptour__roadswav" size={22} />
+                      Your run
+                    </button>
+                    <button
+                      type="button"
+                      role="tab"
+                      aria-selected={mode === 'champion'}
+                      className={mode === 'champion' ? 'is-on is-champ' : ''}
+                      onClick={() => setMode('champion')}
+                    >
+                      <img src={TROPHY} alt="" />
+                      Champion's run
+                    </button>
+                  </div>
+                ) : null}
+              </div>
+
+              <div className="ptour__roadmap">
+                <svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+                  <polyline points={points(n)} className="ptour__roadline" />
+                  {reachedAt >= 0 && <polyline points={points(crowned ? n : reachedAt)} className="ptour__roadlit" />}
+                </svg>
+                {stops.map((s, i) => (
+                  <div key={i} className={`ptour__stop is-${s.kind}`} style={{ left: `${xAt(i)}%`, top: `${yAt(i)}%` }}>
+                    {s.kind === 'loss' && (
+                      <span className="ptour__stopout">{shown?.wallet === p.wallet ? 'You went out' : 'Out'}</span>
+                    )}
+                    <small>{board.name(i, true)}</small>
+                    {s.kind === 'win' || s.kind === 'loss' ? (
+                      <button
+                        type="button"
+                        className="ptour__stopring"
+                        title={`Watch: ${board.name(s.round)} against ${s.opp.tag || s.opp.wallet}`}
+                        onClick={() => p.onWatch(s.m, s.round)}
+                      >
+                        <PlayerAvatar id={s.opp.avatar} name={s.opp.tag} className="ptour__stopav" size={46} />
+                      </button>
+                    ) : (
+                      <span className="ptour__stopring">{s.kind === 'pass' ? 'PASS' : ''}</span>
+                    )}
+                    <b>{s.kind === 'win' ? 'Won' : s.kind === 'loss' ? 'Lost' : s.kind === 'pass' ? 'Free pass' : '—'}</b>
+                  </div>
+                ))}
+                {champion && (
+                  <div className={`ptour__roadcrown${crowned ? '' : ' is-dim'}`} style={{ left: `${crownX}%` }}>
+                    <span className="ptour__roadmedal">
+                      <img className="ptour__roadtro" src={TROPHY} alt="" />
+                      <PlayerAvatar id={champion.avatar} name={champion.tag} className="ptour__roadchav" size={78} />
+                    </span>
+                    <b>{champion.tag || champion.wallet}</b>
+                    <small>Champion</small>
+                  </div>
+                )}
+              </div>
+            </section>,
+            'main',
+          ],
+          [
+            <div className="ptour__roadfights" style={road}>
+              {stops.map((s) =>
+                s.kind === 'pass' ? (
+                  <div key={s.round} className="ptour__rf is-win">
+                    <small>{board.name(s.round)}</small>
+                    <div className="ptour__rfvs">
+                      <span className="ptour__rfpass mono">10</span>
+                      <span>
+                        <small>a top seed</small>
+                        <b>Free pass</b>
+                      </span>
+                      <em className="mono">+10</em>
+                    </div>
+                  </div>
+                ) : s.kind === 'win' || s.kind === 'loss' ? (
+                  <button key={s.round} type="button" className={`ptour__rf is-${s.kind}`} onClick={() => p.onWatch(s.m, s.round)}>
+                    <small>
+                      {board.name(s.round)} · {timeOf(chainTime(s.m.play_time))}
+                      <span className="ptour__rfplay" />
+                    </small>
+                    <div className="ptour__rfvs">
+                      <PlayerAvatar id={s.opp.avatar} name={s.opp.tag} className="ptour__rfav" size={38} />
+                      <span>
+                        <small>against</small>
+                        <b>{s.opp.tag || s.opp.wallet}</b>
+                      </span>
+                      <em>{s.kind === 'win' ? 'Won' : 'Lost'}</em>
+                    </div>
+                  </button>
+                ) : null,
+              )}
+              {exit && (
+                <div className="ptour__rfnote">
+                  <PlayerAvatar id={exit.opp.avatar} name={exit.opp.tag} className="ptour__rfav" size={42} />
+                  <span>
+                    <b>Out in the {board.name(exit.round)}</b>
+                    <small>
+                      {exitLine(board, stops, exit)} Every fight can be watched again until the tournament is cleaned up.
+                    </small>
+                  </span>
+                </div>
+              )}
+            </div>,
+            'main',
+          ],
+          [
+            <>
+              <div className="ptour__rhead">
+                <b>Every fight · {board.name(round)}</b>
+                <small>pick a round on the strip</small>
+              </div>
+              <RoundList
+                board={board}
+                round={round}
+                rows={p.history[round] ?? []}
+                wallet={p.wallet}
+                now={p.now}
+                mineOnly={false}
+                current={false}
+                onWatch={(m) => p.onWatch(m, round)}
+              />
+            </>,
+            'main',
+          ],
+          [
+            me && mePaid ? (
+              <section className={`ptour__card ptour__roadyou${meChamp ? ' is-champ' : ''}`}>
+                <span className={`ptour__kick ${meChamp ? 'ptour__kick--gold' : 'ptour__kick--cyan'}`}>
+                  {meChamp ? 'You are the champion' : 'Your result'}
+                </span>
+                <div className="ptour__roadplace">
+                  <b className="mono">{place(mePaid.rank)}</b>
+                  <small>
+                    of {formatNumber(started)} · {mePaid.points} point{mePaid.points === 1 ? '' : 's'}
+                  </small>
+                </div>
+                <div className="ptour__roadrew">
+                  <div className={mePaid.wax > 0 ? '' : 'is-none'}>
+                    <small>WAX · Top 16</small>
+                    <b className="mono">
+                      {mePaid.wax > 0 ? (
+                        <>
+                          <img src={WAX_ICON} alt="" />
+                          {wax(mePaid.wax)}
+                        </>
+                      ) : (
+                        'Not this time'
+                      )}
+                    </b>
+                  </div>
+                  <div>
+                    <small>TLM</small>
+                    <b className="mono">
+                      <img src={TLM_ICON} alt="" />
+                      {tlm(mePaid.tlm)}
+                    </b>
+                  </div>
+                </div>
+                <p className="ptour__fine">
+                  {reached(p.wallet)} · paid when the tournament ended
+                  {mePaid.tenth ? ' · a tenth, without Legend Access' : ''}
+                </p>
+              </section>
+            ) : null,
+            'side',
+          ],
+          [
+            podium.length > 0 && (
+              <section className="ptour__card">
+                <span className="ptour__kick ptour__kick--gold">The podium</span>
+                <div className="ptour__roadpod">
+                  {podium.map(([e, t, role]) => {
+                    const x = paid(e.wallet)
+                    return (
+                      <div key={e.wallet} className={`ptour__rp${e.wallet === p.wallet ? ' is-me' : ''}`}>
+                        <img src={asset(`/assets/icons/trophy-${t}.svg`)} alt="" />
+                        <PlayerAvatar id={e.avatar} name={e.tag} className="ptour__sideav" size={32} />
+                        <span>
+                          {e.tag || e.wallet}
+                          {e.wallet === p.wallet ? ' · you' : ''}
+                          <small>{role}</small>
+                        </span>
+                        <span className="mono">
+                          {wax(x.wax)} WAX
+                          <small>{tlm(x.tlm)} TLM</small>
+                        </span>
+                      </div>
+                    )
+                  })}
+                </div>
+              </section>
+            ),
+            'side',
+          ],
+          [
+            <div className="ptour__roadacts">
+              {final && (
+                <button type="button" className="btn btn--gold" onClick={() => p.onWatch(final, board.rounds - 1)}>
+                  <span className="ptour__playicon" />
+                  Watch the final
+                </button>
+              )}
+              <button type="button" className="ptour__pill ptour__center" onClick={p.onHof}>
+                <img src={TROPHY} alt="" />
+                Hall of Fame
+              </button>
+            </div>,
             'side',
           ],
         ]}

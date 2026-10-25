@@ -7773,3 +7773,515 @@
 .ptour__inrow .ptour__status {
   margin-bottom: 4px;
 }
+
+/* ---------- desktop results: the road to the crown ---------- */
+.ptour__road {
+  position: relative;
+  overflow: hidden;
+  padding: 18px 22px 10px;
+  border-radius: 16px;
+  background:
+    linear-gradient(180deg, rgb(4 9 18 / 55%), rgb(4 9 18 / 94%)),
+    url('/assets/background/bg-arena.png') center / cover;
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 10%);
+}
+.ptour__roadhead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.ptour__roadhead h3 {
+  margin: 4px 0 0;
+  font-family: var(--font-display);
+  font-size: 21px;
+  font-weight: 900;
+  color: var(--white);
+}
+.ptour__roadswitch {
+  display: inline-flex;
+  padding: 4px;
+  border-radius: 14px;
+  background: rgb(4 8 16 / 85%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 14%);
+}
+.ptour__roadswitch button,
+.ptour__roadsolo {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  height: 38px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 10px;
+  font-family: var(--font-display);
+  font-size: 11.5px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: #8f9bb3;
+  background: none;
+  cursor: pointer;
+}
+.ptour__roadswitch button img {
+  width: 22px;
+  height: 22px;
+}
+.ptour__roadswitch button.is-me {
+  color: var(--white);
+  background: rgb(0 186 255 / 18%);
+  box-shadow: inset 0 0 0 1.5px var(--cyan);
+}
+.ptour__roadswitch button.is-champ,
+.ptour__roadsolo {
+  color: #2a1a00;
+  background: linear-gradient(180deg, #ffd979, #f6a800);
+  cursor: default;
+}
+.ptour__roadswitch button.is-champ {
+  cursor: pointer;
+}
+.ptour__roadswav {
+  width: 22px;
+  height: 22px;
+}
+
+/* The map: stops and the crown placed in percent, the line drawn under them. */
+.ptour__roadmap {
+  position: relative;
+  height: 230px;
+  margin-top: 6px;
+}
+.ptour__roadmap svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.ptour__roadline,
+.ptour__roadlit {
+  fill: none;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+.ptour__roadline {
+  stroke: rgb(255 255 255 / 16%);
+  stroke-width: 3;
+}
+.ptour__roadlit {
+  stroke: var(--road);
+  stroke-width: 4;
+  stroke-dasharray: 8 10;
+  filter: drop-shadow(0 0 6px var(--road));
+  animation: ptroad-dash 2.6s linear infinite;
+}
+@keyframes ptroad-dash {
+  to { stroke-dashoffset: -36; }
+}
+.ptour__stop {
+  position: absolute;
+  display: grid;
+  justify-items: center;
+  gap: 5px;
+  width: 96px;
+  transform: translate(-50%, -50%);
+  text-align: center;
+}
+.ptour__stop small {
+  font-family: var(--font-display);
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #8f9bb3;
+}
+.ptour__stop b {
+  font-family: var(--font-display);
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.ptour__stopring {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 900;
+  color: var(--road);
+  background: #0a1424;
+  box-shadow: inset 0 0 0 2px rgb(255 255 255 / 18%);
+}
+button.ptour__stopring {
+  cursor: pointer;
+}
+.ptour__stopav {
+  width: 46px;
+  height: 46px;
+}
+.ptour__stop.is-win .ptour__stopring {
+  box-shadow: 0 0 0 2.5px var(--road), 0 0 18px color-mix(in srgb, var(--road) 50%, transparent);
+}
+.ptour__stop.is-win b,
+.ptour__stop.is-pass b {
+  color: var(--road);
+}
+.ptour__stop.is-pass .ptour__stopring {
+  background: color-mix(in srgb, var(--road) 18%, #0a1424);
+  box-shadow: 0 0 0 2.5px var(--road);
+}
+.ptour__stop.is-loss .ptour__stopring {
+  box-shadow: 0 0 0 2.5px #ff5a6a, 0 0 18px rgb(255 90 106 / 45%);
+}
+.ptour__stop.is-loss .ptour__stopring::after {
+  content: '✕';
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  font-size: 12px;
+  color: var(--white);
+  background: #ff5a6a;
+}
+.ptour__stop.is-loss b {
+  color: #ff5a6a;
+}
+.ptour__stop.is-ahead {
+  opacity: 0.32;
+}
+.ptour__stop.is-ahead .ptour__stopring::before {
+  content: '';
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgb(255 255 255 / 30%);
+}
+.ptour__stopout {
+  position: absolute;
+  top: -26px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-family: var(--font-display);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--white);
+  background: #ff5a6a;
+}
+.ptour__roadcrown {
+  position: absolute;
+  top: 50%;
+  display: grid;
+  justify-items: center;
+  width: 150px;
+  transform: translate(-50%, -50%);
+  text-align: center;
+}
+.ptour__roadmedal {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgb(255 200 90 / 35%), transparent);
+}
+.ptour__roadmedal::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border: 2px dashed rgb(255 217 121 / 60%);
+  border-radius: 50%;
+  animation: ptroad-spin 50s linear infinite;
+}
+@keyframes ptroad-spin {
+  to { transform: rotate(360deg); }
+}
+.ptour__roadchav {
+  width: 78px;
+  height: 78px;
+  box-shadow: 0 0 0 3px #ffd979, 0 0 34px rgb(255 190 60 / 60%);
+}
+.ptour__roadtro {
+  position: absolute;
+  top: -26px;
+  left: 50%;
+  width: 38px;
+  transform: translateX(-50%);
+}
+.ptour__roadcrown b {
+  margin-top: 8px;
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 900;
+  color: var(--white);
+}
+.ptour__roadcrown small {
+  font-family: var(--font-display);
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #ffd979;
+}
+.ptour__roadcrown.is-dim .ptour__roadmedal {
+  opacity: 0.8;
+  filter: saturate(0.7);
+}
+
+/* The run's fights, a card each, to watch again. */
+.ptour__roadfights {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+.ptour__rf {
+  display: grid;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 0;
+  border-radius: 14px;
+  text-align: left;
+  color: inherit;
+  background: rgb(6 12 24 / 86%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 12%);
+}
+button.ptour__rf {
+  cursor: pointer;
+}
+.ptour__rf > small {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: var(--font-display);
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #8f9bb3;
+}
+.ptour__rfplay {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1.5px #ffd979;
+}
+.ptour__rfplay::before {
+  content: '';
+  margin-left: 2px;
+  border-top: 5px solid transparent;
+  border-bottom: 5px solid transparent;
+  border-left: 8px solid #ffd979;
+}
+.ptour__rfvs {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.ptour__rfvs > span {
+  min-width: 0;
+}
+.ptour__rfvs small {
+  display: block;
+  font-size: 11.5px;
+  color: #8f9bb3;
+}
+.ptour__rfvs b {
+  display: block;
+  overflow: hidden;
+  font-size: 14.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--white);
+}
+.ptour__rfvs em {
+  margin-left: auto;
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+.ptour__rfav {
+  width: 38px;
+  height: 38px;
+  flex: none;
+}
+.ptour__rfpass {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  font-size: 11px;
+  color: var(--road);
+  box-shadow: inset 0 0 0 1.5px var(--road);
+}
+.ptour__rf.is-win {
+  box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--road) 70%, transparent);
+}
+.ptour__rf.is-win em {
+  color: var(--road);
+}
+.ptour__rf.is-loss {
+  box-shadow: inset 0 0 0 1.5px rgb(255 90 106 / 65%);
+}
+.ptour__rf.is-loss em {
+  color: #ff5a6a;
+}
+.ptour__rfnote {
+  display: flex;
+  grid-column: 1 / -1;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 16px;
+  border-radius: 14px;
+  background: rgb(255 90 106 / 7%);
+  box-shadow: inset 0 0 0 1px rgb(255 90 106 / 30%);
+}
+.ptour__rfnote b {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 14px;
+  color: var(--white);
+}
+.ptour__rfnote small {
+  font-size: 12.5px;
+  color: #c5cee0;
+}
+
+/* The side: the player's own result first, then the podium. */
+.ptour__roadyou {
+  box-shadow: inset 0 0 0 1.5px var(--cyan), 0 0 30px rgb(0 186 255 / 14%);
+}
+.ptour__roadyou.is-champ {
+  background: linear-gradient(180deg, rgb(246 168 0 / 18%), rgb(6 12 24 / 90%));
+  box-shadow: inset 0 0 0 1.5px #ffd979, 0 0 40px rgb(246 168 0 / 25%);
+}
+.ptour__roadplace {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-top: 6px;
+}
+.ptour__roadplace b {
+  font-size: 32px;
+  font-weight: 900;
+  color: var(--white);
+}
+.ptour__roadplace small {
+  font-size: 13px;
+  color: #8f9bb3;
+}
+.ptour__roadrew {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 12px;
+}
+.ptour__roadrew > div {
+  padding: 10px;
+  border-radius: 10px;
+  background: rgb(255 255 255 / 5%);
+}
+.ptour__roadrew small {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #8f9bb3;
+}
+.ptour__roadrew b {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 5px;
+  font-size: 17px;
+  color: var(--white);
+}
+.ptour__roadrew b img {
+  width: 18px;
+  height: 18px;
+}
+.ptour__roadrew .is-none b {
+  font-family: var(--font-body, inherit);
+  font-size: 13px;
+  font-weight: 700;
+  color: #8f9bb3;
+}
+.ptour__roadpod {
+  margin-top: 8px;
+}
+.ptour__rp {
+  display: grid;
+  grid-template-columns: 26px 32px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 9px;
+  padding: 7px 0;
+  border-top: 1px solid rgb(255 255 255 / 6%);
+}
+.ptour__rp:first-child {
+  border-top: 0;
+}
+.ptour__rp > img {
+  width: 24px;
+}
+.ptour__rp > span:nth-of-type(1) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--white);
+}
+.ptour__rp small {
+  display: block;
+  font-size: 11.5px;
+  color: #8f9bb3;
+}
+.ptour__rp > span:last-child {
+  font-size: 12px;
+  text-align: right;
+  color: var(--white);
+}
+.ptour__rp.is-me > span:nth-of-type(1) {
+  color: #ffd979;
+}
+.ptour__roadacts {
+  display: grid;
+  gap: 12px;
+}
+.ptour__roadacts .btn {
+  width: 100%;
+}
+@media (prefers-reduced-motion: reduce) {
+  .ptour__roadlit,
+  .ptour__roadmedal::before {
+    animation: none;
+  }
+}
+.ptour__roadchav,
+.ptour__stopav,
+.ptour__rfav,
+.ptour__roadswav {
+  border-radius: 50%;
+  object-fit: cover;
+}
