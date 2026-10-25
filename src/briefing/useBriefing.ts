@@ -289,5 +289,5 @@ export function useBriefing(player: Player) {
     [player, parts],
   )
 
-  return { items, roster: parts.roster, pending: pending.size, total: LOADER_KEYS.length }
+  return { items, roster: parts.roster, pools: parts.pools, pending: pending.size, total: LOADER_KEYS.length }
 }

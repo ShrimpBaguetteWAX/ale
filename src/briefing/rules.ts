@@ -52,6 +52,8 @@ export interface BriefItem {
 /** One pool's bar: how full, and what a mine there pays today. */
 export interface BriefMeter {
   pool: string
+  /** The pool's own name — "Dungeon Wins", "Arena Domination". */
+  label: string
   /** "TLM" or "Shards". */
   symbol: string
   icon: string
@@ -240,6 +242,7 @@ export function poolProgressLine(label: string, entries: PoolEntry[]): string {
 export function metersFor(entries: PoolEntry[]): BriefMeter[] {
   return entries.map((e) => ({
     pool: e.pool,
+    label: e.label,
     symbol: SYMBOL[e.type] ?? e.type,
     icon: e.type === 'shards' ? ICON.shards : ICON.tlm,
     progress: e.ready ? 1 : e.progress,
@@ -759,7 +762,7 @@ export function buildBriefing(input: BriefingInput): BriefItem[] {
 
 export const GROUP_ORDER: BriefGroup[] = ['start', 'now', 'play', 'grow']
 
-/* ---------- the road so far ---------- */
+/* ---------- first steps ---------- */
 
 export interface FirstStep {
   key: string
@@ -790,17 +793,6 @@ export function firstSteps(player: Player, roster?: RosterSummary): FirstStep[] 
     { key: 'arena', label: 'Fight in an arena', done: stat(player, 'arenas_played') > 0 },
   ]
 }
-
-/** The lifetime figures worth a glance, in the order a player reads them. */
-export const JOURNEY_STATS: { key: string; label: string; icon: string }[] = [
-  { key: 'dungeons_won', label: 'Dungeons won', icon: ICON.dungeon },
-  { key: 'arenas_won', label: 'Arenas won', icon: ICON.arena },
-  { key: 'recruits', label: 'Recruits', icon: ICON.recruit },
-  { key: 'level_ups', label: 'Level-ups', icon: ICON.level },
-  { key: 'quests_completed', label: 'Quests', icon: ICON.quests },
-  { key: 'tlm_earned', label: 'TLM earned', icon: ICON.tlm },
-  { key: 'shards_earned', label: 'Shards earned', icon: ICON.shards },
-]
 
 /**
  * A "waiting" item as a phone's tile: the amount large, the rest small.

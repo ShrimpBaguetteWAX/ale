@@ -1,133 +1,11 @@
 /*
  * The briefing.
  *
- * A reading page rather than a control panel: a greeting, then what is
- * waiting, then what today holds, then the long game. Each suggestion is one
- * row — a picture, a sentence of why, one way in — and the tone runs down
- * the left edge so a glance tells "take this" from "play this" from "build
- * towards this" without reading a word.
+ * On a desktop, three lanes read left to right — Waiting, Today, Grow — with
+ * warnings across the top of them (.dbrief). On a phone, one column, what is
+ * waiting first (.pbrief). The suggestion card (.bcard) and the first steps
+ * (.brief__steps) are the phone's, for a player who is just starting.
  */
-
-.brief {
-  display: grid;
-  gap: var(--sp-6);
-  align-content: start;
-  /*
-     Narrower than the shell's own cap, because these rows are sentences and
-     1,428px of them is a long way for an eye to travel back. Centred with
-     it, though: left alone, the page kept its 1,080 at the left edge and
-     dropped the whole 348px of slack on the right, which reads as the
-     screen having been pushed aside rather than measured.
-  */
-  max-width: 1080px;
-  margin-inline: auto;
-  width: 100%;
-  padding-bottom: var(--sp-10);
-}
-
-/* ---------- greeting ---------- */
-
-.brief__hero {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: var(--sp-5);
-  align-items: center;
-  padding: var(--sp-6);
-  background:
-    radial-gradient(120% 140% at 0% 0%, rgb(0 186 255 / 16%), transparent 55%),
-    linear-gradient(180deg, var(--surface-3), var(--surface-1));
-  border: 1px solid var(--line);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow);
-}
-
-.brief__avatar {
-  width: 72px;
-  height: 72px;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 2px solid var(--cyan);
-  box-shadow: 0 0 0 4px rgb(0 186 255 / 14%);
-  background: var(--black);
-}
-
-.brief__who {
-  display: grid;
-  gap: var(--sp-1);
-  min-width: 0;
-}
-
-.brief__kicker {
-  font-family: var(--font-display);
-  font-size: var(--fs-xs);
-  font-weight: var(--fw-bold);
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--cyan);
-}
-
-.brief__title {
-  margin: 0;
-  font-family: var(--font-display);
-  font-size: var(--fs-4xl);
-  font-weight: var(--fw-bold);
-  letter-spacing: 0.03em;
-  /*
-     Not the heading yellow, which every other screen uses to shout a
-     section at you. This one says your name and asks nothing: the page it
-     opens is a list of quiet suggestions, and a wall of #faff00 above them
-     set a pitch the rest of the screen never meets. Cooler than white so it
-     sits with the cyan kicker rather than glaring past it.
-  */
-  color: #dce6f5;
-  overflow-wrap: anywhere;
-}
-
-.brief__lead {
-  margin: 0;
-  color: var(--text-dim);
-  font-size: var(--fs-md);
-}
-
-.brief__chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--sp-2);
-  margin-top: var(--sp-2);
-}
-
-.brief__chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  min-height: 30px;
-  padding: 0 12px;
-  font-size: var(--fs-sm);
-  color: var(--text);
-  text-decoration: none;
-  background: rgb(255 255 255 / 5%);
-  border: 1px solid var(--line-soft);
-  border-radius: var(--radius-full);
-}
-.brief__chip img {
-  width: 16px;
-  height: 16px;
-  object-fit: contain;
-}
-a.brief__chip:hover {
-  border-color: var(--line-bright);
-}
-.brief__chip--legend {
-  color: var(--gold);
-  border-color: rgb(246 168 0 / 50%);
-}
-.brief__chip--busy {
-  color: var(--text-faint);
-}
-.brief__chip--busy .spinner {
-  width: 12px;
-  height: 12px;
-}
 
 /* ---------- first steps ---------- */
 
@@ -187,19 +65,7 @@ a.brief__chip:hover {
   border-color: var(--teal);
 }
 
-/* ---------- groups ---------- */
-
-.brief__group {
-  display: grid;
-  gap: var(--sp-3);
-}
-
-.brief__grouphead {
-  display: flex;
-  align-items: baseline;
-  flex-wrap: wrap;
-  gap: var(--sp-1) var(--sp-3);
-}
+/* ---------- a heading, a list ---------- */
 
 .brief__h2 {
   margin: 0;
@@ -209,26 +75,6 @@ a.brief__chip:hover {
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--white);
-}
-
-.brief__grouphint {
-  font-size: var(--fs-sm);
-  color: var(--text-faint);
-}
-
-.brief__morelink {
-  margin-left: auto;
-  font-size: var(--fs-sm);
-  color: var(--cyan);
-}
-
-.brief__clear {
-  margin: 0;
-  padding: var(--sp-4) var(--sp-5);
-  color: var(--text-dim);
-  background: rgb(14 212 168 / 6%);
-  border: 1px dashed rgb(14 212 168 / 40%);
-  border-radius: var(--radius-md);
 }
 
 .brief__list {
@@ -436,60 +282,9 @@ a.brief__chip:hover {
   font-weight: var(--fw-medium);
 }
 
-/* ---------- the road so far ---------- */
-
-.brief__journey {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-  gap: var(--sp-2);
-}
-
-.brief__stat {
-  display: grid;
-  grid-template-columns: 22px 1fr;
-  grid-template-rows: auto auto;
-  column-gap: var(--sp-2);
-  align-items: center;
-  padding: 10px 12px;
-  background: var(--surface-1);
-  border: 1px solid var(--line-soft);
-  border-radius: var(--radius-sm);
-}
-.brief__stat img {
-  grid-row: span 2;
-  width: 22px;
-  height: 22px;
-  object-fit: contain;
-}
-.brief__stat strong {
-  font-size: var(--fs-md);
-  color: var(--white);
-}
-.brief__stat span {
-  font-size: var(--fs-xs);
-  color: var(--text-faint);
-}
-
 /* ---------- phone ---------- */
 
 @media (max-width: 719px) {
-  .brief {
-    gap: var(--sp-5);
-  }
-
-  .brief__hero {
-    grid-template-columns: 1fr;
-    justify-items: start;
-    gap: var(--sp-3);
-    padding: var(--sp-4);
-  }
-  .brief__avatar {
-    width: 56px;
-    height: 56px;
-  }
-  .brief__title {
-    font-size: var(--fs-xl);
-  }
 
   .brief__steps {
     padding: var(--sp-4);
@@ -528,9 +323,6 @@ a.brief__chip:hover {
     grid-template-columns: 1fr;
   }
 
-  .brief__journey {
-    grid-template-columns: 1fr 1fr;
-  }
 }
 
 /* ---------- phone: what is waiting first ---------- */
@@ -745,4 +537,561 @@ a.brief__chip:hover {
   stroke-width: 2;
   stroke-linecap: round;
   stroke-linejoin: round;
+}
+
+/* ---------- desktop: three lanes ---------- */
+
+.dbrief {
+  container: dbrief / inline-size;
+  display: grid;
+  gap: var(--sp-4);
+  align-content: start;
+  width: 100%;
+  max-width: 1320px;
+  margin-inline: auto;
+  padding-bottom: var(--sp-10);
+}
+
+/* A greeting line, the account's chips at its end. */
+.dbrief__hello {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3);
+}
+.dbrief__avatar {
+  flex: none;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px var(--cyan);
+}
+.dbrief__who {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+}
+.shell .main__inner .dbrief h1.dbrief__name {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  font-size: var(--fs-lg);
+  letter-spacing: 0.06em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-shadow: none;
+}
+.shell .main__inner .dbrief h1.dbrief__name::after {
+  display: none;
+}
+.dbrief__line {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--fs-sm);
+  color: var(--text-faint);
+}
+.dbrief__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.dbrief__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 11px;
+  border-radius: 999px;
+  font-size: var(--fs-xs);
+  color: var(--text);
+  background: rgb(255 255 255 / 5%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 14%);
+}
+.dbrief__chip:hover {
+  text-decoration: none;
+  background: rgb(255 255 255 / 9%);
+}
+.dbrief__chip img {
+  width: 15px;
+  height: 15px;
+  object-fit: contain;
+}
+.dbrief__chip.is-legend {
+  box-shadow: inset 0 0 0 1px rgb(246 168 0 / 55%);
+}
+
+/* Start here: across the board, the first steps beside it. */
+.dbrief__start {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 420px);
+  gap: var(--sp-5);
+  align-items: center;
+  padding: 18px 20px;
+  border-radius: 16px;
+  background:
+    radial-gradient(80% 140% at 0% 0%, rgb(0 186 255 / 16%), transparent 60%),
+    rgb(8 14 28 / 76%);
+  box-shadow: inset 0 0 0 1.5px rgb(0 186 255 / 50%);
+}
+.dbrief__start:not(:has(.dbrief__steps)) {
+  grid-template-columns: minmax(0, 1fr);
+}
+.dbrief__kick {
+  font-family: var(--font-display);
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--cyan);
+}
+.shell .main__inner .dbrief .dbrief__starttitle {
+  margin: 4px 0 6px;
+  font-family: var(--font-display);
+  font-size: var(--fs-lg);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: var(--white);
+}
+.dbrief__startbody {
+  max-width: 62ch;
+  margin: 0 0 var(--sp-3);
+  font-size: var(--fs-sm);
+  line-height: 1.55;
+  color: var(--text-dim);
+}
+.dbrief__startacts {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+}
+.dbrief__more {
+  font-size: var(--fs-sm);
+  color: var(--cyan);
+}
+
+.dbrief__steps {
+  display: grid;
+  gap: 8px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgb(255 255 255 / 4%);
+}
+.dbrief__stepshead {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: var(--fw-bold);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.dbrief__stepshead em {
+  font-family: var(--font-body);
+  font-size: var(--fs-xs);
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.dbrief__steps ol {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.dbrief__steps li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--fs-sm);
+  color: var(--text);
+}
+.dbrief__stepnum {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--text-faint);
+  background: rgb(255 255 255 / 8%);
+}
+.dbrief__steps li.is-next .dbrief__stepnum {
+  color: var(--navy);
+  background: var(--cyan);
+}
+.dbrief__steps li.is-done {
+  color: var(--text-faint);
+}
+.dbrief__steps li.is-done .dbrief__stepnum {
+  color: var(--navy);
+  background: var(--teal);
+}
+/* Once there is a team: the steps as one quiet line. */
+.dbrief__steps.is-line {
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--sp-4);
+  padding: 9px 14px;
+  background: rgb(8 14 28 / 66%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 8%);
+}
+.dbrief__steps.is-line .dbrief__stepshead em {
+  margin-left: 8px;
+}
+.dbrief__steps.is-line ol {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+}
+
+/* A warning: the phone's slim bar, across all three lanes. */
+.dbrief__warns {
+  display: grid;
+  gap: 6px;
+}
+.dbrief__warn {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: 8px 10px 8px 12px;
+  border-radius: 11px;
+  background: linear-gradient(90deg, rgb(255 1 255 / 14%), rgb(8 14 28 / 70%) 60%);
+  box-shadow: inset 0 0 0 1px rgb(255 1 255 / 38%);
+}
+.dbrief__warn > img {
+  flex: none;
+  width: 26px;
+  height: 26px;
+  object-fit: contain;
+}
+.dbrief__warntext {
+  display: flex;
+  flex: 1;
+  align-items: baseline;
+  gap: 10px;
+  min-width: 0;
+  white-space: nowrap;
+}
+.dbrief__warntext b {
+  flex: none;
+  font-size: var(--fs-sm);
+}
+.dbrief__warntext small {
+  flex: none;
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-bold);
+  color: var(--magenta);
+}
+.dbrief__warntext span {
+  min-width: 0;
+  overflow: hidden;
+  font-size: var(--fs-xs);
+  color: var(--text-faint);
+  text-overflow: ellipsis;
+}
+.dbrief__warngo {
+  flex: none;
+  --btn-bg: rgb(255 1 255 / 22%);
+  --btn-line: rgb(255 1 255 / 60%);
+  --btn-fg: var(--white);
+}
+
+/* ---------- the lanes ---------- */
+
+.dbrief__lanes {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.2fr) minmax(0, 1fr);
+  gap: var(--sp-4);
+  align-items: start;
+}
+.dbrief__lane {
+  display: grid;
+  gap: 8px;
+  align-content: start;
+  min-width: 0;
+}
+.shell .main__inner .dbrief .dbrief__cap {
+  display: flex;
+  justify-content: space-between;
+  margin: 2px 2px 0;
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: var(--fw-bold);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.dbrief__cap span {
+  font-family: var(--font-body);
+  letter-spacing: 0.04em;
+  color: var(--text-dim);
+}
+
+/* What can be collected: gold, one a row, the button at the end. */
+.dbrief__tile {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0 var(--sp-3);
+  padding: 11px 12px 11px 13px;
+  border-radius: 12px;
+  background: linear-gradient(110deg, rgb(246 168 0 / 15%), rgb(8 14 28 / 74%) 60%);
+  box-shadow: inset 0 0 0 1px rgb(246 168 0 / 32%);
+}
+.dbrief__tileicon {
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+}
+.dbrief__tiletext {
+  display: grid;
+  min-width: 0;
+}
+.dbrief__amount {
+  overflow: hidden;
+  font-family: var(--font-display);
+  font-size: 19px;
+  font-weight: 800;
+  line-height: 1.2;
+  color: #ffd979;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.dbrief__amount small {
+  margin-left: 4px;
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: var(--fw-bold);
+}
+.dbrief__tilelabel {
+  font-size: var(--fs-xs);
+  line-height: 1.35;
+  color: var(--text-faint);
+}
+.dbrief__tilelabel.is-only {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-bold);
+  color: var(--white);
+}
+.dbrief__tile > .btn {
+  min-width: 112px;
+}
+
+/* The pools, a row each and a column a currency. */
+.dbrief__pools {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: minmax(0, 1fr) 72px 72px;
+  margin-top: 10px;
+  padding-top: 4px;
+  border-top: 1px solid rgb(246 168 0 / 18%);
+  font-size: var(--fs-xs);
+  color: var(--text-faint);
+}
+.dbrief__prow {
+  display: contents;
+}
+.dbrief__pools > span,
+.dbrief__prow > span {
+  padding: 4px 0;
+}
+.dbrief__phead {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  font-family: var(--font-display);
+  font-size: 9.5px;
+  font-weight: var(--fw-bold);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+.dbrief__phead img {
+  width: 13px;
+  height: 13px;
+}
+.dbrief__pname {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.dbrief__pcell {
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 800;
+  text-align: right;
+  color: var(--text-dim);
+}
+.dbrief__pcell.is-ready {
+  color: #ffd979;
+}
+.dbrief__pcell.is-none {
+  font-weight: var(--fw-medium);
+}
+
+/* Nothing waiting: the pools, filling. */
+.dbrief__calm {
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+  border-radius: 12px;
+  background: rgb(8 14 28 / 66%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 8%);
+}
+.dbrief__calm > b {
+  font-family: var(--font-display);
+  font-size: 12.5px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: var(--white);
+}
+.dbrief__calm > small {
+  margin-bottom: 2px;
+  font-size: var(--fs-xs);
+  color: var(--text-faint);
+}
+.dbrief__meter {
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 3px 8px;
+  font-size: var(--fs-xs);
+  color: var(--text-faint);
+}
+.dbrief__meter img {
+  width: 15px;
+  height: 15px;
+}
+.dbrief__meter b {
+  font-family: var(--font-display);
+  font-size: 10.5px;
+  font-weight: 800;
+  color: var(--text);
+}
+.dbrief__meter.is-ready b {
+  color: #ffd979;
+}
+.dbrief__meterbar {
+  grid-column: 2 / -1;
+  height: 4px;
+  overflow: hidden;
+  border-radius: 3px;
+  background: rgb(255 255 255 / 8%);
+}
+.dbrief__meterbar i {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #8a6a20, var(--gold));
+}
+
+/* What today holds, and the slower things: a card, one way in. */
+.dbrief__card {
+  display: grid;
+  grid-template-columns: 26px minmax(0, 1fr);
+  gap: 6px 10px;
+  align-items: center;
+  padding: 11px 12px;
+  border-radius: 12px;
+  background: rgb(8 14 28 / 72%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 10%);
+}
+.dbrief__card > img {
+  width: 26px;
+  height: 26px;
+  object-fit: contain;
+}
+.dbrief__card > b {
+  font-size: var(--fs-sm);
+  line-height: 1.3;
+}
+.dbrief__cardfoot {
+  display: flex;
+  grid-column: 2;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+.dbrief__cardfoot small {
+  min-width: 0;
+  overflow: hidden;
+  font-size: var(--fs-xs);
+  color: var(--text-faint);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.dbrief__cardfoot small.is-hot {
+  color: #ffd979;
+}
+.dbrief__cardfoot .btn {
+  flex: none;
+}
+.dbrief__card.is-done {
+  background: rgb(14 212 168 / 6%);
+  box-shadow: inset 0 0 0 1px rgb(14 212 168 / 30%);
+}
+.dbrief__card.is-done > b {
+  color: #bff5e6;
+}
+.dbrief__empty {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 12px;
+  font-size: var(--fs-xs);
+  color: var(--text-dim);
+  background: rgb(8 14 28 / 40%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 7%);
+}
+
+/* Still reading: glass the size of what will land there. */
+.dbrief__sk {
+  border-radius: 12px;
+  background: linear-gradient(90deg, rgb(255 255 255 / 4%) 20%, rgb(255 255 255 / 8%) 40%, rgb(255 255 255 / 4%) 60%) 0 0 / 300% 100%;
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 6%);
+  animation: dbrief-sheen 1.6s linear infinite;
+}
+.dbrief__sk--tile {
+  height: 56px;
+}
+.dbrief__sk--card {
+  height: 76px;
+}
+@keyframes dbrief-sheen {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -100% 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dbrief__sk {
+    animation: none;
+  }
+}
+:root[data-fx='low'] .dbrief__sk {
+  animation: none;
+}
+
+/* Too narrow for three: Waiting across the top, Today and Grow under it. */
+@container dbrief (max-width: 900px) {
+  .dbrief__lanes {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+  .dbrief__lane--wait,
+  .dbrief__lane--today:last-child {
+    grid-column: 1 / -1;
+  }
+  .dbrief__start {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
