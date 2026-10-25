@@ -207,6 +207,41 @@ function gainAmount(item: ShopItem): number {
   return item.gain_gem || item.gain_dust || item.gain_action_points || item.gain_legend_acct_seconds || 0
 }
 
+/* The unit a price or a reward is counted in, for a sentence. */
+function costUnit(item: ShopItem): string {
+  if (isWaxPriced(item)) return 'WAX'
+  return item.cost_gem ? 'gems' : item.cost_dust ? 'credits' : 'energy'
+}
+function gainUnit(item: ShopItem): string {
+  return item.gain_gem ? 'gems' : item.gain_dust ? 'credits' : 'energy'
+}
+
+/**
+ * What one unit of the price buys: "2.04 gems per WAX", "1,200 credits per
+ * gem" — or, for a Legend pass, which is time, "833 gems a month". The badge
+ * says how much better a rung is; this says what it is, so two rows can be
+ * compared without arithmetic. Nothing for a free item.
+ */
+export function rateOf(item: ShopItem): string | undefined {
+  const cost = costAmount(item)
+  const gain = gainAmount(item)
+  if (!cost || !gain) return undefined
+  if (item.gain_legend_acct_seconds > 0) {
+    const months = item.gain_legend_acct_seconds / (30 * 86400)
+    return `${Math.round(cost / months).toLocaleString(NUM_LOCALE)} ${costUnit(item)} a month`
+  }
+  const per = gain / cost
+  const figure =
+    per >= 100
+      ? Math.round(per).toLocaleString(NUM_LOCALE)
+      : per.toLocaleString(NUM_LOCALE, {
+          minimumFractionDigits: per >= 10 ? 1 : 2,
+          maximumFractionDigits: per >= 10 ? 1 : 2,
+        })
+  const unit = costUnit(item)
+  return `${figure} ${gainUnit(item)} per ${unit === 'gems' ? 'gem' : unit === 'credits' ? 'credit' : unit}`
+}
+
 /**
  * How much better a rung of the ladder is than the bottom one, as a short
  * badge: "+22%" more of the reward for the same money, or "save 17%" on a

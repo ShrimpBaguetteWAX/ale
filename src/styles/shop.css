@@ -215,29 +215,6 @@
   max-width: 62ch;
 }
 
-.benefits {
-  display: grid;
-  gap: var(--sp-2);
-  margin: var(--sp-3) 0 0;
-  padding: 0;
-  list-style: none;
-  font-size: var(--fs-sm);
-  color: var(--text-dim);
-}
-.benefits li {
-  display: grid;
-  grid-template-columns: 16px 1fr;
-  gap: var(--sp-2);
-}
-.benefits li::before {
-  content: '';
-  width: 8px;
-  height: 8px;
-  margin-top: 7px;
-  border-radius: 50%;
-  background: var(--gold);
-}
-
 /* ---------- WAX balance ---------- */
 
 /*
@@ -522,7 +499,7 @@
 
 /* ---------- Value badges and the short benefits ---------- */
 
-/* "+22%", "save 17%": a phone's rows carry them; a desktop card does not. */
+/* "+22%", "save 17%": rows carry them, on either size. */
 .pack__value {
   display: none;
 }
@@ -538,14 +515,9 @@
     gap: 10px;
   }
 
-  /* SHOP and the Legend tag on one line; the ladder line and the blurb go —
-     each row's button already says what it costs. */
+  /* SHOP and the Legend tag on one line. */
   .shop__head {
     flex-wrap: nowrap;
-  }
-  .shop__ladder,
-  .shop__blurb {
-    display: none;
   }
   .shop__status {
     display: flex;
@@ -721,9 +693,6 @@
   .legendcard .panel__title {
     display: none;
   }
-  .benefits--long {
-    display: none;
-  }
   /* Trial against Legend, three columns, the Legend one in gold. */
   .legendvs {
     display: grid;
@@ -819,3 +788,348 @@
 .outpost__rarity--legendary { --dot: #ffb23e; }
 .outpost__rarity--mythical { --dot: #ff4f8b; }
 
+/* ---------- A desktop: the phone's rows, and the currencies beside them ---------- */
+
+@media (min-width: 720px) {
+  .shop__inner {
+    container: shop / inline-size;
+  }
+
+  .shop__board {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 340px;
+    gap: var(--sp-5);
+    align-items: start;
+  }
+  .shop__main {
+    display: grid;
+    gap: var(--sp-4);
+    align-content: start;
+    min-width: 0;
+  }
+
+  /* One panel of rows: art, what you get, its rate, the price on the right. */
+  .shop__main .packgrid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+    overflow: hidden;
+    border-radius: 14px;
+    background: rgb(8 14 28 / 72%);
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 10%);
+  }
+  .shop__main .pack {
+    flex-direction: row;
+    align-items: center;
+    gap: var(--sp-4);
+    padding: 12px 16px 12px 12px;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+  }
+  .shop__main .pack + .pack {
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 7%);
+  }
+  .shop__main .pack:hover {
+    background: rgb(255 255 255 / 3%);
+  }
+  .shop__main .pack__art {
+    flex: none;
+    width: 76px;
+    height: 76px;
+    aspect-ratio: auto;
+    overflow: hidden;
+    border-radius: 12px;
+  }
+  .shop__main .pack__badge {
+    left: 3px;
+    top: 3px;
+    padding: 1px 4px;
+    font-size: 8px;
+    letter-spacing: 0.04em;
+  }
+  .shop__main .pack__body {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    align-items: center;
+    gap: 4px var(--sp-4);
+    flex: 1;
+    min-width: 0;
+    padding: 0;
+  }
+  .shop__main .pack__title {
+    grid-column: 1;
+    min-height: 0;
+    overflow: hidden;
+    font-family: var(--font-display);
+    font-size: 12px;
+    font-weight: var(--fw-bold);
+    letter-spacing: 0.06em;
+    color: #dfe6f2;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+  .shop__main .pack__offer {
+    grid-column: 1;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .shop__main .pack__value {
+    display: inline-block;
+    padding: 2px 7px;
+    border-radius: 6px;
+    font-family: var(--font-body);
+    font-size: 11px;
+    font-weight: var(--fw-bold);
+    letter-spacing: 0.02em;
+    color: #5ff0c9;
+    background: rgb(14 212 168 / 14%);
+    box-shadow: inset 0 0 0 1px rgb(14 212 168 / 40%);
+  }
+  .shop__main .pack__rate {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    max-width: 10em;
+    font-size: var(--fs-xs);
+    line-height: 1.35;
+    color: var(--text-faint);
+    text-align: right;
+  }
+  .shop__main .pack .btn {
+    grid-column: 3;
+    grid-row: 1 / span 2;
+    width: auto;
+    min-width: 150px;
+    height: 40px;
+    margin: 0;
+    padding: 0 16px;
+  }
+  .shop__main .pack--loading {
+    height: 100px;
+    aspect-ratio: auto;
+  }
+
+  /* The Outpost: rows two across, each edged in its rarity's colour. */
+  .shop__main .outpost .packgrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    overflow: visible;
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+  }
+  .shop__main .outpost__card {
+    --edge: rgb(255 255 255 / 20%);
+  }
+  .shop__main .outpost__card,
+  .shop__main .outpost .pack + .pack {
+    gap: 12px;
+    padding: 8px 12px 8px 8px;
+    border-radius: 12px;
+    background: rgb(8 14 28 / 72%);
+    box-shadow:
+      inset 0 0 0 1px rgb(255 255 255 / 9%),
+      inset 3px 0 0 var(--edge);
+  }
+  .shop__main .outpost .outpost__card--rare { --edge: #4aa8ff; }
+  .shop__main .outpost .outpost__card--epic { --edge: #b06bff; }
+  .shop__main .outpost .outpost__card--legendary { --edge: #ffb23e; }
+  .shop__main .outpost .outpost__card--mythical { --edge: #ff4f8b; }
+  .shop__main .outpost__card .pack__art {
+    width: 54px;
+    height: 54px;
+    border-radius: 8px;
+  }
+  /* The card's picture, zoomed past its frame, as on a phone. */
+  .shop__main .outpost__card .pack__art img {
+    transform: scale(1.6);
+    transform-origin: center 30%;
+  }
+  .shop__main .outpost__card .pack__badge {
+    display: none;
+  }
+  .shop__main .outpost__card .pack__body {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 3px 0;
+  }
+  .shop__main .outpost__card .pack__title {
+    grid-column: 1 / 3;
+  }
+  .shop__main .outpost__meta,
+  .shop__main .outpost__window {
+    grid-row: 2;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+  .shop__main .outpost__meta {
+    grid-column: 1;
+    max-width: 150px;
+  }
+  .shop__main .outpost__window {
+    grid-column: 2;
+  }
+  .shop__main .outpost__window::before {
+    content: ' · ';
+    white-space: pre;
+  }
+  .shop__main .outpost__card .btn,
+  .shop__main .outpost__soon {
+    grid-column: 3;
+    grid-row: 1 / span 2;
+    min-width: 128px;
+    margin-left: 10px;
+  }
+  .shop__main .outpost__soon {
+    min-height: 40px;
+    padding: 0 10px;
+  }
+  .outpost__rarity--all::before {
+    display: none;
+  }
+
+  /* Legend: Trial against Legend, the Legend column in gold. */
+  .shop__main .legendcard {
+    max-width: none;
+  }
+  .shop__main .legendvs {
+    display: grid;
+    margin-top: var(--sp-2);
+  }
+  .shop__main .legendvs__row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 110px 130px;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 0;
+    font-size: var(--fs-sm);
+    color: #dfe6f2;
+  }
+  .shop__main .legendvs__row + .legendvs__row {
+    border-top: 1px solid rgb(255 255 255 / 7%);
+  }
+  .shop__main .legendvs__row--head {
+    padding: 2px 0 6px;
+    font-family: var(--font-display);
+    font-size: 9.5px;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+  }
+  .shop__main .legendvs__row > span:nth-child(n + 2) {
+    text-align: center;
+  }
+  .shop__main .legendvs__trial {
+    color: var(--text-faint);
+  }
+  .shop__main .legendvs__legend {
+    font-weight: var(--fw-bold);
+    color: #ffcf4d;
+  }
+
+  /* ---------- What each currency is for ---------- */
+
+  .cguide {
+    display: grid;
+    gap: 8px;
+    align-content: start;
+  }
+  .shell .main__inner .cguide .cguide__title {
+    margin: 0 2px 2px;
+    font-family: var(--font-display);
+    font-size: 10px;
+    font-weight: var(--fw-bold);
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+  }
+  .cguide__card {
+    padding: 12px 14px;
+    border-radius: 12px;
+    background: rgb(8 14 28 / 72%);
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 9%);
+  }
+  .cguide__card.is-here {
+    background: linear-gradient(160deg, rgb(0 186 255 / 10%), rgb(8 14 28 / 78%) 55%);
+    box-shadow: inset 0 0 0 1.5px rgb(0 186 255 / 55%);
+  }
+  .cguide__head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .cguide__head img {
+    flex: none;
+    width: 20px;
+    height: 20px;
+    object-fit: contain;
+  }
+  .cguide__head b {
+    font-family: var(--font-display);
+    font-size: 12.5px;
+    letter-spacing: 0.04em;
+  }
+  .cguide__head em {
+    padding: 1px 7px;
+    border-radius: 999px;
+    font-size: 10.5px;
+    font-style: normal;
+    font-weight: var(--fw-bold);
+    color: var(--cyan);
+    background: rgb(0 186 255 / 12%);
+  }
+  .cguide__bal {
+    margin-left: auto;
+    font-family: var(--font-display);
+    font-size: 12.5px;
+    font-weight: var(--fw-bold);
+    color: var(--white);
+    white-space: nowrap;
+  }
+  .cguide__uses {
+    display: grid;
+    gap: 3px;
+    margin: 8px 0 0;
+    padding: 0;
+    list-style: none;
+    font-size: 12.5px;
+    line-height: 1.4;
+    color: #dfe6f2;
+  }
+  .cguide__uses li {
+    display: grid;
+    grid-template-columns: 12px minmax(0, 1fr);
+  }
+  .cguide__uses li::before {
+    content: '';
+    width: 5px;
+    height: 5px;
+    margin-top: 7px;
+    border-radius: 50%;
+    background: var(--text-faint);
+  }
+  .cguide__card.is-here .cguide__uses li::before {
+    background: var(--cyan);
+  }
+}
+
+/* Too narrow for a column beside the list: the guide goes under it, two across. */
+@container shop (max-width: 900px) {
+  .shop__board {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .cguide {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .shell .main__inner .cguide .cguide__title {
+    grid-column: 1 / -1;
+  }
+  .shop__main .outpost .packgrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

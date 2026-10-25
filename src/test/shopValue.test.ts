@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { dailyFlasks, legendLeft, valueBadges } from '@/shop/rules'
+import { dailyFlasks, legendLeft, rateOf, valueBadges } from '@/shop/rules'
 import type { ShopItem } from '@/shop/types'
 
 /* Just enough of a shop row to price it. */
@@ -83,5 +83,19 @@ describe('the Legend time left', () => {
   })
   it('says so once it has run out', () => {
     expect(legendLeft(0)).toBe('Ended')
+  })
+})
+
+describe('the rate on a desktop row', () => {
+  it('says what one unit of the price buys, to two places below ten', () => {
+    expect(rateOf(item({ cost_wax: '49.00000000 WAX', gain_gem: 100 }))).toBe('2.04 gems per WAX')
+    expect(rateOf(item({ cost_wax: '499.00000000 WAX', gain_gem: 1100 }))).toBe('2.20 gems per WAX')
+    expect(rateOf(item({ cost_gem: 599, gain_dust: 40000 }))).toBe('66.8 credits per gem')
+    expect(rateOf(item({ cost_gem: 59999, gain_dust: 6000000 }))).toBe('100 credits per gem')
+  })
+
+  it('prices a Legend pass by the month, and says nothing for a free flask', () => {
+    expect(rateOf(item({ cost_gem: 2499, gain_legend_acct_seconds: 90 * 86400 }))).toBe('833 gems a month')
+    expect(rateOf(item({ gain_action_points: 100 }))).toBeUndefined()
   })
 })

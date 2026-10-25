@@ -118,7 +118,16 @@ export function OutpostTab() {
       ? upcoming
       : active.filter((e) => (e.template?.rarity || 'Other') === shownRarity)
   const pickRarity = setRarity
-  const openShown = phone ? (shownRarity === SOON ? [] : inRarity) : active
+  /* A desktop filters the one list instead, and starts on all of it. */
+  const [deskRarity, setDeskRarity] = useState<string | null>(null)
+  const deskShown = rarities.some(([r]) => r === deskRarity) ? deskRarity : null
+  const openShown = phone
+    ? shownRarity === SOON
+      ? []
+      : inRarity
+    : deskShown
+      ? active.filter((e) => (e.template?.rarity || 'Other') === deskShown)
+      : active
   const soonShown = phone ? (shownRarity === SOON ? inRarity : []) : upcoming
 
   const redeem = (entry: OutpostOffer) => {
@@ -129,14 +138,15 @@ export function OutpostTab() {
       `${entry.template?.name || 'Offer'} redeemed — the NFT is in your wallet.`,
       {
         /*
-           Nothing of ours moves, so there is no table of ours to drop: the
-           shards are the Outpost's row and the NFT goes straight to the
-           wallet. Re-reading this screen's own query is the whole of it.
+           Nothing of ours moves: the shards are the Outpost's row and the NFT
+           goes straight to the wallet. That shard row is dropped all the same,
+           because the desktop's currency guide shows the balance too.
         */
         intervalMs: 700,
         onSettled: async () => {
           await board.reload()
         },
+        dirties: ['outpostPoints'],
       },
     )
   }
@@ -152,6 +162,8 @@ export function OutpostTab() {
         can reach. Named in full because this figure is not on the player row
         with the gems and credits — it is the Outpost's own ledger.
       */}
+      {/* On a desktop the balance is in the currency guide beside the shop. */}
+      {phone && (
       <div className="waxbar outpost__bar">
         <span className="waxbar__label">Your Alien Worlds shards</span>
         <span className="waxbar__value">
@@ -164,6 +176,7 @@ export function OutpostTab() {
           )}
         </span>
       </div>
+      )}
 
       {!registered && !board.loading && (
         <p className="hint outpost__note">
@@ -218,6 +231,34 @@ export function OutpostTab() {
             Open now
             {active.length > 0 && <span className="outpost__count">{active.length}</span>}
           </h2>
+          )}
+
+          {!phone && rarities.length > 1 && (
+            <div className="outpost__rarities" role="tablist" aria-label="Rarity">
+              <button
+                type="button"
+                role="tab"
+                className="outpost__rarity outpost__rarity--all"
+                aria-selected={deskShown === null}
+                onClick={() => setDeskRarity(null)}
+              >
+                All
+                <i>{active.length}</i>
+              </button>
+              {rarities.map(([r, n]) => (
+                <button
+                  type="button"
+                  key={r}
+                  role="tab"
+                  className={`outpost__rarity outpost__rarity--${r.toLowerCase()}`}
+                  aria-selected={deskShown === r}
+                  onClick={() => setDeskRarity(r)}
+                >
+                  {r}
+                  <i>{n}</i>
+                </button>
+              ))}
+            </div>
           )}
 
           {active.length === 0 ? (
@@ -334,7 +375,13 @@ function OfferCard({
   const art = offerArt(template)
 
   return (
-    <article className={'pack outpost__card' + (dim ? ' pack--blocked' : '')}>
+    <article
+      className={
+        'pack outpost__card' +
+        (template?.rarity ? ' outpost__card--' + template.rarity.toLowerCase() : '') +
+        (dim ? ' pack--blocked' : '')
+      }
+    >
       <div className="pack__art">
         {art ? (
           <img src={art} alt="" loading="lazy" decoding="async" />

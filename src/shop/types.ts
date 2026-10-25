@@ -40,26 +40,22 @@ export interface ShopCooldown {
  * which follows the economy: WAX buys gems, gems buy credits and Legend,
  * credits buy energy.
  */
-export const SHOP_CATEGORIES: { key: string; label: string; blurb: string }[] = [
+export const SHOP_CATEGORIES: { key: string; label: string }[] = [
   {
     key: 'gems',
     label: 'Gems',
-    blurb: 'Bought with WAX. Gems buy credits and Legend passes.',
   },
   {
     key: 'credits',
     label: 'Credits',
-    blurb: 'Bought with gems. Credits buy energy.',
   },
   {
     key: 'flasks',
     label: 'Energy',
-    blurb: 'Bought with credits, plus a free flask every day.',
   },
   {
     key: 'account',
     label: 'Legend',
-    blurb: 'Bought with gems. Unlocks the benefits below.',
   },
   /*
      Last, and outside the ladder the other three describe. `uspts.worlds` is
@@ -71,25 +67,14 @@ export const SHOP_CATEGORIES: { key: string; label: string; blurb: string }[] = 
   {
     key: 'outpost',
     label: 'AW Outpost',
-    blurb: 'Alien Worlds offers, paid for with the Alien Worlds shards',
   },
 ]
 
 /**
- * What a Legend pass gets you, in the original's own words. These are not on
- * chain — the contract only stores the seconds granted.
- */
-export const LEGEND_BENEFITS = [
-  'Auto-reveal fighters instantly and for free whenever you visit a tavern',
-  'Claim full rewards instead of the 10% limit on trial accounts',
-  'Boost your CPU for 24 hours, up to 25 times a week',
-  'A larger free daily energy flask',
-]
-
-/**
- * The same four as a comparison, for a phone: what a trial account gets and
- * what Legend gets, side by side — the difference is the reason to buy. The
- * flask row is filled from the shop's own free flasks where it can be.
+ * What a Legend pass gets you, as a comparison: what a trial account gets and
+ * what Legend gets, side by side — the difference is the reason to buy. Not
+ * on chain; the contract only stores the seconds granted. The flask row is
+ * filled from the shop's own free flasks where it can be.
  */
 export const LEGEND_VS_TRIAL: [string, string, string][] = [
   ['Tavern reveals', 'Paid', 'Free'],

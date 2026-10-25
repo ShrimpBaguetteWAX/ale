@@ -17,11 +17,11 @@ import {
   priceOf,
   legendLeft,
   rewardOf,
+  rateOf,
   valueBadges,
   waxAmount,
 } from '@/shop/rules'
 import {
-  LEGEND_BENEFITS,
   LEGEND_VS_TRIAL,
   SHOP_CATEGORIES,
   type ShopCooldown,
@@ -34,9 +34,10 @@ import { useLazyConfig } from '@/state/useConfig'
 import { asset } from '@/assets'
 import { NUM_LOCALE } from '@/format'
 import { OutpostTab } from '@/outpost/OutpostTab'
+import { CurrencyGuide } from '@/shop/CurrencyGuide'
+import { usePhone } from '@/components/usePhone'
 
 const EMPTY_COOLDOWNS: ShopCooldown[] = []
-
 
 function Amount({ label, icon }: { label: string; icon?: string }) {
   return (
@@ -142,7 +143,7 @@ export default function Shop() {
     )
   }
 
-  const active = SHOP_CATEGORIES.find((c) => c.key === category)
+  const phone = usePhone()
 
   return (
     <div className="shop">
@@ -151,12 +152,7 @@ export default function Shop() {
 
       <div className="shop__inner">
         <header className="shop__head">
-          <div>
-            <h1 className="page__title">Shop</h1>
-            <p className="faint shop__ladder" style={{ fontSize: 'var(--fs-sm)' }}>
-              WAX buys gems · gems buy credits and Legend · credits buy energy
-            </p>
-          </div>
+          <h1 className="page__title">Shop</h1>
           <span className="spacer" />
           <div className="shop__status">
             <span className={`tag ${legend ? 'tag--legend' : ''}`}>
@@ -185,22 +181,22 @@ export default function Shop() {
           ))}
         </div>
 
-        <p className="hint shop__blurb" style={{ marginTop: 0 }}>
-          {active?.blurb}
-        </p>
-
         {/*
           Gem packs are the one thing paid for with real money, so the wallet
           balance belongs on screen rather than in the wallet popup — it is
           what tells you which rung you can reach.
         */}
-        {category === 'gems' && (
+        {phone && category === 'gems' && (
           <div className="waxbar">
             <span className="waxbar__label">Your current WAX balance</span>
             <span className="waxbar__value mono">{formatWax(wax)} WAX</span>
           </div>
         )}
 
+        <ShopBoard
+          phone={phone}
+          guide={<CurrencyGuide player={player} wax={wax} category={category} />}
+        >
         {/*
           The Outpost is somebody else's shop and shares none of this
           screen's data: different contract, different currency, and an NFT
@@ -245,6 +241,7 @@ export default function Shop() {
                         <span className="pack__value">{badges.get(item.item)}</span>
                       )}
                     </div>
+                    {!phone && rateOf(item) && <span className="pack__rate">{rateOf(item)}</span>}
 
                     {/*
                       The button carries the price when you can buy and the
@@ -279,17 +276,7 @@ export default function Shop() {
 
         {category === 'account' && (
           <section className="panel legendcard">
-            <div className="panel__title">Legend account benefits</div>
-            <ul className="benefits benefits--long">
-              {LEGEND_BENEFITS.map((b) => (
-                <li key={b}>
-                  {flasks && b === LEGEND_BENEFITS[3]
-                    ? `A free daily energy flask of ${energy(flasks.legend)} energy instead of ${energy(flasks.trial)}`
-                    : b}
-                </li>
-              ))}
-            </ul>
-            {/* A phone compares instead: Trial against Legend. */}
+            <div className="panel__title">Trial against Legend</div>
             <div className="legendvs" role="table" aria-label="Trial against Legend">
               <div className="legendvs__row legendvs__row--head" role="row">
                 <span role="columnheader" />
@@ -316,6 +303,7 @@ export default function Shop() {
             </p>
           </section>
         )}
+        </ShopBoard>
       </div>
 
       {confirming && (
@@ -326,6 +314,31 @@ export default function Shop() {
           onConfirm={() => void buy(confirming)}
         />
       )}
+    </div>
+  )
+}
+
+/**
+ * The tab's goods, and on a desktop the currencies beside them.
+ *
+ * A phone has the width for the list alone. A desktop has room for what the
+ * list cannot say — what each currency on these buttons is actually for — so
+ * the guide sits in a column of its own on the right.
+ */
+function ShopBoard({
+  phone,
+  guide,
+  children,
+}: {
+  phone: boolean
+  guide: React.ReactNode
+  children: React.ReactNode
+}) {
+  if (phone) return <>{children}</>
+  return (
+    <div className="shop__board">
+      <div className="shop__main">{children}</div>
+      {guide}
     </div>
   )
 }

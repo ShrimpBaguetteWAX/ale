@@ -56,6 +56,9 @@ export const TABLES = {
 
   /** How much of the weekly free-CPU allowance a wallet has spent. */
   cpuUsage: { code: CONTRACTS.cpu, table: 'cpuusage' },
+
+  /** A wallet's Alien Worlds shards, on the Outpost's own ledger. */
+  outpostPoints: { code: CONTRACTS.outpost, table: 'userpoints' },
 } as const
 
 export type TableKey = keyof typeof TABLES
