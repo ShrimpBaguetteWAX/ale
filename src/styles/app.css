@@ -2856,3 +2856,15 @@ a.res {
   min-height: 100%;
   align-content: start;
 }
+/* Narrow: the same two columns as the build step — the altar over the rows. */
+@container dasc (max-width: 980px) {
+  .dasc.dasc--offers {
+    grid-template-columns: clamp(300px, 45%, 360px) minmax(0, 1fr);
+  }
+}
+/* The portrait keeps its circle whatever the column does. */
+.dasc__risen > img {
+  flex: none;
+  aspect-ratio: 1;
+  max-width: 100%;
+}
