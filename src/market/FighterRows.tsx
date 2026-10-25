@@ -85,7 +85,6 @@ export function FighterRow({
   below,
   marker,
   dim = false,
-  id,
   children,
 }: {
   stats: RosterStats
@@ -98,8 +97,6 @@ export function FighterRow({
   marker?: string
   /** Shown but set back, as for a fighter already placed somewhere else. */
   dim?: boolean
-  /** The fighter's number after its class, where two of a kind must be told apart. */
-  id?: number
   template?: ClassTemplate
   right: React.ReactNode
   open: boolean
@@ -155,10 +152,7 @@ export function FighterRow({
           )}
         </span>
         <span className="mrow__who">
-          <b>
-            {f.classname}
-            {id !== undefined && <small className="mrow__id">#{id}</small>}
-          </b>
+          <b>{f.classname}</b>
           <small>
             <img src={asset(`/assets/icons/elements/${f.element}.png`)} alt="" width={14} height={14} />
             {/* A fixed slot, so the grades stand in the same place on every row

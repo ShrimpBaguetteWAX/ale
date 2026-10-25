@@ -1253,257 +1253,6 @@
   max-width: 70ch;
 }
 
-/* Roster tiles: portrait, then who it is and what it can cover. */
-/* ---------- what has been chosen ---------- */
-
-/*
- * The four slots, above the list they are filled from.
- *
- * Kept on screen the whole time rather than appearing as things are picked:
- * the errand is "one fighter and three specific sacrifices", and four labelled
- * boxes say that before the first click. They double as the tab strip's
- * second face — clicking one opens the list that fills it.
- */
-.ascpick {
-  display: grid;
-  gap: var(--sp-3);
-}
-
-.ascpick__slots {
-  display: grid;
-  gap: var(--sp-2);
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-}
-
-/*
- * A slot is now a label over the picker's own card, so the frame belongs to
- * the card: a box around a box put two borders and two backgrounds around
- * one fighter.
- */
-.ascslot {
-  display: grid;
-  /* Label, then whatever fills the rest of the row — so an empty slot is the
-     height of the card that will land in it rather than a short box beside
-     three tall ones. */
-  grid-template-rows: auto 1fr;
-  gap: 4px;
-  min-width: 0;
-  text-align: left;
-}
-
-/* Which of the four lists is open below. */
-.ascslot--active .ascslot__label {
-  color: var(--cyan);
-}
-
-/*
- * Two lines of status held open on all four.
- *
- * "You will lose this fighter" wraps on a phone where "Gains the upgrade"
- * does not, and the four cards stand side by side — one card's tabs sitting
- * a line below its neighbours' is the same thing "In team" was doing in the
- * dungeon picker.
- */
-.ascslot .fightercard__status {
-  min-height: 28px;
-}
-
-.ascslot__label {
-  display: flex;
-  align-items: baseline;
-  align-content: start;
-  gap: 5px;
-  flex-wrap: wrap;
-  /* Two lines held open, so a label that wraps where its neighbours do not
-     cannot start its card a line below theirs. */
-  min-height: 2.4em;
-  line-height: 1.2;
-  font-family: var(--font-display);
-  font-size: 9px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--text-faint);
-}
-
-/*
- * The class every sacrifice has to share, on each of their three headers.
- *
- * It is the one requirement all three have in common and the one the labels
- * never carried — "same element" and "same race" read as the whole of it,
- * so a roster of sixty offering four candidates looked like a bug. Set off
- * from the requirement beside it, because they are two different things
- * being asked for.
- */
-.ascslot__class {
-  padding: 1px 5px;
-  border-radius: var(--radius-full);
-  background: rgb(0 186 255 / 14%);
-  color: #7ee7fb;
-  font-weight: var(--fw-bold);
-}
-
-/* Nothing to name yet: the rule stated, in the shape the class will take —
-   so the slot does not change size when a fighter is finally chosen. */
-.ascslot__class--any {
-  background: rgb(148 163 184 / 12%);
-  color: var(--text-faint);
-}
-
-/* Still somewhere to put something: dashed, and the height of the card that
-   will land in it, so choosing one does not reflow the other three. */
-.ascslot__empty {
-  display: grid;
-  place-content: center;
-  justify-items: center;
-  gap: 4px;
-  min-height: 132px;
-  height: 100%;
-  padding: var(--sp-3);
-  border: 1px dashed var(--line);
-  border-radius: var(--radius-xs);
-  background: rgb(0 0 0 / 26%);
-  font-size: var(--fs-sm);
-  text-align: center;
-  color: var(--text-faint);
-  cursor: pointer;
-  transition: border-color var(--dur-fast) var(--ease);
-}
-.ascslot__empty:hover:not(:disabled) {
-  border-color: var(--cyan);
-  color: var(--white);
-}
-.ascslot__empty:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-}
-
-.ascslot__plus {
-  font-family: var(--font-display);
-  font-size: 22px;
-  line-height: 1;
-}
-
-.ascpick__go {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: var(--sp-3);
-  flex-wrap: wrap;
-}
-
-/* ---------- the four lists ---------- */
-
-.asctabs {
-  display: flex;
-  gap: var(--sp-1);
-  margin-bottom: var(--sp-3);
-  overflow-x: auto;
-  scrollbar-width: none;
-}
-.asctabs::-webkit-scrollbar {
-  display: none;
-}
-
-.asctabs__tab {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--sp-2);
-  flex: none;
-  padding: var(--sp-2) var(--sp-3);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-xs);
-  background: rgb(0 0 0 / 35%);
-  color: var(--text-dim);
-  font-family: var(--font-display);
-  font-size: var(--fs-xs);
-  letter-spacing: 0.04em;
-  cursor: pointer;
-  transition:
-    background var(--dur-fast) var(--ease),
-    color var(--dur-fast) var(--ease),
-    border-color var(--dur-fast) var(--ease);
-}
-
-.asctabs__tab:hover:not(:disabled) {
-  color: var(--white);
-}
-
-.asctabs__tab[aria-selected='true'] {
-  background: var(--surface-3);
-  border-color: var(--cyan);
-  color: var(--white);
-}
-
-.asctabs__tab:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-/*
- * How many fighters the tab holds.
- *
- * The number is the half of the label worth reading: a zero here is the
- * answer to why the plan cannot work, and it should not take opening the tab
- * to find out.
- */
-.asctabs__n {
-  padding: 0 5px;
-  border-radius: var(--radius-full);
-  background: rgb(255 255 255 / 10%);
-  font-size: 10px;
-  color: var(--text-dim);
-}
-
-.asctabs__tab[aria-selected='true'] .asctabs__n {
-  background: rgb(53 208 255 / 22%);
-  color: #9ee6ff;
-}
-
-/* ---------- one fighter ---------- */
-
-/*
- * The team picker's own track, because it holds the team picker's card —
- * including its width. The card carries four tabs and its labels want the
- * room; at 140 the grid was printing the dungeon's card two columns narrower
- * than the dungeon prints it.
- */
-.ascgrid {
-  display: grid;
-  gap: var(--sp-2);
-  grid-template-columns: repeat(auto-fill, minmax(178px, 1fr));
-  margin-top: var(--sp-3);
-}
-
-/* Nothing to say on the left here — the tabs above already carry the count,
-   and the eligibility rule is spelled out in the hint. */
-.picker__countrow--end {
-  justify-content: flex-end;
-}
-
-@media (max-width: 719px) {
-  .ascgrid {
-    grid-template-columns: repeat(auto-fill, minmax(138px, 1fr));
-  }
-
-  /*
-     Two rows of two rather than four across.
-
-     Four slots on a phone is 85px each, which fits neither a name nor the
-     words that say what the slot is for.
-  */
-  .ascpick__slots {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .ascpick__go {
-    justify-content: stretch;
-  }
-
-  .ascpick__go .btn {
-    width: 100%;
-  }
-}
-
 /* ---------- the three offers ---------- */
 
 /* ---------- the reward ---------- */
@@ -1912,17 +1661,6 @@ a.res {
   color: inherit;
   text-decoration: none;
   cursor: pointer;
-}
-
-/* Ascension's grids in compact, at the fight pickers' size. */
-.ascgrid.ascgrid--compact {
-  grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
-}
-
-@media (max-width: 719px) {
-  .ascgrid.ascgrid--compact {
-    grid-template-columns: repeat(auto-fill, minmax(52px, 1fr));
-  }
 }
 
 /* The fight screens on a phone: no tab bar, the screen is theirs. */
@@ -2603,4 +2341,271 @@ a.res {
   font-size: 11px;
   font-weight: 800;
   text-align: right;
+}
+
+/* ---------- Ascension on a desktop: the list, the altar, the deal ---------- */
+
+/* The board sizes itself to the page it is on, not to the window. */
+.ascension:has(.dasc) {
+  container: dasc / inline-size;
+}
+.dasc {
+  /* The phone's quiet palette: white hairlines, not the violet rims. */
+  --line-bright: rgb(255 255 255 / 22%);
+  --btn-line: rgb(255 255 255 / 22%);
+  display: grid;
+  grid-template-columns: minmax(300px, 360px) minmax(0, 1fr) minmax(250px, 290px);
+  grid-template-areas: 'list middle side';
+  gap: var(--sp-4);
+  align-items: start;
+  margin-bottom: var(--sp-4);
+}
+.dasc__list {
+  grid-area: list;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 10px;
+  min-width: 0;
+}
+/* The altar and the deal stay in view while a long list goes by. */
+.dasc__middle,
+.dasc__side {
+  position: sticky;
+  top: calc(var(--topbar-h, 0px) + var(--sp-4));
+}
+.dasc__middle {
+  grid-area: middle;
+  display: grid;
+  justify-items: center;
+  gap: var(--sp-4);
+  min-width: 0;
+}
+.dasc__middle .pasc__needs {
+  width: 100%;
+}
+.dasc__soft {
+  color: var(--text-faint) !important;
+}
+.dasc__side {
+  grid-area: side;
+  display: grid;
+  gap: 12px;
+  align-content: start;
+  min-width: 0;
+  padding: 16px;
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgb(10 18 34 / 62%), rgb(4 9 20 / 72%));
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 11%);
+}
+
+/* The list's tools: the tabs, the player's markers, a number, an order. */
+.dasc__chips,
+.dasc__markers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.dasc__chips button,
+.dasc__markers button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 5%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 14%);
+  font-size: 12.5px;
+  font-weight: var(--fw-bold);
+  color: #c5cee0;
+  cursor: pointer;
+}
+.dasc__markers button {
+  min-height: 28px;
+  padding: 0 9px;
+  font-size: 12px;
+}
+.dasc__markers img {
+  width: 16px;
+  height: 16px;
+}
+.dasc__chips em,
+.dasc__markers em {
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 800;
+  color: var(--text-faint);
+}
+.dasc__chips button[aria-pressed='true'],
+.dasc__markers button[aria-pressed='true'] {
+  color: var(--white);
+  background: rgb(0 186 255 / 16%);
+  box-shadow: inset 0 0 0 1.5px var(--cyan);
+}
+.dasc__tools {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 12.5px;
+  color: var(--text-faint);
+}
+.dasc__tools b {
+  color: var(--white);
+}
+.dasc__order {
+  flex: none;
+  height: 30px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 8px;
+  color-scheme: dark;
+  background: rgb(255 255 255 / 5%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 16%);
+  font-size: 12px;
+  color: #dfe6f2;
+}
+.dasc__empty {
+  margin: 0;
+  padding: 14px 4px;
+}
+/* The row picked: the one on the altar, or the one being looked at. */
+.dasc .mrow.is-open {
+  background: rgb(0 186 255 / 8%);
+  box-shadow: inset 3px 0 0 var(--cyan);
+}
+.dasc__fit {
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--text-faint);
+}
+.dasc__fit.is-all {
+  color: var(--teal);
+}
+
+/* The phone's altar, a size up, with the socket being filled lit. */
+.dasc__stage .pasc__altar {
+  transform: scale(1.15);
+  transform-origin: top center;
+  margin-bottom: 50px;
+}
+.dasc .pasc__core,
+.dasc .pasc__sock:not(:disabled) {
+  cursor: pointer;
+}
+.dasc .pasc__core.is-active > i,
+.dasc .pasc__sock.is-active > i {
+  color: var(--cyan);
+  background: rgb(0 186 255 / 10%);
+  box-shadow: inset 0 0 0 2px var(--cyan);
+}
+.dasc .pasc__sock.is-active img {
+  box-shadow:
+    0 0 0 2px #ff6d85,
+    0 0 0 5px rgb(0 186 255 / 60%);
+}
+/* On the altar: hovering says a click takes it off. */
+.dasc .pasc__core.is-removable:hover img {
+  box-shadow:
+    0 0 0 3px #ff6d85,
+    0 0 30px rgb(255 109 133 / 40%);
+}
+.dasc .pasc__core.is-removable::after {
+  content: '×';
+  position: absolute;
+  top: 0;
+  left: calc(50% + 34px);
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  font-size: 15px;
+  line-height: 1;
+  color: var(--white);
+  background: rgb(20 4 8 / 90%);
+  box-shadow: inset 0 0 0 1px rgb(255 109 133 / 80%);
+  opacity: 0;
+  transition: opacity var(--dur-fast) var(--ease);
+}
+.dasc .pasc__core.is-removable:hover::after,
+.dasc .pasc__core.is-removable:focus-visible::after {
+  opacity: 1;
+}
+.dasc__coremark {
+  position: absolute;
+  top: 2px;
+  left: calc(50% - 52px);
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 7px;
+  background: rgb(4 8 16 / 88%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 30%);
+}
+.dasc__coremark img {
+  width: 17px;
+  height: 17px;
+}
+
+/* The deal: what is covered, what it does, what it costs. */
+.dasc__cap {
+  font-family: var(--font-display);
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.dasc__checks {
+  display: grid;
+  gap: 6px;
+}
+.dasc__checks span {
+  padding: 8px 10px;
+  border-radius: 9px;
+  background: rgb(255 255 255 / 4%);
+  font-size: 12.5px;
+  color: #dfe6f2;
+}
+.dasc__checks .is-ok {
+  color: var(--teal);
+}
+.dasc__checks .is-none {
+  color: #ff8fa0;
+}
+.dasc__side .mfacts dd.is-short {
+  color: #ff8fa0;
+}
+.dasc__go {
+  min-height: 46px;
+}
+.dasc__hint {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--text-faint);
+}
+
+/* Too narrow for three columns: the altar over the deal, beside the list. */
+@container dasc (max-width: 980px) {
+  .dasc {
+    grid-template-columns: clamp(300px, 45%, 360px) minmax(0, 1fr);
+    grid-template-areas:
+      'list middle'
+      'list side';
+  }
+  .dasc__middle,
+  .dasc__side {
+    position: static;
+  }
+}
+.dasc__side .mfacts dd {
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
 }

@@ -1536,13 +1536,6 @@
 .mrow.is-dim {
   opacity: 0.55;
 }
-.mrow__id {
-  margin-left: 5px;
-  font-family: var(--font-body);
-  font-size: 10.5px;
-  font-weight: var(--fw-bold);
-  color: var(--text-faint);
-}
 .mrow__who {
   min-width: 0;
 }
@@ -1555,7 +1548,7 @@
   text-transform: capitalize;
   white-space: nowrap;
 }
-.mrow__who small {
+.mrow__who > small {
   display: flex;
   align-items: center;
   gap: 4px;
@@ -1567,7 +1560,7 @@
   white-space: nowrap;
 }
 /* A stat's icon in white, then its grade: only the grade is in colour. */
-.mrow__who small > img {
+.mrow__who > small > img {
   flex: none;
 }
 /* Robotron, the longest race, is 46px. */

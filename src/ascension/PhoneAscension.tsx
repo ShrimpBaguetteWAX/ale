@@ -139,7 +139,8 @@ export function PhoneAscension({
             const need = needOf(key, target)
             return (
               <span key={key}>
-                <i>✓</i>#{f.fighter_id} · {key === 'ability' ? 'Sacrifice ability' : `${need.name}, ${need.sub}`}
+                <i>✓</i>
+                {key === 'ability' ? 'Sacrifice ability' : `${need.name}, ${need.sub}`} · level {levelOf(f)}
               </span>
             )
           })}
@@ -180,7 +181,7 @@ export function PhoneAscension({
             ) : (
               <i aria-hidden="true">+</i>
             )}
-            <b>{target ? `${cap(target.classname)} #${target.fighter_id}` : 'Choose a fighter'}</b>
+            <b>{target ? cap(target.classname) : 'Choose a fighter'}</b>
             <small>
               {target
                 ? `${cap(target.racename)} · ${cap(target.element)} · L${levelOf(target)}`
@@ -208,7 +209,7 @@ export function PhoneAscension({
                 <b>{need?.name ?? REQUIREMENTS.find((r) => r.key === key)?.label}</b>
                 <small>
                   {f
-                    ? `#${f.fighter_id} · L${levelOf(f)}`
+                    ? `${cap(f.racename)} · L${levelOf(f)}`
                     : need
                       ? `${need.sub} · ${fit} fit`
                       : 'choose a fighter first'}
@@ -322,7 +323,6 @@ function PickRow({
       ascension={f.ascension_level}
       template={template}
       marker={f.marker}
-      id={f.fighter_id}
       dim={dim}
       open={open}
       onToggle={onToggle}
@@ -335,7 +335,7 @@ function PickRow({
           Details
         </button>
         <button type="button" className="btn btn--primary btn--sm" onClick={onChoose}>
-          {on ? 'Chosen' : `Choose #${f.fighter_id}`}
+          {on ? 'Chosen' : 'Choose'}
         </button>
       </div>
     </FighterRow>
@@ -525,7 +525,7 @@ function Offers({
         <GameImg src={fighterArt(fighter)} fallback={fighterArtFallback()} alt="" />
         <span>
           <b>
-            {cap(fighter.classname)} #{fighter.fighter_id}
+            {cap(fighter.classname)}
           </b>
           <small>Three upgrades were rolled. Take one — the other two are gone.</small>
         </span>
