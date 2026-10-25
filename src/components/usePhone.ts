@@ -18,11 +18,16 @@ const PHONE = '(max-width: 719px)'
 
 export function usePhone(): boolean {
   /*
-     False before the first paint rather than a guess, so the server render
-     and the first client render agree. A phone flips to true in the effect
-     below on the same tick, before anything is committed to the screen.
+     Read on the first render, where there is a window to ask. An effect runs
+     after the paint, so starting at false showed a phone the desktop markup
+     for a frame whenever a screen that branches on this mounted — Sell
+     flashed its tile grid before the rows. The app renders with
+     `createRoot`, not hydration, so there is no server markup to agree with;
+     the SSR preview harness has no window and still gets false.
   */
-  const [phone, setPhone] = useState(false)
+  const [phone, setPhone] = useState(
+    () => typeof window !== 'undefined' && typeof window.matchMedia === 'function' && window.matchMedia(PHONE).matches,
+  )
 
   useEffect(() => {
     if (typeof window.matchMedia !== 'function') return
