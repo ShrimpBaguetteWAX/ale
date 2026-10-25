@@ -279,8 +279,8 @@ export function bulkListPlan(
 /**
  * Why an instant offer has no cancel button.
  *
- * `canceloffer` checks `gems == 0`, but `newoffer` always stores
- * `gems_instant_buy_price`, which is never zero — so the check can never pass
+ * `canceloffer` checks `gems == 0`, but `newoffer` always stores the
+ * auction's starting price, which is never below the minimum start — so the check can never pass
  * and the action always reverts. Offers can only run to their end, which is
  * the fighter's next payday. Surfaced rather than hidden, because a seller
  * looking for the button deserves to know it does not work rather than to

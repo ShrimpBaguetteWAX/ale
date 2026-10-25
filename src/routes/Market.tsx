@@ -44,7 +44,7 @@ import {
   markerIcon,
   type RosterFilter,
 } from '@/dungeon/filters'
-import type { RosterFighter } from '@/dungeon/types'
+import type { RosterFighter, RosterStats } from '@/dungeon/types'
 import {
   DetailSheet,
   Portrait,
@@ -292,6 +292,18 @@ export default function Market() {
     onSettled: () => setDialog(null),
     dirties: DIRTIES[action],
   })
+
+  const cancel = (a: Auction) =>
+    void run(
+      `cancel${a.auction_id}`,
+      () =>
+        cancelAuction(session!, {
+          scope: a.fighter.classname,
+          auctionId: a.auction_id,
+        }),
+      'Auction withdrawn.',
+      opts('cancelAuction'),
+    )
 
   const show = useCallback(
     (listing: Auction | InstantOffer) => {
@@ -572,31 +584,26 @@ export default function Market() {
             />
           )}
 
-          {tab === 'mine' && phone && myBids.length > 0 && (
-            <>
-              <p className="mrows__head">Your bids · {myBids.length}</p>
-              <div className="mrows">
-                {myBids.map((a) => (
-                  <ListingRow
-                    key={`b${a.auction_id}`}
-                    listing={a}
-                    price={a.current_bid}
-                    closing={extendsOnBid(a, config, now)}
-                    open={openRow === `b${a.auction_id}`}
-                    onToggle={() => toggleRow(`b${a.auction_id}`)}
-                    template={classes.get(a.fighter.classname)}
-                    unlockLevel={unlockLevel}
-                    now={now}
-                    note={<span className="mrow__lead">You are the top bidder</span>}
-                    onOpen={() => show(a)}
-                  />
-                ))}
-              </div>
-              <p className="mrows__head">Your listings</p>
-            </>
+          {tab === 'mine' && phone && (
+            <PhoneMine
+              bids={myBids}
+              auctions={myAuctions}
+              offers={myOffers}
+              config={config}
+              now={now}
+              busy={busy}
+              player={player}
+              classes={classes}
+              unlockLevel={unlockLevel}
+              openRow={openRow}
+              onToggle={toggleRow}
+              onOpen={show}
+              onCancel={cancel}
+              onSell={() => setTab('sell')}
+            />
           )}
 
-          {tab === 'mine' && (
+          {tab === 'mine' && !phone && (
             <MyListings
               auctions={myAuctions}
               offers={myOffers}
@@ -607,18 +614,7 @@ export default function Market() {
               levelMod={levelMod}
               player={player}
               onOpen={show}
-              onCancel={(a) =>
-                void run(
-                  `cancel${a.auction_id}`,
-                  () =>
-                    cancelAuction(session!, {
-                      scope: a.fighter.classname,
-                      auctionId: a.auction_id,
-                    }),
-                  'Auction withdrawn.',
-                  opts('cancelAuction'),
-                )
-              }
+              onCancel={cancel}
             />
           )}
         </section>
@@ -717,41 +713,32 @@ export default function Market() {
 /* ---------- the phone: a row a listing, opened in place ---------- */
 
 /**
- * One listing as a phone row: portrait, who it is, price and clock.
+ * One fighter as a phone row: portrait, who it is, and a right-hand column
+ * the caller fills (a price and a clock on the board, a cue on Sell).
  *
- * A card a listing was a screenful each on a phone, so forty listings were
- * forty screens. The row is what is scanned; tapping it opens the same three
- * readouts the card has, and the bid or the buy, under it in place — the
- * list never goes away behind a dialog just to look.
+ * A line can sit under the row whether or not it is open — what a listing
+ * of your own is doing — and the row opens in place on whatever it was given
+ * to show: the readouts on the board, the terms on Sell.
  */
-function ListingRow({
-  listing,
-  price,
-  closing,
+function FighterRow({
+  stats: f,
+  ascension,
+  template,
+  right,
   open,
   onToggle,
-  template,
-  unlockLevel,
-  now,
-  note,
-  action,
-  onOpen,
+  below,
+  children,
 }: {
-  listing: Auction | InstantOffer
-  price: number
-  closing: boolean
+  stats: RosterStats
+  ascension: number
+  template?: ClassTemplate
+  right: React.ReactNode
   open: boolean
   onToggle: () => void
-  template?: ClassTemplate
-  unlockLevel?: number
-  now: number
-  /** A line under the name in place of the grades: "You are the top bidder". */
-  note?: React.ReactNode
-  /** The bid or buy button, or nothing on a listing of your own. */
-  action?: React.ReactNode
-  onOpen: () => void
+  below?: React.ReactNode
+  children?: React.ReactNode
 }) {
-  const f = listing.fighter
   const raw = f as unknown as Record<string, number>
   /*
      The four graded figures, each behind its stat's icon so an arrow says
@@ -783,10 +770,8 @@ function ListingRow({
           {/* Level and ascension in one badge, the way a fighter is described. */}
           <span className="mrow__level">
             <span>L{f.level}</span>
-            {listing.ascension_level > 0 && (
-              <em title={`Ascended ${listing.ascension_level} time${listing.ascension_level === 1 ? '' : 's'}`}>
-                ✦{listing.ascension_level}
-              </em>
+            {ascension > 0 && (
+              <em title={`Ascended ${ascension} time${ascension === 1 ? '' : 's'}`}>✦{ascension}</em>
             )}
           </span>
           {sacrifice && (
@@ -811,28 +796,77 @@ function ListingRow({
               ))}
             </span>
           </small>
-          {note ? (
-            <small className="mrow__note">{note}</small>
-          ) : (
-            tagged.length > 0 && (
-              <span className="mrow__abilities">
-                {tagged.map((a, i) => {
-                  const rarity = abilityRarity(a.displayname)
-                  return (
-                    <span
-                      key={`${a.ability}-${i}`}
-                      className={`mrow__ab${a.locked ? ' is-locked' : ''}${rarity ? '' : ' is-plain'}`}
-                      style={{ '--ab': rarity ? ABILITY_RARITY_COLOR[rarity] : undefined } as React.CSSProperties}
-                      title={`${abilityName(a.displayname)}${rarity ? ` · ${rarity}` : ''}${a.locked ? ' · unlocks on ascension' : ''}`}
-                    >
-                      {rarity ? rarity.charAt(0).toUpperCase() : '·'}
-                    </span>
-                  )
-                })}
-              </span>
-            )
+          {tagged.length > 0 && (
+            <span className="mrow__abilities">
+              {tagged.map((a, i) => {
+                const rarity = abilityRarity(a.displayname)
+                return (
+                  <span
+                    key={`${a.ability}-${i}`}
+                    className={`mrow__ab${a.locked ? ' is-locked' : ''}${rarity ? '' : ' is-plain'}`}
+                    style={{ '--ab': rarity ? ABILITY_RARITY_COLOR[rarity] : undefined } as React.CSSProperties}
+                    title={`${abilityName(a.displayname)}${rarity ? ` · ${rarity}` : ''}${a.locked ? ' · unlocks on ascension' : ''}`}
+                  >
+                    {rarity ? rarity.charAt(0).toUpperCase() : '·'}
+                  </span>
+                )
+              })}
+            </span>
           )}
         </span>
+        {right}
+      </button>
+      {below && <div className="mrow__below">{below}</div>}
+      {open && children && <div className="mrow__open">{children}</div>}
+    </div>
+  )
+}
+
+/**
+ * One listing as a phone row: portrait, who it is, price and clock.
+ *
+ * A card a listing was a screenful each on a phone, so forty listings were
+ * forty screens. The row is what is scanned; tapping it opens the same three
+ * readouts the card has, and the bid or the buy, under it in place — the
+ * list never goes away behind a dialog just to look.
+ */
+function ListingRow({
+  listing,
+  price,
+  closing,
+  open,
+  onToggle,
+  template,
+  unlockLevel,
+  now,
+  below,
+  action,
+  onOpen,
+}: {
+  listing: Auction | InstantOffer
+  price: number
+  closing: boolean
+  open: boolean
+  onToggle: () => void
+  template?: ClassTemplate
+  unlockLevel?: number
+  now: number
+  /** What a listing of your own is doing, under the row. */
+  below?: React.ReactNode
+  /** The bid or buy button, or nothing on a listing of your own. */
+  action?: React.ReactNode
+  onOpen: () => void
+}) {
+  const f = listing.fighter
+  return (
+    <FighterRow
+      stats={f}
+      ascension={listing.ascension_level}
+      template={template}
+      open={open}
+      onToggle={onToggle}
+      below={below}
+      right={
         <span className="mrow__price">
           <span className="mono">
             {price.toLocaleString(NUM_LOCALE)}
@@ -840,19 +874,169 @@ function ListingRow({
           </span>
           <small className={closing ? 'is-closing' : ''}>{timeLeftLabel(msLeft(listing, now))}</small>
         </span>
-      </button>
-      {open && (
-        <div className="mrow__open">
-          <ListingBody stats={f} template={template} readout="stats" unlockLevel={unlockLevel} />
-          <div className="mrow__acts">
-            <button type="button" className="btn btn--ghost btn--sm" onClick={onOpen}>
-              Details
-            </button>
-            {action}
+      }
+    >
+      <ListingBody stats={f} template={template} readout="stats" unlockLevel={unlockLevel} />
+      <div className="mrow__acts">
+        <button type="button" className="btn btn--ghost btn--sm" onClick={onOpen}>
+          Details
+        </button>
+        {action}
+      </div>
+    </FighterRow>
+  )
+}
+
+/**
+ * Mine, on the phone: a section for each way a listing can stand.
+ *
+ * Winning — auctions where you hold the top bid. Selling — your auctions,
+ * with who is on top and what you would net, and Withdraw while nobody has
+ * bid (the only time the contract allows it). Fixed price — unsold fighters
+ * kept at the market's fixed price, which cannot be withdrawn and end on the
+ * fighter's payday.
+ */
+function PhoneMine({
+  bids,
+  auctions,
+  offers,
+  config,
+  now,
+  busy,
+  player,
+  classes,
+  unlockLevel,
+  openRow,
+  onToggle,
+  onOpen,
+  onCancel,
+  onSell,
+}: {
+  bids: Auction[]
+  auctions: Auction[]
+  offers: InstantOffer[]
+  config: MarketConfig | undefined
+  now: number
+  busy: string | null
+  player: NonNullable<ReturnType<typeof useGame.getState>['player']>
+  classes: Map<string, ClassTemplate>
+  unlockLevel?: number
+  openRow: string | null
+  onToggle: (key: string) => void
+  onOpen: (l: Auction | InstantOffer) => void
+  onCancel: (a: Auction) => void
+  onSell: () => void
+}) {
+  if (bids.length + auctions.length + offers.length === 0) {
+    return (
+      <div className="mrows__empty">
+        <p className="faint">Nothing of yours is on the market.</p>
+        <button type="button" className="btn btn--ghost btn--sm" onClick={onSell}>
+          Sell a fighter
+        </button>
+      </div>
+    )
+  }
+  const row = (key: string, l: Auction | InstantOffer, price: number, closing: boolean, below?: React.ReactNode) => (
+    <ListingRow
+      key={key}
+      listing={l}
+      price={price}
+      closing={closing}
+      open={openRow === key}
+      onToggle={() => onToggle(key)}
+      template={classes.get(l.fighter.classname)}
+      unlockLevel={unlockLevel}
+      now={now}
+      below={below}
+      onOpen={() => onOpen(l)}
+    />
+  )
+  return (
+    <>
+      {bids.length > 0 && (
+        <>
+          <p className="mrows__head">
+            <span>Winning · {bids.length}</span>
+            <small>you hold the top bid</small>
+          </p>
+          <div className="mrows">
+            {sortListings(bids, 'ending', now).map((a) =>
+              row(`b${a.auction_id}`, a, a.current_bid, extendsOnBid(a, config, now)),
+            )}
           </div>
-        </div>
+        </>
       )}
-    </div>
+
+      {auctions.length > 0 && (
+        <>
+          <p className="mrows__head">
+            <span>Selling · {auctions.length}</span>
+            <small>{Math.round(Number(config?.standard_duration_minutes ?? 0) / 60)}h auctions</small>
+          </p>
+          <div className="mrows">
+            {sortListings(auctions, 'ending', now).map((a) => {
+              const n = Number(a.bids)
+              const gate = canCancelAuction(a, player)
+              const ended = hasEnded(a, now)
+              const cancelling = busy === `cancel${a.auction_id}`
+              return row(
+                `s${a.auction_id}`,
+                a,
+                a.current_bid,
+                extendsOnBid(a, config, now),
+                n > 0 ? (
+                  <span className="mrow__line">
+                    {n} bid{n === 1 ? '' : 's'} · top bid by <b>{a.current_bidder_gamertag || a.current_bidder}</b> · you
+                    net <span className="mrow__lead">{sellerPayout(a.current_bid, config)}</span> after the fee
+                  </span>
+                ) : (
+                  <>
+                    <span className="mrow__line">
+                      No bids yet · if nobody bids it{' '}
+                      {a.keep_after_auction ? `stays listed at ${a.current_bid} gems` : 'comes back to you'}
+                    </span>
+                    {gate.ok && !ended && (
+                      <button
+                        type="button"
+                        className="btn btn--sm mrow__withdraw"
+                        onClick={() => onCancel(a)}
+                        disabled={cancelling}
+                      >
+                        {cancelling && <span className="spinner" />}
+                        Withdraw
+                      </button>
+                    )}
+                  </>
+                ),
+              )
+            })}
+          </div>
+        </>
+      )}
+
+      {offers.length > 0 && (
+        <>
+          <p className="mrows__head">
+            <span>Fixed price · {offers.length}</span>
+            <small>ends on the fighter's payday</small>
+          </p>
+          <div className="mrows">
+            {sortListings(offers, 'ending', now).map((o) =>
+              row(
+                `o${o.offer_id}`,
+                o,
+                o.gems,
+                false,
+                <span className="mrow__line">
+                  Can't be withdrawn · you net <span className="mrow__lead">{sellerPayout(o.gems, config)}</span> if it sells
+                </span>,
+              ),
+            )}
+          </div>
+        </>
+      )}
+    </>
   )
 }
 
@@ -1815,6 +1999,147 @@ export function SellTab({
     setSelling(false)
     setPickedId(null)
   }, [selling, pickedId, sellable])
+
+  /*
+     The phone: the roster as the board's rows, under the same filter, and
+     the terms opened in place under the fighter tapped — the price, whether
+     to keep it listed, and what selling at that price would actually pay.
+  */
+  if (phone) {
+    const listFee = Number(config?.gems_listing_price ?? 0)
+    const resetHours = Math.round(Number(config?.reset_duration_below_minutes ?? 0) / 60)
+    const payout = sellerPayout(price, config)
+    const quick = [10, 25, 50, 100, 250].filter((q) => q >= minStart)
+    return (
+      <div className="selltab selltab--phone">
+        {sellable.length === 0 ? (
+          <p className="faint">
+            None of your fighters can be listed right now. A fighter has to be
+            active, idle, and not yet asking for a payday.
+          </p>
+        ) : (
+          <>
+            <RosterFilters filter={filter} onChange={setFilter} roster={sellable} sheet={{}} />
+            {shown.length === 0 ? (
+              <p className="faint">No fighter you can sell matches these filters.</p>
+            ) : (
+              <div className="mrows">
+                {shown.map((f) => {
+                  const open = f.fighter_id === pickedId
+                  return (
+                    <FighterRow
+                      key={f.fighter_id}
+                      stats={f.stats}
+                      ascension={f.ascension_level}
+                      template={classes.get(f.classname)}
+                      open={open}
+                      onToggle={() => setPickedId(open ? null : f.fighter_id)}
+                      right={<span className="mrow__price mrow__cue">{open ? 'Close' : 'Sell ›'}</span>}
+                    >
+                      <div className="mstep">
+                        <span className="msell__cap">Starting price</span>
+                        <div className="mstep__row">
+                          <button
+                            type="button"
+                            className="mstep__btn"
+                            onClick={() => setPrice((p) => Math.max(minStart, p - 1))}
+                            disabled={price <= minStart}
+                            aria-label="One gem less"
+                          >
+                            −
+                          </button>
+                          <input
+                            className="mstep__input mono"
+                            type="number"
+                            inputMode="numeric"
+                            min={minStart}
+                            step={1}
+                            value={price}
+                            aria-label="Starting price"
+                            onChange={(e) => setPrice(Math.max(0, Math.floor(Number(e.target.value) || 0)))}
+                          />
+                          <button
+                            type="button"
+                            className="mstep__btn"
+                            onClick={() => setPrice((p) => p + 1)}
+                            aria-label="One gem more"
+                          >
+                            +
+                          </button>
+                        </div>
+                        <div className="msell__quick">
+                          {quick.map((q) => (
+                            <button
+                              type="button"
+                              key={q}
+                              className={price === q ? 'is-on' : ''}
+                              onClick={() => setPrice(q)}
+                            >
+                              {q}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      <label className="msell__keep">
+                        <span className="toggle">
+                          <input type="checkbox" checked={keep} onChange={(e) => setKeep(e.target.checked)} />
+                          <span className="toggle__track" aria-hidden="true">
+                            <span className="toggle__thumb" />
+                          </span>
+                        </span>
+                        <span>
+                          If nobody bids, keep it listed at <b className="mono">{price}</b> gems
+                        </span>
+                      </label>
+
+                      <dl className="mfacts">
+                        <div>
+                          <dt>Starting price</dt>
+                          <dd className="mono">{price}</dd>
+                        </div>
+                        <div>
+                          <dt>Market fee on a sale ({config?.gems_processing_fee_percent ?? 0}%)</dt>
+                          <dd className="mono">−{price - payout}</dd>
+                        </div>
+                        <div className="is-total">
+                          <dt>You get if it sells at this price</dt>
+                          <dd className="mono">{payout}</dd>
+                        </div>
+                      </dl>
+                      <p className="msell__hint">
+                        Listing costs {listFee} gem{listFee === 1 ? '' : 's'} now, sold or not. It runs {hours}h, and a bid in
+                        the last {resetHours}h pushes the end back out. Once anybody bids it can't be withdrawn.
+                      </p>
+
+                      <div className="mrow__acts">
+                        <button type="button" className="btn btn--ghost btn--sm" onClick={() => onInspect(f)}>
+                          Details
+                        </button>
+                        <button
+                          type="button"
+                          className="btn btn--primary btn--sm"
+                          onClick={() => {
+                            setSelling(true)
+                            onList(f.fighter_id, price, keep)
+                          }}
+                          disabled={busy || !gate.ok}
+                          title={gate.reason}
+                        >
+                          {busy && <span className="spinner" />}
+                          {gate.ok ? `List for ${price} · costs ${listFee}` : gate.reason}
+                        </button>
+                      </div>
+                    </FighterRow>
+                  )
+                })}
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    )
+  }
 
   return (
     <div className="selltab">

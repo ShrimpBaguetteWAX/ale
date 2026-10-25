@@ -1246,20 +1246,20 @@
   color: #f4a0a0;
 }
 
-.autosign__group .toggle {
+:is(.autosign__group, .msell__keep) .toggle {
   position: relative;
   display: inline-flex;
   flex: none;
   margin-top: 2px;
 }
 
-.autosign__group .toggle input {
+:is(.autosign__group, .msell__keep) .toggle input {
   position: absolute;
   opacity: 0;
   pointer-events: none;
 }
 
-.autosign__group .toggle__track {
+:is(.autosign__group, .msell__keep) .toggle__track {
   position: relative;
   width: 40px;
   height: 22px;
@@ -1268,7 +1268,7 @@
   transition: background 0.15s ease;
 }
 
-.autosign__group .toggle__thumb {
+:is(.autosign__group, .msell__keep) .toggle__thumb {
   position: absolute;
   top: 3px;
   left: 3px;
@@ -1279,20 +1279,20 @@
   transition: transform 0.15s ease;
 }
 
-.autosign__group .toggle input:checked + .toggle__track {
+:is(.autosign__group, .msell__keep) .toggle input:checked + .toggle__track {
   background: var(--teal);
 }
 
-.autosign__group .toggle input:checked + .toggle__track .toggle__thumb {
+:is(.autosign__group, .msell__keep) .toggle input:checked + .toggle__track .toggle__thumb {
   transform: translateX(18px);
 }
 
-.autosign__group .toggle input:focus-visible + .toggle__track {
+:is(.autosign__group, .msell__keep) .toggle input:focus-visible + .toggle__track {
   outline: 2px solid var(--cyan);
   outline-offset: 2px;
 }
 
-.autosign__group .toggle input:disabled + .toggle__track {
+:is(.autosign__group, .msell__keep) .toggle input:disabled + .toggle__track {
   opacity: 0.5;
 }
 

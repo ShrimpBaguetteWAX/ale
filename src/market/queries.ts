@@ -10,7 +10,8 @@ import type { AscUpgrade, RosterStats } from '@/dungeon/types'
  * player lists an *auction*; an *instant offer* only ever comes into being
  * when an auction ends with no bids and the seller ticked "keep after
  * auction", at which point `compauct` converts it to a fixed-price listing at
- * the config's `gems_instant_buy_price`.
+ * the auction's starting price (its `current_bid`, untouched without bids) —
+ * not at the config's `gems_instant_buy_price`, which nothing reads.
  *
  * Both tables live in a single scope on the contract account rather than
  * being scoped by class, so each is one read.

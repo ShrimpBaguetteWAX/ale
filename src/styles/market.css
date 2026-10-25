@@ -1166,6 +1166,11 @@
     border: 0;
     box-shadow: none;
   }
+  /* The game's half-strength glass for panels reaches this one too, and
+     would frame the section names on Mine; the rows carry their own. */
+  .shell:not(.shell--flush) > .main .market .panel.market__panel {
+    background: none;
+  }
   /*
      Browse and Buy now: the page is held to the screen, the purse and the
      filter stay where they are, and only the rows scroll, inside the panel.
@@ -1286,12 +1291,125 @@
     color: var(--text-faint);
   }
   .mrows__head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 10px;
     margin-top: 4px;
     font-family: var(--font-display);
     font-size: 9.5px;
     font-weight: 800;
     letter-spacing: 0.18em;
     text-transform: uppercase;
+  }
+  /* What the section means, beside its name, in plain words. */
+  .mrows__head small {
+    font-family: var(--font-body);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0;
+    text-transform: none;
+  }
+  .mrows__empty {
+    display: grid;
+    justify-items: center;
+    gap: 10px;
+    padding: 28px 12px;
+    text-align: center;
+  }
+  .mrows__empty p {
+    margin: 0;
+  }
+  /* A listing of your own: what it is doing, under the row, open or not. */
+  .mrow__below {
+    display: grid;
+    justify-items: start;
+    gap: 8px;
+    padding: 0 12px 11px 76px;
+  }
+  .mrow__line {
+    font-size: 11.5px;
+    line-height: 1.4;
+    color: var(--text-faint);
+  }
+  .mrow__line b {
+    color: var(--white);
+  }
+  .mrow__withdraw {
+    --btn-bg: rgb(255 90 106 / 14%);
+    --btn-line: rgb(255 90 106 / 60%);
+    color: var(--white);
+  }
+  /* Sell: the cue where the board has its price. */
+  .mrow__cue {
+    font-family: var(--font-display);
+    font-size: 10px;
+    font-weight: 800;
+    white-space: nowrap;
+    color: var(--text-faint);
+  }
+  .mrow.is-open .mrow__cue {
+    color: var(--white);
+  }
+  /* The terms take the row's full width, not the column under the name. */
+  .selltab--phone {
+    display: grid;
+    gap: 10px;
+  }
+  .selltab--phone .mrow__open {
+    padding-left: 12px;
+  }
+  .msell__cap {
+    font-family: var(--font-display);
+    font-size: 9.5px;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+  }
+  .msell__quick {
+    display: flex;
+    gap: 6px;
+  }
+  .msell__quick button {
+    flex: 1;
+    height: 32px;
+    border: 0;
+    border-radius: 8px;
+    font-family: var(--font-display);
+    font-size: 11px;
+    font-weight: 800;
+    color: #c5cee0;
+    background: rgb(255 255 255 / 5%);
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 12%);
+  }
+  .msell__quick button.is-on {
+    color: var(--white);
+    background: rgb(0 186 255 / 16%);
+    box-shadow: inset 0 0 0 1.5px var(--cyan);
+  }
+  .msell__keep {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 12.5px;
+    color: #dfe6f2;
+    cursor: pointer;
+  }
+  .msell__keep .toggle {
+    margin-top: 0;
+  }
+  .msell__hint {
+    margin: 0;
+    font-size: 11px;
+    line-height: 1.45;
+    color: var(--text-faint);
+  }
+  .mfacts > div.is-total dt {
+    color: var(--white);
+  }
+  .mfacts > div.is-total dd {
+    color: var(--teal);
   }
   .mrows {
     overflow: hidden;

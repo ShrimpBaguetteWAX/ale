@@ -267,8 +267,8 @@ export function playArena(
  *
  * Costs `gems_listing_price` whether or not it sells, and marks the fighter
  * in use for the duration. `keep_after_auction` decides what happens when
- * nobody bids: false returns the fighter, true relists it at the config's
- * fixed instant-buy price instead.
+ * nobody bids: false returns the fighter, true relists it as a fixed-price
+ * offer at the starting price instead.
  */
 export function addAuction(
   session: Session,
