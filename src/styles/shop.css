@@ -936,15 +936,15 @@
   .shop__main .outpost .outpost__card--epic { --edge: #b06bff; }
   .shop__main .outpost .outpost__card--legendary { --edge: #ffb23e; }
   .shop__main .outpost .outpost__card--mythical { --edge: #ff4f8b; }
+  /* The whole Alien Worlds card, frame and all: portrait, fitted, not cropped. */
   .shop__main .outpost__card .pack__art {
-    width: 54px;
-    height: 54px;
-    border-radius: 8px;
+    width: 64px;
+    height: 88px;
+    border-radius: 6px;
+    background: none;
   }
-  /* The card's picture, zoomed past its frame, as on a phone. */
   .shop__main .outpost__card .pack__art img {
-    transform: scale(1.6);
-    transform-origin: center 30%;
+    object-fit: contain;
   }
   .shop__main .outpost__card .pack__badge {
     display: none;
