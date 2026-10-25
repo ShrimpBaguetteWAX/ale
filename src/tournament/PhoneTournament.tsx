@@ -2568,7 +2568,6 @@ function Results(p: PhoneTournamentProps & {
         semis={semis}
         final={final}
         paid={paid}
-        reached={reached}
         round={round}
         onRound={setPicked}
         items={items}
@@ -2770,7 +2769,7 @@ function exitLine(board: Board, stops: Stop[], exit: { opp: Entrant }): string {
  * there instead. Their own result and the podium stay on the right whichever
  * road is shown.
  */
-function RoadResults({ p, champion, runnerUp, semis, final, paid, reached, round, onRound, items }: {
+function RoadResults({ p, champion, runnerUp, semis, final, paid, round, onRound, items }: {
   p: PhoneTournamentProps & {
     board: Board
     onPrizes: () => void
@@ -2782,7 +2781,6 @@ function RoadResults({ p, champion, runnerUp, semis, final, paid, reached, round
   semis: Entrant[]
   final: TournamentMatchup | undefined
   paid: (w: string) => { rank: number; points: number; wax: number; tlm: number; tenth: boolean }
-  reached: (w: string) => string
   round: number
   onRound: (r: number) => void
   items: StripItem[]
@@ -3006,10 +3004,7 @@ function RoadResults({ p, champion, runnerUp, semis, final, paid, reached, round
                     </b>
                   </div>
                 </div>
-                <p className="ptour__fine">
-                  {reached(p.wallet)} · paid when the tournament ended
-                  {mePaid.tenth ? ' · a tenth, without Legend Access' : ''}
-                </p>
+                {mePaid.tenth && <p className="ptour__fine">A tenth, without Legend Access</p>}
               </section>
             ) : null,
             'side',
