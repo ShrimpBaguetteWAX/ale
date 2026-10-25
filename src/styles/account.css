@@ -2494,12 +2494,18 @@ button.prew__row:hover:not(:disabled) {
 
 /* ---- mining ---- */
 
+/* Pick a slot, see the gain: the slots lead, the land's cut under them, then the tools. */
+.drew__mining {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+}
 .drew__bag {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: 24px;
-  padding: 18px 22px;
+  padding: 18px 22px 22px;
   border-radius: 14px;
   background: radial-gradient(70% 120% at 0% 0%, rgb(0 186 255 / 10%), transparent 60%), rgb(8 14 28 / 72%);
   box-shadow: inset 0 0 0 1px rgb(255 255 255 / 10%);
@@ -2525,38 +2531,112 @@ button.prew__row:hover:not(:disabled) {
 }
 .drew__slots {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 120px));
-  justify-content: end;
+  grid-template-columns: repeat(3, 124px);
+  justify-content: center;
   gap: 14px;
 }
 .drew__slot {
+  position: relative;
   display: grid;
   justify-items: center;
-  gap: 6px;
-  min-height: 150px;
-  padding: 6px;
+  min-height: 172px;
+  border: 0;
+  border-radius: 12px;
+  background: rgb(255 255 255 / 3%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 8%);
+  color: var(--white);
+  font: inherit;
+}
+.drew__slot.is-target {
+  background: rgb(0 186 255 / 10%);
+  box-shadow: inset 0 0 0 1.5px var(--cyan);
+}
+.drew__slot.is-new:not(.is-target) {
+  box-shadow: inset 0 0 0 1.5px var(--teal, #0ed4a8);
+}
+.drew__slotpick {
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  gap: 4px;
+  width: 100%;
+  padding: 10px 6px 14px;
   border: 0;
   border-radius: 12px;
   background: none;
-  color: var(--white);
+  color: inherit;
   font: inherit;
   font-size: 12.5px;
   font-weight: var(--fw-bold);
+  line-height: 1.2;
   text-align: center;
   cursor: pointer;
 }
-.drew__slot:hover {
+.drew__slotpick:hover {
   background: rgb(255 255 255 / 4%);
 }
-.drew__slot > img {
-  width: 92px;
-  height: 126px;
+.drew__slotpick > img {
+  width: 72px;
+  height: 99px;
   object-fit: contain;
+}
+.drew__slotpick small {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-faint);
+}
+.drew__slotoff {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgb(0 0 0 / 50%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 20%);
+  color: var(--text-faint);
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+}
+.drew__slotoff:hover {
+  color: var(--white);
+}
+.drew__slottag {
+  position: absolute;
+  bottom: -9px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: var(--cyan);
+  color: #04121b;
+  font-family: var(--font-display);
+  font-size: 8.5px;
+  font-style: normal;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  white-space: nowrap;
 }
 .drew__slot.is-empty {
   place-content: center;
+  gap: 4px;
   border: 1px dashed rgb(255 255 255 / 22%);
+  background: none;
+  box-shadow: none;
   color: var(--text-faint);
+  font-size: 12.5px;
+  font-weight: var(--fw-bold);
+  cursor: pointer;
+}
+.drew__slot.is-empty.is-target {
+  border-color: var(--cyan);
+  background: rgb(0 186 255 / 8%);
 }
 .drew__slot.is-empty i {
   font-size: 28px;
@@ -2564,16 +2644,128 @@ button.prew__row:hover:not(:disabled) {
   color: var(--cyan);
 }
 .drew__slot.is-loading {
-  border-radius: 12px;
   background: rgb(255 255 255 / 5%);
 }
+.drew__save {
+  display: grid;
+  justify-items: end;
+  gap: 8px;
+  min-width: 150px;
+}
+.drew__save small {
+  font-size: 12px;
+  color: var(--text-faint);
+}
+.drew__save .toolsheet__delta {
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 800;
+}
+.drew__missing {
+  grid-column: 1 / -1;
+  margin: 0;
+}
 
+/* The landowner split, on the page. */
+.drew__land {
+  display: grid;
+  grid-template-columns: minmax(180px, auto) minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 20px;
+  padding: 12px 18px;
+  border-radius: 14px;
+  background: rgb(8 14 28 / 72%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 10%);
+}
+.drew__landtext {
+  display: grid;
+  gap: 2px;
+  max-width: 260px;
+}
+.drew__landtext b {
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.drew__landtext small {
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--text-faint);
+}
+.drew__landbar {
+  display: grid;
+  gap: 4px;
+}
+.drew__landbar .splitbar {
+  height: 10px;
+  margin: 0;
+}
+.drew__landbar .landsheet__range {
+  margin: 0;
+}
+.drew__landpresets button {
+  flex: 0 0 auto;
+  min-width: 78px;
+}
+.drew__land.is-off .drew__landbar,
+.drew__land.is-off .drew__landpresets {
+  opacity: 0.4;
+}
+.drew__landlink {
+  font-size: 12.5px;
+  font-weight: var(--fw-bold);
+  color: var(--cyan);
+  white-space: nowrap;
+}
+
+/* The tools, against the slot being filled. */
 .drew__cathead {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 10px;
+  margin-top: 4px;
+}
+.shell .main__inner .drew .drew__cathead .drew__cap {
+  margin: 0;
+}
+.drew__catcontrols {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+.drew__seg {
+  display: inline-flex;
+  padding: 3px;
+  border-radius: 10px;
+  background: rgb(0 0 0 / 30%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 12%);
+}
+.drew__seg button {
+  min-height: 30px;
+  padding: 0 13px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: var(--text-faint);
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: var(--fw-bold);
+  white-space: nowrap;
+  cursor: pointer;
+}
+.drew__seg button[aria-selected='true'] {
+  background: rgb(0 186 255 / 18%);
+  box-shadow: inset 0 0 0 1px rgb(0 186 255 / 55%);
+  color: var(--white);
+}
+.drew__search {
+  width: 200px;
+  min-height: 36px;
 }
 .drew__sorts {
   margin: 0;
@@ -2585,27 +2777,26 @@ button.prew__row:hover:not(:disabled) {
 }
 .drew__tool {
   display: grid;
-  grid-template-columns: 44px minmax(0, 1fr);
-  grid-template-rows: auto auto;
+  grid-template-columns: 50px minmax(0, 1fr);
   gap: 4px 12px;
+  align-content: start;
   align-items: center;
-  padding: 8px 12px 8px 8px;
+  padding: 10px;
   border-radius: 12px;
   background: rgb(8 14 28 / 72%);
   box-shadow: inset 0 0 0 1px rgb(255 255 255 / 9%);
 }
 .drew__tool > img {
   grid-row: 1 / span 2;
-  width: 44px;
-  height: 60px;
+  width: 50px;
+  height: 69px;
   object-fit: contain;
 }
 .drew__tool.is-yours {
-  box-shadow: inset 0 0 0 1px rgb(0 186 255 / 45%);
+  box-shadow: inset 0 0 0 1px rgb(14 212 168 / 50%);
 }
-.drew__tool.is-used {
-  background: rgb(0 186 255 / 8%);
-  box-shadow: inset 0 0 0 1.5px var(--cyan);
+.drew__tool.is-here {
+  opacity: 0.6;
 }
 .drew__toolname {
   display: grid;
@@ -2622,15 +2813,52 @@ button.prew__row:hover:not(:disabled) {
   color: var(--text-faint);
   text-transform: capitalize;
 }
-.drew__toolname em {
-  margin-left: 6px;
+.drew__gain {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 12px;
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--text-faint);
+}
+.drew__gain > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.drew__gain img {
+  width: 13px;
+  height: 13px;
+}
+.drew__gain .up {
+  color: var(--teal, #0ed4a8);
+}
+.drew__gain .down {
+  color: #ff8fa0;
+}
+.drew__toolfoot {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 30px;
+  margin-top: 4px;
+  padding-top: 8px;
+  border-top: 1px solid rgb(255 255 255 / 7%);
+  font-size: 12px;
+  color: var(--text-faint);
+}
+.drew__toolfoot a {
+  font-weight: var(--fw-bold);
+  color: var(--cyan);
+  white-space: nowrap;
+}
+.drew__toolfoot em {
   font-style: normal;
   font-weight: var(--fw-bold);
   color: var(--cyan);
-  text-transform: none;
-}
-.drew__tool .prew__power {
-  gap: 12px;
 }
 .drew__more {
   justify-self: center;
@@ -2641,10 +2869,26 @@ button.prew__row:hover:not(:disabled) {
   .drew__stage {
     grid-template-columns: minmax(0, 1fr);
   }
+  /* Power and Save share the top line; the slots take the row under them. */
   .drew__bag {
-    grid-template-columns: minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr) auto;
+    row-gap: 16px;
   }
   .drew__slots {
+    grid-column: 1 / -1;
+    grid-row: 2;
     justify-content: start;
+  }
+  .drew__save {
+    grid-column: 2;
+    grid-row: 1;
+  }
+  .drew__land {
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    row-gap: 10px;
+  }
+  .drew__landbar {
+    grid-column: 1 / -1;
+    grid-row: 2;
   }
 }

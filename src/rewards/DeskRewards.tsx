@@ -1,7 +1,6 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import type { Player } from '@/chain/types'
-import type { MiningTool } from '@/chain/atomic'
 import { fetchOwnedLands } from '@/chain/atomic'
 import {
   bagPower,
@@ -28,14 +27,11 @@ import { asset } from '@/assets'
 import { MAX_TOOLS, paymentSources } from './rules'
 import { useMiningTools } from './useMiningTools'
 import {
-  AllToolsSheet,
   EARNED_STAT,
-  LandSheet,
   PoolFacts,
   Power,
   Ring,
   TABS,
-  ToolsSheet,
   earnLink,
   earned,
   poolIcon,
@@ -51,9 +47,9 @@ import {
  * across the page and the one picked is open beside them — what it holds,
  * what a mine pays, how far along it is — so nothing hides in a sheet. Every
  * ready mine is one gold bar under the rings, and the payments are rows by
- * where they came from. On Mining, the tools in use are large over every
- * tool in the game, sorted by power, with the player's own marked; changing
- * tools and the landowner split open the phone's sheets from the side.
+ * where they came from. On Mining, the three slots lead and every tool shows
+ * what it would add to the one being filled; the landowner split sits under
+ * them. Nothing on Mining opens a sheet.
  */
 export function DeskRewards({
   tab,
@@ -119,25 +115,33 @@ export function DeskRewards({
   )
 }
 
-function Chevron() {
-  return (
-    <svg className="pchev" viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M9 6l6 6-6 6" />
-    </svg>
-  )
-}
-
 /* ---------- mining ---------- */
 
-type CatalogueSort = 'combined' | 'tlm_mp' | 'shrd_mp'
-const CATALOGUE_SORTS: [CatalogueSort, string][] = [
-  ['combined', 'Combined'],
-  ['tlm_mp', 'TLM power'],
-  ['shrd_mp', 'Shard power'],
+type ToolFilter = 'yours' | 'all'
+type GainSort = 'combined' | 'tlm_mp' | 'shrd_mp'
+const GAIN_SORTS: [GainSort, string][] = [
+  ['combined', 'Biggest gain'],
+  ['tlm_mp', 'TLM'],
+  ['shrd_mp', 'Shards'],
 ]
 /* The strongest tools are the ones worth a look; the rest are one click away. */
 const CATALOGUE_FIRST = 24
+const SHARE_PRESETS: [number, string][] = [
+  [100, 'All TLM'],
+  [50, '50 / 50'],
+  [0, 'All Shards'],
+]
 
+/**
+ * Mining on a desktop: pick a slot, see the gain.
+ *
+ * The three slots lead. One of them is always the slot being filled — the
+ * first empty one, else the weakest, unless the player clicks another — and
+ * every tool below says what it would add or take away against it. Tools the
+ * wallet holds equip straight into that slot; the rest link to the NFT
+ * Market. Changes wait in the slots until one Save signs them, and the
+ * landowner split sits on the page under them.
+ */
 function DeskMining({
   player,
   account,
@@ -154,67 +158,125 @@ function DeskMining({
   onShare: (share: number) => void
 }) {
   const { tools, templates, loading, powerOf } = useMiningTools(account)
-  const [open, setOpen] = useState<'tools' | 'land' | 'all' | null>(null)
-  const [sort, setSort] = useState<CatalogueSort>('combined')
-  const [mineOnly, setMineOnly] = useState(false)
+  const [filter, setFilter] = useState<ToolFilter>('yours')
+  const [sort, setSort] = useState<GainSort>('combined')
+  const [query, setQuery] = useState('')
   const [everything, setEverything] = useState(false)
 
-  const lands = useChainQuery(player.wallet && `owned-lands:${player.wallet}`, () =>
-    fetchOwnedLands(player.wallet),
-  )
-  const ownsLand = (lands.data?.length ?? 0) > 0
-
+  const byId = useMemo(() => new Map(tools.map((t) => [t.asset_id, t])), [tools])
   const stored = useMemo(() => (player.mine_nfts ?? []).map(String), [player.mine_nfts])
-  const equipped = useMemo(() => {
-    const byId = new Map(tools.map((t) => [t.asset_id, t]))
-    return stored.map((id) => byId.get(id)).filter((t): t is MiningTool => !!t)
-  }, [tools, stored])
-  const bag = useMemo(
-    () => bagPower(equipped.map((t) => powerOf(t.template_id) ?? {})),
-    [equipped, powerOf],
+  /*
+     What is saved, less anything the wallet no longer holds: `setminenfts`
+     aborts on an id it cannot find, so a tool that left the wallet is dropped
+     here and said out loud under the slots.
+  */
+  const saved = useMemo(
+    () => [...new Set(stored)].filter((id) => byId.has(id)).slice(0, MAX_TOOLS),
+    [stored, byId],
   )
-  const share = Number(player.landowner_tlm_share ?? 0)
+  const missing = loading ? [] : stored.filter((id) => !byId.has(id))
+  const [draft, setDraft] = useState<string[] | null>(null)
+  /* A save that lands changes what is stored; the draft it came from is done. */
+  const storedKey = stored.join(',')
+  useEffect(() => setDraft(null), [storedKey])
+  const picked = draft ?? saved
+  const changed =
+    picked.length !== stored.length || picked.some((id) => !stored.includes(id))
+
+  const powerOfId = (id: string) => {
+    const t = byId.get(id)
+    return t ? powerOf(t.template_id) : undefined
+  }
+  const now = bagPower(picked.map((id) => powerOfId(id) ?? {}))
+  const before = bagPower(saved.map((id) => powerOfId(id) ?? {}))
+
+  /* The slot a tool goes into: the one clicked, else the first empty, else the weakest. */
+  const [slotPick, setSlotPick] = useState<number | null>(null)
+  const weakest = picked.reduce((w, id, i) => {
+    const a = powerOfId(picked[w])
+    const b = powerOfId(id)
+    const sa = powerScore('combined', a)
+    const sb = powerScore('combined', b)
+    return sb < sa || (sb === sa && Number(b?.tlm_mp ?? 0) < Number(a?.tlm_mp ?? 0)) ? i : w
+  }, 0)
+  const target =
+    slotPick !== null && slotPick <= picked.length
+      ? slotPick
+      : picked.length < MAX_TOOLS
+        ? picked.length
+        : weakest
+  const targetTool = byId.get(picked[target])
+  const targetPower = targetTool ? powerOf(targetTool.template_id) : undefined
 
   const held = useMemo(() => {
-    const map = new Map<number, number>()
-    for (const t of tools) map.set(t.template_id, (map.get(t.template_id) ?? 0) + 1)
+    const map = new Map<number, string[]>()
+    for (const t of tools) map.set(t.template_id, [...(map.get(t.template_id) ?? []), t.asset_id])
     return map
   }, [tools])
-  const inUse = useMemo(() => new Set(equipped.map((t) => t.template_id)), [equipped])
-  const catalogue = useMemo(
-    () =>
-      templates
-        .filter((t) => !mineOnly || held.has(t.template_id))
-        .sort((a, b) => powerScore(sort, b) - powerScore(sort, a) || byQuality(a, b)),
-    [templates, sort, mineOnly, held],
-  )
+
+  const equip = (templateId: number) => {
+    const spare = (held.get(templateId) ?? []).find((id) => !picked.includes(id))
+    if (!spare) return
+    setDraft(
+      target >= picked.length ? [...picked, spare] : picked.map((x, i) => (i === target ? spare : x)),
+    )
+    setSlotPick(null)
+  }
+  const takeOff = (index: number) => {
+    setDraft(picked.filter((_, i) => i !== index))
+    setSlotPick(null)
+  }
+
+  const catalogue = useMemo(() => {
+    const needle = query.trim().toLowerCase()
+    return templates
+      .filter((t) => filter === 'all' || held.has(t.template_id))
+      .filter(
+        (t) =>
+          !needle ||
+          t.toolname.toLowerCase().includes(needle) ||
+          t.rarity.toLowerCase().includes(needle) ||
+          t.shine.toLowerCase().includes(needle),
+      )
+      .sort((a, b) => powerScore(sort, b) - powerScore(sort, a) || byQuality(a, b))
+  }, [templates, filter, query, sort, held])
   const shown = everything ? catalogue : catalogue.slice(0, CATALOGUE_FIRST)
 
+  const signed = (n: number) => (n > 0 ? '+' : n < 0 ? '−' : '±') + formatNumber(Math.abs(n))
+  const delta = (n: number) =>
+    n === 0 ? null : <em className={n > 0 ? 'up' : 'down'}>{signed(n)}</em>
+
   return (
-    <div className="drew__stage">
-      <div className="drew__main">
-        <section className="drew__bag" aria-label="Your mining power">
-          <span className="drew__bagpower">
-            <small>Your mining power</small>
-            {loading ? (
-              <span className="prew__power prew__power--big">—</span>
-            ) : (
-              <Power tlm={bag.tlm_mp} shrd={bag.shrd_mp} big />
-            )}
-            <small className="drew__bagnote">
-              {loading ? 'Loading your tools…' : `${equipped.length} of ${MAX_TOOLS} tools equipped`}
-            </small>
-          </span>
-          <div className="drew__slots">
-            {Array.from({ length: MAX_TOOLS }, (_, i) => {
-              const t = equipped[i]
-              if (loading) return <span className="drew__slot is-loading" key={i} />
-              return t ? (
+    <div className="drew__mining">
+      <section className="drew__bag" aria-label="Your mining power">
+        <span className="drew__bagpower">
+          <small>{changed ? 'If you save' : 'Your mining power'}</small>
+          {loading ? (
+            <span className="prew__power prew__power--big">—</span>
+          ) : (
+            <Power tlm={now.tlm_mp} shrd={now.shrd_mp} big />
+          )}
+          <small className="drew__bagnote">
+            {loading ? 'Loading your tools…' : 'Click a slot to fill or swap it'}
+          </small>
+        </span>
+        <div className="drew__slots">
+          {Array.from({ length: MAX_TOOLS }, (_, i) => {
+            if (loading) return <span className="drew__slot is-loading" key={i} />
+            const t = byId.get(picked[i])
+            const p = t && powerOf(t.template_id)
+            const on = i === target
+            const fresh = t && !saved.includes(t.asset_id)
+            return t ? (
+              <div
+                className={`drew__slot${on ? ' is-target' : ''}${fresh ? ' is-new' : ''}`}
+                key={t.asset_id}
+              >
                 <button
                   type="button"
-                  className="drew__slot"
-                  key={t.asset_id}
-                  onClick={() => setOpen('tools')}
+                  className="drew__slotpick"
+                  aria-pressed={on}
+                  onClick={() => setSlotPick(i)}
                 >
                   <GameImg
                     src={asset(`/assets/cards/${t.template_id}.webp`)}
@@ -222,30 +284,115 @@ function DeskMining({
                     fallback={asset('/assets/default-card.png')}
                   />
                   <span>{t.name}</span>
+                  <small>
+                    {formatNumber(Number(p?.tlm_mp ?? 0))} · {formatNumber(Number(p?.shrd_mp ?? 0))}
+                  </small>
                 </button>
-              ) : (
                 <button
                   type="button"
-                  className="drew__slot is-empty"
-                  key={`empty-${i}`}
-                  onClick={() => setOpen('tools')}
-                  aria-label="Equip a tool"
+                  className="drew__slotoff"
+                  aria-label={`Take off ${t.name}`}
+                  onClick={() => takeOff(i)}
                 >
-                  <i>+</i>
-                  <span>Empty</span>
+                  ×
                 </button>
-              )
-            })}
-          </div>
-        </section>
+                {on && <em className="drew__slottag">Replacing</em>}
+              </div>
+            ) : (
+              <button
+                type="button"
+                className={`drew__slot is-empty${on ? ' is-target' : ''}`}
+                key={`empty-${i}`}
+                aria-pressed={on}
+                onClick={() => setSlotPick(picked.length)}
+              >
+                <i>+</i>
+                <span>Empty</span>
+                {on && <em className="drew__slottag">Filling</em>}
+              </button>
+            )
+          })}
+        </div>
+        <div className="drew__save">
+          {changed && !loading ? (
+            <>
+              <span className="toolsheet__delta">
+                {delta(now.tlm_mp - before.tlm_mp)}
+                {delta(now.shrd_mp - before.shrd_mp)}
+              </span>
+              {draft && (
+                <button
+                  type="button"
+                  className="btn btn--ghost btn--sm"
+                  onClick={() => {
+                    setDraft(null)
+                    setSlotPick(null)
+                  }}
+                >
+                  Undo
+                </button>
+              )}
+            </>
+          ) : (
+            <small>{loading ? '' : 'No change yet'}</small>
+          )}
+          <button
+            type="button"
+            className="btn btn--primary"
+            disabled={!canAct || busy !== null || loading || !changed}
+            onClick={() => onSave(picked)}
+          >
+            {busy === 'mining' && <span className="spinner" />}
+            Save tools
+          </button>
+        </div>
+        {missing.length > 0 && (
+          <p className="rsheet__hint rsheet__hint--error drew__missing">
+            {missing.length === 1 ? 'One equipped tool is' : `${missing.length} equipped tools are`}{' '}
+            no longer in this wallet. Saving takes {missing.length === 1 ? 'it' : 'them'} off on chain
+            too.
+          </p>
+        )}
+      </section>
 
-        <div className="drew__cathead">
-          <h2 className="drew__cap">
-            Every tool · {formatNumber(catalogue.length)}
-            <span>yours marked</span>
-          </h2>
+      <LandCut player={player} busy={busy} canAct={canAct} onShare={onShare} />
+
+      <div className="drew__cathead">
+        <h2 className="drew__cap">
+          {loading
+            ? 'Tools'
+            : targetTool
+              ? `Slot ${target + 1} · gain over ${targetTool.name}`
+              : `Slot ${target + 1} · what each tool adds`}
+        </h2>
+        <div className="drew__catcontrols">
+          <div className="drew__seg" role="tablist" aria-label="Which tools">
+            {(
+              [
+                ['yours', `Yours · ${formatNumber(held.size)}`],
+                ['all', `Every tool · ${formatNumber(templates.length)}`],
+              ] as [ToolFilter, string][]
+            ).map(([key, label]) => (
+              <button
+                type="button"
+                key={key}
+                role="tab"
+                aria-selected={filter === key}
+                onClick={() => setFilter(key)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          <input
+            type="search"
+            className="input drew__search"
+            placeholder="Search tools"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
           <div className="alltools__chips drew__sorts">
-            {CATALOGUE_SORTS.map(([key, label]) => (
+            {GAIN_SORTS.map(([key, label]) => (
               <button
                 type="button"
                 key={key}
@@ -256,144 +403,190 @@ function DeskMining({
                 {label}
               </button>
             ))}
-            <button
-              type="button"
-              className={mineOnly ? 'is-on' : ''}
-              aria-pressed={mineOnly}
-              onClick={() => setMineOnly((v) => !v)}
-            >
-              Yours only
-            </button>
           </div>
         </div>
-        {loading ? (
-          <p className="rsheet__hint">Loading every tool…</p>
-        ) : (
-          <div className="drew__catalog">
-            {shown.map((t) => {
-              const count = held.get(t.template_id) ?? 0
-              return (
-                <div
-                  className={`drew__tool${count > 0 ? ' is-yours' : ''}${inUse.has(t.template_id) ? ' is-used' : ''}`}
-                  key={t.template_id}
-                >
-                  <GameImg
-                    src={asset(`/assets/cards/${t.template_id}.webp`)}
-                    alt=""
-                    fallback={asset('/assets/default-card.png')}
-                  />
-                  <span className="drew__toolname">
-                    <b>{t.toolname}</b>
-                    <small>
-                      {t.rarity} · {t.shine}
-                      {count > 0 && (
-                        <em>
-                          {inUse.has(t.template_id) ? 'in use' : 'yours'}
-                          {count > 1 ? ` ×${formatNumber(count)}` : ''}
-                        </em>
-                      )}
-                    </small>
-                  </span>
-                  <Power tlm={t.tlm_mp} shrd={t.shrd_mp} />
-                </div>
-              )
-            })}
-          </div>
-        )}
-        {!loading && catalogue.length > CATALOGUE_FIRST && (
-          <button type="button" className="btn btn--ghost drew__more" onClick={() => setEverything((v) => !v)}>
-            {everything ? 'Show the strongest only' : `Show all ${formatNumber(catalogue.length)}`}
-          </button>
-        )}
       </div>
 
-      <aside className="drew__side">
-        <div className="prew__rows">
-          <button type="button" className="prew__row" onClick={() => setOpen('tools')}>
-            <img src={asset('/assets/icons/menu/rewards.png')} alt="" />
-            <span className="prew__rowtext">
-              <strong>Change tools</strong>
-              <small>
-                {loading
-                  ? 'Loading…'
-                  : `${formatNumber(Math.max(0, tools.length - equipped.length))} more in your wallet`}
-              </small>
-            </span>
-            <Chevron />
-          </button>
-          <button
-            type="button"
-            className="prew__row"
-            disabled={!ownsLand}
-            onClick={() => setOpen('land')}
-          >
-            <img src={asset('/assets/icons/menu/my-land.png')} alt="" />
-            <span className="prew__rowtext">
-              <strong>Landowner settings</strong>
-              <small>
-                {lands.data === undefined
-                  ? 'Checking your land…'
-                  : ownsLand
-                    ? `${share}% TLM · ${100 - share}% Shards`
-                    : 'You own no land — nothing to set'}
-              </small>
-            </span>
-            {ownsLand && <Chevron />}
-          </button>
-          <button type="button" className="prew__row" onClick={() => setOpen('all')}>
-            <img src={asset('/assets/icons/menu/card.png')} alt="" />
-            <span className="prew__rowtext">
-              <strong>Search all tools</strong>
-              <small>By name, rarity or shine</small>
-            </span>
-            <Chevron />
-          </button>
-        </div>
-        <p className="rsheet__hint drew__note">
-          Mining adds the power of every equipped tool together. The tools stay in your wallet —
-          the game only records which you picked.
+      {loading ? (
+        <p className="rsheet__hint">Loading your tools…</p>
+      ) : catalogue.length === 0 ? (
+        <p className="rsheet__hint">
+          {query.trim()
+            ? 'No tool matches that.'
+            : 'No Alien Worlds tools in this wallet yet. Every tool in the game is under Every tool.'}
         </p>
-      </aside>
-
-      {open === 'tools' && (
-        <ToolsSheet
-          side
-          tools={tools}
-          loading={loading}
-          powerOf={powerOf}
-          stored={stored}
-          busy={busy}
-          canAct={canAct}
-          onSave={(ids) => {
-            onSave(ids)
-            setOpen(null)
-          }}
-          onClose={() => setOpen(null)}
-        />
+      ) : (
+        <div className="drew__catalog">
+          {shown.map((t) => {
+            const ids = held.get(t.template_id) ?? []
+            const spare = ids.filter((id) => !picked.includes(id)).length
+            const here = targetTool?.template_id === t.template_id
+            const dt = t.tlm_mp - Number(targetPower?.tlm_mp ?? 0)
+            const ds = t.shrd_mp - Number(targetPower?.shrd_mp ?? 0)
+            return (
+              <div
+                className={`drew__tool${spare > 0 ? ' is-yours' : ''}${here ? ' is-here' : ''}`}
+                key={t.template_id}
+              >
+                <GameImg
+                  src={asset(`/assets/cards/${t.template_id}.webp`)}
+                  alt=""
+                  loading="lazy"
+                  fallback={asset('/assets/default-card.png')}
+                />
+                <span className="drew__toolname">
+                  <b>{t.toolname}</b>
+                  <small>
+                    {t.rarity} · {t.shine}
+                  </small>
+                </span>
+                <span className="drew__gain">
+                  <span className={dt < 0 ? 'down' : dt > 0 ? 'up' : undefined}>
+                    <img src={CURRENCY_ICON.tlm} alt="TLM" />
+                    {signed(dt)}
+                  </span>
+                  <span className={ds < 0 ? 'down' : ds > 0 ? 'up' : undefined}>
+                    <img src={CURRENCY_ICON.shrds} alt="Shards" />
+                    {signed(ds)}
+                  </span>
+                </span>
+                <span className="drew__toolfoot">
+                  {here ? (
+                    <>
+                      <span>In this slot</span>
+                      <em>Current</em>
+                    </>
+                  ) : spare > 0 ? (
+                    <>
+                      <span>{formatNumber(spare)} spare</span>
+                      <button
+                        type="button"
+                        className="btn btn--primary btn--sm"
+                        disabled={busy !== null}
+                        onClick={() => equip(t.template_id)}
+                      >
+                        Equip
+                      </button>
+                    </>
+                  ) : ids.length > 0 ? (
+                    <span>{ids.length === 1 ? 'Equipped' : `All ${formatNumber(ids.length)} equipped`}</span>
+                  ) : (
+                    <>
+                      <span>Not owned</span>
+                      <Link to="/shop?c=market">NFT Market ›</Link>
+                    </>
+                  )}
+                </span>
+              </div>
+            )
+          })}
+        </div>
       )}
-      {open === 'land' && (
-        <LandSheet
-          side
-          stored={share}
-          busy={busy}
-          canAct={canAct}
-          onSave={(next) => {
-            onShare(next)
-            setOpen(null)
-          }}
-          onClose={() => setOpen(null)}
-        />
-      )}
-      {open === 'all' && (
-        <AllToolsSheet
-          side
-          templates={templates}
-          owned={tools}
-          loading={loading}
-          onClose={() => setOpen(null)}
-        />
+      {!loading && catalogue.length > CATALOGUE_FIRST && (
+        <button type="button" className="btn btn--ghost drew__more" onClick={() => setEverything((v) => !v)}>
+          {everything ? 'Show the strongest only' : `Show all ${formatNumber(catalogue.length)}`}
+        </button>
       )}
     </div>
+  )
+}
+
+/**
+ * The landowner split, on the page: the bar, a slider, three presets and a
+ * Save. It belongs to the land, not the miner — `pools.cpp` reads the
+ * owner's `landowner_tlm_share` to split the power earned on their land —
+ * so without land it stays dimmed with a way to get some.
+ */
+function LandCut({
+  player,
+  busy,
+  canAct,
+  onShare,
+}: {
+  player: Player
+  busy: string | null
+  canAct: boolean
+  onShare: (share: number) => void
+}) {
+  const lands = useChainQuery(player.wallet && `owned-lands:${player.wallet}`, () =>
+    fetchOwnedLands(player.wallet),
+  )
+  const count = lands.data?.length ?? 0
+  const owns = count > 0
+  const stored = Number(player.landowner_tlm_share ?? 0)
+  const [share, setShare] = useState(stored)
+  useEffect(() => setShare(stored), [stored])
+  const off = !owns || !canAct || busy !== null
+
+  return (
+    <section className={`drew__land${owns ? '' : ' is-off'}`} aria-label="Your land's cut">
+      <span className="drew__landtext">
+        <b>Your land's cut</b>
+        <small>
+          {lands.data === undefined
+            ? 'Checking your land…'
+            : owns
+              ? `Other players' mines on your ${count === 1 ? 'land' : `${formatNumber(count)} lands`} pay you a cut of their power`
+              : 'Own land and you earn a cut of everyone who mines on it'}
+        </small>
+      </span>
+      <span className="drew__landbar">
+        <span className="splitbar">
+          <span className="splitbar__tlm" style={{ width: `${share}%` }} />
+          <span className="splitbar__shards" style={{ width: `${100 - share}%` }} />
+        </span>
+        <span className="splitlabels">
+          <span>
+            <img src={CURRENCY_ICON.tlm} alt="" width={14} height={14} />
+            {share}% TLM
+          </span>
+          <span>
+            {100 - share}% Shards
+            <img src={CURRENCY_ICON.shrds} alt="" width={14} height={14} />
+          </span>
+        </span>
+        <input
+          type="range"
+          className="landsheet__range"
+          min={0}
+          max={100}
+          step={1}
+          value={share}
+          aria-label="Share paid as TLM"
+          onChange={(e) => setShare(Number(e.target.value))}
+          disabled={off}
+        />
+      </span>
+      <span className="landsheet__presets drew__landpresets">
+        {SHARE_PRESETS.map(([value, label]) => (
+          <button
+            type="button"
+            key={value}
+            className={share === value ? 'is-on' : ''}
+            aria-pressed={share === value}
+            onClick={() => setShare(value)}
+            disabled={off}
+          >
+            {label}
+          </button>
+        ))}
+      </span>
+      {owns ? (
+        <button
+          type="button"
+          className="btn btn--primary btn--sm"
+          disabled={off || share === stored}
+          onClick={() => onShare(share)}
+        >
+          {busy === 'share' && <span className="spinner" />}
+          Save
+        </button>
+      ) : (
+        <Link className="drew__landlink" to="/lands">
+          Go to My Lands ›
+        </Link>
+      )}
+    </section>
   )
 }
 
