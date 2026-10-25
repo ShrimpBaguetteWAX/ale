@@ -552,44 +552,52 @@
   padding-bottom: var(--sp-10);
 }
 
-/* A greeting line, the account's chips at its end. */
+/*
+ * The page's title, as on every other screen, with the greeting under it
+ * and the account's chips at the far end.
+ */
+.dbrief__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--sp-3) var(--sp-5);
+}
+.dbrief__who {
+  display: grid;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+.shell .main__inner .dbrief h1.dbrief__title {
+  margin-bottom: 0;
+}
 .dbrief__hello {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--sp-3);
+  gap: 4px 8px;
+  margin: 0;
+  font-size: var(--fs-sm);
+  color: var(--text-faint);
 }
 .dbrief__avatar {
   flex: none;
-  width: 46px;
-  height: 46px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
-  box-shadow: 0 0 0 2px var(--cyan);
+  box-shadow: 0 0 0 1.5px var(--cyan);
 }
-.dbrief__who {
-  display: grid;
-  flex: 1;
-  min-width: 0;
-}
-.shell .main__inner .dbrief h1.dbrief__name {
-  margin: 0;
-  padding: 0;
-  overflow: hidden;
-  font-size: var(--fs-lg);
-  letter-spacing: 0.06em;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  text-shadow: none;
-}
-.shell .main__inner .dbrief h1.dbrief__name::after {
-  display: none;
+.dbrief__name {
+  font-weight: var(--fw-bold);
+  color: var(--white);
 }
 .dbrief__line {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: var(--fs-sm);
-  color: var(--text-faint);
+}
+.dbrief__line::before {
+  content: '·';
 }
 .dbrief__chips {
   display: flex;

@@ -76,21 +76,25 @@ export function DeskBriefing({
     <div className="dbrief">
       {pending > 0 && <Loading label="Reading your account" />}
 
-      <header className="dbrief__hello">
-        <PlayerAvatar
-          id={Number(player.active_avatar) || undefined}
-          name={name}
-          className="dbrief__avatar"
-          size={46}
-        />
+      {/* The page's title like every other screen's, the greeting under it. */}
+      <header className="dbrief__head">
         <div className="dbrief__who">
-          <h1 className="dbrief__name">
-            {veteran ? 'Welcome back' : 'Welcome'}, {name}
-          </h1>
-          <span className="dbrief__line" role="status">
-            {pending > 0 && <span className="spinner" />}
-            {line}
-          </span>
+          <h1 className="dbrief__title">Briefing</h1>
+          <p className="dbrief__hello">
+            <PlayerAvatar
+              id={Number(player.active_avatar) || undefined}
+              name={name}
+              className="dbrief__avatar"
+              size={28}
+            />
+            <span className="dbrief__name">
+              {veteran ? 'Welcome back' : 'Welcome'}, {name}
+            </span>
+            <span className="dbrief__line" role="status">
+              {pending > 0 && <span className="spinner" />}
+              {line}
+            </span>
+          </p>
         </div>
         <div className="dbrief__chips">
           <Link className={`dbrief__chip${legend ? ' is-legend' : ''}`} to="/shop?c=account">
