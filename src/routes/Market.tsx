@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useGame } from '@/state/useGame'
 import { NUM_LOCALE } from '@/format'
 import {
@@ -31,24 +31,21 @@ import { useChainQuery } from '@/chain/useChainQuery'
 import { useModal } from '@/components/useModal'
 import { BottomSheet } from '@/components/BottomSheet'
 import { usePhone } from '@/components/usePhone'
-import { HoverPopover, useHoverCard } from '@/components/HoverPopover'
-import { FighterAbilities, FighterHoverCard, FighterStats, type PanelFighter } from '@/components/FighterPanel'
+import { FighterAbilities, FighterStats, type PanelFighter } from '@/components/FighterPanel'
 import { GameImg } from '@/components/GameImg'
 import { useAction } from '@/wharf/useAction'
 import { DIRTIES } from '@/wharf/actions'
 import { fighterAvailable } from '@/dungeon/rules'
-import { ageBand, ageBonus, ageDays, ageNote, battleFactor } from '@/fighters/rules'
+import { ageNote } from '@/fighters/rules'
 import {
   EMPTY_FILTER,
   applyFilter,
   isFilterActive,
-  markerIcon,
   type RosterFilter,
 } from '@/dungeon/filters'
 import type { RosterFighter, RosterStats } from '@/dungeon/types'
 import {
   DetailSheet,
-  Portrait,
   RosterFilters,
   rosterPanel,
   type Detail,
@@ -66,7 +63,6 @@ import {
   fighterArtFallback,
   fighterAvatar,
   formatResistance,
-  formatScaled,
   formatStat,
   gradeOfStat,
   resolveAbilityDescription,
@@ -283,7 +279,7 @@ export default function Market() {
   const counts: Record<Tab, number> = {
     auctions: liveAuctions.length,
     offers: liveOffers.length,
-    mine: myAuctions.length + myOffers.length + (phone ? myBids.length : 0),
+    mine: myAuctions.length + myOffers.length + myBids.length,
     sell: sellable.length,
   }
 
@@ -338,8 +334,31 @@ export default function Market() {
      the one picked, or the first, so the middle is never empty while there
      is anything to show.
   */
-  const board: (Auction | InstantOffer)[] = tab === 'offers' ? liveOffers : liveAuctions
+  const mineBids = useMemo(() => sortListings(myBids, 'ending', now), [myBids, now])
+  const mineAuctions = useMemo(() => sortListings(myAuctions, 'ending', now), [myAuctions, now])
+  const mineOffers = useMemo(() => sortListings(myOffers, 'ending', now), [myOffers, now])
+  const board: (Auction | InstantOffer)[] =
+    tab === 'offers'
+      ? liveOffers
+      : tab === 'mine'
+        ? [...mineBids, ...mineAuctions, ...mineOffers]
+        : liveAuctions
   const picked = board.find((l) => listingKey(l) === pick) ?? board[0] ?? null
+  /* A row of the desktop list: picking it shows it beside the list. */
+  const deskRow = (l: Auction | InstantOffer) => (
+    <ListingRow
+      key={listingKey(l)}
+      listing={l}
+      price={'auction_id' in l ? l.current_bid : l.gems}
+      closing={'auction_id' in l && extendsOnBid(l, config, now)}
+      open={l === picked}
+      onToggle={() => setPick(listingKey(l))}
+      template={classes.get(l.fighter.classname)}
+      now={now}
+      onOpen={() => show(l)}
+      inline={false}
+    />
+  )
 
   const show = useCallback(
     (listing: Auction | InstantOffer) => {
@@ -439,63 +458,97 @@ export default function Market() {
           </div>
           )}
 
-          {!phone && (tab === 'auctions' || tab === 'offers') && (
+          {!phone && (tab === 'auctions' || tab === 'offers' || tab === 'mine') && (
             <DeskBoard
-              listings={board}
-              loading={tab === 'auctions' ? !auctions : !offers}
-              empty={
-                tab === 'auctions'
-                  ? 'No auctions are running. List one and it will show up here.'
-                  : 'Nothing is on sale at a fixed price. These only appear when an auction ends unsold and the seller chose to keep it listed.'
-              }
+              order={board}
               picked={picked}
               onPick={(l) => setPick(listingKey(l))}
-              tools={browseTools}
-              row={(l, on) => (
-                <ListingRow
-                  key={listingKey(l)}
-                  listing={l}
-                  price={'auction_id' in l ? l.current_bid : l.gems}
-                  closing={'auction_id' in l && extendsOnBid(l, config, now)}
-                  open={on}
-                  onToggle={() => setPick(listingKey(l))}
-                  template={classes.get(l.fighter.classname)}
-                  now={now}
-                  onOpen={() => show(l)}
-                  inline={false}
-                />
-              )}
-              fighter={(l) => (
-                <MarketFighter
-                  listing={l}
-                  panel={rosterPanel(listingAsFighter(l), levelMod, ageDecay)}
-                  template={classes.get(l.fighter.classname)}
-                  unlockLevel={unlockLevel}
-                />
-              )}
-              deal={(l) =>
-                'auction_id' in l ? (
+              list={
+                tab === 'mine' ? (
+                  !auctions || !offers ? (
+                    <PhoneRows loading empty="">
+                      {[]}
+                    </PhoneRows>
+                  ) : board.length === 0 ? (
+                    <div className="mrows__empty">
+                      <p className="faint">Nothing of yours is on the market.</p>
+                      <button type="button" className="btn btn--ghost btn--sm" onClick={() => setTab('sell')}>
+                        Sell a fighter
+                      </button>
+                    </div>
+                  ) : (
+                    /* Mine in the phone's sections, by where each listing stands. */
+                    (
+                      [
+                        ['Winning', mineBids, 'you hold the top bid'],
+                        ['Selling', mineAuctions, `${Math.round(Number(config?.standard_duration_minutes ?? 0) / 60)}h auctions`],
+                        ['Fixed price', mineOffers, "ends on the fighter's payday"],
+                      ] as [string, (Auction | InstantOffer)[], string][]
+                    ).map(
+                      ([title, ls, note]) =>
+                        ls.length > 0 && (
+                          <Fragment key={title}>
+                            <p className="mrows__head">
+                              <span>
+                                {title} · {ls.length}
+                              </span>
+                              <small>{note}</small>
+                            </p>
+                            <div className="mrows">{ls.map(deskRow)}</div>
+                          </Fragment>
+                        ),
+                    )
+                  )
+                ) : (
+                  <>
+                    {browseTools}
+                    <PhoneRows
+                      loading={tab === 'auctions' ? !auctions : !offers}
+                      empty={
+                        tab === 'auctions'
+                          ? 'No auctions are running. List one and it will show up here.'
+                          : 'Nothing is on sale at a fixed price. These only appear when an auction ends unsold and the seller chose to keep it listed.'
+                      }
+                    >
+                      {board.map(deskRow)}
+                    </PhoneRows>
+                  </>
+                )
+              }
+              fighter={
+                picked && (
+                  <ListingFighter
+                    listing={picked}
+                    panel={rosterPanel(listingAsFighter(picked), levelMod, ageDecay)}
+                    template={classes.get(picked.fighter.classname)}
+                    unlockLevel={unlockLevel}
+                  />
+                )
+              }
+              deal={
+                picked &&
+                ('auction_id' in picked ? (
                   <AuctionDeal
-                    key={listingKey(l)}
-                    auction={l}
+                    key={listingKey(picked)}
+                    auction={picked}
                     config={config}
                     player={player}
                     now={now}
                     busy={busy}
-                    onBid={(gems) => placeBid(l, gems)}
-                    onCancel={() => cancel(l)}
+                    onBid={(gems) => placeBid(picked, gems)}
+                    onCancel={() => cancel(picked)}
                   />
                 ) : (
                   <OfferDeal
-                    key={listingKey(l)}
-                    offer={l}
+                    key={listingKey(picked)}
+                    offer={picked}
                     config={config}
                     player={player}
                     now={now}
                     busy={busy === 'buy'}
-                    onBuy={() => buyNow(l)}
+                    onBuy={() => buyNow(picked)}
                   />
-                )
+                ))
               }
             />
           )}
@@ -576,6 +629,7 @@ export default function Market() {
               config={config}
               player={player}
               busy={busy === 'list'}
+              unlockLevel={unlockLevel}
               onInspect={(f) =>
                 setDetail({
                   kind: 'panel',
@@ -618,20 +672,6 @@ export default function Market() {
             />
           )}
 
-          {tab === 'mine' && !phone && (
-            <MyListings
-              auctions={myAuctions}
-              offers={myOffers}
-              config={config}
-              now={now}
-              busy={busy}
-              ageDecay={ageDecay}
-              levelMod={levelMod}
-              player={player}
-              onOpen={show}
-              onCancel={cancel}
-            />
-          )}
         </section>
       </div>
 
@@ -1054,64 +1094,57 @@ function shortDay(date: string): string {
 const roundUp = (n: number, step: number) => Math.ceil(n / step) * step
 
 /**
- * The desktop market: the phone's list on the left, the listing picked shown
- * in full in the middle, and what can be done with it on the right.
+ * The desktop market: the phone's list on the left, the one picked shown in
+ * full in the middle, and what can be done with it on the right — a bid, a
+ * buy, a withdrawal, a listing, by tab.
  *
- * A desktop has the width to stop asking a buyer to open each fighter to
+ * A desktop has the width to stop asking a player to open each fighter to
  * judge it: the rolls, the resistances and every ability's text stand next
- * to the price, and the bid is beside them. The arrow keys walk the list, so
- * comparing two fighters is a keypress.
+ * to the price, and the deal is beside them. The arrow keys walk the list,
+ * so comparing two fighters is a keypress.
  */
-function DeskBoard({
-  listings,
-  loading,
-  empty,
+function DeskBoard<T>({
+  order,
   picked,
   onPick,
-  tools,
-  row,
+  list,
   fighter,
   deal,
 }: {
-  listings: (Auction | InstantOffer)[]
-  loading: boolean
-  empty: string
-  picked: Auction | InstantOffer | null
-  onPick: (l: Auction | InstantOffer) => void
-  tools: React.ReactNode
-  row: (l: Auction | InstantOffer, on: boolean) => React.ReactNode
-  fighter: (l: Auction | InstantOffer) => React.ReactNode
-  deal: (l: Auction | InstantOffer) => React.ReactNode
+  /** Everything in the list, top to bottom, for the arrow keys. */
+  order: T[]
+  picked: T | null
+  onPick: (item: T) => void
+  list: React.ReactNode
+  fighter: React.ReactNode
+  deal: React.ReactNode
 }) {
-  const list = useRef<HTMLDivElement>(null)
-  const index = picked ? listings.indexOf(picked) : -1
+  const box = useRef<HTMLDivElement>(null)
+  const index = picked === null ? -1 : order.indexOf(picked)
 
   /* The picked row kept in sight as the keys walk past the fold. */
   useEffect(() => {
-    list.current?.querySelector('.mrow.is-open')?.scrollIntoView({ block: 'nearest' })
+    box.current?.querySelector('.mrow.is-open')?.scrollIntoView({ block: 'nearest' })
   }, [picked])
 
   const onKey = (e: React.KeyboardEvent) => {
     if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return
     if ((e.target as HTMLElement).closest('input, select, textarea')) return
-    const next = listings[Math.min(listings.length - 1, Math.max(0, index + (e.key === 'ArrowDown' ? 1 : -1)))]
-    if (!next) return
+    const next = order[Math.min(order.length - 1, Math.max(0, index + (e.key === 'ArrowDown' ? 1 : -1)))]
+    if (next === undefined) return
     e.preventDefault()
     onPick(next)
   }
 
   return (
     <div className="mdesk">
-      <div className="mdesk__list" ref={list} onKeyDown={onKey}>
-        {tools}
-        <PhoneRows loading={loading} empty={empty}>
-          {listings.map((l) => row(l, l === picked))}
-        </PhoneRows>
+      <div className="mdesk__list" ref={box} onKeyDown={onKey}>
+        {list}
       </div>
-      {picked && (
+      {picked !== null && (
         <>
-          {fighter(picked)}
-          {deal(picked)}
+          {fighter}
+          {deal}
         </>
       )}
     </div>
@@ -1119,24 +1152,30 @@ function DeskBoard({
 }
 
 /**
- * The listing's fighter in full: what the Details sheet shows, standing in
- * the board rather than over it. The game's own stat lines, resistances and
- * ability texts, laid out as tiles for the width.
+ * A fighter in full: what the Details sheet shows, standing in the board
+ * rather than over it. The game's own stat lines, resistances and ability
+ * texts, laid out as tiles for the width. The same for a listing and for a
+ * fighter of your own about to be listed; `facts` is what differs.
  */
 function MarketFighter({
-  listing,
+  stats: f,
+  ascension,
+  id,
   panel,
   template,
   unlockLevel,
+  facts,
 }: {
-  listing: Auction | InstantOffer
+  stats: RosterStats
+  ascension: number
+  id: number
   panel: PanelFighter
   template?: ClassTemplate
   unlockLevel?: number
+  /** The dated lines under the name: listed, payday. */
+  facts: string[]
 }) {
-  const f = listing.fighter
   const sacrifice = (f.abilities ?? []).some((a) => String(a.ability) === SACRIFICE_ABILITY)
-  const listed = 'auction_id' in listing ? listing.auction_start : listing.offer_start
   return (
     <section className="mfighter" aria-label={`${f.classname}, in full`}>
       <div className="mfighter__hero">
@@ -1148,7 +1187,7 @@ function MarketFighter({
           />
           <span className="mrow__level">
             <span>Level {f.level}</span>
-            {listing.ascension_level > 0 && <em>✦{listing.ascension_level}</em>}
+            {ascension > 0 && <em>✦{ascension}</em>}
           </span>
           {sacrifice && (
             <span className="mrow__skull" title="Has the Sacrifice ability">
@@ -1157,15 +1196,16 @@ function MarketFighter({
           )}
         </span>
         <div className="mfighter__who">
-          <span className="mfighter__kick">Fighter #{listing.fighter_id}</span>
+          <span className="mfighter__kick">Fighter #{id}</span>
           <h2 className="mfighter__name">{f.classname}</h2>
           <span className="mfighter__line">
             <img src={asset(`/assets/icons/elements/${f.element}.png`)} alt="" width={18} height={18} />
             {f.racename} · {f.element}
           </span>
           <div className="mfighter__meta">
-            <span>Listed {shortDay(listed)}</span>
-            <span>Payday {shortDay(listing.next_payday)}</span>
+            {facts.map((t) => (
+              <span key={t}>{t}</span>
+            ))}
             {panel.age && (
               <span title={ageNote(panel.age.bonus, panel.age.days, panel.age.factor)}>
                 Age {panel.age.bonus > 0 ? '+' : ''}
@@ -1184,6 +1224,34 @@ function MarketFighter({
         </>
       )}
     </section>
+  )
+}
+
+/** A listing in full, with the dates a buyer weighs. */
+function ListingFighter({
+  listing,
+  panel,
+  template,
+  unlockLevel,
+}: {
+  listing: Auction | InstantOffer
+  panel: PanelFighter
+  template?: ClassTemplate
+  unlockLevel?: number
+}) {
+  return (
+    <MarketFighter
+      stats={listing.fighter}
+      ascension={listing.ascension_level}
+      id={listing.fighter_id}
+      panel={panel}
+      template={template}
+      unlockLevel={unlockLevel}
+      facts={[
+        `Listed ${shortDay('auction_id' in listing ? listing.auction_start : listing.offer_start)}`,
+        `Payday ${shortDay(listing.next_payday)}`,
+      ]}
+    />
   )
 }
 
@@ -1454,121 +1522,6 @@ function PhoneRows({ loading, empty, children }: { loading: boolean; empty: stri
 }
 
 /**
- * The portrait and who the fighter is.
- *
- * The art sits on its elemental backdrop, the way it does everywhere else a
- * fighter is shown in full — a listing was the one place a fighter appeared
- * as a thumbnail on a plain card, which made the market look like a table of
- * rows rather than a shelf of fighters.
- */
-function ListingHead({
-  listing,
-  onOpen,
-  ageDecay,
-  levelMod,
-}: {
-  listing: Auction | InstantOffer
-  onOpen: () => void
-  ageDecay: number
-  levelMod: number
-}) {
-  const f = listing.fighter
-  /*
-     What age has already taken off this fighter.
-
-     `apply_weather_and_age` multiplies health and damage by
-     `age_decay ^ (days²)`, which is imperceptible for a week and then falls
-     off a cliff. On a market that is the difference between a bargain and a
-     fighter with weeks left in it, and nothing else on the card hints at it —
-     the stat figures are the stored roll, which does not move as a fighter
-     ages.
-  */
-  const asFighter = listingAsFighter(listing)
-  const days = ageDays(asFighter, Date.now())
-  const factor = battleFactor(asFighter, levelMod, ageDecay, Date.now())
-  /* The same scale My Fighters prints, so a fighter does not change its
-     apparent condition on the way from one screen to the other. */
-  const bonus = ageBonus(asFighter, ageDecay, Date.now())
-  const band = ageBand(bonus)
-
-  return (
-    <button type="button" className="listingcard__hit" onClick={onOpen}>
-      <span
-        className="listingcard__art"
-        style={{ backgroundImage: `url('${elementBackground(f.element)}')` }}
-      >
-        <img
-          src={fighterAvatar({ classname: f.classname, racename: f.racename })}
-          alt={`${f.classname} ${f.racename}`}
-          loading="lazy"
-          onError={(e) => {
-            const img = e.currentTarget
-            /*
-               Two steps down, not one: the avatar crop, then the full body,
-               then the generic. Falling straight to the placeholder would
-               throw away perfectly good art whenever a single crop is
-               missing.
-            */
-            if (img.dataset.step === 'full') return
-            if (img.dataset.step === 'avatar') {
-              img.dataset.step = 'full'
-              img.src = fighterArtFallback()
-              return
-            }
-            img.dataset.step = 'avatar'
-            img.src = fighterArt({ classname: f.classname, racename: f.racename })
-          }}
-        />
-        <span className="listingcard__level">L{f.level}</span>
-        {/*
-          What the fighter has been ascended to, opposite its level.
-
-          An ascension is permanent, paid for, and the thing that unlocks the
-          last ability — so between two otherwise identical listings it is
-          most of the difference in what they are worth, and the market was
-          the one screen carrying it in the data and not on the card. Absent
-          below 1, the same rule My Fighters uses, so a card with no badge
-          means the same thing on both screens.
-        */}
-        {listing.ascension_level > 0 && (
-          <span
-            className="listingcard__asc"
-            title={`Ascended ${listing.ascension_level} time${listing.ascension_level === 1 ? '' : 's'}`}
-          >
-            Asc {listing.ascension_level}
-          </span>
-        )}
-      </span>
-
-      <span className="listingcard__who">
-        <span className="listingcard__class">{f.classname}</span>
-        <span className="listingcard__race">{f.racename}</span>
-        <span className="listingcard__element">
-          <img
-            src={asset(`/assets/icons/elements/${f.element}.png`)}
-            alt=""
-            width={14}
-            height={14}
-          />
-          {f.element}
-        </span>
-
-        <span
-          className={`listingcard__age listingcard__age--${band}`}
-          title={ageNote(bonus, days, factor.age)}
-        >
-          {days}d
-          <em>
-            {bonus > 0 ? '+' : ''}
-            {bonus.toFixed(0)}%
-          </em>
-        </span>
-      </span>
-    </button>
-  )
-}
-
-/**
  * One graded row: the figure, then how good it is for the class.
  *
  * The number leads and the arrow follows, because the number is what is read
@@ -1717,115 +1670,6 @@ function ListingBody({
         </div>
       )}
     </div>
-  )
-}
-
-/* ---------- my listings ---------- */
-
-export function MyListings({
-  auctions,
-  offers,
-  config,
-  now,
-  busy,
-  ageDecay,
-  levelMod,
-  player,
-  onOpen,
-  onCancel,
-}: {
-  auctions: Auction[]
-  offers: InstantOffer[]
-  config: MarketConfig | undefined
-  now: number
-  busy: string | null
-  ageDecay: number
-  levelMod: number
-  player: NonNullable<ReturnType<typeof useGame.getState>['player']>
-  onOpen: (l: Auction | InstantOffer) => void
-  onCancel: (a: Auction) => void
-}) {
-  if (auctions.length === 0 && offers.length === 0) {
-    return <p className="faint listinggrid__empty">You have nothing listed.</p>
-  }
-
-  return (
-    <>
-      {auctions.length > 0 && (
-        <div className="listinggrid">
-          {auctions.map((a) => {
-            const gate = canCancelAuction(a, player)
-            const ended = hasEnded(a, now)
-            return (
-              <article className="listingcard" key={a.auction_id}>
-                <ListingHead listing={a} onOpen={() => onOpen(a)} ageDecay={ageDecay} levelMod={levelMod} />
-                <div className="listingcard__price">
-                  <span className="listingcard__label">
-                    {Number(a.bids) > 0 ? `${a.bids} bids` : 'No bids yet'}
-                  </span>
-                  <span className="listingcard__gems mono">
-                    {a.current_bid.toLocaleString(NUM_LOCALE)}
-                    <img src={asset("/assets/icons/gems.png")} alt="gems" width={16} height={16} />
-                  </span>
-                </div>
-                <div className="listingcard__meta">
-                  <span className="listingcard__clock">
-                    {timeLeftLabel(msLeft(a, now))}
-                  </span>
-                  <span className="faint">
-                    {Number(a.bids) > 0
-                      ? `nets ${sellerPayout(a.current_bid, config)} after fee`
-                      : a.keep_after_auction
-                        ? 'will relist at the fixed price'
-                        : 'will come back to you'}
-                  </span>
-                </div>
-                <button
-                  type="button"
-                  className="btn btn--ghost btn--sm btn--block"
-                  onClick={() => onCancel(a)}
-                  disabled={!gate.ok || ended || busy === `cancel${a.auction_id}`}
-                  title={gate.reason}
-                >
-                  {busy === `cancel${a.auction_id}` && <span className="spinner" />}
-                  {gate.ok ? 'Withdraw' : (gate.reason ?? 'Withdraw')}
-                </button>
-              </article>
-            )
-          })}
-        </div>
-      )}
-
-      {offers.length > 0 && (
-        <>
-          <p className="hint" style={{ marginTop: 'var(--sp-4)' }}>
-            {OFFER_CANCEL_IS_BROKEN}
-          </p>
-          <div className="listinggrid">
-            {offers.map((o) => (
-              <article className="listingcard" key={o.offer_id}>
-                <ListingHead listing={o} onOpen={() => onOpen(o)} ageDecay={ageDecay} levelMod={levelMod} />
-                <div className="listingcard__price">
-                  <span className="listingcard__label">Listed at</span>
-                  <span className="listingcard__gems mono">
-                    {o.gems.toLocaleString(NUM_LOCALE)}
-                    <img src={asset("/assets/icons/gems.png")} alt="gems" width={16} height={16} />
-                  </span>
-                </div>
-                <div className="listingcard__meta">
-                  <span className="listingcard__clock">
-                    {timeLeftLabel(msLeft(o, now))}
-                  </span>
-                  <span className="faint">
-                    nets {sellerPayout(o.gems, config)} after fee
-                  </span>
-                </div>
-              </article>
-            ))}
-          </div>
-        </>
-      )}
-    </>
   )
 }
 
@@ -2087,76 +1931,6 @@ export function BuyDialog({
   )
 }
 
-/**
- * One sellable fighter, with the read the pickers already give.
- *
- * A seller is pricing the rolls and the tile says a class, a level and a
- * damage figure — everything the price actually turns on was behind a
- * button. This is the same card the dungeon and arena grids open on a rest
- * of the pointer, in the same way, so nothing new has to be learned and
- * nothing is built until the pointer settles on one.
- *
- * The hover is hung on a wrapper rather than the button: the hook measures
- * the element it is given, and the grid item is what the card should open
- * beside.
- */
-function SellPickTile({
-  fighter: f,
-  classes,
-  levelMod,
-  ageDecay,
-  picked,
-  hoverStats,
-  onPick,
-}: {
-  fighter: RosterFighter
-  classes: Map<string, ClassTemplate>
-  levelMod: number
-  ageDecay: number
-  picked: boolean
-  hoverStats: boolean
-  onPick: () => void
-}) {
-  const preview = useCallback(
-    () => ({
-      panel: rosterPanel(f, levelMod, ageDecay),
-      template: classes.get(f.classname),
-    }),
-    [f, levelMod, ageDecay, classes],
-  )
-  const { ref, shown, close, handlers } = useHoverCard(preview, hoverStats)
-
-  return (
-    <div className="sellpick__slot" ref={ref} {...handlers}>
-      {shown && (
-        <HoverPopover anchor={shown.rect}>
-          <FighterHoverCard fighter={shown.value.panel} template={shown.value.template} />
-        </HoverPopover>
-      )}
-      <button
-        type="button"
-        className="sellpick__one"
-        aria-pressed={picked}
-        onClick={() => {
-          close()
-          onPick()
-        }}
-      >
-        <Portrait element={f.element} classname={f.classname} racename={f.racename} />
-        {!!f.marker && (
-          <span className="sellpick__marker" title={`Marked ${f.marker}`}>
-            <img src={markerIcon(f.marker)} alt="" width={14} height={14} />
-          </span>
-        )}
-        <span className="sellpick__name">{f.classname}</span>
-        <span className="sellpick__sub mono">
-          L{f.stats.level} · {formatScaled(f.stats.damage_min)} dmg
-        </span>
-      </button>
-    </div>
-  )
-}
-
 export function SellTab({
   sellable,
   classes,
@@ -2166,6 +1940,7 @@ export function SellTab({
   player,
   busy,
   onInspect,
+  unlockLevel,
   onList,
 }: {
   sellable: RosterFighter[]
@@ -2179,6 +1954,8 @@ export function SellTab({
   busy: boolean
   /* Opens the full panel on the fighter being listed. */
   onInspect: (fighter: RosterFighter) => void
+  /** The ascension that frees a locked ability, for the desktop's fighter. */
+  unlockLevel?: number
   onList: (fighterId: number, startPrice: number, keep: boolean) => void
 }) {
   const minStart = Number(config?.gems_min_start_bid ?? 0)
@@ -2228,26 +2005,143 @@ export function SellTab({
     setPickedId(null)
   }, [selling, pickedId, sellable])
 
+  const listFee = Number(config?.gems_listing_price ?? 0)
+  const resetHours = Math.round(Number(config?.reset_duration_below_minutes ?? 0) / 60)
+  const payout = sellerPayout(price, config)
+  const quick = [10, 25, 50, 100, 250].filter((q) => q >= minStart)
+  const gemIcon = <img src={asset('/assets/icons/gems.png')} alt="gems" width={13} height={13} />
+
+  /*
+     The terms, the same on both layouts: the price, whether to keep it
+     listed, what selling at that price would actually pay, and List. The
+     phone adds Details beside List; the desktop is already showing them.
+  */
+  const terms = (f: RosterFighter, details?: () => void) => {
+    const list = (
+      <button
+        type="button"
+        className={`btn btn--primary${details ? ' btn--sm' : ' mdeal__go'}`}
+        onClick={() => {
+          setSelling(true)
+          onList(f.fighter_id, price, keep)
+        }}
+        disabled={busy || !gate.ok}
+        title={gate.reason}
+      >
+        {busy && <span className="spinner" />}
+        {gate.ok ? (
+          <span className="msell__go">
+            List for {price}
+            {gemIcon}· costs {listFee}
+            {gemIcon}
+          </span>
+        ) : (
+          gate.reason
+        )}
+      </button>
+    )
+    return (
+      <>
+        <div className="mstep">
+          <span className="msell__cap">Starting price</span>
+          <div className="mstep__row">
+            <button
+              type="button"
+              className="mstep__btn"
+              onClick={() => setPrice((p) => Math.max(minStart, p - 1))}
+              disabled={price <= minStart}
+              aria-label="One gem less"
+            >
+              −
+            </button>
+            <input
+              className="mstep__input mono"
+              type="number"
+              inputMode="numeric"
+              min={minStart}
+              step={1}
+              value={price}
+              aria-label="Starting price"
+              onChange={(e) => setPrice(Math.max(0, Math.floor(Number(e.target.value) || 0)))}
+            />
+            <button type="button" className="mstep__btn" onClick={() => setPrice((p) => p + 1)} aria-label="One gem more">
+              +
+            </button>
+          </div>
+          <div className="msell__quick">
+            {quick.map((q) => (
+              <button type="button" key={q} className={price === q ? 'is-on' : ''} onClick={() => setPrice(q)}>
+                {q}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <label className="msell__keep">
+          <span className="toggle">
+            <input type="checkbox" checked={keep} onChange={(e) => setKeep(e.target.checked)} />
+            <span className="toggle__track" aria-hidden="true">
+              <span className="toggle__thumb" />
+            </span>
+          </span>
+          <span>
+            If nobody bids, keep it listed at <b className="mono">{price}</b> gems
+          </span>
+        </label>
+
+        <dl className="mfacts">
+          <div>
+            <dt>Starting price</dt>
+            <dd className="mono">{price}</dd>
+          </div>
+          <div>
+            <dt>Market fee on a sale ({config?.gems_processing_fee_percent ?? 0}%)</dt>
+            <dd className="mono">−{price - payout}</dd>
+          </div>
+          <div className="is-total">
+            <dt>You get if it sells at this price</dt>
+            <dd className="mono">{payout}</dd>
+          </div>
+        </dl>
+        <p className="msell__hint">
+          Listing costs {listFee} gem{listFee === 1 ? '' : 's'} now, sold or not. It runs {hours}h, and a bid in the
+          last {resetHours}h pushes the end back out. Once anybody bids it can't be withdrawn.
+        </p>
+
+        {details ? (
+          <div className="mrow__acts">
+            <button type="button" className="btn btn--ghost btn--sm" onClick={details}>
+              Details
+            </button>
+            {list}
+          </div>
+        ) : (
+          list
+        )}
+      </>
+    )
+  }
+
+  const none = (
+    <p className="faint">
+      None of your fighters can be listed right now. A fighter has to be active, idle, and not yet asking for a
+      payday.
+    </p>
+  )
+  const filters = <RosterFilters filter={filter} onChange={setFilter} roster={sellable} sheet={{}} />
+
   /*
      The phone: the roster as the board's rows, under the same filter, and
-     the terms opened in place under the fighter tapped — the price, whether
-     to keep it listed, and what selling at that price would actually pay.
+     the terms opened in place under the fighter tapped.
   */
   if (phone) {
-    const listFee = Number(config?.gems_listing_price ?? 0)
-    const resetHours = Math.round(Number(config?.reset_duration_below_minutes ?? 0) / 60)
-    const payout = sellerPayout(price, config)
-    const quick = [10, 25, 50, 100, 250].filter((q) => q >= minStart)
     return (
       <div className="selltab selltab--phone">
         {sellable.length === 0 ? (
-          <p className="faint">
-            None of your fighters can be listed right now. A fighter has to be
-            active, idle, and not yet asking for a payday.
-          </p>
+          none
         ) : (
           <>
-            <RosterFilters filter={filter} onChange={setFilter} roster={sellable} sheet={{}} />
+            {filters}
             {shown.length === 0 ? (
               <p className="faint">No fighter you can sell matches these filters.</p>
             ) : (
@@ -2264,109 +2158,7 @@ export function SellTab({
                       onToggle={() => setPickedId(open ? null : f.fighter_id)}
                       right={<span className="mrow__price mrow__cue">{open ? 'Close' : 'Sell ›'}</span>}
                     >
-                      <div className="mstep">
-                        <span className="msell__cap">Starting price</span>
-                        <div className="mstep__row">
-                          <button
-                            type="button"
-                            className="mstep__btn"
-                            onClick={() => setPrice((p) => Math.max(minStart, p - 1))}
-                            disabled={price <= minStart}
-                            aria-label="One gem less"
-                          >
-                            −
-                          </button>
-                          <input
-                            className="mstep__input mono"
-                            type="number"
-                            inputMode="numeric"
-                            min={minStart}
-                            step={1}
-                            value={price}
-                            aria-label="Starting price"
-                            onChange={(e) => setPrice(Math.max(0, Math.floor(Number(e.target.value) || 0)))}
-                          />
-                          <button
-                            type="button"
-                            className="mstep__btn"
-                            onClick={() => setPrice((p) => p + 1)}
-                            aria-label="One gem more"
-                          >
-                            +
-                          </button>
-                        </div>
-                        <div className="msell__quick">
-                          {quick.map((q) => (
-                            <button
-                              type="button"
-                              key={q}
-                              className={price === q ? 'is-on' : ''}
-                              onClick={() => setPrice(q)}
-                            >
-                              {q}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-
-                      <label className="msell__keep">
-                        <span className="toggle">
-                          <input type="checkbox" checked={keep} onChange={(e) => setKeep(e.target.checked)} />
-                          <span className="toggle__track" aria-hidden="true">
-                            <span className="toggle__thumb" />
-                          </span>
-                        </span>
-                        <span>
-                          If nobody bids, keep it listed at <b className="mono">{price}</b> gems
-                        </span>
-                      </label>
-
-                      <dl className="mfacts">
-                        <div>
-                          <dt>Starting price</dt>
-                          <dd className="mono">{price}</dd>
-                        </div>
-                        <div>
-                          <dt>Market fee on a sale ({config?.gems_processing_fee_percent ?? 0}%)</dt>
-                          <dd className="mono">−{price - payout}</dd>
-                        </div>
-                        <div className="is-total">
-                          <dt>You get if it sells at this price</dt>
-                          <dd className="mono">{payout}</dd>
-                        </div>
-                      </dl>
-                      <p className="msell__hint">
-                        Listing costs {listFee} gem{listFee === 1 ? '' : 's'} now, sold or not. It runs {hours}h, and a bid in
-                        the last {resetHours}h pushes the end back out. Once anybody bids it can't be withdrawn.
-                      </p>
-
-                      <div className="mrow__acts">
-                        <button type="button" className="btn btn--ghost btn--sm" onClick={() => onInspect(f)}>
-                          Details
-                        </button>
-                        <button
-                          type="button"
-                          className="btn btn--primary btn--sm"
-                          onClick={() => {
-                            setSelling(true)
-                            onList(f.fighter_id, price, keep)
-                          }}
-                          disabled={busy || !gate.ok}
-                          title={gate.reason}
-                        >
-                          {busy && <span className="spinner" />}
-                          {gate.ok ? (
-                            <span className="msell__go">
-                              List for {price}
-                              <img src={asset('/assets/icons/gems.png')} alt="gems" width={13} height={13} />
-                              · costs {listFee}
-                              <img src={asset('/assets/icons/gems.png')} alt="gems" width={13} height={13} />
-                            </span>
-                          ) : (
-                            gate.reason
-                          )}
-                        </button>
-                      </div>
+                      {terms(f, () => onInspect(f))}
                     </FighterRow>
                   )
                 })}
@@ -2378,179 +2170,63 @@ export function SellTab({
     )
   }
 
+  /*
+     The desktop: the board the other tabs use — your roster on the left, the
+     fighter you are about to price in full in the middle, so its rolls and
+     abilities are in front of you while you set the number, and the terms on
+     the right.
+  */
+  const deskPicked = shown.find((f) => f.fighter_id === pickedId) ?? shown[0] ?? null
+  if (sellable.length === 0) return none
   return (
-    <div className="selltab">
-      {sellable.length === 0 ? (
-        <p className="faint">
-          None of your fighters can be listed right now. A fighter has to be
-          active, idle, and not yet asking for a payday.
-        </p>
-      ) : (
+    <DeskBoard
+      order={shown}
+      picked={deskPicked}
+      onPick={(f) => setPickedId(f.fighter_id)}
+      list={
         <>
-          {/*
-            The bar over the roster it is choosing from.
-
-            The same arrangement My Fighters uses, and for the same reason:
-            the button acts on something below it, the thing below it is
-            usually past the fold, and scrolling back up to reach the button
-            for the fighter you just tapped is the whole interaction. It
-            pins itself only once there is a fighter to act on, so an
-            untouched tab is not carrying a bar that does nothing.
-          */}
-          <div className={`selltab__bar${picked ? ' selltab__bar--pinned' : ''}`}>
-            {picked ? (
-              <span className="selltab__who">
-                <span className="selltab__face">
-                  <Portrait
-                    element={picked.element}
-                    classname={picked.classname}
-                    racename={picked.racename}
-                  />
-                </span>
-                <span>
-                  <b>{picked.classname}</b>
-                  <em className="faint mono">
-                    L{picked.stats.level} · {picked.racename}
-                  </em>
-                </span>
-              </span>
-            ) : (
-              <span className="selltab__who selltab__who--none">
-                Pick a fighter below to sell it.
-              </span>
-            )}
-
-            {/*
-               Listing a fighter is permanent for as long as the auction
-               runs, and a tile says a class and a level. The whole panel —
-               every graded roll, the resistances, the abilities — is what a
-               seller is actually pricing, so it is one button away rather
-               than something to go and look up on another screen. It stays
-               out here: from inside the terms it would be a second sheet on
-               top of the first.
-            */}
-            <button
-              type="button"
-              className="btn btn--ghost"
-              onClick={() => picked && onInspect(picked)}
-              disabled={!picked}
-              title={picked ? undefined : 'Pick a fighter first'}
-            >
-              View fighter
-            </button>
-
-            <button
-              type="button"
-              className="btn btn--primary"
-              onClick={() => setSelling(true)}
-              disabled={!picked}
-              title={picked ? undefined : 'Pick a fighter first'}
-            >
-              Sell
-            </button>
-          </div>
-
-          {/* The roll-quality rules come with `RosterFilters`, which renders
-              them itself — a second one here was a duplicate of the same two
-              selects, and would now be the copy that did not fold away. */}
-          <RosterFilters filter={filter} onChange={setFilter} roster={sellable} />
-
+          {filters}
           {shown.length === 0 ? (
             <p className="faint">No fighter you can sell matches these filters.</p>
           ) : (
-          <div className="sellpick">
-            {shown.map((f) => (
-              <SellPickTile
-                key={f.fighter_id}
-                fighter={f}
-                classes={classes}
-                levelMod={levelMod}
-                ageDecay={ageDecay}
-                picked={f.fighter_id === pickedId}
-                hoverStats={!phone}
-                onPick={() => setPickedId(f.fighter_id)}
-              />
-            ))}
-          </div>
-          )}
-
-          {selling && picked && (
-            <Backdrop title={`Sell ${picked.classname}`} onClose={() => setSelling(false)}>
-              <label className="field">
-                <span className="field__label">Starting bid (min {minStart})</span>
-                <input
-                  className="input mono"
-                  type="number"
-                  min={minStart}
-                  step={1}
-                  value={price}
-                  onChange={(e) =>
-                    setPrice(Math.max(0, Math.floor(Number(e.target.value) || 0)))
-                  }
+            <div className="mrows">
+              {shown.map((f) => (
+                <FighterRow
+                  key={f.fighter_id}
+                  stats={f.stats}
+                  ascension={f.ascension_level}
+                  template={classes.get(f.classname)}
+                  open={f === deskPicked}
+                  onToggle={() => setPickedId(f.fighter_id)}
+                  right={<span className="mrow__price mrow__cue">Sell ›</span>}
                 />
-              </label>
-
-              <label className="checkline">
-                <input
-                  type="checkbox"
-                  checked={keep}
-                  onChange={(e) => setKeep(e.target.checked)}
-                />
-                <span>
-                  Keep listed if nobody bids
-                  <em className="faint">
-                    {' '}
-                    — it becomes a fixed-price instant buy offer at your
-                    starting price instead of coming back to you
-                  </em>
-                </span>
-              </label>
-
-              <dl className="marketdialog__facts">
-                <div>
-                  <dt>Listing fee</dt>
-                  <dd className="mono">{config?.gems_listing_price ?? 0}</dd>
-                </div>
-                <div>
-                  <dt>Runs for</dt>
-                  <dd className="mono">{hours}h</dd>
-                </div>
-                <div>
-                  <dt>Fee on sale</dt>
-                  <dd className="mono">
-                    {config?.gems_processing_fee_percent ?? 0}% (min{' '}
-                    {config?.gems_processing_fee_min ?? 0})
-                  </dd>
-                </div>
-                <div>
-                  <dt>You keep at {price}</dt>
-                  <dd className="mono">{sellerPayout(price, config)}</dd>
-                </div>
-              </dl>
-
-              <p className="hint">
-                The fighter is locked in the market while it is listed, and the
-                listing fee is spent whether or not it sells. Once anybody bids,
-                the auction cannot be withdrawn.
-              </p>
-
-              <button
-                type="button"
-                className="btn btn--primary btn--block"
-                onClick={() => onList(picked.fighter_id, price, keep)}
-                disabled={busy || !gate.ok}
-                title={gate.reason}
-              >
-                {busy && <span className="spinner" />}
-                {gate.ok
-                  ? `List for ${config?.gems_listing_price ?? 0} gems`
-                  : gate.reason}
-              </button>
-            </Backdrop>
+              ))}
+            </div>
           )}
         </>
-      )}
-    </div>
+      }
+      fighter={
+        deskPicked && (
+          <MarketFighter
+            stats={deskPicked.stats}
+            ascension={deskPicked.ascension_level}
+            id={deskPicked.fighter_id}
+            panel={rosterPanel(deskPicked, levelMod, ageDecay)}
+            template={classes.get(deskPicked.classname)}
+            unlockLevel={unlockLevel}
+            facts={[`Yours since ${shortDay(deskPicked.creation_date)}`, `Payday ${shortDay(deskPicked.next_payday)}`]}
+          />
+        )
+      }
+      deal={
+        deskPicked && (
+          <aside className="mdeal" aria-label="Sell this fighter">
+            <span className="mdeal__cap">Sell this fighter</span>
+            {terms(deskPicked)}
+          </aside>
+        )
+      }
+    />
   )
 }
 
