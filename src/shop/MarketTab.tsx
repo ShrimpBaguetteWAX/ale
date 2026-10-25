@@ -19,7 +19,7 @@ import { fetchNftValues } from '@/dungeon/queries'
 import { fetchStakeWeights } from '@/farming/queries'
 import { weightOf } from '@/farming/rules'
 import { nftAsPanel } from '@/dungeon/nftFighter'
-import { formatStat, STAT_LABEL } from '@/tavern/fighterStats'
+import { formatScaled, STAT_LABEL } from '@/tavern/fighterStats'
 import { FighterAbilities, FighterStats } from '@/components/FighterPanel'
 import {
   fetchSaleRecord,
@@ -414,10 +414,10 @@ function Benefits({ card, game }: { card: MarketCard; game: Game | undefined }) 
         <>
           {/* In the game's own units and names, as the fighter panel below shows them. */}
           <span>
-            {STAT_LABEL.damage} <b>{formatStat(v.stats.damage, v.stats.damage)}</b>
+            {STAT_LABEL.damage} <b>{formatScaled(v.stats.damage)}</b>
           </span>
           <span>
-            {STAT_LABEL.health} <b>{formatStat(v.stats.health, v.stats.health)}</b>
+            {STAT_LABEL.health} <b>{formatScaled(v.stats.health)}</b>
           </span>
           {v.ability[0] && (
             <span className="amk__ability" title={v.ability[0].description}>
