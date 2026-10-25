@@ -1156,6 +1156,9 @@
   /* No frame of its own: the filter and the rows carry theirs, and the
      filter needs the width for its rows of controls. */
   .market__panel {
+    /* The pickers' quiet palette: white hairlines, not the violet rims. */
+    --line-bright: rgb(255 255 255 / 22%);
+    --btn-line: rgb(255 255 255 / 22%);
     display: grid;
     gap: 10px;
     padding: 0;
