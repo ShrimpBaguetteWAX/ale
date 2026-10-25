@@ -29,6 +29,7 @@ import { fetchRoster } from '@/dungeon/queries'
 import { useConfig, useLazyConfig } from '@/state/useConfig'
 import { useChainQuery } from '@/chain/useChainQuery'
 import { useModal } from '@/components/useModal'
+import { BottomSheet } from '@/components/BottomSheet'
 import { usePhone } from '@/components/usePhone'
 import { HoverPopover, useHoverCard } from '@/components/HoverPopover'
 import { FighterHoverCard } from '@/components/FighterPanel'
@@ -304,25 +305,93 @@ export default function Market() {
     [classes, levelMod, ageDecay],
   )
 
+  const pinned = phone && (tab === 'auctions' || tab === 'offers')
+  const head = (
+    <header className="market__head">
+      <div>
+        <h1 className="page__title">Market</h1>
+        <p className="faint" style={{ fontSize: 'var(--fs-sm)' }}>
+          Buy and sell fighters for gems
+        </p>
+      </div>
+      <span className="spacer" />
+      <span className="market__purse mono">
+        {player.activestats.gems.toLocaleString(NUM_LOCALE)}
+        <img src={asset("/assets/icons/gems.png")} alt="gems" width={18} height={18} />
+      </span>
+    </header>
+  )
+  /*
+     Status and Sort are dropped rather than shown inert. Every listing is
+     stamped "Market", so four of the five Status options match nothing and
+     the fifth matches everything; and the board is ordered by the market's
+     own sort below, which would silently override the roster one.
+  */
+  const browseTools = (
+    <>
+      <RosterFilters
+        filter={filter}
+        onChange={setFilter}
+        roster={filterRoster}
+        omit={['status', 'sort', 'markers']}
+        sheet={
+          phone
+            ? { sort: { value: sort, options: MARKET_SORTS, onChange: (v) => setSort(v as MarketSort) } }
+            : undefined
+        }
+      />
+      {/* The roll-quality rules now come with `RosterFilters`, which
+          is where every screen that has them wanted them. */}
+      {/*
+        One bar, two arrangements of the same grid: which face of the
+        cards is up, and what order they are in. They were two boxes
+        with the second floating clear of the first, which made the
+        Order control look like it belonged to nothing.
+      */}
+      {!phone && (
+      <div className="marketbar">
+        <span className="qfilter__lead">Show</span>
+        <ReadoutPicker value={readout} onChange={setReadout} />
+        <span className="marketbar__gap" />
+        <span className="qfilter__lead">Order</span>
+        <select
+          className="input marketbar__sort"
+          value={sort}
+          onChange={(e) => setSort(e.target.value as MarketSort)}
+          aria-label="Order"
+        >
+          {MARKET_SORTS.map((o) => (
+            <option key={o.value} value={o.value}>
+              {o.label}
+            </option>
+          ))}
+        </select>
+      </div>
+      )}
+    </>
+  )
+
   return (
-    <div className="market">
+    <div className={`market${pinned ? ' market--pinned' : ''}`}>
       <img className="market__art" src={asset("/assets/background/bg-shop.png")} alt="" />
       <div className="market__scrim" />
 
       <div className="market__inner">
-        <header className="market__head">
-          <div>
-            <h1 className="page__title">Market</h1>
-            <p className="faint" style={{ fontSize: 'var(--fs-sm)' }}>
-              Buy and sell fighters for gems
-            </p>
+
+        {/*
+           On the phone, Browse and Buy now pin the purse and the filter to the
+           top and let only the rows scroll: the price on a row is weighed
+           against the gems you hold, and the filter is what you reach for
+           between looks.
+        */}
+        {pinned ? (
+          <div className="mktop">
+            {head}
+            {browseTools}
           </div>
-          <span className="spacer" />
-          <span className="market__purse mono">
-            {player.activestats.gems.toLocaleString(NUM_LOCALE)}
-            <img src={asset("/assets/icons/gems.png")} alt="gems" width={18} height={18} />
-          </span>
-        </header>
+        ) : (
+          head
+        )}
 
         {error && <div className="alert alert--error">{error}</div>}
 
@@ -352,62 +421,7 @@ export default function Market() {
           </div>
           )}
 
-          {(tab === 'auctions' || tab === 'offers') && (
-            <>
-              {/*
-                Status and Sort are dropped rather than shown inert. Every
-                listing is stamped "Market", so four of the five Status
-                options match nothing and the fifth matches everything; and
-                the board is ordered by the market's own sort below, which
-                would silently override the roster one.
-              */}
-              <RosterFilters
-                filter={filter}
-                onChange={setFilter}
-                roster={filterRoster}
-                omit={['status', 'sort', 'markers']}
-                sheet={
-                  phone
-                    ? { sort: { value: sort, options: MARKET_SORTS, onChange: (v) => setSort(v as MarketSort) } }
-                    : undefined
-                }
-              />
-              {/* The roll-quality rules now come with `RosterFilters`, which
-                  is where every screen that has them wanted them. */}
-              {/*
-                One bar, two arrangements of the same grid: which face of the
-                cards is up, and what order they are in. They were two boxes
-                with the second floating clear of the first, which made the
-                Order control look like it belonged to nothing.
-              */}
-              {phone ? (
-                <p className="mrows__count">
-                  <b>{tab === 'auctions' ? liveAuctions.length : liveOffers.length}</b> of{' '}
-                  {tab === 'auctions' ? (auctions ?? []).filter((a) => !hasEnded(a, now)).length : (offers ?? []).filter((o) => !hasEnded(o, now)).length}{' '}
-                  {tab === 'auctions' ? 'auctions' : 'offers'}
-                </p>
-              ) : (
-              <div className="marketbar">
-                <span className="qfilter__lead">Show</span>
-                <ReadoutPicker value={readout} onChange={setReadout} />
-                <span className="marketbar__gap" />
-                <span className="qfilter__lead">Order</span>
-                <select
-                  className="input marketbar__sort"
-                  value={sort}
-                  onChange={(e) => setSort(e.target.value as MarketSort)}
-                  aria-label="Order"
-                >
-                  {MARKET_SORTS.map((o) => (
-                    <option key={o.value} value={o.value}>
-                      {o.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              )}
-            </>
-          )}
+          {!pinned && (tab === 'auctions' || tab === 'offers') && browseTools}
 
           {tab === 'auctions' && phone && (
             <PhoneRows loading={!auctions} empty="No auctions are running. List one and it will show up here.">
@@ -646,6 +660,7 @@ export default function Market() {
           player={player}
           now={now}
           busy={busy === 'bid'}
+          phone={phone}
           onClose={() => setDialog(null)}
           onBid={(gems) =>
             void run(
@@ -669,6 +684,7 @@ export default function Market() {
           player={player}
           now={now}
           busy={busy === 'buy'}
+          phone={phone}
           onClose={() => setDialog(null)}
           onBuy={() =>
             void run(
@@ -1434,12 +1450,46 @@ function Backdrop({
   )
 }
 
+/**
+ * The frame a bid or a buy opens in: the phone's bottom sheet, in the quiet
+ * palette its other sheets use, with the action held at the foot; the
+ * centred dialog everywhere else.
+ */
+function DialogFrame({
+  phone,
+  title,
+  onClose,
+  action,
+  children,
+}: {
+  phone: boolean
+  title: string
+  onClose: () => void
+  action: React.ReactNode
+  children: React.ReactNode
+}) {
+  if (phone) {
+    return (
+      <BottomSheet title={title} onClose={onClose} foot={<div className="rsheet__actions">{action}</div>}>
+        {children}
+      </BottomSheet>
+    )
+  }
+  return (
+    <Backdrop title={title} onClose={onClose}>
+      {children}
+      {action}
+    </Backdrop>
+  )
+}
+
 export function BidDialog({
   auction,
   config,
   player,
   now,
   busy,
+  phone = false,
   onClose,
   onBid,
 }: {
@@ -1448,6 +1498,7 @@ export function BidDialog({
   player: ReturnType<typeof useGame.getState>['player']
   now: number
   busy: boolean
+  phone?: boolean
   onClose: () => void
   onBid: (gems: number) => void
 }) {
@@ -1455,10 +1506,27 @@ export function BidDialog({
   const [gems, setGems] = useState(min)
   const gate = canBid(auction, player!, config, gems, now)
   const closing = extendsOnBid(auction, config, now)
+  const hint = phone ? 'rsheet__hint' : 'hint'
 
   return (
-    <Backdrop title={`Bid on ${auction.fighter.classname}`} onClose={onClose}>
-      <dl className="marketdialog__facts">
+    <DialogFrame
+      phone={phone}
+      title={`Bid on ${auction.fighter.classname}`}
+      onClose={onClose}
+      action={
+        <button
+          type="button"
+          className={`btn btn--primary${phone ? '' : ' btn--block'}`}
+          onClick={() => onBid(gems)}
+          disabled={busy || !gate.ok}
+          title={gate.reason}
+        >
+          {busy && <span className="spinner" />}
+          {gate.ok ? `Bid ${gems} gems` : gate.reason}
+        </button>
+      }
+    >
+      <dl className={phone ? 'mfacts' : 'marketdialog__facts'}>
         <div>
           <dt>{Number(auction.bids) > 0 ? 'Current bid' : 'Starting price'}</dt>
           <dd className="mono">{auction.current_bid}</dd>
@@ -1482,40 +1550,65 @@ export function BidDialog({
         afterwards: the gems leave now rather than on winning, and bidding
         late does not shorten the wait.
       */}
-      <p className="hint">
+      <p className={hint}>
         Your gems are taken as soon as you bid. If somebody outbids you they
         are refunded to you in the same transaction.
       </p>
       {closing && (
-        <p className="hint">
+        <p className={hint}>
           This auction is inside its closing window, so any bid pushes the end
           back out by {Math.round(Number(config?.reset_duration_below_minutes ?? 0) / 60)} hours.
         </p>
       )}
 
-      <label className="field">
-        <span className="field__label">Your bid</span>
-        <input
-          className="input mono"
-          type="number"
-          min={min}
-          step={1}
-          value={gems}
-          onChange={(e) => setGems(Math.max(0, Math.floor(Number(e.target.value) || 0)))}
-        />
-      </label>
-
-      <button
-        type="button"
-        className="btn btn--primary btn--block"
-        onClick={() => onBid(gems)}
-        disabled={busy || !gate.ok}
-        title={gate.reason}
-      >
-        {busy && <span className="spinner" />}
-        {gate.ok ? `Bid ${gems} gems` : gate.reason}
-      </button>
-    </Backdrop>
+      {phone ? (
+        /* A thumb's stepper around the figure, which can still be typed. */
+        <div className="mstep">
+          <span className="rsheet__cap">Your bid</span>
+          <div className="mstep__row">
+            <button
+              type="button"
+              className="mstep__btn"
+              onClick={() => setGems((g) => Math.max(min, g - 1))}
+              disabled={gems <= min}
+              aria-label="One gem less"
+            >
+              −
+            </button>
+            <input
+              className="mstep__input mono"
+              type="number"
+              inputMode="numeric"
+              min={min}
+              step={1}
+              value={gems}
+              aria-label="Your bid"
+              onChange={(e) => setGems(Math.max(0, Math.floor(Number(e.target.value) || 0)))}
+            />
+            <button
+              type="button"
+              className="mstep__btn"
+              onClick={() => setGems((g) => g + 1)}
+              aria-label="One gem more"
+            >
+              +
+            </button>
+          </div>
+        </div>
+      ) : (
+        <label className="field">
+          <span className="field__label">Your bid</span>
+          <input
+            className="input mono"
+            type="number"
+            min={min}
+            step={1}
+            value={gems}
+            onChange={(e) => setGems(Math.max(0, Math.floor(Number(e.target.value) || 0)))}
+          />
+        </label>
+      )}
+    </DialogFrame>
   )
 }
 
@@ -1524,6 +1617,7 @@ export function BuyDialog({
   player,
   now,
   busy,
+  phone = false,
   onClose,
   onBuy,
 }: {
@@ -1531,13 +1625,30 @@ export function BuyDialog({
   player: ReturnType<typeof useGame.getState>['player']
   now: number
   busy: boolean
+  phone?: boolean
   onClose: () => void
   onBuy: () => void
 }) {
   const gate = canBuy(offer, player!, now)
   return (
-    <Backdrop title={`Buy ${offer.fighter.classname}`} onClose={onClose}>
-      <dl className="marketdialog__facts">
+    <DialogFrame
+      phone={phone}
+      title={`Buy ${offer.fighter.classname}`}
+      onClose={onClose}
+      action={
+        <button
+          type="button"
+          className={`btn btn--primary${phone ? '' : ' btn--block'}`}
+          onClick={onBuy}
+          disabled={busy || !gate.ok}
+          title={gate.reason}
+        >
+          {busy && <span className="spinner" />}
+          {gate.ok ? `Buy for ${offer.gems} gems` : gate.reason}
+        </button>
+      }
+    >
+      <dl className={phone ? 'mfacts' : 'marketdialog__facts'}>
         <div>
           <dt>Price</dt>
           <dd className="mono">{offer.gems}</dd>
@@ -1556,22 +1667,11 @@ export function BuyDialog({
         </div>
       </dl>
 
-      <p className="hint">
+      <p className={phone ? 'rsheet__hint' : 'hint'}>
         The fighter moves to your roster immediately. Its payday clock keeps
         running, and it is due at the time above.
       </p>
-
-      <button
-        type="button"
-        className="btn btn--primary btn--block"
-        onClick={onBuy}
-        disabled={busy || !gate.ok}
-        title={gate.reason}
-      >
-        {busy && <span className="spinner" />}
-        {gate.ok ? `Buy for ${offer.gems} gems` : gate.reason}
-      </button>
-    </Backdrop>
+    </DialogFrame>
   )
 }
 
