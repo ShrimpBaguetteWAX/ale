@@ -77,12 +77,6 @@
   background-repeat: no-repeat;
 }
 
-.account__grid {
-  display: grid;
-  gap: var(--sp-4);
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-}
-
 /* ---------- tabs ---------- */
 
 /*
@@ -351,32 +345,6 @@
   color: var(--gold);
 }
 
-/* ---------- mining ---------- */
-
-.sharerow {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-3);
-  flex-wrap: wrap;
-  margin-top: var(--sp-3);
-}
-.sharerow input[type='range'] {
-  flex: 1;
-  min-width: 160px;
-  accent-color: var(--cyan);
-  cursor: pointer;
-}
-.sharerow__value {
-  min-width: 4ch;
-  font-family: var(--font-display);
-  font-size: var(--fs-lg);
-  font-variant-numeric: tabular-nums;
-  color: var(--white);
-}
-.sharerow .btn {
-  min-height: 44px;
-}
-
 /* ---------- cpu ---------- */
 
 .cpubar {
@@ -409,112 +377,6 @@
   font-variant-numeric: tabular-nums;
   color: var(--white);
   text-shadow: 0 1px 3px rgb(0 0 0 / 80%);
-}
-
-/*
- * auto-fill left empty columns when a player had one or two tools; auto-fit
- * collapses them so the cards spread across the width instead. Capped so a
- * single card does not stretch to the whole panel.
- */
-.toolgrid {
-  display: grid;
-  gap: var(--sp-2);
-  grid-template-columns: repeat(auto-fit, minmax(230px, 340px));
-  margin-top: var(--sp-2);
-}
-
-.toolcard {
-  display: grid;
-  grid-template-columns: 64px minmax(0, 1fr);
-  gap: var(--sp-3);
-  align-items: center;
-  padding: var(--sp-2);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-xs);
-  background: rgb(0 0 0 / 30%);
-  cursor: pointer;
-  text-align: left;
-  transition: border-color var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease);
-}
-.toolcard:hover:not(:disabled) {
-  border-color: var(--purple);
-}
-.toolcard--picked {
-  border-color: var(--cyan);
-  background: rgb(0 186 255 / 14%);
-  box-shadow: 0 0 0 1px var(--cyan);
-}
-.toolcard:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-.toolcard--loading {
-  min-height: 92px;
-  border-color: var(--line-soft);
-  background: linear-gradient(
-    -90deg,
-    rgb(255 255 255 / 4%),
-    rgb(255 255 255 / 10%),
-    rgb(255 255 255 / 4%)
-  );
-  background-size: 400% 400%;
-  animation: cardtile-shimmer 1.2s ease-in-out infinite;
-}
-
-.toolcard__art {
-  width: 64px;
-  aspect-ratio: 1 / 1;
-  object-fit: contain;
-  border-radius: var(--radius-xs);
-}
-
-.toolcard__body {
-  display: grid;
-  gap: 2px;
-  min-width: 0;
-}
-
-.toolcard__name {
-  font-family: var(--font-display);
-  font-size: var(--fs-xs);
-  font-weight: var(--fw-bold);
-  color: var(--white);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.toolcard__rarity {
-  font-size: 10px;
-  letter-spacing: 0.04em;
-  color: var(--text-faint);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.toolstats {
-  display: flex;
-  gap: var(--sp-2);
-  flex-wrap: wrap;
-  margin-top: 2px;
-}
-
-.toolstat {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 3px;
-  font-family: var(--font-display);
-  font-size: 10px;
-  font-variant-numeric: tabular-nums;
-  color: var(--white);
-}
-.toolstat em {
-  font-style: normal;
-  font-size: 9px;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--text-faint);
 }
 
 /* ---------- landowner split ---------- */
@@ -582,69 +444,6 @@
   margin-top: var(--sp-2);
 }
 
-.ledger__row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto 130px;
-  gap: var(--sp-3);
-  align-items: center;
-  padding: var(--sp-2) 0;
-  border-bottom: 1px solid var(--line-soft);
-}
-.ledger__row:last-child {
-  border-bottom: 0;
-}
-
-.ledger__what {
-  display: grid;
-  gap: 1px;
-  min-width: 0;
-}
-.ledger__what strong {
-  font-size: var(--fs-sm);
-  color: var(--white);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.ledger__what em {
-  font-style: normal;
-  font-size: 10px;
-  color: var(--text-faint);
-}
-
-.ledger__when {
-  font-size: var(--fs-xs);
-  color: var(--text-faint);
-  white-space: nowrap;
-}
-
-.ledger__amount {
-  font-family: var(--font-display);
-  font-size: var(--fs-sm);
-  font-variant-numeric: tabular-nums;
-  color: var(--gold);
-  text-align: right;
-  white-space: nowrap;
-}
-
-@media (max-width: 700px) {
-  .ledger__row {
-    grid-template-columns: minmax(0, 1fr) auto;
-  }
-  .ledger__when {
-    display: none;
-  }
-}
-
-/* ---------- history capacity ---------- */
-
-.rowcount {
-  color: var(--text-muted);
-  font-size: 12px;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-
 /*
   The purchase sits under the ledger rather than above it: the rows are the
   reason to open the tab, and the offer only makes sense once you have seen
@@ -673,138 +472,6 @@
   vertical-align: baseline;
 }
 
-/* ---------- reward pools ---------- */
-
-.poollist {
-  display: grid;
-  gap: var(--sp-3);
-  margin-top: var(--sp-3);
-}
-
-.poolrow {
-  padding: var(--sp-3);
-  border: 1px solid var(--line-soft);
-  border-radius: var(--radius-md);
-  background: rgb(0 0 0 / 18%);
-}
-
-/* A pool that can be mined right now is the only thing worth spotting. */
-.poolrow--ready {
-  border-color: var(--line);
-  background: rgb(145 54 188 / 12%);
-}
-
-.poolrow__head {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--sp-3);
-}
-
-.poolrow__head strong {
-  display: block;
-  font-family: var(--font-display);
-  font-size: var(--fs-sm);
-  color: var(--white);
-}
-
-.poolrow__head em {
-  display: block;
-  margin-top: 2px;
-  font-size: var(--fs-xs);
-  font-style: normal;
-  color: var(--text-dim);
-}
-
-.poolrow__held {
-  text-align: right;
-  white-space: nowrap;
-}
-
-.poolrow__held span {
-  display: block;
-  font-size: var(--fs-xs);
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-}
-
-.poolrow__held strong {
-  font-family: var(--font-display);
-  font-size: var(--fs-sm);
-  font-variant-numeric: tabular-nums;
-  color: var(--gold);
-}
-
-.poolbar {
-  height: 10px;
-  margin: var(--sp-3) 0 var(--sp-2);
-  border-radius: var(--radius-full);
-  background: rgb(255 255 255 / 8%);
-  overflow: hidden;
-}
-
-.poolbar span {
-  display: block;
-  height: 100%;
-  background: linear-gradient(90deg, #9136bc, #ce73e0);
-  transition: width var(--dur) var(--ease);
-}
-
-.poolrow--ready .poolbar span {
-  background: linear-gradient(90deg, #ebb309, #f6a800);
-}
-
-.poolrow__foot {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-3);
-  flex-wrap: wrap;
-}
-
-.poolrow__power {
-  font-size: var(--fs-xs);
-  font-variant-numeric: tabular-nums;
-  color: var(--text-muted);
-}
-
-.poolrow__payout {
-  font-family: var(--font-display);
-  font-size: var(--fs-sm);
-  font-variant-numeric: tabular-nums;
-  color: var(--gold);
-}
-
-.poolrow__short {
-  font-size: var(--fs-xs);
-  color: var(--text-dim);
-}
-
-.poolrow__foot .btn {
-  min-height: 34px;
-  padding: 0 var(--sp-4);
-}
-
-/* ---------- the tool catalogue ---------- */
-
-.cataloguebar {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-3);
-  flex-wrap: wrap;
-  margin: var(--sp-3) 0;
-}
-
-.cataloguebar .input {
-  flex: 1 1 240px;
-  min-width: 0;
-}
-
-.cataloguebar__sorts {
-  display: flex;
-  gap: var(--sp-2);
-  flex-wrap: wrap;
-}
-
 /*
  * A long list read by scanning rather than by reading, so the two mining
  * powers get a bar as well as a figure — the numbers span two orders of
@@ -820,247 +487,10 @@
   overflow-y: auto;
 }
 
-.catalogue__head,
-.catalogue__row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 110px 110px 64px;
-  align-items: center;
-  gap: var(--sp-3);
-  padding: var(--sp-2) var(--sp-3);
-}
-
-.catalogue__head {
-  position: sticky;
-  top: 0;
-  z-index: 1;
-  background: #131a2c;
-  border-bottom: 1px solid var(--line-soft);
-  font-size: 10px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--text-faint);
-}
-
-.catalogue__row {
-  border-bottom: 1px solid rgb(255 255 255 / 5%);
-}
-
-.catalogue__row:last-child {
-  border-bottom: 0;
-}
-
-/* Something already in the wallet is the row a player is comparing against. */
-.catalogue__row.is-owned {
-  background: rgb(53 208 255 / 8%);
-  box-shadow: inset 2px 0 0 var(--cyan);
-}
-
-.catalogue__name strong {
-  display: block;
-  font-size: var(--fs-sm);
-  color: var(--white);
-}
-
-.catalogue__name em {
-  display: block;
-  margin-top: 1px;
-  font-size: var(--fs-xs);
-  font-style: normal;
-  text-transform: capitalize;
-  color: var(--text-dim);
-}
-
-.catalogue__mp {
-  display: grid;
-  gap: 3px;
-}
-
-.catalogue__mp b {
-  font-family: var(--font-display);
-  font-size: var(--fs-sm);
-  font-variant-numeric: tabular-nums;
-  color: var(--gold);
-}
-
-.catalogue__meter {
-  display: block;
-  height: 3px;
-  border-radius: 2px;
-  background: rgb(255 255 255 / 8%);
-  overflow: hidden;
-}
-
-.catalogue__meter i {
-  display: block;
-  height: 100%;
-  background: var(--gold);
-}
-
-.catalogue__meter--shard i {
-  background: #ce73e0;
-}
-
-.catalogue__mp:last-of-type b {
-  color: #ce73e0;
-}
-
-/*
- * Which way a tool leans. Gold from the left is its Trilium share, magenta
- * fills the rest — the two powers are derived from ease and luck, so every
- * tool sits somewhere on this line.
- */
-.catalogue__bias {
-  display: block;
-  height: 6px;
-  border-radius: 3px;
-  background: #ce73e0;
-  overflow: hidden;
-}
-
-.catalogue__bias i {
-  display: block;
-  height: 100%;
-  background: var(--gold);
-}
-
-@media (max-width: 719px) {
-  .catalogue__head,
-  .catalogue__row {
-    grid-template-columns: minmax(0, 1fr) 74px 74px;
-  }
-  .catalogue__head span:last-child,
-  .catalogue__bias {
-    display: none;
-  }
-}
-
-/* A heading inside a panel, under something it belongs to. */
-.panel__sub {
-  margin: var(--sp-4) 0 var(--sp-2);
-  font-family: var(--font-display);
-  font-size: var(--fs-xs);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--text-muted);
-}
-
-/* Icons sit on the line with their figure; the sheet resets img to block. */
-.toolstat img,
-.catalogue__head img {
-  display: inline-block;
-  flex: none;
-  margin-right: 4px;
-  vertical-align: -2px;
-}
-
-.catalogue__head span {
-  display: flex;
-  align-items: center;
-}
-
 /* Keeps the intro from squeezing the totals onto their own line too early. */
 .miningintro {
   flex: 1 1 320px;
   min-width: 0;
-}
-
-/* The sub-heading row that carries the tool sort. */
-.subhead {
-  align-items: baseline;
-  gap: var(--sp-2);
-  margin-top: var(--sp-4);
-}
-
-.subhead .panel__sub {
-  margin: 0;
-}
-
-.sortby {
-  font-size: 10px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--text-faint);
-}
-
-/* The wallet panel's heading row carries the sort, so it needs no top gap. */
-.subhead--top {
-  margin-top: 0;
-}
-
-/* A pick the chain has not been told about yet. */
-.toolcard--unsaved {
-  border-color: var(--gold);
-  box-shadow: inset 0 0 0 1px rgb(246 168 0 / 25%);
-}
-
-.toolcard__flag {
-  display: inline-block;
-  margin-left: 6px;
-  padding: 1px 5px;
-  border-radius: 999px;
-  background: var(--gold);
-  color: #2a1c00;
-  font-family: var(--font-display);
-  font-size: 9px;
-  font-style: normal;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  vertical-align: 1px;
-}
-
-/* ---------- total minepower ---------- */
-
-/*
- * The bag's combined power, sitting on the line with the tools it sums.
- *
- * Built from the same pill the top resource strip uses rather than a bordered
- * box of its own — it is the same kind of readout, an icon and a figure, and
- * the screen already has a shape for that.
- */
-.bagtotals {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-2);
-  margin: 0;
-}
-
-.bagtotals dt {
-  font-size: 10px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--text-faint);
-  white-space: nowrap;
-}
-
-.mpchip {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  margin: 0;
-  padding: 3px var(--sp-3) 3px var(--sp-2);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-full);
-  background: rgb(0 0 0 / 55%);
-  font-family: var(--font-display);
-  font-size: var(--fs-sm);
-  font-variant-numeric: tabular-nums;
-  color: var(--white);
-}
-
-/* The sheet resets img to display:block, which would break the pill. */
-.mpchip img {
-  display: inline-block;
-  flex: none;
-  object-fit: contain;
-}
-
-/*
- * The wallet's grid fills the panel, so the cards' right edge meets the same
- * line the sort control sits on. Capping the columns left a strip of empty
- * panel and the two ran out of alignment.
- */
-.toolgrid--fill {
-  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
 }
 
 /* The absolute time under a countdown, for anyone who wants the date. */
@@ -1078,14 +508,6 @@
 }
 .cpubar[data-band='low'] .cpubar__fill {
   background: #e0344f;
-}
-
-/* How Reward Power is earned in a pool — the answer to an empty bar. */
-.poolrow__how {
-  margin: var(--sp-2) 0 var(--sp-3);
-  font-size: var(--fs-xs);
-  line-height: 1.5;
-  color: var(--text-dim);
 }
 
 /*
@@ -1126,13 +548,6 @@
   background: var(--gold);
   box-shadow: 0 0 8px rgb(246 168 0 / 90%);
   animation: chore-pulse 2.4s ease-in-out infinite;
-}
-
-/* The next batch of spare tools, under the grid it extends. */
-.toolmore {
-  display: flex;
-  justify-content: center;
-  margin-top: var(--sp-3);
 }
 
 /* ---------- auto-signing ---------- */
@@ -1236,10 +651,6 @@
 .autosign__hint {
   font-size: var(--fs-xs);
   color: var(--text-faint);
-}
-
-.autosign__hint--ok {
-  color: var(--teal);
 }
 
 .autosign__hint--warn {
@@ -1656,11 +1067,6 @@ button.prew__row:hover:not(:disabled) {
 .pring__togo {
   font-size: 10px;
   color: var(--text-faint);
-}
-.pring__mine {
-  min-height: 26px;
-  padding: 0 9px;
-  font-size: 10px;
 }
 
 .prew__chart {
@@ -2903,4 +2309,335 @@ button.prew__row:hover:not(:disabled) {
 }
 .statboard--sheet .hint {
   text-align: center;
+}
+
+/* ---------- Rewards on a desktop: the pools as the stage ---------- */
+
+.drew {
+  container: drew / inline-size;
+  display: grid;
+  gap: var(--sp-4);
+  align-content: start;
+}
+.drew__head {
+  margin-bottom: var(--sp-2);
+}
+.shell .main__inner .drew__head h1.drew__title {
+  margin-bottom: 0;
+}
+.drew__tabs {
+  max-width: 640px;
+  padding: 4px;
+  border-radius: 13px;
+}
+.drew__tabs .prew__tab {
+  min-height: 40px;
+  border-radius: 10px;
+  font-size: var(--fs-sm);
+}
+
+.drew__stage {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: var(--sp-5);
+  align-items: start;
+}
+.drew__main,
+.drew__side {
+  display: grid;
+  gap: 12px;
+  align-content: start;
+  min-width: 0;
+}
+.shell .main__inner .drew .drew__cap {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 6px 2px 0;
+  font-family: var(--font-display);
+  font-size: 10.5px;
+  font-weight: var(--fw-bold);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.drew__cap span {
+  font-family: var(--font-body);
+  font-size: 12.5px;
+  font-weight: var(--fw-bold);
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--text-dim);
+}
+.drew .prew__row {
+  min-height: 56px;
+}
+
+/* The rings, large, across the page; the one open beside them marked. */
+.drew__rings {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 24px 56px;
+  padding: 26px 20px 22px;
+  border-radius: 14px;
+  background: rgb(8 14 28 / 66%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 10%);
+}
+.drew__rings .pring__dial,
+.drew__rings .pring__dial svg {
+  width: 136px;
+  height: 136px;
+}
+.drew__rings .pring__dial {
+  cursor: pointer;
+  transition: box-shadow var(--dur-fast) var(--ease);
+}
+.drew__rings .pring__dial:hover {
+  box-shadow: 0 0 0 3px rgb(0 186 255 / 35%);
+}
+.drew__rings .pring.is-selected .pring__dial {
+  box-shadow: 0 0 0 3px var(--cyan);
+}
+.drew__rings .pring__centre {
+  font-size: 22px;
+}
+.drew__rings .pring--ready .pring__centre {
+  font-size: 17px;
+}
+.drew__rings .pring__name {
+  margin-top: 4px;
+  font-size: 14px;
+}
+.drew__rings .pring__togo {
+  font-size: 12px;
+}
+.drew__rings .pring__togo--ready {
+  color: #ffd979;
+}
+
+/* Every ready mine, one signature: the phone's Mine card as a bar. */
+.drew__minebar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 14px 12px 16px;
+  border-radius: 14px;
+  background: linear-gradient(110deg, rgb(246 168 0 / 16%), rgb(8 14 28 / 80%) 60%);
+  box-shadow: inset 0 0 0 1px rgb(246 168 0 / 45%);
+}
+.drew__minebar.is-waiting {
+  background: rgb(8 14 28 / 72%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 10%);
+}
+.drew__minebar > img {
+  flex: none;
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+}
+.drew__minetext {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+}
+.drew__minetext b {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 800;
+}
+.drew__minetext small {
+  font-size: 12px;
+  color: var(--text-faint);
+}
+.drew__minebar .btn {
+  flex: none;
+  min-height: 44px;
+}
+
+.drew__hero {
+  padding: 26px 18px;
+}
+
+/* The pool open beside the rings: the phone's pool sheet, kept open. */
+.drew__pool {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgb(10 18 34 / 80%), rgb(4 9 20 / 88%));
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 11%);
+}
+.shell .main__inner .drew .drew__pooltitle {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--white);
+}
+.drew__pool .rsheet__hint {
+  margin: 0;
+}
+.drew__note {
+  margin: 0;
+}
+
+/* ---- mining ---- */
+
+.drew__bag {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 24px;
+  padding: 18px 22px;
+  border-radius: 14px;
+  background: radial-gradient(70% 120% at 0% 0%, rgb(0 186 255 / 10%), transparent 60%), rgb(8 14 28 / 72%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 10%);
+}
+.drew__bagpower {
+  display: grid;
+  gap: 8px;
+}
+.drew__bagpower small {
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.drew__bagpower small.drew__bagnote {
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.drew__slots {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 120px));
+  justify-content: end;
+  gap: 14px;
+}
+.drew__slot {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  min-height: 150px;
+  padding: 6px;
+  border: 0;
+  border-radius: 12px;
+  background: none;
+  color: var(--white);
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: var(--fw-bold);
+  text-align: center;
+  cursor: pointer;
+}
+.drew__slot:hover {
+  background: rgb(255 255 255 / 4%);
+}
+.drew__slot > img {
+  width: 92px;
+  height: 126px;
+  object-fit: contain;
+}
+.drew__slot.is-empty {
+  place-content: center;
+  border: 1px dashed rgb(255 255 255 / 22%);
+  color: var(--text-faint);
+}
+.drew__slot.is-empty i {
+  font-size: 28px;
+  font-style: normal;
+  color: var(--cyan);
+}
+.drew__slot.is-loading {
+  border-radius: 12px;
+  background: rgb(255 255 255 / 5%);
+}
+
+.drew__cathead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.drew__sorts {
+  margin: 0;
+}
+.drew__catalog {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 10px;
+}
+.drew__tool {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  gap: 4px 12px;
+  align-items: center;
+  padding: 8px 12px 8px 8px;
+  border-radius: 12px;
+  background: rgb(8 14 28 / 72%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 9%);
+}
+.drew__tool > img {
+  grid-row: 1 / span 2;
+  width: 44px;
+  height: 60px;
+  object-fit: contain;
+}
+.drew__tool.is-yours {
+  box-shadow: inset 0 0 0 1px rgb(0 186 255 / 45%);
+}
+.drew__tool.is-used {
+  background: rgb(0 186 255 / 8%);
+  box-shadow: inset 0 0 0 1.5px var(--cyan);
+}
+.drew__toolname {
+  display: grid;
+  min-width: 0;
+}
+.drew__toolname b {
+  overflow: hidden;
+  font-size: 13px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.drew__toolname small {
+  font-size: 11.5px;
+  color: var(--text-faint);
+  text-transform: capitalize;
+}
+.drew__toolname em {
+  margin-left: 6px;
+  font-style: normal;
+  font-weight: var(--fw-bold);
+  color: var(--cyan);
+  text-transform: none;
+}
+.drew__tool .prew__power {
+  gap: 12px;
+}
+.drew__more {
+  justify-self: center;
+}
+
+/* Too narrow for the side column: it goes under the stage. */
+@container drew (max-width: 900px) {
+  .drew__stage {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .drew__bag {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .drew__slots {
+    justify-content: start;
+  }
 }

@@ -6,26 +6,15 @@ import {
   type PoolDescription,
   type ShardPool,
   type TlmPool,
-  type ToolTemplate,
 } from '@/pools/queries'
-import {
-  poolAmount,
-  poolBoard,
-  trialPenalty,
-  batchPayout,
-  batchableMines,
-  MINE_POWER,
-  type PoolEntry,
-} from '@/pools/rules'
+import { poolBoard, trialPenalty } from '@/pools/rules'
 import { useGame } from '@/state/useGame'
 import { kvToRecord, type Avatar, type Player } from '@/chain/types'
 import { landId } from '@/chain/landId'
-import { byQuality } from '@/dungeon/nftFighter'
 import { AutoSign } from '@/components/AutoSign'
 import { prettyStat, statIconFor } from '@/account/stats'
 import { StatBoard } from '@/account/StatLeaderboard'
 import { landThumbStyle } from '@/map/terrain'
-import type { MiningTool } from '@/chain/atomic'
 import {
   fetchCpuUsage,
   fetchAccountCpu,
@@ -48,21 +37,9 @@ import {
   nextCpuReset,
   untilLabel,
   validateTag,
-  assetValue,
-  bagPower,
-  claimPays,
   logCapacity,
-  type LogCapacity,
-  powerBias,
   CURRENCIES,
-  CURRENCY_ICON,
   CURRENCY_LABEL,
-  CURRENCY_PRECISION,
-  CURRENCY_UNCLAIMED,
-  MINING_POWER,
-  POWER_SORTS,
-  powerScore,
-  type PowerSort,
   type AvatarEntry,
   type Currency,
 } from '@/account/rules'
@@ -87,13 +64,12 @@ import {
   readMinedRewards,
 } from '@/pools/MineCelebration'
 import { MineToast, type MineToastState } from '@/pools/MineToast'
-import { formatAsset, formatNumber, formatDecimals, formatStat } from '@/format'
+import { formatNumber, formatStat } from '@/format'
 import { asset } from '@/assets'
 import { GameImg } from '@/components/GameImg'
 import { usePhone } from '@/components/usePhone'
-import { MAX_TOOLS } from '@/rewards/rules'
-import { useMiningTools } from '@/rewards/useMiningTools'
 import { PhoneRewards } from '@/rewards/PhoneRewards'
+import { DeskRewards } from '@/rewards/DeskRewards'
 import { PhoneAccount, type AccountTab } from '@/account/PhoneAccount'
 
 /**
@@ -110,9 +86,6 @@ import { PhoneAccount, type AccountTab } from '@/account/PhoneAccount'
  */
 
 type Tab = 'avatar' | 'mining' | 'cpu' | 'autosign' | 'stats' | Currency
-
-/** How many spare tools the Rewards screen draws at a time. */
-const TOOL_BATCH = 240
 
 /**
  * Which half of the old account screen this is.
@@ -294,6 +267,8 @@ export default function Profile({ section = 'account' }: { section?: Section }) 
   */
   const phone = usePhone()
   const phoneRewards = phone && section === 'rewards'
+  /* A desktop's Rewards: the pools as the stage, under a page title of its own. */
+  const deskRewards = !phone && section === 'rewards'
   const phoneAccount = phone && section === 'account'
   const leave = async () => {
     await disconnect()
@@ -384,7 +359,13 @@ export default function Profile({ section = 'account' }: { section?: Section }) 
 
   return (
     <div className="account">
-      {!phoneRewards && !phoneAccount && (
+      {deskRewards && (
+        <header className="drew__head">
+          <h1 className="drew__title">Rewards</h1>
+        </header>
+      )}
+
+      {!phoneRewards && !deskRewards && !phoneAccount && (
       <header className="account__head">
         <span
           className="account__avatar"
@@ -425,7 +406,7 @@ export default function Profile({ section = 'account' }: { section?: Section }) 
          on the line you already read to move around this screen, at the
          opposite end so it is never the thing a thumb reaches first.
       */}
-      {!phoneRewards && !phoneAccount && (
+      {!phoneRewards && !deskRewards && !phoneAccount && (
       <div className="accounthead">
       <div
         className="accounttabs"
@@ -516,8 +497,9 @@ export default function Profile({ section = 'account' }: { section?: Section }) 
         />
       )}
 
-      {phoneRewards && (
-        <PhoneRewards
+      {(phoneRewards || deskRewards) && (
+        <RewardsFor
+          phone={phoneRewards}
           tab={tab === 'mining' || currencyTab ? (tab as 'mining' | Currency) : 'mining'}
           onTab={setTab}
           player={player}
@@ -549,31 +531,6 @@ export default function Profile({ section = 'account' }: { section?: Section }) 
         />
       )}
 
-      {tab === 'mining' && !phoneRewards && (
-        <MiningTab
-          account={account ?? ''}
-          player={player}
-          busy={busy}
-          canAct={!!session}
-          onSave={(ids) =>
-            void run(
-              'mining',
-              () => setMiningNfts(session!, ids),
-              'Mining settings saved !',
-              opts('setMiningNfts'),
-            )
-          }
-          onShare={(share) =>
-            void run(
-              'share',
-              () => setLandownerShare(session!, share),
-              'Mining settings saved !',
-              opts('setLandownerShare'),
-            )
-          }
-        />
-      )}
-
       {tab === 'cpu' && !phoneAccount && (
         <CpuTab
           player={player}
@@ -585,38 +542,6 @@ export default function Profile({ section = 'account' }: { section?: Section }) 
           onClaim={() =>
             void run('cpu', () => claimCpu(session!), 'CPU claimed.', cpuOpts)
           }
-        />
-      )}
-
-      {currencyTab && !phoneRewards && (
-        <CurrencyTab
-          currency={currencyTab}
-          player={player}
-          log={logs[currencyTab]}
-          capacity={logCapacity(currencyTab, logCap, logCfg)}
-          busy={busy}
-          canAct={!!session}
-          onClaim={() =>
-            void run('claim', () => claimCurrencies(session!), 'Rewards claimed.', opts('claimCurrencies'))
-          }
-          onUnlock={(rows) =>
-            void run(
-              'rows',
-              () => unlockRewardRows(session!, currencyTab, rows),
-              'History unlocked.',
-              opts('unlockRewardRows'),
-            )
-          }
-          board={poolBoard(
-            currencyTab,
-            player,
-            tlmPools,
-            shardPools,
-            poolNames,
-          )}
-          trial={trialPenalty(player.legend_access_expiry, usersCfg?.trial_rewpow_mod)}
-          minedPool={minedPool}
-          onMine={onMine}
         />
       )}
 
@@ -632,6 +557,14 @@ export default function Profile({ section = 'account' }: { section?: Section }) 
       )}
     </div>
   )
+}
+
+/** The phone's Rewards or the desktop's: the same data and actions, laid out for the size. */
+function RewardsFor({
+  phone,
+  ...props
+}: { phone: boolean } & React.ComponentProps<typeof PhoneRewards>) {
+  return phone ? <PhoneRewards {...props} /> : <DeskRewards {...props} />
 }
 
 /* ---------- avatar ---------- */
@@ -796,953 +729,6 @@ export function AvatarTab({
   )
 }
 /* ---------- mining ---------- */
-
-export function MiningTab({
-  account,
-  player,
-  busy,
-  canAct,
-  onSave,
-  onShare,
-}: {
-  account: string
-  player: Player
-  busy: Busy
-  canAct: boolean
-  onSave: (ids: string[]) => void
-  onShare: (share: number) => void
-}) {
-  const { tools, templates, loading, loadedSoFar, powerOf } = useMiningTools(account)
-  /*
-     How many spare tools are drawn.
-
-     Every tool loads now — one player had 15,000 — but drawing 15,000 cards
-     with their art at once freezes the page. The list is already sorted best
-     first, so the first screenfuls are the ones a player picks from, and the
-     rest are a button away.
-  */
-  const [spareShown, setSpareShown] = useState(TOOL_BATCH)
-  const [picked, setPicked] = useState<string[]>(
-    () => (player.mine_nfts ?? []).map(String),
-  )
-  const [share, setShare] = useState(Number(player.landowner_tlm_share ?? 0))
-  /* Rarity and shine, the way every other NFT list in the game opens. */
-  const [sort, setSort] = useState<PowerSort>('quality')
-
-  const stored = useMemo(
-    () => (player.mine_nfts ?? []).map(String),
-    [player.mine_nfts],
-  )
-  const storedKey = stored.join(',')
-
-  /*
-     Re-seed when the chain's list actually changes — after a save, or after
-     `mineland` pruned tools the player no longer owns. Keyed on the contents
-     rather than the array, so an unrelated player refresh does not throw away
-     a selection in progress.
-   */
-  useEffect(() => {
-    setPicked(storedKey ? storedKey.split(',') : [])
-  }, [storedKey])
-
-  /*
-     Picks the wallet cannot back.
-
-     `setminenfts` looks every id up in the player's own AtomicAssets rows and
-     dereferences the result without checking it found anything, so a single
-     id they no longer hold aborts the whole transaction. Such a tool has no
-     card to render either — it arrives in `mine_nfts` from the chain but is
-     absent from the wallet — so it was an invisible pick that silently broke
-     Save. Only judged once the wallet has actually loaded; before that,
-     everything would look missing.
-   */
-  const missing = useMemo(() => {
-    if (loading || !tools.length) return []
-    const held = new Set(tools.map((t) => t.asset_id))
-    return picked.filter((id) => !held.has(id))
-  }, [loading, tools, picked])
-
-  /*
-     What Save actually sends: the visible selection, deduplicated. The
-     contract rejects duplicates outright ("duplicate NFT ids found"), and the
-     transaction should never disagree with the cards on screen.
-   */
-  const sendable = useMemo(
-    () => [...new Set(picked.filter((id) => !missing.includes(id)))],
-    [picked, missing],
-  )
-
-  /*
-     A pick only takes effect once `setminenfts` has run, and nothing else on
-     the card says so — a player could equip three tools, navigate away and
-     mine with the old bag none the wiser.
-   */
-  const unsaved = (id: string) => picked.includes(id) !== stored.includes(id)
-  const changed =
-    sendable.length !== stored.length || sendable.some((id) => !stored.includes(id))
-  const shareChanged = share !== Number(player.landowner_tlm_share ?? 0)
-
-  /*
-     Best first, on whichever axis the player is building for — a bag for
-     Trilium and a bag for shards rank the same tools differently — falling
-     back to rarity and shine, which is the order the tools open in and the
-     one every other list of NFTs in the game uses. Without either, a wallet
-     of dozens sits in whatever order AtomicAssets returned.
-   */
-  const byPower = useMemo(
-    () => (a: MiningTool, b: MiningTool) =>
-      powerScore(sort, powerOf(b.template_id)) -
-        powerScore(sort, powerOf(a.template_id)) || byQuality(a, b),
-    [powerOf, sort],
-  )
-
-  const equipped = useMemo(
-    () => tools.filter((t) => picked.includes(t.asset_id)).sort(byPower),
-    [tools, picked, byPower],
-  )
-  const spare = useMemo(
-    () => tools.filter((t) => !picked.includes(t.asset_id)).sort(byPower),
-    [tools, picked, byPower],
-  )
-  const bag = useMemo(
-    () => bagPower(equipped.map((t) => powerOf(t.template_id) ?? {})),
-    [equipped, powerOf],
-  )
-
-  /* Three at most: a fourth pick is refused rather than sent to the chain. */
-  const toggle = (id: string) =>
-    setPicked((prev) =>
-      prev.includes(id)
-        ? prev.filter((x) => x !== id)
-        : prev.length >= MAX_TOOLS
-          ? prev
-          : [...prev, id],
-    )
-
-  return (
-    <div className="stack">
-      <section className="panel">
-        {/*
-          Title, totals and the save button share one line. The totals are two
-          short numbers; given a row of their own they stretched across the
-          whole panel and pushed everything below the fold for no gain.
-        */}
-        <div className="row row--wrap">
-          <div className="miningintro">
-            <h2 className="panel__title">Mining Tools</h2>
-            <p className="hint">
-              Mining adds the power of every equipped tool together. The tools
-              stay in your wallet — the game only records which you picked.
-            </p>
-          </div>
-          <span className="spacer" />
-          <button
-            type="button"
-            className="btn btn--primary"
-            disabled={!canAct || busy !== null || !changed}
-            onClick={() => onSave(sendable)}
-          >
-            {busy === 'mining' && <span className="spinner" />}
-            Save Settings
-          </button>
-        </div>
-
-        {/*
-          The equipped bag sits under its own totals rather than in a panel of
-          its own: with one or two tools picked, the separate panel was mostly
-          empty, and the numbers above are a sum of exactly these cards.
-        */}
-        <div className="row row--wrap subhead">
-          <h3 className="panel__sub">
-            Currently equipped ({equipped.length} of {MAX_TOOLS})
-          </h3>
-
-          {/* The sum of exactly the cards below, so it sits with them. */}
-          <dl className="bagtotals" title="The bag's combined mining power">
-            <dt>Total Minepower</dt>
-            {MINING_POWER.map((m) => (
-              <dd key={m.key} className="mpchip" title={m.hint}>
-                <img src={m.icon} alt={m.label} width={18} height={18} />
-                {formatNumber(bag[m.key])}
-              </dd>
-            ))}
-          </dl>
-        </div>
-
-        {/*
-          Worth saying out loud rather than quietly correcting. The player
-          equipped these, the wallet no longer holds them, and Save is about
-          to leave them behind — and until now they were an invisible pick
-          that aborted the whole transaction.
-        */}
-        {missing.length > 0 && (
-          <p className="hint hint--error">
-            {missing.length === 1
-              ? 'One equipped tool is no longer in this wallet, so it has'
-              : `${formatNumber(missing.length)} equipped tools are no longer in this wallet, so they have`}{' '}
-            been left out of the selection. Saving drops{' '}
-            {missing.length === 1 ? 'it' : 'them'} on chain too.
-          </p>
-        )}
-
-        {loading ? (
-          <div className="toolgrid">
-            {Array.from({ length: 3 }, (_, i) => (
-              <div className="toolcard toolcard--loading" key={i} />
-            ))}
-          </div>
-        ) : equipped.length === 0 ? (
-          <p className="muted">
-            Nothing equipped. Pick tools below and save to mine with them.
-          </p>
-        ) : (
-          <div className="toolgrid">
-            {equipped.map((t) => (
-              <ToolCard
-                key={t.asset_id}
-                tool={t}
-                power={powerOf(t.template_id)}
-                picked
-                unsaved={unsaved(t.asset_id)}
-                disabled={!canAct || busy !== null}
-                onClick={() => toggle(t.asset_id)}
-              />
-            ))}
-          </div>
-        )}
-      </section>
-
-      <section className="panel">
-        <div className="row row--wrap subhead subhead--top">
-          <h3 className="panel__title">Available in your wallet ({spare.length})</h3>
-          <span className="spacer" />
-          {/*
-            The sort lives here rather than with the equipped bag: that list
-            is two or three cards, this one can be dozens, and this is where a
-            player is actually comparing tools.
-          */}
-          <span className="sortby">Sort by</span>
-          <PowerSortButtons value={sort} onChange={setSort} />
-        </div>
-        {loading ? (
-          <>
-            {/* A few hundred tools arrive in one page; past that the wait is
-                long enough to deserve a number. */}
-            {loadedSoFar >= 1000 && (
-              <p className="muted">
-                Loading your tools… {formatNumber(loadedSoFar)} so far.
-              </p>
-            )}
-            <div className="toolgrid toolgrid--fill">
-              {Array.from({ length: 6 }, (_, i) => (
-                <div className="toolcard toolcard--loading" key={i} />
-              ))}
-            </div>
-          </>
-        ) : spare.length === 0 ? (
-          <p className="muted">No other Alien Worlds tools in this wallet.</p>
-        ) : (
-          <div className="toolgrid toolgrid--fill">
-            {spare.slice(0, spareShown).map((t) => (
-              <ToolCard
-                key={t.asset_id}
-                tool={t}
-                power={powerOf(t.template_id)}
-                picked={false}
-                unsaved={unsaved(t.asset_id)}
-                disabled={!canAct || busy !== null || picked.length >= MAX_TOOLS}
-                onClick={() => toggle(t.asset_id)}
-              />
-            ))}
-          </div>
-        )}
-        {!loading && spare.length > spareShown && (
-          <div className="toolmore">
-            <button
-              type="button"
-              className="btn btn--ghost btn--sm"
-              onClick={() => setSpareShown((n) => n + TOOL_BATCH)}
-            >
-              Show {formatNumber(Math.min(TOOL_BATCH, spare.length - spareShown))} more ·{' '}
-              {formatNumber(spare.length - spareShown)} not shown
-            </button>
-          </div>
-        )}
-      </section>
-
-      <ToolCatalogue templates={templates} owned={tools} loading={loading} />
-
-      {/*
-        This setting belongs to the landowner, not the miner. `pools.cpp` looks
-        up whoever owns the land a mine happened on, reads *their*
-        `landowner_tlm_share`, and splits the mining power they earn between
-        the TLM pools and the shard pools — `shard_share = 100 - tlm_share`.
-        It changes nothing for a player who owns no land, so the panel says so
-        rather than implying a cost.
-      */}
-      <section className="panel">
-        <h2 className="panel__title">Landowner Rewards</h2>
-        <p className="hint">
-          When other players mine on land you own, you earn a cut. This decides
-          whether that cut arrives as Trilium or as Shards. It only applies to
-          land you own — it takes nothing from your own mining.
-        </p>
-
-        <div className="splitbar">
-          <span className="splitbar__tlm" style={{ width: `${share}%` }} />
-          <span className="splitbar__shards" style={{ width: `${100 - share}%` }} />
-        </div>
-        <div className="splitlabels">
-          <span>
-            <img src={asset("/assets/icons/tlm.svg")} alt="" width={14} height={14} />
-            {share}% TLM
-          </span>
-          <span>
-            {100 - share}% Shards
-            <img src={asset("/assets/icons/shards.svg")} alt="" width={14} height={14} />
-          </span>
-        </div>
-
-        <div className="sharerow">
-          <input
-            type="range"
-            min={0}
-            max={100}
-            step={1}
-            value={share}
-            onChange={(e) => setShare(Number(e.target.value))}
-            disabled={!canAct || busy !== null}
-          />
-          <button
-            type="button"
-            className="btn btn--primary"
-            disabled={!canAct || busy !== null || !shareChanged}
-            onClick={() => onShare(share)}
-          >
-            {busy === 'share' && <span className="spinner" />}
-            Save Settings
-          </button>
-        </div>
-      </section>
-    </div>
-  )
-}
-
-export function ToolCard({
-  tool,
-  power,
-  picked,
-  unsaved = false,
-  disabled,
-  onClick,
-}: {
-  tool: MiningTool
-  /** From `templatemp`; absent only if the template is not registered yet. */
-  power: ToolTemplate | undefined
-  picked: boolean
-  /** Picked or dropped since the last save, so the chain does not know yet. */
-  unsaved?: boolean
-  disabled: boolean
-  onClick: () => void
-}) {
-  return (
-    <button
-      type="button"
-      className={
-        'toolcard' +
-        (picked ? ' toolcard--picked' : '') +
-        (unsaved ? ' toolcard--unsaved' : '')
-      }
-      aria-pressed={picked}
-      disabled={disabled}
-      onClick={onClick}
-    >
-      <GameImg
-        className="toolcard__art"
-        src={asset(`/assets/cards/${tool.template_id}.webp`)}
-        alt=""
-        loading="lazy"
-        fallback={asset('/assets/default-card.png')}
-      />
-      <span className="toolcard__body">
-        <span className="toolcard__name">
-          {tool.name}
-          {unsaved && <em className="toolcard__flag">Unsaved</em>}
-        </span>
-        <span className={`toolcard__rarity r-${tool.rarity.toLowerCase()}`}>
-          {tool.shine === 'Stone' ? tool.rarity : `${tool.rarity} · ${tool.shine}`}
-          {tool.type && ` · ${tool.type}`}
-        </span>
-        <span className="toolstats">
-          {MINING_POWER.map((m) => (
-            <span className="toolstat" key={m.key} title={`${m.label} — ${m.hint}`}>
-              <img src={m.icon} alt={m.label} width={13} height={13} />
-              {power ? formatNumber(power[m.key]) : '—'}
-            </span>
-          ))}
-        </span>
-      </span>
-    </button>
-  )
-}
-
-/** The three orderings, as one control so both lists offer the same set. */
-function PowerSortButtons({
-  value,
-  onChange,
-}: {
-  value: PowerSort
-  onChange: (next: PowerSort) => void
-}) {
-  return (
-    <>
-      {POWER_SORTS.map((s) => (
-        <button
-          type="button"
-          key={s.key}
-          className={`btn btn--sm ${value === s.key ? 'btn--primary' : 'btn--ghost'}`}
-          aria-pressed={value === s.key}
-          onClick={() => onChange(s.key)}
-        >
-          {s.label}
-        </button>
-      ))}
-    </>
-  )
-}
-
-/* ---------- the tool catalogue ---------- */
-
-type CatalogueSort = PowerSort | 'toolname'
-
-/**
- * Every tool in the game, whether or not the player owns one.
- *
- * `templatemp` holds the mining power of all 150-odd templates, so a player
- * can see what a tool would be worth before going to the market for it —
- * which is the question the equipped list cannot answer. Owned templates are
- * marked rather than filtered, so the list doubles as a comparison against
- * what is already in the bag.
- */
-function ToolCatalogue({
-  templates,
-  owned,
-  loading,
-}: {
-  templates: ToolTemplate[]
-  owned: MiningTool[]
-  loading: boolean
-}) {
-  const [query, setQuery] = useState('')
-  const [sort, setSort] = useState<CatalogueSort>('combined')
-  const [mineOnly, setMineOnly] = useState(false)
-
-  /* How many of each template sit in the wallet. */
-  const held = useMemo(() => {
-    const map = new Map<number, number>()
-    for (const t of owned) map.set(t.template_id, (map.get(t.template_id) ?? 0) + 1)
-    return map
-  }, [owned])
-
-  const rows = useMemo(() => {
-    const needle = query.trim().toLowerCase()
-    const list = templates.filter((t) => {
-      if (mineOnly && !held.has(t.template_id)) return false
-      if (!needle) return true
-      return (
-        t.toolname.toLowerCase().includes(needle) ||
-        t.rarity.toLowerCase().includes(needle) ||
-        t.shine.toLowerCase().includes(needle) ||
-        String(t.template_id) === needle
-      )
-    })
-    return list.sort((a, b) =>
-      sort === 'toolname'
-        ? a.toolname.localeCompare(b.toolname)
-        : powerScore(sort, b) - powerScore(sort, a) || byQuality(a, b),
-    )
-  }, [templates, query, sort, mineOnly, held])
-
-  /* The best in the game, so a row can be read against something. */
-  const peak = useMemo(
-    () => ({
-      tlm_mp: Math.max(1, ...templates.map((t) => Number(t.tlm_mp))),
-      shrd_mp: Math.max(1, ...templates.map((t) => Number(t.shrd_mp))),
-    }),
-    [templates],
-  )
-
-  return (
-    <section className="panel">
-      <div className="row row--wrap">
-        <div>
-          <h2 className="panel__title">Every Tool</h2>
-          <p className="hint">
-            The mining power of every tool in the game, from{' '}
-            <span className="mono">templatemp</span> — including ones you do
-            not own, so you can see what a tool is worth before buying it.
-          </p>
-        </div>
-      </div>
-
-      <div className="cataloguebar">
-        <input
-          type="search"
-          className="input"
-          placeholder="Search by name, rarity or template id"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-        />
-        <div className="cataloguebar__sorts">
-          <PowerSortButtons
-            value={sort === 'toolname' ? 'combined' : sort}
-            onChange={setSort}
-          />
-          <button
-            type="button"
-            className={`btn btn--sm ${sort === 'toolname' ? 'btn--primary' : 'btn--ghost'}`}
-            onClick={() => setSort('toolname')}
-          >
-            Name
-          </button>
-          <button
-            type="button"
-            className={`btn btn--sm ${mineOnly ? 'btn--primary' : 'btn--ghost'}`}
-            aria-pressed={mineOnly}
-            onClick={() => setMineOnly((v) => !v)}
-          >
-            Mine only
-          </button>
-        </div>
-      </div>
-
-      {loading ? (
-        <p className="muted">Loading…</p>
-      ) : rows.length === 0 ? (
-        <p className="muted">No tool matches that.</p>
-      ) : (
-        <>
-          <div className="catalogue">
-            <div className="catalogue__head">
-              <span>Tool</span>
-              {MINING_POWER.map((m) => (
-                <span key={m.key} title={m.hint}>
-                  <img src={m.icon} alt="" width={12} height={12} />
-                  {m.label}
-                </span>
-              ))}
-              <span>Leans</span>
-            </div>
-            {rows.map((t) => {
-              const count = held.get(t.template_id) ?? 0
-              const bias = powerBias(t)
-              return (
-                <div
-                  className={`catalogue__row${count ? ' is-owned' : ''}`}
-                  key={t.template_id}
-                  title={`Template ${t.template_id} — ${t.rarity} ${t.shine}`}
-                >
-                  <span className="catalogue__name">
-                    <strong>{t.toolname}</strong>
-                    <em>
-                      {t.rarity} · {t.shine}
-                      {count > 0 && ` · you own ${count}`}
-                    </em>
-                  </span>
-                  <span className="catalogue__mp">
-                    <b>{formatNumber(t.tlm_mp)}</b>
-                    <span className="catalogue__meter">
-                      <i style={{ width: `${(t.tlm_mp / peak.tlm_mp) * 100}%` }} />
-                    </span>
-                  </span>
-                  <span className="catalogue__mp">
-                    <b>{formatNumber(t.shrd_mp)}</b>
-                    <span className="catalogue__meter catalogue__meter--shard">
-                      <i style={{ width: `${(t.shrd_mp / peak.shrd_mp) * 100}%` }} />
-                    </span>
-                  </span>
-                  {/*
-                    A tool's two powers come from its ease and its luck, so it
-                    always leans one way. Worth seeing at a glance when picking
-                    a bag for Trilium or for shards.
-                  */}
-                  <span className="catalogue__bias" aria-hidden="true">
-                    <i style={{ width: `${bias * 100}%` }} />
-                  </span>
-                </div>
-              )
-            })}
-          </div>
-          <p className="hint">
-            Showing {formatNumber(rows.length)} of {formatNumber(templates.length)} tools.
-          </p>
-        </>
-      )}
-    </section>
-  )
-}
-
-/* ---------- currencies ---------- */
-
-/**
- * One token's ledger.
- *
- * The unclaimed balance is almost always zero — nearly everything the game
- * pays goes straight out — so the ledger is the point of the tab: it is the
- * only place that says *where* a payment came from, in the contract's own
- * words.
- */
-export function CurrencyTab({
-  currency,
-  player,
-  log,
-  capacity,
-  busy,
-  canAct,
-  onClaim,
-  onUnlock,
-  board,
-  trial,
-  minedPool,
-  onMine,
-}: {
-  currency: Currency
-  player: Player
-  /** Undefined until this currency's ledger has been read. */
-  log: RewardLogEntry[] | undefined
-  capacity: LogCapacity
-  busy: Busy
-  canAct: boolean
-  onClaim: () => void
-  onUnlock: (rows: number) => void
-  /** The pools this currency's reward power can be spent in. */
-  board: PoolEntry[]
-  /** The share of reward power a trial account banks, or null on Legend. */
-  trial: number | null
-  minedPool: string | null
-  onMine: (pool: string, times: number) => void
-}) {
-  const places = CURRENCY_PRECISION[currency]
-  const raw = Number(
-    (player.activestats as unknown as Record<string, number>)[
-      CURRENCY_UNCLAIMED[currency]
-    ] ?? 0,
-  )
-  const pending = raw / Math.pow(10, places)
-  const rows = log ?? []
-  const total = rows.reduce((sum, r) => sum + assetValue(r.reward), 0)
-  const pays = claimPays(currency)
-
-  /*
-     WAX is kept to eight places on chain, which reads as a wall of digits
-     wherever it is printed in full — so this screen shows one, matching the
-     payment rows. Cut rather than rounded, so a figure never claims a
-     fraction the account has not got.
-   */
-  const shown = currency === 'wax' ? 1 : places
-  const amount = (value: number) =>
-    formatDecimals(Math.trunc(value * 10 ** shown) / 10 ** shown, shown)
-
-  return (
-    <div className="stack">
-      <section className="panel">
-        <div className="row row--wrap">
-          <img src={CURRENCY_ICON[currency]} alt="" width={32} height={32} />
-          <div>
-            <h2 className="panel__title">{CURRENCY_LABEL[currency]}</h2>
-            <p className="hint">
-              {rows.length === 0
-                ? 'No payments on record.'
-                : `${amount(total)} across the ${
-                    rows.length === 1 ? 'one payment' : `${rows.length} payments`
-                  } below.`}
-            </p>
-          </div>
-          <span className="spacer" />
-          <div className="pending">
-            <span>Waiting</span>
-            <strong>{amount(pending)}</strong>
-          </div>
-          {pays && (
-            <button
-              type="button"
-              className="btn btn--primary"
-              disabled={!canAct || busy !== null || pending <= 0}
-              onClick={onClaim}
-            >
-              {busy === 'claim' && <span className="spinner" />}
-              Claim
-            </button>
-          )}
-        </div>
-
-        {/*
-          `claimcur` transfers TLM but zeroes unclaimed shards and WAX without
-          sending them. Both are paid out directly in practice and sit at zero
-          — but offering a claim button that destroys a balance would be worse
-          than offering none.
-        */}
-        {!pays && pending > 0 && (
-          <p className="hint hint--error">
-            {/*
-              In full here, unlike the headline: this names a balance that is
-              stuck, and a truncated tail could print it as 0.0.
-            */}
-            The game holds {formatDecimals(pending, places)}{' '}
-            {CURRENCY_LABEL[currency]} against your account, but the claim
-            action clears this figure without paying it out. Nothing here can
-            release it.
-          </p>
-        )}
-      </section>
-
-      {board.length > 0 && (
-        <section className="panel">
-          <div className="row">
-            <h2 className="panel__title">Reward Pools</h2>
-          </div>
-          {/*
-            The pool balance is the headline, not the power. A mine takes
-            `balance * power / 1,000,000` — one percent at a full 10,000 —
-            from a shared figure every other player is also drawing on, so the
-            same power is worth several times more against a full pool. Both
-            numbers sit on the row for that reason.
-          */}
-          <p className="hint">
-            Playing the game banks Reward Power in each pool. Spending it takes
-            a slice of what that pool is holding — one percent at a full{' '}
-            {formatNumber(MINE_POWER)} — so the pool's size decides what your
-            power is worth.
-          </p>
-
-          {trial !== null && (
-            <p className="hint hint--error">
-              Your Legend access has lapsed, so you are banking{' '}
-              {Math.round(trial * 100)}% of the Reward Power you earn.
-            </p>
-          )}
-
-          <div className="poollist">
-            {board.map((entry) => (
-              <PoolRow
-                key={entry.pool}
-                entry={entry}
-                places={places}
-                symbol={CURRENCY_LABEL[currency]}
-                busy={busy === 'mine' && minedPool === entry.pool}
-                disabled={!canAct || busy !== null || !entry.ready}
-                onMine={(times) => onMine(entry.pool, times)}
-              />
-            ))}
-          </div>
-        </section>
-      )}
-
-      <section className="panel">
-        <div className="row">
-          <h3 className="panel__title">Payments</h3>
-          <span className="spacer" />
-          {capacity.unlocked > 0 && (
-            <span className="rowcount">
-              {formatNumber(capacity.used)} / {formatNumber(capacity.unlocked)} kept
-            </span>
-          )}
-        </div>
-
-        {/*
-          The history is rented storage, not a record of what happened.
-          `addhistory` writes nothing at all for a currency with no rows
-          unlocked, and drops the oldest row once the rows are full — so an
-          empty ledger has to say which of the two it is, or a player reads it
-          as never having earned anything.
-        */}
-        {capacity.unlocked === 0 ? (
-          <p className="muted">
-            {CURRENCY_LABEL[currency]} payments are not being recorded. Unlock
-            history rows and everything you earn from here on is listed —
-            earlier payments are gone, as the game only kept what was unlocked
-            at the time.
-          </p>
-        ) : log === undefined ? (
-          <p className="muted">Loading…</p>
-        ) : rows.length === 0 ? (
-          <p className="muted">
-            Nothing recorded yet. The next {CURRENCY_LABEL[currency]} you earn
-            appears here.
-          </p>
-        ) : (
-          <>
-            {capacity.used >= capacity.unlocked && (
-              <p className="hint">
-                These rows are full, so each new payment now pushes out the
-                oldest one.
-              </p>
-            )}
-            <div className="ledger">
-              {rows.map((r) => (
-                <div className="ledger__row" key={r.index}>
-                  <span className="ledger__what">
-                    <strong>{r.pool_description || r.pool}</strong>
-                    <em>{r.pool}</em>
-                  </span>
-                  <span className="ledger__when">
-                    {new Date(Date.parse(r.timestamp + 'Z')).toLocaleString()}
-                  </span>
-                  {/*
-                    WAX is the one currency the chain keeps to eight places,
-                    which is more tail than a payment row can use.
-                  */}
-                  <span className="ledger__amount">
-                    {currency === 'wax' ? formatAsset(r.reward, 1) : r.reward}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </>
-        )}
-
-        {!capacity.atMax && (
-          <div className="unlockrow">
-            <span>
-              {formatNumber(capacity.step)} more rows ·{' '}
-              <img src={asset("/assets/icons/gems.png")} alt="" width={13} height={13} />
-              {formatNumber(capacity.price)} gems
-            </span>
-            <span className="spacer" />
-            <button
-              type="button"
-              className="btn"
-              disabled={!canAct || busy !== null}
-              onClick={() => onUnlock(capacity.step)}
-            >
-              {busy === 'rows' && <span className="spinner" />}
-              {capacity.unlocked === 0 ? 'Start recording' : 'Keep more'}
-            </button>
-          </div>
-        )}
-      </section>
-    </div>
-  )
-}
-
-/**
- * One pool: what it holds, how close the power is to a mine, and the button.
- *
- * The bar is the power towards a full mine, not the pool's balance — the
- * balance has no ceiling to measure against, and the threshold is the thing
- * the button waits on.
- */
-export function PoolRow({
-  entry,
-  places,
-  symbol,
-  busy,
-  disabled,
-  onMine,
-}: {
-  entry: PoolEntry
-  places: number
-  symbol: string
-  busy: boolean
-  disabled: boolean
-  onMine: (times: number) => void
-}) {
-  /* Whole units: the fractional tail on a pool balance is pure noise. */
-  const payout = poolAmount(entry.payout, places)
-  const balance = poolAmount(entry.balance, places)
-  const batch = batchableMines(entry)
-
-  return (
-    <div className={`poolrow${entry.ready ? ' poolrow--ready' : ''}`}>
-      <div className="poolrow__head">
-        <div>
-          <strong>{entry.label}</strong>
-          <em>{entry.pool}</em>
-        </div>
-        <span className="spacer" />
-        <div className="poolrow__held">
-          <span>In the pool</span>
-          <strong>
-            {balance} {symbol}
-          </strong>
-        </div>
-      </div>
-
-      <div className="poolbar">
-        <span style={{ width: `${Math.round(entry.progress * 100)}%` }} />
-      </div>
-
-      {/*
-        Where the power comes from. The bar sits at zero until a player has
-        earned some, and without this the panel says what they have but never
-        how to get more.
-      */}
-      {entry.how && <p className="poolrow__how">{entry.how}</p>}
-
-      <div className="poolrow__foot">
-        <span className="poolrow__power">
-          {entry.anyAmount
-            ? `${formatNumber(entry.power)} power · no minimum`
-            : `${formatNumber(entry.power)} / ${formatNumber(MINE_POWER)} power`}
-          {/*
-            Power keeps accruing past the threshold and a mine spends only
-            10,000 of it, so more than one banked mine is worth saying — it is
-            the difference between coming back later and coming back at once.
-          */}
-          {entry.mines > 1 && ` · ${formatNumber(entry.mines)} mines banked`}
-        </span>
-        <span className="spacer" />
-        {entry.ready ? (
-          <span className="poolrow__payout">
-            +{payout} {symbol}
-          </span>
-        ) : (
-          <span className="poolrow__short">
-            {entry.anyAmount
-              ? 'No power banked'
-              : `${formatNumber(MINE_POWER - entry.power)} more to mine`}
-          </span>
-        )}
-        <button
-          type="button"
-          className="btn btn--primary"
-          disabled={disabled}
-          onClick={() => onMine(1)}
-        >
-          {busy && <span className="spinner" />}
-          Mine
-        </button>
-        {/*
-          The banked ones, in a single signature.
-
-          Only when there is more than one to spend — with one banked this
-          button would be the button beside it, under a different name. The
-          count is what it will actually spend, so a player with three banked
-          is offered three rather than ten.
-        */}
-        {batch > 1 && (
-          <button
-            type="button"
-            className="btn"
-            disabled={disabled}
-            onClick={() => onMine(batch)}
-            /* What it pays, because it is not the figure beside it times the
-               count: each mine takes its share of what the pool holds at that
-               moment, so the later ones are paid against a smaller pool. */
-            title={`Spend ${batch} banked mines in one transaction, for about ${poolAmount(
-              batchPayout(entry.balance, MINE_POWER, batch),
-              places,
-            )} ${symbol}`}
-          >
-            Mine ×{batch}
-          </button>
-        )}
-      </div>
-    </div>
-  )
-}
-
-/* ---------- cpu ---------- */
 
 export function CpuTab({
   player,

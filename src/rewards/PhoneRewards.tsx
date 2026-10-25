@@ -34,9 +34,9 @@ import { asset } from '@/assets'
 import { MAX_TOOLS, paymentSources } from './rules'
 import { useMiningTools } from './useMiningTools'
 
-type RewardsTab = 'mining' | Currency
+export type RewardsTab = 'mining' | Currency
 
-const TABS: [RewardsTab, string][] = [
+export const TABS: [RewardsTab, string][] = [
   ['mining', 'Mining'],
   ['tlm', CURRENCY_LABEL.tlm],
   ['shrds', CURRENCY_LABEL.shrds],
@@ -59,19 +59,19 @@ export interface PhoneCurrencyData {
 }
 
 /* Each currency's lifetime counter in `permstats`. */
-const EARNED_STAT: Record<Currency, string> = {
+export const EARNED_STAT: Record<Currency, string> = {
   tlm: 'tlm_earned',
   shrds: 'shards_earned',
   wax: 'wax_earned',
 }
 
 /** What this account has earned in one currency, raw, as the chain counts it. */
-function earned(player: Player, currency: Currency): number {
+export function earned(player: Player, currency: Currency): number {
   return Number(kvToRecord(player.permstats ?? [])[EARNED_STAT[currency]] ?? 0)
 }
 
 /** What the game holds for this wallet in one currency, in whole units. */
-function unclaimed(player: Player, currency: Currency): number {
+export function unclaimed(player: Player, currency: Currency): number {
   const raw = Number(
     (player.activestats as unknown as Record<string, number>)[CURRENCY_UNCLAIMED[currency]] ?? 0,
   )
@@ -168,7 +168,7 @@ function Chevron() {
 }
 
 /** The two powers side by side, with their icons. */
-function Power({ tlm, shrd, big }: { tlm: number; shrd: number; big?: boolean }) {
+export function Power({ tlm, shrd, big }: { tlm: number; shrd: number; big?: boolean }) {
   const [t, s] = MINING_POWER
   return (
     <span className={`prew__power${big ? ' prew__power--big' : ''}`}>
@@ -370,7 +370,7 @@ interface ToolGroup {
 
 const SPARE_PAGE = 40
 
-function ToolsSheet({
+export function ToolsSheet({
   tools,
   loading,
   powerOf,
@@ -379,7 +379,9 @@ function ToolsSheet({
   canAct,
   onSave,
   onClose,
+  side = false,
 }: {
+  side?: boolean
   tools: MiningTool[]
   loading: boolean
   powerOf: (templateId: number) => ToolTemplate | undefined
@@ -448,6 +450,7 @@ function ToolsSheet({
 
   return (
     <BottomSheet
+      side={side}
       title="Change tools"
       onClose={onClose}
       foot={
@@ -594,13 +597,15 @@ const SHARE_PRESETS: [number, string][] = [
   [0, 'All Shards'],
 ]
 
-function LandSheet({
+export function LandSheet({
   stored,
   busy,
   canAct,
   onSave,
   onClose,
+  side = false,
 }: {
+  side?: boolean
   stored: number
   busy: string | null
   canAct: boolean
@@ -610,6 +615,7 @@ function LandSheet({
   const [share, setShare] = useState(stored)
   return (
     <BottomSheet
+      side={side}
       title="Landowner settings"
       onClose={onClose}
       foot={
@@ -689,12 +695,14 @@ const CATALOGUE_SORTS: [CatalogueSort, string][] = [
   ['shrd_mp', 'Shard power'],
 ]
 
-function AllToolsSheet({
+export function AllToolsSheet({
   templates,
   owned,
   loading,
   onClose,
+  side = false,
 }: {
+  side?: boolean
   templates: ToolTemplate[]
   owned: MiningTool[]
   loading: boolean
@@ -726,7 +734,7 @@ function AllToolsSheet({
   }, [templates, query, sort, mineOnly, held])
 
   return (
-    <BottomSheet title="All tools" onClose={onClose}>
+    <BottomSheet side={side} title="All tools" onClose={onClose}>
       <input
         type="search"
         className="input"
@@ -798,14 +806,14 @@ function ringLabel(label: string): string {
 }
 
 /* Where the power for a pool is earned, when that is a place on the map. */
-function earnLink(pool: string): { label: string; to: string } | null {
+export function earnLink(pool: string): { label: string; to: string } | null {
   if (/arena/i.test(pool)) return { label: 'Find an arena', to: '/map' }
   if (/dung/i.test(pool)) return { label: 'Find a dungeon', to: '/map' }
   return null
 }
 
 /* A pool's picture: where its power is earned, or the currency it pays. */
-function poolIcon(pool: string, currency: Currency): string {
+export function poolIcon(pool: string, currency: Currency): string {
   if (/arena/i.test(pool)) return asset('/assets/icons/arena.svg')
   if (/dung/i.test(pool)) return asset('/assets/icons/dungeons.svg')
   return CURRENCY_ICON[currency]
@@ -914,12 +922,23 @@ function MineCard({
   )
 }
 
-function Ring({ entry, symbol, onOpen }: { entry: PoolEntry; symbol: string; onOpen: () => void }) {
+export function Ring({
+  entry,
+  symbol,
+  onOpen,
+  selected = false,
+}: {
+  entry: PoolEntry
+  symbol: string
+  onOpen: () => void
+  /** A desktop marks the ring whose pool is open beside it. */
+  selected?: boolean
+}) {
   const r = 31
   const around = 2 * Math.PI * r
   const fill = Math.min(1, entry.anyAmount ? (entry.power > 0 ? 1 : 0) : entry.progress)
   return (
-    <div className={`pring${entry.ready ? ' pring--ready' : ''}`}>
+    <div className={`pring${entry.ready ? ' pring--ready' : ''}${selected ? ' is-selected' : ''}`}>
       <button
         type="button"
         className="pring__dial"
@@ -962,6 +981,78 @@ function Ring({ entry, symbol, onOpen }: { entry: PoolEntry; symbol: string; onO
       )}
       <span className="sr-only">{symbol}</span>
     </div>
+  )
+}
+
+/**
+ * What one pool holds and pays, how far along it is and how it fills: the
+ * phone's pool sheet and the desktop's pool panel say the same things.
+ */
+export function PoolFacts({
+  entry,
+  places,
+  symbol,
+  pays,
+  trial,
+}: {
+  entry: PoolEntry
+  places: number
+  symbol: string
+  pays: number
+  trial: number | null
+}) {
+  return (
+    <>
+      <div className="poolsheet__stats">
+        <div>
+          <small>In the pool</small>
+          <strong className="mono">
+            {poolAmount(entry.balance, places)} <em>{symbol}</em>
+          </strong>
+        </div>
+        <div>
+          <small>{entry.anyAmount ? 'Mining now pays' : 'A mine pays'}</small>
+          <strong className="mono poolsheet__pays">
+            ~{poolAmount(pays, places)} <em>{symbol}</em>
+          </strong>
+        </div>
+      </div>
+      <div className="poolsheet__power">
+        <span>
+          {entry.anyAmount
+            ? `${formatNumber(entry.power)} power · no minimum`
+            : `${formatNumber(entry.power)} / ${formatNumber(MINE_POWER)} power`}
+        </span>
+        <span className={entry.ready ? 'poolsheet__banked' : 'faint'}>
+          {entry.mines > 1
+            ? `${formatNumber(entry.mines)} mines banked`
+            : entry.ready
+              ? 'Ready to mine'
+              : entry.anyAmount
+                ? ''
+                : `${formatNumber(MINE_POWER - entry.power)} to go`}
+        </span>
+      </div>
+      <div className={`poolsheet__bar${entry.ready ? ' is-ready' : ''}`}>
+        <i
+          style={{
+            width: `${Math.min(100, Math.round(entry.progress * 100))}%`,
+          }}
+        />
+      </div>
+      {entry.how && <p className="rsheet__hint">{entry.how}</p>}
+      <p className="rsheet__hint">
+        {entry.anyAmount
+          ? 'This pool has no minimum: mining spends all the power you have here.'
+          : `A mine spends ${formatNumber(MINE_POWER)} power and takes 1% of what the pool holds.`}
+      </p>
+      {trial !== null && (
+        <p className="rsheet__hint rsheet__hint--error">
+          Your Legend access has lapsed, so you are banking {Math.round(trial * 100)}% of the Reward
+          Power you earn.
+        </p>
+      )}
+    </>
   )
 }
 
@@ -1030,55 +1121,7 @@ function PoolSheet({
         </div>
       }
     >
-      <div className="poolsheet__stats">
-        <div>
-          <small>In the pool</small>
-          <strong className="mono">
-            {poolAmount(entry.balance, places)} <em>{symbol}</em>
-          </strong>
-        </div>
-        <div>
-          <small>{entry.anyAmount ? 'Mining now pays' : 'A mine pays'}</small>
-          <strong className="mono poolsheet__pays">
-            ~{poolAmount(pays, places)} <em>{symbol}</em>
-          </strong>
-        </div>
-      </div>
-      <div className="poolsheet__power">
-        <span>
-          {entry.anyAmount
-            ? `${formatNumber(entry.power)} power · no minimum`
-            : `${formatNumber(entry.power)} / ${formatNumber(MINE_POWER)} power`}
-        </span>
-        <span className={entry.ready ? 'poolsheet__banked' : 'faint'}>
-          {entry.mines > 1
-            ? `${formatNumber(entry.mines)} mines banked`
-            : entry.ready
-              ? 'Ready to mine'
-              : entry.anyAmount
-                ? ''
-                : `${formatNumber(MINE_POWER - entry.power)} to go`}
-        </span>
-      </div>
-      <div className={`poolsheet__bar${entry.ready ? ' is-ready' : ''}`}>
-        <i
-          style={{
-            width: `${Math.min(100, Math.round(entry.progress * 100))}%`,
-          }}
-        />
-      </div>
-      {entry.how && <p className="rsheet__hint">{entry.how}</p>}
-      <p className="rsheet__hint">
-        {entry.anyAmount
-          ? 'This pool has no minimum: mining spends all the power you have here.'
-          : `A mine spends ${formatNumber(MINE_POWER)} power and takes 1% of what the pool holds.`}
-      </p>
-      {trial !== null && (
-        <p className="rsheet__hint rsheet__hint--error">
-          Your Legend access has lapsed, so you are banking {Math.round(trial * 100)}% of the Reward
-          Power you earn.
-        </p>
-      )}
+      <PoolFacts entry={entry} places={places} symbol={symbol} pays={pays} trial={trial} />
     </BottomSheet>
   )
 }
@@ -1186,7 +1229,11 @@ function PhoneCurrency({
               : formatStat(EARNED_STAT[currency], earned(player, currency))}
           </strong>
           {!pays ? (
-            <small className="prew__heronote">Paid straight to your wallet</small>
+            <small className="prew__heronote">
+              {currency === 'wax'
+                ? 'Paid out when you claim a Candle mission'
+                : 'Paid straight to your wallet'}
+            </small>
           ) : pending > 0 ? (
             <button
               type="button"

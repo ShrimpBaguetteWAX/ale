@@ -98,15 +98,16 @@ describe('batchableMines', () => {
 describe('the Mine ×N button', () => {
   it('appears only once there is more than one banked mine', async () => {
     const { render, screen, cleanup } = await import('@testing-library/react')
-    const { PoolRow } = await import('@/routes/Profile')
+    const { DeskPool } = await import('@/rewards/DeskRewards')
 
     const row = (mines: number, over: Partial<PoolEntry> = {}) => {
       cleanup()
       render(
-        <PoolRow
+        <DeskPool
           entry={entry({ mines, power: mines * MINE_POWER, ...over })}
           places={4}
           symbol="TLM"
+          trial={null}
           busy={false}
           disabled={false}
           onMine={() => {}}
@@ -126,14 +127,15 @@ describe('the Mine ×N button', () => {
 
   it('asks for exactly the number on the button', async () => {
     const { render, screen, fireEvent, cleanup } = await import('@testing-library/react')
-    const { PoolRow } = await import('@/routes/Profile')
+    const { DeskPool } = await import('@/rewards/DeskRewards')
 
     const asked: number[] = []
     render(
-      <PoolRow
+      <DeskPool
         entry={entry({ mines: 6, power: 6 * MINE_POWER })}
         places={4}
         symbol="TLM"
+        trial={null}
         busy={false}
         disabled={false}
         onMine={(times) => asked.push(times)}
