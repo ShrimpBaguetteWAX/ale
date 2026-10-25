@@ -1143,11 +1143,13 @@ function DeskBoard<T>({
       <div className="mdesk__list" ref={box} onKeyDown={onKey}>
         {list}
       </div>
+      {/* One box for the two, so a narrower board can stack them in one
+          column; a wide one lays them out as columns of their own. */}
       {picked !== null && (
-        <>
+        <div className="mdesk__side">
           {fighter}
           {deal}
-        </>
+        </div>
       )}
     </div>
   )

@@ -1712,6 +1712,11 @@ i.mrow__arrow {
 
 /* ---------- the desktop board: the list, the fighter, the deal ---------- */
 @media (min-width: 720px) {
+  /* The board sizes itself to the panel it is in, not to the window: the
+     game's side rail takes a different share of the window at each width. */
+  .market__panel:has(.mdesk) {
+    container: mkboard / inline-size;
+  }
   .mdesk {
     /* The phone's quiet palette: white hairlines, not the violet rims. */
     --line-bright: rgb(255 255 255 / 22%);
@@ -1721,8 +1726,13 @@ i.mrow__arrow {
     gap: var(--sp-4);
     align-items: start;
   }
+  /* Wide: the fighter and the deal are columns of their own. */
+  .mdesk__side {
+    display: contents;
+  }
   .mdesk__list {
     display: grid;
+    grid-template-columns: minmax(0, 1fr);
     gap: 10px;
     min-width: 0;
   }
@@ -1929,5 +1939,69 @@ i.mrow__arrow {
   }
   .mdeal__go {
     min-height: 44px;
+  }
+  /* Nothing in the deal may be wider than its column: the quick prices
+     share the width, and the button's words wrap before they spill. */
+  .mdeal {
+    overflow-x: hidden;
+  }
+  .mdeal .msell__quick button {
+    min-width: 0;
+    padding: 0;
+  }
+  .mdeal .msell__go {
+    flex-wrap: wrap;
+    justify-content: center;
+    white-space: normal;
+  }
+
+  /* The fighter lays its tiles out for its own width. */
+  .mfighter {
+    container: mfighter / inline-size;
+  }
+}
+
+/*
+   A board too narrow for three columns: the list, and beside it one column
+   holding the deal over the fighter, scrolling as one and held in view.
+*/
+@container mkboard (max-width: 980px) {
+  .mdesk {
+    /* The list gives up width first; the fighter and the deal need it more. */
+    grid-template-columns: clamp(300px, 45%, 340px) minmax(0, 1fr);
+  }
+  .mdesk__side {
+    position: sticky;
+    top: calc(var(--topbar-h, 0px) + var(--sp-4));
+    display: grid;
+    gap: var(--sp-4);
+    align-content: start;
+    min-width: 0;
+    max-height: calc(100dvh - var(--topbar-h, 0px) - 2 * var(--sp-4));
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+  .mdesk__side > .mfighter,
+  .mdesk__side > .mdeal {
+    position: static;
+    max-height: none;
+    overflow-y: visible;
+  }
+  .mdesk__side > .mdeal {
+    order: -1;
+  }
+}
+
+/* A narrow fighter: two stat tiles a row, the resistances in two rows. */
+@container mfighter (max-width: 420px) {
+  .mfighter .fstats__lines {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .mfighter .resgrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .mfighter__art {
+    width: 88px;
+    height: 88px;
   }
 }
