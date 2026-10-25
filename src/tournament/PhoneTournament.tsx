@@ -3714,12 +3714,14 @@ function PhoneAllFights({ p, champion, onBack }: {
  * longer. A banner opens its week's top four in the panel underneath, the
  * reigning week to begin with, beside the most-titled players.
  */
-function BannerHall({ cups, ranking, wallet, finalAfterMs, onBack }: {
+function BannerHall({ cups, ranking, wallet, finalAfterMs, onBack, phone = false }: {
   cups: TournamentHof[][]
   ranking: [string, { tag: string; avatar: number; titles: number; podiums: number }][]
   wallet: string
   finalAfterMs: number
   onBack: () => void
+  /** A phone's narrower hall: smaller banners on a rail you swipe. */
+  phone?: boolean
 }) {
   const [sel, setSel] = useState(0)
   const titlesOf = (w: string) => ranking.find(([x]) => x === w)?.[1].titles ?? 0
@@ -3728,14 +3730,17 @@ function BannerHall({ cups, ranking, wallet, finalAfterMs, onBack }: {
     Number.isFinite(ms) ? new Date(ms).toLocaleDateString(undefined, { day: 'numeric', month: 'short' }) : ''
   const week = cups[Math.min(sel, cups.length - 1)]
   const roman = ['I', 'II', 'III', 'IV', 'V']
-  const role = ['Champion', 'Runner-up', 'Semi-finals', 'Semi-finals']
+  const semis = phone ? 'Semis' : 'Semi-finals'
+  const role = ['Champion', 'Runner-up', semis, semis]
   const cup = ['gold', 'silver', 'bronze', 'bronze']
 
   return (
-    <div className="ptour__hall">
+    <div className={`ptour__hall${phone ? ' is-phone' : ''}`}>
       <div className="ptour__hallhead">
         <div>
-          <span className="ptour__kick ptour__kick--gold">Every champion's banner, hung in the hall</span>
+          <span className="ptour__kick ptour__kick--gold">
+            {phone ? "Every champion's banner" : "Every champion's banner, hung in the hall"}
+          </span>
           <h1>Hall of Legends</h1>
         </div>
         <button type="button" className="ptour__pill" onClick={onBack}>
@@ -3792,7 +3797,7 @@ function BannerHall({ cups, ranking, wallet, finalAfterMs, onBack }: {
                   {r.gamertag || r.wallet}
                   {r.wallet === wallet ? ' · you' : ''}
                 </b>
-                <small>{role[i] ?? 'Semi-finals'}</small>
+                <small>{role[i] ?? semis}</small>
               </div>
             ))}
           </section>
@@ -3820,7 +3825,7 @@ function BannerHall({ cups, ranking, wallet, finalAfterMs, onBack }: {
 
 /* ---------- hall of fame ---------- */
 
-function HallOfFame({ rows, wallet, nextFinal, finalAfterMs = 0, onBack }: {
+function HallOfFame({ rows, wallet, finalAfterMs = 0, onBack }: {
   rows: TournamentHof[]
   wallet: string
   finalAfterMs?: number
@@ -3847,9 +3852,6 @@ function HallOfFame({ rows, wallet, nextFinal, finalAfterMs = 0, onBack }: {
     }
     return [...tally.entries()].sort((a, b) => b[1].titles - a[1].titles || b[1].podiums - a[1].podiums)
   }, [rows])
-  const king = ranking[0]
-  const plural = (n: number, w: string) => `${n} ${w}${n === 1 ? '' : 's'}`
-  const placeOf = (rank: number) => (rank === 1 ? '1st' : rank === 2 ? '2nd' : '3rd')
 
   const head = (
     <div className="ptour__head">
@@ -3876,76 +3878,8 @@ function HallOfFame({ rows, wallet, nextFinal, finalAfterMs = 0, onBack }: {
     )
   }
 
-  /* A desktop hangs every champion's banner in the hall. */
-  if (desk) return <BannerHall cups={cups} ranking={ranking} wallet={wallet} finalAfterMs={finalAfterMs} onBack={onBack} />
-
-  const best = (
-    <section className="ptour__card ptour__hofbest">
-      <span className="ptour__kick ptour__kick--gold">Most titles</span>
-      <div className="ptour__hofking">
-        <PlayerAvatar id={king[1].avatar} name={king[1].tag} className="ptour__hofkingav" size={desk ? 120 : 72} />
-        <b>{king[1].tag || king[0]}</b>
-        <small>
-          {plural(king[1].titles, 'title').toUpperCase()} · {plural(king[1].podiums, 'podium').toUpperCase()}
-        </small>
-      </div>
-      {desk && (
-        <div className="ptour__hofrank">
-          {ranking.slice(0, 10).map(([w, t], i) => (
-            <div key={w} className={w === wallet ? 'is-me' : ''}>
-              <b className="mono">{i + 1}</b>
-              <PlayerAvatar id={t.avatar} name={t.tag} className="ptour__sideav" size={40} />
-              <span>{t.tag || w}</span>
-              <em>{t.titles ? plural(t.titles, 'title') : ''}</em>
-              <small>{plural(t.podiums, 'podium')}</small>
-            </div>
-          ))}
-        </div>
-      )}
-    </section>
-  )
-
-  const weeks = (
-    <div className="ptour__hofweeks">
-      {Number.isFinite(nextFinal) && (
-        <div className="ptour__hofnext">
-          <b>{dayLabel(nextFinal!)}</b>
-          <span>The next champion is written here after the final.</span>
-        </div>
-      )}
-      {cups.map((four) => (
-        <section key={four[0].tournament_name} className="ptour__card ptour__hofweek">
-          <b className="ptour__cupname">{dayLabel(chainTime(four[0].tournament_date) + finalAfterMs)}</b>
-          <div className="ptour__four">
-            {four.map((r) => (
-              <div key={r.index} className={`${r.rank === 1 ? 'is-top' : ''}${r.wallet === wallet ? ' is-me' : ''}`}>
-                <PlayerAvatar id={r.avatar} name={r.gamertag} className="ptour__sideav" size={r.rank === 1 ? 44 : 36} />
-                <span>
-                  <b>{r.gamertag || r.wallet}</b>
-                  <small>{placeOf(r.rank)}</small>
-                </span>
-              </div>
-            ))}
-          </div>
-        </section>
-      ))}
-    </div>
-  )
-
+  /* Every champion's banner on one rail: across a desktop, swiped on a phone. */
   return (
-    <div className="ptour__hof">
-      {head}
-      {desk ? (
-        <div className="ptour__hofcols">
-          {best}
-          {weeks}
-        </div>
-      ) : (
-        <>
-          {best}
-          {weeks}
-        </>
-      )}
-    </div>
+    <BannerHall cups={cups} ranking={ranking} wallet={wallet} finalAfterMs={finalAfterMs} onBack={onBack} phone={!desk} />
   )
 }

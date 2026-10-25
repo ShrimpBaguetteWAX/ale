@@ -1662,7 +1662,6 @@
     gap: 6px;
   }
 
-
   .tour__row .combatcard__art {
     aspect-ratio: 3 / 4;
     min-height: 0;
@@ -3982,7 +3981,6 @@
   .bcast__say { display: none; }
 }
 
-
 /* ————————————————— choosing between tournaments ————————————————— */
 
 /*
@@ -4126,7 +4124,6 @@
   border-color: rgb(255 219 125 / 45%);
   color: #ffdb7d;
 }
-
 
 /* ————————————————— watching a fight again ————————————————— */
 
@@ -5746,8 +5743,7 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
 }
-.ptour__best > div,
-.ptour__four > div {
+.ptour__best > div {
   display: grid;
   justify-items: center;
   gap: 3px;
@@ -5757,13 +5753,11 @@
   text-align: center;
   background: rgb(0 0 0 / 26%);
 }
-.ptour__best > div:first-child,
-.ptour__four > div.is-top {
+.ptour__best > div:first-child {
   background: rgb(246 168 0 / 12%);
   box-shadow: inset 0 0 0 1px rgb(246 168 0 / 40%);
 }
-.ptour__best b,
-.ptour__four b {
+.ptour__best b {
   max-width: 100%;
   overflow: hidden;
   font-size: 12.5px;
@@ -5786,40 +5780,6 @@
 .ptour__best .ptour__sideav {
   width: 44px;
   height: 44px;
-}
-.ptour__cupname {
-  font-family: var(--font-display);
-  font-size: 12px;
-  letter-spacing: 0.08em;
-  color: var(--white);
-}
-.ptour__four {
-  display: grid;
-  grid-template-columns: 1.3fr 1fr 1fr 1fr;
-  gap: 6px;
-}
-.ptour__four .ptour__sideav {
-  width: 36px;
-  height: 36px;
-}
-.ptour__four > div.is-top .ptour__sideav {
-  width: 44px;
-  height: 44px;
-  box-shadow: 0 0 0 2px #f6a800;
-}
-.ptour__four small {
-  font-family: var(--font-display);
-  font-size: 8.5px;
-  font-weight: 800;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--text-faint);
-}
-.ptour__four > div.is-top small {
-  color: #ffd979;
-}
-.ptour__four > div.is-me b {
-  color: #9fe3ff;
 }
 
 /* The prize sheet: the WAX places one roomy line each, and TLM by round. */
@@ -6759,192 +6719,12 @@
   width: 48px;
   height: 48px;
 }
-.ptour__hofbest {
-  background:
-    radial-gradient(70% 60% at 50% 0%, rgb(246 168 0 / 26%), transparent 70%),
-    rgb(8 14 28 / 80%);
-  box-shadow: inset 0 0 0 1px rgb(246 168 0 / 40%);
-  justify-items: center;
-  text-align: center;
-}
-.ptour__hofking {
-  display: grid;
-  justify-items: center;
-  gap: 6px;
-}
-.ptour__hofkingav {
-  width: 72px;
-  height: 72px;
-  border-radius: 50%;
-  object-fit: cover;
-  box-shadow:
-    0 0 0 3px #f6a800,
-    0 0 30px rgb(246 168 0 / 50%);
-}
-.ptour__hofking b {
-  font-family: var(--font-display);
-  font-size: 20px;
-  font-weight: 900;
-  color: var(--white);
-}
-.ptour__hofking small {
-  font-family: var(--font-display);
-  font-size: 10.5px;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  color: #ffd979;
-}
-.ptour__hofweeks {
-  display: grid;
-  gap: 10px;
-  align-content: start;
-}
-.ptour__hofnext {
-  display: grid;
-  gap: 2px;
-  padding: 12px 14px;
-  border: 1px dashed rgb(246 168 0 / 35%);
-  border-radius: 14px;
-  font-size: 12.5px;
-  color: var(--text-faint);
-}
-.ptour__hofnext b {
-  font-family: var(--font-display);
-  font-size: 14px;
-  color: #ffd979;
-}
-.ptour__hofweek {
-  gap: 10px;
-}
-.ptour__four > div > span {
-  display: grid;
-  justify-items: center;
-  min-width: 0;
-  max-width: 100%;
-}
-.ptour__four > div > span b {
-  max-width: 100%;
-}
-.ptour__four > div:not(.is-top) .ptour__sideav {
-  width: 32px;
-  height: 32px;
-}
-.ptour__four > div.is-top .ptour__sideav {
-  width: 38px;
-  height: 38px;
-  box-shadow: 0 0 0 2px #f6a800;
-}
 
-/* The Hall of Fame on a desktop: the best on the left, the weeks on the right. */
-.ptour--desk .ptour__hofcols {
+/* The Hall of Fame on a desktop: the best on the left {
   display: grid;
   grid-template-columns: clamp(380px, 34%, 520px) minmax(0, 1fr);
   gap: 24px;
   align-items: start;
-}
-.ptour--desk .ptour__hofbest {
-  position: sticky;
-  top: 16px;
-  padding: 28px;
-  gap: 18px;
-}
-.ptour--desk .ptour__hofkingav {
-  width: 120px;
-  height: 120px;
-  box-shadow:
-    0 0 0 4px #f6a800,
-    0 0 50px rgb(246 168 0 / 50%);
-}
-.ptour--desk .ptour__hofking b {
-  font-size: 30px;
-}
-.ptour--desk .ptour__hofking small {
-  font-size: 14px;
-}
-.ptour__hofrank {
-  display: grid;
-  width: 100%;
-  text-align: left;
-}
-.ptour__hofrank > div {
-  display: grid;
-  grid-template-columns: 30px 40px minmax(0, 1fr) auto auto;
-  align-items: center;
-  gap: 12px;
-  min-height: 54px;
-  padding: 0 8px;
-}
-.ptour__hofrank > div + div {
-  box-shadow: inset 0 1px 0 rgb(255 255 255 / 7%);
-}
-.ptour__hofrank > div.is-me {
-  background: linear-gradient(90deg, rgb(0 186 255 / 12%), transparent);
-  box-shadow: inset 3px 0 0 var(--cyan);
-}
-.ptour__hofrank b {
-  font-family: var(--font-display);
-  font-size: 14px;
-  text-align: center;
-  color: var(--text-faint);
-}
-.ptour__hofrank span {
-  overflow: hidden;
-  font-size: 15px;
-  font-weight: var(--fw-bold);
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  color: var(--white);
-}
-.ptour__hofrank em {
-  font-family: var(--font-display);
-  font-size: 13px;
-  font-style: normal;
-  font-weight: 800;
-  color: #ffd979;
-}
-.ptour__hofrank small {
-  font-size: 12.5px;
-  color: var(--text-faint);
-}
-.ptour--desk .ptour__hofnext {
-  grid-template-columns: 200px 1fr;
-  align-items: center;
-  padding: 18px 24px;
-  font-size: 15px;
-}
-.ptour--desk .ptour__hofnext b {
-  font-size: 19px;
-}
-.ptour--desk .ptour__hofweek {
-  grid-template-columns: 200px minmax(0, 1fr);
-  align-items: center;
-  padding: 18px 24px;
-}
-.ptour--desk .ptour__hofweek .ptour__cupname {
-  font-size: 19px;
-}
-.ptour--desk .ptour__hofweek .ptour__four {
-  grid-template-columns: 1.35fr 1fr 1fr 1fr;
-  gap: 12px;
-}
-.ptour--desk .ptour__hofweek .ptour__four > div {
-  display: flex;
-  align-items: center;
-  justify-items: start;
-  gap: 12px;
-  padding: 10px 14px;
-  text-align: left;
-}
-.ptour--desk .ptour__hofweek .ptour__four > div > span {
-  justify-items: start;
-}
-.ptour--desk .ptour__hofweek .ptour__four > div .ptour__sideav {
-  width: 42px;
-  height: 42px;
-}
-.ptour--desk .ptour__hofweek .ptour__four > div.is-top .ptour__sideav {
-  width: 50px;
-  height: 50px;
 }
 
 /* The team sizes to itself and centres on the light, whatever the panel's width. */
@@ -9554,4 +9334,140 @@ button.ptour__rfplay {
 }
 .ptour__hallwall {
   min-width: 0;
+}
+
+/* ---------- phone hall of fame: the same wall, on a rail you swipe ---------- */
+.ptour__hall.is-phone {
+  gap: 12px;
+  padding: 16px 14px 16px;
+  border-radius: 16px;
+}
+.ptour__hall.is-phone .ptour__hallhead h1 {
+  margin-top: 4px;
+  font-size: 22px;
+  letter-spacing: 0.06em;
+}
+.ptour__hall.is-phone .ptour__hallwall {
+  margin: 0 -14px;
+  padding: 4px 14px 0;
+}
+.ptour__hall.is-phone .ptour__hallrail {
+  height: 6px;
+  border-radius: 3px;
+}
+.ptour__hall.is-phone .ptour__hallbanners {
+  gap: 8px;
+  min-height: 0;
+  margin: -3px -14px 0;
+  padding: 0 14px 10px;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x proximity;
+  scrollbar-width: none;
+}
+.ptour__hall.is-phone .ptour__hallbanners::-webkit-scrollbar {
+  display: none;
+}
+.ptour__hall.is-phone .ptour__banner {
+  --h: 180px;
+  flex-basis: 70px;
+  scroll-snap-align: start;
+}
+.ptour__hall.is-phone .ptour__banner.is-legend {
+  --h: 202px;
+}
+.ptour__hall.is-phone .ptour__bannercloth {
+  gap: 5px;
+  padding-top: 12px;
+}
+.ptour__hall.is-phone .ptour__bannercloth::before {
+  inset: 5px 5px auto;
+  height: calc(100% - 24px);
+}
+.ptour__hall.is-phone .ptour__bannerav {
+  width: 38px;
+  height: 38px;
+}
+.ptour__hall.is-phone .ptour__bannercloth b {
+  max-width: 62px;
+  font-size: 9px;
+}
+.ptour__hall.is-phone .ptour__bannercloth small {
+  font-size: 8px;
+}
+.ptour__hall.is-phone .ptour__bannerstars {
+  font-size: 9px;
+}
+.ptour__hall.is-phone .ptour__bannertassel {
+  top: calc(var(--h) - 12px);
+  height: 20px;
+}
+.ptour__hall.is-phone .ptour__banner.is-sel .ptour__bannercloth {
+  transform: translateY(5px);
+}
+/* The week: its date in a line, its four as a two-by-two of small rows. */
+.ptour__hall.is-phone .ptour__hallweek {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  padding: 12px;
+}
+.ptour__hall.is-phone .ptour__hallwk {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+  grid-column: 1 / -1;
+}
+.ptour__hall.is-phone .ptour__hallwk b {
+  margin-top: 0;
+  font-size: 18px;
+}
+.ptour__hall.is-phone .ptour__hallwk small {
+  font-size: 11.5px;
+}
+.ptour__hall.is-phone .ptour__hallreign {
+  margin-top: 0;
+}
+.ptour__hall.is-phone .ptour__hallpl {
+  grid-template-columns: 20px 36px minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  align-items: center;
+  justify-items: start;
+  column-gap: 8px;
+  row-gap: 0;
+  padding: 9px 10px;
+  border-radius: 12px;
+  text-align: left;
+}
+.ptour__hall.is-phone .ptour__halltro {
+  grid-row: 1 / 3;
+  width: 20px;
+}
+.ptour__hall.is-phone .ptour__hallav {
+  grid-row: 1 / 3;
+  width: 36px;
+  height: 36px;
+}
+.ptour__hall.is-phone .ptour__hallpl b {
+  grid-column: 3;
+  align-self: end;
+  font-size: 12.5px;
+}
+.ptour__hall.is-phone .ptour__hallpl small {
+  grid-column: 3;
+  align-self: start;
+  max-width: 100%;
+  overflow: hidden;
+  font-size: 8px;
+  letter-spacing: 0.06em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ptour__hall.is-phone .ptour__hallfoot {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 10px;
+}
+.ptour__hall.is-phone .ptour__halllg {
+  grid-template-columns: 22px 30px minmax(0, 1fr) auto;
+  gap: 9px;
+  font-size: 12.5px;
 }
