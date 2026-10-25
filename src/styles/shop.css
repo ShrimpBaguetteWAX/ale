@@ -1511,3 +1511,96 @@
   line-height: 1.45;
   color: var(--text-faint);
 }
+
+/* A tool's power, as the Rewards page shows it, and what it would add. */
+.amk__power {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+.amk__power > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-display);
+  font-size: 12.5px;
+  font-weight: 800;
+  color: var(--white);
+}
+.amk__power img {
+  width: 16px;
+  height: 16px;
+}
+.amk__gain {
+  font-family: var(--font-display);
+  font-size: 11.5px;
+  font-weight: 800;
+  color: #6ff0cf;
+}
+.amk__gain small {
+  font-family: var(--font-body);
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--text-faint);
+}
+.amk__gain.is-none {
+  font-family: var(--font-body);
+  font-weight: 600;
+  color: var(--text-faint);
+}
+.amk__bag {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--sp-5);
+  align-items: start;
+}
+.amk__baglist {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.amk__baglist li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  background: rgb(255 255 255 / 4%);
+}
+/* The one this tool would take the place of. */
+.amk__baglist li.is-out {
+  box-shadow: inset 0 0 0 1px rgb(255 178 62 / 55%);
+}
+.amk__baglist li.is-out > span:first-child::after {
+  content: ' · would be swapped out';
+  color: #ffb23e;
+  font-size: 11.5px;
+}
+.amk__baglist li.is-empty {
+  color: var(--text-faint);
+  box-shadow: inset 0 0 0 1px dashed rgb(255 255 255 / 15%);
+  border: 1px dashed rgb(255 255 255 / 18%);
+  background: none;
+}
+.amk__with {
+  display: grid;
+  gap: 8px;
+  padding-top: 22px;
+}
+.amk__with > span {
+  display: grid;
+  gap: 4px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  font-size: 11.5px;
+  color: var(--text-faint);
+  background: rgb(255 255 255 / 4%);
+}
+.amk__with > span:last-child {
+  background: rgb(14 212 168 / 7%);
+  box-shadow: inset 0 0 0 1px rgb(14 212 168 / 30%);
+}

@@ -7,6 +7,7 @@ import { buyMarketSale } from '@/wharf/actions'
 import { asset, ipfsImage } from '@/assets'
 import { formatNumber } from '@/format'
 import {
+  fetchAssetTemplates,
   fetchMarketCards,
   fetchOwnedTemplates,
   forgetMarketCards,
@@ -28,11 +29,12 @@ import {
   saleStatus,
   sortCards,
   sortLabel,
+  toolGain,
+  type BagTool,
   type MarketSort,
 } from '@/shop/market'
+import { MINING_POWER } from '@/account/rules'
 
-const TLM = asset('/assets/icons/tlm.svg')
-const SHARDS = asset('/assets/icons/shards.svg')
 const SORTS: MarketSort[] = ['cheapest', 'dearest', 'power']
 
 /* A balance, rounded down to the hundredth: never more than is there. */
@@ -41,17 +43,30 @@ function balanceLabel(wax: number): string {
   return down.toLocaleString('en-US', { maximumFractionDigits: 2 }) + ' WAX'
 }
 
+/* Whole cents as a figure: 5 → "0.05", 67000 → "670", 669309 → "6,693.09". */
+function centsLabel(cents: number): string {
+  return (cents / 100).toLocaleString('en-US', { maximumFractionDigits: 2 }) + ' WAX'
+}
+
 /**
- * "0.0480", "670", "6,693.08": a WAX figure as a row shows it.
+ * A sale's price as every button and line shows it: two decimals at most,
+ * rounded **up**. "0.04790691 WAX" is "0.05 WAX", and even 0.000001 WAX is
+ * "0.01 WAX" — what is shown is never under what is charged.
  *
- * Rounded up, never to the nearest: 0.04790691 shown as 0.0479 would put a
- * price on the button a hair under what is charged. The confirmation shows
- * the exact figure.
+ * Worked in whole units of the token from the asset string, not in floating
+ * point, so no rounding error can ever take a price down a cent.
  */
+export function priceLabel(price: string): string {
+  const [amount] = price.split(' ')
+  const [whole, frac = ''] = amount.split('.')
+  const units = BigInt(whole + frac.padEnd(8, '0').slice(0, 8))
+  const perCent = BigInt(1_000_000)
+  return centsLabel(Number((units + perCent - BigInt(1)) / perCent))
+}
+
+/** A worked-out WAX figure, the same way: two decimals, rounded up. */
 export function waxLabel(wax: number): string {
-  const places = wax < 10 ? 4 : 2
-  const up = Math.ceil(wax * 10 ** places - 1e-6) / 10 ** places
-  return up.toLocaleString('en-US', { maximumFractionDigits: places }) + ' WAX'
+  return centsLabel(Math.ceil(wax * 100 - 1e-9))
 }
 
 /**
@@ -83,7 +98,16 @@ export function MarketTab({ wax }: { wax: number }) {
     setOpen(null)
   }, [schema])
 
-  const market = useChainQuery(`awmarket:${schema}`, () => fetchMarketCards(schema))
+  /*
+     Tagged with the kind it was read for: the query holds the last kind's
+     list until the new one lands, and showing it under the new chip looked
+     like the switch had done nothing.
+  */
+  const market = useChainQuery(`awmarket:${schema}`, async () => ({
+    schema,
+    cards: await fetchMarketCards(schema),
+  }))
+  const current = market.data?.schema === schema ? market.data : undefined
   /* What each card does here: three tables of the game's own, read once. */
   const game = useChainQuery('awmarket:game', async () => {
     const [tools, values, weights] = await Promise.all([
@@ -96,8 +120,21 @@ export function MarketTab({ wax }: { wax: number }) {
   const owned = useChainQuery(player.wallet && `awmarket:owned:${player.wallet}`, () =>
     fetchOwnedTemplates(player.wallet),
   )
+  /* The tools the player mines with now, for what a tool here would add. */
+  const equipped = (player.mine_nfts ?? []).map(String)
+  const equippedTemplates = useChainQuery(`awmarket:bag:${equipped.join(',')}`, () =>
+    fetchAssetTemplates(equipped),
+  )
+  const bag: BagTool[] | undefined =
+    game.data && equippedTemplates.data
+      ? equipped.flatMap((id) => {
+          const templateId = equippedTemplates.data!.get(id)
+          const t = templateId !== undefined ? game.data!.tools.get(templateId) : undefined
+          return t ? [{ templateId: t.template_id, name: t.toolname, tlm: t.tlm_mp, shrd: t.shrd_mp }] : []
+        })
+      : undefined
 
-  const cards = market.data ?? []
+  const cards = current?.cards ?? []
   const rarities = useMemo(() => {
     const counts = new Map<string, number>()
     for (const c of cards) counts.set(c.rarity, (counts.get(c.rarity) ?? 0) + 1)
@@ -216,7 +253,7 @@ export function MarketTab({ wax }: { wax: number }) {
 
       {market.error && <div className="alert alert--error">{market.error}</div>}
 
-      {market.loading && !market.data ? (
+      {!current ? (
         <div className="amk__rows">
           {Array.from({ length: 6 }, (_, i) => (
             <div className="skeleton amk__row amk__row--loading" key={i} />
@@ -260,7 +297,7 @@ export function MarketTab({ wax }: { wax: number }) {
                       </span>
                     )}
                   </div>
-                  <Benefits card={card} game={game.data} />
+                  <Benefits card={card} game={game.data} bag={bag} />
                 </div>
                 <svg className="amk__chev" viewBox="0 0 24 24" aria-hidden="true">
                   <path d="M6 9l6 6 6-6" />
@@ -274,9 +311,11 @@ export function MarketTab({ wax }: { wax: number }) {
                   onClick={() => setBuying(card)}
                 >
                   {busy === key && <span className="spinner" />}
-                  {busy === key ? 'Buying' : waxLabel(card.wax)}
+                  {busy === key ? 'Buying' : priceLabel(card.price)}
                 </button>
-                {open === card.templateId && game.data && <Details card={card} game={game.data} />}
+                {open === card.templateId && game.data && (
+                  <Details card={card} game={game.data} bag={bag} />
+                )}
               </article>
             )
           })}
@@ -301,7 +340,7 @@ export function MarketTab({ wax }: { wax: number }) {
 }
 
 type Game = {
-  tools: Map<number, { tlm_mp: number; shrd_mp: number; ease: number; luck: number }>
+  tools: Map<number, { template_id: number; toolname: string; tlm_mp: number; shrd_mp: number }>
   values: Awaited<ReturnType<typeof fetchNftValues>>
   weights: Awaited<ReturnType<typeof fetchStakeWeights>>
 }
@@ -311,32 +350,63 @@ type Game = {
  * game's own fighter panel — its stats, six resistances and every ability
  * written out — and a tool's mining numbers.
  */
-function Details({ card, game }: { card: MarketCard; game: Game }) {
+function Details({ card, game, bag }: { card: MarketCard; game: Game; bag?: BagTool[] }) {
   if (card.schema === 'tool.worlds') {
     const t = game.tools.get(card.templateId)
+    if (!t) {
+      return (
+        <div className="amk__more">
+          <p className="amk__none">This tool has no mining power in Alien Legends.</p>
+        </div>
+      )
+    }
+    const sum = (b: BagTool[]) => ({
+      tlm: b.reduce((n, x) => n + x.tlm, 0),
+      shrd: b.reduce((n, x) => n + x.shrd, 0),
+    })
+    const gain = bag ? toolGain({ tlm: t.tlm_mp, shrd: t.shrd_mp }, bag) : undefined
+    const now = bag ? sum(bag) : undefined
     return (
       <div className="amk__more">
-        {t ? (
-          <div className="amk__facts">
-            <span>
-              TLM power<b>{formatNumber(t.tlm_mp)}</b>
-            </span>
-            <span>
-              Shard power<b>{formatNumber(t.shrd_mp)}</b>
-            </span>
-            <span>
-              Ease<b>{formatNumber(t.ease)}</b>
-            </span>
-            <span>
-              Luck<b>{formatNumber(t.luck)}</b>
-            </span>
+        {bag && gain && now ? (
+          <div className="amk__bag">
+            <div>
+              <h4 className="amk__morecap">Your tools now</h4>
+              <ul className="amk__baglist">
+                {bag.map((b, i) => (
+                  <li
+                    key={i}
+                    className={gain.kind === 'replace' && gain.replaces === b ? 'is-out' : undefined}
+                  >
+                    <span>{b.name}</span>
+                    <Power tlm={b.tlm} shrd={b.shrd} />
+                  </li>
+                ))}
+                {Array.from({ length: Math.max(0, 3 - bag.length) }, (_, i) => (
+                  <li key={`empty-${i}`} className="is-empty">
+                    <span>Empty slot</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div className="amk__with">
+              <span>
+                Equipped now
+                <Power tlm={now.tlm} shrd={now.shrd} />
+              </span>
+              <span>
+                {gain.kind === 'empty' ? 'With this in your empty slot' : `With this instead of your ${gain.replaces.name}`}
+                <Power tlm={now.tlm + gain.tlm} shrd={now.shrd + gain.shrd} />
+                <Gain gain={gain} />
+              </span>
+            </div>
           </div>
         ) : (
-          <p className="amk__none">This tool has no mining power in Alien Legends.</p>
+          <p className="faint">Reading your equipped tools…</p>
         )}
         <p className="amk__note">
-          Equip up to three tools under Rewards. Their TLM and shard power set the Reward Power
-          every dungeon and arena win banks; ease leans a tool towards TLM, luck towards shards.
+          Equip up to three tools under Rewards. Their TLM and shard power set the Reward Power every
+          dungeon and arena win banks.
         </p>
       </div>
     )
@@ -374,8 +444,39 @@ function Details({ card, game }: { card: MarketCard; game: Game }) {
   )
 }
 
+/** A tool's mining power, the way the Rewards page shows it. */
+function Power({ tlm, shrd }: { tlm: number; shrd: number }) {
+  const [t, sh] = MINING_POWER
+  return (
+    <span className="amk__power">
+      <span title={t.hint}>
+        <img src={t.icon} alt={t.label} />
+        {formatNumber(tlm)}
+      </span>
+      <span title={sh.hint}>
+        <img src={sh.icon} alt={sh.label} />
+        {formatNumber(shrd)}
+      </span>
+    </span>
+  )
+}
+
+/** What a tool would add: to an empty slot, or over the weakest tool. */
+function Gain({ gain }: { gain: ReturnType<typeof toolGain> }) {
+  const signed = (n: number) => (n > 0 ? '+' : n < 0 ? '−' : '±') + formatNumber(Math.abs(n))
+  if (gain.tlm <= 0 && gain.shrd <= 0) {
+    return <span className="amk__gain is-none">No gain over your {gain.kind === 'replace' ? gain.replaces.name : 'tools'}</span>
+  }
+  return (
+    <span className="amk__gain">
+      {signed(gain.tlm)} TLM · {signed(gain.shrd)} shard
+      <small>{gain.kind === 'empty' ? ' in your empty slot' : ` over your ${gain.replaces.name}`}</small>
+    </span>
+  )
+}
+
 /** What the card does here, in one line. */
-function Benefits({ card, game }: { card: MarketCard; game: Game | undefined }) {
+function Benefits({ card, game, bag }: { card: MarketCard; game: Game | undefined; bag?: BagTool[] }) {
   if (!game) return <div className="amk__ben faint">Reading what it does…</div>
   const farm = weightOf(card, game.weights)
   const farming = farm ? (
@@ -386,23 +487,11 @@ function Benefits({ card, game }: { card: MarketCard; game: Game | undefined }) 
 
   if (card.schema === 'tool.worlds') {
     const t = game.tools.get(card.templateId)
+    if (!t) return <div className="amk__ben amk__none">No mining power in Alien Legends</div>
     return (
       <div className="amk__ben">
-        {t ? (
-          <>
-            <span>
-              <img src={TLM} alt="" />
-              <b>{formatNumber(t.tlm_mp)}</b> TLM power
-            </span>
-            <span>
-              <img src={SHARDS} alt="" />
-              <b>{formatNumber(t.shrd_mp)}</b> shard power
-            </span>
-          </>
-        ) : (
-          <span className="amk__none">No mining power in Alien Legends</span>
-        )}
-        {farming}
+        <Power tlm={t.tlm_mp} shrd={t.shrd_mp} />
+        {bag && <Gain gain={toolGain({ tlm: t.tlm_mp, shrd: t.shrd_mp }, bag)} />}
       </div>
     )
   }
@@ -462,8 +551,8 @@ function ConfirmBuy({
         <div className="confirm__deal">
           <div className="confirm__side">
             <span className="confirm__label">You pay</span>
-            <span className="confirm__value confirm__value--cost mono">{card.price}</span>
-            <span className="faint confirm__sub">exactly — no fee on top</span>
+            <span className="confirm__value confirm__value--cost mono">{priceLabel(card.price)}</span>
+            <span className="faint confirm__sub">at most — no fee on top</span>
           </div>
           <span className="confirm__arrow" aria-hidden="true">
             →
@@ -520,7 +609,7 @@ function ConfirmBuy({
               disabled={status !== 'ok'}
               onClick={onConfirm}
             >
-              Buy for {waxLabel(card.wax)}
+              Buy for {priceLabel(card.price)}
             </button>
           )}
         </div>
@@ -576,7 +665,7 @@ export function MarketGuide({ wax }: { wax: number }) {
         ))}
       </section>
       <p className="amk__safe">
-        <b>You pay exactly the price shown.</b> Each card is its cheapest sale on AtomicMarket. The
+        <b>You never pay more than the price shown.</b> Each card is its cheapest sale on AtomicMarket. The
         purchase checks the sale on chain first; if its price or card changed, or someone bought it,
         nothing leaves your wallet.
       </p>

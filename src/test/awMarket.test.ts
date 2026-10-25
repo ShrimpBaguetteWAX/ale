@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import { marketCardsFrom, waxAsset } from '@/chain/atomic'
 import { saleStatus } from '@/shop/market'
-import { waxLabel } from '@/shop/MarketTab'
+import { priceLabel, waxLabel } from '@/shop/MarketTab'
 import { buyMarketSale } from '@/wharf/actions'
 import type { Session } from '@/wharf/session'
 
@@ -35,10 +35,15 @@ describe('the market price', () => {
     expect(waxAsset('7', 8)).toBe('0.00000007 WAX')
   })
 
-  it('rounds a shown price up, never down', () => {
-    expect(waxLabel(0.04790691)).toBe('0.048 WAX')
-    expect(waxLabel(670)).toBe('670 WAX')
-    expect(waxLabel(6693.081)).toBe('6,693.09 WAX')
+  it('shows two decimals at most, always rounded up', () => {
+    expect(priceLabel('0.04790691 WAX')).toBe('0.05 WAX')
+    expect(priceLabel('0.00000100 WAX')).toBe('0.01 WAX')
+    expect(priceLabel('0.00000001 WAX')).toBe('0.01 WAX')
+    expect(priceLabel('0.05000000 WAX')).toBe('0.05 WAX')
+    expect(priceLabel('670.00000000 WAX')).toBe('670 WAX')
+    expect(priceLabel('6693.08100000 WAX')).toBe('6,693.09 WAX')
+    expect(waxLabel(0.07)).toBe('0.07 WAX')
+    expect(waxLabel(0.0700001)).toBe('0.08 WAX')
   })
 })
 

@@ -88,3 +88,35 @@ export function saleStatus(
     String(record.asset_ids[0]) === card.assetId
   return same ? 'ok' : 'changed'
 }
+
+/* ---------- a tool against the player's own three ---------- */
+
+/** One equipped tool, with the power the game gives its template. */
+export interface BagTool {
+  templateId: number
+  name: string
+  tlm: number
+  shrd: number
+}
+
+/** The game's limit on equipped mining tools. */
+export const TOOL_SLOTS = 3
+
+export type ToolGain =
+  | { kind: 'empty'; tlm: number; shrd: number }
+  | { kind: 'replace'; tlm: number; shrd: number; replaces: BagTool }
+
+/**
+ * What a tool would add to the player's mining power.
+ *
+ * With a slot free, all of it. With all three slots full, what it adds over
+ * the weakest tool there — weakest by TLM and shard power together, the way
+ * the Rewards page ranks a bag — which can be nothing, or less than nothing.
+ */
+export function toolGain(tool: { tlm: number; shrd: number }, bag: BagTool[]): ToolGain {
+  if (bag.length < TOOL_SLOTS) return { kind: 'empty', tlm: tool.tlm, shrd: tool.shrd }
+  const weakest = bag.reduce((a, b) =>
+    b.tlm + b.shrd < a.tlm + a.shrd || (b.tlm + b.shrd === a.tlm + a.shrd && b.tlm < a.tlm) ? b : a,
+  )
+  return { kind: 'replace', tlm: tool.tlm - weakest.tlm, shrd: tool.shrd - weakest.shrd, replaces: weakest }
+}
