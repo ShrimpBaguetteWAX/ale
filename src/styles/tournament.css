@@ -9517,3 +9517,41 @@ button.ptour__rfplay {
     animation: none;
   }
 }
+/*
+   The hall sizes itself by its own width, not the window's: the page beside
+   the menu can be narrow on a wide screen. Narrower, the Legends go under the
+   week; narrower still, the week's date goes above its four.
+*/
+.ptour__hall {
+  container: hall / inline-size;
+}
+@container hall (max-width: 1080px) {
+  .ptour__hallfoot {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@container hall (max-width: 700px) {
+  .ptour__hallweek {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  .ptour__hallwk {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 4px 12px;
+    grid-column: 1 / -1;
+  }
+  .ptour__hallwk b {
+    margin-top: 0;
+  }
+  .ptour__hallreign {
+    margin-top: 0;
+  }
+}
+/* One column the hall's own width: the rail scrolls, it never widens the page. */
+.ptour__hall {
+  grid-template-columns: minmax(0, 1fr);
+}
+.ptour__hallwall {
+  min-width: 0;
+}
