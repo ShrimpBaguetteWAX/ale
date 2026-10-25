@@ -53,25 +53,25 @@ describe('the boot gate', () => {
     renderGate()
 
     expect(screen.queryByText('wallet picker')).toBeNull()
-    expect(document.querySelector('.spinner')).not.toBeNull()
+    expect(document.querySelector('.pageload')).not.toBeNull()
   })
 
   it('sends a genuine visitor to the picker once boot has decided', () => {
     /* The other half: waiting must not become hiding. Nobody who really has
-       no wallet should be left looking at a spinner. */
+       no wallet should be left looking at a loading bar. */
     useGame.setState({ sessionChecked: true } as never)
     renderGate()
 
     expect(screen.getByText('wallet picker')).toBeInTheDocument()
   })
 
-  it('keeps the same spinner up while the player row is still coming', () => {
+  it('keeps the same loading bar up while the player row is still coming', () => {
     /* One continuous loading state, not a second labelled one: the account is
        known, the row is not here yet, and nothing has moved on screen. */
     useGame.setState({ sessionChecked: true, account: 'smoke.wam' } as never)
     renderGate()
 
-    expect(document.querySelector('.spinner')).not.toBeNull()
+    expect(document.querySelector('.pageload')).not.toBeNull()
     expect(screen.queryByText('wallet picker')).toBeNull()
   })
 
@@ -99,7 +99,7 @@ describe('the boot gate', () => {
     expect(screen.getByText('signup')).toBeInTheDocument()
   })
 
-  it('does not hold the spinner up when there is no node to talk to', () => {
+  it('does not hold the loading bar up when there is no node to talk to', () => {
     /*
        Offline still has to reach a screen that can say so. Waiting on a
        session that can never be restored would trade a flash for a hang,
