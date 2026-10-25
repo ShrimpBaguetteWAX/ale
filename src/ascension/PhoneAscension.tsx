@@ -17,6 +17,9 @@ import {
 } from '@/ascension/rules'
 import { fighterArt, fighterArtFallback } from '@/tavern/fighterStats'
 import { BottomSheet } from '@/components/BottomSheet'
+import { FighterRow, ListingBody } from '@/market/FighterRows'
+import { DetailSheet, rosterPanel } from '@/fight/setup'
+import { useConfig } from '@/state/useConfig'
 import { GameImg } from '@/components/GameImg'
 import { formatNumber } from '@/format'
 import { asset } from '@/assets'
@@ -26,7 +29,6 @@ type Busy = 'ascend' | 'reroll' | 'claim' | null
 const CREDITS = asset('/assets/icons/credits.png')
 const cap = (s: string) => (s ? s[0].toUpperCase() + s.slice(1) : s)
 const levelOf = (f: RosterFighter) => Number(f.stats?.level ?? 0)
-const elementIcon = (el: string) => asset(`/assets/icons/elements/${el}.png`)
 
 /* Where each requirement sits on the altar, and how it reads for this fighter. */
 const SOCKETS: { key: Requirement; pos: 'top' | 'left' | 'right' }[] = [
@@ -283,47 +285,75 @@ export function PhoneAscension({
 
 /* ---------- choosing ---------- */
 
-function FighterRow({
-  fighter,
+/**
+ * A fighter to choose, as the market draws it: portrait with level, the
+ * Sacrifice skull and the player's own marker, then the graded stats and a
+ * tag an ability. Nineteen Tacticians at the cap were nineteen identical
+ * lines of "Tactician · Human · Nature · L10"; this is how they are told
+ * apart.
+ *
+ * Tapping opens it in place on the full readouts, Details for everything,
+ * and Choose — so looking is never the same tap as choosing.
+ */
+function PickRow({
+  fighter: f,
   on,
+  open,
   note,
   dim,
-  onClick,
+  onToggle,
+  onDetails,
+  onChoose,
 }: {
   fighter: RosterFighter
   on: boolean
+  open: boolean
   note?: string
   dim?: boolean
-  onClick: () => void
+  onToggle: () => void
+  onDetails: () => void
+  onChoose: () => void
 }) {
+  const { classes, fighters } = useConfig()
+  const template = classes.get(f.classname)
   return (
-    <button
-      type="button"
-      className={`pasc__row${on ? ' is-on' : ''}${dim ? ' is-dim' : ''}`}
-      onClick={onClick}
+    <FighterRow
+      stats={f.stats}
+      ascension={f.ascension_level}
+      template={template}
+      marker={f.marker}
+      id={f.fighter_id}
+      dim={dim}
+      open={open}
+      onToggle={onToggle}
+      below={note ? <span className="mrow__line">{note}</span> : undefined}
+      right={<span className={`pasc__radio${on ? ' is-on' : ''}`} aria-hidden="true" />}
     >
-      <GameImg
-        className="pasc__port"
-        src={fighterArt(fighter)}
-        fallback={fighterArtFallback()}
-        alt=""
-        loading="lazy"
-      />
-      <span className="pasc__rowtext">
-        <b>
-          {cap(fighter.classname)} #{fighter.fighter_id}
-        </b>
-        <small>
-          {cap(fighter.racename)} ·{' '}
-          <img src={elementIcon(fighter.element)} alt="" />
-          {cap(fighter.element)} · L{levelOf(fighter)}
-        </small>
-        {note && <em>{note}</em>}
-      </span>
-      <span className={`pasc__radio${on ? ' is-on' : ''}`} aria-hidden="true" />
-    </button>
+      <ListingBody stats={f.stats} template={template} readout="stats" unlockLevel={fighters?.asc_ability_unlock_lvl} />
+      <div className="mrow__acts">
+        <button type="button" className="btn btn--ghost btn--sm" onClick={onDetails}>
+          Details
+        </button>
+        <button type="button" className="btn btn--primary btn--sm" onClick={onChoose}>
+          {on ? 'Chosen' : `Choose #${f.fighter_id}`}
+        </button>
+      </div>
+    </FighterRow>
   )
 }
+
+/** The whole fighter, over the sheet, from a row's Details. */
+function PickDetails({ fighter, onClose }: { fighter: RosterFighter; onClose: () => void }) {
+  const { classes, levelMod, ageDecay } = useConfig()
+  return (
+    <DetailSheet
+      panel={rosterPanel(fighter, levelMod, ageDecay)}
+      template={classes.get(fighter.classname)}
+      onClose={onClose}
+    />
+  )
+}
+
 
 function TargetSheet({
   ready,
@@ -343,6 +373,8 @@ function TargetSheet({
     return [...counts.entries()].sort((a, b) => b[1] - a[1])
   }, [ready])
   const shown = cls ? ready.filter((f) => f.classname === cls) : ready
+  const [open, setOpen] = useState<number | null>(null)
+  const [details, setDetails] = useState<RosterFighter | null>(null)
 
   return (
     <BottomSheet title="Fighter to ascend" onClose={onClose}>
@@ -362,18 +394,22 @@ function TargetSheet({
               </button>
             ))}
           </div>
-          <div className="pasc__list">
+          <div className="mrows">
             {shown.map((f) => (
-              <FighterRow
+              <PickRow
                 key={f.fighter_id}
                 fighter={f}
                 on={f.fighter_id === picked}
-                onClick={() => onPick(f.fighter_id)}
+                open={f.fighter_id === open}
+                onToggle={() => setOpen((o) => (o === f.fighter_id ? null : f.fighter_id))}
+                onDetails={() => setDetails(f)}
+                onChoose={() => onPick(f.fighter_id)}
               />
             ))}
           </div>
         </>
       )}
+      {details && <PickDetails fighter={details} onClose={() => setDetails(null)} />}
     </BottomSheet>
   )
 }
@@ -399,6 +435,8 @@ function SocketSheet({
     () => [...candidates].sort((a, b) => levelOf(a) - levelOf(b) || a.fighter_id - b.fighter_id),
     [candidates],
   )
+  const [open, setOpen] = useState<number | null>(null)
+  const [details, setDetails] = useState<RosterFighter | null>(null)
   const title =
     requirement === 'ability' ? 'Sacrifice ability' : `${cap(need.sub)} · ${need.name}`
   const what =
@@ -417,7 +455,7 @@ function SocketSheet({
           is not busy or mid-ascension.
         </p>
       ) : (
-        <div className="pasc__list">
+        <div className="mrows">
           {rows.map((f) => {
             const met = requirementsMet(f, target)
             const elsewhere = REQUIREMENTS.find(
@@ -425,10 +463,13 @@ function SocketSheet({
             )
             const also = REQUIREMENTS.filter((r) => r.key !== requirement && met.has(r.key))
             return (
-              <FighterRow
+              <PickRow
                 key={f.fighter_id}
                 fighter={f}
                 on={slots[requirement] === f.fighter_id}
+                open={f.fighter_id === open}
+                onToggle={() => setOpen((o) => (o === f.fighter_id ? null : f.fighter_id))}
+                onDetails={() => setDetails(f)}
                 dim={!!elsewhere}
                 note={
                   elsewhere
@@ -437,12 +478,13 @@ function SocketSheet({
                       ? `Also fits ${also.map((r) => r.label.toLowerCase()).join(' and ')}`
                       : undefined
                 }
-                onClick={() => onPick(f.fighter_id)}
+                onChoose={() => onPick(f.fighter_id)}
               />
             )
           })}
         </div>
       )}
+      {details && <PickDetails fighter={details} onClose={() => setDetails(null)} />}
     </BottomSheet>
   )
 }

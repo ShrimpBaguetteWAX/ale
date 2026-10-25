@@ -1505,6 +1505,44 @@
   background: rgb(20 4 8 / 85%);
   box-shadow: inset 0 0 0 1px rgb(255 90 106 / 70%);
 }
+/* The player's own marker, in the corner opposite the skull. */
+.mrow__marker {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  background: rgb(4 8 16 / 85%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 30%);
+}
+.mrow__marker img {
+  width: 14px;
+  height: 14px;
+}
+.mfighter__art .mrow__marker {
+  top: 5px;
+  left: 5px;
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+}
+.mfighter__art .mrow__marker img {
+  width: 19px;
+  height: 19px;
+}
+.mrow.is-dim {
+  opacity: 0.55;
+}
+.mrow__id {
+  margin-left: 5px;
+  font-family: var(--font-body);
+  font-size: 10.5px;
+  font-weight: var(--fw-bold);
+  color: var(--text-faint);
+}
 .mrow__who {
   min-width: 0;
 }
