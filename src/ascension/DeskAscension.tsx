@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import type { RosterFighter } from '@/dungeon/types'
 import {
   REQUIREMENTS,
@@ -12,6 +12,9 @@ import { markerIcon } from '@/dungeon/filters'
 import { fighterArt, fighterArtFallback } from '@/tavern/fighterStats'
 import { FighterRow } from '@/market/FighterRows'
 import { GameImg } from '@/components/GameImg'
+import { HoverPopover, useHoverCard } from '@/components/HoverPopover'
+import { FighterHoverCard } from '@/components/FighterPanel'
+import { rosterPanel } from '@/fight/setup'
 import { useConfig } from '@/state/useConfig'
 import { formatNumber } from '@/format'
 import { asset } from '@/assets'
@@ -22,7 +25,6 @@ type List = 'target' | Requirement
 const CREDITS = asset('/assets/icons/credits.png')
 const cap = (s: string) => (s ? s[0].toUpperCase() + s.slice(1) : s)
 const levelOf = (f: RosterFighter) => Number(f.stats?.level ?? 0)
-const an = (word: string) => (/^[aeiou]/i.test(word) ? 'an' : 'a')
 
 /* Where each requirement sits on the altar, as on the phone. */
 const SOCKETS: { key: Requirement; pos: 'top' | 'left' | 'right' }[] = [
@@ -261,23 +263,24 @@ export function DeskAscension({
               if (list === 'target') {
                 const n = covered.get(f.fighter_id) ?? 0
                 return (
-                  <FighterRow
-                    key={f.fighter_id}
-                    stats={f.stats}
-                    ascension={f.ascension_level}
-                    template={classes.get(f.classname)}
-                    marker={f.marker}
-                    open={false}
-                    onToggle={() => {
-                      onPlace(f.fighter_id)
-                      show('race')
-                    }}
-                    right={
-                      <span className={`dasc__fit${n === 3 ? ' is-all' : ''}`} title="Sockets you have a fighter for">
-                        {n}/3
-                      </span>
-                    }
-                  />
+                  <Peek key={f.fighter_id} fighter={f}>
+                    <FighterRow
+                      stats={f.stats}
+                      ascension={f.ascension_level}
+                      template={classes.get(f.classname)}
+                      marker={f.marker}
+                      open={false}
+                      onToggle={() => {
+                        onPlace(f.fighter_id)
+                        show('race')
+                      }}
+                      right={
+                        <span className={`dasc__fit${n === 3 ? ' is-all' : ''}`} title="Sockets you have a fighter for">
+                          {n}/3
+                        </span>
+                      }
+                    />
+                  </Peek>
                 )
               }
               const key = list
@@ -287,28 +290,29 @@ export function DeskAscension({
                 : []
               const on = slots[key] === f.fighter_id
               return (
-                <FighterRow
-                  key={f.fighter_id}
-                  stats={f.stats}
-                  ascension={f.ascension_level}
-                  template={classes.get(f.classname)}
-                  marker={f.marker}
-                  dim={!!elsewhere}
-                  open={on}
-                  onToggle={() => onAssign(key, f.fighter_id)}
-                  below={
-                    elsewhere ? (
-                      <span className="mrow__line">
-                        In the {elsewhere.label.toLowerCase()} socket — choosing it moves it here
-                      </span>
-                    ) : also.length > 0 ? (
-                      <span className="mrow__line">
-                        Also fits {also.map((r) => r.label.toLowerCase()).join(' and ')}
-                      </span>
-                    ) : undefined
-                  }
-                  right={<span className={`pasc__radio${on ? ' is-on' : ''}`} aria-hidden="true" />}
-                />
+                <Peek key={f.fighter_id} fighter={f}>
+                  <FighterRow
+                    stats={f.stats}
+                    ascension={f.ascension_level}
+                    template={classes.get(f.classname)}
+                    marker={f.marker}
+                    dim={!!elsewhere}
+                    open={on}
+                    onToggle={() => onAssign(key, f.fighter_id)}
+                    below={
+                      elsewhere ? (
+                        <span className="mrow__line">
+                          In the {elsewhere.label.toLowerCase()} socket — choosing it moves it here
+                        </span>
+                      ) : also.length > 0 ? (
+                        <span className="mrow__line">
+                          Also fits {also.map((r) => r.label.toLowerCase()).join(' and ')}
+                        </span>
+                      ) : undefined
+                    }
+                    right={<span className={`pasc__radio${on ? ' is-on' : ''}`} aria-hidden="true" />}
+                  />
+                </Peek>
               )
             })}
           </div>
@@ -398,15 +402,33 @@ export function DeskAscension({
         ) : (
           <div className="pasc__needs">
             <b>To ascend this fighter, sacrifice three other {plural}:</b>
-            <span>
-              <i>1</i>one <em>{cap(target.racename)}</em> — the same race
-            </span>
-            <span>
-              <i>2</i>one <em>{cap(target.element)}</em> — the same element
-            </span>
-            <span>
-              <i>3</i>one with the <em>Sacrifice</em> ability
-            </span>
+            {/* Each need with where it stands: how many of the roster fit it,
+                or the level of the one in its socket. */}
+            {SOCKETS.map(({ key }, i) => {
+              const placed = chosen(key)
+              const fits = byRequirement[key].length
+              return (
+                <span key={key} className={placed ? 'is-placed' : fits === 0 ? 'is-none' : undefined}>
+                  <i>{placed ? '✓' : i + 1}</i>
+                  {key === 'race' ? (
+                    <>
+                      one <em>{cap(target.racename)}</em> — the same race
+                    </>
+                  ) : key === 'element' ? (
+                    <>
+                      one <em>{cap(target.element)}</em> — the same element
+                    </>
+                  ) : (
+                    <>
+                      one with the <em>Sacrifice</em> ability
+                    </>
+                  )}
+                  <small className="dasc__fitn">
+                    {placed ? `level ${levelOf(placed)}` : fits === 0 ? 'none fit' : fits === 1 ? '1 fits' : `${fits} fit`}
+                  </small>
+                </span>
+              )
+            })}
             <small>Three different fighters. All three are gone after ascending.</small>
             {filled && check && !check.ok && <small>These three do not cover all three between them.</small>}
           </div>
@@ -437,40 +459,12 @@ export function DeskAscension({
           ) : (
             <>
               <span className="dasc__cap">This ascension</span>
-              <div className="dasc__checks">
-                {SOCKETS.map(({ key }, i) => {
-                  const need = needOf(key, target)
-                  const placed = chosen(key)
-                  const fits = byRequirement[key].length
-                  const label =
-                    key === 'ability'
-                      ? `${an(target.classname)} ${cap(target.classname)} with Sacrifice`
-                      : `${an(need.name)} ${need.name} ${cap(target.classname)}`
-                  return (
-                    <span key={key} className={placed || fits > 0 ? 'is-ok' : 'is-none'}>
-                      {placed ? (
-                        <>
-                          ✓ {key === 'ability' ? 'Sacrifice ability' : cap(need.sub)} · level {levelOf(placed)}
-                        </>
-                      ) : (
-                        <>
-                          {i + 1} · {label} — {fits === 0 ? 'none fit' : fits === 1 ? '1 fits' : `${fits} fit`}
-                        </>
-                      )}
-                    </span>
-                  )
-                })}
-              </div>
               <dl className="mfacts">
                 <div>
                   <dt>Ascension</dt>
                   <dd className="mono">
                     ✦{target.ascension_level} → ✦{target.ascension_level + 1}
                   </dd>
-                </div>
-                <div>
-                  <dt>Level</dt>
-                  <dd className="mono">stays {levelOf(target)}</dd>
                 </div>
                 {unlockAt > 0 && (target.stats?.abilities ?? []).some((a) => a.locked) && (
                   <div>
@@ -486,10 +480,6 @@ export function DeskAscension({
                     {formatNumber(fee)}
                     <img className="pasc__coin" src={CREDITS} alt="credits" />
                   </dd>
-                </div>
-                <div>
-                  <dt>Your credits</dt>
-                  <dd className={`mono${short ? ' is-short' : ''}`}>{formatNumber(credits)}</dd>
                 </div>
               </dl>
 
@@ -527,6 +517,30 @@ export function DeskAscension({
         </aside>
         {extra}
       </div>
+    </div>
+  )
+}
+
+/**
+ * A row that shows its fighter in full on a resting pointer — the same card
+ * the desktop pickers open — so a fighter can be looked at before it is
+ * chosen, while a click still chooses it at once.
+ */
+function Peek({ fighter, children }: { fighter: RosterFighter; children: React.ReactNode }) {
+  const { classes, levelMod, ageDecay } = useConfig()
+  const make = useCallback(
+    () => ({ panel: rosterPanel(fighter, levelMod, ageDecay), template: classes.get(fighter.classname) }),
+    [fighter, levelMod, ageDecay, classes],
+  )
+  const { ref, shown, close, handlers } = useHoverCard(make, true)
+  return (
+    <div className="dasc__peek" ref={ref} {...handlers} onClick={close}>
+      {children}
+      {shown && (
+        <HoverPopover anchor={shown.rect}>
+          <FighterHoverCard fighter={shown.value.panel} template={shown.value.template} />
+        </HoverPopover>
+      )}
     </div>
   )
 }

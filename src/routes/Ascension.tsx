@@ -298,9 +298,10 @@ export default function Ascension() {
     figure, and showed it to exactly the player still deciding whether
     the errand is worth doing.
   */
-  const oddsPanel = (
+  const oddsPanel = (open: boolean) => (
     <OddsPanel
       odds={odds}
+      open={open}
       factor={
         pending ?? target
           ? battleFactor((pending ?? target)!, levelMod, ageDecay).total
@@ -376,7 +377,7 @@ export default function Ascension() {
           credits={credits}
           busy={busy}
           canAct={!!session}
-          extra={oddsPanel}
+          extra={oddsPanel(true)}
           onAscend={() =>
             void run(
               'ascend',
@@ -394,7 +395,7 @@ export default function Ascension() {
         />
       )}
 
-      {pending && oddsPanel}
+      {pending && oddsPanel(false)}
     </div>
   )
 }
@@ -630,10 +631,13 @@ function OfferPanel({
 function OddsPanel({
   odds,
   factor,
+  open = false,
 }: {
   odds: UpgradeOdds[]
   /** The fighter's level × age multiplier, applied to health and damage. */
   factor: number
+  /** Open from the start, where it has a box of its own to fill. */
+  open?: boolean
 }) {
   const sorted = useMemo(
     () => [...odds].sort((a, b) => b.chance - a.chance),
@@ -652,7 +656,7 @@ function OddsPanel({
        reference material. A summary that says how many there are, and
        opens.
     */
-    <details className="panel oddspanel">
+    <details className="panel oddspanel" open={open}>
       <summary className="oddspanel__summary">
         What can be rolled
         <span className="oddspanel__count faint">{sorted.length} upgrades</span>
