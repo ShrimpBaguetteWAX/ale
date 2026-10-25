@@ -562,6 +562,8 @@
   align-items: flex-end;
   justify-content: space-between;
   gap: var(--sp-3) var(--sp-5);
+  /* A clear break between the page's head and the board under it. */
+  margin-bottom: var(--sp-4);
 }
 .dbrief__who {
   display: grid;
