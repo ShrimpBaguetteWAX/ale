@@ -1399,6 +1399,12 @@
   .msell__keep .toggle {
     margin-top: 0;
   }
+  .msell__go {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    white-space: nowrap;
+  }
   .msell__hint {
     margin: 0;
     font-size: 11px;

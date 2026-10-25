@@ -2127,7 +2127,16 @@ export function SellTab({
                           title={gate.reason}
                         >
                           {busy && <span className="spinner" />}
-                          {gate.ok ? `List for ${price} · costs ${listFee}` : gate.reason}
+                          {gate.ok ? (
+                            <span className="msell__go">
+                              List for {price}
+                              <img src={asset('/assets/icons/gems.png')} alt="gems" width={13} height={13} />
+                              · costs {listFee}
+                              <img src={asset('/assets/icons/gems.png')} alt="gems" width={13} height={13} />
+                            </span>
+                          ) : (
+                            gate.reason
+                          )}
                         </button>
                       </div>
                     </FighterRow>
