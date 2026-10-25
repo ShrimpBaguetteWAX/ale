@@ -70,7 +70,7 @@ export const SHOP_CATEGORIES: { key: string; label: string }[] = [
   },
   /*
      Alien Worlds tools, crew and weapons on AtomicMarket, bought for WAX
-     through shop.ale. A desktop's for now.
+     through shop.ale.
   */
   {
     key: 'market',

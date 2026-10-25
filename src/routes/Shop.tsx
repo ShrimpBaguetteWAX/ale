@@ -76,8 +76,7 @@ export default function Shop() {
      unrecognised falls back to the first tab.
    */
   const phone = usePhone()
-  /* The NFT Market is a desktop's for now; a phone falls back to Gems. */
-  const tabs = phone ? SHOP_CATEGORIES.filter((c) => c.key !== 'market') : SHOP_CATEGORIES
+  const tabs = SHOP_CATEGORIES
   const [params, setParams] = useSearchParams()
   const category = tabs.find((c) => c.key === params.get('c'))?.key ?? tabs[0].key
   const setCategory = (key: string) =>

@@ -3,6 +3,8 @@ import { useGame } from '@/state/useGame'
 import { useChainQuery } from '@/chain/useChainQuery'
 import { useAction } from '@/wharf/useAction'
 import { useModal } from '@/components/useModal'
+import { BottomSheet } from '@/components/BottomSheet'
+import { usePhone } from '@/components/usePhone'
 import { buyMarketSale } from '@/wharf/actions'
 import { asset, ipfsImage } from '@/assets'
 import { formatNumber } from '@/format'
@@ -85,6 +87,7 @@ export function MarketTab({ wax }: { wax: number }) {
   const player = useGame((s) => s.player)!
   const session = useGame((s) => s.session)
   const { busy, error, run } = useAction()
+  const phone = usePhone()
 
   const [schema, setSchema] = useState<AwSchema>('tool.worlds')
   const [rarity, setRarity] = useState<string | null>(null)
@@ -183,6 +186,13 @@ export function MarketTab({ wax }: { wax: number }) {
   return (
     <div className="amk">
       {error && <div className="alert alert--error">{error}</div>}
+
+      {phone && (
+        <div className="waxbar">
+          <span className="waxbar__label">Your WAX</span>
+          <span className="waxbar__value mono">{balanceLabel(wax)}</span>
+        </div>
+      )}
 
       <div className="amk__bar">
         <div className="amk__schemas" role="tablist" aria-label="Kind of card">
@@ -316,6 +326,17 @@ export function MarketTab({ wax }: { wax: number }) {
                 {open === card.templateId && game.data && (
                   <Details card={card} game={game.data} bag={bag} />
                 )}
+                {open === card.templateId && phone && (
+                  <button
+                    type="button"
+                    className="btn btn--primary btn--block amk__morebuy"
+                    disabled={busy !== null || short || !session}
+                    onClick={() => setBuying(card)}
+                  >
+                    {busy === key && <span className="spinner" />}
+                    {busy === key ? 'Buying' : `Buy for ${priceLabel(card.price)}`}
+                  </button>
+                )}
               </article>
             )
           })}
@@ -324,6 +345,7 @@ export function MarketTab({ wax }: { wax: number }) {
 
       {buying && (
         <ConfirmBuy
+          phone={phone}
           card={buying}
           wax={wax}
           onCancel={() => setBuying(null)}
@@ -527,92 +549,123 @@ function Benefits({ card, game, bag }: { card: MarketCard; game: Game | undefine
  * offers the button while the sale is still exactly what the row showed.
  */
 function ConfirmBuy({
+  phone,
   card,
   wax,
   onCancel,
   onConfirm,
   onStale,
 }: {
+  phone: boolean
   card: MarketCard
   wax: number
   onCancel: () => void
   onConfirm: () => void
   onStale: () => void
 }) {
-  const panel = useModal(onCancel)
   const check = useChainQuery(`awmarket:sale:${card.saleId}`, () => fetchSaleRecord(card.saleId))
   const status = check.loading ? 'checking' : check.error ? 'error' : saleStatus(card, check.data)
+  const title = `Buy ${card.name}`
 
+  const body = (
+    <>
+      <div className="confirm__deal">
+        <div className="confirm__side">
+          <span className="confirm__label">You pay</span>
+          <span className="confirm__value confirm__value--cost mono">{priceLabel(card.price)}</span>
+          <span className="faint confirm__sub">at most — no fee on top</span>
+        </div>
+        <span className="confirm__arrow" aria-hidden="true">
+          →
+        </span>
+        <div className="confirm__side">
+          <span className="confirm__label">You receive</span>
+          <img className="amk__confirmart" src={ipfsImage(card.img)} alt="" />
+          <span className="faint confirm__sub">into your WAX wallet</span>
+        </div>
+      </div>
+
+      <div className="confirm__balance">
+        <div className="statline">
+          <span className="statline__k">Your WAX balance</span>
+          <span className="statline__v mono">{balanceLabel(wax)}</span>
+        </div>
+        <div className="statline">
+          <span className="statline__k">After this purchase</span>
+          <span className="statline__v mono">{balanceLabel(Math.max(0, wax - card.wax))}</span>
+        </div>
+      </div>
+
+      {status === 'ok' && (
+        <p className="amk__safe">
+          Checked again when you sign: if this sale's price or card changes, or it sells first, the
+          purchase is cancelled and nothing is spent.
+        </p>
+      )}
+      {status === 'checking' && <p className="hint">Checking the sale is still open…</p>}
+      {(status === 'gone' || status === 'changed') && (
+        <p className="alert alert--error">
+          {status === 'gone'
+            ? 'This sale has just closed — someone bought it, or the seller took it down.'
+            : 'This sale has changed since the list was read.'}{' '}
+          Nothing was spent.
+        </p>
+      )}
+      {status === 'error' && (
+        <p className="alert alert--error">The sale could not be checked. Try again in a moment.</p>
+      )}
+    </>
+  )
+
+  const actions = (
+    <>
+      <button type="button" className="btn btn--ghost" onClick={onCancel}>
+        Cancel
+      </button>
+      {status === 'gone' || status === 'changed' ? (
+        <button type="button" className="btn btn--primary" onClick={onStale}>
+          Show the current price
+        </button>
+      ) : (
+        <button type="button" className="btn btn--primary" disabled={status !== 'ok'} onClick={onConfirm}>
+          Buy for {priceLabel(card.price)}
+        </button>
+      )}
+    </>
+  )
+
+  /* A phone confirms in the game's bottom sheet, as the fighter market does. */
+  if (phone) {
+    return (
+      <BottomSheet title={title} onClose={onCancel} foot={<div className="rsheet__actions">{actions}</div>}>
+        <div className="amk__sheet">{body}</div>
+      </BottomSheet>
+    )
+  }
   return (
-    <div className="confirm" role="dialog" aria-modal="true" aria-label="Confirm purchase" onClick={onCancel}>
+    <DeskConfirm title={title} onCancel={onCancel}>
+      {body}
+      <div className="confirm__actions">{actions}</div>
+    </DeskConfirm>
+  )
+}
+
+/** A desktop's confirmation frame, centred over the shop. */
+function DeskConfirm({
+  title,
+  onCancel,
+  children,
+}: {
+  title: string
+  onCancel: () => void
+  children: React.ReactNode
+}) {
+  const panel = useModal(onCancel)
+  return (
+    <div className="confirm" role="dialog" aria-modal="true" aria-label={title} onClick={onCancel}>
       <div className="confirm__panel panel" ref={panel} onClick={(e) => e.stopPropagation()}>
-        <h2 className="confirm__title">Buy {card.name}</h2>
-
-        <div className="confirm__deal">
-          <div className="confirm__side">
-            <span className="confirm__label">You pay</span>
-            <span className="confirm__value confirm__value--cost mono">{priceLabel(card.price)}</span>
-            <span className="faint confirm__sub">at most — no fee on top</span>
-          </div>
-          <span className="confirm__arrow" aria-hidden="true">
-            →
-          </span>
-          <div className="confirm__side">
-            <span className="confirm__label">You receive</span>
-            <img className="amk__confirmart" src={ipfsImage(card.img)} alt="" />
-            <span className="faint confirm__sub">into your WAX wallet</span>
-          </div>
-        </div>
-
-        <div className="confirm__balance">
-          <div className="statline">
-            <span className="statline__k">Your WAX balance</span>
-            <span className="statline__v mono">{balanceLabel(wax)}</span>
-          </div>
-          <div className="statline">
-            <span className="statline__k">After this purchase</span>
-            <span className="statline__v mono">{balanceLabel(Math.max(0, wax - card.wax))}</span>
-          </div>
-        </div>
-
-        {status === 'ok' && (
-          <p className="amk__safe">
-            Checked again when you sign: if this sale's price or card changes, or it sells first,
-            the purchase is cancelled and nothing is spent.
-          </p>
-        )}
-        {status === 'checking' && <p className="hint">Checking the sale is still open…</p>}
-        {(status === 'gone' || status === 'changed') && (
-          <p className="alert alert--error">
-            {status === 'gone'
-              ? 'This sale has just closed — someone bought it, or the seller took it down.'
-              : 'This sale has changed since the list was read.'}{' '}
-            Nothing was spent.
-          </p>
-        )}
-        {status === 'error' && (
-          <p className="alert alert--error">The sale could not be checked. Try again in a moment.</p>
-        )}
-
-        <div className="confirm__actions">
-          <button type="button" className="btn btn--ghost" onClick={onCancel}>
-            Cancel
-          </button>
-          {status === 'gone' || status === 'changed' ? (
-            <button type="button" className="btn btn--primary" onClick={onStale}>
-              Show the current price
-            </button>
-          ) : (
-            <button
-              type="button"
-              className="btn btn--primary"
-              disabled={status !== 'ok'}
-              onClick={onConfirm}
-            >
-              Buy for {priceLabel(card.price)}
-            </button>
-          )}
-        </div>
+        <h2 className="confirm__title">{title}</h2>
+        {children}
       </div>
     </div>
   )
