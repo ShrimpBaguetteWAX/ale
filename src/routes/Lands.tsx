@@ -647,7 +647,8 @@ function DeskLands({
 const BOOST_BADGE: Record<Exclude<BoostState, 'ok'>, string> = {
   low: 'Running low',
   hidden: 'Off the map',
-  closed: 'Closed',
+  /* Closed is off the map too, as far as a player can tell: one word for both. */
+  closed: 'Off the map',
 }
 
 /**
@@ -1170,11 +1171,12 @@ function LandSheet({
       {head}
       {state !== 'ok' && (
         <div className={`lsheet__alert is-${state}`}>
-          <b>{state === 'low' ? 'Running low' : state === 'hidden' ? 'Off the map' : 'Closed'}</b>
+          {/* A desktop says closed and off the map the same way; a phone still tells them apart. */}
+          <b>{state === 'low' ? 'Running low' : state === 'hidden' || side ? 'Off the map' : 'Closed'}</b>
           <small>
             {state === 'low'
               ? 'Under 0.1× players stop seeing it on the map.'
-              : state === 'hidden'
+              : state === 'hidden' || side
                 ? 'Players cannot see it on the map any more. Boost it to bring it back.'
                 : 'Its boost has run out, so nobody can use it.'}
           </small>
