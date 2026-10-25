@@ -2368,8 +2368,8 @@ a.res {
   min-width: 0;
 }
 /*
-   The altar and the right column stay in view while a long list goes by.
-   The altar alone in the middle, centred in the height of the screen.
+   The altar stays in view while a long list goes by: alone in the middle,
+   centred in the height of the screen.
 */
 .dasc__middle {
   grid-area: middle;
@@ -2381,19 +2381,17 @@ a.res {
   height: calc(100dvh - var(--topbar-h, 0px) - 2 * var(--sp-4));
   min-height: 460px;
 }
-/* What it needs, what it does and costs, and what it can roll. */
+/*
+   What it needs, what it does and costs, and what it can roll. Part of the
+   page, not held: the odds make it taller than a screen, and a held column
+   that tall would keep its foot out of reach.
+*/
 .dasc__right {
   grid-area: side;
-  position: sticky;
-  top: calc(var(--topbar-h, 0px) + var(--sp-4));
   display: grid;
   gap: var(--sp-3);
   align-content: start;
   min-width: 0;
-  max-height: calc(100dvh - var(--topbar-h, 0px) - 2 * var(--sp-4));
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  scrollbar-width: thin;
 }
 .dasc__right .pasc__needs {
   margin: 0;
@@ -2613,11 +2611,9 @@ a.res {
       'list middle'
       'list side';
   }
-  .dasc__middle,
-  .dasc__right {
+  .dasc__middle {
     position: static;
     height: auto;
-    max-height: none;
   }
   .dasc__middle {
     min-height: 0;
