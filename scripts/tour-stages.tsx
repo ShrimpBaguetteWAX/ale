@@ -435,6 +435,31 @@ function at(d: Loaded, now: number, picks: Record<string, 1 | 2>, key: string) {
             avatar: r.avatar,
           }))
       : []
+  /*
+     A made-up history before it, for a made-up field: eleven earlier weeks,
+     each with a top four drawn from the same players, so the hall has a wall
+     of banners and some players with several titles.
+  */
+  if (key === 'hof' && d.stage.tournament_name.startsWith('fake') && d.field.length >= 8) {
+    const top = d.field.slice(0, 8)
+    const start = chainTime(d.plan[0]?.time_start)
+    for (let w = 1; w <= 11; w++) {
+      const pick = [0, 1, 2, 3].map((k) => top[(w * 3 + k * (w % 3 + 1)) % top.length])
+      const four = [...new Map(pick.map((s) => [s.wallet, s])).values()]
+      for (const s of top) if (four.length < 4 && !four.includes(s)) four.push(s)
+      four.forEach((s, i) =>
+        hof.push({
+          index: w * 4 + i,
+          tournament_date: new Date(start - w * WEEK).toISOString().slice(0, 19),
+          tournament_name: 'past' + w,
+          rank: Math.min(3, i + 1),
+          wallet: s.wallet,
+          gamertag: s.playertag,
+          avatar: s.avatar,
+        }),
+      )
+    }
+  }
 
   return {
     /* Before its first step the tournament does not exist yet: the wait. */
