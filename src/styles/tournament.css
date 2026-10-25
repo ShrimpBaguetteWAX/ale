@@ -9187,8 +9187,13 @@ button.ptour__rfplay {
   padding: 26px 30px 28px;
   border-radius: 18px;
   overflow: hidden;
-  background: linear-gradient(180deg, #120c08, #07050a 60%, #040306);
-  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 10%), 0 30px 60px rgb(0 0 0 / 50%);
+  /* The frosted glass of the other screens, so the page shows through. */
+  background: rgb(8 14 28 / 72%);
+  box-shadow:
+    inset 0 0 0 1px rgb(255 255 255 / 11%),
+    0 14px 30px rgb(0 0 0 / 45%);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
 .ptour__hallhead {
   display: flex;
