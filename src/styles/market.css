@@ -1146,3 +1146,228 @@
     padding: 4px 8px;
   }
 }
+
+/* ---------- the phone: rows opened in place, the market's own tab bar ---------- */
+@media (max-width: 719px) {
+  /* Room under the list for the market's bar, which sits over the game's. */
+  .market__inner {
+    padding-bottom: calc(var(--sp-4) + 58px);
+  }
+  /* No frame of its own: the filter and the rows carry theirs, and the
+     filter needs the width for its rows of controls. */
+  .market__panel {
+    display: grid;
+    gap: 10px;
+    padding: 0;
+    background: none;
+    border: 0;
+    box-shadow: none;
+  }
+  .mrows__count,
+  .mrows__head {
+    margin: 0;
+    padding: 0 2px;
+    font-size: 11.5px;
+    color: var(--text-faint);
+  }
+  .mrows__count b {
+    color: var(--white);
+  }
+  .mrows__head {
+    margin-top: 4px;
+    font-family: var(--font-display);
+    font-size: 9.5px;
+    font-weight: 800;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+  }
+  .mrows {
+    overflow: hidden;
+    border-radius: 14px;
+    background: linear-gradient(180deg, rgb(10 18 34 / 62%), rgb(4 9 20 / 72%));
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 11%);
+  }
+  .mrow + .mrow {
+    border-top: 1px solid rgb(255 255 255 / 6%);
+  }
+  .mrow--loading {
+    height: 74px;
+    border-radius: 0;
+  }
+  .mrow.is-open {
+    background: rgb(255 255 255 / 3%);
+  }
+  .mrow__hit {
+    display: grid;
+    grid-template-columns: 56px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 9px 10px;
+    border: 0;
+    text-align: left;
+    color: inherit;
+    background: none;
+    cursor: pointer;
+  }
+  .mrow__art {
+    position: relative;
+    width: 56px;
+    height: 56px;
+    overflow: hidden;
+    border-radius: 12px;
+    background-position: center;
+    background-size: cover;
+  }
+  .mrow__art img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .mrow__level,
+  .mrow__asc {
+    position: absolute;
+    padding: 1px 5px;
+    border-radius: 5px;
+    font-family: var(--font-display);
+    font-size: 9px;
+    font-weight: 800;
+  }
+  .mrow__level {
+    left: 3px;
+    bottom: 3px;
+    background: rgb(0 0 0 / 70%);
+  }
+  .mrow__asc {
+    top: 3px;
+    right: 3px;
+    font-size: 8px;
+    color: #2a1a00;
+    background: #ffd979;
+  }
+  .mrow__who {
+    min-width: 0;
+  }
+  .mrow__who b {
+    display: block;
+    overflow: hidden;
+    font-family: var(--font-display);
+    font-size: 12.5px;
+    text-overflow: ellipsis;
+    text-transform: capitalize;
+    white-space: nowrap;
+  }
+  .mrow__who small {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    min-width: 0;
+    margin-top: 2px;
+    font-size: 11.5px;
+    color: var(--text-faint);
+    text-transform: capitalize;
+    white-space: nowrap;
+  }
+  .mrow__grades {
+    display: inline-flex;
+    gap: 2px;
+  }
+  .mrow__grades img {
+    width: 12px;
+    height: 12px;
+  }
+  .mrow__note {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-transform: none;
+  }
+  .mrow__lead {
+    color: var(--teal);
+  }
+  .mrow__price {
+    display: grid;
+    justify-items: end;
+    gap: 4px;
+  }
+  .mrow__price .mono {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 13px;
+    font-weight: 800;
+  }
+  .mrow__price small {
+    font-family: var(--font-display);
+    font-size: 10px;
+    font-weight: 800;
+    white-space: nowrap;
+    color: #c5cee0;
+  }
+  .mrow__price small.is-closing {
+    color: #ff5a6a;
+  }
+  /* Opened: the card's own readouts, under the row it belongs to. */
+  .mrow__open {
+    display: grid;
+    gap: 10px;
+    padding: 0 12px 12px 76px;
+  }
+  .mrow__open .listingcard__body {
+    padding: 0;
+  }
+  .mrow__acts {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 8px;
+  }
+  /* The market's tabs, as a bar of their own over the game's. */
+  .mkbar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: calc(var(--nav-h) + env(safe-area-inset-bottom));
+    z-index: calc(var(--z-sticky) - 2);
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, auto));
+    justify-content: space-between;
+    gap: 2px;
+    padding: 6px 8px;
+    background: rgb(8 14 26 / 96%);
+    box-shadow: 0 -1px 0 rgb(255 255 255 / 10%), 0 -10px 24px rgb(0 0 0 / 35%);
+  }
+  .mkbar__tab {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    height: 38px;
+    padding: 0 9px;
+    border: 0;
+    border-radius: 10px;
+    font-family: var(--font-display);
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    color: var(--text-faint);
+    background: none;
+    cursor: pointer;
+  }
+  .mkbar__tab em {
+    padding: 1px 6px;
+    border-radius: 999px;
+    font-size: 9px;
+    font-style: normal;
+    color: var(--white);
+    background: rgb(255 255 255 / 10%);
+  }
+  .mkbar__tab.is-on {
+    color: var(--white);
+    background: rgb(124 92 255 / 25%);
+    box-shadow: inset 0 0 0 1px #6f55ff;
+  }
+  .mkbar__tab.is-on em {
+    background: #6f55ff;
+  }
+}

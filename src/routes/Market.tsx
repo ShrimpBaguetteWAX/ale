@@ -164,6 +164,13 @@ export default function Market() {
   const [filter, setFilter] = useState<RosterFilter>(EMPTY_FILTER)
   const [detail, setDetail] = useState<Detail>(null)
   const [dialog, setDialog] = useState<Dialog>(null)
+  /*
+     A phone lists a row a listing and opens one in place; a desktop keeps the
+     grid of cards. One open at a time, so the list stays a list.
+  */
+  const phone = usePhone()
+  const [openRow, setOpenRow] = useState<string | null>(null)
+  const toggleRow = (key: string) => setOpenRow((k) => (k === key ? null : key))
 
   const { busy, error, run } = useAction()
 
@@ -243,6 +250,13 @@ export default function Market() {
     () => (auctions ?? []).filter((a) => a.owner === player.wallet),
     [auctions, player.wallet],
   )
+  const myBids = useMemo(
+    () =>
+      (auctions ?? []).filter(
+        (a) => a.current_bidder === player.wallet && a.owner !== player.wallet && Number(a.bids) > 0 && !hasEnded(a, now),
+      ),
+    [auctions, player.wallet, now],
+  )
   const myOffers = useMemo(
     () => (offers ?? []).filter((o) => o.owner === player.wallet),
     [offers, player.wallet],
@@ -262,7 +276,7 @@ export default function Market() {
   const counts: Record<Tab, number> = {
     auctions: liveAuctions.length,
     offers: liveOffers.length,
-    mine: myAuctions.length + myOffers.length,
+    mine: myAuctions.length + myOffers.length + (phone ? myBids.length : 0),
     sell: sellable.length,
   }
 
@@ -308,7 +322,8 @@ export default function Market() {
 
         {error && <div className="alert alert--error">{error}</div>}
 
-        <section className="panel">
+        <section className="panel market__panel">
+          {!phone && (
           <div className="tabs" role="tablist">
             {(
               [
@@ -331,6 +346,7 @@ export default function Market() {
               </button>
             ))}
           </div>
+          )}
 
           {(tab === 'auctions' || tab === 'offers') && (
             <>
@@ -346,6 +362,11 @@ export default function Market() {
                 onChange={setFilter}
                 roster={filterRoster}
                 omit={['status', 'sort', 'markers']}
+                sheet={
+                  phone
+                    ? { sort: { value: sort, options: MARKET_SORTS, onChange: (v) => setSort(v as MarketSort) } }
+                    : undefined
+                }
               />
               {/* The roll-quality rules now come with `RosterFilters`, which
                   is where every screen that has them wanted them. */}
@@ -355,6 +376,13 @@ export default function Market() {
                 with the second floating clear of the first, which made the
                 Order control look like it belonged to nothing.
               */}
+              {phone ? (
+                <p className="mrows__count">
+                  <b>{tab === 'auctions' ? liveAuctions.length : liveOffers.length}</b> of{' '}
+                  {tab === 'auctions' ? (auctions ?? []).filter((a) => !hasEnded(a, now)).length : (offers ?? []).filter((o) => !hasEnded(o, now)).length}{' '}
+                  {tab === 'auctions' ? 'auctions' : 'offers'}
+                </p>
+              ) : (
               <div className="marketbar">
                 <span className="qfilter__lead">Show</span>
                 <ReadoutPicker value={readout} onChange={setReadout} />
@@ -373,10 +401,43 @@ export default function Market() {
                   ))}
                 </select>
               </div>
+              )}
             </>
           )}
 
-          {tab === 'auctions' && (
+          {tab === 'auctions' && phone && (
+            <PhoneRows loading={!auctions} empty="No auctions are running. List one and it will show up here.">
+              {liveAuctions.map((a) => {
+                const mine = a.owner === player.wallet
+                return (
+                  <ListingRow
+                    key={`a${a.auction_id}`}
+                    listing={a}
+                    price={a.current_bid}
+                    closing={extendsOnBid(a, config, now)}
+                    open={openRow === `a${a.auction_id}`}
+                    onToggle={() => toggleRow(`a${a.auction_id}`)}
+                    template={classes.get(a.fighter.classname)}
+                    unlockLevel={unlockLevel}
+                    now={now}
+                    onOpen={() => show(a)}
+                    action={
+                      <button
+                        type="button"
+                        className="btn btn--primary btn--sm"
+                        disabled={mine}
+                        onClick={() => setDialog({ kind: 'bid', auction: a })}
+                      >
+                        {mine ? 'Your auction' : `Bid ${minNextBid(a.current_bid, config)}`}
+                      </button>
+                    }
+                  />
+                )
+              })}
+            </PhoneRows>
+          )}
+
+          {tab === 'auctions' && !phone && (
             <ListingGrid
               loading={!auctions}
               empty="No auctions are running. List one and it will show up here."
@@ -400,7 +461,42 @@ export default function Market() {
             </ListingGrid>
           )}
 
-          {tab === 'offers' && (
+          {tab === 'offers' && phone && (
+            <PhoneRows
+              loading={!offers}
+              empty="Nothing is on sale at a fixed price. These only appear when an auction ends unsold and the seller chose to keep it listed."
+            >
+              {liveOffers.map((o) => {
+                const mine = o.owner === player.wallet
+                return (
+                  <ListingRow
+                    key={`o${o.offer_id}`}
+                    listing={o}
+                    price={o.gems}
+                    closing={false}
+                    open={openRow === `o${o.offer_id}`}
+                    onToggle={() => toggleRow(`o${o.offer_id}`)}
+                    template={classes.get(o.fighter.classname)}
+                    unlockLevel={unlockLevel}
+                    now={now}
+                    onOpen={() => show(o)}
+                    action={
+                      <button
+                        type="button"
+                        className="btn btn--primary btn--sm"
+                        disabled={mine}
+                        onClick={() => setDialog({ kind: 'buy', offer: o })}
+                      >
+                        {mine ? 'Your listing' : 'Buy'}
+                      </button>
+                    }
+                  />
+                )
+              })}
+            </PhoneRows>
+          )}
+
+          {tab === 'offers' && !phone && (
             <ListingGrid
               loading={!offers}
               empty={
@@ -458,6 +554,30 @@ export default function Market() {
             />
           )}
 
+          {tab === 'mine' && phone && myBids.length > 0 && (
+            <>
+              <p className="mrows__head">Your bids · {myBids.length}</p>
+              <div className="mrows">
+                {myBids.map((a) => (
+                  <ListingRow
+                    key={`b${a.auction_id}`}
+                    listing={a}
+                    price={a.current_bid}
+                    closing={extendsOnBid(a, config, now)}
+                    open={openRow === `b${a.auction_id}`}
+                    onToggle={() => toggleRow(`b${a.auction_id}`)}
+                    template={classes.get(a.fighter.classname)}
+                    unlockLevel={unlockLevel}
+                    now={now}
+                    note={<span className="mrow__lead">You are the top bidder</span>}
+                    onOpen={() => show(a)}
+                  />
+                ))}
+              </div>
+              <p className="mrows__head">Your listings</p>
+            </>
+          )}
+
           {tab === 'mine' && (
             <MyListings
               auctions={myAuctions}
@@ -486,6 +606,34 @@ export default function Market() {
         </section>
       </div>
 
+
+      {phone && (
+        <nav className="mkbar" role="tablist" aria-label="Market">
+          {(
+            [
+              ['auctions', 'Browse'],
+              ['offers', 'Buy now'],
+              ['mine', 'Mine'],
+              ['sell', 'Sell'],
+            ] as [Tab, string][]
+          ).map(([key, label]) => (
+            <button
+              type="button"
+              key={key}
+              role="tab"
+              aria-selected={tab === key}
+              className={`mkbar__tab${tab === key ? ' is-on' : ''}`}
+              onClick={() => {
+                setTab(key)
+                setOpenRow(null)
+              }}
+            >
+              <span>{label}</span>
+              {counts[key] > 0 && <em className="mono">{counts[key]}</em>}
+            </button>
+          ))}
+        </nav>
+      )}
 
       {dialog?.kind === 'bid' && (
         <BidDialog
@@ -546,6 +694,106 @@ export default function Market() {
 }
 
 
+/* ---------- the phone: a row a listing, opened in place ---------- */
+
+/**
+ * One listing as a phone row: portrait, who it is, price and clock.
+ *
+ * A card a listing was a screenful each on a phone, so forty listings were
+ * forty screens. The row is what is scanned; tapping it opens the same three
+ * readouts the card has, and the bid or the buy, under it in place — the
+ * list never goes away behind a dialog just to look.
+ */
+function ListingRow({
+  listing,
+  price,
+  closing,
+  open,
+  onToggle,
+  template,
+  unlockLevel,
+  now,
+  note,
+  action,
+  onOpen,
+}: {
+  listing: Auction | InstantOffer
+  price: number
+  closing: boolean
+  open: boolean
+  onToggle: () => void
+  template?: ClassTemplate
+  unlockLevel?: number
+  now: number
+  /** A line under the name in place of the grades: "You are the top bidder". */
+  note?: React.ReactNode
+  /** The bid or buy button, or nothing on a listing of your own. */
+  action?: React.ReactNode
+  onOpen: () => void
+}) {
+  const f = listing.fighter
+  const raw = f as unknown as Record<string, number>
+  /* The first three graded figures: enough to tell a strong roll at a glance. */
+  const grades = PRIMARY_STATS.map((field) => gradeOfStat(raw, field, template))
+    .filter((g): g is StatGrade => !!g)
+    .slice(0, 3)
+  return (
+    <div className={`mrow${open ? ' is-open' : ''}`}>
+      <button type="button" className="mrow__hit" onClick={onToggle} aria-expanded={open}>
+        <span className="mrow__art" style={{ backgroundImage: `url('${elementBackground(f.element)}')` }}>
+          <img
+            src={fighterAvatar({ classname: f.classname, racename: f.racename })}
+            alt=""
+            loading="lazy"
+            onError={(e) => {
+              e.currentTarget.onerror = null
+              e.currentTarget.src = fighterArtFallback()
+            }}
+          />
+          <span className="mrow__level">L{f.level}</span>
+          {listing.ascension_level > 0 && <span className="mrow__asc">Asc {listing.ascension_level}</span>}
+        </span>
+        <span className="mrow__who">
+          <b>{f.classname}</b>
+          <small>
+            <img src={asset(`/assets/icons/elements/${f.element}.png`)} alt="" width={14} height={14} />
+            {f.racename}
+            {note ? (
+              <span className="mrow__note">· {note}</span>
+            ) : (
+              grades.length > 0 && (
+                <span className="mrow__grades">
+                  {grades.map((g, i) => (
+                    <img key={i} src={GRADE_ICON[g]} alt="" title={GRADE_LABEL[g]} />
+                  ))}
+                </span>
+              )
+            )}
+          </small>
+        </span>
+        <span className="mrow__price">
+          <span className="mono">
+            {price.toLocaleString(NUM_LOCALE)}
+            <img src={asset('/assets/icons/gems.png')} alt="gems" width={14} height={14} />
+          </span>
+          <small className={closing ? 'is-closing' : ''}>{timeLeftLabel(msLeft(listing, now))}</small>
+        </span>
+      </button>
+      {open && (
+        <div className="mrow__open">
+          <ListingBody stats={f} template={template} readout="stats" unlockLevel={unlockLevel} />
+          <div className="mrow__acts">
+            <button type="button" className="btn btn--ghost btn--sm" onClick={onOpen}>
+              Details
+            </button>
+            {action}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 /* ---------- listing cards ---------- */
 
 function ListingGrid({
@@ -568,6 +816,21 @@ function ListingGrid({
   }
   if (children.length === 0) return <p className="faint listinggrid__empty">{empty}</p>
   return <div className="listinggrid">{children}</div>
+}
+
+/** The phone's list: rows, a skeleton while reading, a line when empty. */
+function PhoneRows({ loading, empty, children }: { loading: boolean; empty: string; children: React.ReactNode[] }) {
+  if (loading) {
+    return (
+      <div className="mrows">
+        {Array.from({ length: 6 }, (_, i) => (
+          <div className="skeleton mrow mrow--loading" key={i} />
+        ))}
+      </div>
+    )
+  }
+  if (children.length === 0) return <p className="faint listinggrid__empty">{empty}</p>
+  return <div className="mrows">{children}</div>
 }
 
 /**

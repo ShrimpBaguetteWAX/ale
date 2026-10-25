@@ -1145,8 +1145,16 @@ export function RosterFilters({
    * One row instead of four: a Filters button that names what is switched
    * on and clears it, the sort as an icon, and the card size as an icon.
    * Everything else — the markers too — opens under it from Filters.
+   *
+   * The card size only where there are two sizes of card; and a screen that
+   * orders by its own sorts (the market) hands them in as `sort`, drawn as
+   * the same icon in place of the roster's.
    */
-  sheet?: { density: PickDensity; onDensity: (density: PickDensity) => void }
+  sheet?: {
+    density?: PickDensity
+    onDensity?: (density: PickDensity) => void
+    sort?: { value: string; options: { value: string; label: string }[]; onChange: (value: string) => void }
+  }
 }) {
   const { classes, races } = useMemo(() => facetsOf(roster), [roster])
 
@@ -1231,7 +1239,9 @@ export function RosterFilters({
             ) : (
               <>
                 <span className="sheetbar__label">Filter</span>
-                <span className="sheetbar__hint">Markers, element, class…</span>
+                <span className="sheetbar__hint">
+                  {omit.includes('markers') ? 'Element, class, race…' : 'Markers, element, class…'}
+                </span>
               </>
             )}
           </button>
@@ -1268,12 +1278,27 @@ export function RosterFilters({
             </select>
           </label>
         )}
+        {sheet.sort && (
+          <label className="sheetbar__icon" title="Order">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M5 2.5v11M2.5 11 5 13.5 7.5 11M11 13.5v-11M8.5 5 11 2.5 13.5 5" />
+            </svg>
+            <select aria-label="Order" value={sheet.sort.value} onChange={(e) => sheet.sort!.onChange(e.target.value)}>
+              {sheet.sort.options.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
+        {sheet.density && sheet.onDensity && (
         <button
           type="button"
           className="sheetbar__icon sheetbar__icon--on"
           aria-label={sheet.density === 'compact' ? 'Compact cards, show full cards' : 'Full cards, show compact cards'}
           title={sheet.density === 'compact' ? 'Compact cards' : 'Full cards'}
-          onClick={() => sheet.onDensity(sheet.density === 'compact' ? 'full' : 'compact')}
+          onClick={() => sheet.onDensity!(sheet.density === 'compact' ? 'full' : 'compact')}
         >
           {sheet.density === 'compact' ? (
             <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
@@ -1294,6 +1319,7 @@ export function RosterFilters({
             </svg>
           )}
         </button>
+        )}
       </div>
     )}
     {drop && !folded && <div className="filters__dropshade" onClick={() => setOpen(false)} />}
