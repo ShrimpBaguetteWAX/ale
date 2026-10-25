@@ -2790,15 +2790,17 @@ function RoadFights({ board, stops, color, onWatch }: {
 
 /* ---------- every fight: anyone's road, or a whole round ---------- */
 
-type AllView = { mode: 'players' | 'rounds'; who: string; round: number; only: 'all' | 'mine' | 'champion' }
+type AllView = { mode: 'players' | 'rounds'; who: string }
 
 /**
  * The whole finished tournament on a desktop, from the results.
  *
- * One switch: Players, to pick anyone and see their road to the crown and
- * their fights, or Rounds, to pick a round and see every fight in it. The
- * two lead into each other — a stop on a road opens its round, a player in a
- * round opens their road — and every fight plays from where it is listed.
+ * It opens on Rounds: every fight in one long list, the final first, a fight
+ * a line, with a rail of the rounds beside it that follows the scroll. The
+ * switch puts Players there instead, to pick anyone and see their road and
+ * fights. The two lead into each other — a stop on a road jumps to its
+ * round, a player in a fight opens their road — and every fight plays from
+ * where it is listed.
  */
 function AllFights({ p, champion, onBack }: {
   p: PhoneTournamentProps & { board: Board; onWatch: (m: TournamentMatchup, round: number) => void }
@@ -2808,10 +2810,8 @@ function AllFights({ p, champion, onBack }: {
   const { board } = p
   const me = board.runs.get(p.wallet)
   const [view, setView] = useState<AllView>({
-    mode: 'players',
+    mode: 'rounds',
     who: me?.wallet ?? champion?.wallet ?? board.order[0]?.wallet ?? '',
-    round: Math.max(0, board.rounds - 1),
-    only: 'all',
   })
   const [query, setQuery] = useState('')
   const top = useRef<HTMLDivElement>(null)
@@ -2825,7 +2825,42 @@ function AllFights({ p, champion, onBack }: {
     [board, p.history],
   )
   const openPlayer = (who: string) => setView((v) => ({ ...v, mode: 'players', who }))
-  const openRound = (round: number) => setView((v) => ({ ...v, mode: 'rounds', round, only: 'all' }))
+
+  /*
+     Rounds is one long list, the final first. The rail beside it marks the
+     round in view as the page scrolls and jumps to one on a click; a stop on
+     someone's road jumps there too, once the list is back on screen.
+  */
+  const sections = useRef<(HTMLElement | null)[]>([])
+  const jumpTo = useRef<number | null>(null)
+  const [inView, setInView] = useState(Math.max(0, board.rounds - 1))
+  useEffect(() => {
+    if (view.mode !== 'rounds') return
+    if (jumpTo.current !== null) {
+      sections.current[jumpTo.current]?.scrollIntoView({ block: 'start' })
+      jumpTo.current = null
+    }
+    const spy = () => {
+      let at = board.rounds - 1
+      for (let r = board.rounds - 1; r >= 0; r--) {
+        const el = sections.current[r]
+        if (el && el.getBoundingClientRect().top <= 140) at = r
+      }
+      setInView(at)
+    }
+    spy()
+    document.addEventListener('scroll', spy, { passive: true, capture: true })
+    return () => document.removeEventListener('scroll', spy, { capture: true })
+  }, [view.mode, board.rounds])
+  const openRound = (round: number) => {
+    if (view.mode === 'rounds') {
+      sections.current[round]?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      return
+    }
+    jumpTo.current = round
+    setView((v) => ({ ...v, mode: 'rounds' }))
+  }
+  const longest = Array.from({ length: board.rounds }, (_, i) => board.rounds - 1 - i)
 
   const q = query.trim().toLowerCase()
   const people = q
@@ -2837,10 +2872,6 @@ function AllFights({ p, champion, onBack }: {
   const mine = roads.get(p.wallet) ?? []
   const started = Number(p.stage?.player_count ?? board.players)
 
-  const rows = p.history[view.round] ?? []
-  const listed = rows.filter((m) =>
-    view.only === 'mine' ? isIn(m, p.wallet) : view.only === 'champion' ? !!champion && isIn(m, champion.wallet) : true,
-  )
   const span = (r: number) => {
     const times = (p.history[r] ?? []).map((m) => chainTime(m.play_time)).filter(Number.isFinite)
     if (!times.length) return ''
@@ -2877,7 +2908,7 @@ function AllFights({ p, champion, onBack }: {
         <div>
           <h2>Every fight</h2>
           <small>
-            {view.mode === 'players' ? "Anyone's road — pick a player" : 'Every fight of a round — pick a round'}
+            {view.mode === 'players' ? "Anyone's road — pick a player" : 'Every fight, the final first'}
           </small>
         </div>
         <input
@@ -2950,14 +2981,14 @@ function AllFights({ p, champion, onBack }: {
             </div>
           ) : (
             <div className="ptour__aflist">
-              {Array.from({ length: board.rounds }, (_, r) => {
+              {longest.map((r) => {
                 const s = mine[r]
                 const count = (p.history[r] ?? []).length
                 return (
                   <button
                     key={r}
                     type="button"
-                    className={`ptour__afrd${r === view.round ? ' is-sel' : ''}`}
+                    className={`ptour__afrd${r === inView ? ' is-sel' : ''}`}
                     onClick={() => openRound(r)}
                   >
                     <span>
@@ -3009,64 +3040,55 @@ function AllFights({ p, champion, onBack }: {
             )}
           </section>
         ) : (
-          <section className="ptour__card ptour__afright">
-            <div className="ptour__afrhead">
-              <div>
-                <span className="ptour__kick ptour__kick--gold">
-                  {rows.length} fight{rows.length === 1 ? '' : 's'}
-                  {span(view.round) ? ` · ${span(view.round)}` : ''}
-                </span>
-                <h3>{board.name(view.round)}</h3>
-              </div>
-              <div className="ptour__afchips">
-                <button
-                  type="button"
-                  className={view.only === 'all' ? 'is-on' : ''}
-                  onClick={() => setView((v) => ({ ...v, only: 'all' }))}
+          <div className="ptour__aflong">
+            {longest.map((r) => {
+              const rows = p.history[r] ?? []
+              const s = mine[r]
+              return (
+                <section
+                  key={r}
+                  ref={(el) => {
+                    sections.current[r] = el
+                  }}
+                  className="ptour__aflsec"
                 >
-                  All
-                </button>
-                {rows.some((m) => isIn(m, p.wallet)) && (
-                  <button
-                    type="button"
-                    className={view.only === 'mine' ? 'is-on' : ''}
-                    onClick={() => setView((v) => ({ ...v, only: 'mine' }))}
-                  >
-                    Your fight
-                  </button>
-                )}
-                {!!champion && rows.some((m) => isIn(m, champion.wallet)) && (
-                  <button
-                    type="button"
-                    className={view.only === 'champion' ? 'is-on' : ''}
-                    onClick={() => setView((v) => ({ ...v, only: 'champion' }))}
-                  >
-                    Champion's fight
-                  </button>
-                )}
-              </div>
-            </div>
-            <div className="ptour__affights">
-              {listed.map((m) => (
-                <div
-                  key={m.index}
-                  className={`ptour__affx${isIn(m, p.wallet) ? ' is-me' : champion && isIn(m, champion.wallet) ? ' is-champ' : ''}`}
-                >
-                  <small className="mono">{timeOf(chainTime(m.play_time))}</small>
-                  {side(m, 1)}
-                  <i>VS</i>
-                  {side(m, 2)}
-                  <button
-                    type="button"
-                    className="ptour__rfplay"
-                    aria-label={`Watch ${m.gamertag_player1 || m.wallet_player1} against ${m.gamertag_player2 || m.wallet_player2}`}
-                    onClick={() => p.onWatch(m, view.round)}
-                  />
-                </div>
-              ))}
-            </div>
-            <p className="ptour__fine ptour__center">Tap a player to open their road.</p>
-          </section>
+                  <div className="ptour__aflstick">
+                    <span>
+                      <b>{board.name(r)}</b>
+                      {s?.kind === 'win' ? (
+                        <em className="is-won">You won</em>
+                      ) : s?.kind === 'loss' ? (
+                        <em className="is-lost">You lost</em>
+                      ) : s?.kind === 'pass' ? (
+                        <em className="is-pass">Your pass</em>
+                      ) : null}
+                    </span>
+                    <small>
+                      {rows.length} fight{rows.length === 1 ? '' : 's'}
+                      {span(r) ? ` · ${span(r)}` : ''}
+                    </small>
+                  </div>
+                  {rows.map((m) => (
+                    <div
+                      key={m.index}
+                      className={`ptour__affx${isIn(m, p.wallet) ? ' is-me' : champion && isIn(m, champion.wallet) ? ' is-champ' : ''}`}
+                    >
+                      <small className="mono">{timeOf(chainTime(m.play_time))}</small>
+                      {side(m, 1)}
+                      <i>VS</i>
+                      {side(m, 2)}
+                      <button
+                        type="button"
+                        className="ptour__rfplay"
+                        aria-label={`Watch ${m.gamertag_player1 || m.wallet_player1} against ${m.gamertag_player2 || m.wallet_player2}`}
+                        onClick={() => p.onWatch(m, r)}
+                      />
+                    </div>
+                  ))}
+                </section>
+              )
+            })}
+          </div>
         )}
       </div>
     </div>
