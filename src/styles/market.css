@@ -1594,6 +1594,15 @@
   .mrow__ab.is-plain.is-locked {
     background: none;
   }
+  /* Sacrifice: the portrait's skull, in the line with the others. */
+  .mrow__ab.is-sacrifice {
+    --ab: rgb(255 90 106 / 70%);
+    font-family: var(--font-body);
+    font-size: 10px;
+    color: var(--white);
+    background: rgb(20 4 8 / 85%);
+    box-shadow: inset 0 0 0 1px var(--ab);
+  }
   .mrow__note {
     display: block;
     margin-top: 3px;

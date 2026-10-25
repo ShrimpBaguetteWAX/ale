@@ -747,13 +747,14 @@ function FighterRow({
   */
   const grades = ROW_GRADES.map((field) => ({ field, grade: gradeOfStat(raw, field, template) }))
   /*
-     A tag an ability, in its rarity's colour, the locked one hollow; and
-     Sacrifice, which has no rarity and is the one ability a buyer may be
-     shopping for (it feeds an ascension), as a skull on the portrait.
+     A tag every ability, in its rarity's colour, the locked one hollow, so
+     the count is the fighter's count. Sacrifice has no rarity and is the one
+     ability a buyer may be shopping for (it feeds an ascension): its tag is
+     a skull, and the portrait carries one too.
   */
   const abilities = f.abilities ?? []
-  const sacrifice = abilities.some((a) => String(a.ability) === SACRIFICE_ABILITY)
-  const tagged = abilities.filter((a) => String(a.ability) !== SACRIFICE_ABILITY)
+  const isSacrifice = (a: (typeof abilities)[number]) => String(a.ability) === SACRIFICE_ABILITY
+  const sacrifice = abilities.some(isSacrifice)
   return (
     <div className={`mrow${open ? ' is-open' : ''}`}>
       <button type="button" className="mrow__hit" onClick={onToggle} aria-expanded={open}>
@@ -796,18 +797,19 @@ function FighterRow({
               ))}
             </span>
           </small>
-          {tagged.length > 0 && (
+          {abilities.length > 0 && (
             <span className="mrow__abilities">
-              {tagged.map((a, i) => {
+              {abilities.map((a, i) => {
                 const rarity = abilityRarity(a.displayname)
+                const skull = isSacrifice(a)
                 return (
                   <span
                     key={`${a.ability}-${i}`}
-                    className={`mrow__ab${a.locked ? ' is-locked' : ''}${rarity ? '' : ' is-plain'}`}
+                    className={`mrow__ab${a.locked ? ' is-locked' : ''}${skull ? ' is-sacrifice' : rarity ? '' : ' is-plain'}`}
                     style={{ '--ab': rarity ? ABILITY_RARITY_COLOR[rarity] : undefined } as React.CSSProperties}
                     title={`${abilityName(a.displayname)}${rarity ? ` · ${rarity}` : ''}${a.locked ? ' · unlocks on ascension' : ''}`}
                   >
-                    {rarity ? rarity.charAt(0).toUpperCase() : '·'}
+                    {skull ? '☠' : rarity ? rarity.charAt(0).toUpperCase() : '·'}
                   </span>
                 )
               })}
