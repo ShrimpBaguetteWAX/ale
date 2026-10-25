@@ -1002,10 +1002,9 @@ export function setLandownerShare(session: Session, share: number) {
  * Sweep whatever the game is holding for the player.
  *
  * `claimcur` folds unclaimed gems and credits into the live balances and
- * transfers unclaimed TLM. It also zeroes `unclaimed_shards` and
- * `unclaimed_wax` **without paying them** — both are normally paid out
- * directly and sit at zero, but the screen should never call this a claim for
- * those two.
+ * transfers unclaimed TLM and WAX (tournament prizes). It zeroes
+ * `unclaimed_shards` **without paying them** — shards are paid out directly
+ * and sit at zero, so the screen never calls this a claim for shards.
  */
 export function claimCurrencies(session: Session) {
   const action: ActionInput = {

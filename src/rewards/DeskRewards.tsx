@@ -507,8 +507,22 @@ function DeskCurrency({
             <strong className={`prew__heronum mono${pays && pending > 0 ? ' is-gold' : ''}`}>
               {pays ? heroAmount(pending) : earnedSoFar}
             </strong>
-            {currency === 'wax' && (
-              <small className="prew__heronote">Paid out when you claim a Candle mission</small>
+            {pays ? (
+              pending > 0 ? (
+                <button
+                  type="button"
+                  className="btn btn--gold prew__claim"
+                  disabled={!canAct || busy !== null}
+                  onClick={onClaim}
+                >
+                  {busy === 'claim' && <span className="spinner" />}
+                  Claim {heroAmount(pending)} {symbol}
+                </button>
+              ) : (
+                <small className="prew__heronote">Nothing to claim right now</small>
+              )
+            ) : (
+              <small className="prew__heronote">Paid straight to your wallet</small>
             )}
           </div>
         )}
@@ -617,7 +631,8 @@ function DeskCurrency({
           <section className="drew__pool">
             <h2 className="drew__pooltitle">Where WAX comes from</h2>
             <p className="rsheet__hint">
-              Candle missions pay WAX when you claim them at the Candle. There is no pool to mine here.
+              Tournament prizes wait here until you claim them. Candle missions pay WAX when you claim
+              them at the Candle. There is no pool to mine.
             </p>
             <Link className="btn btn--primary" to="/candle">
               Go to the Candle
@@ -627,7 +642,7 @@ function DeskCurrency({
 
         {/* Only TLM waits to be claimed; the others say what they have earned. */}
         <div className="prew__rows">
-          {pays ? (
+          {pays && board.length > 0 ? (
             <div className="prew__row">
               <img src={CURRENCY_ICON[currency]} alt="" />
               <span className="prew__rowtext">

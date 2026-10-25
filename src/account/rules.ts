@@ -226,16 +226,17 @@ export const CURRENCY_PRECISION: Record<Currency, number> = {
 }
 
 /**
- * Whether `claimcur` actually pays this currency out.
+ * Whether a currency waits on the account to be claimed with `claimcur`.
  *
- * It transfers unclaimed TLM and folds gems and credits into the live
- * balances — but zeroes `unclaimed_shards` and `unclaimed_wax` while sending
- * nothing, the same way the land claim drops shards. Both are normally paid
- * straight out and sit at zero, so this rarely costs anybody anything; it
- * still should not be presented as a claim.
+ * TLM does, and so does WAX: tournament prizes are credited as unclaimed WAX
+ * and claimed here. `claimcur` transfers unclaimed TLM; it must transfer
+ * unclaimed WAX too — the one deployed on 2026-10-25 still zeroed it without
+ * sending anything, so that contract change has to be live before this
+ * reaches players. Shards are not claimed here: they are paid straight out,
+ * and `claimcur` drops any unclaimed shards the way the land claim does.
  */
 export function claimPays(currency: Currency): boolean {
-  return currency === 'tlm'
+  return currency === 'tlm' || currency === 'wax'
 }
 
 /** An eosio asset string as a number. */

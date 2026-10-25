@@ -1229,11 +1229,7 @@ function PhoneCurrency({
               : formatStat(EARNED_STAT[currency], earned(player, currency))}
           </strong>
           {!pays ? (
-            <small className="prew__heronote">
-              {currency === 'wax'
-                ? 'Paid out when you claim a Candle mission'
-                : 'Paid straight to your wallet'}
-            </small>
+            <small className="prew__heronote">Paid straight to your wallet</small>
           ) : pending > 0 ? (
             <button
               type="button"
