@@ -6789,13 +6789,14 @@
    =================================================================== */
 
 /* The roster's filters behind one Filter button on a desktop too — the
-   phone sheet's toolbar, re-scoped from dungeon.css. */
-.picker--inline .sheetbar {
+   phone sheet's toolbar, re-scoped from dungeon.css. The market's desktop
+   board shares it. */
+:is(.picker--inline, .mdesk) .sheetbar {
   display: flex;
   align-items: center;
   gap: 6px;
 }
-.picker--inline .sheetbar__filter {
+:is(.picker--inline, .mdesk) .sheetbar__filter {
   flex: 1;
   min-width: 0;
   display: flex;
@@ -6805,12 +6806,12 @@
   box-shadow: inset 0 0 0 1px rgb(255 255 255 / 16%);
   overflow: hidden;
 }
-.picker--inline .sheetbar__filter--on {
+:is(.picker--inline, .mdesk) .sheetbar__filter--on {
   background: rgb(0 186 255 / 10%);
   box-shadow: inset 0 0 0 1px rgb(0 186 255 / 70%);
 }
 .sheetbar__main,
-.picker--inline .sheetbar__end {
+:is(.picker--inline, .mdesk) .sheetbar__end {
   display: inline-flex;
   align-items: center;
   border: 0;
@@ -6819,19 +6820,19 @@
   font: var(--fw-bold) 12.5px var(--font-body);
   cursor: pointer;
 }
-.picker--inline .sheetbar__main {
+:is(.picker--inline, .mdesk) .sheetbar__main {
   flex: 1;
   min-width: 0;
   gap: 7px;
   padding: 0 10px;
   text-align: left;
 }
-.picker--inline .sheetbar__main svg {
+:is(.picker--inline, .mdesk) .sheetbar__main svg {
   flex: none;
   width: 15px;
   height: 15px;
 }
-.picker--inline .sheetbar__end {
+:is(.picker--inline, .mdesk) .sheetbar__end {
   flex: none;
   width: 34px;
   justify-content: center;
@@ -6839,10 +6840,10 @@
   font-size: 11px;
 }
 .sheetbar__filter--on .sheetbar__main,
-.picker--inline .sheetbar__filter--on .sheetbar__end {
+:is(.picker--inline, .mdesk) .sheetbar__filter--on .sheetbar__end {
   color: #bff0ff;
 }
-.picker--inline .sheetbar__label {
+:is(.picker--inline, .mdesk) .sheetbar__label {
   flex: none;
   font-size: 10px;
   letter-spacing: 0.08em;
@@ -6850,17 +6851,17 @@
   color: var(--text-faint);
 }
 .sheetbar__hint,
-.picker--inline .sheetbar__what {
+:is(.picker--inline, .mdesk) .sheetbar__what {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.picker--inline .sheetbar__hint {
+:is(.picker--inline, .mdesk) .sheetbar__hint {
   font-weight: 600;
   color: var(--text-faint);
 }
-.picker--inline .sheetbar__icon {
+:is(.picker--inline, .mdesk) .sheetbar__icon {
   position: relative;
   flex: none;
   display: grid;
@@ -6874,16 +6875,16 @@
   color: #dfe6f2;
   cursor: pointer;
 }
-.picker--inline .sheetbar__icon svg {
+:is(.picker--inline, .mdesk) .sheetbar__icon svg {
   width: 16px;
   height: 16px;
 }
-.picker--inline .sheetbar__icon--on {
+:is(.picker--inline, .mdesk) .sheetbar__icon--on {
   background: rgb(124 92 255 / 25%);
   box-shadow: inset 0 0 0 1px #6f55ff;
 }
 /* The real select, invisible over the icon, so a tap opens it. */
-.picker--inline .sheetbar__icon select {
+:is(.picker--inline, .mdesk) .sheetbar__icon select {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -6894,29 +6895,29 @@
 /* The list the phone or browser opens for it: dark, like the rest of the
    game. Without this it took the icon's light text on the browser's white
    list, which is unreadable. */
-.picker--inline .sheetbar__icon select {
+:is(.picker--inline, .mdesk) .sheetbar__icon select {
   color-scheme: dark;
   color: var(--white);
   background: #0b1324;
 }
 .sheetbar__icon select option,
-.picker--inline .sheetbar__icon select optgroup {
+:is(.picker--inline, .mdesk) .sheetbar__icon select optgroup {
   color: var(--white);
   background: #0b1324;
 }
 
 /* The filters themselves open under the toolbar, and only from it. */
-.picker--inline .filters--sheet.filters--folded {
+:is(.picker--inline, .mdesk) .filters--sheet.filters--folded {
   display: none;
 }
-.picker--inline .sheetbar {
+:is(.picker--inline, .mdesk) .sheetbar {
   margin-bottom: 4px;
 }
-.picker--inline .sheetbar__filter,
-.picker--inline .sheetbar__icon {
+:is(.picker--inline, .mdesk) .sheetbar__filter,
+:is(.picker--inline, .mdesk) .sheetbar__icon {
   height: 42px;
 }
-.picker--inline .sheetbar__icon {
+:is(.picker--inline, .mdesk) .sheetbar__icon {
   width: 42px;
 }
 

@@ -1213,443 +1213,451 @@
     overflow-y: auto;
     overscroll-behavior: contain;
   }
-  /* The bid and buy sheets: the facts as label and figure on hairlines,
-     the bid as a stepper. White glass, no violet. */
-  .mfacts {
-    display: grid;
-    margin: 0;
-  }
-  .mfacts > div {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    gap: 10px;
-    padding: 8px 2px;
-  }
-  .mfacts > div + div {
-    border-top: 1px solid rgb(255 255 255 / 8%);
-  }
-  .mfacts dt {
-    font-size: var(--fs-xs);
-    color: var(--text-faint);
-  }
-  .mfacts dd {
-    margin: 0;
-    font-weight: var(--fw-bold);
-    color: var(--white);
-  }
-  .mstep {
-    display: grid;
-    gap: 8px;
-  }
-  .mstep__row {
-    display: grid;
-    grid-template-columns: 48px minmax(0, 1fr) 48px;
-    height: 48px;
-    overflow: hidden;
-    border-radius: 12px;
-    background: rgb(0 0 0 / 35%);
-    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 22%);
-  }
-  .mstep__row:focus-within {
-    box-shadow: inset 0 0 0 1px rgb(0 186 255 / 70%);
-  }
-  .mstep__btn {
-    border: 0;
-    background: none;
-    font-size: 22px;
-    font-weight: var(--fw-bold);
-    color: var(--white);
-  }
-  .mstep__btn:disabled {
-    color: rgb(255 255 255 / 25%);
-  }
-  .mstep__input {
-    width: 100%;
-    min-width: 0;
-    border: 0;
-    background: none;
-    text-align: center;
-    font-size: 20px;
-    font-weight: var(--fw-bold);
-    color: var(--white);
-    appearance: textfield;
-    -moz-appearance: textfield;
-  }
-  .mstep__input:focus {
-    outline: none;
-  }
-  .mstep__input::-webkit-inner-spin-button,
-  .mstep__input::-webkit-outer-spin-button {
-    appearance: none;
-    margin: 0;
-  }
-  .mrows__head {
-    margin: 0;
-    padding: 0 2px;
-    font-size: 11.5px;
-    color: var(--text-faint);
-  }
-  .mrows__head {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    gap: 10px;
-    margin-top: 4px;
-    font-family: var(--font-display);
-    font-size: 9.5px;
-    font-weight: 800;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-  }
-  /* What the section means, beside its name, in plain words. */
-  .mrows__head small {
-    font-family: var(--font-body);
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 0;
-    text-transform: none;
-  }
-  .mrows__empty {
-    display: grid;
-    justify-items: center;
-    gap: 10px;
-    padding: 28px 12px;
-    text-align: center;
-  }
-  .mrows__empty p {
-    margin: 0;
-  }
-  /* A listing of your own: what it is doing, under the row, open or not. */
-  .mrow__below {
-    display: grid;
-    justify-items: start;
-    gap: 8px;
-    padding: 0 12px 11px 76px;
-  }
-  .mrow__line {
-    font-size: 11.5px;
-    line-height: 1.4;
-    color: var(--text-faint);
-  }
-  .mrow__line b {
-    color: var(--white);
-  }
-  .mrow__withdraw {
-    --btn-bg: rgb(255 90 106 / 14%);
-    --btn-line: rgb(255 90 106 / 60%);
-    color: var(--white);
-  }
-  /* Sell: the cue where the board has its price. */
-  .mrow__cue {
-    font-family: var(--font-display);
-    font-size: 10px;
-    font-weight: 800;
-    white-space: nowrap;
-    color: var(--text-faint);
-  }
-  .mrow.is-open .mrow__cue {
-    color: var(--white);
-  }
-  /* The terms take the row's full width, not the column under the name. */
-  .selltab--phone {
-    display: grid;
-    gap: 10px;
-  }
-  .selltab--phone .mrow__open {
-    padding-left: 12px;
-  }
-  .msell__cap {
-    font-family: var(--font-display);
-    font-size: 9.5px;
-    font-weight: 800;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    color: var(--text-faint);
-  }
-  .msell__quick {
-    display: flex;
-    gap: 6px;
-  }
-  .msell__quick button {
-    flex: 1;
-    height: 32px;
-    border: 0;
-    border-radius: 8px;
-    font-family: var(--font-display);
-    font-size: 11px;
-    font-weight: 800;
-    color: #c5cee0;
-    background: rgb(255 255 255 / 5%);
-    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 12%);
-  }
-  .msell__quick button.is-on {
-    color: var(--white);
-    background: rgb(0 186 255 / 16%);
-    box-shadow: inset 0 0 0 1.5px var(--cyan);
-  }
-  .msell__keep {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-size: 12.5px;
-    color: #dfe6f2;
-    cursor: pointer;
-  }
-  .msell__keep .toggle {
-    margin-top: 0;
-  }
-  .msell__go {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    white-space: nowrap;
-  }
-  .msell__hint {
-    margin: 0;
-    font-size: 11px;
-    line-height: 1.45;
-    color: var(--text-faint);
-  }
-  .mfacts > div.is-total dt {
-    color: var(--white);
-  }
-  .mfacts > div.is-total dd {
-    color: var(--teal);
-  }
-  .mrows {
-    overflow: hidden;
-    border-radius: 14px;
-    background: linear-gradient(180deg, rgb(10 18 34 / 62%), rgb(4 9 20 / 72%));
-    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 11%);
-  }
-  .mrow + .mrow {
-    border-top: 1px solid rgb(255 255 255 / 6%);
-  }
-  .mrow--loading {
-    height: 74px;
-    border-radius: 0;
-  }
-  .mrow.is-open {
-    background: rgb(255 255 255 / 3%);
-  }
-  .mrow__hit {
-    display: grid;
-    /* The price column a fixed width too, so the line of grades starts in
-       the same place on every row whatever the price. */
-    grid-template-columns: 56px minmax(0, 1fr) 56px;
-    align-items: center;
-    gap: 8px;
-    width: 100%;
-    padding: 9px 10px;
-    border: 0;
-    text-align: left;
-    color: inherit;
-    background: none;
-    cursor: pointer;
-  }
-  .mrow__art {
-    position: relative;
-    width: 56px;
-    height: 56px;
-    overflow: hidden;
-    border-radius: 12px;
-    background-position: center;
-    background-size: cover;
-  }
-  .mrow__art img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-  /* Level, and its gold half when the fighter is ascended. */
-  .mrow__level {
-    position: absolute;
-    left: 3px;
-    bottom: 3px;
-    display: inline-flex;
-    overflow: hidden;
-    border-radius: 5px;
-    font-family: var(--font-display);
-    font-size: 9px;
-    font-weight: 800;
-    line-height: 1.5;
-  }
-  .mrow__level span {
-    padding: 0 4px;
-    background: rgb(0 0 0 / 70%);
-  }
-  .mrow__level em {
-    padding: 0 4px;
-    font-style: normal;
-    color: #2a1a00;
-    background: linear-gradient(180deg, #ffe08a, #f6a800);
-  }
-  .mrow__skull {
-    position: absolute;
-    top: 2px;
-    right: 2px;
-    display: grid;
-    place-items: center;
-    width: 18px;
-    height: 18px;
-    border-radius: 50%;
-    font-size: 11px;
-    line-height: 1;
-    background: rgb(20 4 8 / 85%);
-    box-shadow: inset 0 0 0 1px rgb(255 90 106 / 70%);
-  }
-  .mrow__who {
-    min-width: 0;
-  }
-  .mrow__who b {
-    display: block;
-    overflow: hidden;
-    font-family: var(--font-display);
-    font-size: 12.5px;
-    text-overflow: ellipsis;
-    text-transform: capitalize;
-    white-space: nowrap;
-  }
-  .mrow__who small {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    min-width: 0;
-    margin-top: 2px;
-    font-size: 11.5px;
-    color: var(--text-faint);
-    text-transform: capitalize;
-    white-space: nowrap;
-  }
-  /* A stat's icon in white, then its grade: only the grade is in colour. */
-  .mrow__who small > img {
-    flex: none;
-  }
-  /* Robotron, the longest race, is 46px. */
-  .mrow__race {
-    /* Shrinks (the same on every row) before the grades would clip. */
-    flex: 0 1 48px;
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .mrow__grades {
-    display: inline-flex;
-    flex: none;
-    align-items: center;
-    gap: 3px;
-  }
-  .mrow__grade {
-    display: inline-flex;
-    align-items: center;
-    gap: 1px;
-  }
-  .mrow__staticon {
-    width: auto;
-    height: 10px;
-    filter: brightness(0) invert(1);
-    opacity: 0.85;
-  }
-  /* The arrows are 16 wide and 7 to 20 tall: a fixed width, their own
-     height, centred in a box of their tallest, so none is squashed. */
-  .mrow__arrow {
-    display: block;
-    width: 10px;
-    height: auto;
-    max-height: 13px;
-    object-fit: contain;
-  }
-  i.mrow__arrow {
-    height: 1px;
-  }
-  .mrow__abilities {
-    display: flex;
-    gap: 3px;
-    margin-top: 4px;
-  }
-  .mrow__ab {
-    display: inline-grid;
-    place-items: center;
-    min-width: 15px;
-    height: 15px;
-    padding: 0 3px;
-    border-radius: 4px;
-    font-family: var(--font-display);
-    font-size: 8.5px;
-    font-weight: 900;
-    color: #08101e;
-    background: var(--ab);
-  }
-  .mrow__ab.is-locked {
-    color: var(--ab);
-    background: none;
-    box-shadow: inset 0 0 0 1px var(--ab);
-  }
-  .mrow__ab.is-plain {
-    --ab: rgb(255 255 255 / 60%);
-    color: var(--white);
-    background: rgb(255 255 255 / 18%);
-  }
-  .mrow__ab.is-plain.is-locked {
-    background: none;
-  }
-  /* Sacrifice: the portrait's skull, in the line with the others. */
-  .mrow__ab.is-sacrifice {
-    --ab: rgb(255 90 106 / 70%);
-    font-family: var(--font-body);
-    font-size: 10px;
-    color: var(--white);
-    background: rgb(20 4 8 / 85%);
-    box-shadow: inset 0 0 0 1px var(--ab);
-  }
-  .mrow__note {
-    display: block;
-    margin-top: 3px;
-    overflow: hidden;
-    font-size: 11.5px;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  .mrow__lead {
-    color: var(--teal);
-  }
-  .mrow__price {
-    display: grid;
-    justify-items: end;
-    gap: 4px;
-  }
-  .mrow__price .mono {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    font-size: 13px;
-    font-weight: 800;
-  }
-  .mrow__price small {
-    font-family: var(--font-display);
-    font-size: 10px;
-    font-weight: 800;
-    white-space: nowrap;
-    color: #c5cee0;
-  }
-  .mrow__price small.is-closing {
-    color: #ff5a6a;
-  }
-  /* Opened: the card's own readouts, under the row it belongs to. */
-  .mrow__open {
-    display: grid;
-    gap: 10px;
-    padding: 0 12px 12px 76px;
-  }
-  .mrow__open .listingcard__body {
-    padding: 0;
-  }
-  .mrow__acts {
-    display: grid;
-    grid-template-columns: auto minmax(0, 1fr);
-    gap: 8px;
-  }
+}
+
+/*
+   The rows: the phone list, and the desktop board, which is the same list
+   beside the fighter it is showing.
+*/
+/* The bid and buy sheets: the facts as label and figure on hairlines,
+   the bid as a stepper. White glass, no violet. */
+.mfacts {
+  display: grid;
+  margin: 0;
+}
+.mfacts > div {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+  padding: 8px 2px;
+}
+.mfacts > div + div {
+  border-top: 1px solid rgb(255 255 255 / 8%);
+}
+.mfacts dt {
+  font-size: var(--fs-xs);
+  color: var(--text-faint);
+}
+.mfacts dd {
+  margin: 0;
+  font-weight: var(--fw-bold);
+  color: var(--white);
+}
+.mstep {
+  display: grid;
+  gap: 8px;
+}
+.mstep__row {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr) 48px;
+  height: 48px;
+  overflow: hidden;
+  border-radius: 12px;
+  background: rgb(0 0 0 / 35%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 22%);
+}
+.mstep__row:focus-within {
+  box-shadow: inset 0 0 0 1px rgb(0 186 255 / 70%);
+}
+.mstep__btn {
+  border: 0;
+  background: none;
+  font-size: 22px;
+  font-weight: var(--fw-bold);
+  color: var(--white);
+}
+.mstep__btn:disabled {
+  color: rgb(255 255 255 / 25%);
+}
+.mstep__input {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  background: none;
+  text-align: center;
+  font-size: 20px;
+  font-weight: var(--fw-bold);
+  color: var(--white);
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+.mstep__input:focus {
+  outline: none;
+}
+.mstep__input::-webkit-inner-spin-button,
+.mstep__input::-webkit-outer-spin-button {
+  appearance: none;
+  margin: 0;
+}
+.mrows__head {
+  margin: 0;
+  padding: 0 2px;
+  font-size: 11.5px;
+  color: var(--text-faint);
+}
+.mrows__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+  margin-top: 4px;
+  font-family: var(--font-display);
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+/* What the section means, beside its name, in plain words. */
+.mrows__head small {
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.mrows__empty {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  padding: 28px 12px;
+  text-align: center;
+}
+.mrows__empty p {
+  margin: 0;
+}
+/* A listing of your own: what it is doing, under the row, open or not. */
+.mrow__below {
+  display: grid;
+  justify-items: start;
+  gap: 8px;
+  padding: 0 12px 11px 76px;
+}
+.mrow__line {
+  font-size: 11.5px;
+  line-height: 1.4;
+  color: var(--text-faint);
+}
+.mrow__line b {
+  color: var(--white);
+}
+.mrow__withdraw {
+  --btn-bg: rgb(255 90 106 / 14%);
+  --btn-line: rgb(255 90 106 / 60%);
+  color: var(--white);
+}
+/* Sell: the cue where the board has its price. */
+.mrow__cue {
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: 800;
+  white-space: nowrap;
+  color: var(--text-faint);
+}
+.mrow.is-open .mrow__cue {
+  color: var(--white);
+}
+/* The terms take the row's full width, not the column under the name. */
+.selltab--phone {
+  display: grid;
+  gap: 10px;
+}
+.selltab--phone .mrow__open {
+  padding-left: 12px;
+}
+.msell__cap {
+  font-family: var(--font-display);
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.msell__quick {
+  display: flex;
+  gap: 6px;
+}
+.msell__quick button {
+  flex: 1;
+  height: 32px;
+  border: 0;
+  border-radius: 8px;
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 800;
+  color: #c5cee0;
+  background: rgb(255 255 255 / 5%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 12%);
+}
+.msell__quick button.is-on {
+  color: var(--white);
+  background: rgb(0 186 255 / 16%);
+  box-shadow: inset 0 0 0 1.5px var(--cyan);
+}
+.msell__keep {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12.5px;
+  color: #dfe6f2;
+  cursor: pointer;
+}
+.msell__keep .toggle {
+  margin-top: 0;
+}
+.msell__go {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+.msell__hint {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--text-faint);
+}
+.mfacts > div.is-total dt {
+  color: var(--white);
+}
+.mfacts > div.is-total dd {
+  color: var(--teal);
+}
+.mrows {
+  overflow: hidden;
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgb(10 18 34 / 62%), rgb(4 9 20 / 72%));
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 11%);
+}
+.mrow + .mrow {
+  border-top: 1px solid rgb(255 255 255 / 6%);
+}
+.mrow--loading {
+  height: 74px;
+  border-radius: 0;
+}
+.mrow.is-open {
+  background: rgb(255 255 255 / 3%);
+}
+.mrow__hit {
+  display: grid;
+  /* The price column a fixed width too, so the line of grades starts in
+     the same place on every row whatever the price. */
+  grid-template-columns: 56px minmax(0, 1fr) 56px;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 9px 10px;
+  border: 0;
+  text-align: left;
+  color: inherit;
+  background: none;
+  cursor: pointer;
+}
+.mrow__art {
+  position: relative;
+  width: 56px;
+  height: 56px;
+  overflow: hidden;
+  border-radius: 12px;
+  background-position: center;
+  background-size: cover;
+}
+.mrow__art img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+/* Level, and its gold half when the fighter is ascended. */
+.mrow__level {
+  position: absolute;
+  left: 3px;
+  bottom: 3px;
+  display: inline-flex;
+  overflow: hidden;
+  border-radius: 5px;
+  font-family: var(--font-display);
+  font-size: 9px;
+  font-weight: 800;
+  line-height: 1.5;
+}
+.mrow__level span {
+  padding: 0 4px;
+  background: rgb(0 0 0 / 70%);
+}
+.mrow__level em {
+  padding: 0 4px;
+  font-style: normal;
+  color: #2a1a00;
+  background: linear-gradient(180deg, #ffe08a, #f6a800);
+}
+.mrow__skull {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  font-size: 11px;
+  line-height: 1;
+  background: rgb(20 4 8 / 85%);
+  box-shadow: inset 0 0 0 1px rgb(255 90 106 / 70%);
+}
+.mrow__who {
+  min-width: 0;
+}
+.mrow__who b {
+  display: block;
+  overflow: hidden;
+  font-family: var(--font-display);
+  font-size: 12.5px;
+  text-overflow: ellipsis;
+  text-transform: capitalize;
+  white-space: nowrap;
+}
+.mrow__who small {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  margin-top: 2px;
+  font-size: 11.5px;
+  color: var(--text-faint);
+  text-transform: capitalize;
+  white-space: nowrap;
+}
+/* A stat's icon in white, then its grade: only the grade is in colour. */
+.mrow__who small > img {
+  flex: none;
+}
+/* Robotron, the longest race, is 46px. */
+.mrow__race {
+  /* Shrinks (the same on every row) before the grades would clip. */
+  flex: 0 1 48px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.mrow__grades {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 3px;
+}
+.mrow__grade {
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+}
+.mrow__staticon {
+  width: auto;
+  height: 10px;
+  filter: brightness(0) invert(1);
+  opacity: 0.85;
+}
+/* The arrows are 16 wide and 7 to 20 tall: a fixed width, their own
+   height, centred in a box of their tallest, so none is squashed. */
+.mrow__arrow {
+  display: block;
+  width: 10px;
+  height: auto;
+  max-height: 13px;
+  object-fit: contain;
+}
+i.mrow__arrow {
+  height: 1px;
+}
+.mrow__abilities {
+  display: flex;
+  gap: 3px;
+  margin-top: 4px;
+}
+.mrow__ab {
+  display: inline-grid;
+  place-items: center;
+  min-width: 15px;
+  height: 15px;
+  padding: 0 3px;
+  border-radius: 4px;
+  font-family: var(--font-display);
+  font-size: 8.5px;
+  font-weight: 900;
+  color: #08101e;
+  background: var(--ab);
+}
+.mrow__ab.is-locked {
+  color: var(--ab);
+  background: none;
+  box-shadow: inset 0 0 0 1px var(--ab);
+}
+.mrow__ab.is-plain {
+  --ab: rgb(255 255 255 / 60%);
+  color: var(--white);
+  background: rgb(255 255 255 / 18%);
+}
+.mrow__ab.is-plain.is-locked {
+  background: none;
+}
+/* Sacrifice: the portrait's skull, in the line with the others. */
+.mrow__ab.is-sacrifice {
+  --ab: rgb(255 90 106 / 70%);
+  font-family: var(--font-body);
+  font-size: 10px;
+  color: var(--white);
+  background: rgb(20 4 8 / 85%);
+  box-shadow: inset 0 0 0 1px var(--ab);
+}
+.mrow__note {
+  display: block;
+  margin-top: 3px;
+  overflow: hidden;
+  font-size: 11.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mrow__lead {
+  color: var(--teal);
+}
+.mrow__price {
+  display: grid;
+  justify-items: end;
+  gap: 4px;
+}
+.mrow__price .mono {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  font-weight: 800;
+}
+.mrow__price small {
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: 800;
+  white-space: nowrap;
+  color: #c5cee0;
+}
+.mrow__price small.is-closing {
+  color: #ff5a6a;
+}
+/* Opened: the card's own readouts, under the row it belongs to. */
+.mrow__open {
+  display: grid;
+  gap: 10px;
+  padding: 0 12px 12px 76px;
+}
+.mrow__open .listingcard__body {
+  padding: 0;
+}
+.mrow__acts {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 8px;
+}
+
+@media (max-width: 719px) {
   /* The market's tabs, as a bar of their own over the game's. */
   .mkbar {
     position: fixed;
@@ -1699,5 +1707,227 @@
   }
   .mkbar__tab.is-on em {
     background: #6f55ff;
+  }
+}
+
+/* ---------- the desktop board: the list, the fighter, the deal ---------- */
+@media (min-width: 720px) {
+  .mdesk {
+    /* The phone's quiet palette: white hairlines, not the violet rims. */
+    --line-bright: rgb(255 255 255 / 22%);
+    --btn-line: rgb(255 255 255 / 22%);
+    display: grid;
+    grid-template-columns: minmax(290px, 340px) minmax(0, 1fr) minmax(240px, 270px);
+    gap: var(--sp-4);
+    align-items: start;
+  }
+  .mdesk__list {
+    display: grid;
+    gap: 10px;
+    min-width: 0;
+  }
+  /* The row picked: the one shown beside the list. */
+  .mdesk .mrow.is-open {
+    background: rgb(0 186 255 / 8%);
+    box-shadow: inset 3px 0 0 var(--cyan);
+  }
+  /* The fighter and the deal stay in view while the list goes by. */
+  .mfighter,
+  .mdeal {
+    position: sticky;
+    top: calc(var(--topbar-h, 0px) + var(--sp-4));
+    display: grid;
+    align-content: start;
+    min-width: 0;
+    max-height: calc(100dvh - var(--topbar-h, 0px) - 2 * var(--sp-4));
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    border-radius: 14px;
+    background: linear-gradient(180deg, rgb(10 18 34 / 62%), rgb(4 9 20 / 72%));
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 11%);
+  }
+  .mfighter {
+    gap: 10px;
+    padding: 14px;
+  }
+  .mdeal {
+    gap: 10px;
+    padding: 16px;
+  }
+
+  .mfighter__hero {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .mfighter__art {
+    position: relative;
+    flex: none;
+    width: 112px;
+    height: 112px;
+    overflow: hidden;
+    border-radius: 14px;
+    background-position: center;
+    background-size: cover;
+  }
+  .mfighter__art > img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .mfighter__who {
+    display: grid;
+    gap: 5px;
+    min-width: 0;
+  }
+  .mfighter__kick,
+  .mfighter__cap,
+  .mdeal__cap {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: 9.5px;
+    font-weight: 800;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+  }
+  .mfighter__cap {
+    margin-top: 4px;
+  }
+  .mfighter__name {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: 24px;
+    font-weight: 900;
+    text-transform: capitalize;
+    color: var(--white);
+  }
+  .mfighter__line {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+    text-transform: capitalize;
+    color: #c5cee0;
+  }
+  .mfighter__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 2px;
+  }
+  .mfighter__meta span {
+    padding: 3px 9px;
+    border-radius: 999px;
+    font-size: 12px;
+    color: #dfe6f2;
+    background: rgb(255 255 255 / 5%);
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 12%);
+  }
+
+  /* The game's stat lines, as tiles: label over figure and grade. */
+  .mfighter .fstats {
+    gap: 10px;
+  }
+  .mfighter .fstats__lines {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+  }
+  .mfighter .statline {
+    display: grid;
+    gap: 3px;
+    padding: 7px 10px;
+    border: 0;
+    border-radius: 10px;
+    background: rgb(255 255 255 / 4%);
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 8%);
+  }
+  .mfighter .statline__k {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-family: var(--font-display);
+    font-size: 8.5px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .mfighter .statline__icon {
+    width: 11px;
+    height: 11px;
+    filter: brightness(0) invert(1);
+    opacity: 0.8;
+  }
+  .mfighter .statline__v {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-family: var(--font-display);
+    font-size: 13px;
+    font-weight: 800;
+    text-align: left;
+    white-space: nowrap;
+    color: var(--white);
+  }
+  /* The resistances under their own name, six across. */
+  .mfighter .resgrid {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 6px;
+    margin-top: 4px;
+  }
+  .mfighter .resgrid::before {
+    content: 'Resistances';
+    grid-column: 1 / -1;
+    margin-bottom: 1px;
+    font-family: var(--font-display);
+    font-size: 9.5px;
+    font-weight: 800;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+  }
+  .mfighter .resgrid__cell {
+    border: 0;
+    border-radius: 10px;
+    background: rgb(255 255 255 / 4%);
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 8%);
+  }
+  .mfighter .resgrid__label {
+    font-family: var(--font-display);
+    font-size: 8px;
+    font-weight: 800;
+  }
+  .mfighter .abilities {
+    margin-top: 0;
+  }
+  .mfighter .ability {
+    border: 0;
+    border-left: 3px solid var(--purple);
+    border-radius: 10px;
+    background: rgb(255 255 255 / 4%);
+  }
+
+  .mdeal__price {
+    display: grid;
+    gap: 2px;
+  }
+  .mdeal__price .mono {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 26px;
+    font-weight: 900;
+    color: var(--white);
+  }
+  .mdeal__price small {
+    font-size: 12px;
+    color: var(--text-faint);
+  }
+  .mdeal .mfacts dd.is-closing {
+    color: var(--red, #ff5a6a);
+  }
+  .mdeal__go {
+    min-height: 44px;
   }
 }
