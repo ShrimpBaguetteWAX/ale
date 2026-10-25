@@ -2526,6 +2526,8 @@ function Results(p: PhoneTournamentProps & {
 }) {
   const { board } = p
   const [picked, setPicked] = useState<number | null>(null)
+  /* Every fight of the tournament, on a page of its own (a phone's; a desktop has its own). */
+  const [all, setAll] = useState(false)
   const desk = useContext(Desk)
   const last = board.rounds - 1
   const final = (p.history[last] ?? [])[0]
@@ -2574,6 +2576,7 @@ function Results(p: PhoneTournamentProps & {
       />
     )
   const started = Number(p.stage?.player_count ?? 0)
+  if (all) return <PhoneAllFights p={p} champion={champion} onBack={() => setAll(false)} />
 
   return (
     <>
@@ -2593,6 +2596,12 @@ function Results(p: PhoneTournamentProps & {
               paid={paid}
               onWatch={p.onWatch}
             />,
+            'main',
+          ],
+          [
+            <button type="button" className="btn ptour__allbtn" onClick={() => setAll(true)}>
+              All fights
+            </button>,
             'main',
           ],
           [
@@ -3404,45 +3413,272 @@ function PhoneRun({ board, history, wallet, champion, runnerUp, semis, paid, onW
         </div>
       )}
 
-      {shown && (
-        <section className="ptour__stepper" style={{ '--run': gold ? '#ffd979' : '#00baff' } as React.CSSProperties}>
-          {stops.map((s) => {
-            const fought = s.kind === 'win' || s.kind === 'loss'
+      {shown && <RunStepper board={board} stops={stops} gold={gold} onWatch={onWatch} />}
+    </>
+  )
+}
+
+/** A run a round at a time, as a phone draws it: a ring a round, lit up to where it ended. */
+function RunStepper({ board, stops, gold, onWatch }: {
+  board: Board
+  stops: Stop[]
+  gold: boolean
+  onWatch: (m: TournamentMatchup, round: number) => void
+}) {
+  return (
+    <section className="ptour__stepper" style={{ '--run': gold ? '#ffd979' : '#00baff' } as React.CSSProperties}>
+      {stops.map((s) => {
+        const fought = s.kind === 'win' || s.kind === 'loss'
+        return (
+          <div key={s.round} className={`ptour__sr is-${s.kind}`}>
+            <span className="ptour__srring">
+              {fought ? (
+                <PlayerAvatar id={s.opp.avatar} name={s.opp.tag} className="ptour__srav" size={38} />
+              ) : s.kind === 'pass' ? (
+                'PASS'
+              ) : null}
+            </span>
+            <span className="ptour__srwho">
+              <small>
+                {board.name(s.round)}
+                {fought ? ` · ${timeOf(chainTime(s.m.play_time))}` : ''}
+              </small>
+              <b>{fought ? s.opp.tag || s.opp.wallet : s.kind === 'pass' ? 'Free pass' : 'Not reached'}</b>
+            </span>
+            <em className="mono">
+              {s.kind === 'win' ? 'Won' : s.kind === 'loss' ? 'Lost' : s.kind === 'pass' ? '+10' : ''}
+            </em>
+            {fought ? (
+              <button
+                type="button"
+                className="ptour__srplay"
+                aria-label={`Watch the ${board.name(s.round)} against ${s.opp.tag || s.opp.wallet}`}
+                onClick={() => onWatch(s.m, s.round)}
+              />
+            ) : (
+              <span />
+            )}
+          </div>
+        )
+      })}
+    </section>
+  )
+}
+
+/* ---------- every fight, on a phone ---------- */
+
+/**
+ * The whole finished tournament on a phone, from the results.
+ *
+ * Rounds is one long scroll of every fight, the final first, each round
+ * under a header that stays put while you are in it, with a row of chips to
+ * jump between rounds. Players lists everyone by place; tapping one, here or
+ * in any fight, shows their run a round at a time.
+ */
+function PhoneAllFights({ p, champion, onBack }: {
+  p: PhoneTournamentProps & { board: Board; onWatch: (m: TournamentMatchup, round: number) => void }
+  champion: Entrant | null
+  onBack: () => void
+}) {
+  const { board } = p
+  const [mode, setMode] = useState<'rounds' | 'players'>('rounds')
+  const [who, setWho] = useState<string | null>(null)
+  const [query, setQuery] = useState('')
+  const top = useRef<HTMLDivElement>(null)
+  const sections = useRef<(HTMLElement | null)[]>([])
+  useEffect(() => {
+    top.current?.scrollIntoView({ block: 'start' })
+  }, [mode, who])
+
+  const roads = useMemo(
+    () => new Map(board.order.map((r) => [r.wallet, roadOf(r.wallet, p.history, board.rounds, r.pass)])),
+    [board, p.history],
+  )
+  const mine = roads.get(p.wallet) ?? []
+  const order = Array.from({ length: board.rounds }, (_, i) => board.rounds - 1 - i)
+  const openPlayer = (wallet: string) => {
+    setMode('players')
+    setWho(wallet)
+  }
+  const q = query.trim().toLowerCase()
+  const people = q
+    ? board.order.filter((r) => (r.tag || '').toLowerCase().includes(q) || r.wallet.includes(q))
+    : board.order
+  const shown = who ? board.runs.get(who) : undefined
+
+  const side = (m: TournamentMatchup, s: 1 | 2) => {
+    const e = sideOf(m, s)
+    return (
+      <button
+        type="button"
+        className={`ptour__pafside${s === 2 ? ' is-right' : ''}${winnerSide(m) === s ? ' is-won' : ' is-lost'}`}
+        onClick={() => openPlayer(e.wallet)}
+      >
+        <PlayerAvatar id={e.avatar} name={e.tag} className="ptour__pafav" size={26} />
+        <span>
+          <b>{e.tag || e.wallet}</b>
+          {e.wallet === p.wallet ? ' · you' : ''}
+          <small>{place(board.rankOf(e.wallet))}</small>
+        </span>
+      </button>
+    )
+  }
+
+  return (
+    <div ref={top} className="ptour__paf">
+      <div className="ptour__pafhead">
+        <button
+          type="button"
+          className="ptour__pill"
+          onClick={() => (mode === 'players' && who ? setWho(null) : onBack())}
+        >
+          ‹ {mode === 'players' && who ? 'Everyone' : 'Results'}
+        </button>
+        <div>
+          <h2>Every fight</h2>
+          <small>
+            {formatNumber(Number(p.stage?.player_count ?? board.players))} players · {board.rounds} rounds
+          </small>
+        </div>
+      </div>
+
+      <div className="ptour__runsw" role="tablist">
+        <button
+          type="button"
+          role="tab"
+          aria-selected={mode === 'players'}
+          className={mode === 'players' ? 'is-on is-champ' : ''}
+          onClick={() => {
+            setMode('players')
+            setWho(null)
+          }}
+        >
+          Players
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={mode === 'rounds'}
+          className={mode === 'rounds' ? 'is-on is-champ' : ''}
+          onClick={() => setMode('rounds')}
+        >
+          Rounds
+        </button>
+      </div>
+
+      {mode === 'rounds' ? (
+        <>
+          <div className="ptour__pafjump">
+            {order.map((r) => (
+              <button
+                key={r}
+                type="button"
+                onClick={() => sections.current[r]?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+              >
+                {board.name(r, true)}
+              </button>
+            ))}
+          </div>
+          {order.map((r) => {
+            const rows = p.history[r] ?? []
+            const s = mine[r]
             return (
-              <div key={s.round} className={`ptour__sr is-${s.kind}`}>
-                <span className="ptour__srring">
-                  {fought ? (
-                    <PlayerAvatar id={s.opp.avatar} name={s.opp.tag} className="ptour__srav" size={38} />
-                  ) : s.kind === 'pass' ? (
-                    'PASS'
-                  ) : null}
-                </span>
-                <span className="ptour__srwho">
+              <section
+                key={r}
+                ref={(el) => {
+                  sections.current[r] = el
+                }}
+                className="ptour__pafsec"
+              >
+                <div className="ptour__pafstick">
+                  <b>{board.name(r)}</b>
                   <small>
-                    {board.name(s.round)}
-                    {fought ? ` · ${timeOf(chainTime(s.m.play_time))}` : ''}
+                    {rows.length} fight{rows.length === 1 ? '' : 's'}
+                    {s?.kind === 'win' ? ' · you won' : s?.kind === 'loss' ? ' · you lost' : s?.kind === 'pass' ? ' · your pass' : ''}
                   </small>
-                  <b>{fought ? s.opp.tag || s.opp.wallet : s.kind === 'pass' ? 'Free pass' : 'Not reached'}</b>
-                </span>
-                <em className="mono">
-                  {s.kind === 'win' ? 'Won' : s.kind === 'loss' ? 'Lost' : s.kind === 'pass' ? '+10' : ''}
-                </em>
-                {fought ? (
-                  <button
-                    type="button"
-                    className="ptour__srplay"
-                    aria-label={`Watch the ${board.name(s.round)} against ${s.opp.tag || s.opp.wallet}`}
-                    onClick={() => onWatch(s.m, s.round)}
-                  />
-                ) : (
-                  <span />
-                )}
-              </div>
+                </div>
+                {rows.map((m) => (
+                  <div
+                    key={m.index}
+                    className={`ptour__pafx${isIn(m, p.wallet) ? ' is-me' : champion && isIn(m, champion.wallet) ? ' is-champ' : ''}`}
+                  >
+                    {side(m, 1)}
+                    <i>VS</i>
+                    {side(m, 2)}
+                    <button
+                      type="button"
+                      className="ptour__srplay"
+                      aria-label={`Watch ${m.gamertag_player1 || m.wallet_player1} against ${m.gamertag_player2 || m.wallet_player2}`}
+                      onClick={() => p.onWatch(m, r)}
+                    />
+                  </div>
+                ))}
+              </section>
             )
           })}
-        </section>
+        </>
+      ) : shown ? (
+        <>
+          <section className="ptour__pafwho">
+            <PlayerAvatar id={shown.avatar} name={shown.tag} className="ptour__ribbonav" size={44} />
+            <div>
+              <b>{shown.wallet === p.wallet ? 'Your road' : `${shown.tag || shown.wallet}'s road`}</b>
+              <small>
+                {place(board.rankOf(shown.wallet))} · {shown.points} pt{shown.points === 1 ? '' : 's'}
+              </small>
+            </div>
+          </section>
+          <RunStepper
+            board={board}
+            stops={roads.get(shown.wallet) ?? []}
+            gold={shown.wallet === champion?.wallet}
+            onWatch={p.onWatch}
+          />
+        </>
+      ) : (
+        <>
+          <input
+            className="ptour__pafsearch"
+            type="search"
+            placeholder="Find a player…"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
+          <section className="ptour__paflist">
+            {people.map((r) => (
+              <button
+                key={r.wallet}
+                type="button"
+                className={`ptour__pafpl${r.wallet === p.wallet ? ' is-me' : ''}${r.wallet === champion?.wallet ? ' is-champ' : ''}`}
+                onClick={() => setWho(r.wallet)}
+              >
+                <b className="mono">{place(board.rankOf(r.wallet))}</b>
+                <PlayerAvatar id={r.avatar} name={r.tag} className="ptour__pafav" size={30} />
+                <span>
+                  {r.tag || r.wallet}
+                  {r.wallet === p.wallet ? ' · you' : ''}
+                  <small>
+                    {r.points} pt{r.points === 1 ? '' : 's'}
+                  </small>
+                </span>
+                <span
+                  className="ptour__afmeter"
+                  style={{
+                    '--meter':
+                      r.wallet === champion?.wallet ? '#ffd979' : r.wallet === p.wallet ? '#00baff' : 'var(--teal)',
+                  } as React.CSSProperties}
+                >
+                  {(roads.get(r.wallet) ?? []).map((s, i) => (
+                    <i key={i} className={`is-${s.kind}`} />
+                  ))}
+                </span>
+              </button>
+            ))}
+            {!people.length && <p className="ptour__fine">Nobody by that name in this tournament.</p>}
+          </section>
+        </>
       )}
-    </>
+    </div>
   )
 }
 

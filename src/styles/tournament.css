@@ -8910,3 +8910,228 @@ button.ptour__rfplay {
   background: none;
   cursor: pointer;
 }
+
+/* ---------- phone: every fight, one long scroll ---------- */
+.ptour__paf {
+  display: grid;
+  gap: 10px;
+  scroll-margin-top: calc(var(--topbar-h, 0px) + 8px);
+}
+.ptour__pafhead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.ptour__pafhead h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 19px;
+  font-weight: 900;
+  color: #ffd979;
+}
+.ptour__pafhead small {
+  display: block;
+  font-size: 11.5px;
+  color: #8f9bb3;
+}
+.ptour__pafjump {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.ptour__pafjump::-webkit-scrollbar {
+  display: none;
+}
+.ptour__pafjump button {
+  flex: none;
+  padding: 7px 11px;
+  border: 0;
+  border-radius: 999px;
+  font-family: var(--font-display);
+  font-size: 10.5px;
+  font-weight: 800;
+  color: #c5cee0;
+  background: rgb(255 255 255 / 5%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 12%);
+  cursor: pointer;
+}
+.ptour__pafsec {
+  border-radius: 16px;
+  background: rgb(8 16 30 / 92%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 11%);
+  scroll-margin-top: calc(var(--topbar-h, 0px) + 8px);
+}
+/* The round's header stays in view while its fights scroll under it. */
+.ptour__pafstick {
+  position: sticky;
+  top: var(--topbar-h, 0px);
+  z-index: 2;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 16px 16px 0 0;
+  background: rgb(14 24 42 / 98%);
+  box-shadow: inset 0 -1px 0 rgb(255 255 255 / 8%);
+}
+.ptour__pafstick b {
+  font-family: var(--font-display);
+  font-size: 13px;
+  color: var(--white);
+}
+.ptour__pafstick small {
+  font-size: 11px;
+  color: #8f9bb3;
+}
+.ptour__pafx {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 20px minmax(0, 1fr) 30px;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 10px;
+  border-top: 1px solid rgb(255 255 255 / 6%);
+}
+.ptour__pafx.is-me {
+  background: rgb(0 186 255 / 9%);
+  box-shadow: inset 3px 0 0 var(--cyan);
+}
+.ptour__pafx.is-champ {
+  background: rgb(246 168 0 / 9%);
+  box-shadow: inset 3px 0 0 #ffd979;
+}
+.ptour__pafx:last-child {
+  border-radius: 0 0 16px 16px;
+}
+.ptour__pafx > i {
+  font-family: var(--font-display);
+  font-size: 9px;
+  font-style: italic;
+  font-weight: 900;
+  text-align: center;
+  color: #8f9bb3;
+}
+.ptour__pafside {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  text-align: left;
+  font-size: 12.5px;
+  color: var(--white);
+  background: none;
+  cursor: pointer;
+}
+.ptour__pafside.is-right {
+  flex-direction: row-reverse;
+  text-align: right;
+}
+.ptour__pafside > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ptour__pafside small {
+  display: block;
+  font-size: 9.5px;
+  color: #8f9bb3;
+}
+.ptour__pafside.is-lost {
+  opacity: 0.5;
+}
+.ptour__pafside.is-lost .ptour__pafav {
+  filter: grayscale(0.7);
+}
+.ptour__pafav {
+  width: 26px;
+  height: 26px;
+  flex: none;
+  border-radius: 50%;
+  object-fit: cover;
+}
+.ptour__pafsearch {
+  height: 42px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 12px;
+  font: inherit;
+  color: var(--white);
+  background: rgb(4 8 16 / 90%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 15%);
+}
+.ptour__pafsearch:focus {
+  outline: none;
+  box-shadow: inset 0 0 0 1.5px var(--cyan);
+}
+.ptour__paflist {
+  border-radius: 16px;
+  overflow: hidden;
+  background: rgb(8 16 30 / 92%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 11%);
+}
+.ptour__pafpl {
+  display: grid;
+  grid-template-columns: 40px 30px minmax(0, 1fr) 62px;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  padding: 8px 12px;
+  border: 0;
+  border-top: 1px solid rgb(255 255 255 / 6%);
+  text-align: left;
+  font-size: 13px;
+  color: var(--white);
+  background: none;
+  cursor: pointer;
+}
+.ptour__pafpl:first-child {
+  border-top: 0;
+}
+.ptour__pafpl > b {
+  font-size: 10.5px;
+}
+.ptour__pafpl > span:nth-of-type(1) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ptour__pafpl small {
+  display: block;
+  font-size: 10.5px;
+  color: #8f9bb3;
+}
+.ptour__pafpl .ptour__pafav {
+  width: 30px;
+  height: 30px;
+}
+.ptour__pafpl.is-me {
+  background: rgb(0 186 255 / 10%);
+  box-shadow: inset 3px 0 0 var(--cyan);
+}
+.ptour__pafpl.is-champ > span:nth-of-type(1) {
+  color: #ffd979;
+}
+.ptour__pafwho {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: rgb(8 16 30 / 92%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 11%);
+}
+.ptour__pafwho b {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 900;
+  color: var(--white);
+}
+.ptour__pafwho small {
+  font-size: 12px;
+  color: #8f9bb3;
+}
