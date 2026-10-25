@@ -5,20 +5,22 @@ import type { RosterFighter } from '@/dungeon/types'
 import type { MarketConfig } from '@/market/queries'
 
 /**
- * The sell tab: choose on the page, agree the terms in a dialog.
+ * The sell tab on a desktop: the roster on the left, the fighter being priced
+ * in full in the middle, the terms beside it.
  *
- * The listing form used to stand under a grid of every sellable fighter,
- * which on a real roster put the price box most of a screen below the
- * fighter being priced. What is pinned here is that the way into the terms
- * rides above the grid and only works once there is something to sell, that
- * the terms are not on the page until they are asked for, and that the
- * keep-if-nobody-bids flag — a second decision about a fighter the market
- * has already refused once — is not made on the seller's behalf.
+ * What is pinned here is that the terms are always for the fighter on show —
+ * the first one until another is picked, and exactly the one picked after —
+ * that the price cannot be stepped under the market's minimum, and that the
+ * keep-if-nobody-bids flag starts ticked and goes through as the seller
+ * leaves it.
  */
 
 let id = 0
-const fighter = (over: Partial<RosterFighter> = {}): RosterFighter =>
-  ({
+/* The stats carry the class, race and element too, as a roster's do: the
+   rows and the fighter in full are drawn from them. */
+const fighter = (over: Partial<RosterFighter> = {}): RosterFighter => {
+  const classname = over.classname ?? 'Hunter'
+  return {
     fighter_id: ++id,
     owner: 'me.wam',
     classname: 'Hunter',
@@ -30,9 +32,20 @@ const fighter = (over: Partial<RosterFighter> = {}): RosterFighter =>
     use_type: '',
     creation_date: '2025-01-01T00:00:00',
     next_payday: '2999-01-01T00:00:00',
-    stats: { level: 12, health_min: 400, health_max: 600, damage_min: 90, damage_max: 130 },
+    ascension_level: 0,
+    stats: {
+      classname,
+      racename: 'elgem',
+      element: 'nature',
+      level: 12,
+      health_min: 400,
+      health_max: 600,
+      damage_min: 90,
+      damage_max: 130,
+    },
     ...over,
-  }) as unknown as RosterFighter
+  } as unknown as RosterFighter
+}
 
 const CONFIG: MarketConfig = {
   index: 0,
@@ -64,94 +77,83 @@ const draw = (sellable: RosterFighter[], onList: (...a: never[]) => void = () =>
     />,
   )
 
-const bar = (c: HTMLElement) => c.querySelector('.selltab__bar') as HTMLElement
-const sellBtn = (c: HTMLElement) =>
-  [...bar(c).querySelectorAll('button')].find((b) => b.textContent === 'Sell') as HTMLButtonElement
-
-/* By name, never by position: the grid draws `applyFilter`'s order, not the
+/* By name, never by position: the list draws `applyFilter`'s order, not the
    order the fixtures were written in. */
-const tile = (c: HTMLElement, classname: string) =>
-  [...c.querySelectorAll('.sellpick__one')].find((t) =>
-    t.textContent?.includes(classname),
-  ) as HTMLElement
+const row = (c: HTMLElement, classname: string) =>
+  [...c.querySelectorAll('.mdesk .mrow')].find((r) =>
+    r.querySelector('b')?.textContent === classname,
+  )?.querySelector('.mrow__hit') as HTMLElement
+const shown = (c: HTMLElement) => c.querySelector('.mfighter__name')?.textContent
+const listBtn = (c: HTMLElement) => c.querySelector('.mdeal .btn--primary') as HTMLButtonElement
+const keepBox = (c: HTMLElement) => c.querySelector('.mdeal .msell__keep input') as HTMLInputElement
 
 afterEach(cleanup)
 
 describe('the sell tab', () => {
-  it('waits for a fighter before it will sell one', () => {
-    const { container, getByText } = draw([fighter(), fighter()])
-    expect(sellBtn(container).disabled).toBe(true)
-    getByText('Pick a fighter below to sell it.')
-    /* Nothing follows you down the page while it can do nothing. */
-    expect(bar(container).className).not.toContain('selltab__bar--pinned')
-    expect(container.querySelector('.sheet')).toBeNull()
+  it('shows a fighter and its terms from the start', () => {
+    const { container } = draw([fighter(), fighter()])
+    expect(shown(container)).toBe('Hunter')
+    expect(listBtn(container).disabled).toBe(false)
+    expect(listBtn(container).textContent).toContain('List for 10')
   })
 
-  it('pins the bar to the fighter that was picked', () => {
+  it('shows the fighter that was picked', () => {
     const { container } = draw([fighter(), fighter({ classname: 'Juggernaut' })])
-    fireEvent.click(tile(container, 'Juggernaut'))
+    fireEvent.click(row(container, 'Juggernaut'))
 
-    expect(bar(container).className).toContain('selltab__bar--pinned')
-    expect(bar(container).textContent).toContain('Juggernaut')
-    expect(sellBtn(container).disabled).toBe(false)
+    expect(shown(container)).toBe('Juggernaut')
+    expect(container.querySelector('.mdesk .mrow.is-open b')?.textContent).toBe('Juggernaut')
   })
 
-  it('keeps the terms off the page until they are asked for', () => {
-    const { container, queryByText, getByText } = draw([fighter()])
-    expect(queryByText(/Starting bid/)).toBeNull()
+  it('will not step the price under the minimum start', () => {
+    const { container } = draw([fighter()])
+    const less = container.querySelector('.mdeal .mstep__btn') as HTMLButtonElement
+    expect(less.disabled).toBe(true)
 
-    fireEvent.click(tile(container, 'Hunter'))
-    fireEvent.click(sellBtn(container))
-
-    expect(container.querySelector('.sheet')).not.toBeNull()
-    getByText(/Starting bid/)
-    getByText(/List for 1 gems/)
+    const quick = [...container.querySelectorAll('.mdeal .msell__quick button')]
+    fireEvent.click(quick.find((b) => b.textContent === '25') as HTMLElement)
+    expect(listBtn(container).textContent).toContain('List for 25')
+    expect(less.disabled).toBe(false)
   })
 
   /*
-     Off unless the seller says so. It turns an auction nobody bid on into a
-     fixed-price offer rather than handing the fighter back, which is not a
-     decision to make for them because a box happened to be ticked.
+     On unless the seller says otherwise: an unsold fighter staying up at
+     the price its seller already chose is the outcome most of them want,
+     and the switch is right there to turn off.
   */
   it('starts with the keep-if-nobody-bids flag ticked', () => {
     const { container } = draw([fighter()])
-    fireEvent.click(tile(container, 'Hunter'))
-    fireEvent.click(sellBtn(container))
-
-    const box = container.querySelector('.checkline input') as HTMLInputElement
-    expect(box.checked).toBe(true)
+    expect(keepBox(container).checked).toBe(true)
   })
 
   it('carries the flag through to the listing when it is unticked', () => {
     const calls: unknown[][] = []
     const { container } = draw([fighter()], ((...a: unknown[]) => calls.push(a)) as never)
 
-    fireEvent.click(tile(container, 'Hunter'))
-    fireEvent.click(sellBtn(container))
-    fireEvent.click(container.querySelector('.checkline input') as HTMLElement)
-    fireEvent.click(container.querySelector('.sheet .btn--primary') as HTMLElement)
+    fireEvent.click(keepBox(container))
+    fireEvent.click(listBtn(container))
 
     expect(calls[0][2]).toBe(false)
   })
 
-  it('lists the fighter the bar was showing', () => {
+  it('lists the fighter on show', () => {
     const wanted = fighter({ classname: 'Arcanist' })
     const calls: unknown[][] = []
     const { container } = draw([fighter(), wanted], ((...a: unknown[]) =>
       calls.push(a)) as never)
 
-    fireEvent.click(tile(container, 'Arcanist'))
-    fireEvent.click(sellBtn(container))
-    fireEvent.click(container.querySelector('.sheet .btn--primary') as HTMLElement)
+    fireEvent.click(row(container, 'Arcanist'))
+    fireEvent.click(listBtn(container))
 
     expect(calls).toHaveLength(1)
     expect(calls[0][0]).toBe(wanted.fighter_id)
+    expect(calls[0][1]).toBe(10)
     expect(calls[0][2]).toBe(true)
   })
 
   it('says so plainly when there is nothing to sell', () => {
     const { container, getByText } = draw([])
     getByText(/None of your fighters can be listed right now/)
-    expect(container.querySelector('.selltab__bar')).toBeNull()
+    expect(container.querySelector('.mdesk')).toBeNull()
   })
 })

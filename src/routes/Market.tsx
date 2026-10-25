@@ -1124,7 +1124,9 @@ function DeskBoard<T>({
 
   /* The picked row kept in sight as the keys walk past the fold. */
   useEffect(() => {
-    box.current?.querySelector('.mrow.is-open')?.scrollIntoView({ block: 'nearest' })
+    const row = box.current?.querySelector('.mrow.is-open')
+    /* Absent where there is no layout to scroll, as in the tests' DOM. */
+    if (typeof row?.scrollIntoView === 'function') row.scrollIntoView({ block: 'nearest' })
   }, [picked])
 
   const onKey = (e: React.KeyboardEvent) => {
@@ -1986,8 +1988,6 @@ export function SellTab({
 
   useEffect(() => setPrice(minStart), [minStart])
 
-  const picked = sellable.find((f) => f.fighter_id === pickedId) ?? null
-  const gate = canList(picked, price, player!, config)
   const hours = Math.round(Number(config?.standard_duration_minutes ?? 0) / 60)
 
   /*
@@ -2017,6 +2017,9 @@ export function SellTab({
      phone adds Details beside List; the desktop is already showing them.
   */
   const terms = (f: RosterFighter, details?: () => void) => {
+    /* Asked of the fighter these terms are for: on a desktop that is the
+       one on show, which is the first before anything is clicked. */
+    const gate = canList(f, price, player!, config)
     const list = (
       <button
         type="button"
