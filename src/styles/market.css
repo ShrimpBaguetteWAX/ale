@@ -1202,7 +1202,9 @@
   }
   .mrow__hit {
     display: grid;
-    grid-template-columns: 56px minmax(0, 1fr) auto;
+    /* The price column a fixed width too, so the line of grades starts in
+       the same place on every row whatever the price. */
+    grid-template-columns: 56px minmax(0, 1fr) 64px;
     align-items: center;
     gap: 10px;
     width: 100%;
@@ -1227,26 +1229,42 @@
     height: 100%;
     object-fit: cover;
   }
-  .mrow__level,
-  .mrow__asc {
+  /* Level, and its gold half when the fighter is ascended. */
+  .mrow__level {
     position: absolute;
-    padding: 1px 5px;
+    left: 3px;
+    bottom: 3px;
+    display: inline-flex;
+    overflow: hidden;
     border-radius: 5px;
     font-family: var(--font-display);
     font-size: 9px;
     font-weight: 800;
+    line-height: 1.5;
   }
-  .mrow__level {
-    left: 3px;
-    bottom: 3px;
+  .mrow__level span {
+    padding: 0 4px;
     background: rgb(0 0 0 / 70%);
   }
-  .mrow__asc {
-    top: 3px;
-    right: 3px;
-    font-size: 8px;
+  .mrow__level em {
+    padding: 0 4px;
+    font-style: normal;
     color: #2a1a00;
-    background: #ffd979;
+    background: linear-gradient(180deg, #ffe08a, #f6a800);
+  }
+  .mrow__skull {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    display: grid;
+    place-items: center;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    font-size: 11px;
+    line-height: 1;
+    background: rgb(20 4 8 / 85%);
+    box-shadow: inset 0 0 0 1px rgb(255 90 106 / 70%);
   }
   .mrow__who {
     min-width: 0;
@@ -1271,18 +1289,86 @@
     text-transform: capitalize;
     white-space: nowrap;
   }
-  .mrow__grades {
-    display: inline-flex;
-    gap: 2px;
+  /* A stat's icon in white, then its grade: only the grade is in colour. */
+  .mrow__who small > img {
+    flex: none;
   }
-  .mrow__grades img {
-    width: 12px;
-    height: 12px;
-  }
-  .mrow__note {
+  .mrow__race {
+    flex: none;
+    width: 60px;
     overflow: hidden;
     text-overflow: ellipsis;
-    text-transform: none;
+  }
+  .mrow__grades {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 3px;
+  }
+  .mrow__grade {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+  }
+  /* Each icon in a box of the same width, so the arrows line up too. */
+  .mrow__staticon {
+    box-sizing: content-box;
+    width: 12px;
+    object-fit: contain;
+  }
+  .mrow__staticon {
+    height: 11px;
+    filter: brightness(0) invert(1);
+    opacity: 0.85;
+  }
+  /* The arrows are 16 wide and 7 to 20 tall: a fixed width, their own
+     height, centred in a box of their tallest, so none is squashed. */
+  .mrow__arrow {
+    display: block;
+    width: 11px;
+    height: auto;
+    max-height: 14px;
+    object-fit: contain;
+  }
+  i.mrow__arrow {
+    height: 1px;
+  }
+  .mrow__abilities {
+    display: flex;
+    gap: 3px;
+  }
+  .mrow__ab {
+    display: inline-grid;
+    place-items: center;
+    min-width: 15px;
+    height: 15px;
+    padding: 0 3px;
+    border-radius: 4px;
+    font-family: var(--font-display);
+    font-size: 8.5px;
+    font-weight: 900;
+    color: #08101e;
+    background: var(--ab);
+  }
+  .mrow__ab.is-locked {
+    color: var(--ab);
+    background: none;
+    box-shadow: inset 0 0 0 1px var(--ab);
+  }
+  .mrow__ab.is-plain {
+    --ab: rgb(255 255 255 / 60%);
+    color: var(--white);
+    background: rgb(255 255 255 / 18%);
+  }
+  .mrow__ab.is-plain.is-locked {
+    background: none;
+  }
+  .mrow__note {
+    min-width: 0;
+    overflow: hidden;
+    font-size: 11.5px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
   .mrow__lead {
     color: var(--teal);

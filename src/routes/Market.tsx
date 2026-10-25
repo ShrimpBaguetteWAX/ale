@@ -52,6 +52,7 @@ import {
   type Detail,
 } from '@/fight/setup'
 import {
+  ABILITY_RARITY_COLOR,
   GRADE_ICON,
   GRADE_LABEL,
   STAT_LABEL,
@@ -72,6 +73,7 @@ import {
   type StatGrade,
 } from '@/tavern/fighterStats'
 import { addAuction, bidAuction, buyOffer, cancelAuction } from '@/wharf/actions'
+import { SACRIFICE_ABILITY } from '@/ascension/rules'
 import { asset } from '@/assets'
 
 /**
@@ -118,6 +120,8 @@ const READOUTS: [Readout, string][] = [
 
 /** The five banded stats, in the order the fighter panel uses. */
 const PRIMARY_STATS = ['damage', 'health', 'taunt', 'attackspeed', 'initiative'] as const
+/** The phone row's grades: the primary figures that have one. */
+const ROW_GRADES = ['damage', 'health', 'attackspeed', 'initiative'] as const
 
 const RESISTANCES: [string, string][] = [
   ['res_fire', 'Fire'],
@@ -733,10 +737,20 @@ function ListingRow({
 }) {
   const f = listing.fighter
   const raw = f as unknown as Record<string, number>
-  /* The first three graded figures: enough to tell a strong roll at a glance. */
-  const grades = PRIMARY_STATS.map((field) => gradeOfStat(raw, field, template))
-    .filter((g): g is StatGrade => !!g)
-    .slice(0, 3)
+  /*
+     The four graded figures, each behind its stat's icon so an arrow says
+     which number it grades: damage, health, cooldown, windup. Taunt is a role
+     rather than a quality and carries no grade.
+  */
+  const grades = ROW_GRADES.map((field) => ({ field, grade: gradeOfStat(raw, field, template) }))
+  /*
+     A tag an ability, in its rarity's colour, the locked one hollow; and
+     Sacrifice, which has no rarity and is the one ability a buyer may be
+     shopping for (it feeds an ascension), as a skull on the portrait.
+  */
+  const abilities = f.abilities ?? []
+  const sacrifice = abilities.some((a) => String(a.ability) === SACRIFICE_ABILITY)
+  const tagged = abilities.filter((a) => String(a.ability) !== SACRIFICE_ABILITY)
   return (
     <div className={`mrow${open ? ' is-open' : ''}`}>
       <button type="button" className="mrow__hit" onClick={onToggle} aria-expanded={open}>
@@ -750,22 +764,58 @@ function ListingRow({
               e.currentTarget.src = fighterArtFallback()
             }}
           />
-          <span className="mrow__level">L{f.level}</span>
-          {listing.ascension_level > 0 && <span className="mrow__asc">Asc {listing.ascension_level}</span>}
+          {/* Level and ascension in one badge, the way a fighter is described. */}
+          <span className="mrow__level">
+            <span>L{f.level}</span>
+            {listing.ascension_level > 0 && (
+              <em title={`Ascended ${listing.ascension_level} time${listing.ascension_level === 1 ? '' : 's'}`}>
+                ✦{listing.ascension_level}
+              </em>
+            )}
+          </span>
+          {sacrifice && (
+            <span className="mrow__skull" title="Has the Sacrifice ability">
+              ☠
+            </span>
+          )}
         </span>
         <span className="mrow__who">
           <b>{f.classname}</b>
+          {/*
+            The grades on a line of their own, straight under the name, so the
+            same stat stands in the same place on every row and the rows can
+            be compared down the list.
+          */}
+          <span className="mrow__grades">
+            {grades.map(({ field, grade }) => (
+              <span key={field} className="mrow__grade" title={`${STAT_LABEL[field] ?? field}${grade ? `: ${GRADE_LABEL[grade]}` : ''}`}>
+                <img className="mrow__staticon" src={statIcon(field)} alt="" />
+                {grade ? <img className="mrow__arrow" src={GRADE_ICON[grade]} alt="" /> : <i className="mrow__arrow" />}
+              </span>
+            ))}
+          </span>
           <small>
             <img src={asset(`/assets/icons/elements/${f.element}.png`)} alt="" width={14} height={14} />
-            {f.racename}
+            {/* A fixed slot, so the ability tags start in the same place too. */}
+            <span className="mrow__race">{f.racename}</span>
             {note ? (
-              <span className="mrow__note">· {note}</span>
+              <span className="mrow__note">{note}</span>
             ) : (
-              grades.length > 0 && (
-                <span className="mrow__grades">
-                  {grades.map((g, i) => (
-                    <img key={i} src={GRADE_ICON[g]} alt="" title={GRADE_LABEL[g]} />
-                  ))}
+              tagged.length > 0 && (
+                <span className="mrow__abilities">
+                  {tagged.map((a, i) => {
+                    const rarity = abilityRarity(a.displayname)
+                    return (
+                      <span
+                        key={`${a.ability}-${i}`}
+                        className={`mrow__ab${a.locked ? ' is-locked' : ''}${rarity ? '' : ' is-plain'}`}
+                        style={{ '--ab': rarity ? ABILITY_RARITY_COLOR[rarity] : undefined } as React.CSSProperties}
+                        title={`${abilityName(a.displayname)}${rarity ? ` · ${rarity}` : ''}${a.locked ? ' · unlocks on ascension' : ''}`}
+                      >
+                        {rarity ? rarity.charAt(0).toUpperCase() : '·'}
+                      </span>
+                    )
+                  })}
                 </span>
               )
             )}
