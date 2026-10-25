@@ -3,7 +3,6 @@ import type { Player } from '@/chain/types'
 import type { PoolEntry } from '@/pools/rules'
 import { asset } from '@/assets'
 import { formatNumber } from '@/format'
-import { PlayerAvatar } from '@/components/PlayerAvatar'
 import { Loading } from '@/components/Loading'
 import {
   metersFor,
@@ -81,12 +80,6 @@ export function DeskBriefing({
         <div className="dbrief__who">
           <h1 className="dbrief__title">Briefing</h1>
           <p className="dbrief__hello">
-            <PlayerAvatar
-              id={Number(player.active_avatar) || undefined}
-              name={name}
-              className="dbrief__avatar"
-              size={28}
-            />
             <span className="dbrief__name">
               {veteran ? 'Welcome back' : 'Welcome'}, {name}
             </span>

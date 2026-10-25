@@ -582,13 +582,6 @@
   font-size: var(--fs-sm);
   color: var(--text-faint);
 }
-.dbrief__avatar {
-  flex: none;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  box-shadow: 0 0 0 1.5px var(--cyan);
-}
 .dbrief__name {
   font-weight: var(--fw-bold);
   color: var(--white);
