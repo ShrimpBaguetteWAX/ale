@@ -3050,10 +3050,6 @@ function RoadResults({ p, champion, runnerUp, semis, final, paid, reached, round
                   Watch the final
                 </button>
               )}
-              <button type="button" className="ptour__pill ptour__center" onClick={p.onHof}>
-                <img src={TROPHY} alt="" />
-                Hall of Fame
-              </button>
             </div>,
             'side',
           ],
