@@ -175,6 +175,55 @@ export function buyShopItemWithWax(
 }
 
 /**
+ * Buy one Alien Worlds card on AtomicMarket, through `shop.ale`.
+ *
+ * Three actions in one transaction, so they stand or fall together:
+ *
+ * 1. `assertsale` — the sale still holds exactly this card at exactly this
+ *    price, settled in WAX. If the seller relisted, repriced or it sold,
+ *    this fails and so does everything after it: nothing is spent.
+ * 2. a transfer of that same price to `atomicmarket` as a deposit — the
+ *    listing's own figure, never a rounded or padded one.
+ * 3. `purchasesale` with `shop.ale` as the taker marketplace, which spends
+ *    the deposit. The marketplace's share comes out of the seller's
+ *    proceeds, so the buyer pays the listed price and nothing on top.
+ */
+export function buyMarketSale(
+  session: Session,
+  sale: { saleId: string; assetId: string; price: string },
+) {
+  const buyer = String(session.actor)
+  const actions: ActionInput[] = [
+    {
+      account: CONTRACTS.atomicmarket,
+      name: 'assertsale',
+      data: {
+        sale_id: sale.saleId,
+        asset_ids_to_assert: [sale.assetId],
+        listing_price_to_assert: sale.price,
+        settlement_symbol_to_assert: '8,WAX',
+      },
+    },
+    {
+      account: CONTRACTS.token,
+      name: 'transfer',
+      data: { from: buyer, to: CONTRACTS.atomicmarket, quantity: sale.price, memo: 'deposit' },
+    },
+    {
+      account: CONTRACTS.atomicmarket,
+      name: 'purchasesale',
+      data: {
+        buyer,
+        sale_id: sale.saleId,
+        intended_delphi_median: 0,
+        taker_marketplace: CONTRACTS.shop,
+      },
+    },
+  ]
+  return transact(session, actions)
+}
+
+/**
  * Enter a dungeon and fight it.
  *
  * `history_id` is chosen by the client before signing, because it is the only

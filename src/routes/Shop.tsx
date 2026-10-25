@@ -35,6 +35,7 @@ import { asset } from '@/assets'
 import { NUM_LOCALE } from '@/format'
 import { OutpostTab } from '@/outpost/OutpostTab'
 import { CurrencyGuide } from '@/shop/CurrencyGuide'
+import { MarketGuide, MarketTab } from '@/shop/MarketTab'
 import { usePhone } from '@/components/usePhone'
 
 const EMPTY_COOLDOWNS: ShopCooldown[] = []
@@ -74,10 +75,11 @@ export default function Shop() {
      section they need — the CPU tab links here for a Legend pass. Anything
      unrecognised falls back to the first tab.
    */
+  const phone = usePhone()
+  /* The NFT Market is a desktop's for now; a phone falls back to Gems. */
+  const tabs = phone ? SHOP_CATEGORIES.filter((c) => c.key !== 'market') : SHOP_CATEGORIES
   const [params, setParams] = useSearchParams()
-  const category =
-    SHOP_CATEGORIES.find((c) => c.key === params.get('c'))?.key ??
-    SHOP_CATEGORIES[0].key
+  const category = tabs.find((c) => c.key === params.get('c'))?.key ?? tabs[0].key
   const setCategory = (key: string) =>
     setParams(key === SHOP_CATEGORIES[0].key ? {} : { c: key }, { replace: true })
   const [confirming, setConfirming] = useState<ShopItem | null>(null)
@@ -143,8 +145,6 @@ export default function Shop() {
     )
   }
 
-  const phone = usePhone()
-
   return (
     <div className="shop">
       <img className="shop__art" src={asset("/assets/background/bg-shop.png")} alt="" />
@@ -167,7 +167,7 @@ export default function Shop() {
         {error && <div className="alert alert--error">{error}</div>}
 
         <div className="tabs" role="tablist">
-          {SHOP_CATEGORIES.map((c) => (
+          {tabs.map((c) => (
             <button
               key={c.key}
               type="button"
@@ -195,7 +195,13 @@ export default function Shop() {
 
         <ShopBoard
           phone={phone}
-          guide={<CurrencyGuide player={player} wax={wax} category={category} />}
+          guide={
+            category === 'market' ? (
+              <MarketGuide wax={wax} />
+            ) : (
+              <CurrencyGuide player={player} wax={wax} category={category} />
+            )
+          }
         >
         {/*
           The Outpost is somebody else's shop and shares none of this
@@ -205,6 +211,8 @@ export default function Shop() {
         */}
         {category === 'outpost' ? (
           <OutpostTab />
+        ) : category === 'market' ? (
+          <MarketTab wax={wax} />
         ) : !items ? (
           <div className="packgrid">
             {Array.from({ length: 4 }, (_, i) => (

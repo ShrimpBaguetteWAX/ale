@@ -816,3 +816,118 @@ export async function fetchTemplateData(
   cacheSet(key, [...out.entries()], TTL.long, true)
   return out
 }
+
+/* ---------- AtomicMarket: the cheapest sale of each template ---------- */
+
+/** The three Alien Worlds schemas the Shop's NFT Market sells. */
+export type AwSchema = 'tool.worlds' | 'crew.worlds' | 'arms.worlds'
+
+/**
+ * One template's cheapest open sale.
+ *
+ * `price` is the listing's own figure as an asset string — "0.04790691 WAX",
+ * every decimal kept — because it is what the purchase asserts and what it
+ * transfers. A number would round, and a rounded price is either refused by
+ * `assertsale` or, worse, a different amount than the one shown.
+ */
+export interface MarketCard {
+  saleId: string
+  assetId: string
+  templateId: number
+  schema: AwSchema
+  name: string
+  rarity: string
+  shine: string
+  /** IPFS hash of the card art. */
+  img: string
+  price: string
+  /** The same price as a number, for sorting and comparing to a balance. */
+  wax: number
+}
+
+/**
+ * An integer amount in a token's smallest unit as an asset string:
+ * `waxAsset('4790691', 8)` → "0.04790691 WAX". String arithmetic only.
+ */
+export function waxAsset(amount: string, precision: number, symbol = 'WAX'): string {
+  const digits = String(amount).replace(/^0+(?=\d)/, '').padStart(precision + 1, '0')
+  return `${digits.slice(0, -precision)}.${digits.slice(-precision)} ${symbol}`
+}
+
+interface SaleRow {
+  sale_id: string
+  listing_price: string
+  listing_symbol: string
+  price?: { token_precision?: number }
+  assets?: {
+    asset_id: string
+    name?: string
+    template?: { template_id?: string; immutable_data?: Record<string, unknown> }
+    data?: Record<string, unknown>
+  }[]
+}
+
+/**
+ * The rows `sales/templates` answers with, as cards.
+ *
+ * Only sales listed in WAX and holding a single card are kept. A sale listed
+ * in another currency settles at whatever the oracle says at the moment it is
+ * bought, and a bundle is several cards at one price — neither has the one
+ * fixed WAX figure this tab promises to charge and nothing more.
+ */
+export function marketCardsFrom(rows: SaleRow[], schema: AwSchema): MarketCard[] {
+  const out: MarketCard[] = []
+  const seen = new Set<number>()
+  for (const s of rows) {
+    if (s.listing_symbol !== 'WAX' || s.assets?.length !== 1) continue
+    const a = s.assets[0]
+    const templateId = Number(a.template?.template_id)
+    if (!templateId || seen.has(templateId)) continue
+    seen.add(templateId)
+    const d = { ...(a.template?.immutable_data ?? {}), ...(a.data ?? {}) }
+    const price = waxAsset(s.listing_price, s.price?.token_precision ?? 8)
+    out.push({
+      saleId: String(s.sale_id),
+      assetId: String(a.asset_id),
+      templateId,
+      schema,
+      name: String(d.name ?? a.name ?? `#${templateId}`),
+      rarity: String(d.rarity ?? ''),
+      shine: String(d.shine ?? 'Stone'),
+      img: String(d.img ?? ''),
+      price,
+      wax: parseFloat(price),
+    })
+  }
+  return out
+}
+
+/**
+ * Every template of a schema that has a WAX sale open, at its cheapest.
+ *
+ * AtomicMarket's `sales/templates` already groups by template and keeps the
+ * lowest price, so a card appears once however many copies are listed.
+ */
+export async function fetchMarketCards(schema: AwSchema): Promise<MarketCard[]> {
+  const key = `awmarket:${schema}`
+  const hit = cacheGet<MarketCard[]>(key)
+  if (hit) return hit
+
+  const rows: SaleRow[] = []
+  for (let page = 1; page <= 5; page++) {
+    const res = await get<{ data: SaleRow[] }>(
+      `/atomicmarket/v1/sales/templates?collection_name=alien.worlds` +
+        `&schema_name=${schema}&symbol=WAX&state=1&sort=price&order=asc&limit=100&page=${page}`,
+    )
+    rows.push(...res.data)
+    if (res.data.length < 100) break
+  }
+  const cards = marketCardsFrom(rows, schema)
+  cacheSet(key, cards, TTL.short)
+  return cards
+}
+
+/** Forget a schema's sales, after a purchase took one of them. */
+export function forgetMarketCards(schema: AwSchema): void {
+  cacheDrop(`awmarket:${schema}`)
+}

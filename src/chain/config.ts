@@ -96,6 +96,8 @@ export const CONTRACTS = {
   ram: 'ram.ale',
   token: 'eosio.token',
   atomicassets: 'atomicassets',
+  /** AtomicMarket: the Shop's Market tab buys Alien Worlds cards here, through shop.ale. */
+  atomicmarket: 'atomicmarket',
   /** Alien Worlds TLM token contract. */
   alienWorlds: 'alien.worlds',
   /** Alien Worlds bag contract, read on signup to seed mining NFTs. */

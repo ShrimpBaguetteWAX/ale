@@ -68,6 +68,14 @@ export const SHOP_CATEGORIES: { key: string; label: string }[] = [
     key: 'outpost',
     label: 'AW Outpost',
   },
+  /*
+     Alien Worlds tools, crew and weapons on AtomicMarket, bought for WAX
+     through shop.ale. A desktop's for now.
+  */
+  {
+    key: 'market',
+    label: 'NFT Market',
+  },
 ]
 
 /**
