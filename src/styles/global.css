@@ -514,3 +514,60 @@ a:hover {
     display: none;
   }
 }
+
+/* ---------- the page loading ---------- */
+
+/*
+ * A thin cyan sweep along the top of the page area: across the window before
+ * the game has a frame, under the phone's top bar and beside the desktop's
+ * menu once it has one.
+ */
+.pageload {
+  position: fixed;
+  top: 0;
+  right: 0;
+  left: 0;
+  z-index: var(--z-sticky);
+  height: 3px;
+  overflow: hidden;
+  background: rgb(255 255 255 / 6%);
+  pointer-events: none;
+}
+.shell .pageload {
+  top: var(--topbar-h);
+}
+@media (min-width: 1024px) {
+  .shell .pageload {
+    left: var(--rail-w);
+  }
+}
+.pageload i {
+  position: absolute;
+  top: 0;
+  left: -30%;
+  width: 30%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+  animation: pageload-sweep 1.4s ease-in-out infinite;
+}
+@keyframes pageload-sweep {
+  to {
+    left: 100%;
+  }
+}
+/* Without motion: the bar stays put and breathes instead. */
+@media (prefers-reduced-motion: reduce) {
+  .pageload i {
+    left: 0;
+    width: 100%;
+    animation: pageload-breathe 2s ease-in-out infinite;
+  }
+}
+@keyframes pageload-breathe {
+  50% {
+    opacity: 0.35;
+  }
+}
+:root[data-fx='low'] .pageload i {
+  animation-duration: 2.4s;
+}
