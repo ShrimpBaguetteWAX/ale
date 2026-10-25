@@ -2360,12 +2360,18 @@ a.res {
   align-items: start;
   margin-bottom: var(--sp-4);
 }
+/* The full height of the board, so the list's box ends where the right
+   column does rather than wherever its last row happens to. */
 .dasc__list {
   grid-area: list;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
   gap: 10px;
   min-width: 0;
+}
+.dasc__list > .dasc__rows {
+  flex: 1;
 }
 /*
    The altar stays in view while a long list goes by: alone in the middle,
