@@ -501,9 +501,11 @@ function DeskLands({
   const stateOf = (land: OwnedLand) => (land.buildings[0] ? boostState(scoreOf(land), config) : 'ok')
   const count = (name: BuildingName) => lands.filter((l) => landBuilding(l) === name).length
   const inTab = tab === 'all' ? lands : lands.filter((l) => landBuilding(l) === tab)
-  const needs = inTab.filter((l) => l.buildings[0] && stateOf(l) !== 'ok')
+  /* Lowest boost first in each group: the one closest to dropping off is the one to see. */
+  const byBoost = (a: OwnedLand, b: OwnedLand) => scoreOf(a) - scoreOf(b)
+  const needs = inTab.filter((l) => l.buildings[0] && stateOf(l) !== 'ok').sort(byBoost)
   const empty = tab === 'all' ? inTab.filter((l) => !l.buildings[0]) : []
-  const fine = inTab.filter((l) => l.buildings[0] && stateOf(l) === 'ok')
+  const fine = inTab.filter((l) => l.buildings[0] && stateOf(l) === 'ok').sort(byBoost)
   const tabs: [PhoneTab, string][] = [
     ['all', `All ${lands.length}`],
     ...(['dungeon', 'arena', 'tavern'] as BuildingName[]).map(
