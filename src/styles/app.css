@@ -2239,8 +2239,11 @@ a.res {
 }
 .pasc__card {
   display: grid;
+  /* Icon, what it is, what it does, then the rest of the card's height for
+     the button — so Take sits at the foot of all three, level with each
+     other, however many lines the name above it took. */
+  grid-template-rows: auto auto auto 1fr;
   justify-items: center;
-  align-content: start;
   gap: 6px;
   padding: 14px 6px 10px;
   border-radius: 14px;
