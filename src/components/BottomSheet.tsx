@@ -8,22 +8,27 @@ import { useSwipeToClose } from '@/components/useSwipeToClose'
  * Escape, a tap on the shade, × or a swipe down close it.
  *
  * Styled by the `.rsheet` rules, in the quiet palette the phone screens use.
+ *
+ * `side` slides the same sheet in from the right instead, full height —
+ * a desktop's version of it, over a board that stays in view beside it.
  */
 export function BottomSheet({
   title,
   onClose,
   children,
   foot,
+  side = false,
 }: {
   title: string
   onClose: () => void
   children: ReactNode
   foot?: ReactNode
+  side?: boolean
 }) {
   const panel = useModal(onClose)
   const { grip } = useSwipeToClose(onClose, panel)
   return (
-    <div className="rsheet" role="dialog" aria-modal="true" aria-label={title} onClick={onClose}>
+    <div className={side ? 'rsheet rsheet--side' : 'rsheet'} role="dialog" aria-modal="true" aria-label={title} onClick={onClose}>
       <div className="rsheet__panel" ref={panel} onClick={(e) => e.stopPropagation()}>
         <div className="rsheet__head" {...grip}>
           <span className="rsheet__grip" aria-hidden="true" />

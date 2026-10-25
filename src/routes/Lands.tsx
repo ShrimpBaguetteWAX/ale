@@ -9,11 +9,14 @@ import {
   BUILDING_SRC,
   RANKED_SRC,
   buildingIcon,
-  boostGradient,
   boostRank,
   formatBoost,
   landThumbStyle,
   liveBoostScore,
+  PLANET_MAP_H,
+  PLANET_MAP_W,
+  PLANET_TILE,
+  planetMapSrc,
   rarityColor,
 } from '@/map/terrain'
 import { BUILDINGS, type BuildingName } from '@/lands/queries'
@@ -27,7 +30,6 @@ import {
   formatSpan,
   hoursToSmallerLook,
   type BoostState,
-  stepCosts,
   hasClaimable,
   incomeOf,
   totalIncome,
@@ -95,10 +97,6 @@ function parseBusy(raw: string | null): Busy {
 
 function tlm(raw: number): string {
   return formatDecimals(raw / 10_000, 1)
-}
-
-function shards(raw: number): string {
-  return formatDecimals(raw / 10, 1)
 }
 
 function credits(raw: number): string {
@@ -197,7 +195,6 @@ export default function Lands() {
   const data = useLands(account)
   const { lands, costs, discounts, config } = data
 
-  const [selectedKey, setSelectedKey] = useState<string | null>(null)
   const { busy: rawBusy, error, run } = useAction()
   const busy = parseBusy(rawBusy)
 
@@ -208,7 +205,6 @@ export default function Lands() {
     return () => clearInterval(id)
   }, [])
 
-  const selected = lands.find((l) => landKey(l) === selectedKey) ?? null
   const totals = useMemo(() => totalIncome(lands), [lands])
   const claimable = useMemo(() => claimAllTargets(lands), [lands])
 
@@ -326,17 +322,6 @@ export default function Lands() {
       <header className="lands__head">
         <h1 className="lands__title">My Lands</h1>
 
-        {lands.length > 0 && !phone && (
-          <button
-            type="button"
-            className="btn btn--primary lands__claimAll"
-            disabled={!session || busy !== null || claimable.length === 0}
-            onClick={() => void doClaimAll()}
-          >
-            {busy?.kind === 'claim-all' && <span className="spinner" />}
-            Claim All Buildings
-          </button>
-        )}
       </header>
 
       <ActionBanner error={error ?? data.error} />
@@ -372,352 +357,30 @@ export default function Lands() {
           onDestroy={doDestroy}
         />
       ) : (
-        <div className="lands__cols">
-          {/*
-            The column headings sit in the grid rather than inside the list,
-            so the side column can start on the same row as the first land
-            instead of a header's height above it.
-          */}
-          <div className="landlist__head">
-            <span>Land</span>
-            <span>Income since last claim</span>
-            <span>Buildings</span>
-            <span />
-          </div>
-
-          <div className="landlist">
-            {lands.map((land) => (
-              <LandRow
-                key={landKey(land)}
-                land={land}
-                config={config}
-                now={now}
-                selected={landKey(land) === selectedKey}
-                busy={busy}
-                canAct={!!session}
-                onSelect={() =>
-                  setSelectedKey((k) => (k === landKey(land) ? null : landKey(land)))
-                }
-                onClaim={() => void doClaim(land)}
-              />
-            ))}
-          </div>
-
-          <div className="lands__side">
-            {/*
-              The running totals sit at the head of the side column, stacked,
-              rather than in a band across the top of the screen — they belong
-              with the panel that acts on a land, not above the list you scan.
-              Credits and gems appear only when a land is actually holding
-              some; nothing on chain has ever paid either, so a permanent pair
-              of zeroes was just noise.
-            */}
-            <div className="lands__totals">
-              <Tally icon={asset("/assets/icons/tlm.svg")} label="TLM" value={tlm(totals.tlm)} />
-              {totals.credits > 0 && (
-                <Tally
-                  icon={asset("/assets/icons/credits.png")}
-                  label="Credits"
-                  value={formatNumber(totals.credits)}
-                />
-              )}
-              {totals.gems > 0 && (
-                <Tally
-                  icon={asset("/assets/icons/gems.png")}
-                  label="Gems"
-                  value={formatNumber(totals.gems)}
-                />
-              )}
-              {/*
-                Shards are shown plainly, not as a warning. They are ordinary
-                earnings, and they have already been settled — a fact worth
-                stating once, not an alarm to raise on every screen.
-              */}
-              {totals.shards > 0 && (
-                <Tally
-                  icon={asset("/assets/icons/shards.svg")}
-                  label="Shards, already paid out"
-                  value={shards(totals.shards)}
-                />
-              )}
-            </div>
-
-            <aside className="landside">
-            {selected ? (
-              <LandPanel
-                land={selected}
-                costs={costs}
-                discounts={discounts}
-                config={config}
-                now={now}
-                busy={busy}
-                credits={player.activestats.credits}
-                gems={player.activestats.gems}
-                canAct={!!session}
-                onBuild={(opt) => doBuild(selected, opt)}
-                onBoost={(building, target, cost) => doBoost(selected, building, target, cost)}
-                onDestroy={(building) => doDestroy(selected, building)}
-              />
-              ) : (
-                <div className="landside__empty">
-                  <span className="landside__bar">Select a Land</span>
-                  <p>Select a Land</p>
-                </div>
-              )}
-            </aside>
-          </div>
-        </div>
+        <DeskLands
+          lands={lands}
+          costs={costs}
+          discounts={discounts}
+          config={config}
+          now={now}
+          busy={busy}
+          credits={player.activestats.credits}
+          gems={player.activestats.gems}
+          canAct={!!session}
+          claimableCount={claimable.length}
+          totalTlm={totals.tlm}
+          onClaimAll={() => void doClaimAll()}
+          onClaim={(land) => void doClaim(land)}
+          onBuild={doBuild}
+          onBoost={doBoost}
+          onDestroy={doDestroy}
+        />
       )}
     </div>
   )
 }
 
 /* ---------- small pieces ---------- */
-
-function Tally({
-  icon,
-  label,
-  value,
-}: {
-  icon: string
-  label: string
-  value: string
-}) {
-  return (
-    <div className="tally">
-      <img src={icon} alt="" width={20} height={20} />
-      <strong>{value}</strong>
-      <span>{label}</span>
-    </div>
-  )
-}
-
-/* ---------- one land in the list ---------- */
-
-export function LandRow({
-  land,
-  config,
-  now,
-  selected,
-  busy,
-  canAct,
-  onSelect,
-  onClaim,
-}: {
-  land: OwnedLand
-  config?: LandsConfig
-  now: number
-  selected: boolean
-  busy: Busy
-  canAct: boolean
-  onSelect: () => void
-  onClaim: () => void
-}) {
-  const income = incomeOf(land.buildings)
-  const building = land.buildings[0]
-  const decay = Number(config?.boost_decay_per_hour ?? 0)
-  const key = landKey(land)
-  const working = busy !== null && 'key' in busy && busy.key === key
-
-  const score = building
-    ? liveBoostScore(
-        Number(building.boost_score ?? 0),
-        String(building.boost_score_update ?? ''),
-        decay,
-        now,
-      )
-    : 0
-  const percent = score / 10_000
-  /* The original's own three bands, on its own thresholds. */
-  const band = percent > 80 ? 'good' : percent > 50 ? 'fair' : 'poor'
-
-  return (
-    <article className={`landrow${selected ? ' landrow--selected' : ''}`}>
-      <button
-        type="button"
-        className="landrow__hit"
-        onClick={onSelect}
-        aria-pressed={selected}
-        aria-label={land.name}
-      />
-
-      <div className="landrow__land">
-        <span
-          className="landthumb"
-          style={{
-            ...landThumbStyle(land.planet, land.x, land.y, 56),
-            borderColor: rarityColor(land.rarity),
-          }}
-        />
-        <span className="landrow__ident">
-          <span className="landrow__name">
-            {land.name} ({land.x}:{land.y})
-          </span>
-          <span className="landrow__meta" style={{ color: rarityColor(land.rarity) }}>
-            {land.rarity || 'common'}
-          </span>
-        </span>
-      </div>
-
-      <div className="landrow__income">
-        <span className="coin">
-          <img src={asset("/assets/icons/tlm.svg")} alt="TLM" width={14} height={14} />
-          {tlm(income.tlm)}
-        </span>
-        {income.credits > 0 && (
-          <span className="coin">
-            <img src={asset("/assets/icons/credits.png")} alt="Credits" width={14} height={14} />
-            {formatNumber(income.credits)}
-          </span>
-        )}
-        {income.shards > 0 && (
-          <span className="coin" title="Not paid out when you claim">
-            <img src={asset("/assets/icons/shards.svg")} alt="Shards" width={14} height={14} />
-            {shards(income.shards)}
-          </span>
-        )}
-      </div>
-
-      <div className="landrow__building">
-        {building ? (
-          <>
-            <img
-              src={buildingIcon(String(building.building_name ?? ''))}
-              alt={String(building.building_name ?? '')}
-              title={String(building.building_name ?? '')}
-              width={30}
-              height={30}
-            />
-            <span className={`boostbar boostbar--${band}`}>
-              {/* Coloured by the figure rather than by which of three bands
-                  it falls in — see `boostGradient`. */}
-              <span
-                className="boostbar__fill"
-                style={{ width: `${percent}%`, background: boostGradient(percent) }}
-              />
-              <span className="boostbar__text">{formatBoost(percent)}</span>
-            </span>
-          </>
-        ) : (
-          <span className="faint">No Building</span>
-        )}
-      </div>
-
-      <div className="landrow__act">
-        <button
-          type="button"
-          className="btn btn--ghost btn--sm"
-          /* The label is the original's, but the action collects gems and
-             credits too — so it is enabled whenever anything is waiting,
-             rather than stranding those behind a zero TLM balance. */
-          disabled={!canAct || busy !== null || !hasClaimable(income)}
-          onClick={onClaim}
-        >
-          {working && busy?.kind === 'claim' && <span className="spinner" />}
-          Claim TLM
-        </button>
-      </div>
-    </article>
-  )
-}
-
-/* ---------- the selected land ---------- */
-
-export function LandPanel({
-  land,
-  costs,
-  discounts,
-  config,
-  now,
-  busy,
-  credits: playerCredits,
-  gems,
-  canAct,
-  onBuild,
-  onBoost,
-  onDestroy,
-}: {
-  land: OwnedLand
-  costs: Map<string, BuildingCost[]>
-  discounts: Map<string, number>
-  config?: LandsConfig
-  now: number
-  busy: Busy
-  credits: number
-  gems: number
-  canAct: boolean
-  onBuild: (opt: ReturnType<typeof buildOptions>[number]) => void
-  onBoost: (building: Building, target: number, cost: number) => void
-  onDestroy: (building: Building) => void
-}) {
-  const building = land.buildings[0]
-  const options = useMemo(
-    () => buildOptions(land, costs, discounts, BUILDINGS as readonly BuildingName[]),
-    [land, costs, discounts],
-  )
-
-  return (
-    <div className="landpanel">
-      <span className="landside__bar">
-        {land.name} ({land.x}:{land.y})
-      </span>
-
-      {building ? (
-        <BuildingPanel
-          land={land}
-          building={building}
-          config={config}
-          now={now}
-          busy={busy}
-          credits={playerCredits}
-          gems={gems}
-          canAct={canAct}
-          onBoost={onBoost}
-          onDestroy={onDestroy}
-        />
-      ) : (
-        <section className="buildmenu">
-          <h3 className="panel__title">Select a Building</h3>
-
-          {options.map((opt) => {
-            const tooPoor = opt.credits > playerCredits || opt.gems > gems
-            return (
-              <div className="buildopt" key={opt.building}>
-                <img src={buildingIcon(opt.building)} alt="" width={44} height={44} />
-                <div className="buildopt__body">
-                  <span className="buildopt__name">
-                    {buildingLabel(opt.building, costs)}
-                  </span>
-                  <span className="buildopt__note">
-                    {opt.blocked ?? BUILDING_BLURB[opt.building]}
-                  </span>
-                </div>
-                <button
-                  type="button"
-                  className="btn btn--primary btn--sm"
-                  disabled={!canAct || busy !== null || !!opt.blocked || tooPoor}
-                  onClick={() => onBuild(opt)}
-                  title={opt.blocked ?? undefined}
-                >
-                  Build {buildingLabel(opt.building, costs)}
-                  <span className={`cost${tooPoor ? ' cost--short' : ''}`}>
-                    {formatNumber(opt.credits)}
-                    <img
-                      src={asset("/assets/icons/credits.png")}
-                      alt="Credits"
-                      width={16}
-                      height={16}
-                    />
-                  </span>
-                </button>
-              </div>
-            )
-          })}
-        </section>
-      )}
-    </div>
-  )
-}
 
 /** The original's own descriptions, kept word for word. */
 const BUILDING_BLURB: Record<string, string> = {
@@ -729,224 +392,7 @@ const BUILDING_BLURB: Record<string, string> = {
     'Allows players to fight in the arena on your land - and you earn whenever a player wins this battle. A higher arena rating means higher rewards.',
 }
 
-/* ---------- boost and destroy ---------- */
-
-function BuildingPanel({
-  land,
-  building,
-  config,
-  now,
-  busy,
-  credits: playerCredits,
-  gems,
-  canAct,
-  onBoost,
-  onDestroy,
-}: {
-  land: OwnedLand
-  building: Building
-  config?: LandsConfig
-  now: number
-  busy: Busy
-  credits: number
-  gems: number
-  canAct: boolean
-  onBoost: (building: Building, target: number, cost: number) => void
-  onDestroy: (building: Building) => void
-}) {
-  const decay = Number(config?.boost_decay_per_hour ?? 0)
-  const current = liveBoostScore(
-    Number(building.boost_score ?? 0),
-    String(building.boost_score_update ?? ''),
-    decay,
-    now,
-  )
-  const currentPercent = current / 10_000
-  const name = String(building.building_name ?? '')
-
-  /*
-   * The slider opens one point above where the building already is: the
-   * contract rejects any target at or below the current boost, so opening on
-   * "no change" would be opening on an error.
-   */
-  const floor = Math.min(BOOST_MAX, (Math.round(current / 10_000) + 1) * 10_000)
-  const [target, setTarget] = useState(floor)
-  useEffect(() => {
-    setTarget(floor)
-  }, [floor])
-
-  const cost = boostCost(current, target, config)
-  const steps = stepCosts(current, target, config)
-  const income = incomeOf(land.buildings)
-  const destroyCost = Number(config?.delete_building_gems_cost ?? 0)
-  const [confirmDestroy, setConfirmDestroy] = useState(false)
-  const working = busy !== null && 'key' in busy && busy.key === landKey(land)
-
-  if (confirmDestroy) {
-    return (
-      <section className="destroybox">
-        <h3 className="panel__title">Confirm Destruction</h3>
-        <p className="destroybox__warn">
-          You are about to destroy one of your buildings. This cannot be
-          reversed. You will lose the building as well as the buildings current
-          rating. Only proceed if you are sure about your decision!
-        </p>
-        {income.shards > 0 && (
-          <p className="hint">
-            It also holds {shards(income.shards)} shards, which the contract
-            clears without paying out.
-          </p>
-        )}
-        <div className="destroybox__row">
-          <span>You will spend</span>
-          <span className={`cost${destroyCost > gems ? ' cost--short' : ''}`}>
-            {formatNumber(destroyCost)}
-            <img src={asset("/assets/icons/gems.png")} alt="Gems" width={16} height={16} />
-          </span>
-        </div>
-        <div className="qcard__confirmRow">
-          <button
-            type="button"
-            className="btn btn--ghost btn--sm"
-            onClick={() => setConfirmDestroy(false)}
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            className="btn btn--danger btn--sm"
-            disabled={!canAct || busy !== null || destroyCost > gems}
-            onClick={() => onDestroy(building)}
-          >
-            {working && busy?.kind === 'destroy' && <span className="spinner" />}
-            Pay and destroy now
-          </button>
-        </div>
-      </section>
-    )
-  }
-
-  return (
-    <>
-      <section className="boostbox">
-        <h3 className="panel__title">
-          <img src={buildingIcon(name)} alt="" width={22} height={22} />
-          Building Boost
-        </h3>
-        <p className="boostbox__lede">{BUILDING_BLURB[name.toLowerCase()]}</p>
-        <p className="boostbox__lede">
-          Boosting a building raises its perks, but usage and time reduce boost
-          levels. If boost drops below 1%, the building becomes unusable.
-        </p>
-
-        {/*
-          Boosting is priced as a geometric series, so the last points cost
-          many times the first. A slider with the running total beside it is
-          the only way to see that before spending.
-        */}
-        <label className="boostslider">
-          <span className="field__label">Raise to {formatBoost(target / 10_000)}</span>
-          <input
-            type="range"
-            min={floor}
-            max={BOOST_MAX}
-            step={10_000}
-            value={target}
-            onChange={(e) => setTarget(Number(e.target.value))}
-            disabled={current >= BOOST_MAX}
-          />
-        </label>
-
-        <dl className="boostbox__facts">
-          <div>
-            <dt>Total Cost</dt>
-            <dd>
-              {credits(cost)}
-              <img src={asset("/assets/icons/credits.png")} alt="Credits" width={14} height={14} />
-            </dd>
-          </div>
-          {/*
-            The rate for what is actually being bought, not for the first
-            step of it: each 0.1x costs three percent more than the one
-            below, so a long drag averages well above where it starts.
-          */}
-          <div
-            title={
-              steps.steps > 1
-                ? `The first 0.1x costs ${credits(steps.first)} and the last ${credits(steps.last)} — each step is dearer than the one below it.`
-                : undefined
-            }
-          >
-            <dt>{steps.steps > 1 ? `Average of ${steps.steps} steps` : 'Cost per 0.1x'}</dt>
-            <dd>
-              {credits(steps.average)}
-              <img src={asset("/assets/icons/credits.png")} alt="Credits" width={14} height={14} />
-            </dd>
-          </div>
-          <div>
-            <dt>Start Score</dt>
-            <dd>{formatBoost(currentPercent)}</dd>
-          </div>
-        </dl>
-
-        <button
-          type="button"
-          className="btn btn--primary landpanel__action"
-          disabled={
-            !canAct ||
-            busy !== null ||
-            current >= BOOST_MAX ||
-            target <= current ||
-            cost > playerCredits
-          }
-          onClick={() => onBoost(building, target, cost)}
-        >
-          {working && busy?.kind === 'boost' && <span className="spinner" />}
-          Boost
-          <span className={`cost${cost > playerCredits ? ' cost--short' : ''}`}>
-            {credits(cost)}
-            <img src={asset("/assets/icons/credits.png")} alt="Credits" width={16} height={16} />
-          </span>
-        </button>
-      </section>
-
-      <section className="landpanel__income">
-        <h3 className="panel__title">Income since last claim</h3>
-        <dl className="boostbox__facts">
-          <div>
-            <dt>TLM</dt>
-            <dd>{tlm(income.tlm)}</dd>
-          </div>
-          <div>
-            <dt>Credits</dt>
-            <dd>{formatNumber(income.credits)}</dd>
-          </div>
-          <div>
-            <dt>Gems</dt>
-            <dd>{formatNumber(income.gems)}</dd>
-          </div>
-        </dl>
-        {income.shards > 0 && (
-          <p className="hint">
-            This building also holds {shards(income.shards)} shards. Claiming
-            clears them without paying them out.
-          </p>
-        )}
-      </section>
-
-      <button
-        type="button"
-        className="btn btn--ghost landpanel__action"
-        disabled={!canAct || busy !== null}
-        onClick={() => setConfirmDestroy(true)}
-      >
-        Destroy Building
-      </button>
-    </>
-  )
-}
-
-/* ---------- a phone: the lands by building, each one in a sheet ---------- */
+/* ---------- the lands by building: tiles on a desktop, rows on a phone ---------- */
 
 type PhoneTab = 'all' | BuildingName
 
@@ -1011,6 +457,211 @@ function GemIcon() {
 }
 
 type BuildOption = ReturnType<typeof buildOptions>[number]
+
+/**
+ * My Lands on a desktop: the lands as the map draws them.
+ *
+ * The phone's page, given room: the ready-to-claim strip and the building
+ * switch across the top, then every land as its own map tile with its
+ * building on it and its boost in the corner. What needs a boost comes first —
+ * a building off the map or closed is earning nothing — then the empty lands
+ * waiting for a building, then the ones running fine. A tile opens the
+ * phone's land sheet from the right, over the tiles rather than in place of
+ * them, to claim, boost, destroy or build.
+ */
+function DeskLands({
+  lands,
+  costs,
+  discounts,
+  config,
+  now,
+  busy,
+  credits: playerCredits,
+  gems,
+  canAct,
+  claimableCount,
+  totalTlm,
+  onClaimAll,
+  onClaim,
+  onBuild,
+  onBoost,
+  onDestroy,
+}: Parameters<typeof PhoneLands>[0]) {
+  const [tab, setTab] = useState<PhoneTab>('all')
+  const [openKey, setOpenKey] = useState<string | null>(null)
+  const open = lands.find((l) => landKey(l) === openKey) ?? null
+  const decay = Number(config?.boost_decay_per_hour ?? 0)
+
+  const scoreOf = (land: OwnedLand) => {
+    const b = land.buildings[0]
+    return b
+      ? liveBoostScore(Number(b.boost_score ?? 0), String(b.boost_score_update ?? ''), decay, now)
+      : 0
+  }
+  const stateOf = (land: OwnedLand) => (land.buildings[0] ? boostState(scoreOf(land), config) : 'ok')
+  const count = (name: BuildingName) => lands.filter((l) => landBuilding(l) === name).length
+  const inTab = tab === 'all' ? lands : lands.filter((l) => landBuilding(l) === tab)
+  const needs = inTab.filter((l) => l.buildings[0] && stateOf(l) !== 'ok')
+  const empty = tab === 'all' ? inTab.filter((l) => !l.buildings[0]) : []
+  const fine = inTab.filter((l) => l.buildings[0] && stateOf(l) === 'ok')
+  const tabs: [PhoneTab, string][] = [
+    ['all', `All ${lands.length}`],
+    ...(['dungeon', 'arena', 'tavern'] as BuildingName[]).map(
+      (b) => [b, `${buildingLabel(b, costs)}s ${count(b)}`] as [PhoneTab, string],
+    ),
+  ]
+
+  const tile = (land: OwnedLand) => {
+    const building = land.buildings[0]
+    const name = landBuilding(land)
+    const score = scoreOf(land)
+    const state = stateOf(land)
+    const income = incomeOf(land.buildings)
+    return (
+      <button
+        type="button"
+        className={`dlands__tile${open === land ? ' is-open' : ''}`}
+        key={landKey(land)}
+        onClick={() => setOpenKey(landKey(land))}
+      >
+        <span
+          className="dlands__map"
+          style={{ ...landTileStyle(land.planet, land.x, land.y), borderColor: rarityColor(land.rarity) }}
+        >
+          {building ? (
+            <img
+              src={buildingArt(name, score, state === 'hidden' || state === 'closed')}
+              alt={buildingLabel(name, costs)}
+            />
+          ) : (
+            <span className="dlands__plot">Empty land</span>
+          )}
+          {building && state !== 'ok' && (
+            <span className={`dlands__badge is-${state}`}>{BOOST_BADGE[state]}</span>
+          )}
+          {building && (
+            <span className={`dlands__boost mono is-${state}`}>{stateLabel(score, state)}</span>
+          )}
+        </span>
+        <span className="dlands__name">{shortName(land.name)}</span>
+        <small className="dlands__where">
+          {building ? buildingLabel(name, costs) : 'No building'} · {cap(land.planet)} {land.x}:
+          {land.y}
+        </small>
+        {building ? (
+          <span className="dlands__tlm mono">
+            {tlm(income.tlm)}
+            <TlmIcon />
+          </span>
+        ) : (
+          <span className="btn btn--primary btn--sm dlands__build">Build</span>
+        )}
+      </button>
+    )
+  }
+
+  const group = (title: string, hint: string, list: OwnedLand[]) =>
+    list.length > 0 && (
+      <section className="dlands__group" aria-label={title}>
+        <h2 className="dlands__cap">
+          {title} · {list.length}
+          <span>{hint}</span>
+        </h2>
+        <div className="dlands__tiles">{list.map(tile)}</div>
+      </section>
+    )
+
+  return (
+    <div className="dlands">
+      <div className="dlands__top">
+        <div className="plands__claim">
+          <TlmIcon />
+          <span className="plands__claimtext">
+            <small>Ready to claim</small>
+            <b className="mono">{tlm(totalTlm)} TLM</b>
+          </span>
+          <button
+            type="button"
+            className="btn btn--gold btn--sm"
+            disabled={!canAct || busy !== null || claimableCount === 0}
+            onClick={onClaimAll}
+          >
+            {busy?.kind === 'claim-all' && <span className="spinner" />}
+            Claim all
+          </button>
+        </div>
+        <div className="plands__tabs" role="tablist" aria-label="Buildings">
+          {tabs.map(([key, label]) => (
+            <button
+              type="button"
+              key={key}
+              role="tab"
+              aria-selected={tab === key}
+              onClick={() => setTab(key)}
+            >
+              {label}
+              {lands.some(
+                (l) => (key === 'all' || landBuilding(l) === key) && l.buildings[0] && stateOf(l) !== 'ok',
+              ) && <i className="plands__dot" aria-label="needs a boost" />}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {group('Needs a boost', 'players cannot see or use these, or soon will not', needs)}
+      {group('Empty land', 'build a tavern, dungeon or arena and earn from every use', empty)}
+      {group('Running fine', 'nothing to do here for now', fine)}
+      {inTab.length === 0 && (
+        <p className="plands__sum">
+          <small>No {tab === 'all' ? 'lands' : buildingLabel(tab, costs).toLowerCase() + 's'} yet.</small>
+        </p>
+      )}
+
+      {open && (
+        <LandSheet
+          side
+          key={landKey(open)}
+          land={open}
+          costs={costs}
+          discounts={discounts}
+          config={config}
+          now={now}
+          busy={busy}
+          credits={playerCredits}
+          gems={gems}
+          canAct={canAct}
+          onClose={() => setOpenKey(null)}
+          onClaim={() => onClaim(open)}
+          onBuild={(opt) => onBuild(open, opt)}
+          onBoost={(b, target, cost) => onBoost(open, b, target, cost)}
+          onDestroy={(b) => onDestroy(open, b)}
+        />
+      )}
+    </div>
+  )
+}
+
+/* A tile's corner badge: the phone's flag, in two words. */
+const BOOST_BADGE: Record<Exclude<BoostState, 'ok'>, string> = {
+  low: 'Running low',
+  hidden: 'Off the map',
+  closed: 'Closed',
+}
+
+/**
+ * A land's square of its planet's map at any size: the map is a grid of
+ * 40 × 20 squares, so a percentage size and position pick out one square
+ * however wide the tile turns out.
+ */
+function landTileStyle(planet: string, x: number, y: number): React.CSSProperties {
+  return {
+    backgroundImage: `url('${planetMapSrc(planet)}')`,
+    backgroundSize: `${MAP_COLS * 100}% ${MAP_ROWS * 100}%`,
+    backgroundPosition: `${((x - 1) / (MAP_COLS - 1)) * 100}% ${((y - 1) / (MAP_ROWS - 1)) * 100}%`,
+  }
+}
+const MAP_COLS = PLANET_MAP_W / PLANET_TILE
+const MAP_ROWS = PLANET_MAP_H / PLANET_TILE
 
 /**
  * My Lands on a phone.
@@ -1251,6 +902,7 @@ function LandSheet({
   onBuild,
   onBoost,
   onDestroy,
+  side = false,
 }: {
   land: OwnedLand
   costs: Map<string, BuildingCost[]>
@@ -1261,6 +913,8 @@ function LandSheet({
   credits: number
   gems: number
   canAct: boolean
+  /** A desktop's: in from the right, beside the tiles, rather than up from the bottom. */
+  side?: boolean
   onClose: () => void
   onClaim: () => void
   onBuild: (opt: BuildOption) => void
@@ -1341,6 +995,7 @@ function LandSheet({
   if (!building) {
     return (
       <BottomSheet
+        side={side}
         title={shortName(land.name)}
         onClose={onClose}
         foot={
@@ -1418,6 +1073,7 @@ function LandSheet({
   if (confirm) {
     return (
       <BottomSheet
+        side={side}
         title={`Destroy the ${buildingLabel(name, costs).toLowerCase()}?`}
         onClose={onClose}
         foot={
@@ -1477,6 +1133,7 @@ function LandSheet({
   /* ---- a building: claim and boost ---- */
   return (
     <BottomSheet
+      side={side}
       title={shortName(land.name)}
       onClose={onClose}
       foot={

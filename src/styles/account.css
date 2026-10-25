@@ -1729,6 +1729,44 @@ button.prew__row:hover:not(:disabled) {
 :root[data-fx='low'] .rsheet__panel {
   animation: none;
 }
+/*
+ * The same sheet from the side: a desktop's, full height on the right, over
+ * a board that stays in view beside it.
+ */
+.rsheet--side {
+  align-items: stretch;
+  justify-content: flex-end;
+  background: rgb(0 0 0 / 42%);
+}
+.rsheet--side .rsheet__panel {
+  width: min(440px, 100%);
+  max-height: none;
+  border-radius: 18px 0 0 18px;
+  box-shadow:
+    -1px 0 0 rgb(255 255 255 / 14%),
+    -14px 0 30px rgb(0 0 0 / 45%);
+  animation-name: rsheet-in;
+}
+@keyframes rsheet-in {
+  from {
+    transform: translateX(100%);
+  }
+}
+.rsheet--side .rsheet__grip {
+  display: none;
+}
+.rsheet--side .rsheet__head {
+  padding: 18px 18px 10px;
+  touch-action: auto;
+}
+/* The body takes the height, so the actions sit at the foot of the window. */
+.rsheet--side .rsheet__body {
+  flex: 1;
+  padding: 2px 18px 14px;
+}
+.rsheet--side .rsheet__foot {
+  padding: 12px 18px 16px;
+}
 .rsheet__head {
   position: relative;
   display: flex;

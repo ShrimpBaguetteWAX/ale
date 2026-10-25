@@ -1,14 +1,14 @@
 /*
  * My Lands.
  *
- * The original's two-pane shape: a list of your land on the left, and the
- * selected plot's controls on the right. Kept because it is the right shape —
- * you compare lands to decide which needs attention, then act on one without
- * losing sight of the others.
+ * On a desktop, every land as its own square of the planet map with its
+ * building on it, grouped by what it needs (.dlands); on a phone, quiet rows
+ * by building (.plands). Either way a land opens the same sheet — from the
+ * right on a desktop, from the bottom on a phone — to claim, boost, destroy
+ * or build.
  *
- * The land thumbnails are crops of the planet artwork already downloaded for
- * the map, positioned by `landThumbStyle`. The original ships 4,800 separate
- * 50x50 JPEGs to do the same job.
+ * The land squares are crops of the planet artwork already downloaded for
+ * the map. The original ships 4,800 separate 50x50 JPEGs to do the same job.
  */
 
 .lands {
@@ -40,12 +40,6 @@
   color: var(--text-heading);
 }
 
-.lands__claimAll {
-  margin-left: auto;
-  min-height: 48px;
-  white-space: nowrap;
-}
-
 .lands__empty {
   margin: var(--sp-10) auto;
   max-width: 46ch;
@@ -53,122 +47,11 @@
   color: var(--text-dim);
 }
 
-/* ---------- totals ---------- */
-
-/*
- * Stacked, at the head of the side column.
- *
- * Across the top of the screen these read as a dashboard nobody asked for;
- * in the side column they sit with the panel that acts on a land, and a
- * vertical stack lets the figures line up on one edge so two lands' worth of
- * TLM can be compared at a glance.
- */
-.lands__side {
-  display: grid;
-  gap: var(--sp-3);
-  align-content: start;
-  position: sticky;
-  top: var(--sp-4);
-}
-
-.lands__totals {
-  display: grid;
-  gap: var(--sp-2);
-}
-
-.tally {
-  display: grid;
-  grid-template-columns: 20px auto minmax(0, 1fr);
-  align-items: center;
-  gap: var(--sp-2);
-  padding: var(--sp-2) var(--sp-3);
-  background: rgb(0 0 0 / 30%);
-  border: 1px solid var(--line-soft);
-  border-radius: var(--radius-sm);
-}
-.tally img {
-  object-fit: contain;
-}
-.tally strong {
-  font-family: var(--font-display);
-  font-size: var(--fs-lg);
-  font-variant-numeric: tabular-nums;
-  color: var(--white);
-  text-align: right;
-  min-width: 5ch;
-}
-.tally span {
-  font-size: var(--fs-xs);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--text-faint);
-}
-
-/* ---------- two panes ---------- */
-
-/*
- * Two columns, and the column headings are a row of their own.
- *
- * With the headings inside the list, the side column began a header's height
- * above the first land — a visible step between the two columns. Placing them
- * as a grid row that only the left column occupies puts the first tally and
- * the first land on the same line, with no hard-coded offset to drift.
- */
-.lands__cols {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 420px;
-  grid-template-rows: auto minmax(0, 1fr);
-  column-gap: var(--sp-4);
-  row-gap: var(--sp-2);
-  align-items: start;
-}
-
-.lands__cols > .landlist__head {
-  grid-column: 1;
-  grid-row: 1;
-}
-.lands__cols > .landlist {
-  grid-column: 1;
-  grid-row: 2;
-}
-.lands__cols > .lands__side {
-  grid-column: 2;
-  grid-row: 2;
-}
-
-@media (max-width: 1100px) {
-  .lands__cols {
-    grid-template-columns: 1fr;
-  }
-  .lands__cols > .lands__side {
-    grid-column: 1;
-    grid-row: 3;
-  }
-}
-
 /* ---------- the list ---------- */
 
 .landlist {
   display: grid;
   gap: var(--sp-2);
-}
-
-.landlist__head {
-  display: grid;
-  grid-template-columns: minmax(0, 2fr) minmax(0, 1.2fr) 150px 120px;
-  gap: var(--sp-3);
-  padding: 0 var(--sp-3);
-  font-family: var(--font-display);
-  font-size: 10px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--text-faint);
-}
-
-@media (max-width: 720px) {
-  .landlist__head {
-    display: none;
-  }
 }
 
 .landrow {
@@ -182,11 +65,6 @@
   border-radius: var(--radius-sm);
   background: linear-gradient(180deg, rgb(14 20 38 / 90%), rgb(6 10 24 / 94%));
   transition: border-color var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease);
-}
-
-.landrow--selected {
-  border-color: var(--cyan);
-  box-shadow: 0 0 0 1px var(--cyan), 0 0 18px -6px var(--cyan);
 }
 
 .landrow--loading {
@@ -218,73 +96,6 @@
   }
 }
 
-/* Selection sits under the row's own controls — see the roster screen. */
-.landrow__hit {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  padding: 0;
-  border: 0;
-  background: none;
-  cursor: pointer;
-  border-radius: var(--radius-sm);
-}
-.landrow__hit:focus-visible {
-  outline: 2px solid var(--cyan);
-  outline-offset: -3px;
-}
-.landrow > *:not(.landrow__hit) {
-  position: relative;
-  z-index: 1;
-  pointer-events: none;
-}
-.landrow button:not(.landrow__hit) {
-  pointer-events: auto;
-}
-
-.landrow__land {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-3);
-  min-width: 0;
-}
-
-/* A crop of the planet artwork, framed in the land's rarity colour. */
-.landthumb {
-  display: block;
-  flex: none;
-  border: 2px solid var(--line);
-  border-radius: var(--radius-xs);
-  background-repeat: no-repeat;
-}
-
-.landrow__ident {
-  display: grid;
-  gap: 2px;
-  min-width: 0;
-}
-
-.landrow__name {
-  font-family: var(--font-display);
-  font-size: var(--fs-sm);
-  font-weight: var(--fw-bold);
-  color: var(--white);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.landrow__meta {
-  font-size: var(--fs-xs);
-  text-transform: capitalize;
-}
-
-.landrow__income {
-  display: flex;
-  gap: var(--sp-3);
-  flex-wrap: wrap;
-}
-
 .coin {
   display: inline-flex;
   align-items: center;
@@ -298,268 +109,10 @@
   object-fit: contain;
 }
 
-.landrow__building {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-2);
-}
-.landrow__building img {
-  object-fit: contain;
-  flex: none;
-}
-
-/* ---------- boost bar ---------- */
-
-.boostbar {
-  position: relative;
-  display: grid;
-  place-items: center;
-  flex: 1;
-  min-width: 60px;
-  height: 18px;
-  border-radius: var(--radius-full);
-  background: rgb(0 0 0 / 55%);
-  border: 1px solid var(--line-soft);
-  overflow: hidden;
-}
-
-.boostbar--good {
-  --band: #6cc000;
-}
-.boostbar--fair {
-  --band: #f7a600;
-}
-.boostbar--poor {
-  --band: #c2253f;
-}
-
-.boostbar__fill {
-  position: absolute;
-  inset: 0 auto 0 0;
-  /* Set inline from the figure; the band classes are the fallback. */
-  background: var(--band);
-  opacity: 0.85;
-  transition: width var(--dur) var(--ease);
-}
-
-.boostbar__text {
-  position: relative;
-  font-family: var(--font-display);
-  font-size: 10px;
-  font-variant-numeric: tabular-nums;
-  color: var(--white);
-  text-shadow: 0 1px 3px rgb(0 0 0 / 80%);
-}
-
-.landrow__act {
-  display: flex;
-  justify-content: flex-end;
-}
-
-/* ---------- the side pane ---------- */
-
-.landside {
-  border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
-  background: linear-gradient(180deg, rgb(14 20 38 / 92%), rgb(6 10 24 / 96%));
-  overflow: hidden;
-}
-
-@media (max-width: 1100px) {
-  .lands__side {
-    position: static;
-  }
-}
-
-/* The original's title strip above each pane. */
-.landside__bar {
-  display: block;
-  padding: var(--sp-3) var(--sp-4);
-  background: rgb(32 29 44 / 90%);
-  font-family: var(--font-display);
-  font-size: var(--fs-md);
-  font-weight: var(--fw-bold);
-  color: #c9c9c9;
-}
-
-.landside__empty {
-  display: grid;
-}
-.landside__empty p {
-  margin: 0;
-  padding: var(--sp-16) var(--sp-4);
-  text-align: center;
-  font-family: var(--font-display);
-  font-size: var(--fs-2xl);
-  color: var(--white);
-}
-
-.landpanel {
-  display: grid;
-  gap: var(--sp-4);
-}
-.landpanel > section,
-.landpanel > .btn {
-  margin: 0 var(--sp-4);
-}
-.landpanel > .btn:last-child {
-  margin-bottom: var(--sp-4);
-}
-
-.landpanel__action {
-  width: 100%;
-  min-height: 44px;
-}
-
-/*
-   Except when the button is the panel's own child rather than a section's.
-   `width: 100%` measures the grid area, which does not subtract the item's
-   own margins — so Destroy Building came out a full gutter wider than the
-   card above it and hung over the right edge. A grid item stretches to its
-   area by default, margins included, so the width just has to get out of
-   the way.
-*/
-.landpanel > .landpanel__action {
-  width: auto;
-}
-
 .panel__title img {
   vertical-align: -4px;
   margin-right: 6px;
   object-fit: contain;
-}
-
-/* ---------- build menu ---------- */
-
-.buildmenu {
-  display: grid;
-  gap: var(--sp-3);
-}
-
-.buildopt {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  gap: var(--sp-3);
-  padding: var(--sp-3);
-  border: 1px solid var(--line-soft);
-  border-radius: var(--radius-xs);
-  background: rgb(0 0 0 / 25%);
-}
-.buildopt img {
-  object-fit: contain;
-}
-.buildopt .btn {
-  grid-column: 1 / -1;
-  width: 100%;
-  min-height: 40px;
-}
-
-.buildopt__body {
-  display: grid;
-  gap: 3px;
-  min-width: 0;
-}
-
-.buildopt__name {
-  font-family: var(--font-display);
-  font-size: var(--fs-sm);
-  font-weight: var(--fw-bold);
-  color: var(--white);
-}
-
-.buildopt__note {
-  font-size: var(--fs-xs);
-  line-height: 1.45;
-  color: var(--text-faint);
-}
-
-/* ---------- boost box ---------- */
-
-.boostbox {
-  display: grid;
-  gap: var(--sp-3);
-}
-
-.boostbox__lede {
-  margin: 0;
-  font-size: var(--fs-xs);
-  line-height: 1.5;
-  color: var(--text-dim);
-}
-
-.boostslider {
-  display: grid;
-  gap: var(--sp-1);
-}
-.boostslider input {
-  width: 100%;
-  accent-color: var(--cyan);
-  cursor: pointer;
-}
-
-.boostbox__facts {
-  display: grid;
-  gap: var(--sp-1);
-  margin: 0;
-  padding: var(--sp-3);
-  border: 1px solid var(--line-soft);
-  border-radius: var(--radius-xs);
-  background: rgb(0 0 0 / 25%);
-}
-.boostbox__facts > div {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--sp-3);
-}
-.boostbox__facts dt {
-  font-size: var(--fs-xs);
-  color: var(--text-faint);
-}
-.boostbox__facts dd {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  margin: 0;
-  font-family: var(--font-display);
-  font-size: var(--fs-sm);
-  font-variant-numeric: tabular-nums;
-  color: var(--white);
-}
-.boostbox__facts dd img {
-  object-fit: contain;
-}
-.boostbox__facts dd.warn {
-  color: #ffc978;
-}
-
-/* ---------- destroy ---------- */
-
-.destroybox {
-  display: grid;
-  gap: var(--sp-3);
-  padding: var(--sp-4);
-  margin: 0 var(--sp-4) var(--sp-4);
-  border: 1px solid rgb(255 52 52 / 45%);
-  border-radius: var(--radius-xs);
-  background: rgb(255 52 52 / 8%);
-}
-
-.destroybox__warn {
-  margin: 0;
-  font-size: var(--fs-sm);
-  line-height: 1.5;
-  color: var(--text-dim);
-}
-
-.destroybox__row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--sp-3);
-  font-family: var(--font-display);
-  font-size: var(--fs-sm);
-  color: var(--white);
 }
 
 /* ---------- My Lands on a phone: by building, each land in a sheet ---------- */
@@ -1166,4 +719,199 @@
   --btn-bg: rgb(216 50 79 / 22%);
   --btn-line: rgb(255 109 133 / 70%);
   color: #ffd0d8;
+}
+
+/* ---------- My Lands on a desktop: the lands as the map draws them ---------- */
+
+.dlands {
+  display: grid;
+  gap: var(--sp-5);
+  align-content: start;
+}
+
+/* The phone's claim strip and building switch, side by side and a size up. */
+.dlands__top {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
+  gap: var(--sp-3);
+  align-items: stretch;
+}
+.dlands .plands__claim {
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: linear-gradient(110deg, rgb(246 168 0 / 14%), rgb(8 14 28 / 74%) 55%);
+}
+.dlands .plands__claim > .plands__tlm {
+  width: 30px;
+  height: 30px;
+}
+.dlands .plands__claimtext small {
+  font-size: 9.5px;
+}
+.dlands .plands__claimtext b {
+  font-size: 19px;
+}
+.dlands .plands__tabs {
+  align-items: stretch;
+  padding: 4px;
+  border-radius: 14px;
+}
+.dlands .plands__tabs button {
+  min-height: 40px;
+  font-size: 13.5px;
+  border-radius: 10px;
+}
+.dlands .plands__dot {
+  top: 8px;
+  right: 10px;
+}
+
+.dlands__group {
+  display: grid;
+  gap: 10px;
+}
+.shell .main__inner .dlands .dlands__cap {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin: 0 2px;
+  font-family: var(--font-display);
+  font-size: 10.5px;
+  font-weight: var(--fw-bold);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.dlands__cap span {
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--text-dim);
+}
+
+.dlands__tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 12px;
+}
+/* One land: its square of the map, its name and place, what it holds. */
+.dlands__tile {
+  display: grid;
+  gap: 4px;
+  align-content: start;
+  min-width: 0;
+  padding: 8px 8px 10px;
+  border: 0;
+  border-radius: 13px;
+  background: rgb(8 14 28 / 76%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 9%);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: box-shadow var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease);
+}
+.dlands__tile:hover {
+  box-shadow: inset 0 0 0 1px rgb(0 186 255 / 45%);
+  transform: translateY(-1px);
+}
+.dlands__tile.is-open {
+  background: rgb(0 186 255 / 8%);
+  box-shadow: inset 0 0 0 1.5px var(--cyan);
+}
+.dlands__map {
+  position: relative;
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
+  margin-bottom: 4px;
+  overflow: hidden;
+  border: 2px solid;
+  border-radius: 10px;
+  background-repeat: no-repeat;
+}
+.dlands__map img {
+  width: 58%;
+  height: 58%;
+  object-fit: contain;
+  filter: drop-shadow(0 3px 4px rgb(0 0 0 / 60%));
+}
+.dlands__plot {
+  padding: 3px 9px;
+  border-radius: 7px;
+  font-family: var(--font-display);
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--white);
+  background: rgb(4 8 16 / 78%);
+}
+.dlands__badge,
+.dlands__boost {
+  position: absolute;
+  padding: 1px 7px;
+  border-radius: 6px;
+  background: rgb(4 8 16 / 86%);
+}
+.dlands__badge {
+  left: 6px;
+  top: 6px;
+  font-family: var(--font-display);
+  font-size: 8.5px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.dlands__boost {
+  right: 6px;
+  bottom: 6px;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--white);
+}
+.dlands__badge.is-low,
+.dlands__boost.is-low {
+  color: #ffc56b;
+}
+.dlands__badge.is-hidden,
+.dlands__badge.is-closed,
+.dlands__boost.is-hidden,
+.dlands__boost.is-closed {
+  color: #ff8fa0;
+}
+.dlands__name {
+  overflow: hidden;
+  font-size: 13.5px;
+  font-weight: var(--fw-bold);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.dlands__where {
+  overflow: hidden;
+  font-size: 11.5px;
+  color: var(--text-faint);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.dlands__tlm {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 2px;
+  font-size: 12.5px;
+  font-weight: 800;
+  color: #ffd979;
+}
+.dlands__build {
+  justify-self: start;
+  margin-top: 4px;
+}
+
+@media (max-width: 1100px) {
+  .dlands__top {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
