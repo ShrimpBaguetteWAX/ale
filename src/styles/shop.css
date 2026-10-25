@@ -1537,6 +1537,21 @@
   font-weight: 800;
   color: #6ff0cf;
 }
+.amk__gain {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 6px;
+}
+.amk__gainfig {
+  white-space: nowrap;
+}
+.amk__gainfig b {
+  font-weight: 800;
+}
+.amk__gainfig b.is-down {
+  color: #ff8fa0;
+}
 .amk__gain small {
   font-family: var(--font-body);
   font-size: 11.5px;
@@ -1617,16 +1632,17 @@
   .amk {
     gap: 8px;
   }
+  /* The kind across the top, then rarity and sort side by side under it. */
   .amk__bar {
-    flex-wrap: nowrap;
-    gap: 6px;
+    flex-wrap: wrap;
+    gap: 12px 6px;
   }
   .amk__search,
   .amk__bar > .spacer {
     display: none;
   }
   .amk__schemas {
-    flex: 1;
+    flex: 1 1 100%;
     gap: 4px;
   }
   .amk__chip {
@@ -1642,10 +1658,11 @@
     height: 15px;
   }
   .amk__sort {
-    width: 104px;
+    flex: 1 1 0;
+    min-width: 0;
     height: 32px;
-    padding: 0 6px;
-    font-size: 11.5px;
+    padding: 0 8px;
+    font-size: 12px;
   }
 
   .amk__rows {

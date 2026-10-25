@@ -219,6 +219,25 @@ export function MarketTab({ wax }: { wax: number }) {
           onChange={(e) => setSearch(e.target.value)}
           aria-label={`Search ${label.toLowerCase()}`}
         />
+        {/*
+          A phone has no room for a row of rarity chips, so rarity is a
+          dropdown beside the sort, counts and all.
+        */}
+        {phone && rarities.length > 1 && (
+          <select
+            className="amk__sort"
+            value={rarity ?? ''}
+            onChange={(e) => setRarity(e.target.value || null)}
+            aria-label="Rarity"
+          >
+            <option value="">All rarities ({cards.length})</option>
+            {rarities.map(([r, n]) => (
+              <option key={r} value={r}>
+                {r} ({n})
+              </option>
+            ))}
+          </select>
+        )}
         <select
           className="amk__sort"
           value={sort}
@@ -233,7 +252,7 @@ export function MarketTab({ wax }: { wax: number }) {
         </select>
       </div>
 
-      {rarities.length > 1 && (
+      {!phone && rarities.length > 1 && (
         <div className="outpost__rarities amk__rarities" role="tablist" aria-label="Rarity">
           <button
             type="button"
@@ -489,10 +508,18 @@ function Gain({ gain }: { gain: ReturnType<typeof toolGain> }) {
   if (gain.tlm <= 0 && gain.shrd <= 0) {
     return <span className="amk__gain is-none">No gain over your {gain.kind === 'replace' ? gain.replaces.name : 'tools'}</span>
   }
+  /* A trade — more of one, less of the other — shows its loss as a loss. */
+  const part = (n: number, unit: string) => (
+    <b className={n < 0 ? 'is-down' : undefined}>
+      {signed(n)} {unit}
+    </b>
+  )
   return (
     <span className="amk__gain">
-      {signed(gain.tlm)} TLM · {signed(gain.shrd)} shard
-      <small>{gain.kind === 'empty' ? ' in your empty slot' : ` over your ${gain.replaces.name}`}</small>
+      <span className="amk__gainfig">
+        {part(gain.tlm, 'TLM')} · {part(gain.shrd, 'shard')}
+      </span>
+      <small>{gain.kind === 'empty' ? 'in your empty slot' : `over your ${gain.replaces.name}`}</small>
     </span>
   )
 }
