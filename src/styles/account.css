@@ -2481,6 +2481,13 @@ button.prew__row:hover:not(:disabled) {
 .drew__pool .rsheet__hint {
   margin: 0;
 }
+/* One line on every button; the way to earn more takes the wider share. */
+.drew__pool .rsheet__actions .btn {
+  white-space: nowrap;
+}
+.drew__pool .rsheet__actions > a.btn {
+  flex: 1.6;
+}
 .drew__note {
   margin: 0;
 }
