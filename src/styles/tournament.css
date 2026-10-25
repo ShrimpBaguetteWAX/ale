@@ -8599,3 +8599,314 @@ button.ptour__rf {
   border-bottom: 5px solid transparent;
   border-left: 8px solid #ffd979;
 }
+
+/* ---------- desktop: every fight, anyone's road or a whole round ---------- */
+.ptour__allbtn {
+  width: 100%;
+  color: var(--white);
+  background: rgb(255 255 255 / 6%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 22%);
+}
+.ptour__af {
+  display: grid;
+  gap: 16px;
+  scroll-margin-top: 80px;
+}
+.ptour__afhead {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.ptour__afhead h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 900;
+  color: #ffd979;
+}
+.ptour__afhead small {
+  font-size: 12.5px;
+  color: #8f9bb3;
+}
+.ptour__afsearch {
+  width: 280px;
+  height: 40px;
+  margin-left: auto;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 10px;
+  font: inherit;
+  color: var(--white);
+  background: rgb(4 8 16 / 85%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 15%);
+}
+.ptour__afsearch:focus {
+  outline: none;
+  box-shadow: inset 0 0 0 1.5px var(--cyan);
+}
+.ptour__afgrid {
+  display: grid;
+  grid-template-columns: 330px minmax(0, 1fr);
+  align-items: start;
+  gap: 18px;
+}
+.ptour__afleft {
+  position: sticky;
+  top: 80px;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  max-height: calc(100vh - 110px);
+  padding: 0;
+  overflow: hidden;
+}
+.ptour__afmode {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  margin: 12px;
+  padding: 4px;
+  border-radius: 12px;
+  background: rgb(4 8 16 / 90%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 13%);
+}
+.ptour__afmode button {
+  height: 34px;
+  border: 0;
+  border-radius: 9px;
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #8f9bb3;
+  background: none;
+  cursor: pointer;
+}
+.ptour__afmode button.is-on {
+  color: #2a1a00;
+  background: linear-gradient(180deg, #ffd979, #f6a800);
+}
+.ptour__aflist {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.ptour__afpl,
+.ptour__afrd {
+  display: grid;
+  align-items: center;
+  width: 100%;
+  border: 0;
+  border-top: 1px solid rgb(255 255 255 / 6%);
+  text-align: left;
+  color: var(--white);
+  background: none;
+  cursor: pointer;
+}
+.ptour__afpl {
+  grid-template-columns: 40px 30px minmax(0, 1fr) 70px;
+  gap: 9px;
+  padding: 7px 12px;
+  font-size: 13px;
+}
+.ptour__afpl > b {
+  font-size: 11px;
+}
+.ptour__afpl > span:nth-of-type(1) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ptour__afpl small,
+.ptour__afrd small {
+  display: block;
+  font-size: 11px;
+  color: #8f9bb3;
+}
+.ptour__afpl:hover,
+.ptour__afrd:hover {
+  background: rgb(255 255 255 / 4%);
+}
+.ptour__afpl.is-me {
+  background: rgb(0 186 255 / 10%);
+  box-shadow: inset 3px 0 0 var(--cyan);
+}
+.ptour__afpl.is-sel,
+.ptour__afrd.is-sel {
+  background: rgb(246 168 0 / 12%);
+  box-shadow: inset 3px 0 0 #ffd979;
+}
+.ptour__afav {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+.ptour__afmeter {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 2px;
+}
+.ptour__afmeter i {
+  height: 6px;
+  border-radius: 2px;
+  background: rgb(255 255 255 / 10%);
+}
+.ptour__afmeter i.is-win {
+  background: var(--meter);
+}
+.ptour__afmeter i.is-pass {
+  background: color-mix(in srgb, var(--meter) 50%, transparent);
+}
+.ptour__afmeter i.is-loss {
+  background: #ff5a6a;
+}
+.ptour__afrd {
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  padding: 11px 14px;
+}
+.ptour__afrd b {
+  font-family: var(--font-display);
+  font-size: 13px;
+}
+.ptour__afrd em {
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-family: var(--font-display);
+  font-size: 9.5px;
+  font-style: normal;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.ptour__afrd em.is-won {
+  color: #04121b;
+  background: var(--cyan);
+}
+.ptour__afrd em.is-lost {
+  color: var(--white);
+  background: #ff5a6a;
+}
+.ptour__afrd em.is-pass {
+  color: var(--cyan);
+  box-shadow: inset 0 0 0 1.5px var(--cyan);
+}
+.ptour__afright {
+  display: grid;
+  gap: 12px;
+  padding: 18px 20px;
+}
+.ptour__afright h3 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 900;
+  color: var(--white);
+}
+.ptour__afrhead {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+}
+.ptour__afchips {
+  display: flex;
+  gap: 6px;
+}
+.ptour__afchips button {
+  padding: 7px 12px;
+  border: 0;
+  border-radius: 999px;
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 800;
+  color: #8f9bb3;
+  background: rgb(255 255 255 / 5%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 12%);
+  cursor: pointer;
+}
+.ptour__afchips button.is-on {
+  color: var(--white);
+  background: rgb(0 186 255 / 16%);
+  box-shadow: inset 0 0 0 1.5px var(--cyan);
+}
+.ptour__affights {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 12px;
+}
+.ptour__affx {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) 22px minmax(0, 1fr) 26px;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  border-radius: 12px;
+  background: rgb(8 16 30 / 92%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 10%);
+}
+.ptour__affx > small {
+  font-size: 9.5px;
+  color: #8f9bb3;
+}
+.ptour__affx > i {
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-style: italic;
+  font-weight: 900;
+  text-align: center;
+  color: #8f9bb3;
+}
+.ptour__affx.is-me {
+  box-shadow: inset 0 0 0 1.5px var(--cyan);
+}
+.ptour__affx.is-champ {
+  box-shadow: inset 0 0 0 1.5px #ffd979;
+}
+.ptour__afside {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  text-align: left;
+  font-size: 12.5px;
+  color: var(--white);
+  background: none;
+  cursor: pointer;
+}
+.ptour__afside.is-right {
+  flex-direction: row-reverse;
+  text-align: right;
+}
+.ptour__afside > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ptour__afside small {
+  display: block;
+  font-size: 10px;
+  color: #8f9bb3;
+}
+.ptour__afside .ptour__afav {
+  width: 28px;
+  height: 28px;
+}
+.ptour__afside.is-lost {
+  opacity: 0.5;
+}
+.ptour__afside.is-lost .ptour__afav {
+  filter: grayscale(0.7);
+}
+.ptour__afside:hover b {
+  text-decoration: underline;
+}
+button.ptour__rfplay {
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}

@@ -2680,6 +2680,390 @@ function roadOf(wallet: string, history: TournamentMatchup[][], rounds: number, 
   })
 }
 
+/** A run's road across the box: a stop a round, gently waving, then the champion's crown. */
+function RoadMap({ board, stops, champion, crowned, out, onStop }: {
+  board: Board
+  stops: Stop[]
+  champion: Entrant | null
+  crowned: boolean
+  /** The label over the stop where the run ended. */
+  out: string
+  onStop: (s: Fought) => void
+}) {
+  const n = Math.max(1, board.rounds)
+  const xAt = (i: number) => 5 + (i * 80) / n
+  const yAt = (i: number) => (i % 2 ? 60 : 44)
+  const crownX = 92
+  const reachedAt = stops.reduce((at, s, i) => (s.kind === 'ahead' ? at : i), -1)
+  const points = (to: number) =>
+    [...stops.slice(0, to + 1).map((_, i) => `${xAt(i)},${yAt(i)}`), ...(to >= n ? [`${crownX},52`] : [])].join(' ')
+  return (
+    <div className="ptour__roadmap">
+      <svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+        <polyline points={points(n)} className="ptour__roadline" />
+        {reachedAt >= 0 && <polyline points={points(crowned ? n : reachedAt)} className="ptour__roadlit" />}
+      </svg>
+      {stops.map((s, i) => (
+        <div key={i} className={`ptour__stop is-${s.kind}`} style={{ left: `${xAt(i)}%`, top: `${yAt(i)}%` }}>
+          {s.kind === 'loss' && <span className="ptour__stopout">{out}</span>}
+          <small>{board.name(i, true)}</small>
+          {s.kind === 'win' || s.kind === 'loss' ? (
+            <button
+              type="button"
+              className="ptour__stopring"
+              title={`${board.name(s.round)} against ${s.opp.tag || s.opp.wallet}`}
+              onClick={() => onStop(s)}
+            >
+              <PlayerAvatar id={s.opp.avatar} name={s.opp.tag} className="ptour__stopav" size={46} />
+            </button>
+          ) : (
+            <span className="ptour__stopring">{s.kind === 'pass' ? 'PASS' : ''}</span>
+          )}
+          <b>{s.kind === 'win' ? 'Won' : s.kind === 'loss' ? 'Lost' : s.kind === 'pass' ? 'Free pass' : '—'}</b>
+        </div>
+      ))}
+      {champion && (
+        <div className={`ptour__roadcrown${crowned ? '' : ' is-dim'}`} style={{ left: `${crownX}%` }}>
+          <span className="ptour__roadmedal">
+            <img className="ptour__roadtro" src={TROPHY} alt="" />
+            <PlayerAvatar id={champion.avatar} name={champion.tag} className="ptour__roadchav" size={78} />
+          </span>
+          <b>{champion.tag || champion.wallet}</b>
+          <small>Champion</small>
+        </div>
+      )}
+    </div>
+  )
+}
+
+/** The fights of a run as cards, a free pass included, each one to watch again. */
+function RoadFights({ board, stops, color, onWatch }: {
+  board: Board
+  stops: Stop[]
+  color: string
+  onWatch: (m: TournamentMatchup, round: number) => void
+}) {
+  return (
+    <div className="ptour__roadfights" style={{ '--road': color } as React.CSSProperties}>
+      {stops.map((s) =>
+        s.kind === 'pass' ? (
+          <div key={s.round} className="ptour__rf is-win">
+            <small>{board.name(s.round)}</small>
+            <div className="ptour__rfvs">
+              <span className="ptour__rfpass mono">10</span>
+              <span>
+                <small>a top seed</small>
+                <b>Free pass</b>
+              </span>
+              <em className="mono">+10</em>
+            </div>
+          </div>
+        ) : s.kind === 'win' || s.kind === 'loss' ? (
+          <button key={s.round} type="button" className={`ptour__rf is-${s.kind}`} onClick={() => onWatch(s.m, s.round)}>
+            <small>
+              {board.name(s.round)} · {timeOf(chainTime(s.m.play_time))}
+              <span className="ptour__rfplay" />
+            </small>
+            <div className="ptour__rfvs">
+              <PlayerAvatar id={s.opp.avatar} name={s.opp.tag} className="ptour__rfav" size={38} />
+              <span>
+                <small>against</small>
+                <b>{s.opp.tag || s.opp.wallet}</b>
+              </span>
+              <em>{s.kind === 'win' ? 'Won' : 'Lost'}</em>
+            </div>
+          </button>
+        ) : null,
+      )}
+    </div>
+  )
+}
+
+/* ---------- every fight: anyone's road, or a whole round ---------- */
+
+type AllView = { mode: 'players' | 'rounds'; who: string; round: number; only: 'all' | 'mine' | 'champion' }
+
+/**
+ * The whole finished tournament on a desktop, from the results.
+ *
+ * One switch: Players, to pick anyone and see their road to the crown and
+ * their fights, or Rounds, to pick a round and see every fight in it. The
+ * two lead into each other — a stop on a road opens its round, a player in a
+ * round opens their road — and every fight plays from where it is listed.
+ */
+function AllFights({ p, champion, onBack }: {
+  p: PhoneTournamentProps & { board: Board; onWatch: (m: TournamentMatchup, round: number) => void }
+  champion: Entrant | null
+  onBack: () => void
+}) {
+  const { board } = p
+  const me = board.runs.get(p.wallet)
+  const [view, setView] = useState<AllView>({
+    mode: 'players',
+    who: me?.wallet ?? champion?.wallet ?? board.order[0]?.wallet ?? '',
+    round: Math.max(0, board.rounds - 1),
+    only: 'all',
+  })
+  const [query, setQuery] = useState('')
+  const top = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    top.current?.scrollIntoView({ block: 'start' })
+  }, [])
+
+  /* Everyone's road, worked out once: the list draws a meter from each. */
+  const roads = useMemo(
+    () => new Map(board.order.map((r) => [r.wallet, roadOf(r.wallet, p.history, board.rounds, r.pass)])),
+    [board, p.history],
+  )
+  const openPlayer = (who: string) => setView((v) => ({ ...v, mode: 'players', who }))
+  const openRound = (round: number) => setView((v) => ({ ...v, mode: 'rounds', round, only: 'all' }))
+
+  const q = query.trim().toLowerCase()
+  const people = q
+    ? board.order.filter((r) => (r.tag || '').toLowerCase().includes(q) || r.wallet.includes(q))
+    : board.order
+  const shown = board.runs.get(view.who)
+  const stops = roads.get(view.who) ?? []
+  const isChamp = !!shown && shown.wallet === champion?.wallet
+  const mine = roads.get(p.wallet) ?? []
+  const started = Number(p.stage?.player_count ?? board.players)
+
+  const rows = p.history[view.round] ?? []
+  const listed = rows.filter((m) =>
+    view.only === 'mine' ? isIn(m, p.wallet) : view.only === 'champion' ? !!champion && isIn(m, champion.wallet) : true,
+  )
+  const span = (r: number) => {
+    const times = (p.history[r] ?? []).map((m) => chainTime(m.play_time)).filter(Number.isFinite)
+    if (!times.length) return ''
+    const a = timeOf(Math.min(...times))
+    const b = timeOf(Math.max(...times))
+    return a === b ? a : `${a}–${b}`
+  }
+  const side = (m: TournamentMatchup, s: 1 | 2) => {
+    const e = sideOf(m, s)
+    const won = winnerSide(m) === s
+    return (
+      <button
+        type="button"
+        className={`ptour__afside${s === 2 ? ' is-right' : ''}${won ? ' is-won' : ' is-lost'}`}
+        onClick={() => openPlayer(e.wallet)}
+        title={`See ${e.tag || e.wallet}'s road`}
+      >
+        <PlayerAvatar id={e.avatar} name={e.tag} className="ptour__afav" size={28} />
+        <span>
+          <b>{e.tag || e.wallet}</b>
+          {e.wallet === p.wallet ? ' · you' : ''}
+          <small>{place(board.rankOf(e.wallet))}</small>
+        </span>
+      </button>
+    )
+  }
+
+  return (
+    <div ref={top} className="ptour__af">
+      <div className="ptour__afhead">
+        <button type="button" className="ptour__pill" onClick={onBack}>
+          ‹ Results
+        </button>
+        <div>
+          <h2>Every fight</h2>
+          <small>
+            {view.mode === 'players' ? "Anyone's road — pick a player" : 'Every fight of a round — pick a round'}
+          </small>
+        </div>
+        <input
+          className="ptour__afsearch"
+          type="search"
+          placeholder="Find a player…"
+          value={query}
+          onChange={(e) => {
+            setQuery(e.target.value)
+            setView((v) => ({ ...v, mode: 'players' }))
+          }}
+        />
+      </div>
+
+      <div className="ptour__afgrid">
+        <aside className="ptour__card ptour__afleft">
+          <div className="ptour__afmode" role="tablist">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={view.mode === 'players'}
+              className={view.mode === 'players' ? 'is-on' : ''}
+              onClick={() => setView((v) => ({ ...v, mode: 'players' }))}
+            >
+              Players
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={view.mode === 'rounds'}
+              className={view.mode === 'rounds' ? 'is-on' : ''}
+              onClick={() => setView((v) => ({ ...v, mode: 'rounds' }))}
+            >
+              Rounds
+            </button>
+          </div>
+
+          {view.mode === 'players' ? (
+            <div className="ptour__aflist">
+              {people.map((r) => (
+                <button
+                  key={r.wallet}
+                  type="button"
+                  className={`ptour__afpl${r.wallet === view.who ? ' is-sel' : ''}${r.wallet === p.wallet ? ' is-me' : ''}`}
+                  onClick={() => openPlayer(r.wallet)}
+                >
+                  <b className="mono">{place(board.rankOf(r.wallet))}</b>
+                  <PlayerAvatar id={r.avatar} name={r.tag} className="ptour__afav" size={30} />
+                  <span>
+                    {r.tag || r.wallet}
+                    {r.wallet === p.wallet ? ' · you' : ''}
+                    <small>
+                      {r.points} pt{r.points === 1 ? '' : 's'}
+                    </small>
+                  </span>
+                  <span
+                    className="ptour__afmeter"
+                    style={{
+                      '--meter':
+                        r.wallet === champion?.wallet ? '#ffd979' : r.wallet === p.wallet ? '#00baff' : 'var(--teal)',
+                    } as React.CSSProperties}
+                  >
+                    {(roads.get(r.wallet) ?? []).map((s, i) => (
+                      <i key={i} className={`is-${s.kind}`} />
+                    ))}
+                  </span>
+                </button>
+              ))}
+              {!people.length && <p className="ptour__fine">Nobody by that name in this tournament.</p>}
+            </div>
+          ) : (
+            <div className="ptour__aflist">
+              {Array.from({ length: board.rounds }, (_, r) => {
+                const s = mine[r]
+                const count = (p.history[r] ?? []).length
+                return (
+                  <button
+                    key={r}
+                    type="button"
+                    className={`ptour__afrd${r === view.round ? ' is-sel' : ''}`}
+                    onClick={() => openRound(r)}
+                  >
+                    <span>
+                      <b>{board.name(r)}</b>
+                      <small>
+                        {count} fight{count === 1 ? '' : 's'}
+                        {span(r) ? ` · ${span(r)}` : ''}
+                      </small>
+                    </span>
+                    {s?.kind === 'win' ? (
+                      <em className="is-won">You won</em>
+                    ) : s?.kind === 'loss' ? (
+                      <em className="is-lost">You lost</em>
+                    ) : s?.kind === 'pass' ? (
+                      <em className="is-pass">Your pass</em>
+                    ) : null}
+                  </button>
+                )
+              })}
+            </div>
+          )}
+        </aside>
+
+        {view.mode === 'players' ? (
+          <section
+            className="ptour__card ptour__afright"
+            style={{ '--road': isChamp ? '#ffd979' : '#00baff' } as React.CSSProperties}
+          >
+            {shown ? (
+              <>
+                <span className="ptour__kick ptour__kick--gold">Road to the crown</span>
+                <h3>
+                  {shown.wallet === p.wallet ? 'Your road' : `${shown.tag || shown.wallet}'s road`} ·{' '}
+                  {place(board.rankOf(shown.wallet))} of {formatNumber(started)}
+                </h3>
+                <RoadMap
+                  board={board}
+                  stops={stops}
+                  champion={champion}
+                  crowned={isChamp}
+                  out={shown.wallet === p.wallet ? 'You went out' : 'Out'}
+                  onStop={(s) => openRound(s.round)}
+                />
+                <RoadFights board={board} stops={stops} color={isChamp ? '#ffd979' : '#00baff'} onWatch={p.onWatch} />
+                <p className="ptour__fine ptour__center">Tap a stop on the road to see every fight of that round.</p>
+              </>
+            ) : (
+              <p className="ptour__fine">Pick a player on the left.</p>
+            )}
+          </section>
+        ) : (
+          <section className="ptour__card ptour__afright">
+            <div className="ptour__afrhead">
+              <div>
+                <span className="ptour__kick ptour__kick--gold">
+                  {rows.length} fight{rows.length === 1 ? '' : 's'}
+                  {span(view.round) ? ` · ${span(view.round)}` : ''}
+                </span>
+                <h3>{board.name(view.round)}</h3>
+              </div>
+              <div className="ptour__afchips">
+                <button
+                  type="button"
+                  className={view.only === 'all' ? 'is-on' : ''}
+                  onClick={() => setView((v) => ({ ...v, only: 'all' }))}
+                >
+                  All
+                </button>
+                {rows.some((m) => isIn(m, p.wallet)) && (
+                  <button
+                    type="button"
+                    className={view.only === 'mine' ? 'is-on' : ''}
+                    onClick={() => setView((v) => ({ ...v, only: 'mine' }))}
+                  >
+                    Your fight
+                  </button>
+                )}
+                {!!champion && rows.some((m) => isIn(m, champion.wallet)) && (
+                  <button
+                    type="button"
+                    className={view.only === 'champion' ? 'is-on' : ''}
+                    onClick={() => setView((v) => ({ ...v, only: 'champion' }))}
+                  >
+                    Champion's fight
+                  </button>
+                )}
+              </div>
+            </div>
+            <div className="ptour__affights">
+              {listed.map((m) => (
+                <div
+                  key={m.index}
+                  className={`ptour__affx${isIn(m, p.wallet) ? ' is-me' : champion && isIn(m, champion.wallet) ? ' is-champ' : ''}`}
+                >
+                  <small className="mono">{timeOf(chainTime(m.play_time))}</small>
+                  {side(m, 1)}
+                  <i>VS</i>
+                  {side(m, 2)}
+                  <button
+                    type="button"
+                    className="ptour__rfplay"
+                    aria-label={`Watch ${m.gamertag_player1 || m.wallet_player1} against ${m.gamertag_player2 || m.wallet_player2}`}
+                    onClick={() => p.onWatch(m, view.round)}
+                  />
+                </div>
+              ))}
+            </div>
+            <p className="ptour__fine ptour__center">Tap a player to open their road.</p>
+          </section>
+        )}
+      </div>
+    </div>
+  )
+}
+
 /**
  * The finished tournament on a desktop, told as a road.
  *
@@ -2709,22 +3093,16 @@ function RoadResults({ p, champion, runnerUp, semis, final, paid, round, onRound
   const me = board.runs.get(p.wallet)
   const meChamp = !!me && champion?.wallet === p.wallet
   const [mode, setMode] = useState<'me' | 'champion'>(me && !meChamp ? 'me' : 'champion')
+  /* Every fight of the tournament, on a page of its own. */
+  const [all, setAll] = useState(false)
   const shown = mode === 'me' && me ? me : champion ? board.runs.get(champion.wallet) : undefined
   const gold = !shown || shown.wallet === champion?.wallet
   const road = { '--road': gold ? '#ffd979' : '#00baff' } as React.CSSProperties
   const stops = shown ? roadOf(shown.wallet, p.history, board.rounds, shown.pass) : []
-  const reachedAt = stops.reduce((at, s, i) => (s.kind === 'ahead' ? at : i), -1)
   const crowned = !!shown && shown.wallet === champion?.wallet
   const mePaid = me ? paid(p.wallet) : null
   const started = Number(p.stage?.player_count ?? board.players)
-
-  /* The road, in percent of its box: a stop a round across, gently waving, then the crown. */
-  const n = Math.max(1, board.rounds)
-  const xAt = (i: number) => 5 + (i * 80) / n
-  const yAt = (i: number) => (i % 2 ? 60 : 44)
-  const crownX = 92
-  const points = (to: number) =>
-    [...stops.slice(0, to + 1).map((_, i) => `${xAt(i)},${yAt(i)}`), ...(to >= n ? [`${crownX},52`] : [])].join(' ')
+  if (all) return <AllFights p={p} champion={champion} onBack={() => setAll(false)} />
 
   const podium: [Entrant, 'gold' | 'silver' | 'bronze', string][] = []
   if (champion) podium.push([champion, 'gold', 'Champion'])
@@ -2784,79 +3162,19 @@ function RoadResults({ p, champion, runnerUp, semis, final, paid, round, onRound
                 ) : null}
               </div>
 
-              <div className="ptour__roadmap">
-                <svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-                  <polyline points={points(n)} className="ptour__roadline" />
-                  {reachedAt >= 0 && <polyline points={points(crowned ? n : reachedAt)} className="ptour__roadlit" />}
-                </svg>
-                {stops.map((s, i) => (
-                  <div key={i} className={`ptour__stop is-${s.kind}`} style={{ left: `${xAt(i)}%`, top: `${yAt(i)}%` }}>
-                    {s.kind === 'loss' && (
-                      <span className="ptour__stopout">{shown?.wallet === p.wallet ? 'You went out' : 'Out'}</span>
-                    )}
-                    <small>{board.name(i, true)}</small>
-                    {s.kind === 'win' || s.kind === 'loss' ? (
-                      <button
-                        type="button"
-                        className="ptour__stopring"
-                        title={`Watch: ${board.name(s.round)} against ${s.opp.tag || s.opp.wallet}`}
-                        onClick={() => p.onWatch(s.m, s.round)}
-                      >
-                        <PlayerAvatar id={s.opp.avatar} name={s.opp.tag} className="ptour__stopav" size={46} />
-                      </button>
-                    ) : (
-                      <span className="ptour__stopring">{s.kind === 'pass' ? 'PASS' : ''}</span>
-                    )}
-                    <b>{s.kind === 'win' ? 'Won' : s.kind === 'loss' ? 'Lost' : s.kind === 'pass' ? 'Free pass' : '—'}</b>
-                  </div>
-                ))}
-                {champion && (
-                  <div className={`ptour__roadcrown${crowned ? '' : ' is-dim'}`} style={{ left: `${crownX}%` }}>
-                    <span className="ptour__roadmedal">
-                      <img className="ptour__roadtro" src={TROPHY} alt="" />
-                      <PlayerAvatar id={champion.avatar} name={champion.tag} className="ptour__roadchav" size={78} />
-                    </span>
-                    <b>{champion.tag || champion.wallet}</b>
-                    <small>Champion</small>
-                  </div>
-                )}
-              </div>
+              <RoadMap
+                board={board}
+                stops={stops}
+                champion={champion}
+                crowned={crowned}
+                out={shown?.wallet === p.wallet ? 'You went out' : 'Out'}
+                onStop={(s) => p.onWatch(s.m, s.round)}
+              />
             </section>,
             'main',
           ],
           [
-            <div className="ptour__roadfights" style={road}>
-              {stops.map((s) =>
-                s.kind === 'pass' ? (
-                  <div key={s.round} className="ptour__rf is-win">
-                    <small>{board.name(s.round)}</small>
-                    <div className="ptour__rfvs">
-                      <span className="ptour__rfpass mono">10</span>
-                      <span>
-                        <small>a top seed</small>
-                        <b>Free pass</b>
-                      </span>
-                      <em className="mono">+10</em>
-                    </div>
-                  </div>
-                ) : s.kind === 'win' || s.kind === 'loss' ? (
-                  <button key={s.round} type="button" className={`ptour__rf is-${s.kind}`} onClick={() => p.onWatch(s.m, s.round)}>
-                    <small>
-                      {board.name(s.round)} · {timeOf(chainTime(s.m.play_time))}
-                      <span className="ptour__rfplay" />
-                    </small>
-                    <div className="ptour__rfvs">
-                      <PlayerAvatar id={s.opp.avatar} name={s.opp.tag} className="ptour__rfav" size={38} />
-                      <span>
-                        <small>against</small>
-                        <b>{s.opp.tag || s.opp.wallet}</b>
-                      </span>
-                      <em>{s.kind === 'win' ? 'Won' : 'Lost'}</em>
-                    </div>
-                  </button>
-                ) : null,
-              )}
-            </div>,
+            <RoadFights board={board} stops={stops} color={gold ? '#ffd979' : '#00baff'} onWatch={p.onWatch} />,
             'main',
           ],
           [
@@ -2953,6 +3271,9 @@ function RoadResults({ p, champion, runnerUp, semis, final, paid, round, onRound
                   Watch the final
                 </button>
               )}
+              <button type="button" className="btn ptour__allbtn" onClick={() => setAll(true)}>
+                All fights
+              </button>
             </div>,
             'side',
           ],
