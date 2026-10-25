@@ -2680,21 +2680,6 @@ function roadOf(wallet: string, history: TournamentMatchup[][], rounds: number, 
   })
 }
 
-/** How a run ended, in a line: the wins before it and how far the one who stopped it went. */
-function exitLine(board: Board, stops: Stop[], exit: { opp: Entrant }): string {
-  const wins = stops.filter((x) => x.kind === 'win').length
-  const opp = board.runs.get(exit.opp.wallet)
-  const went = !opp
-    ? ''
-    : opp.outIn === null
-      ? ', who went on to win it all'
-      : opp.outIn === board.rounds - 1
-        ? ', who went on to reach the final'
-        : ''
-  const who = exit.opp.tag || exit.opp.wallet
-  return `${wins ? `${wins} win${wins === 1 ? '' : 's'}, then ${who}` : `Beaten by ${who}`}${went}.`
-}
-
 /**
  * The finished tournament on a desktop, told as a road.
  *
@@ -2730,7 +2715,6 @@ function RoadResults({ p, champion, runnerUp, semis, final, paid, round, onRound
   const stops = shown ? roadOf(shown.wallet, p.history, board.rounds, shown.pass) : []
   const reachedAt = stops.reduce((at, s, i) => (s.kind === 'ahead' ? at : i), -1)
   const crowned = !!shown && shown.wallet === champion?.wallet
-  const exit = stops.find((s): s is Fought => s.kind === 'loss')
   const mePaid = me ? paid(p.wallet) : null
   const started = Number(p.stage?.player_count ?? board.players)
 
@@ -2871,17 +2855,6 @@ function RoadResults({ p, champion, runnerUp, semis, final, paid, round, onRound
                     </div>
                   </button>
                 ) : null,
-              )}
-              {exit && (
-                <div className="ptour__rfnote">
-                  <PlayerAvatar id={exit.opp.avatar} name={exit.opp.tag} className="ptour__rfav" size={42} />
-                  <span>
-                    <b>Out in the {board.name(exit.round)}</b>
-                    <small>
-                      {exitLine(board, stops, exit)} Every fight can be watched again until the tournament is cleaned up.
-                    </small>
-                  </span>
-                </div>
               )}
             </div>,
             'main',
