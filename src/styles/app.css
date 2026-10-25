@@ -2367,27 +2367,41 @@ a.res {
   gap: 10px;
   min-width: 0;
 }
-/* The altar and the deal stay in view while a long list goes by. */
-.dasc__middle,
-.dasc__side {
-  position: sticky;
-  top: calc(var(--topbar-h, 0px) + var(--sp-4));
-}
+/*
+   The altar and the right column stay in view while a long list goes by.
+   The altar alone in the middle, centred in the height of the screen.
+*/
 .dasc__middle {
   grid-area: middle;
+  position: sticky;
+  top: calc(var(--topbar-h, 0px) + var(--sp-4));
   display: grid;
-  justify-items: center;
-  gap: var(--sp-4);
+  place-items: center;
   min-width: 0;
+  height: calc(100dvh - var(--topbar-h, 0px) - 2 * var(--sp-4));
+  min-height: 460px;
 }
-.dasc__middle .pasc__needs {
-  width: 100%;
+/* What it needs, what it does and costs, and what it can roll. */
+.dasc__right {
+  grid-area: side;
+  position: sticky;
+  top: calc(var(--topbar-h, 0px) + var(--sp-4));
+  display: grid;
+  gap: var(--sp-3);
+  align-content: start;
+  min-width: 0;
+  max-height: calc(100dvh - var(--topbar-h, 0px) - 2 * var(--sp-4));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+}
+.dasc__right .pasc__needs {
+  margin: 0;
 }
 .dasc__soft {
   color: var(--text-faint) !important;
 }
 .dasc__side {
-  grid-area: side;
   display: grid;
   gap: 12px;
   align-content: start;
@@ -2600,12 +2614,41 @@ a.res {
       'list side';
   }
   .dasc__middle,
-  .dasc__side {
+  .dasc__right {
     position: static;
+    height: auto;
+    max-height: none;
+  }
+  .dasc__middle {
+    min-height: 0;
   }
 }
 .dasc__side .mfacts dd {
   display: inline-flex;
   align-items: center;
   white-space: nowrap;
+}
+
+/* The table of what can be rolled, slim, under the deal. */
+.dasc__right .oddspanel {
+  margin: 0;
+  padding: 12px 14px;
+}
+.dasc__right .oddspanel__summary {
+  font-size: 11px;
+}
+.dasc__right .oddsrow {
+  grid-template-columns: minmax(0, 1fr) auto 46px;
+  gap: 8px;
+  padding: 6px 10px;
+  font-size: 12px;
+}
+.dasc__right .oddsrow__name strong {
+  font-size: 12px;
+}
+.dasc__right .oddsrow__name em {
+  font-size: 10.5px;
+}
+.dasc__right .oddsrow__chance {
+  font-size: 11px;
 }

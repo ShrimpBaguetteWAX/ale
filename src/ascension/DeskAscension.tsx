@@ -77,6 +77,7 @@ export function DeskAscension({
   busy,
   canAct,
   onAscend,
+  extra,
 }: {
   roster: RosterFighter[]
   ready: RosterFighter[]
@@ -94,6 +95,8 @@ export function DeskAscension({
   busy: Busy
   canAct: boolean
   onAscend: () => void
+  /** What goes under the deal: the table of what can be rolled. */
+  extra?: React.ReactNode
 }) {
   const { classes, fighters } = useConfig()
   const unlockAt = Number(fighters?.asc_ability_unlock_lvl ?? 0)
@@ -312,44 +315,8 @@ export function DeskAscension({
         )}
       </div>
 
-      {/* ---------- the altar ---------- */}
+      {/* ---------- the altar, alone in the middle ---------- */}
       <div className="dasc__middle">
-        {!target ? (
-          <div className="pasc__needs">
-            <b>Put a fighter at the level cap in the middle. It is the one that ascends.</b>
-            <small className="dasc__soft">Choose one on the left to put it on the altar.</small>
-          </div>
-        ) : complete ? (
-          <div className="pasc__needs is-done">
-            <b>Ready — these three are sacrificed:</b>
-            {SOCKETS.map(({ key }) => {
-              const f = chosen(key)!
-              const need = needOf(key, target)
-              return (
-                <span key={key}>
-                  <i>✓</i>
-                  {key === 'ability' ? 'Sacrifice ability' : `${need.name}, ${need.sub}`} · level {levelOf(f)}
-                </span>
-              )
-            })}
-          </div>
-        ) : (
-          <div className="pasc__needs">
-            <b>To ascend this fighter, sacrifice three other {plural}:</b>
-            <span>
-              <i>1</i>one <em>{cap(target.racename)}</em> — the same race
-            </span>
-            <span>
-              <i>2</i>one <em>{cap(target.element)}</em> — the same element
-            </span>
-            <span>
-              <i>3</i>one with the <em>Sacrifice</em> ability
-            </span>
-            <small>Three different fighters. All three are gone after ascending.</small>
-            {filled && check && !check.ok && <small>These three do not cover all three between them.</small>}
-          </div>
-        )}
-
         <div className="pasc__stage dasc__stage">
           <div className="pasc__altar">
             <svg className="pasc__lines" viewBox="0 0 330 330" aria-hidden="true">
@@ -407,120 +374,159 @@ export function DeskAscension({
         </div>
       </div>
 
-      {/* ---------- what it does and costs ---------- */}
-      <aside className="dasc__side">
+      {/* ---------- what it needs, does and costs, and what it can roll ---------- */}
+      <div className="dasc__right">
         {!target ? (
-          <>
-            <span className="dasc__cap">Ascension</span>
-            <p className="dasc__hint">
-              Three fighters of the same class are spent to push a fourth past the level cap: one of its race, one of
-              its element, one with the Sacrifice ability.
-            </p>
-            <dl className="mfacts">
-              <div>
-                <dt>At the level cap</dt>
-                <dd className="mono">{formatNumber(ready.length)}</dd>
-              </div>
-              <div>
-                <dt>Your credits</dt>
-                <dd className="mono">{formatNumber(credits)}</dd>
-              </div>
-            </dl>
-            <button type="button" className="btn btn--primary dasc__go" disabled>
-              Choose a fighter
-            </button>
-          </>
+          <div className="pasc__needs">
+            <b>Put a fighter at the level cap in the middle. It is the one that ascends.</b>
+            <small className="dasc__soft">Choose one on the left to put it on the altar.</small>
+          </div>
+        ) : complete ? (
+          <div className="pasc__needs is-done">
+            <b>Ready — these three are sacrificed:</b>
+            {SOCKETS.map(({ key }) => {
+              const f = chosen(key)!
+              const need = needOf(key, target)
+              return (
+                <span key={key}>
+                  <i>✓</i>
+                  {key === 'ability' ? 'Sacrifice ability' : `${need.name}, ${need.sub}`} · level {levelOf(f)}
+                </span>
+              )
+            })}
+          </div>
         ) : (
-          <>
-            <span className="dasc__cap">This ascension</span>
-            <div className="dasc__checks">
-              {SOCKETS.map(({ key }, i) => {
-                const need = needOf(key, target)
-                const placed = chosen(key)
-                const fits = byRequirement[key].length
-                const label =
-                  key === 'ability'
-                    ? `${an(target.classname)} ${cap(target.classname)} with Sacrifice`
-                    : `${an(need.name)} ${need.name} ${cap(target.classname)}`
-                return (
-                  <span key={key} className={placed || fits > 0 ? 'is-ok' : 'is-none'}>
-                    {placed ? (
-                      <>
-                        ✓ {key === 'ability' ? 'Sacrifice ability' : cap(need.sub)} · level {levelOf(placed)}
-                      </>
-                    ) : (
-                      <>
-                        {i + 1} · {label} — {fits === 0 ? 'none fit' : fits === 1 ? '1 fits' : `${fits} fit`}
-                      </>
-                    )}
-                  </span>
-                )
-              })}
-            </div>
-            <dl className="mfacts">
-              <div>
-                <dt>Ascension</dt>
-                <dd className="mono">
-                  ✦{target.ascension_level} → ✦{target.ascension_level + 1}
-                </dd>
-              </div>
-              <div>
-                <dt>Level</dt>
-                <dd className="mono">stays {levelOf(target)}</dd>
-              </div>
-              {unlockAt > 0 && (target.stats?.abilities ?? []).some((a) => a.locked) && (
+          <div className="pasc__needs">
+            <b>To ascend this fighter, sacrifice three other {plural}:</b>
+            <span>
+              <i>1</i>one <em>{cap(target.racename)}</em> — the same race
+            </span>
+            <span>
+              <i>2</i>one <em>{cap(target.element)}</em> — the same element
+            </span>
+            <span>
+              <i>3</i>one with the <em>Sacrifice</em> ability
+            </span>
+            <small>Three different fighters. All three are gone after ascending.</small>
+            {filled && check && !check.ok && <small>These three do not cover all three between them.</small>}
+          </div>
+        )}
+
+        <aside className="dasc__side">
+          {!target ? (
+            <>
+              <span className="dasc__cap">Ascension</span>
+              <p className="dasc__hint">
+                Three fighters of the same class are spent to push a fourth past the level cap: one of its race, one of
+                its element, one with the Sacrifice ability.
+              </p>
+              <dl className="mfacts">
                 <div>
-                  <dt>Locked ability</dt>
+                  <dt>At the level cap</dt>
+                  <dd className="mono">{formatNumber(ready.length)}</dd>
+                </div>
+                <div>
+                  <dt>Your credits</dt>
+                  <dd className="mono">{formatNumber(credits)}</dd>
+                </div>
+              </dl>
+              <button type="button" className="btn btn--primary dasc__go" disabled>
+                Choose a fighter
+              </button>
+            </>
+          ) : (
+            <>
+              <span className="dasc__cap">This ascension</span>
+              <div className="dasc__checks">
+                {SOCKETS.map(({ key }, i) => {
+                  const need = needOf(key, target)
+                  const placed = chosen(key)
+                  const fits = byRequirement[key].length
+                  const label =
+                    key === 'ability'
+                      ? `${an(target.classname)} ${cap(target.classname)} with Sacrifice`
+                      : `${an(need.name)} ${need.name} ${cap(target.classname)}`
+                  return (
+                    <span key={key} className={placed || fits > 0 ? 'is-ok' : 'is-none'}>
+                      {placed ? (
+                        <>
+                          ✓ {key === 'ability' ? 'Sacrifice ability' : cap(need.sub)} · level {levelOf(placed)}
+                        </>
+                      ) : (
+                        <>
+                          {i + 1} · {label} — {fits === 0 ? 'none fit' : fits === 1 ? '1 fits' : `${fits} fit`}
+                        </>
+                      )}
+                    </span>
+                  )
+                })}
+              </div>
+              <dl className="mfacts">
+                <div>
+                  <dt>Ascension</dt>
                   <dd className="mono">
-                    {target.ascension_level + 1 >= unlockAt ? 'starts working' : `works from ✦${unlockAt}`}
+                    ✦{target.ascension_level} → ✦{target.ascension_level + 1}
                   </dd>
                 </div>
-              )}
-              <div>
-                <dt>Fee</dt>
-                <dd className="mono">
-                  {formatNumber(fee)}
-                  <img className="pasc__coin" src={CREDITS} alt="credits" />
-                </dd>
-              </div>
-              <div>
-                <dt>Your credits</dt>
-                <dd className={`mono${short ? ' is-short' : ''}`}>{formatNumber(credits)}</dd>
-              </div>
-            </dl>
+                <div>
+                  <dt>Level</dt>
+                  <dd className="mono">stays {levelOf(target)}</dd>
+                </div>
+                {unlockAt > 0 && (target.stats?.abilities ?? []).some((a) => a.locked) && (
+                  <div>
+                    <dt>Locked ability</dt>
+                    <dd className="mono">
+                      {target.ascension_level + 1 >= unlockAt ? 'starts working' : `works from ✦${unlockAt}`}
+                    </dd>
+                  </div>
+                )}
+                <div>
+                  <dt>Fee</dt>
+                  <dd className="mono">
+                    {formatNumber(fee)}
+                    <img className="pasc__coin" src={CREDITS} alt="credits" />
+                  </dd>
+                </div>
+                <div>
+                  <dt>Your credits</dt>
+                  <dd className={`mono${short ? ' is-short' : ''}`}>{formatNumber(credits)}</dd>
+                </div>
+              </dl>
 
-            {complete ? (
-              <>
-                <button
-                  type="button"
-                  className="btn btn--primary dasc__go"
-                  disabled={!canAct || busy !== null || short}
-                  onClick={onAscend}
-                >
-                  {busy === 'ascend' && <span className="spinner" />}
-                  Ascend · {formatNumber(fee)}
-                  <img className="pasc__coin" src={CREDITS} alt="credits" />
-                </button>
-                <p className="dasc__hint">
-                  {short
-                    ? `You have ${formatNumber(credits)} — not enough.`
-                    : 'The three sacrifices are gone after ascending. Then three upgrades are rolled and you take one.'}
-                </p>
-              </>
-            ) : (
-              <>
-                <button type="button" className="btn btn--primary dasc__go" disabled>
-                  Fill the three sockets
-                </button>
-                <p className="dasc__hint">
-                  Click a socket on the altar, or a tab above the list. Click the fighter on the altar to take it
-                  off — its sacrifices come off with it.
-                </p>
-              </>
-            )}
-          </>
-        )}
-      </aside>
+              {complete ? (
+                <>
+                  <button
+                    type="button"
+                    className="btn btn--primary dasc__go"
+                    disabled={!canAct || busy !== null || short}
+                    onClick={onAscend}
+                  >
+                    {busy === 'ascend' && <span className="spinner" />}
+                    Ascend · {formatNumber(fee)}
+                    <img className="pasc__coin" src={CREDITS} alt="credits" />
+                  </button>
+                  <p className="dasc__hint">
+                    {short
+                      ? `You have ${formatNumber(credits)} — not enough.`
+                      : 'The three sacrifices are gone after ascending. Then three upgrades are rolled and you take one.'}
+                  </p>
+                </>
+              ) : (
+                <>
+                  <button type="button" className="btn btn--primary dasc__go" disabled>
+                    Fill the three sockets
+                  </button>
+                  <p className="dasc__hint">
+                    Click a socket on the altar, or a tab above the list. Click the fighter on the altar to take it
+                    off — its sacrifices come off with it.
+                  </p>
+                </>
+              )}
+            </>
+          )}
+        </aside>
+        {extra}
+      </div>
     </div>
   )
 }

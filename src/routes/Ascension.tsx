@@ -287,6 +287,28 @@ export default function Ascension() {
     )
   }
 
+  /*
+    Quoted for the fighter on screen: the one mid-ascension if there is
+    one, otherwise the one picked to ascend.
+
+    With neither, the level cap rather than the bare stored values. Only
+    a fighter at the cap can be ascended at all, so every fighter this
+    table will ever apply to is at that level — quoting health and damage
+    at level 1 until somebody is picked showed a quarter of the real
+    figure, and showed it to exactly the player still deciding whether
+    the errand is worth doing.
+  */
+  const oddsPanel = (
+    <OddsPanel
+      odds={odds}
+      factor={
+        pending ?? target
+          ? battleFactor((pending ?? target)!, levelMod, ageDecay).total
+          : levelFactor(ascendLevel, levelMod)
+      }
+    />
+  )
+
   return (
     <div className="ascension">
       <header className="ascension__head">
@@ -354,6 +376,7 @@ export default function Ascension() {
           credits={credits}
           busy={busy}
           canAct={!!session}
+          extra={oddsPanel}
           onAscend={() =>
             void run(
               'ascend',
@@ -371,25 +394,7 @@ export default function Ascension() {
         />
       )}
 
-      {/*
-        Quoted for the fighter on screen: the one mid-ascension if there is
-        one, otherwise the one picked to ascend.
-
-        With neither, the level cap rather than the bare stored values. Only
-        a fighter at the cap can be ascended at all, so every fighter this
-        table will ever apply to is at that level — quoting health and damage
-        at level 1 until somebody is picked showed a quarter of the real
-        figure, and showed it to exactly the player still deciding whether
-        the errand is worth doing.
-      */}
-      <OddsPanel
-        odds={odds}
-        factor={
-          pending ?? target
-            ? battleFactor((pending ?? target)!, levelMod, ageDecay).total
-            : levelFactor(ascendLevel, levelMod)
-        }
-      />
+      {pending && oddsPanel}
     </div>
   )
 }
