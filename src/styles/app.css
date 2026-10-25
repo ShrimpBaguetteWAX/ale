@@ -2850,3 +2850,9 @@ a.res {
 .dasc.dasc--offers {
   grid-template-columns: minmax(300px, 340px) minmax(0, 1fr) minmax(320px, 380px);
 }
+/* The fighter's box runs to the foot of the board, level with the right
+   column, as the list did on the screen before. */
+.dasc__scroll > .dasc__fighter {
+  min-height: 100%;
+  align-content: start;
+}

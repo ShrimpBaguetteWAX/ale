@@ -105,6 +105,23 @@ function Harness() {
         factor={1}
         onReroll={noop}
         onClaim={(s, v, p) => alert(`claim ${s} ${v} ${p}`)}
+        extra={
+          /* A stand-in for the open odds table the screen puts here. */
+          <details className="panel oddspanel" open>
+            <summary className="oddspanel__summary">What can be rolled</summary>
+            <div className="oddslist">
+              {Array.from({ length: 12 }, (_, i) => (
+                <div className="oddsrow" key={i}>
+                  <span className="oddsrow__name">
+                    <strong>Upgrade {i + 1}</strong>
+                  </span>
+                  <span className="oddsrow__range">+1 to +5</span>
+                  <span className="oddsrow__chance">8.3%</span>
+                </div>
+              ))}
+            </div>
+          </details>
+        }
       />
     </div>
   )
