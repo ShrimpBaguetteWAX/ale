@@ -18,6 +18,9 @@ import { fetchToolTemplates } from '@/pools/queries'
 import { fetchNftValues } from '@/dungeon/queries'
 import { fetchStakeWeights } from '@/farming/queries'
 import { weightOf } from '@/farming/rules'
+import { nftAsPanel } from '@/dungeon/nftFighter'
+import { formatStat, STAT_LABEL } from '@/tavern/fighterStats'
+import { FighterAbilities, FighterStats } from '@/components/FighterPanel'
 import {
   fetchSaleRecord,
   MARKET_SCHEMAS,
@@ -73,7 +76,12 @@ export function MarketTab({ wax }: { wax: number }) {
   const [sort, setSort] = useState<MarketSort>('cheapest')
   const [search, setSearch] = useState('')
   const [buying, setBuying] = useState<MarketCard | null>(null)
-  useEffect(() => setRarity(null), [schema])
+  /* One row open at a time, showing everything the card does here. */
+  const [open, setOpen] = useState<number | null>(null)
+  useEffect(() => {
+    setRarity(null)
+    setOpen(null)
+  }, [schema])
 
   const market = useChainQuery(`awmarket:${schema}`, () => fetchMarketCards(schema))
   /* What each card does here: three tables of the game's own, read once. */
@@ -223,7 +231,16 @@ export function MarketTab({ wax }: { wax: number }) {
             const short = card.wax > wax
             const key = `awmarket:${card.saleId}`
             return (
-              <article className="amk__row" key={card.templateId}>
+              <article
+                className={`amk__row${open === card.templateId ? ' is-open' : ''}`}
+                key={card.templateId}
+              >
+                <button
+                  type="button"
+                  className="amk__open"
+                  aria-expanded={open === card.templateId}
+                  onClick={() => setOpen(open === card.templateId ? null : card.templateId)}
+                >
                 <img
                   className="amk__art"
                   src={ipfsImage(card.img)}
@@ -245,6 +262,10 @@ export function MarketTab({ wax }: { wax: number }) {
                   </div>
                   <Benefits card={card} game={game.data} />
                 </div>
+                <svg className="amk__chev" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M6 9l6 6 6-6" />
+                </svg>
+                </button>
                 <button
                   type="button"
                   className="btn btn--primary amk__buy"
@@ -255,6 +276,7 @@ export function MarketTab({ wax }: { wax: number }) {
                   {busy === key && <span className="spinner" />}
                   {busy === key ? 'Buying' : waxLabel(card.wax)}
                 </button>
+                {open === card.templateId && game.data && <Details card={card} game={game.data} />}
               </article>
             )
           })}
@@ -279,9 +301,77 @@ export function MarketTab({ wax }: { wax: number }) {
 }
 
 type Game = {
-  tools: Map<number, { tlm_mp: number; shrd_mp: number }>
+  tools: Map<number, { tlm_mp: number; shrd_mp: number; ease: number; luck: number }>
   values: Awaited<ReturnType<typeof fetchNftValues>>
   weights: Awaited<ReturnType<typeof fetchStakeWeights>>
+}
+
+/**
+ * Everything the card does here, under its row: a crew or weapon as the
+ * game's own fighter panel — its stats, six resistances and every ability
+ * written out — and a tool's mining numbers.
+ */
+function Details({ card, game }: { card: MarketCard; game: Game }) {
+  if (card.schema === 'tool.worlds') {
+    const t = game.tools.get(card.templateId)
+    return (
+      <div className="amk__more">
+        {t ? (
+          <div className="amk__facts">
+            <span>
+              TLM power<b>{formatNumber(t.tlm_mp)}</b>
+            </span>
+            <span>
+              Shard power<b>{formatNumber(t.shrd_mp)}</b>
+            </span>
+            <span>
+              Ease<b>{formatNumber(t.ease)}</b>
+            </span>
+            <span>
+              Luck<b>{formatNumber(t.luck)}</b>
+            </span>
+          </div>
+        ) : (
+          <p className="amk__none">This tool has no mining power in Alien Legends.</p>
+        )}
+        <p className="amk__note">
+          Equip up to three tools under Rewards. Their TLM and shard power set the Reward Power
+          every dungeon and arena win banks; ease leans a tool towards TLM, luck towards shards.
+        </p>
+      </div>
+    )
+  }
+
+  const v = game.values.get(card.templateId)
+  if (!v) {
+    return (
+      <div className="amk__more">
+        <p className="amk__none">This card has no value in a fight here.</p>
+      </div>
+    )
+  }
+  const weapon = card.schema === 'arms.worlds'
+  return (
+    <div className="amk__more amk__more--fighter">
+      <div>
+        <h4 className="amk__morecap">As your sixth fighter</h4>
+        <FighterStats fighter={nftAsPanel(v, card.name)} />
+      </div>
+      <div>
+        <h4 className="amk__morecap">Abilities · {v.ability.length}</h4>
+        {v.ability.length ? (
+          <FighterAbilities abilities={v.ability} />
+        ) : (
+          <p className="amk__none">No ability.</p>
+        )}
+        <p className="amk__note">
+          {weapon
+            ? `Paired with a crew card, it joins a dungeon, arena or tournament fight. Their stats add up, and this weapon's element — ${v.element || 'neutral'} — becomes the fighter's.`
+            : "Paired with a weapon, it joins a dungeon, arena or tournament fight. Their stats add up; the weapon sets the fighter's element."}
+        </p>
+      </div>
+    </div>
+  )
 }
 
 /** What the card does here, in one line. */
@@ -322,14 +412,12 @@ function Benefits({ card, game }: { card: MarketCard; game: Game | undefined }) 
     <div className="amk__ben">
       {v ? (
         <>
+          {/* In the game's own units and names, as the fighter panel below shows them. */}
           <span>
-            HP <b>{formatNumber(v.stats.health)}</b>
+            {STAT_LABEL.damage} <b>{formatStat(v.stats.damage, v.stats.damage)}</b>
           </span>
           <span>
-            DMG <b>{formatNumber(v.stats.damage)}</b>
-          </span>
-          <span>
-            Init <b>{formatNumber(v.stats.initiative)}</b>
+            {STAT_LABEL.health} <b>{formatStat(v.stats.health, v.stats.health)}</b>
           </span>
           {v.ability[0] && (
             <span className="amk__ability" title={v.ability[0].description}>
