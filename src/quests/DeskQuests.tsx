@@ -83,7 +83,7 @@ export function DeskQuests({
                 >
                   <img src={questArt(q)} alt="" loading="lazy" />
                   <span className="dquests__rowtext">
-                    <b>{q.quest_title}</b>
+                    <b title={q.quest_title}>{q.quest_title}</b>
                     <span className="dquests__bar">
                       <i style={{ width: `${Math.max(2, p.percent)}%` }} />
                     </span>
@@ -228,10 +228,6 @@ function Detail({
               {r.label}
               <small>{r.symbol}</small>
             </b>
-            <small>
-              Set aside for you when this quest was issued — it pays the moment the counter reaches{' '}
-              {p.goal.toLocaleString(NUM_LOCALE)}.
-            </small>
           </div>
 
           {p.claimable ? (

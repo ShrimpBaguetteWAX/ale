@@ -644,7 +644,7 @@
   --near: #f6b400;
   --done: var(--teal);
   display: grid;
-  grid-template-columns: minmax(320px, 400px) minmax(0, 1fr);
+  grid-template-columns: clamp(300px, 34%, 400px) minmax(0, 1fr);
   gap: 16px;
   align-items: start;
 }
@@ -959,11 +959,6 @@ button.dquests__row:hover {
   font-size: 12px;
   color: var(--text-faint);
 }
-.dquests__reward > small {
-  font-size: 12px;
-  line-height: 1.4;
-  color: var(--text-faint);
-}
 .dquests__acts {
   display: flex;
   flex-wrap: wrap;
@@ -990,5 +985,67 @@ button.dquests__row:hover {
   }
   .dquests__detail {
     position: static;
+  }
+}
+
+/*
+ * A narrow detail column — a smaller window, or the menu taking its share:
+ * the ring smaller beside the line, and the title a size down. Measured on the column itself, not the window.
+ */
+.dquests__detail {
+  container: dqdetail / inline-size;
+}
+.dquests__acts .btn {
+  white-space: nowrap;
+}
+@container dqdetail (max-width: 620px) {
+  .dquests__hero {
+    height: 220px;
+  }
+  .dquests__plate {
+    flex-wrap: wrap;
+    row-gap: 8px;
+  }
+  .dquests__plate > span:first-child {
+    flex: 1 0 100%;
+  }
+  .shell .main__inner .dquests .dquests__plate h2 {
+    font-size: 21px;
+  }
+  .dquests__clock {
+    margin-left: 0;
+  }
+  .dquests__body {
+    grid-template-columns: 104px minmax(0, 1fr);
+    gap: 16px;
+    padding: 16px 18px 18px;
+  }
+  .dquests__ring {
+    width: 104px;
+    height: 104px;
+  }
+  .dquests__ring::before {
+    inset: 8px;
+  }
+  .dquests__ring b {
+    font-size: 19px;
+  }
+  .dquests__ring small {
+    font-size: 10.5px;
+  }
+  .dquests__reward b {
+    font-size: 21px;
+  }
+}
+/* Narrower still: the line and the reward under the ring, the buttons full width. */
+@container dqdetail (max-width: 440px) {
+  .dquests__body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .dquests__ring {
+    justify-self: center;
+  }
+  .dquests__acts > * {
+    flex: 1 1 100%;
   }
 }
