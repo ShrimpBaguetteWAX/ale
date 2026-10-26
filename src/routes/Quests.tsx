@@ -22,6 +22,7 @@ import { DIRTIES } from '@/wharf/actions'
 import type { Player } from '@/chain/types'
 import { NUM_LOCALE } from '@/format'
 import { asset } from '@/assets'
+import { usePhone } from '@/components/usePhone'
 import { claimedRecently, rememberClaimed } from '@/quests/claimed'
 
 /**
@@ -111,6 +112,7 @@ const EMPTY_SCOPES: QuestScope[] = []
 /* ---------- the screen ---------- */
 
 export default function Quests() {
+  const phone = usePhone()
   const account = useGame((s) => s.account)
   const player = useGame((s) => s.player)
   const session = useGame((s) => s.session)
@@ -273,17 +275,18 @@ export default function Quests() {
         </div>
       )}
 
-      <div className="scopetabs" role="tablist" aria-label="Quest cadence">
+      {/* A desktop draws the cadences as the shop's tabs; a phone keeps its segmented control. */}
+      <div className={phone ? 'scopetabs' : 'tabs scopetabs--desk'} role="tablist" aria-label="Quest cadence">
         {board.map((b) => (
           <button
             type="button"
             key={b.scope}
             role="tab"
             aria-selected={b.scope === scope}
-            className="scopetab"
+            className={phone ? 'scopetab' : 'tabs__tab'}
             onClick={() => setScope(b.scope as Scope)}
           >
-            <span className="scopetab__name">
+            <span className={phone ? 'scopetab__name' : 'scopetab__label'}>
               {b.label}
               {b.claimable > 0 && (
                 <span className="scopetab__badge" title="Ready to claim">

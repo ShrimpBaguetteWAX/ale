@@ -839,16 +839,12 @@
     display: block;
   }
 
-  /* Each tab says where you stand on it. */
-  .lbtab__meta {
-    font-family: var(--font-body);
-    font-size: 12px;
-    font-weight: var(--fw-bold);
-    letter-spacing: 0;
-    color: var(--text-faint);
+  /* The shop's tabs; the page grid already spaces them. */
+  .lbtabs--desk {
+    margin: 0;
   }
-  .lbtab[aria-selected='true'] .lbtab__meta {
-    color: #bff0ff;
+  .lbtabs--desk .tabs__tab img {
+    object-fit: contain;
   }
 
   /* The top three: second, first, third; first larger, in gold. */

@@ -337,7 +337,8 @@ export default function Leaderboard() {
 
       <ActionBanner error={error ?? data.error} />
 
-      <div className="lbtabs" role="tablist" aria-label="Leaderboard">
+      {/* A desktop draws the boards as the shop's tabs; a phone keeps its segmented control. */}
+      <div className={phone ? 'lbtabs' : 'tabs lbtabs--desk'} role="tablist" aria-label="Leaderboard">
         {(
           [
             ['dungeons', 'Dungeons', asset('/assets/icons/dungeons.svg')],
@@ -350,12 +351,12 @@ export default function Leaderboard() {
             key={key}
             role="tab"
             aria-selected={tab === key}
-            className="lbtab"
+            className={phone ? 'lbtab' : 'tabs__tab'}
             onClick={() => setTab(key)}
           >
-            <img src={icon} alt="" width={20} height={20} />
+            <img src={icon} alt="" width={phone ? 20 : 16} height={phone ? 20 : 16} />
             {label}
-            {!phone && tabMeta[key] && <small className="lbtab__meta">{tabMeta[key]}</small>}
+            {!phone && tabMeta[key] && <span className="tabs__count">{tabMeta[key]}</span>}
           </button>
         ))}
       </div>
