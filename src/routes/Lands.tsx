@@ -593,12 +593,14 @@ function DeskLands({
             Claim all
           </button>
         </div>
-        <div className="plands__tabs" role="tablist" aria-label="Buildings">
+        {/* The shop's tabs, as on every desktop screen. */}
+        <div className="tabs dlands__tabs" role="tablist" aria-label="Buildings">
           {tabs.map(([key, label]) => (
             <button
               type="button"
               key={key}
               role="tab"
+              className="tabs__tab"
               aria-selected={tab === key}
               onClick={() => setTab(key)}
             >

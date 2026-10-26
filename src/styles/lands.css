@@ -752,19 +752,13 @@
 .dlands .plands__claimtext b {
   font-size: 19px;
 }
-.dlands .plands__tabs {
-  align-items: stretch;
-  padding: 4px;
-  border-radius: 14px;
+/* The shop's tabs; the page's own gaps space them, and a due building's dot sits in the label. */
+.dlands__tabs {
+  align-self: center;
+  margin: 0;
 }
-.dlands .plands__tabs button {
-  min-height: 40px;
-  font-size: 13.5px;
-  border-radius: 10px;
-}
-.dlands .plands__dot {
-  top: 8px;
-  right: 10px;
+.dlands__tabs .plands__dot {
+  position: static;
 }
 
 .dlands__group {

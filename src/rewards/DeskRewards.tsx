@@ -78,14 +78,15 @@ export function DeskRewards({
     !!mineReady[key] || (claimPays(key) && unclaimed(player, key) > 0)
   return (
     <div className="drew">
-      <div className="prew__tabs drew__tabs" role="tablist" aria-label="Rewards">
+      {/* The shop's tabs, as on every desktop screen. */}
+      <div className="tabs drew__tabs" role="tablist" aria-label="Rewards">
         {TABS.map(([key, label]) => (
           <button
             type="button"
             key={key}
             role="tab"
             aria-selected={tab === key}
-            className="prew__tab"
+            className="tabs__tab"
             onClick={() => onTab(key)}
           >
             {label}

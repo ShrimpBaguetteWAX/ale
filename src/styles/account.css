@@ -1885,15 +1885,9 @@ button.prew__row:hover:not(:disabled) {
 .shell .main__inner .drew__head h1.drew__title {
   margin-bottom: 0;
 }
+/* The shop's tabs; the page's own gaps space them. */
 .drew__tabs {
-  max-width: 640px;
-  padding: 4px;
-  border-radius: 13px;
-}
-.drew__tabs .prew__tab {
-  min-height: 40px;
-  border-radius: 10px;
-  font-size: var(--fs-sm);
+  margin: 0;
 }
 
 .drew__stage {

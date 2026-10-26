@@ -96,14 +96,14 @@ export function DeskAccount({
       />
 
       <div className="dacc__main">
-        <div className="prew__tabs drew__tabs" role="tablist" aria-label="Account">
+        <div className="tabs drew__tabs" role="tablist" aria-label="Account">
           {TABS.map(([key, label]) => (
             <button
               type="button"
               key={key}
               role="tab"
               aria-selected={tab === key}
-              className="prew__tab"
+              className="tabs__tab"
               onClick={() => onTab(key)}
             >
               {label}
