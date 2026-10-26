@@ -2076,3 +2076,39 @@ i.mrow__arrow {
 .mrow__age.is-bad {
   box-shadow: inset 0 0 0 1px rgb(255 90 106 / 50%);
 }
+
+/*
+ * The fighter and the deal level with the first row of the list, under its
+ * filter bar — only where the list has one.
+ */
+@media (min-width: 720px) {
+  .mdesk:has(> .mdesk__list > .sheetbar) > .mdesk__side > .mfighter,
+  .mdesk:has(> .mdesk__list > .sheetbar) > .mdesk__side > .mdeal {
+    margin-top: 56px;
+  }
+}
+@container mkboard (max-width: 980px) {
+  .mdesk:has(> .mdesk__list > .sheetbar) > .mdesk__side {
+    margin-top: 56px;
+  }
+  .mdesk:has(> .mdesk__list > .sheetbar) > .mdesk__side > .mfighter,
+  .mdesk:has(> .mdesk__list > .sheetbar) > .mdesk__side > .mdeal {
+    margin-top: 0;
+  }
+}
+/* My Listings has a heading line over its rows instead of the filter bar. */
+@media (min-width: 720px) {
+  .mdesk:has(> .mdesk__list > .mrows__head:first-child) > .mdesk__side > .mfighter,
+  .mdesk:has(> .mdesk__list > .mrows__head:first-child) > .mdesk__side > .mdeal {
+    margin-top: 32px;
+  }
+}
+@container mkboard (max-width: 980px) {
+  .mdesk:has(> .mdesk__list > .mrows__head:first-child) > .mdesk__side {
+    margin-top: 32px;
+  }
+  .mdesk:has(> .mdesk__list > .mrows__head:first-child) > .mdesk__side > .mfighter,
+  .mdesk:has(> .mdesk__list > .mrows__head:first-child) > .mdesk__side > .mdeal {
+    margin-top: 0;
+  }
+}
