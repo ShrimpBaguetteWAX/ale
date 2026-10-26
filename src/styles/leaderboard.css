@@ -796,3 +796,332 @@
     color: #bff0ff;
   }
 }
+
+/* ---------- a desktop: the phone's podium, then your place, then the board ---------- */
+
+.dpodium,
+.dyou,
+.dseasons {
+  display: none;
+}
+
+@media (min-width: 720px) {
+  /* LEADERBOARDS and its i; the explanation behind it, as on the phone. */
+  .lboard__title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .lboard__info {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: none;
+    box-shadow: inset 0 0 0 1.5px rgb(255 255 255 / 28%);
+    color: var(--text-faint);
+    font: var(--fw-bold) 13px var(--font-body);
+    letter-spacing: 0;
+    cursor: pointer;
+  }
+  .lboard__info[aria-expanded='true'] {
+    color: var(--white);
+    box-shadow: inset 0 0 0 1.5px var(--cyan);
+  }
+  .lboard__lede {
+    display: none;
+  }
+  .lboard--lede .lboard__lede {
+    display: block;
+  }
+
+  /* Each tab says where you stand on it. */
+  .lbtab__meta {
+    font-family: var(--font-body);
+    font-size: 12px;
+    font-weight: var(--fw-bold);
+    letter-spacing: 0;
+    color: var(--text-faint);
+  }
+  .lbtab[aria-selected='true'] .lbtab__meta {
+    color: #bff0ff;
+  }
+
+  /* The top three: second, first, third; first larger, in gold. */
+  .dpodium {
+    display: grid;
+    grid-template-columns: 1fr 1.15fr 1fr;
+    gap: 14px;
+    align-items: end;
+  }
+  .dpodium__place {
+    --medal: #cd7f32;
+    position: relative;
+    display: grid;
+    justify-items: center;
+    gap: 6px;
+    min-width: 0;
+    padding: 18px 14px 14px;
+    border-radius: 16px;
+    background:
+      radial-gradient(80% 60% at 50% 0%, color-mix(in srgb, var(--medal) 18%, transparent), transparent 70%),
+      rgb(8 14 28 / 76%);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--medal) 50%, transparent);
+    text-align: center;
+  }
+  .dpodium__place--1 {
+    --medal: #f6a800;
+    grid-column: 2;
+    grid-row: 1;
+    padding-top: 24px;
+    box-shadow:
+      inset 0 0 0 1.5px color-mix(in srgb, var(--medal) 60%, transparent),
+      0 0 30px -12px var(--medal);
+  }
+  .dpodium__place--2 {
+    --medal: #c9d1e3;
+    grid-column: 1;
+    grid-row: 1;
+  }
+  .dpodium__place--3 {
+    grid-column: 3;
+    grid-row: 1;
+  }
+  .dpodium__place.is-you {
+    box-shadow:
+      inset 0 0 0 2px var(--cyan),
+      0 0 24px -10px var(--cyan);
+  }
+  .dpodium__num {
+    position: absolute;
+    top: 10px;
+    left: 16px;
+    font-family: var(--font-display);
+    font-size: 26px;
+    font-weight: 900;
+    color: var(--medal);
+    opacity: 0.9;
+  }
+  .dpodium__avatar {
+    border-radius: 50%;
+    object-fit: cover;
+    box-shadow:
+      0 0 0 3px var(--medal),
+      0 0 22px color-mix(in srgb, var(--medal) 45%, transparent);
+  }
+  .dpodium__name {
+    max-width: 100%;
+    margin-top: 4px;
+    overflow: hidden;
+    font-size: 15px;
+    font-weight: var(--fw-bold);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .dpodium__you {
+    padding: 1px 8px;
+    border-radius: 999px;
+    background: var(--cyan);
+    color: #04121b;
+    font-family: var(--font-display);
+    font-size: 8.5px;
+    font-style: normal;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+  .dpodium__rating {
+    font-size: 19px;
+    font-weight: 800;
+  }
+  .dpodium__pays {
+    justify-content: center;
+    min-height: 16px;
+  }
+  .dpodium .lbrow__team {
+    justify-content: center;
+  }
+
+  /* Your place, under the podium. */
+  .dyou {
+    display: flex;
+    gap: 18px;
+    align-items: center;
+    padding: 12px 18px;
+    border-radius: 14px;
+    background: linear-gradient(110deg, rgb(0 186 255 / 16%), rgb(8 14 28 / 80%) 60%);
+    box-shadow: inset 0 0 0 1px rgb(0 186 255 / 45%);
+  }
+  .dyou__rank {
+    display: grid;
+    justify-items: center;
+    min-width: 62px;
+    font-family: var(--font-display);
+    font-size: 28px;
+    font-weight: 900;
+    line-height: 1;
+    color: var(--cyan);
+  }
+  .dyou__rank small {
+    margin-bottom: 4px;
+    font-size: 8.5px;
+    font-weight: 800;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+  }
+  .dyou__rank.rank--gold {
+    color: var(--gold);
+  }
+  .dyou__rank.rank--silver {
+    color: var(--r-common);
+  }
+  .dyou__rank.rank--bronze {
+    color: #cd7f32;
+  }
+  .dyou__avatar {
+    border-radius: 10px;
+    object-fit: cover;
+  }
+  .dyou__text {
+    display: grid;
+    flex: 1;
+    gap: 2px;
+    min-width: 0;
+  }
+  .dyou__text b {
+    font-size: 15px;
+  }
+  .dyou__text small {
+    font-size: 12.5px;
+    line-height: 1.4;
+    color: var(--text-faint);
+  }
+  .dyou__stat {
+    display: grid;
+    justify-items: end;
+    gap: 2px;
+  }
+  .dyou__stat small {
+    font-family: var(--font-display);
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+    white-space: nowrap;
+  }
+  .dyou__stat b {
+    font-size: 15px;
+    white-space: nowrap;
+  }
+  .dlb__claim {
+    min-height: 44px;
+    padding: 0 18px;
+    white-space: nowrap;
+  }
+
+  /* The seasons as cards, each with its pot and its clock. */
+  .seasontabs {
+    display: none;
+  }
+  .dseasons {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 12px;
+  }
+  .dseason {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 14px;
+    align-items: center;
+    padding: 14px 16px;
+    border: 0;
+    border-radius: 14px;
+    background: rgb(8 14 28 / 72%);
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 10%);
+    color: var(--white);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+  }
+  .dseason:hover {
+    box-shadow: inset 0 0 0 1px rgb(0 186 255 / 40%);
+  }
+  .dseason[aria-selected='true'] {
+    background: linear-gradient(160deg, rgb(0 186 255 / 14%), rgb(8 14 28 / 78%) 60%);
+    box-shadow: inset 0 0 0 1.5px var(--cyan);
+  }
+  .dseason > img {
+    width: 34px;
+    height: 34px;
+  }
+  .dseason__text {
+    display: grid;
+    gap: 2px;
+    min-width: 0;
+  }
+  .dseason__text b {
+    font-family: var(--font-display);
+    font-size: 14px;
+  }
+  .dseason__text small {
+    font-size: 12px;
+    color: var(--text-faint);
+  }
+  .dseason__clock {
+    display: grid;
+    justify-items: end;
+    gap: 2px;
+  }
+  .dseason__clock small {
+    font-family: var(--font-display);
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+  }
+  .dseason__clock b {
+    font-size: 20px;
+    font-weight: 900;
+    color: var(--cyan);
+  }
+  .dseason__clock.is-soon b {
+    color: #ffd979;
+  }
+
+  /* The season under its card: what it is, and Current / Last results. The clock is on the card. */
+  .season__head--desk {
+    padding: 0 2px;
+    border: 0;
+    background: none;
+  }
+  .season__head--desk .season__name {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+  }
+  .season__head--desk .season__name span {
+    font-family: var(--font-body);
+    font-size: 12.5px;
+    font-weight: var(--fw-bold);
+    letter-spacing: 0;
+    text-transform: none;
+    color: var(--text-dim);
+  }
+  .season__head--desk .season__meta {
+    margin-top: 2px;
+  }
+  .season__head--desk .season__clock {
+    display: none;
+  }
+}

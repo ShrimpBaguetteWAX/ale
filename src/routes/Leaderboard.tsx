@@ -219,6 +219,57 @@ export default function Leaderboard() {
       { after: data.reload, dirties: DIRTIES.claimLeaderboardReward },
     )
 
+  /*
+     A desktop has room to say on each tab where you stand on it: your dungeon
+     place, and your place on the season the Arena tab opens on, with its clock.
+  */
+  const phone = usePhone()
+  const openSeason = defaultSeason(seasons, now)
+  const arenaRank = openSeason
+    ? (arena.get(openSeason.scope) ?? []).findIndex((r) => r.wallet === player?.wallet) + 1
+    : 0
+  const openTiming = openSeason ? seasonTiming(openSeason, now) : undefined
+  const tabMeta: Partial<Record<Tab, string>> = {
+    dungeons: myRank > 0 ? `#${myRank}` : undefined,
+    arena: openTiming
+      ? [
+          arenaRank > 0 ? `#${arenaRank}` : '',
+          openTiming.phase === 'running'
+            ? countdown(openTiming.msLeft)
+            : openTiming.phase === 'upcoming'
+              ? `in ${countdown(openTiming.msLeft)}`
+              : '',
+        ]
+          .filter(Boolean)
+          .join(' · ') || undefined
+      : undefined,
+  }
+
+  /* The desktop's claim, in the strip that says where you stand. */
+  const pays = canClaim ? Math.floor(dungeonReward(myRank, config, pool)) : 0
+  const deskClaim = (
+    <button
+      type="button"
+      className="btn btn--gold dlb__claim"
+      disabled={!session || busy || onCooldown || !canClaim}
+      onClick={() => void doClaim()}
+      title={
+        !canClaim
+          ? `Only the top ${paidPlaces} are paid`
+          : onCooldown
+            ? 'One claim a day'
+            : 'Pays out your dungeon leaderboard rank'
+      }
+    >
+      {busy && <span className="spinner" />}
+      {!canClaim
+        ? `Top ${paidPlaces} only`
+        : onCooldown
+          ? `Next claim in ${countdown(claimAt - now)}`
+          : `Claim ${formatNumber(pays)} TLM`}
+    </button>
+  )
+
   if (!player) return null
 
   return (
@@ -248,7 +299,7 @@ export default function Leaderboard() {
           button on those tabs offered an action that either does nothing for
           what is on screen or fails outright.
         */}
-        {tab === 'dungeons' && (
+        {tab === 'dungeons' && phone && (
           <button
             type="button"
             className="btn btn--primary lboard__claim"
@@ -304,6 +355,7 @@ export default function Leaderboard() {
           >
             <img src={icon} alt="" width={20} height={20} />
             {label}
+            {!phone && tabMeta[key] && <small className="lbtab__meta">{tabMeta[key]}</small>}
           </button>
         ))}
       </div>
@@ -320,6 +372,7 @@ export default function Leaderboard() {
           config={config}
           pool={pool}
           wallet={account ?? ''}
+          claim={deskClaim}
         />
       ) : tab === 'arena' ? (
         <ArenaBoards
@@ -345,17 +398,20 @@ export function DungeonBoard({
   config,
   pool,
   wallet,
+  claim,
 }: {
   ranks: DungeonRank[]
   config?: DungeonConfigLb
   pool?: TlmPool
   wallet: string
+  /** The daily claim, which a desktop holds in the strip that says where you stand. */
+  claim?: React.ReactNode
 }) {
   /* Still the cutoff for the "Pays now" column and the threshold rule. */
   const paid = rewardCount(config)
   const phone = usePhone()
-  /* A phone puts the top three on a podium and lists from fourth. */
-  const from = phone ? Math.min(3, ranks.length) : 0
+  /* Both put the top three on a podium and list from fourth. */
+  const from = Math.min(3, ranks.length)
   const payNow = (rank: number) =>
     rank <= paid ? (
       <>
@@ -392,6 +448,33 @@ export function DungeonBoard({
               ? `${formatNumber(ranks[paid - 1].rating - ranks[mine].rating)} to top ${paid}`
               : undefined
           }
+          absent="Win dungeons to earn a rating"
+        />
+      )}
+      {!phone && ranks.length > 0 && (
+        <DeskPodium
+          places={ranks.slice(0, 3).map((r, i) => ({
+            rank: i + 1,
+            wallet: r.wallet,
+            name: displayName(r),
+            avatar: r.avatar,
+            rating: r.rating,
+            pays: payNow(i + 1),
+            team: <Team row={r} />,
+          }))}
+          wallet={wallet}
+        />
+      )}
+      {!phone && wallet && (
+        <YouStrip
+          verb="You are"
+          rank={mine + 1}
+          name={mine >= 0 ? displayName(ranks[mine]) : ''}
+          avatar={mine >= 0 ? ranks[mine].avatar : undefined}
+          rating={mine >= 0 ? ranks[mine].rating : 0}
+          line={mine >= 0 ? dungeonLine(ranks, mine, paid) : ''}
+          stats={[['Pays now', mine >= 0 ? payNow(mine + 1) : null]]}
+          action={claim}
           absent="Win dungeons to earn a rating"
         />
       )}
@@ -433,21 +516,7 @@ export function DungeonBoard({
                   and it is already in the row — so it is shown rather than
                   hidden behind a click.
                 */}
-                <span className="lbrow__team">
-                  {(row.recent_fighters ?? []).slice(0, 6).map((f, n) => (
-                    <GameImg
-                      key={`${row.wallet}-${n}`}
-                      src={fighterArt({
-                        classname: f.classname,
-                        racename: f.racename,
-                      })}
-                      alt={`${f.racename} ${f.classname}`}
-                      title={`${f.racename} ${f.classname}`}
-                      loading="lazy"
-                      fallback={fighterArtFallback()}
-                    />
-                  ))}
-                </span>
+                <Team row={row} />
 
                 <span className="lbrow__rating">{formatNumber(row.rating)}</span>
 
@@ -531,6 +600,41 @@ export function ArenaBoards({
 
   return (
     <div className="seasons">
+      {!phone ? (
+        /* A desktop: each season as a card with its pot and its clock. */
+        <div className="dseasons" role="tablist" aria-label="Arena season">
+          {seasons.map((s) => {
+            const t = seasonTiming(s, now)
+            return (
+              <button
+                type="button"
+                key={s.scope}
+                role="tab"
+                aria-selected={s.scope === (scope ?? seasons[0].scope)}
+                className="dseason"
+                onClick={() => {
+                  touched.current = true
+                  setScope(s.scope)
+                }}
+              >
+                <img src={asset('/assets/icons/arena.svg')} alt="" />
+                <span className="dseason__text">
+                  <b>{s.displayname}</b>
+                  <small>
+                    Top {formatNumber(s.winners)} share {formatDecimals(seasonPot(s), 0)} TLM
+                  </small>
+                </span>
+                <span className={`dseason__clock${t.phase === 'upcoming' ? ' is-soon' : ''}`}>
+                  <small>
+                    {t.phase === 'running' ? 'Remaining' : t.phase === 'upcoming' ? 'Starts in' : 'Ended'}
+                  </small>
+                  <b className="mono">{t.phase === 'ended' ? '—' : countdown(t.msLeft)}</b>
+                </span>
+              </button>
+            )
+          })}
+        </div>
+      ) : (
       <div className="seasontabs" role="tablist" aria-label="Arena season">
         {seasons.map((s) => {
           const t = seasonTiming(s, now)
@@ -558,6 +662,7 @@ export function ArenaBoards({
           )
         })}
       </div>
+      )}
 
       {shown.map((season) => {
         const timing = seasonTiming(season, now)
@@ -580,22 +685,34 @@ export function ArenaBoards({
             </>
           ) : null
         const rankOf = (row: ArenaRank, i: number) => (showing ? row.rank : i + 1)
-        const from = phone ? Math.min(3, rows.length) : 0
+        const from = Math.min(3, rows.length)
         const mine = rows.findIndex((r) => r.wallet === wallet)
+        const mineRank = mine >= 0 ? rankOf(rows[mine], mine) : 0
+        const above = mine > 0 ? rows[mine - 1] : undefined
 
         return (
           <section className="season" key={season.scope}>
-            <header className="season__head">
+            <header className={`season__head${phone ? '' : ' season__head--desk'}`}>
               <div>
-                <h2 className="season__name">{season.displayname}</h2>
-                <p className="season__meta">
-                  {showing
-                    ? `${formatNumber(finished.length)} paid, ${formatDecimals(
-                        finished.reduce((sum, r) => sum + r.earned_tlm, 0) / 10_000,
-                        0,
-                      )} TLM between them`
-                    : `Top ${formatNumber(season.winners)} share ${formatDecimals(pot, 0)} TLM`}
-                </p>
+                <h2 className="season__name">
+                  {season.displayname}
+                  {!phone && (
+                    <span>
+                      {showing ? 'last results' : `${formatNumber(rows.length)} players`}
+                    </span>
+                  )}
+                </h2>
+                {/* A desktop's season card already says what the running one shares. */}
+                {(phone || showing) && (
+                  <p className="season__meta">
+                    {showing
+                      ? `${formatNumber(finished.length)} paid, ${formatDecimals(
+                          finished.reduce((sum, r) => sum + r.earned_tlm, 0) / 10_000,
+                          0,
+                        )} TLM between them`
+                      : `Top ${formatNumber(season.winners)} share ${formatDecimals(pot, 0)} TLM`}
+                  </p>
+                )}
               </div>
 
               {/*
@@ -658,6 +775,52 @@ export function ArenaBoards({
                   rating: r.rating,
                   pays: placePays(rankOf(r, i), r),
                 }))}
+              />
+            )}
+            {!phone && rows.length > 0 && (
+              <DeskPodium
+                places={rows.slice(0, 3).map((r, i) => ({
+                  rank: rankOf(r, i),
+                  wallet: r.wallet,
+                  name: displayName(r),
+                  avatar: r.avatar,
+                  rating: r.rating,
+                  pays: placePays(rankOf(r, i), r),
+                }))}
+                wallet={wallet}
+              />
+            )}
+            {!phone && wallet && (
+              <YouStrip
+                verb={showing ? 'You were' : 'You are'}
+                rank={mineRank}
+                name={mine >= 0 ? displayName(rows[mine]) : ''}
+                avatar={mine >= 0 ? rows[mine].avatar : undefined}
+                rating={mine >= 0 ? rows[mine].rating : 0}
+                line={
+                  showing
+                    ? `Last ${season.displayname} · ${formatNumber(finished.length)} paid`
+                    : [
+                        above
+                          ? `${formatNumber(above.rating - rows[mine].rating)} behind #${rankOf(above, mine - 1)} ${displayName(above)}`
+                          : mine === 0 && rows[1]
+                            ? `${formatNumber(rows[0].rating - rows[1].rating)} ahead of #2 ${displayName(rows[1])}`
+                            : '',
+                        timing.phase === 'running' ? `${countdown(timing.msLeft)} left` : '',
+                        'paid automatically when it ends',
+                      ]
+                        .filter(Boolean)
+                        .join(' · ')
+                }
+                stats={[
+                  [showing ? 'You earned' : 'Place pays', mine >= 0 ? placePays(mineRank, rows[mine]) : null],
+                  ...(showing ? [] : ([[`Of ${formatNumber(rows.length)}`, `Top ${formatNumber(season.winners)} paid`]] as [string, React.ReactNode][])),
+                ]}
+                absent={
+                  showing
+                    ? 'You were not among the places paid last time'
+                    : 'Win an arena fight this season to get a rating'
+                }
               />
             )}
             {phone && wallet && !showing && (
@@ -758,6 +921,143 @@ export function ArenaBoards({
           </section>
         )
       })}
+    </div>
+  )
+}
+
+/* ---------- the defending team ---------- */
+
+/*
+ * The defending team is the whole reason a dungeon row has a rating, and it is
+ * already in the row — so it is shown rather than hidden behind a click.
+ */
+function Team({ row }: { row: DungeonRank }) {
+  return (
+    <span className="lbrow__team">
+      {(row.recent_fighters ?? []).slice(0, 6).map((f, n) => (
+        <GameImg
+          key={`${row.wallet}-${n}`}
+          src={fighterArt({
+            classname: f.classname,
+            racename: f.racename,
+          })}
+          alt={`${f.racename} ${f.classname}`}
+          title={`${f.racename} ${f.classname}`}
+          loading="lazy"
+          fallback={fighterArtFallback()}
+        />
+      ))}
+    </span>
+  )
+}
+
+/** Where you stand on the dungeon board, in one line: the place above, and the paid line. */
+function dungeonLine(ranks: DungeonRank[], mine: number, paid: number): string {
+  const me = ranks[mine]
+  const parts: string[] = []
+  const inside = paid > 0 && mine < paid
+  if (inside) parts.push(`Inside the paid top ${paid}`)
+  else if (paid > 0 && ranks[paid - 1])
+    parts.push(`${formatNumber(ranks[paid - 1].rating - me.rating)} to reach the top ${paid}`)
+  if (mine > 0) {
+    const above = ranks[mine - 1]
+    parts.push(`${formatNumber(above.rating - me.rating)} behind #${mine} ${displayName(above)}`)
+  } else if (ranks[1]) {
+    parts.push(`${formatNumber(me.rating - ranks[1].rating)} ahead of #2 ${displayName(ranks[1])}`)
+  }
+  if (inside && ranks[paid - 1] && mine < paid - 1)
+    parts.push(`the line is ${formatNumber(me.rating - ranks[paid - 1].rating)} below you`)
+  return parts.join(' · ')
+}
+
+/* ---------- a desktop's podium and your place ---------- */
+
+/**
+ * The phone's podium, given width: first in the middle and larger, second
+ * and third either side, each a card in its medal's colour with the rating,
+ * what the place pays and — on the dungeon board — the defending team.
+ */
+function DeskPodium({ places, wallet }: { places: (Place & { team?: React.ReactNode })[]; wallet: string }) {
+  return (
+    <div className="dpodium">
+      {places.map((p) => (
+        <div
+          className={`dpodium__place dpodium__place--${p.rank}${p.wallet === wallet ? ' is-you' : ''}`}
+          key={p.wallet}
+        >
+          <span className="dpodium__num">{p.rank}</span>
+          <PlayerAvatar
+            id={p.avatar}
+            name={p.name}
+            className="dpodium__avatar"
+            size={p.rank === 1 ? 92 : 72}
+          />
+          <span className="dpodium__name">{p.name}</span>
+          {p.wallet === wallet && <em className="dpodium__you">You</em>}
+          <span className="dpodium__rating mono">{formatNumber(p.rating)}</span>
+          <span className="lbrow__pays dpodium__pays">{p.pays}</span>
+          {p.team}
+        </div>
+      ))}
+    </div>
+  )
+}
+
+/**
+ * Your place, under the podium: the rank large, how far the next place is,
+ * what it pays, and on the dungeon board the claim. On a board you are not
+ * on, it says how to get on it.
+ */
+function YouStrip({
+  verb,
+  rank,
+  name,
+  avatar,
+  rating,
+  line,
+  stats,
+  action,
+  absent,
+}: {
+  verb: string
+  rank: number
+  name: string
+  avatar?: number
+  rating: number
+  line: string
+  stats: [string, React.ReactNode][]
+  action?: React.ReactNode
+  absent: string
+}) {
+  if (rank < 1) {
+    return (
+      <div className="dyou is-absent">
+        <span className="dyou__text">
+          <b>You are not on this board yet</b>
+          <small>{absent}</small>
+        </span>
+      </div>
+    )
+  }
+  return (
+    <div className="dyou">
+      <span className={`dyou__rank ${rankClass(rank)}`}>
+        <small>{verb}</small>#{formatNumber(rank)}
+      </span>
+      <PlayerAvatar id={avatar} name={name} className="dyou__avatar" size={44} />
+      <span className="dyou__text">
+        <b>
+          {name} · {formatNumber(rating)} rating
+        </b>
+        <small>{line}</small>
+      </span>
+      {stats.map(([label, value]) => (
+        <span className="dyou__stat" key={label}>
+          <small>{label}</small>
+          <b className="lbrow__pays">{value ?? <span className="faint">—</span>}</b>
+        </span>
+      ))}
+      {action}
     </div>
   )
 }
