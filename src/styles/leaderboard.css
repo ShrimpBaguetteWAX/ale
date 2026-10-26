@@ -230,12 +230,14 @@
   gap: 2px;
   min-width: 0;
 }
+.lbrow__face {
+  display: block;
+  flex: none;
+}
 .lbrow__team img {
   width: 34px;
   height: 34px;
   object-fit: contain;
-  border-radius: var(--radius-xs);
-  background: rgb(0 0 0 / 35%);
 }
 
 .lbrow__rating {

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useGame } from '@/state/useGame'
 import {
   fetchArenaRanks,
@@ -37,6 +37,14 @@ import { asset } from '@/assets'
 import { PlayerAvatar } from '@/components/PlayerAvatar'
 import { GameImg } from '@/components/GameImg'
 import { usePhone } from '@/components/usePhone'
+import { FighterHoverCard } from '@/components/FighterPanel'
+import { HoverPopover, useHoverCard } from '@/components/HoverPopover'
+import { battlePanel, enemyNftPanel, nftCards } from '@/fight/setup'
+import { fetchSchemaTemplates } from '@/chain/atomic'
+import { useConfig } from '@/state/useConfig'
+import { NFT_FIGHTER_ID } from '@/dungeon/rules'
+import { NFT_FIGHTER_ART } from '@/dungeon/nftFighter'
+import type { BattleFighter } from '@/dungeon/types'
 
 /**
  * Leaderboards.
@@ -936,18 +944,84 @@ function Team({ row }: { row: DungeonRank }) {
   return (
     <span className="lbrow__team">
       {(row.recent_fighters ?? []).slice(0, 6).map((f, n) => (
-        <GameImg
-          key={`${row.wallet}-${n}`}
-          src={fighterArt({
-            classname: f.classname,
-            racename: f.racename,
-          })}
-          alt={`${f.racename} ${f.classname}`}
-          title={`${f.racename} ${f.classname}`}
-          loading="lazy"
-          fallback={fighterArtFallback()}
-        />
+        <TeamFace key={`${row.wallet}-${n}`} fighter={f} templateIds={row.used_template_ids} />
       ))}
+    </span>
+  )
+}
+
+/**
+ * One fighter of a defending team, opening the same stat card the Dungeon's
+ * line-up does on a resting pointer.
+ *
+ * The sixth is the NFT fighter fused from the row's crew and weapon cards: it
+ * has no class or race, so it is drawn and read the way the Dungeon draws it.
+ * The card catalogue that names those two cards is only read once one of
+ * them is hovered — a board of twenty rows should not cost it otherwise.
+ */
+function TeamFace({ fighter: f, templateIds }: { fighter: BattleFighter; templateIds: number[] }) {
+  const phone = usePhone()
+  const { classes } = useConfig()
+  /* A uint64 on chain, so the row hands it over as a string. */
+  const nft = Number(f.fighter_id) === NFT_FIGHTER_ID
+  const [wanted, setWanted] = useState(false)
+  const catalogue = useChainQuery(
+    'card-catalogue',
+    async () => {
+      const [crewTemplates, weaponTemplates] = await Promise.all([
+        fetchSchemaTemplates('crew.worlds'),
+        fetchSchemaTemplates('arms.worlds'),
+      ])
+      return new Map([...crewTemplates, ...weaponTemplates])
+    },
+    { enabled: nft && wanted },
+  )
+  const preview = useMemo(
+    () => () =>
+      nft
+        ? { panel: enemyNftPanel(f), template: undefined, cards: nftCards(templateIds ?? [], catalogue.data) }
+        : { panel: battlePanel(f), template: classes.get(f.classname), cards: undefined },
+    [f, nft, templateIds, catalogue.data, classes],
+  )
+  const { ref, shown, handlers } = useHoverCard(preview, !phone)
+
+  /* The NFT's cards arrive after the pointer did: reopen with them named. */
+  const [resting, setResting] = useState(false)
+  useEffect(() => {
+    if (resting && catalogue.data) handlers.onMouseEnter()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [catalogue.data])
+
+  const name = nft ? 'NFT Fighter' : `${f.racename} ${f.classname}`
+  return (
+    <span
+      className="lbrow__face"
+      ref={ref}
+      onMouseEnter={() => {
+        setWanted(true)
+        setResting(true)
+        handlers.onMouseEnter()
+      }}
+      onMouseLeave={() => {
+        setResting(false)
+        handlers.onMouseLeave()
+      }}
+    >
+      {shown && (
+        <HoverPopover anchor={shown.rect}>
+          <FighterHoverCard
+            fighter={shown.value.panel}
+            template={shown.value.template}
+            cards={shown.value.cards}
+          />
+        </HoverPopover>
+      )}
+      <GameImg
+        src={nft ? NFT_FIGHTER_ART : fighterArt({ classname: f.classname, racename: f.racename })}
+        alt={name}
+        loading="lazy"
+        fallback={fighterArtFallback()}
+      />
     </span>
   )
 }
