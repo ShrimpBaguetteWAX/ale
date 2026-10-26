@@ -566,7 +566,7 @@
     background: var(--teal);
     color: #00131f;
     font-family: var(--font-body);
-    font-size: 9px;
+    font-size: max(9px, var(--fs-floor));
     letter-spacing: 0.08em;
   }
 
@@ -598,7 +598,7 @@
     color: var(--white);
   }
   .qcard__reward span {
-    font-size: 9.5px;
+    font-size: max(9.5px, var(--fs-floor));
   }
 
   .qprog {

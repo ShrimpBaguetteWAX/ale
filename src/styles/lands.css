@@ -151,7 +151,7 @@
 }
 .plands__claimtext small {
   font-family: var(--font-display);
-  font-size: 8.5px;
+  font-size: max(8.5px, var(--fs-floor));
   font-weight: 800;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -441,7 +441,7 @@
 }
 .lsheet__income small {
   font-family: var(--font-display);
-  font-size: 8.5px;
+  font-size: max(8.5px, var(--fs-floor));
   font-weight: 800;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -509,7 +509,7 @@
 }
 .lsheet__look small {
   font-family: var(--font-display);
-  font-size: 8.5px;
+  font-size: max(8.5px, var(--fs-floor));
   font-weight: 800;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -567,7 +567,7 @@
 }
 .lsheet__ticks em {
   margin-top: -2px;
-  font-size: 8.5px;
+  font-size: max(8.5px, var(--fs-floor));
   font-style: normal;
   font-weight: var(--fw-bold);
   color: var(--text-faint);
@@ -747,7 +747,7 @@
   height: 30px;
 }
 .dlands .plands__claimtext small {
-  font-size: 9.5px;
+  font-size: max(9.5px, var(--fs-floor));
 }
 .dlands .plands__claimtext b {
   font-size: 19px;
@@ -837,7 +837,7 @@
   padding: 3px 9px;
   border-radius: 7px;
   font-family: var(--font-display);
-  font-size: 9.5px;
+  font-size: max(9.5px, var(--fs-floor));
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -855,7 +855,7 @@
   left: 6px;
   top: 6px;
   font-family: var(--font-display);
-  font-size: 8.5px;
+  font-size: max(8.5px, var(--fs-floor));
   font-weight: 800;
   letter-spacing: 0.06em;
   text-transform: uppercase;

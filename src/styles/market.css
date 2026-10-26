@@ -210,7 +210,7 @@
   border-radius: 999px;
   background: rgb(10 8 2 / 78%);
   font-family: var(--font-display);
-  font-size: 9px;
+  font-size: max(9px, var(--fs-floor));
   font-weight: var(--fw-bold);
   letter-spacing: 0.04em;
   color: var(--gold);
@@ -670,7 +670,7 @@
   border: 1px solid rgb(246 168 0 / 35%);
   border-radius: 999px;
   background: rgb(246 168 0 / 12%);
-  font-size: 9px;
+  font-size: max(9px, var(--fs-floor));
   font-weight: var(--fw-bold);
   letter-spacing: 0.02em;
   text-transform: uppercase;
@@ -689,7 +689,7 @@
 
 .abilityline__rarity {
   margin-left: 5px;
-  font-size: 9px;
+  font-size: max(9px, var(--fs-floor));
   font-style: normal;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -1078,7 +1078,7 @@
 
   .qfilter__lead {
     flex: 0 0 auto;
-    font-size: 9px;
+    font-size: max(9px, var(--fs-floor));
     letter-spacing: 0.04em;
     white-space: nowrap;
   }
@@ -1303,7 +1303,7 @@
   gap: 10px;
   margin-top: 4px;
   font-family: var(--font-display);
-  font-size: 9.5px;
+  font-size: max(9.5px, var(--fs-floor));
   font-weight: 800;
   letter-spacing: 0.18em;
   text-transform: uppercase;
@@ -1367,7 +1367,7 @@
 }
 .msell__cap {
   font-family: var(--font-display);
-  font-size: 9.5px;
+  font-size: max(9.5px, var(--fs-floor));
   font-weight: 800;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -1477,7 +1477,7 @@
   overflow: hidden;
   border-radius: 5px;
   font-family: var(--font-display);
-  font-size: 9px;
+  font-size: max(9px, var(--fs-floor));
   font-weight: 800;
   line-height: 1.5;
 }
@@ -1613,7 +1613,7 @@ i.mrow__arrow {
   padding: 0 3px;
   border-radius: 4px;
   font-family: var(--font-display);
-  font-size: 8.5px;
+  font-size: max(8.5px, var(--fs-floor));
   font-weight: 900;
   color: #08101e;
   background: var(--ab);
@@ -1726,7 +1726,7 @@ i.mrow__arrow {
   .mkbar__tab em {
     padding: 1px 6px;
     border-radius: 999px;
-    font-size: 9px;
+    font-size: max(9px, var(--fs-floor));
     font-style: normal;
     color: var(--white);
     background: rgb(255 255 255 / 10%);
@@ -1826,7 +1826,7 @@ i.mrow__arrow {
   .mdeal__cap {
     margin: 0;
     font-family: var(--font-display);
-    font-size: 9.5px;
+    font-size: max(9.5px, var(--fs-floor));
     font-weight: 800;
     letter-spacing: 0.16em;
     text-transform: uppercase;
@@ -1889,7 +1889,7 @@ i.mrow__arrow {
     align-items: center;
     gap: 5px;
     font-family: var(--font-display);
-    font-size: 8.5px;
+    font-size: max(8.5px, var(--fs-floor));
     font-weight: 800;
     letter-spacing: 0.08em;
     text-transform: uppercase;
@@ -1922,7 +1922,7 @@ i.mrow__arrow {
     grid-column: 1 / -1;
     margin-bottom: 1px;
     font-family: var(--font-display);
-    font-size: 9.5px;
+    font-size: max(9.5px, var(--fs-floor));
     font-weight: 800;
     letter-spacing: 0.16em;
     text-transform: uppercase;
@@ -1936,7 +1936,7 @@ i.mrow__arrow {
   }
   .mfighter .resgrid__label {
     font-family: var(--font-display);
-    font-size: 8px;
+    font-size: max(8px, var(--fs-floor));
     font-weight: 800;
   }
   .mfighter .abilities {
@@ -2049,7 +2049,7 @@ i.mrow__arrow {
   padding: 0 5px;
   border-radius: 4px;
   font-family: var(--font-display);
-  font-size: 8.5px;
+  font-size: max(8.5px, var(--fs-floor));
   font-weight: 900;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;

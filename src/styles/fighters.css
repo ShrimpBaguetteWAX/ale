@@ -185,7 +185,7 @@
   border-radius: var(--radius-full);
   background: var(--ctl-count);
   font-family: var(--font-display);
-  font-size: 8px;
+  font-size: max(8px, var(--fs-floor));
   line-height: 13px;
   text-align: center;
   color: var(--white);
@@ -207,7 +207,7 @@
   border-radius: var(--radius-full);
   background: rgb(255 255 255 / 8%);
   font-family: var(--font-display);
-  font-size: 9px;
+  font-size: max(9px, var(--fs-floor));
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--text-dim);
@@ -613,7 +613,7 @@
   display: block;
   margin-bottom: 8px;
   font-family: var(--font-display);
-  font-size: 9.5px;
+  font-size: max(9.5px, var(--fs-floor));
   font-weight: 800;
   letter-spacing: 0.16em;
   text-transform: uppercase;
@@ -692,7 +692,7 @@
   display: block;
   margin: 6px 0 2px;
   font-family: var(--font-display);
-  font-size: 9px;
+  font-size: max(9px, var(--fs-floor));
   font-weight: 800;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -917,7 +917,7 @@
   border-radius: 5px;
   background: rgb(0 0 0 / 70%);
   font-family: var(--font-display);
-  font-size: 9px;
+  font-size: max(9px, var(--fs-floor));
   font-weight: 900;
 }
 .drost__lv em {
@@ -1009,7 +1009,7 @@
   border-radius: 5px;
   background: rgb(255 255 255 / 8%);
   font-family: var(--font-display);
-  font-size: 9.5px;
+  font-size: max(9.5px, var(--fs-floor));
   font-weight: 900;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
@@ -1040,7 +1040,7 @@
   background: var(--ab);
   color: #08101e;
   font-family: var(--font-display);
-  font-size: 9px;
+  font-size: max(9px, var(--fs-floor));
   font-weight: 900;
 }
 .drost__ab.is-locked {
@@ -1052,7 +1052,7 @@
   padding: 2px 8px;
   border-radius: 999px;
   font-family: var(--font-display);
-  font-size: 9px;
+  font-size: max(9px, var(--fs-floor));
   font-weight: 800;
   letter-spacing: 0.05em;
   white-space: nowrap;
@@ -1158,7 +1158,7 @@
   align-items: center;
   gap: 3px;
   font-family: var(--font-display);
-  font-size: 7.5px;
+  font-size: max(7.5px, var(--fs-floor));
   font-weight: 800;
   text-transform: uppercase;
   color: var(--text-faint);
@@ -1177,7 +1177,7 @@
   white-space: nowrap;
 }
 .drost__cell em {
-  font-size: 9.5px;
+  font-size: max(9.5px, var(--fs-floor));
   font-style: normal;
   line-height: 1;
   color: var(--text-dim);
@@ -1248,7 +1248,7 @@
 }
 .drost__kick {
   font-family: var(--font-display);
-  font-size: 9.5px;
+  font-size: max(9.5px, var(--fs-floor));
   font-weight: 800;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -1308,7 +1308,7 @@
 }
 .drost__boxhead small {
   font-family: var(--font-display);
-  font-size: 9.5px;
+  font-size: max(9.5px, var(--fs-floor));
   font-weight: 800;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -1382,7 +1382,7 @@
 .drost__abname small {
   margin-left: auto;
   font-family: var(--font-display);
-  font-size: 9.5px;
+  font-size: max(9.5px, var(--fs-floor));
   font-weight: 800;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -1446,7 +1446,7 @@
 }
 .drost__total small {
   font-family: var(--font-display);
-  font-size: 9.5px;
+  font-size: max(9.5px, var(--fs-floor));
   font-weight: 800;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -1600,7 +1600,7 @@
   border-radius: 12px;
 }
 .drost__kick .drost__cr {
-  font-size: 9.5px;
+  font-size: max(9.5px, var(--fs-floor));
   vertical-align: -1px;
 }
 .drost__kick .drost__cr img {
@@ -1652,13 +1652,13 @@
 }
 .drost__detail > .drost__cap {
   margin: 2px 0 -3px;
-  font-size: 9.5px;
+  font-size: max(9.5px, var(--fs-floor));
 }
 .drost__cells--big .drost__cell {
   padding: 6px 2px;
 }
 .drost__cells--big .drost__cell small {
-  font-size: 8px;
+  font-size: max(8px, var(--fs-floor));
 }
 .drost__cells--big .drost__cell b {
   font-size: 14px;
@@ -1933,7 +1933,7 @@
 }
 .drost--phone .drost__lv {
   padding: 1px 4px;
-  font-size: 8.5px;
+  font-size: max(8.5px, var(--fs-floor));
 }
 .drost--phone .drost__mk {
   width: 18px;
@@ -2002,16 +2002,16 @@
 .drost--phone .drost__age {
   height: 17px;
   padding: 0 5px;
-  font-size: 9px;
+  font-size: max(9px, var(--fs-floor));
 }
 .drost--phone .drost__ab {
   min-width: 16px;
   height: 16px;
-  font-size: 8.5px;
+  font-size: max(8.5px, var(--fs-floor));
 }
 .drost--phone .drost__status {
   padding: 1px 7px;
-  font-size: 8.5px;
+  font-size: max(8.5px, var(--fs-floor));
 }
 .drost--phone .drost__row.is-picked {
   background: rgb(124 92 255 / 16%);
@@ -2069,7 +2069,7 @@
 }
 .drost--phone .drost__cell small {
   gap: 2px;
-  font-size: 6.5px;
+  font-size: max(6.5px, var(--fs-floor));
 }
 .drost--phone .drost__cell small .drost__si {
   height: 8px;
@@ -2079,7 +2079,7 @@
   font-size: 11.5px;
 }
 .drost--phone .drost__cell em {
-  font-size: 8.5px;
+  font-size: max(8.5px, var(--fs-floor));
 }
 .drost--phone .drost__names span {
   padding: 1px 6px;
@@ -2107,7 +2107,7 @@
   cursor: default;
 }
 .drost--phone .drost__boxhead small {
-  font-size: 8.5px;
+  font-size: max(8.5px, var(--fs-floor));
   letter-spacing: 0.12em;
 }
 .drost--phone .drost__boxhead b {
@@ -2117,7 +2117,7 @@
   font-size: 10.5px;
 }
 .drost--phone .drost__cells--big .drost__cell small {
-  font-size: 7px;
+  font-size: max(7px, var(--fs-floor));
 }
 .drost--phone .drost__cells--big .drost__cell b {
   font-size: 13px;
@@ -2162,7 +2162,7 @@
 }
 .drost__fsheet .drost__fhead {
   margin-bottom: 6px;
-  font-size: 8.5px;
+  font-size: max(8.5px, var(--fs-floor));
   letter-spacing: 0.14em;
 }
 .drost__seg--chips button {

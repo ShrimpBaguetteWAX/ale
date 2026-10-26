@@ -147,7 +147,7 @@
 }
 .pcandle__claim small {
   font-family: var(--font-display);
-  font-size: 8.5px;
+  font-size: max(8.5px, var(--fs-floor));
   font-weight: 800;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -237,7 +237,7 @@
   font-weight: 800;
 }
 .pcandle__tab > small {
-  font-size: 9.5px;
+  font-size: max(9.5px, var(--fs-floor));
   font-weight: 600;
 }
 .pcandle__tab.is-locked > .pcandle__ring img,
@@ -311,7 +311,7 @@
 }
 .pcandle__clock small {
   font-family: var(--font-display);
-  font-size: 8px;
+  font-size: max(8px, var(--fs-floor));
   font-weight: 800;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -499,7 +499,7 @@
   min-height: 0;
   padding: 7px 10px 2px;
   font-family: var(--font-display);
-  font-size: 7.5px;
+  font-size: max(7.5px, var(--fs-floor));
   font-weight: 800;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -607,7 +607,7 @@
   align-items: center;
   gap: 12px;
   font-family: var(--font-display);
-  font-size: 9.5px;
+  font-size: max(9.5px, var(--fs-floor));
   font-weight: 800;
   letter-spacing: 0.16em;
   text-transform: uppercase;
@@ -655,7 +655,7 @@
 }
 .dcan__claim small {
   font-family: var(--font-display);
-  font-size: 9px;
+  font-size: max(9px, var(--fs-floor));
   font-weight: 800;
   letter-spacing: 0.16em;
   text-transform: uppercase;
@@ -793,7 +793,7 @@
   z-index: 1;
   grid-area: 1 / 1;
   font-family: var(--font-display);
-  font-size: 9px;
+  font-size: max(9px, var(--fs-floor));
   font-weight: 800;
   line-height: 1.15;
   text-align: center;
@@ -807,7 +807,7 @@
   padding: 2px 9px;
   border-radius: 999px;
   font-family: var(--font-display);
-  font-size: 9.5px;
+  font-size: max(9.5px, var(--fs-floor));
   font-weight: 800;
   letter-spacing: 0.05em;
   white-space: nowrap;
@@ -864,7 +864,7 @@
 }
 .dcan__dtitle small {
   font-family: var(--font-display);
-  font-size: 9.5px;
+  font-size: max(9.5px, var(--fs-floor));
   font-weight: 800;
   letter-spacing: 0.18em;
   text-transform: uppercase;
@@ -891,7 +891,7 @@
 }
 .dcan__clock small {
   font-family: var(--font-display);
-  font-size: 9px;
+  font-size: max(9px, var(--fs-floor));
   font-weight: 800;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -953,7 +953,7 @@
 }
 .dcan__stat small {
   font-family: var(--font-display);
-  font-size: 8.5px;
+  font-size: max(8.5px, var(--fs-floor));
   font-weight: 800;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -1038,7 +1038,7 @@
   padding-top: 0;
   background: rgb(8 12 26 / 96%);
   font-family: var(--font-display);
-  font-size: 8.5px;
+  font-size: max(8.5px, var(--fs-floor));
   font-weight: 800;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -1389,7 +1389,7 @@
 }
 .pcandle__tile small {
   font-family: var(--font-display);
-  font-size: 7.5px;
+  font-size: max(7.5px, var(--fs-floor));
   font-weight: 800;
   letter-spacing: 0.12em;
   text-transform: uppercase;

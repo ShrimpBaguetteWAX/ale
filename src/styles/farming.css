@@ -132,7 +132,7 @@
 }
 .pfarm__hero > small {
   font-family: var(--font-display);
-  font-size: 9px;
+  font-size: max(9px, var(--fs-floor));
   font-weight: 800;
   letter-spacing: 0.16em;
   text-transform: uppercase;
@@ -594,7 +594,7 @@
 }
 .dfarm__ready small {
   font-family: var(--font-display);
-  font-size: 8.5px;
+  font-size: max(8.5px, var(--fs-floor));
   font-weight: 800;
   letter-spacing: 0.16em;
   text-transform: uppercase;
@@ -819,7 +819,7 @@
   padding: 0 5px;
   border-radius: 999px;
   background: rgb(0 0 0 / 75%);
-  font-size: 9px;
+  font-size: max(9px, var(--fs-floor));
   font-weight: 800;
 }
 .dfarm__shine {
@@ -831,7 +831,7 @@
   background: linear-gradient(180deg, #ffe9a8, #e0b04a);
   color: #2a1a00;
   font-family: var(--font-display);
-  font-size: 7.5px;
+  font-size: max(7.5px, var(--fs-floor));
   font-weight: 800;
   letter-spacing: 0.04em;
 }
@@ -864,7 +864,7 @@
   justify-content: space-between;
   align-items: center;
   gap: 4px;
-  font-size: 9.5px;
+  font-size: max(9.5px, var(--fs-floor));
 }
 .dfarm__meta em {
   font-style: normal;

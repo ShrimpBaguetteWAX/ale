@@ -109,6 +109,13 @@
   --fs-7xl: 34px;
   /* Hero type is the one place we go fluid, so it fits a 320px phone. */
   --fs-hero: clamp(28px, 4vw + 12px, 56px);
+  /*
+     The smallest text a screen may draw. Nothing on a phone, where the
+     badges and letters were sized for the room there is; at desktop width
+     every size under 10px is written max(size, var(--fs-floor)) and so
+     comes up to 10px. The world map's own labels are left out.
+  */
+  --fs-floor: 0px;
 
   --fw-thin: 300;
   --fw-normal: 400;
@@ -181,6 +188,7 @@
 
 @media (min-width: 720px) {
   :root {
+    --fs-floor: 10px;
     --ctl-line: rgb(255 255 255 / 18%);
     --ctl-edge: rgb(255 255 255 / 12%);
     --ctl-hover: rgb(255 255 255 / 34%);

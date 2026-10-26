@@ -642,7 +642,7 @@
 }
 .dbrief__kick {
   font-family: var(--font-display);
-  font-size: 9.5px;
+  font-size: max(9.5px, var(--fs-floor));
   font-weight: 800;
   letter-spacing: 0.16em;
   text-transform: uppercase;
@@ -912,7 +912,7 @@
   justify-content: flex-end;
   gap: 4px;
   font-family: var(--font-display);
-  font-size: 9.5px;
+  font-size: max(9.5px, var(--fs-floor));
   font-weight: var(--fw-bold);
   letter-spacing: 0.1em;
   text-transform: uppercase;

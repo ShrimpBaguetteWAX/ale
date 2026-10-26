@@ -328,7 +328,7 @@
 }
 .prew__herolabel {
   font-family: var(--font-display);
-  font-size: 9.5px;
+  font-size: max(9.5px, var(--fs-floor));
   font-weight: var(--fw-bold);
   letter-spacing: 0.16em;
   text-transform: uppercase;
@@ -391,7 +391,7 @@
   justify-content: space-between;
   margin: 2px 2px -4px;
   font-family: var(--font-display);
-  font-size: 9.5px;
+  font-size: max(9.5px, var(--fs-floor));
   font-weight: var(--fw-bold);
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -809,7 +809,7 @@ button.prew__row:hover:not(:disabled) {
   justify-content: space-between;
   margin: 2px 2px -4px;
   font-family: var(--font-display);
-  font-size: 9.5px;
+  font-size: max(9.5px, var(--fs-floor));
   font-weight: var(--fw-bold);
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -974,7 +974,7 @@ button.prew__row:hover:not(:disabled) {
 }
 .alltools__head {
   font-family: var(--font-display);
-  font-size: 8.5px;
+  font-size: max(8.5px, var(--fs-floor));
   font-weight: var(--fw-bold);
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -1009,7 +1009,7 @@ button.prew__row:hover:not(:disabled) {
   border-radius: 4px;
   box-shadow: inset 0 0 0 1px rgb(14 212 168 / 50%);
   font-family: var(--font-display);
-  font-size: 8.5px;
+  font-size: max(8.5px, var(--fs-floor));
   font-style: normal;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -1032,7 +1032,7 @@ button.prew__row:hover:not(:disabled) {
 }
 .poolsheet__stats small {
   font-family: var(--font-display);
-  font-size: 8.5px;
+  font-size: max(8.5px, var(--fs-floor));
   font-weight: var(--fw-bold);
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -1302,7 +1302,7 @@ button.prew__row:hover:not(:disabled) {
 }
 .minecard__head strong {
   font-family: var(--font-display);
-  font-size: 9.5px;
+  font-size: max(9.5px, var(--fs-floor));
   font-weight: 800;
   letter-spacing: 0.16em;
   text-transform: uppercase;
@@ -1621,7 +1621,7 @@ button.prew__row:hover:not(:disabled) {
   min-height: 28px;
   border-radius: 8px;
   font-family: var(--font-display);
-  font-size: 9px;
+  font-size: max(9px, var(--fs-floor));
   font-weight: 800;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -1730,7 +1730,7 @@ button.prew__row:hover:not(:disabled) {
   font-weight: 800;
 }
 .pring2__in small {
-  font-size: 9.5px;
+  font-size: max(9.5px, var(--fs-floor));
   font-weight: var(--fw-bold);
   color: var(--text-faint);
 }
@@ -1780,7 +1780,7 @@ button.prew__row:hover:not(:disabled) {
   padding: 1px 6px;
   border-radius: 5px;
   font-family: var(--font-display);
-  font-size: 9px;
+  font-size: max(9px, var(--fs-floor));
   letter-spacing: 0.1em;
   color: #00131f;
   background: var(--teal);
@@ -2167,7 +2167,7 @@ button.prew__row:hover:not(:disabled) {
   background: var(--cyan);
   color: #04121b;
   font-family: var(--font-display);
-  font-size: 8.5px;
+  font-size: max(8.5px, var(--fs-floor));
   font-style: normal;
   font-weight: 800;
   letter-spacing: 0.12em;
@@ -2763,7 +2763,7 @@ button.prew__row:hover:not(:disabled) {
   object-fit: cover;
 }
 .dtier small {
-  font-size: 9.5px;
+  font-size: max(9.5px, var(--fs-floor));
   font-weight: 800;
 }
 .dtier.is-locked img {
@@ -2796,7 +2796,7 @@ button.prew__row:hover:not(:disabled) {
   background: var(--cyan);
   color: #04121b;
   font-family: var(--font-display);
-  font-size: 7.5px;
+  font-size: max(7.5px, var(--fs-floor));
   font-style: normal;
   font-weight: 800;
   letter-spacing: 0.1em;
@@ -2890,7 +2890,7 @@ button.prew__row:hover:not(:disabled) {
 }
 .dgauge__facts small {
   font-family: var(--font-display);
-  font-size: 9px;
+  font-size: max(9px, var(--fs-floor));
   font-weight: 800;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -3174,7 +3174,7 @@ button.prew__row:hover:not(:disabled) {
 }
 .dboard__bigrank small {
   margin-bottom: 4px;
-  font-size: 8.5px;
+  font-size: max(8.5px, var(--fs-floor));
   font-weight: 800;
   letter-spacing: 0.16em;
   text-transform: uppercase;
@@ -3257,7 +3257,7 @@ button.prew__row:hover:not(:disabled) {
   background: var(--cyan);
   color: #04121b;
   font-family: var(--font-display);
-  font-size: 8.5px;
+  font-size: max(8.5px, var(--fs-floor));
   font-style: normal;
   font-weight: 800;
   letter-spacing: 0.12em;

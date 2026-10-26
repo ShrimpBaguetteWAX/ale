@@ -561,7 +561,7 @@
     left: 2px;
     top: 2px;
     padding: 1px 3px;
-    font-size: 7px;
+    font-size: max(7px, var(--fs-floor));
     letter-spacing: 0.04em;
   }
   .pack__body {
@@ -717,7 +717,7 @@
   .legendvs__row--head {
     padding: 4px 0 6px;
     font-family: var(--font-display);
-    font-size: 9.5px;
+    font-size: max(9.5px, var(--fs-floor));
     font-weight: 800;
     letter-spacing: 0.1em;
     text-transform: uppercase;
@@ -845,7 +845,7 @@
     left: 3px;
     top: 3px;
     padding: 1px 4px;
-    font-size: 8px;
+    font-size: max(8px, var(--fs-floor));
     letter-spacing: 0.04em;
   }
   .shop__main .pack__body {
@@ -1015,7 +1015,7 @@
   .shop__main .legendvs__row--head {
     padding: 2px 0 6px;
     font-family: var(--font-display);
-    font-size: 9.5px;
+    font-size: max(9.5px, var(--fs-floor));
     font-weight: 800;
     letter-spacing: 0.12em;
     text-transform: uppercase;
@@ -1316,7 +1316,7 @@
   height: 15px;
 }
 .amk__more .resgrid__label {
-  font-size: 9px;
+  font-size: max(9px, var(--fs-floor));
 }
 .amk__more .resgrid__value {
   font-size: 12px;
@@ -1400,7 +1400,7 @@
   align-items: center;
   gap: 5px;
   font-family: var(--font-display);
-  font-size: 9.5px;
+  font-size: max(9.5px, var(--fs-floor));
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -1689,7 +1689,7 @@
     font-size: 11.5px;
   }
   .amk__rarity {
-    font-size: 8.5px;
+    font-size: max(8.5px, var(--fs-floor));
   }
   .amk__ben {
     gap: 2px 8px;
@@ -1749,7 +1749,7 @@
     font-size: 11px;
   }
   .amk__more .resgrid__label {
-    font-size: 8px;
+    font-size: max(8px, var(--fs-floor));
   }
   .amk__more .resgrid__value {
     font-size: 11px;

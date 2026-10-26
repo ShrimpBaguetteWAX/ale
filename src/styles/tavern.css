@@ -752,7 +752,7 @@
 
 .ability__rarity {
   margin-left: var(--sp-2);
-  font-size: 9px;
+  font-size: max(9px, var(--fs-floor));
   font-weight: var(--fw-bold);
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -790,7 +790,7 @@
   padding: 0 5px;
   border-radius: var(--radius-full);
   background: rgb(255 255 255 / 10%);
-  font-size: 9px;
+  font-size: max(9px, var(--fs-floor));
   font-weight: var(--fw-bold);
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -920,7 +920,7 @@
   }
   .recruithdr__level {
     font-family: var(--font-display);
-    font-size: 9px;
+    font-size: max(9px, var(--fs-floor));
     font-weight: 800;
     letter-spacing: 0.14em;
     text-transform: uppercase;
@@ -1319,7 +1319,7 @@
 }
 .hall__plateText small {
   font-family: var(--font-display);
-  font-size: 9.5px;
+  font-size: max(9.5px, var(--fs-floor));
   font-weight: 800;
   letter-spacing: 0.16em;
   text-transform: uppercase;
@@ -1519,7 +1519,7 @@
   border-radius: 4px;
   background: rgb(156 255 90 / 85%);
   color: #062010;
-  font-size: 9.5px;
+  font-size: max(9.5px, var(--fs-floor));
   font-style: normal;
   font-weight: 700;
 }
@@ -1665,7 +1665,7 @@
   padding: 0 5px;
   border-radius: 999px;
   background: rgb(0 0 0 / 75%);
-  font-size: 9px;
+  font-size: max(9px, var(--fs-floor));
   font-weight: 800;
 }
 .hall__off {
@@ -1691,7 +1691,7 @@
   display: flex;
   justify-content: space-between;
   gap: 4px;
-  font-size: 9px;
+  font-size: max(9px, var(--fs-floor));
   color: var(--text-faint);
   text-transform: capitalize;
 }
