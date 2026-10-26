@@ -20,10 +20,11 @@ import { useChainQuery } from '@/chain/useChainQuery'
 import { useLazyConfig } from '@/state/useConfig'
 import { DIRTIES } from '@/wharf/actions'
 import type { Player } from '@/chain/types'
-import { NUM_LOCALE } from '@/format'
+import { NUM_LOCALE, formatDecimals } from '@/format'
 import { asset } from '@/assets'
 import { usePhone } from '@/components/usePhone'
 import { claimedRecently, rememberClaimed } from '@/quests/claimed'
+import { DeskQuests } from '@/quests/DeskQuests'
 
 /**
  * Quests.
@@ -166,6 +167,16 @@ export default function Quests() {
   )
 
   const current = board.find((b) => b.scope === scope)
+  /* "354.2 TLM on the board" — what every quest held pays, by token. */
+  const onBoard = useMemo(() => {
+    const sums = new Map<string, number>()
+    for (const q of board.flatMap((b) => b.quests)) {
+      const r = rewardOf(q)
+      sums.set(r.symbol, (sums.get(r.symbol) ?? 0) + r.amount)
+    }
+    const parts = [...sums].map(([sym, n]) => `${formatDecimals(n, 1)} ${sym}`)
+    return parts.length ? `Every quest · ${parts.join(' + ')} on the board` : ''
+  }, [board])
   const refill = needsRefill(board)
   const credits = player?.activestats.credits ?? 0
 
@@ -241,6 +252,7 @@ export default function Quests() {
       <header className="quests__head">
         <div>
           <h1 className="quests__title">Quests</h1>
+          {!phone && onBoard && <p className="quests__sub">{onBoard}</p>}
         </div>
 
         {refill && (
@@ -275,44 +287,24 @@ export default function Quests() {
         </div>
       )}
 
-      {/* A desktop draws the cadences as the shop's tabs; a phone keeps its segmented control. */}
-      <div className={phone ? 'scopetabs' : 'tabs scopetabs--desk'} role="tablist" aria-label="Quest cadence">
-        {board.map((b) => (
-          <button
-            type="button"
-            key={b.scope}
-            role="tab"
-            aria-selected={b.scope === scope}
-            className={phone ? 'scopetab' : 'tabs__tab'}
-            onClick={() => setScope(b.scope as Scope)}
-          >
-            <span className={phone ? 'scopetab__name' : 'scopetab__label'}>
-              {b.label}
-              {b.claimable > 0 && (
-                <span className="scopetab__badge" title="Ready to claim">
-                  {b.claimable}
-                </span>
-              )}
-            </span>
-          </button>
-        ))}
-      </div>
-
-      {data.loading ? (
-        <div className="questgrid">
-          {Array.from({ length: 3 }, (_, i) => (
-            <div className="qcard qcard--loading" key={i} />
-          ))}
-        </div>
-      ) : !active ? (
-        <p className="quests__empty">
-          You have no quests yet. Press <strong>New quests</strong> to draw
-          your first three in each cadence.
-        </p>
-      ) : (
-        current && (
-          <ScopePanel
-            board={current}
+      {/*
+        A desktop is the journal: every cadence at once, the picked quest
+        large beside the list, so there is no switch to draw.
+      */}
+      {!phone ? (
+        data.loading ? (
+          <div className="dquests dquests--loading" aria-busy="true">
+            <div className="dquests__list" />
+            <div className="dquests__detail" />
+          </div>
+        ) : !active ? (
+          <p className="quests__empty">
+            You have no quests yet. Press <strong>New quests</strong> to draw your first three in
+            each cadence.
+          </p>
+        ) : (
+          <DeskQuests
+            board={board}
             player={player}
             config={config}
             credits={credits}
@@ -325,6 +317,59 @@ export default function Quests() {
             onAskReroll={setConfirmReroll}
           />
         )
+      ) : (
+        <>
+        <div className="scopetabs" role="tablist" aria-label="Quest cadence">
+          {board.map((b) => (
+            <button
+              type="button"
+              key={b.scope}
+              role="tab"
+              aria-selected={b.scope === scope}
+              className="scopetab"
+              onClick={() => setScope(b.scope as Scope)}
+            >
+              <span className="scopetab__name">
+                {b.label}
+                {b.claimable > 0 && (
+                  <span className="scopetab__badge" title="Ready to claim">
+                    {b.claimable}
+                  </span>
+                )}
+              </span>
+            </button>
+          ))}
+        </div>
+
+        {data.loading ? (
+          <div className="questgrid">
+            {Array.from({ length: 3 }, (_, i) => (
+              <div className="qcard qcard--loading" key={i} />
+            ))}
+          </div>
+        ) : !active ? (
+          <p className="quests__empty">
+            You have no quests yet. Press <strong>New quests</strong> to draw
+            your first three in each cadence.
+          </p>
+        ) : (
+          current && (
+            <ScopePanel
+              board={current}
+              player={player}
+              config={config}
+              credits={credits}
+              now={now}
+              busy={busy}
+              canAct={!!session}
+              confirmReroll={confirmReroll}
+              onClaim={(q) => void doClaim(q)}
+              onReroll={(q) => void doReroll(q)}
+              onAskReroll={setConfirmReroll}
+            />
+          )
+        )}
+        </>
       )}
     </div>
   )

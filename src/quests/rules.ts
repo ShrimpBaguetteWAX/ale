@@ -251,3 +251,44 @@ export function questArt(quest: Quest): string {
 export function questKey(quest: Quest): string {
   return `${quest.quest_scope}:${quest.quest_name}:${quest.task_end_value}:${quest.reward_amount}`
 }
+
+/* ---------- where the progress comes from ---------- */
+
+export interface QuestGo {
+  label: string
+  to: string
+}
+
+/*
+   Every task type is a lifetime counter, and each counter goes up in one
+   place in the game. Fights in dungeons and arenas start from the map, as
+   do taverns and travel; the rest have screens of their own.
+*/
+const GO: Record<string, QuestGo> = {
+  dungeons_won: { label: 'Find a dungeon', to: '/map' },
+  total_dungeon_difficulty: { label: 'Find a dungeon', to: '/map' },
+  damage_dealt: { label: 'Find a dungeon', to: '/map' },
+  damage_blocked: { label: 'Find a dungeon', to: '/map' },
+  knockouts: { label: 'Find a dungeon', to: '/map' },
+  arenas_won: { label: 'Find an arena', to: '/map' },
+  recruits: { label: 'Find a tavern', to: '/map' },
+  energy_saved_recruiting: { label: 'Find a tavern', to: '/map' },
+  total_travel_distance: { label: 'Open the map', to: '/map' },
+  portals_used: { label: 'Open the map', to: '/map' },
+  level_ups: { label: 'Level fighters', to: '/fighters' },
+  fighters_sold: { label: 'Sell fighters', to: '/fighters' },
+  ascensions_completed: { label: 'Open Ascension', to: '/ascension' },
+  gems_in_candle: { label: 'Open the Candle', to: '/candle' },
+  nfts_staked: { label: 'Open Farming', to: '/farming' },
+  dungeon_leaderboard_claims: { label: 'Open Leaderboards', to: '/leaderboard' },
+}
+
+/**
+ * Where a quest's counter goes up, as a button: "Find a dungeon".
+ *
+ * Null for the two that count quests themselves — finishing and rerolling
+ * happen on this screen — and for any task type the game adds later.
+ */
+export function questGo(quest: Quest): QuestGo | null {
+  return GO[quest.task_type] ?? null
+}

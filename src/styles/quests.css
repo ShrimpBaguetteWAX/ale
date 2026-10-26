@@ -104,28 +104,6 @@
   color: #04121a;
 }
 
-.scopetab__meta {
-  font-size: var(--fs-xs);
-  font-variant-numeric: tabular-nums;
-  color: var(--text-faint);
-}
-
-/* The desktop's cadences, as the shop's tabs; the page grid already spaces them. */
-.scopetabs--desk {
-  margin: 0;
-}
-.scopetab__label {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--sp-2);
-}
-.scopetabs--desk .scopetab__badge {
-  min-width: 16px;
-  height: 16px;
-  padding: 0 4px;
-  font-size: 10px;
-}
-
 /* ---------- the grid ---------- */
 
 .questgrid {
@@ -259,7 +237,6 @@
   gap: var(--sp-2);
   padding: var(--sp-3) var(--sp-4) var(--sp-4);
 }
-
 
 .qcard__title {
   margin: 0;
@@ -413,7 +390,6 @@
 
 /* ---------- a phone: the art is the card ---------- */
 
-.quests__reset,
 .qprog__count {
   display: none;
 }
@@ -480,19 +456,6 @@
     height: 16px;
     padding: 0 4px;
     font-size: 10px;
-  }
-  .scopetab__meta {
-    display: none;
-  }
-  .quests__reset {
-    display: flex;
-    justify-content: space-between;
-    margin: 0;
-    font-size: 11px;
-    color: var(--text-faint);
-  }
-  .quests__reset b {
-    color: var(--white);
   }
 
   .questgrid {
@@ -663,5 +626,369 @@
   }
   .qcard__warn {
     font-size: 11.5px;
+  }
+}
+
+/* ===================================================================
+   Quests on a desktop: the journal.
+   Every quest down the left by cadence; the picked one large beside it.
+   =================================================================== */
+
+.quests__sub {
+  margin: 6px 0 0;
+  font-size: 13px;
+  color: var(--text-faint);
+}
+.dquests {
+  --far: #ff6b7d;
+  --near: #f6b400;
+  --done: var(--teal);
+  display: grid;
+  grid-template-columns: minmax(320px, 400px) minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+.dquests__list,
+.dquests__detail {
+  border-radius: 14px;
+  background: rgb(8 14 28 / 80%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 10%);
+}
+.dquests__list {
+  display: grid;
+  gap: 6px;
+  padding: 10px;
+}
+.dquests--loading .dquests__list,
+.dquests--loading .dquests__detail {
+  min-height: 420px;
+}
+.dquests__group {
+  display: grid;
+  gap: 2px;
+}
+.dquests__group + .dquests__group {
+  padding-top: 6px;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 7%);
+}
+.shell .main__inner .dquests h2.dquests__grp {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 4px 6px 4px;
+  font-family: var(--font-display);
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.dquests__grp em {
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: rgb(14 212 168 / 18%);
+  color: var(--teal);
+  font-style: normal;
+  letter-spacing: 0.06em;
+}
+.dquests__grp span {
+  margin-left: auto;
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+}
+.dquests__row {
+  --c: var(--far);
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 7px 8px;
+  border: 0;
+  border-radius: 10px;
+  background: none;
+  color: var(--white);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.dquests__row.is-near {
+  --c: var(--near);
+}
+.dquests__row.is-done {
+  --c: var(--done);
+}
+button.dquests__row:hover {
+  background: rgb(255 255 255 / 4%);
+}
+.dquests__row.is-on {
+  background: rgb(0 186 255 / 10%);
+  box-shadow: inset 3px 0 0 var(--cyan);
+}
+.dquests__row > img {
+  width: 42px;
+  height: 42px;
+  border-radius: 8px;
+  object-fit: cover;
+}
+.dquests__rowtext {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+.dquests__rowtext b {
+  overflow: hidden;
+  font-size: 13px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.dquests__rowtext small {
+  font-size: 11.5px;
+  color: var(--text-faint);
+}
+.dquests__bar {
+  display: block;
+  height: 5px;
+  overflow: hidden;
+  border-radius: 3px;
+  background: rgb(255 255 255 / 9%);
+}
+.dquests__bar i {
+  display: block;
+  height: 100%;
+  border-radius: 3px;
+  background: var(--c);
+}
+.dquests__pay {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-display);
+  font-size: 12.5px;
+  font-weight: 800;
+  color: #ffd979;
+}
+.dquests__pay img {
+  width: 14px;
+  height: 14px;
+}
+.dquests__ready {
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: rgb(14 212 168 / 18%);
+  box-shadow: inset 0 0 0 1px rgb(14 212 168 / 55%);
+  color: var(--teal);
+  font-family: var(--font-display);
+  font-size: 10.5px;
+  font-weight: 800;
+}
+.dquests__row.is-empty,
+.dquests__row.is-expired {
+  cursor: default;
+  opacity: 0.6;
+}
+.dquests__slot {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 8px;
+  box-shadow: inset 0 0 0 1.5px rgb(255 255 255 / 20%);
+  color: var(--text-faint);
+  font-size: 18px;
+}
+.dquests__row.is-expired img {
+  filter: grayscale(1);
+}
+
+/* the picked quest */
+.dquests__detail {
+  --c: var(--far);
+  position: sticky;
+  top: calc(var(--topbar-h, 0px) + var(--sp-4));
+  overflow: hidden;
+}
+.dquests__detail.is-near {
+  --c: var(--near);
+}
+.dquests__detail.is-done {
+  --c: var(--done);
+}
+.dquests__detail--none {
+  padding: 28px;
+  color: var(--text-faint);
+}
+.dquests__hero {
+  position: relative;
+  height: 280px;
+  background-position: center;
+  background-size: cover;
+}
+.dquests__hero::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 35%, rgb(8 14 28 / 96%));
+}
+.dquests__plate {
+  position: absolute;
+  z-index: 1;
+  right: 22px;
+  bottom: 16px;
+  left: 22px;
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+}
+.dquests__plate > span:first-child {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+.dquests__plate small {
+  font-family: var(--font-display);
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--cyan);
+}
+.shell .main__inner .dquests .dquests__plate h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 900;
+  line-height: 1.15;
+  color: var(--white);
+  text-shadow: 0 2px 10px #000;
+}
+.dquests__readychip {
+  flex: none;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgb(14 212 168 / 90%);
+  color: #04261d;
+  font-family: var(--font-display);
+  font-size: 10.5px;
+  font-weight: 800;
+}
+.dquests__clock {
+  flex: none;
+  margin-left: auto;
+  padding: 5px 11px;
+  border-radius: 999px;
+  background: rgb(0 0 0 / 65%);
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 800;
+}
+.dquests__body {
+  display: grid;
+  grid-template-columns: 150px minmax(0, 1fr);
+  gap: 22px;
+  padding: 18px 22px 22px;
+}
+.dquests__ring {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  background: conic-gradient(var(--c) calc(var(--p) * 1%), rgb(255 255 255 / 9%) 0);
+}
+.dquests__ring::before {
+  content: '';
+  position: absolute;
+  inset: 11px;
+  border-radius: 50%;
+  background: #0b1324;
+}
+.dquests__ring > span {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+}
+.dquests__ring b {
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 900;
+}
+.dquests__ring small {
+  font-size: 11.5px;
+  color: var(--text-faint);
+}
+.dquests__info {
+  display: grid;
+  gap: 12px;
+  align-content: start;
+  min-width: 0;
+}
+.dquests__desc {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.45;
+  color: #dfe6f2;
+}
+.dquests__reward {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: linear-gradient(110deg, rgb(246 168 0 / 14%), rgb(8 14 28 / 60%) 60%);
+  box-shadow: inset 0 0 0 1px rgb(246 168 0 / 30%);
+}
+.dquests__reward b {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 900;
+  color: #ffd979;
+}
+.dquests__reward b img {
+  width: 22px;
+  height: 22px;
+}
+.dquests__reward b small {
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: var(--text-faint);
+}
+.dquests__reward > small {
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--text-faint);
+}
+.dquests__acts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.dquests__main {
+  flex: 1;
+  min-height: 44px;
+}
+.dquests__confirm {
+  display: grid;
+  gap: 10px;
+}
+.dquests__confirm p {
+  margin: 0;
+  font-size: 13px;
+  color: #ffb4bf;
+}
+
+/* a narrower desktop: the detail under the list */
+@media (max-width: 1100px) {
+  .dquests {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .dquests__detail {
+    position: static;
   }
 }
