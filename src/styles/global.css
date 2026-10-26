@@ -144,12 +144,21 @@ a:hover {
   transform: translateY(1px);
   filter: brightness(0.95);
 }
+/*
+ * Disabled reads as quiet glass, not as a pale slab with dark text on it —
+ * the brightest thing on a dark screen was the one button that did nothing.
+ * Its label stays readable, so a price or a count still says what it is.
+ */
 .btn:disabled {
-  --btn-bg: var(--grad-disabled);
-  --btn-line: var(--white-800);
-  color: rgb(0 0 0 / 55%);
+  --btn-bg: rgb(255 255 255 / 6%);
+  --btn-line: rgb(255 255 255 / 14%);
+  color: #8f9bb3;
   text-shadow: none;
+  box-shadow: none;
   cursor: not-allowed;
+}
+.btn:disabled img {
+  opacity: 0.7;
 }
 
 /* The "Play" button: the one the whole landing page points at. */
