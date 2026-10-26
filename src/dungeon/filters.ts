@@ -5,7 +5,7 @@ import { ageBonus, battleFactor } from '@/fighters/rules'
 import { combatFigures } from '@/fighters/derived'
 import {
   STAT_SCALE,
-  gradeOfStat,
+  gradeAged,
   gradeRank,
   statDisplay,
   type ClassTemplate,
@@ -129,6 +129,17 @@ export const SORTS: SortOption[] = [
 ]
 
 /**
+ * The sorts only the roster screen offers: what a fighter costs and is worth
+ * to keep, rather than how it fights. Kept apart from `SORTS` so the fight
+ * pickers, which have no use for them, are unchanged.
+ */
+export const ROSTER_SORTS: SortOption[] = [
+  { value: 'payday', label: 'Payday, soonest' },
+  { value: 'age', label: 'Age bonus' },
+  { value: 'credits', label: 'Sell value' },
+]
+
+/**
  * Sorts that only exist while there is an enemy team to compare against.
  *
  * Kept apart from `SORTS` because the roster screen has no opponent, and an
@@ -215,6 +226,11 @@ export interface RosterFilter {
    * count counts it, which is the whole of what those two need to know.
    */
   levelReady: boolean
+  /**
+   * Smallest first instead of biggest. Optional, so the pickers that never
+   * offer it keep the order they have always had.
+   */
+  sortAsc?: boolean
   /** Stat-quality floors, ANDed. Empty means the grades are not filtered on. */
   qualities: QualityRule[]
   /** Matchup floors. Only meaningful on a screen that has an enemy team. */
@@ -253,7 +269,7 @@ export function isFilterActive(f: RosterFilter): boolean {
 
 const mid = (min: number, max: number) => (min + max) / 2
 
-function matchesStatus(f: RosterFighter, status: Status, now: number): boolean {
+export function matchesStatus(f: RosterFighter, status: Status, now: number): boolean {
   switch (status) {
     case 'All':
       return true
@@ -348,8 +364,10 @@ export function applyFilter(
           /* No band, nothing to compare to — let it through rather than
              hiding the whole market while a lookup table loads. */
           if (!template) return true
+          /* Health and damage after age, like the arrows on the cards. */
+          const age = battleFactor(f, 1, ageDecay, now).age
           return (
-            gradeRank(gradeOfStat(f.stats as never, rule.stat, template)) >=
+            gradeRank(gradeAged(f.stats as unknown as Record<string, number>, rule.stat, template, age)) >=
             gradeRank(rule.min)
           )
         })
@@ -446,6 +464,14 @@ export function applyFilter(
         return matchups?.get(f.fighter_id)?.bonuses ?? 0
       case 'level':
         return s.level
+      /* The roster's own three. Payday is the soonest first, so it is negated
+         like the delays above. */
+      case 'payday':
+        return -Date.parse(f.next_payday + 'Z')
+      case 'age':
+        return ageBonus(f, ageDecay, now)
+      case 'credits':
+        return s.credits ?? 0
       default:
         return (s as unknown as Record<string, number>)[filter.sort] ?? 0
     }
@@ -456,7 +482,8 @@ export function applyFilter(
     // a candidate however good its numbers look.
     const av = fighterAvailable(a, now).available ? 0 : 1
     const bv = fighterAvailable(b, now).available ? 0 : 1
-    return av - bv || value(b) - value(a) || a.fighter_id - b.fighter_id
+    const dir = filter.sortAsc ? -1 : 1
+    return av - bv || dir * (value(b) - value(a)) || a.fighter_id - b.fighter_id
   })
 }
 

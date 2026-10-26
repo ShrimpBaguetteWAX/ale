@@ -1591,3 +1591,1224 @@
     display: none;
   }
 }
+
+/* ---------- My Fighters on a desktop: the Market's rows, with payday and age ---------- */
+
+.drost {
+  --ab-abundant: #9aa4b5;
+  display: grid;
+  gap: 14px;
+  align-content: start;
+  padding-bottom: var(--sp-8);
+}
+.main__inner:has(> .drost) {
+  max-width: min(1500px, 100%);
+}
+.drost__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px 18px;
+}
+.shell .main__inner .drost h1.drost__title {
+  margin-bottom: 4px;
+}
+.drost__counts {
+  display: block;
+  font-size: 13px;
+  color: var(--text-faint);
+}
+.drost__counts b {
+  color: var(--white);
+}
+.drost__headacts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+.drost__cr {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+.drost__cr img {
+  width: 14px;
+  height: 14px;
+}
+
+/* segmented controls */
+.drost__seg {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  padding: 3px;
+  border-radius: 10px;
+  background: rgb(0 0 0 / 30%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 12%);
+}
+.drost__seg button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 0 13px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: var(--text-faint);
+  font: inherit;
+  font-size: 13px;
+  font-weight: var(--fw-bold);
+  white-space: nowrap;
+  cursor: pointer;
+}
+.drost__seg button small {
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--text-dim);
+}
+.drost__seg button[aria-selected='true'],
+.drost__seg button[aria-pressed='true'] {
+  background: rgb(0 186 255 / 18%);
+  box-shadow: inset 0 0 0 1px rgb(0 186 255 / 55%);
+  color: var(--white);
+}
+.drost__seg button[aria-selected='true'] small,
+.drost__seg button[aria-pressed='true'] small {
+  color: #bff0ff;
+}
+.drost__seg--sm button {
+  min-height: 28px;
+  padding: 0 10px;
+  font-size: 12px;
+}
+
+/* the toolbar and its two pop-overs */
+.drost__toolbar {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+.drost__search {
+  width: 200px;
+  min-height: 38px;
+}
+.drost__sp {
+  flex: 1;
+}
+.drost__tool,
+.drost__dir {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 38px;
+  padding: 0 13px;
+  border: 0;
+  border-radius: 10px;
+  background: rgb(255 255 255 / 6%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 18%);
+  color: var(--white);
+  font: inherit;
+  font-size: 13px;
+  font-weight: var(--fw-bold);
+  white-space: nowrap;
+  cursor: pointer;
+}
+.drost__tool small {
+  color: var(--text-faint);
+}
+.drost__tool svg {
+  width: 15px;
+  height: 15px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.drost__tool.is-on {
+  background: rgb(0 186 255 / 14%);
+  box-shadow: inset 0 0 0 1.5px var(--cyan);
+}
+.drost__tool em {
+  display: grid;
+  place-items: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--cyan);
+  color: #04121b;
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 900;
+}
+.drost__dir {
+  justify-content: center;
+  width: 38px;
+  padding: 0;
+  font-size: 16px;
+}
+.drost__scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  border: 0;
+  background: rgb(2 6 16 / 40%);
+  cursor: default;
+}
+.drost__pop {
+  position: absolute;
+  top: calc(100% + 8px);
+  z-index: 41;
+  padding: 16px;
+  border-radius: 16px;
+  background: rgb(10 16 32 / 98%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 14%), 0 24px 60px rgb(0 0 0 / 70%);
+}
+.drost__pop--filters {
+  left: 0;
+  right: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.3fr);
+  gap: 20px;
+}
+.drost__pop--sort {
+  right: 0;
+  display: grid;
+  gap: 10px;
+  width: 300px;
+}
+.drost__fcol {
+  display: grid;
+  gap: 14px;
+  align-content: start;
+  min-width: 0;
+}
+.drost__fhead {
+  display: block;
+  margin-bottom: 8px;
+  font-family: var(--font-display);
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.drost__two {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.drost__fcol .field {
+  display: grid;
+  gap: 0;
+}
+.drost__sw {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 6px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: rgb(255 255 255 / 4%);
+  font-size: 13px;
+  font-weight: var(--fw-bold);
+  cursor: pointer;
+}
+.drost__sw small {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-dim);
+}
+.drost__switch {
+  appearance: none;
+  position: relative;
+  flex: none;
+  width: 38px;
+  height: 22px;
+  margin: 0;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 14%);
+  cursor: pointer;
+}
+.drost__switch::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #c5cee0;
+  transition: left 0.15s ease;
+}
+.drost__switch:checked {
+  background: var(--cyan);
+}
+.drost__switch:checked::after {
+  left: 19px;
+  background: var(--white);
+}
+.drost__pfoot {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding-top: 12px;
+  border-top: 1px solid rgb(255 255 255 / 10%);
+}
+.drost__sorts {
+  display: grid;
+  gap: 4px;
+}
+.drost__sorthead {
+  display: block;
+  margin: 6px 0 2px;
+  font-family: var(--font-display);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+.drost__sorts button {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  padding: 5px 10px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: var(--text-faint);
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+}
+.drost__sorts button:hover {
+  background: rgb(255 255 255 / 5%);
+  color: var(--white);
+}
+.drost__sorts button[aria-pressed='true'] {
+  background: rgb(0 186 255 / 14%);
+  color: var(--white);
+}
+.drost__sorts button[aria-pressed='true']::after {
+  content: '✓';
+  color: var(--cyan);
+  font-weight: 900;
+}
+.drost__note {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--text-dim);
+}
+
+/* what is set, under the toolbar */
+.drost__chipsline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+.drost__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 4px 3px 10px;
+  border-radius: 999px;
+  background: rgb(0 186 255 / 12%);
+  box-shadow: inset 0 0 0 1px rgb(0 186 255 / 45%);
+  font-size: 12px;
+  font-weight: var(--fw-bold);
+  text-transform: capitalize;
+}
+.drost__chip img {
+  width: 14px;
+  height: 14px;
+  object-fit: contain;
+}
+.drost__chip button {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgb(255 255 255 / 8%);
+  color: var(--text-faint);
+  font-size: 10px;
+  cursor: pointer;
+}
+
+/* list beside the fighter in full */
+.drost__main {
+  display: grid;
+  grid-template-columns: minmax(480px, 560px) minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+.drost__main.is-narrow {
+  grid-template-columns: minmax(0, 1fr);
+}
+.drost__list {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+.drost__listhead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.drost__cap {
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.drost__side {
+  position: sticky;
+  top: var(--sp-4);
+  min-width: 0;
+  max-height: calc(100dvh - var(--sp-8));
+  overflow-y: auto;
+  border-radius: 14px;
+  scrollbar-width: thin;
+}
+.drost__rows {
+  overflow: hidden;
+  border-radius: 14px;
+  background: rgb(8 14 28 / 72%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 10%);
+}
+
+/* one row */
+.drost__row {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr) 96px;
+  gap: 10px;
+  align-items: center;
+  width: 100%;
+  padding: 8px 12px 8px 8px;
+  border: 0;
+  background: none;
+  color: var(--white);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.drost__row + .drost__row {
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 6%);
+}
+.drost__row:hover {
+  background: rgb(255 255 255 / 3%);
+}
+.drost__row.is-ticking {
+  grid-template-columns: 18px 56px minmax(0, 1fr) 96px;
+}
+.drost__row.is-focused {
+  grid-template-columns: 56px 100px minmax(0, 1fr);
+}
+.drost__row.is-focused.is-ticking {
+  grid-template-columns: 18px 56px 100px minmax(0, 1fr);
+}
+.drost__row.is-picked {
+  background: rgb(0 186 255 / 10%);
+  box-shadow: inset 3px 0 0 var(--cyan);
+}
+.drost__row.is-checked {
+  background: rgb(0 186 255 / 8%);
+}
+.drost__row.is-locked {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.drost__row.is-loading {
+  min-height: 72px;
+  background: linear-gradient(-90deg, rgb(255 255 255 / 3%), rgb(255 255 255 / 8%), rgb(255 255 255 / 3%));
+  background-size: 400% 400%;
+  animation: lbrow-shimmer 1.2s ease-in-out infinite;
+  cursor: default;
+}
+.drost__tick {
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+  box-shadow: inset 0 0 0 1.5px rgb(255 255 255 / 32%);
+}
+.drost__tick.is-on {
+  position: relative;
+  background: var(--cyan);
+  box-shadow: none;
+}
+.drost__tick.is-on::after {
+  content: '✓';
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: #04121b;
+  font-size: 12px;
+  font-weight: 900;
+}
+.drost__tick.is-off {
+  opacity: 0.3;
+}
+.drost__art {
+  position: relative;
+  display: block;
+  width: 56px;
+  height: 56px;
+  overflow: hidden;
+  border-radius: 10px;
+  background-position: center;
+  background-size: cover;
+}
+.drost__art > img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.drost__art--sm {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+}
+.drost__lv {
+  position: absolute;
+  left: 3px;
+  bottom: 3px;
+  padding: 1px 5px;
+  border-radius: 5px;
+  background: rgb(0 0 0 / 70%);
+  font-family: var(--font-display);
+  font-size: 9px;
+  font-weight: 900;
+}
+.drost__lv em {
+  margin-left: 3px;
+  font-style: normal;
+  color: #ffd979;
+}
+.drost__mk {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: rgb(0 0 0 / 65%);
+}
+.drost__mk img {
+  width: 13px;
+  height: 13px;
+}
+.drost__who {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+.drost__l1 {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.drost__l1 b {
+  font-size: 13.5px;
+}
+.drost__l1,
+.drost__name,
+.drost__ticked {
+  text-transform: capitalize;
+}
+.drost__l1 img {
+  width: 13px;
+  height: 13px;
+}
+.drost__l1 small {
+  font-size: 11.5px;
+  color: var(--text-faint);
+}
+.drost__line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+.drost__line > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+.drost__si {
+  height: 11px;
+  filter: brightness(0) invert(1);
+  opacity: 0.8;
+}
+.drost__ei {
+  width: 13px;
+  height: 13px;
+}
+.drost__grade {
+  width: 10px;
+  height: 12px;
+  object-fit: contain;
+}
+.drost__l3 {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+}
+.drost__age {
+  display: inline-grid;
+  place-items: center;
+  height: 18px;
+  padding: 0 6px;
+  border-radius: 5px;
+  background: rgb(255 255 255 / 8%);
+  font-family: var(--font-display);
+  font-size: 9.5px;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.drost__age.is-fresh {
+  color: var(--teal);
+  box-shadow: inset 0 0 0 1px rgb(14 212 168 / 40%);
+}
+.drost__age.is-worn {
+  color: var(--gold);
+  box-shadow: inset 0 0 0 1px rgb(246 168 0 / 45%);
+}
+.drost__age.is-bad {
+  color: var(--red);
+  box-shadow: inset 0 0 0 1px rgb(255 90 106 / 50%);
+}
+.drost__abs {
+  display: inline-flex;
+  gap: 3px;
+}
+.drost__ab {
+  display: inline-grid;
+  place-items: center;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 3px;
+  border-radius: 4px;
+  background: var(--ab);
+  color: #08101e;
+  font-family: var(--font-display);
+  font-size: 9px;
+  font-weight: 900;
+}
+.drost__ab.is-locked {
+  background: none;
+  box-shadow: inset 0 0 0 1px var(--ab);
+  color: var(--ab);
+}
+.drost__status {
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-family: var(--font-display);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+.drost__status.is-busy {
+  background: rgb(124 92 255 / 18%);
+  box-shadow: inset 0 0 0 1px rgb(124 92 255 / 55%);
+  color: #c7b8ff;
+}
+.drost__status.is-market {
+  background: rgb(0 186 255 / 12%);
+  box-shadow: inset 0 0 0 1px rgb(0 186 255 / 45%);
+  color: #9ee7ff;
+}
+.drost__status.is-overdue {
+  background: rgb(255 90 106 / 14%);
+  box-shadow: inset 0 0 0 1px rgb(255 90 106 / 55%);
+  color: #ffb3bd;
+}
+.drost__pay {
+  display: grid;
+  justify-items: end;
+  gap: 3px;
+}
+.drost__pay small {
+  font-size: 11px;
+  color: var(--text-faint);
+  white-space: nowrap;
+}
+.drost__pay .drost__cr {
+  font-size: 11px;
+}
+.drost__pay .drost__cr img {
+  width: 12px;
+  height: 12px;
+}
+.drost__pay.is-overdue small {
+  color: #ffb3bd;
+}
+.drost__bar {
+  display: block;
+  width: 100%;
+  height: 5px;
+  overflow: hidden;
+  border-radius: 3px;
+  background: rgb(255 255 255 / 10%);
+}
+.drost__bar i {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #1677a8, var(--cyan));
+}
+.drost__pay.is-overdue .drost__bar i,
+.drost__box.is-overdue .drost__bar i {
+  background: linear-gradient(90deg, #a83246, #ff5a6a);
+}
+
+/* focused rows: the name, then one kind of figure across the row */
+.drost__name {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+.drost__name b {
+  overflow: hidden;
+  font-size: 13.5px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.drost__name small {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11.5px;
+  color: var(--text-faint);
+}
+.drost__name small img {
+  width: 13px;
+  height: 13px;
+}
+.drost__cells {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+.drost__cells--5 {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+.drost__cells--6 {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+.drost__cell {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  padding: 5px 2px;
+  border-radius: 8px;
+  background: rgb(255 255 255 / 4%);
+  min-width: 0;
+}
+.drost__cell small {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-family: var(--font-display);
+  font-size: 7.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  white-space: nowrap;
+}
+.drost__cell small .drost__si {
+  height: 9px;
+}
+.drost__cell b {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+.drost__cell em {
+  font-size: 9.5px;
+  font-style: normal;
+  line-height: 1;
+  color: var(--text-dim);
+}
+.drost__names {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.drost__names span {
+  padding: 1px 7px;
+  border-radius: 5px;
+  background: var(--ab);
+  color: #08101e;
+  font-size: 11px;
+  font-weight: var(--fw-bold);
+}
+.drost__names span.is-locked {
+  background: none;
+  box-shadow: inset 0 0 0 1px var(--ab);
+  color: var(--ab);
+}
+
+/* the fighter in full */
+.drost__detail,
+.drost__basket {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 14px;
+  background: rgb(8 14 28 / 76%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 10%);
+}
+.rsheet .drost__detail,
+.rsheet .drost__basket {
+  padding: 0;
+  background: none;
+  box-shadow: none;
+}
+.drost__hero {
+  display: grid;
+  grid-template-columns: 120px minmax(0, 1fr);
+  gap: 16px;
+  align-items: center;
+}
+.drost__heroart {
+  position: relative;
+  display: block;
+  width: 120px;
+  height: 120px;
+  overflow: hidden;
+  border-radius: 14px;
+  background-position: center;
+  background-size: cover;
+}
+.drost__heroart > img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top;
+}
+.drost__herotext {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+.drost__kick {
+  font-family: var(--font-display);
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.shell .main__inner .drost .drost__heroname {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 900;
+  text-transform: capitalize;
+}
+.drost__heroline {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+  font-size: 13px;
+  color: var(--text-faint);
+  text-transform: capitalize;
+}
+.drost__heroline img {
+  width: 16px;
+  height: 16px;
+}
+.drost__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.drost__chips > span:not(.drost__age) {
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 5%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 12%);
+  font-size: 12px;
+  color: #dfe6f2;
+}
+.drost__twin {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+}
+.drost__box {
+  display: grid;
+  gap: 8px;
+  align-content: start;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgb(255 255 255 / 4%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 8%);
+}
+.drost__boxhead {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+.drost__boxhead small {
+  font-family: var(--font-display);
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.drost__boxhead b {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 900;
+}
+.drost__boxhead b.is-fresh {
+  color: var(--teal);
+}
+.drost__boxhead b.is-worn {
+  color: var(--gold);
+}
+.drost__boxhead b.is-bad {
+  color: var(--red);
+}
+.drost__box p {
+  margin: 0;
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: var(--text-faint);
+}
+.drost__box p b {
+  color: var(--white);
+}
+.drost__agebar {
+  position: relative;
+  display: block;
+  height: 8px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #ff5a6a, #f6a800 50%, #0ed4a8);
+}
+.drost__agebar i {
+  position: absolute;
+  top: -4px;
+  width: 4px;
+  height: 16px;
+  margin-left: -2px;
+  border-radius: 2px;
+  background: var(--white);
+  box-shadow: 0 0 0 2px rgb(0 0 0 / 60%);
+}
+.drost__tiles {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+.drost__tile {
+  display: grid;
+  gap: 2px;
+  padding: 9px 12px;
+  border-radius: 10px;
+  background: rgb(255 255 255 / 4%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 8%);
+  min-width: 0;
+}
+.drost__tile small {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-display);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.drost__tile b {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 800;
+}
+.drost__tile b em {
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 600;
+  color: var(--text-dim);
+}
+.drost__tile b.drost__target {
+  font-family: var(--font-body);
+  font-size: 13px;
+}
+.drost__abilities {
+  display: grid;
+  gap: 6px;
+}
+.drost__ability {
+  display: grid;
+  gap: 3px;
+  padding: 9px 12px;
+  border-radius: 10px;
+  background: rgb(255 255 255 / 4%);
+  box-shadow: inset 3px 0 0 var(--ab);
+}
+.drost__abname {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13.5px;
+  font-weight: var(--fw-bold);
+}
+.drost__abname em {
+  font-size: 11px;
+  font-style: normal;
+  color: #ffd979;
+}
+.drost__abname small {
+  margin-left: auto;
+  font-family: var(--font-display);
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ab);
+}
+.drost__ability p {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: #c5cee0;
+}
+.drost__ability.is-locked .drost__abname,
+.drost__ability.is-locked p {
+  opacity: 0.7;
+}
+.drost__acts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* selling */
+.shell .main__inner .drost .drost__baskettitle {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.drost__tickedlist {
+  display: grid;
+}
+.drost__ticked {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr) auto 24px;
+  gap: 10px;
+  align-items: center;
+  padding: 6px 0;
+}
+.drost__ticked + .drost__ticked {
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 6%);
+}
+.drost__drop {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text-dim);
+  font-size: 13px;
+  cursor: pointer;
+}
+.drost__drop:hover {
+  color: var(--white);
+}
+.drost__total {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding-top: 10px;
+  border-top: 1px solid rgb(255 255 255 / 10%);
+}
+.drost__total small {
+  font-family: var(--font-display);
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.drost__total .drost__cr {
+  font-size: 22px;
+  font-weight: 900;
+}
+.drost__total .drost__cr img {
+  width: 18px;
+  height: 18px;
+}
+.drost__warn {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgb(255 90 106 / 10%);
+  box-shadow: inset 0 0 0 1px rgb(255 90 106 / 35%);
+  font-size: 12px;
+  line-height: 1.45;
+  color: #ffc2c9;
+}
+.drost__go {
+  width: 100%;
+  min-height: 44px;
+}
+.drost__field {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+}
+.drost__field b {
+  display: block;
+  font-size: 13px;
+}
+.drost__field small {
+  display: block;
+  font-size: 11.5px;
+  color: var(--text-faint);
+}
+.drost__field--check {
+  cursor: pointer;
+}
+.drost__stepper {
+  display: inline-flex;
+  align-items: center;
+  overflow: hidden;
+  border-radius: 10px;
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 18%);
+}
+.drost__stepper button {
+  width: 34px;
+  height: 36px;
+  border: 0;
+  background: none;
+  color: var(--text-faint);
+  font-size: 16px;
+  cursor: pointer;
+}
+.drost__stepper input {
+  width: 64px;
+  height: 36px;
+  border: 0;
+  background: none;
+  color: var(--white);
+  font-size: 15px;
+  font-weight: 800;
+  text-align: center;
+  appearance: textfield;
+}
+.drost__stepper input::-webkit-inner-spin-button,
+.drost__stepper input::-webkit-outer-spin-button {
+  appearance: none;
+  margin: 0;
+}
+.drost__math {
+  display: grid;
+  gap: 6px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgb(255 255 255 / 4%);
+}
+.drost__math span {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 12.5px;
+  color: var(--text-faint);
+}
+.drost__math b {
+  font-family: var(--font-display);
+  font-size: 12.5px;
+  color: var(--white);
+  white-space: nowrap;
+}
+.drost__math .is-sum {
+  padding-top: 6px;
+  border-top: 1px solid rgb(255 255 255 / 10%);
+  color: var(--white);
+}
+
+.drost__stack {
+  display: grid;
+  gap: 12px;
+}
+
+/* narrow desktop: what is ticked, pinned at the foot */
+.drost__dock {
+  position: sticky;
+  bottom: var(--sp-3);
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: linear-gradient(110deg, rgb(0 186 255 / 18%), rgb(8 14 28 / 94%) 60%);
+  box-shadow: inset 0 0 0 1px rgb(0 186 255 / 50%), 0 10px 30px rgb(0 0 0 / 50%);
+  font-weight: var(--fw-bold);
+}
+
+/* the filter pop-over on a small laptop: two columns, the quality rules under them */
+@media (max-width: 1279px) {
+  .drost__pop--filters {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+  .drost__pop--filters > .drost__fcol:nth-child(3) {
+    grid-column: 1 / -1;
+  }
+}
+
+.drost__toolbar .drost__note a {
+  color: var(--cyan);
+}

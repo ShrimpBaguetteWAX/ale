@@ -87,6 +87,8 @@ import { ActionBanner } from '@/components/ActionBanner'
 import { asset } from '@/assets'
 import { recallPayScope, rememberPayScope } from '@/fighters/payScope'
 import { GameImg } from '@/components/GameImg'
+import { usePhone } from '@/components/usePhone'
+import { DeskRoster } from '@/fighters/DeskRoster'
 
 /**
  * My Fighters — the roster screen.
@@ -223,6 +225,7 @@ export default function Fighters() {
 
   const data = useRoster(account)
   const { roster, levels, config, templates, levelMod, ageDecay } = data
+  const phone = usePhone()
 
   const [mode, setMode] = useState<Mode>('inventory')
   const [tab, setTab] = useState<CardTab>('primary')
@@ -538,6 +541,164 @@ export default function Fighters() {
 
   const selectedPay = selected ? paydayOf(selected, config, now) : null
   const selectedLevel = selected ? levelUpOf(selected, levels) : null
+
+  const dialogs = (
+    <>
+      {opened && (
+        <FighterDialog
+          fighter={opened}
+          levels={levels}
+          config={config}
+          template={templates.get(opened.classname)}
+          levelMod={levelMod}
+          ageDecay={ageDecay}
+          now={now}
+          busy={busy === 'marker'}
+          canEdit={!!session}
+          onMarker={(m) => void doMarker(opened, m)}
+          onClose={() => setOpenedId(null)}
+        />
+      )}
+
+      {confirmSell && (
+        <Confirm
+          title={`Sell ${checked.length} fighter${checked.length === 1 ? '' : 's'}?`}
+          body={
+            <>
+              <p>
+                This cannot be undone. You will receive{' '}
+                <strong>{sellValue.toLocaleString(NUM_LOCALE)} credits</strong>.
+              </p>
+              <ul className="confirm__list">
+                {checkedFighters.map((f) => (
+                  <li key={f.fighter_id}>
+                    {f.racename} {f.classname} · level {f.stats.level} ·{' '}
+                    {f.stats.credits.toLocaleString(NUM_LOCALE)} credits
+                  </li>
+                ))}
+              </ul>
+            </>
+          }
+          confirmLabel="Sell them"
+          onConfirm={() => void doSell()}
+          onCancel={() => setConfirmSell(false)}
+        />
+      )}
+
+      {confirmList && (
+        <Confirm
+          title={`List ${listPlan.ids.length} fighter${listPlan.ids.length === 1 ? '' : 's'} on the market?`}
+          body={
+            <>
+              <p>
+                Each starts at <strong>{gemsWord(startPrice)}</strong> and runs
+                for{' '}
+                {Math.round(
+                  Number(marketConfig?.standard_duration_minutes ?? 0) / 60,
+                )}
+                h.
+              </p>
+              {/*
+                The fee is the part worth stating twice. It is charged per
+                fighter, it is charged whether or not anybody bids, and it is
+                the one number a player cannot get back by cancelling.
+              */}
+              <p>
+                The listing fee is{' '}
+                <strong>
+                  {gemsWord(Number(marketConfig?.gems_listing_price ?? 0))} each
+                  — {listPlan.gems.toLocaleString(NUM_LOCALE)} in total
+                </strong>
+                , spent whether or not they sell. They cannot fight while
+                listed.
+              </p>
+              <p className="faint">
+                {keepListed
+                  ? 'Unsold fighters stay up as fixed-price instant buy offers at your starting price.'
+                  : 'Unsold fighters come back to you.'}
+              </p>
+              <ul className="confirm__list">
+                {checkedFighters.map((f) => (
+                  <li key={f.fighter_id}>
+                    {f.racename} {f.classname} · level {f.stats.level}
+                    {f.ascension_level > 0 ? ` · asc ${f.ascension_level}` : ''}
+                  </li>
+                ))}
+              </ul>
+            </>
+          }
+          confirmLabel="List them"
+          onConfirm={() => void doList()}
+          onCancel={() => setConfirmList(false)}
+        />
+      )}
+    </>
+  )
+
+  /*
+     A desktop gets the Market's rows: the roster as a list with the picked
+     fighter in full beside it. Same data, same actions and the same dialogs —
+     only the layout differs. The phone keeps its cards.
+  */
+  if (!phone) {
+    return (
+      <>
+        <DeskRoster
+          roster={roster}
+          shown={shown}
+          filter={filter}
+          onFilter={setFilter}
+          templates={templates}
+          levels={levels}
+          config={config}
+          levelMod={levelMod}
+          ageDecay={ageDecay}
+          now={now}
+          atLevelOne={atLevelOne}
+          onAtLevelOne={setAtLevelOne}
+          readyToLevel={readyToLevel}
+          lockedCount={lockedCount}
+          loading={data.loading}
+          banner={<ActionBanner error={error ?? data.error} />}
+          mode={mode}
+          onMode={switchMode}
+          checked={checked}
+          onCheck={toggleChecked}
+          onChecked={setChecked}
+          selectedId={selectedId}
+          onSelect={setSelectedId}
+          onOpen={setOpenedId}
+          canAct={!!session}
+          busy={busy}
+          credits={credits}
+          gems={gems}
+          payAll={payAll}
+          payScope={payScope}
+          onPayScope={(next) => {
+            setPayScope(next)
+            rememberPayScope(next)
+          }}
+          overdue={overdue}
+          levelAll={levelAll}
+          onPayAll={() => void doPayAll()}
+          onLevelAll={() => void doLevelAll()}
+          onPayOne={(f) => void doPayOne(f)}
+          onLevelOne={(f) => void doLevelOne(f)}
+          sellValue={sellValue}
+          onSell={() => setConfirmSell(true)}
+          marketConfig={marketConfig}
+          listPlan={listPlan}
+          startPrice={startPrice}
+          onStartPrice={setStartPrice}
+          minStart={minStart}
+          keepListed={keepListed}
+          onKeepListed={setKeepListed}
+          onList={() => setConfirmList(true)}
+        />
+        {dialogs}
+      </>
+    )
+  }
 
   return (
     <div className="roster">
@@ -923,94 +1084,7 @@ export default function Fighters() {
         </>
       )}
 
-      {opened && (
-        <FighterDialog
-          fighter={opened}
-          levels={levels}
-          config={config}
-          template={templates.get(opened.classname)}
-          levelMod={levelMod}
-          ageDecay={ageDecay}
-          now={now}
-          busy={busy === 'marker'}
-          canEdit={!!session}
-          onMarker={(m) => void doMarker(opened, m)}
-          onClose={() => setOpenedId(null)}
-        />
-      )}
-
-      {confirmSell && (
-        <Confirm
-          title={`Sell ${checked.length} fighter${checked.length === 1 ? '' : 's'}?`}
-          body={
-            <>
-              <p>
-                This cannot be undone. You will receive{' '}
-                <strong>{sellValue.toLocaleString(NUM_LOCALE)} credits</strong>.
-              </p>
-              <ul className="confirm__list">
-                {checkedFighters.map((f) => (
-                  <li key={f.fighter_id}>
-                    {f.racename} {f.classname} · level {f.stats.level} ·{' '}
-                    {f.stats.credits.toLocaleString(NUM_LOCALE)} credits
-                  </li>
-                ))}
-              </ul>
-            </>
-          }
-          confirmLabel="Sell them"
-          onConfirm={() => void doSell()}
-          onCancel={() => setConfirmSell(false)}
-        />
-      )}
-
-      {confirmList && (
-        <Confirm
-          title={`List ${listPlan.ids.length} fighter${listPlan.ids.length === 1 ? '' : 's'} on the market?`}
-          body={
-            <>
-              <p>
-                Each starts at <strong>{gemsWord(startPrice)}</strong> and runs
-                for{' '}
-                {Math.round(
-                  Number(marketConfig?.standard_duration_minutes ?? 0) / 60,
-                )}
-                h.
-              </p>
-              {/*
-                The fee is the part worth stating twice. It is charged per
-                fighter, it is charged whether or not anybody bids, and it is
-                the one number a player cannot get back by cancelling.
-              */}
-              <p>
-                The listing fee is{' '}
-                <strong>
-                  {gemsWord(Number(marketConfig?.gems_listing_price ?? 0))} each
-                  — {listPlan.gems.toLocaleString(NUM_LOCALE)} in total
-                </strong>
-                , spent whether or not they sell. They cannot fight while
-                listed.
-              </p>
-              <p className="faint">
-                {keepListed
-                  ? 'Unsold fighters stay up as fixed-price instant buy offers at your starting price.'
-                  : 'Unsold fighters come back to you.'}
-              </p>
-              <ul className="confirm__list">
-                {checkedFighters.map((f) => (
-                  <li key={f.fighter_id}>
-                    {f.racename} {f.classname} · level {f.stats.level}
-                    {f.ascension_level > 0 ? ` · asc ${f.ascension_level}` : ''}
-                  </li>
-                ))}
-              </ul>
-            </>
-          }
-          confirmLabel="List them"
-          onConfirm={() => void doList()}
-          onCancel={() => setConfirmList(false)}
-        />
-      )}
+      {dialogs}
     </div>
   )
 }

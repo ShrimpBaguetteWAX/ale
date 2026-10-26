@@ -1,4 +1,5 @@
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useGame } from '@/state/useGame'
 import { NUM_LOCALE } from '@/format'
 import {
@@ -108,7 +109,11 @@ export default function Market() {
   */
   const unlockLevel = fightersConfig?.asc_ability_unlock_lvl
 
-  const [tab, setTab] = useState<Tab>('auctions')
+  /* `?tab=mine` opens on your listings — My Fighters links there. */
+  const [params] = useSearchParams()
+  const [tab, setTab] = useState<Tab>(
+    () => (['auctions', 'offers', 'mine', 'sell'] as Tab[]).find((t) => t === params.get('tab')) ?? 'auctions',
+  )
   const [sort, setSort] = useState<MarketSort>('ending')
   const [filter, setFilter] = useState<RosterFilter>(EMPTY_FILTER)
   const [detail, setDetail] = useState<Detail>(null)

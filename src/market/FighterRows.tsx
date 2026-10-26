@@ -15,8 +15,8 @@ import {
   fighterAvatar,
   formatResistance,
   formatStat,
+  gradeAged,
   gradeOfStat,
-  gradeStat,
   resolveAbilityDescription,
   statIcon,
   type ClassTemplate,
@@ -60,29 +60,6 @@ const PRIMARY_STATS = ['damage', 'health', 'taunt', 'attackspeed', 'initiative']
 /** The phone row's grades: the primary figures that have one. */
 const ROW_GRADES = ['damage', 'health', 'attackspeed', 'initiative'] as const
 
-/**
- * A stat's grade, with health and damage taken at what the fighter fights
- * with after age.
- *
- * The contract multiplies both by `age_decay ^ (days²)` before the first
- * blow, so an old fighter's rolled health is not the health it brings. Level
- * is left out on purpose: the class bands describe a fresh roll, and folding
- * in `level_mod ^ level` would grade every levelled fighter gold. Everything
- * else is fought with exactly as rolled and graded that way.
- */
-export function gradeAged(
-  raw: Record<string, number>,
-  field: string,
-  template: ClassTemplate | undefined,
-  ageFactor = 1,
-): StatGrade | null {
-  if (ageFactor !== 1 && (field === 'damage' || field === 'health')) {
-    if (!template) return null
-    const mid = ((raw[`${field}_min`] ?? 0) + (raw[`${field}_max`] ?? 0)) / 2
-    return gradeStat(field, mid * ageFactor, template)
-  }
-  return gradeOfStat(raw, field, template)
-}
 
 const RESISTANCES: [string, string][] = [
   ['res_fire', 'Fire'],
