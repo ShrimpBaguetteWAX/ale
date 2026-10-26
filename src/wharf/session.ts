@@ -1,4 +1,5 @@
 import {
+  BrowserLocalStorage,
   ChainDefinition,
   Session,
   SessionKit,
@@ -12,7 +13,7 @@ import { CosignPlugin } from './cosign'
 import { AUTO_SIGN_PERMISSION, savedGroups, whitelistFor } from './autoSign'
 import { CHAIN_ID } from '@/chain/config'
 import { endpointPool } from '@/chain/endpoints'
-import { isUserCancel } from './errors'
+import { isUserCancel, SESSION_STORAGE_PREFIX } from './errors'
 
 let kit: SessionKit | null = null
 
@@ -44,6 +45,8 @@ export async function getSessionKit(): Promise<SessionKit> {
       walletPlugins: [new WalletPluginAnchor(), new WalletPluginCloudWallet()],
     },
     {
+      /* The game's own storage keys, never another WharfKit app's on the same origin. */
+      storage: new BrowserLocalStorage(SESSION_STORAGE_PREFIX),
       /*
          Auto-signing: a key kept in this browser that may sign only what the
          player chose on the Account screen. Nothing until they choose, and
