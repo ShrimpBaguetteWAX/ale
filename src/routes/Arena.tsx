@@ -66,8 +66,11 @@ import {
   rosterPanel,
   recallDensity,
   rememberDensity,
+  PickDensitySwitch,
+  PickViewSwitch,
   type Detail,
   type PickDensity,
+  type PickView,
   type Tab,
 } from '@/fight/setup'
 import { fieldedStats, levelFactor, ageFactor } from '@/fight/scaling'
@@ -211,6 +214,13 @@ export default function Arena() {
   const [sheet, setSheet] = useState(false)
   /* The sheet's card size: the same setting as the dungeon's sheet. */
   const [sheetDensity, setSheetDensity] = useState<PickDensity>(() => recallDensity(true))
+  /* A desktop's card size and readout, held here for the toolbar that switches them. */
+  const [deskDensity, setDeskDensity] = useState<PickDensity>(() => recallDensity())
+  const chooseDeskDensity = (next: PickDensity) => {
+    setDeskDensity(next)
+    rememberDensity(next)
+  }
+  const [pickView, setPickView] = useState<PickView>('combat')
   const chooseSheetDensity = (next: PickDensity) => {
     setSheetDensity(next)
     rememberDensity(next, true)
@@ -925,15 +935,24 @@ export default function Arena() {
               the title, as the dungeon does, and the defenders' strength on
               the line under it, where the dungeon has its difficulty.
             */}
-            {phone ? (
-              <WeatherPanel weather={weather} />
-            ) : (
-              <div className="titlebadges">
-                <WeatherPanel weather={weather} />
+            {phone && <WeatherPanel weather={weather} />}
+          </div>
+
+          {!phone && (
+            <>
+              <span className="spacer" />
+              {/*
+                The dungeon's line, in the dungeon's shape: the day's weather,
+                then the defenders' strength where the dungeon has the
+                difficulty — two labels over their readings, not two boxes.
+              */}
+              <div className="dungeon__conditions">
+                <WeatherPanel weather={weather} twin />
+                {weather && <span className="dungeon__rule" aria-hidden="true" />}
                 <ArenaStanding power={arenaPower} />
               </div>
-            )}
-          </div>
+            </>
+          )}
           <span className="spacer" />
           <div className={`dungeon__actions${phone ? ' dungeon__actions--dock' : ''}`}>
             <button
@@ -1357,6 +1376,14 @@ export default function Arena() {
                 onAtLevelOne={setAtLevelOne}
                 count={shownCount}
                 sheet={phone ? { density: sheetDensity, onDensity: chooseSheetDensity } : undefined}
+                bar={
+                  phone
+                    ? undefined
+                    : {
+                        lead: deskDensity === 'full' && <PickViewSwitch view={pickView} onChange={setPickView} />,
+                        tail: <PickDensitySwitch density={deskDensity} onChange={chooseDeskDensity} />,
+                      }
+                }
               />
               <FighterGrid
                 roster={roster}
@@ -1370,8 +1397,9 @@ export default function Arena() {
                 onToggle={toggleFighter}
                 onCount={countFighters}
                 onInspect={showFighter}
-                density={phone ? sheetDensity : undefined}
-                onDensity={phone ? chooseSheetDensity : undefined}
+                density={phone ? sheetDensity : deskDensity}
+                onDensity={phone ? chooseSheetDensity : chooseDeskDensity}
+                view={phone ? undefined : pickView}
               />
             </>
           ) : (
@@ -1435,30 +1463,33 @@ export default function Arena() {
  *
  * A full-width panel with a 22px bar in it for a single percentage was more
  * presence than one number is worth, and it sat between the heading and the
- * matchup pushing both apart. It is a chip beside the weather now — the two
- * are the same kind of fact, conditions this fight happens under that the
- * player did not choose and cannot change — and the bar is gone. The colour
- * of the figure keeps what the bands said: red at full strength, gold part
- * worn, teal once challengers have worn it down.
+ * matchup pushing both apart. It sits beside the weather now, in the same
+ * label-over-reading shape the dungeon gives its weather and difficulty —
+ * the two are the same kind of fact, conditions this fight happens under that
+ * the player did not choose and cannot change. The colour of the figure keeps
+ * what the bands said: red at full strength, gold part worn, teal once
+ * challengers have worn it down.
  */
 function ArenaStanding({ power }: { power: number }) {
   const percent = arenaPowerPercent(power)
   const band = percent >= 90 ? 'high' : percent >= 50 ? 'mid' : 'low'
 
+  /* In the weather's colours: full strength is the bad news. */
+  const lean = band === 'high' ? 'bad' : band === 'mid' ? 'mixed' : 'good'
+
   return (
     <div
-      className={`arenastanding arenastanding--${band}`}
+      className={`weathertwin weathertwin--${lean}`}
       title="Arena power scales every defender’s health and damage. It falls each time a challenger fails and snaps back to full the moment somebody wins, so a high figure is the harder fight."
     >
-      <img
-        className="arenastanding__icon"
-        src={asset('/assets/icons/shield.svg')}
-        alt=""
-        width={16}
-        height={16}
-      />
-      <span className="arenastanding__label">Defender strength</span>
-      <span className="arenastanding__value mono">{percent.toFixed(0)}%</span>
+      <span className="weathertwin__label">Defenders</span>
+      <span className="weathertwin__line">
+        <img className="weathertwin__stat" src={asset('/assets/icons/shield.svg')} alt="" width={18} height={18} />
+        <span className="weathertwin__name">
+          <span className="weathertwin__lead mono">{percent.toFixed(0)}%</span>
+          strength
+        </span>
+      </span>
     </div>
   )
 }

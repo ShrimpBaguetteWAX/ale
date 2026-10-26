@@ -74,8 +74,11 @@ import {
   rosterPanel,
   recallDensity,
   rememberDensity,
+  PickDensitySwitch,
+  PickViewSwitch,
   type Detail,
   type PickDensity,
+  type PickView,
   type Tab,
 } from '@/fight/setup'
 import { DIRTIES, playDungeon } from '@/wharf/actions'
@@ -213,6 +216,13 @@ export default function Dungeon() {
   const [sheet, setSheet] = useState(false)
   /* The sheet's card size: its own setting, compact until changed. */
   const [sheetDensity, setSheetDensity] = useState<PickDensity>(() => recallDensity(true))
+  /* A desktop's card size and readout, held here for the toolbar that switches them. */
+  const [deskDensity, setDeskDensity] = useState<PickDensity>(() => recallDensity())
+  const chooseDeskDensity = (next: PickDensity) => {
+    setDeskDensity(next)
+    rememberDensity(next)
+  }
+  const [pickView, setPickView] = useState<PickView>('combat')
   const chooseSheetDensity = (next: PickDensity) => {
     setSheetDensity(next)
     rememberDensity(next, true)
@@ -1433,6 +1443,14 @@ export default function Dungeon() {
                 onAtLevelOne={setAtLevelOne}
                 count={shownCount}
                 sheet={phone ? { density: sheetDensity, onDensity: chooseSheetDensity } : undefined}
+                bar={
+                  phone
+                    ? undefined
+                    : {
+                        lead: deskDensity === 'full' && <PickViewSwitch view={pickView} onChange={setPickView} />,
+                        tail: <PickDensitySwitch density={deskDensity} onChange={chooseDeskDensity} />,
+                      }
+                }
               />
               <FighterGrid
                 roster={roster}
@@ -1446,8 +1464,9 @@ export default function Dungeon() {
                 onToggle={toggleFighter}
                 onCount={countFighters}
                 onInspect={showFighter}
-                density={phone ? sheetDensity : undefined}
-                onDensity={phone ? chooseSheetDensity : undefined}
+                density={phone ? sheetDensity : deskDensity}
+                onDensity={phone ? chooseSheetDensity : chooseDeskDensity}
+                view={phone ? undefined : pickView}
               />
             </>
           ) : (

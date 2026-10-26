@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import type { CardTemplate } from '@/chain/atomic'
 import { FighterHoverCard, FighterPanel, type PanelFighter } from '@/components/FighterPanel'
 import { HoverPopover, useHoverCard } from '@/components/HoverPopover'
@@ -1079,6 +1079,11 @@ export function CombatCard({
  * single choices and belong in pickers. Ability stays free text because it
  * genuinely is.
  */
+/** The sort's name as the toolbar wears it. */
+function sortLabelOf(value: string): string {
+  return [...VERSUS_SORTS, ...SORTS].find((o) => o.value === value)?.label ?? 'Sort'
+}
+
 export function RosterFilters({
   filter,
   onChange,
@@ -1089,7 +1094,8 @@ export function RosterFilters({
   atLevelOne,
   onAtLevelOne,
   sheet,
-  drop = false,
+  drop: dropProp = false,
+  bar,
 }: {
   filter: RosterFilter
   onChange: (f: RosterFilter) => void
@@ -1156,7 +1162,15 @@ export function RosterFilters({
     onDensity?: (density: PickDensity) => void
     sort?: { value: string; options: { value: string; label: string }[]; onChange: (value: string) => void }
   }
+  /**
+   * Drawn as My Fighters' desktop toolbar: what the cards show on the left,
+   * then Filters, the sort and the card size on the right, one line — with
+   * the filters dropping over the cards. `lead` and `tail` are the
+   * caller's switches; this draws the rest between them.
+   */
+  bar?: { lead?: ReactNode; tail?: ReactNode }
 }) {
+  const drop = dropProp || !!bar
   const { classes, races } = useMemo(() => facetsOf(roster), [roster])
 
   /*
@@ -1323,9 +1337,58 @@ export function RosterFilters({
         )}
       </div>
     )}
+    {bar && (
+      <div className="pickbar">
+        {bar.lead}
+        <span className="pickbar__sp" />
+        {count && count.shown < count.total && (
+          <span className="pickbar__count">
+            <b className="mono">{count.shown}</b> of {count.total}
+          </span>
+        )}
+        <button
+          type="button"
+          className={`drost__tool${open || active > 0 ? ' is-on' : ''}`}
+          aria-expanded={open}
+          onClick={() => setOpen((v) => !v)}
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M3 5h18l-7 8v5l-4 2v-7z" />
+          </svg>
+          Filters
+          {active > 0 && <em>{active}</em>}
+        </button>
+        {active > 0 && (
+          <button
+            type="button"
+            className="drost__dir"
+            aria-label="Clear filters"
+            title="Clear filters"
+            onClick={() => onChange({ ...EMPTY_FILTER, sort: filter.sort })}
+          >
+            ✕
+          </button>
+        )}
+        {!omit.includes('sort') && (
+          <label className="drost__tool pickbar__sort">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M7 4v16M3 16l4 4 4-4M17 20V4M13 8l4-4 4 4" />
+            </svg>
+            <small>Sort</small> {sortLabelOf(filter.sort)}
+            <span className="pickbar__caret" aria-hidden="true">
+              ▾
+            </span>
+            <select aria-label="Sort by" value={filter.sort} onChange={(e) => set({ sort: e.target.value })}>
+              {sortOptions}
+            </select>
+          </label>
+        )}
+        {bar.tail}
+      </div>
+    )}
     {drop && !folded && <div className="filters__dropshade" onClick={() => setOpen(false)} />}
     {(!drop || !folded) && (
-    <div className={drop ? 'filters__drop' : 'filters__inpage'}>
+    <div className={drop ? `filters__drop${bar ? ' filters__drop--bar' : ''}` : 'filters__inpage'}>
     <div className={`filters${folded ? ' filters--folded' : ''}${sheet ? ' filters--sheet' : ''}`}>
 
       {/*
@@ -1869,6 +1932,7 @@ export function FighterGrid({
   onInspect,
   density: heldDensity,
   onDensity,
+  view: heldView,
 }: {
   roster: RosterFighter[] | null
   filter: RosterFilter
@@ -1915,9 +1979,16 @@ export function FighterGrid({
    */
   density?: PickDensity
   onDensity?: (density: PickDensity) => void
+  /**
+   * What every card shows, when the caller keeps it — the desktop toolbar
+   * puts the switch in its own line, beside the filters, and this grid then
+   * draws no switches of its own.
+   */
+  view?: PickView
 }) {
   /* Which face every card shows, until one is turned over on its own. */
-  const [view, setView] = useState<PickView>('combat')
+  const [ownView, setView] = useState<PickView>('combat')
+  const view = heldView ?? ownView
   /* Read once here rather than in every card: a grid is 150 of them. */
   const phone = usePhone()
   /* How much of each fighter to draw, remembered from last time. */
@@ -1983,7 +2054,7 @@ export function FighterGrid({
       {/* The count used to sit here and now rides with the filters that
           decide it, which leaves this row to the two switches: what the
           cards show on the left, how big they are on the right. */}
-      {(!onDensity || density === 'full') && (
+      {heldView === undefined && (!onDensity || density === 'full') && (
         <div className="picker__countrow">
           {/* The readout switch is what the compact card does not have, so it
               goes away with the thing it controls rather than sitting there

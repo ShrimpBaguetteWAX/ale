@@ -362,122 +362,6 @@
 }
 
 /*
- * One row, always — twenty steps that scroll rather than stack.
- *
- * Wrapping put the ladder on two lines from 1280px down, three by 600 and
- * four on a phone, so the panel below it moved by a hundred pixels depending
- * on the window. Shrinking them to fit is not the way out: twenty steps in a
- * 268px row is a 10px button, well under the 44px a thumb needs.
- *
- * So they keep their size and the row scrolls sideways. `1 0 44px` grows them
- * to fill a wide screen exactly as before — the row is unchanged where it
- * already fitted — and refuses to shrink below the tap target anywhere else.
- */
-/* The arrows and the strip between them. */
-.difficulty__scroller {
-  display: flex;
-  align-items: stretch;
-  gap: var(--sp-2);
-  margin-top: var(--sp-3);
-}
-
-.difficulty__row {
-  display: flex;
-  gap: var(--sp-2);
-  flex-wrap: nowrap;
-  overflow-x: auto;
-  overscroll-behavior-x: contain;
-  scroll-behavior: smooth;
-  flex: 1;
-  min-width: 0;
-  /*
-     No scrollbar. It is a control with its own arrows, and a scrollbar under
-     twenty buttons reads as a browser artefact rather than as part of the
-     panel — which is exactly what it looked like.
-  */
-  scrollbar-width: none;
-}
-
-.difficulty__row::-webkit-scrollbar {
-  display: none;
-}
-
-/*
- * The arrows, and only when there is somewhere to go.
- *
- * Rendered out entirely when all twenty fit, rather than disabled: on a wide
- * screen there is nothing off-screen and a permanent pair of dead controls
- * either side of the ladder is furniture. At the ends they are disabled
- * rather than removed, so the row does not resize as you page along it.
- *
- * Out of the tab order on purpose. The steps are a radiogroup and arrow keys
- * already move through it; these are a pointer convenience for what the
- * keyboard can already reach, and tabbing through them twice would be worse
- * than not having them.
- */
-.difficulty__arrow {
-  flex: none;
-  width: 28px;
-  min-height: 44px;
-  display: grid;
-  place-items: center;
-  font-family: var(--font-display);
-  font-size: var(--fs-lg);
-  line-height: 1;
-  color: var(--text-dim);
-  background: rgb(0 0 0 / 35%);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-xs);
-  cursor: pointer;
-  transition:
-    color var(--dur-fast) var(--ease),
-    border-color var(--dur-fast) var(--ease);
-}
-
-.difficulty__arrow:hover:not(:disabled) {
-  color: var(--white);
-  border-color: var(--purple);
-}
-
-.difficulty__arrow:disabled {
-  opacity: 0.35;
-  cursor: default;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .difficulty__row {
-    scroll-behavior: auto;
-  }
-}
-
-.difficulty__step {
-  flex: 1 0 44px;
-  min-width: 44px;
-  min-height: 44px;
-  font-family: var(--font-display);
-  font-size: var(--fs-md);
-  font-weight: var(--fw-bold);
-  color: var(--text-dim);
-  background: rgb(0 0 0 / 35%);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-xs);
-  cursor: pointer;
-  transition:
-    color var(--dur-fast) var(--ease),
-    border-color var(--dur-fast) var(--ease),
-    background var(--dur-fast) var(--ease);
-}
-.difficulty__step:hover {
-  border-color: var(--purple);
-  color: var(--white);
-}
-.difficulty__step[aria-checked='true'] {
-  color: #2a0910;
-  background: linear-gradient(180deg, #ff8a5c, #e0344f);
-  border-color: #ff9d78;
-}
-
-/*
  * The square tile version of `.portrait`, used by the picker grids.
  *
  * The base rule is built for the tavern's single 4:3 hero and carries a top
@@ -601,36 +485,10 @@
   .cardslots {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   }
-  .loadout__result {
-    grid-column: 1 / -1;
-  }
+
   .cardslots__auto {
     grid-column: 1 / -1;
   }
-}
-
-.loadout__result {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--sp-3);
-  flex-wrap: wrap;
-  padding: var(--sp-2) var(--sp-3);
-  background: rgb(0 0 0 / 30%);
-  border: 1px solid var(--line-soft);
-  border-radius: var(--radius-sm);
-}
-
-.loadout__v--element {
-  text-transform: capitalize;
-}
-
-/* Both cards' abilities carry over, named in their rarity colours. */
-
-.loadout__empty {
-  margin: 0;
-  font-size: var(--fs-sm);
-  max-width: 62ch;
 }
 
 .cardslot {
@@ -704,30 +562,6 @@
 .cardsauto__undo:hover:not(:disabled) {
   color: var(--gold);
 }
-/* Above the panel on a phone it spans the width, the pick taking the room. */
-.loadoutauto .cardsauto {
-  display: flex;
-}
-.loadoutauto .cardsauto__go {
-  flex: 1;
-}
-
-/*
- * The same button on a phone, lifted out of the fold it was inside.
- *
- * It belongs beside the slots it fills, and those live in the Loadout
- * panel — which is shut by default, so reaching the control that fills the
- * slots meant first opening the panel and filling them yourself. Above the
- * panel it is on screen either way.
- *
- * Tucked up against the heading it belongs to rather than left floating
- * midway between two panels: the column gap is 16px, and half of it here
- * ties the button to the Loadout below rather than to the matchup above.
- */
-.loadoutauto {
-  display: grid;
-  margin-bottom: calc(var(--sp-2) - var(--sp-4));
-}
 
 /* ---------- overlays ---------- */
 
@@ -751,7 +585,6 @@
   overflow-y: auto;
 }
 
-
 /* ---------- the picker, on the page ---------- */
 
 /*
@@ -765,7 +598,6 @@
   display: grid;
   gap: var(--sp-3);
 }
-
 
 .tabs__count {
   margin-left: 6px;
@@ -1255,12 +1087,6 @@
   color: var(--red);
 }
 
-.fightercard__stats {
-  font-size: 10px;
-  color: var(--text-dim);
-  font-variant-numeric: tabular-nums;
-}
-
 /*
  * The level, as a chip rather than a suffix.
  *
@@ -1460,7 +1286,6 @@
   color: var(--red);
   border-color: var(--red);
 }
-
 
 /* ---------- filters ---------- */
 
@@ -1751,12 +1576,6 @@
   }
 }
 
-.nftcard__stats {
-  font-size: 10px;
-  color: var(--text-dim);
-  font-variant-numeric: tabular-nums;
-}
-
 /*
  * Three tabs, because the card grants more than fits at once.
  *
@@ -1830,7 +1649,6 @@
   .fightercard__meta {
     min-height: 38px;
   }
-
 
   /*
    * Two rows of two, on the fighter's four.
@@ -1974,32 +1792,6 @@
   color: var(--text-faint);
 }
 
-/*
- * The ability by name, in its own rarity's colour — the same pip colour the
- * roster and the tavern give it, so the card and the panel agree about what
- * a Legendary looks like.
- */
-.nftcard__ability {
-  display: block;
-  width: 100%;
-  padding: 2px 6px;
-  border-radius: var(--radius-xs);
-  border-left: 3px solid var(--pip, #b79dff);
-  background: rgb(255 255 255 / 5%);
-  font-size: 10px;
-  line-height: 1.25;
-  text-align: left;
-  color: var(--white);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.nftcard__abilities {
-  font-size: 10px;
-  color: #b79dff;
-}
-
 /* ---------- slots that open a detail view ---------- */
 
 .slot__open {
@@ -2024,7 +1816,6 @@
   border: 0;
   cursor: pointer;
 }
-
 
 .sheet__panel--fighter {
   max-width: 420px;
@@ -2580,9 +2371,16 @@
   white-space: nowrap;
 }
 
+/*
+ * A desktop card is wide enough for the class, but not in the display face:
+ * at 14px Orbitron "Juggernaut" and "Astralknight" were cut to "Juggern…".
+ * The body face at 12px fits every class, "Explosioneer" the longest.
+ */
 @media (min-width: 700px) {
   .combatcard__name {
-    font-size: var(--fs-sm);
+    font-family: var(--font-body);
+    font-size: 12px;
+    letter-spacing: 0;
   }
 }
 
@@ -2654,7 +2452,6 @@
 .combatcard__dmg {
   color: var(--text-dim);
 }
-
 
 /* ---------- empty slots ---------- */
 
@@ -2787,8 +2584,7 @@ button.combatcard--empty:hover {
  * conditions this fight happens under that the player did not choose and
  * cannot change, worth a glance each and no more room than that.
  */
-.weather,
-.arenastanding {
+.weather {
   --lean-colour: var(--violet);
   display: inline-flex;
   align-items: center;
@@ -2801,44 +2597,6 @@ button.combatcard--empty:hover {
   border-radius: var(--radius-sm);
   background: var(--surface-3);
   font-size: var(--fs-sm);
-}
-
-/*
- * The badges sit on the same line, under the heading.
- */
-.titlebadges {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--sp-2);
-}
-
-.arenastanding__icon {
-  opacity: 0.75;
-}
-
-.arenastanding__label {
-  color: var(--text-dim);
-}
-
-/*
- * The figure carries what the bar’s bands used to say, and reads the
- * opposite way round to every other number in the game: high is a harder
- * fight, because `arena_power` scales the team standing against you.
- */
-.arenastanding__value {
-  font-family: var(--font-display);
-  font-weight: var(--fw-bold);
-  color: var(--band);
-}
-.arenastanding--high {
-  --band: #ff8a9c;
-}
-.arenastanding--mid {
-  --band: var(--gold);
-}
-.arenastanding--low {
-  --band: var(--teal);
 }
 
 /*
@@ -2861,18 +2619,6 @@ button.combatcard--empty:hover {
 .weather__name {
   color: var(--text);
   font-weight: var(--fw-medium);
-}
-
-/*
- * Auto-pick, in the list it acts on.
- *
- * There used to be one button doing both halves. Two suggestions that replace
- * different things want two controls, each sitting with what it changes — the
- * card one beside the slots, this one above the roster.
- */
-.picker__auto {
-  align-self: flex-start;
-  margin-bottom: var(--sp-2);
 }
 
 /*
@@ -3155,24 +2901,6 @@ button.combatcard--empty:hover {
   transform-origin: 50% calc(50% + (var(--underrow) + var(--removerow)) / 2);
 }
 
-@media (max-width: 719px) {
-  /*
-     Out here it is upright rather than counter-skewed, and it holds its line
-     whether or not it has chips - the cards in a row must still end level
-     with each other.
-  */
-  .combatslot__under {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 14px;
-    /* Upright, like every other piece of writing on a card. The slot leans
-       now, so staying upright takes the counter-skew that the card's own
-       content has always taken. */
-    transform: skewX(var(--lean-back));
-  }
-}
-
 /*
  * The remove bar, at the foot of a chosen fighter.
  *
@@ -3322,11 +3050,6 @@ button.combatcard--empty:hover {
  * header has no spare room there, the totals already wrap onto their own
  * line, and a third item would make it three.
  */
-@media (max-width: 719px) {
-  .titlebadges {
-    gap: 6px;
-  }
-}
 
 /*
  * The corner badges, inside the card rather than under its edge.
@@ -3409,20 +3132,15 @@ button.combatcard--empty:hover {
  * a fatter shield than the element mark beside it, which is what made them
  * look like two different sizes.
  */
-.weather__stat,
-.arenastanding__icon {
+.weather__stat {
   width: 18px;
   height: 18px;
   object-fit: contain;
 }
 
 @media (max-width: 719px) {
-  .titlebadges {
-    flex-wrap: nowrap;
-  }
 
-  .weather,
-  .arenastanding {
+  .weather {
     min-width: 0;
     gap: 4px 6px;
     padding: 4px 8px 4px 6px;
@@ -3433,10 +3151,6 @@ button.combatcard--empty:hover {
     flex: 1 1 auto;
   }
 
-  .arenastanding {
-    flex: 0 0 auto;
-  }
-
   .weather__name {
     min-width: 0;
     overflow: hidden;
@@ -3444,8 +3158,7 @@ button.combatcard--empty:hover {
     white-space: nowrap;
   }
 
-  .weather__stat,
-  .arenastanding__icon {
+  .weather__stat {
     width: 16px;
     height: 16px;
   }
@@ -3489,17 +3202,6 @@ button.combatcard--empty:hover {
   min-height: 26px;
   padding: 0 10px;
   font-size: var(--fs-xs);
-}
-
-/*
- * The two chips read as one line of text, so the labels match: same size,
- * same weight, same colour. Defender strength was a dimmed label beside a
- * bright weather name, which made it look like a caption for the chip next to
- * it rather than a fact of its own.
- */
-.arenastanding__label {
-  color: var(--text);
-  font-weight: var(--fw-medium);
 }
 
 /*
@@ -3714,8 +3416,7 @@ button.combatcard--empty:hover {
  * the other - so a block dropped into it shrinks to its content. The stats
  * take the full width and the button keeps the line under them.
  */
-.loadout .fstats,
-.loadout .loadout__element {
+.loadout .fstats {
   flex: 1 1 100%;
   min-width: 0;
 }
@@ -3824,93 +3525,6 @@ button.combatcard--empty:hover {
     font-size: var(--fs-xs);
   }
 
-  .loadout__empty {
-    font-size: var(--fs-xs);
-  }
-}
-
-/*
- * The difficulty wheel.
- *
- * A scroll-snapping strip that reads whatever is under the marker.
- *
- * The half-width spacers that let step 1 and step 20 reach the middle are
- * padding on the track, and the track is a grid rather than a flex row.
- * Both details are load-bearing. As pseudo-element spacers in a flex row the
- * percentage resolved against the flex container, the flex container sized
- * itself to its content, and the two agreed on 960px - which is the width of
- * twenty notches, and 647px wider than the phone. As padding it resolves
- * against the parent, which is a plain block of known width; and grid is what
- * makes the browser honour the trailing half, which flex scroll containers
- * drop.
- */
-.difficulty__wheel {
-  position: relative;
-  margin-top: var(--sp-3);
-}
-
-.difficulty__track {
-  display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: 48px;
-  box-sizing: border-box;
-  width: 100%;
-  padding-inline: calc(50% - 24px);
-  overflow-x: auto;
-  overscroll-behavior-x: contain;
-  scroll-snap-type: x mandatory;
-  scrollbar-width: none;
-}
-
-.difficulty__track::-webkit-scrollbar {
-  display: none;
-}
-
-.difficulty__notch {
-  height: 44px;
-  scroll-snap-align: center;
-  font-family: var(--font-display);
-  font-size: var(--fs-md);
-  font-weight: var(--fw-bold);
-  color: var(--text-faint);
-  background: none;
-  border: 0;
-  cursor: pointer;
-  transition:
-    color var(--dur-fast) var(--ease),
-    transform var(--dur-fast) var(--ease);
-}
-
-/*
- * The one under the marker. Larger as well as brighter: on a strip the eye
- * finds size before colour, and the marker frame alone reads as a slot the
- * numbers pass through rather than as the answer.
- */
-.difficulty__notch[aria-checked='true'] {
-  color: #2a0910;
-  transform: scale(1.05);
-}
-
-.difficulty__notch[aria-checked='false'] + .difficulty__notch[aria-checked='false'] {
-  color: var(--text-faint);
-}
-
-.difficulty__marker {
-  position: absolute;
-  left: 50%;
-  top: 0;
-  width: 48px;
-  height: 100%;
-  transform: translateX(-50%);
-  background: linear-gradient(180deg, #ff8a5c, #e0344f);
-  border: 1px solid #ff9d78;
-  border-radius: var(--radius-xs);
-  pointer-events: none;
-  z-index: -1;
-}
-
-:root[data-fx='low'] .difficulty__track {
-  scroll-behavior: auto;
 }
 
 /*
@@ -3923,11 +3537,6 @@ button.combatcard--empty:hover {
  * exactly the case that does not want it.
  */
 .dungeon__inner > * {
-  min-width: 0;
-}
-
-.difficulty__wheel,
-.difficulty__track {
   min-width: 0;
 }
 
@@ -3985,27 +3594,6 @@ button.combatcard--empty:hover {
     font-size: var(--fs-sm);
   }
 
-}
-
-/*
- * The abilities, spelled out.
- *
- * They were name-only chips with the description on a `title` — a tooltip no
- * phone shows and nobody hovers mid-decision — and the abilities are the
- * reason a particular crew-and-weapon pair is worth fielding. They use the
- * detail panel's own rows now, so it is the same presentation here as there;
- * the only thing this adds is a full-width slot in the result panel, which is
- * a flex row and would otherwise squeeze them into a column.
- */
-.loadout .loadout__abilities {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: var(--sp-2);
-  /* A full-width slot: the result panel is a flex row and would squeeze
-     two abilities into a column of one word each. */
-  flex: 1 1 100%;
-  min-width: 0;
-  margin-top: var(--sp-2);
 }
 
 /*
@@ -4527,8 +4115,7 @@ button.combatcard--empty:hover {
 }
 
 /* Said out loud when the pool is smaller than a team, then gone. */
-.autosplit__note,
-.cardsauto__note {
+.autosplit__note {
   position: absolute;
   top: calc(100% + 4px);
   left: 0;
@@ -5213,10 +4800,6 @@ button.combatcard--empty:hover {
 .cardsbar .cardsauto__undo {
   width: 32px;
   padding: 0;
-}
-.cardsbar .cardsauto__note {
-  position: static;
-  align-self: center;
 }
 
 .cardchip {
@@ -6559,4 +6142,87 @@ button.combatcard--empty:hover {
   .picker__sheethead {
     touch-action: none;
   }
+}
+
+/*
+ * The desktop picker's toolbar, in My Fighters' shape: what the cards show
+ * on the left; Filters, the sort and the card size on the right, one line.
+ * The filters drop over the cards rather than pushing them down.
+ */
+.pickbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+.pickbar__sp {
+  flex: 1;
+}
+.pickbar__count {
+  font-size: 12.5px;
+  color: var(--text-faint);
+  white-space: nowrap;
+}
+.pickbar__count b {
+  color: var(--white);
+}
+.pickbar__sort {
+  position: relative;
+  overflow: hidden;
+}
+.pickbar__sort select {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+  color-scheme: dark;
+}
+.pickbar__sort select option,
+.pickbar__sort select optgroup {
+  color: var(--white);
+  background: #0e1626;
+}
+.pickbar__sort:focus-within {
+  box-shadow: inset 0 0 0 1.5px var(--cyan);
+}
+.pickbar__caret {
+  font-size: 11px;
+  color: var(--text-faint);
+}
+
+/* The bar, the cards, and the filters over the cards' row. */
+.picker:has(> .pickbar) > .tabs {
+  grid-row: 1;
+}
+.picker:has(> .pickbar) > .pickbar {
+  grid-row: 2;
+}
+.picker:has(> .pickbar) > .fightergrid,
+.picker:has(> .pickbar) > p.faint {
+  grid-row: 3;
+}
+.picker > .filters__drop--bar {
+  grid-row: 3;
+  grid-column: 1 / -1;
+  align-self: start;
+  justify-self: end;
+  z-index: 20;
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+  gap: 14px 22px;
+  width: min(860px, 100%);
+  padding: 16px 18px;
+  border-radius: 14px;
+  background: rgb(10 18 34 / 98%);
+  box-shadow:
+    inset 0 0 0 1px rgb(255 255 255 / 16%),
+    0 22px 50px rgb(0 0 0 / 65%);
+}
+/* Against a team, what they field closes the panel, under a hairline: it is why the matchup sorts exist. */
+.filters__drop--bar .matchupbar {
+  display: grid;
+  grid-column: 1 / -1;
+  order: 99;
 }
