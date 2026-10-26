@@ -2812,3 +2812,106 @@
 .drost__toolbar .drost__note a {
   color: var(--cyan);
 }
+
+/* The fighter in full, compact: the same facts in about two thirds of the height. */
+.drost__detail {
+  gap: 9px;
+  padding: 14px;
+}
+.drost__hero {
+  grid-template-columns: 92px minmax(0, 1fr);
+  gap: 14px;
+}
+.drost__heroart {
+  width: 92px;
+  height: 92px;
+  border-radius: 12px;
+}
+.drost__kick .drost__cr {
+  font-size: 9.5px;
+  vertical-align: -1px;
+}
+.drost__kick .drost__cr img {
+  width: 11px;
+  height: 11px;
+}
+.shell .main__inner .drost .drost__heroname {
+  font-size: 19px;
+  line-height: 1.15;
+}
+.drost__heroline {
+  margin-bottom: 4px;
+  font-size: 12.5px;
+}
+.drost__chips > span:not(.drost__age) {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 8px;
+  font-size: 11.5px;
+}
+.drost__chips img {
+  height: 11px;
+  filter: brightness(0) invert(1);
+  opacity: 0.8;
+}
+.drost__twin {
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 8px;
+}
+.drost__box {
+  gap: 6px;
+  padding: 9px 12px;
+  cursor: help;
+}
+.drost__boxhead b {
+  font-size: 16px;
+}
+.drost__box p {
+  font-size: 11.5px;
+  line-height: 1.3;
+}
+.drost__box p .drost__cr {
+  font-size: 11px;
+}
+.drost__box p .drost__cr img {
+  width: 12px;
+  height: 12px;
+}
+.drost__detail > .drost__cap {
+  margin: 2px 0 -3px;
+  font-size: 9.5px;
+}
+.drost__cells--big .drost__cell {
+  padding: 6px 2px;
+}
+.drost__cells--big .drost__cell small {
+  font-size: 8px;
+}
+.drost__cells--big .drost__cell b {
+  font-size: 14px;
+}
+.drost__cells--big .drost__cell em {
+  font-size: 10px;
+}
+.drost__abilities {
+  gap: 5px;
+}
+.drost__ability {
+  gap: 2px;
+  padding: 6px 10px;
+}
+.drost__abname {
+  font-size: 13px;
+}
+.drost__ability p {
+  font-size: 11.5px;
+  line-height: 1.35;
+}
+.drost__acts {
+  gap: 6px;
+  padding-top: 2px;
+}
+.drost__acts .btn {
+  padding: 0 11px;
+}

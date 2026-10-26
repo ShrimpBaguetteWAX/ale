@@ -929,6 +929,7 @@ function Detail({
   const unlock = config?.asc_ability_unlock_lvl
     ? `Unlocks at ascension ${config.asc_ability_unlock_lvl}`
     : 'Unlocks on ascension'
+  const daysLeft = Math.max(0, Math.ceil(fig.pay.msLeft / DAY))
   return (
     <div className="drost__detail">
       <div className="drost__hero">
@@ -943,7 +944,7 @@ function Detail({
         <span className="drost__herotext">
           <span className="drost__kick">
             {state === 'busy' ? useLabel(f) : state === 'overdue' ? 'Requests payday' : 'Ready'} · sells for{' '}
-            {(s.credits ?? 0).toLocaleString(NUM_LOCALE)} credits
+            <Credits value={s.credits ?? 0} />
           </span>
           <h2 className="drost__heroname">{f.classname}</h2>
           <span className="drost__heroline">
@@ -956,14 +957,18 @@ function Detail({
               {level.atMax ? ' · max' : ''}
             </span>
             {f.ascension_level > 0 && <span>Ascended {f.ascension_level}</span>}
-            <span>Payday {payDay(f)}</span>
-            <AgeChip bonus={fig.age} />
+            <span>
+              <img src={statIcon('target')} alt="" />
+              {s.target ? formatTarget(s.target) : 'Highest Taunt'}
+            </span>
           </span>
         </span>
       </div>
 
+      {/* The two clocks a fighter runs on. The long explanations sit in the
+          hover text, so each box is its figure, its bar and one line. */}
       <div className="drost__twin">
-        <div className="drost__box">
+        <div className="drost__box" title={`${ageNote(fig.age, days, fig.factor.age)} It only goes down.`}>
           <span className="drost__boxhead">
             <small>Age bonus</small>
             <b className={`is-${ageBand(fig.age)}`}>
@@ -974,12 +979,14 @@ function Detail({
           <span className="drost__agebar">
             <i style={{ left: `${Math.max(0, Math.min(100, (fig.age + 100) / 2))}%` }} />
           </span>
-          <p title={ageNote(fig.age, days, fig.factor.age)}>
-            Health and damage fight at <b>×{fig.factor.age.toFixed(2)}</b> of the roll after {days} day
-            {days === 1 ? '' : 's'}. +100% is untouched, 0% is half gone, and it only goes down.
+          <p>
+            Health &amp; damage <b>×{fig.factor.age.toFixed(2)}</b> · {days} day{days === 1 ? '' : 's'} old
           </p>
         </div>
-        <div className={`drost__box${fig.pay.overdue ? ' is-overdue' : ''}`}>
+        <div
+          className={`drost__box${fig.pay.overdue ? ' is-overdue' : ''}`}
+          title="Paying covers the time since the last payday, so paying early saves nothing. Miss it and the fighter is benched, then deleted."
+        >
           <span className="drost__boxhead">
             <small>Payday</small>
             <b>{payDay(f)}</b>
@@ -988,40 +995,33 @@ function Detail({
             <i style={{ width: `${Math.max(2, fig.pay.progress * 100)}%` }} />
           </span>
           <p>
-            {fig.pay.overdue
-              ? 'Due now: the fighter will not fight until it is paid.'
-              : `Due in ${Math.max(0, Math.ceil(fig.pay.msLeft / DAY))} days.`}{' '}
-            Paying now costs <Credits value={fig.pay.cost} /> — the time since the last one, so paying early saves
-            nothing. Miss it and the fighter is benched, then deleted.
+            {fig.pay.overdue ? 'Due now · benched until paid' : `In ${daysLeft} day${daysLeft === 1 ? '' : 's'}`} · pay now{' '}
+            <Credits value={fig.pay.cost} />
           </p>
         </div>
       </div>
 
       <span className="drost__cap">Stats</span>
-      <div className="drost__tiles">
+      <span className="drost__cells drost__cells--5 drost__cells--big">
         {fig.stats.map((x) => (
-          <span className="drost__tile" key={x.field}>
+          <span className="drost__cell" key={x.field}>
             <small>
               <img className="drost__si" src={statIcon(x.field)} alt="" />
               {STAT_NAMES[x.field]}
             </small>
             <b>
               {x.value}
-              {x.spread > 0 && <em>±{x.spread}</em>}
               <Grade grade={x.grade} />
             </b>
+            {x.spread > 0 && <em>±{x.spread}</em>}
           </span>
         ))}
-        <span className="drost__tile">
-          <small>Targets</small>
-          <b className="drost__target">{s.target ? formatTarget(s.target) : 'Highest Taunt'}</b>
-        </span>
-      </div>
+      </span>
 
       <span className="drost__cap">Resistances</span>
-      <div className="drost__tiles">
+      <span className="drost__cells drost__cells--6 drost__cells--big">
         {fig.res.map((x) => (
-          <span className="drost__tile" key={x.field}>
+          <span className="drost__cell" key={x.field} title={`${cap(x.el)} resistance`}>
             <small>
               <img className="drost__ei" src={asset(`/assets/icons/elements/${x.el}.png`)} alt="" />
               {x.el}
@@ -1032,7 +1032,7 @@ function Detail({
             </b>
           </span>
         ))}
-      </div>
+      </span>
 
       <span className="drost__cap">Abilities · {abilities.length}</span>
       <div className="drost__abilities">
@@ -1058,7 +1058,7 @@ function Detail({
       <div className="drost__acts">
         <button
           type="button"
-          className="btn btn--primary"
+          className="btn btn--primary btn--sm"
           disabled={!canAct || fig.pay.cost <= 1 || !!busy}
           onClick={() => onPayOne(f)}
         >
@@ -1067,7 +1067,7 @@ function Detail({
         </button>
         <button
           type="button"
-          className="btn btn--ghost"
+          className="btn btn--ghost btn--sm"
           disabled={!canAct || !level.ready || level.cost.credits > credits || level.cost.gems > gems || !!busy}
           onClick={() => onLevelOne(f)}
           title={level.atMax ? 'Already at the maximum level' : level.ready ? 'Spend the banked experience' : 'Not enough experience yet'}
@@ -1076,15 +1076,15 @@ function Detail({
           {level.atMax ? 'Max level' : 'Level up'}
           {!level.atMax && level.cost.credits > 0 && <Credits value={level.cost.credits} />}
         </button>
-        <Link className="btn btn--ghost" to="/ascension">
+        <Link className="btn btn--ghost btn--sm" to="/ascension">
           Ascend
         </Link>
-        <button type="button" className="btn btn--ghost" onClick={() => onOpen(f.fighter_id)}>
+        <button type="button" className="btn btn--ghost btn--sm" onClick={() => onOpen(f.fighter_id)}>
           Marker &amp; history
         </button>
         <button
           type="button"
-          className="btn btn--ghost"
+          className="btn btn--ghost btn--sm"
           disabled={!sellable(f)}
           title={sellable(f) ? 'Sell this fighter back to the game' : `${useLabel(f)} — cannot be sold`}
           onClick={() => {
