@@ -432,6 +432,27 @@ export default function Tavern() {
     return inventory.filter((t) => (tab === 'other' ? !known.has(t.schema) : t.schema === tab))
   }, [inventory, tab])
 
+  /*
+     What each card would take off on its own, for the desktop's binder.
+
+     The same `calculateHire` the contract's arithmetic is mirrored in, run on
+     one card at a time — so a badge never promises a discount the hire would
+     not give. Three cards together can take less than their badges add up
+     to, because a wish is met once; the slots show what they actually take.
+  */
+  const ownGain = useMemo(
+    () => new Map(inventory.map((t) => [t.templateid, calculateHire(objectives, [t]).saved])),
+    [inventory, objectives],
+  )
+  /* The desktop opens its binder on the cards worth showing, best first. */
+  const [deskTab, setDeskTab] = useState<string>('best')
+  const deskCards = useMemo(() => {
+    if (deskTab !== 'best') return inventory.filter((t) => t.schema === deskTab)
+    return inventory
+      .filter((t) => (ownGain.get(t.templateid) ?? 0) > 0)
+      .sort((a, b) => (ownGain.get(b.templateid) ?? 0) - (ownGain.get(a.templateid) ?? 0))
+  }, [inventory, deskTab, ownGain])
+
   const toggle = useCallback((templateId: number) => {
     setPicked((prev) => {
       if (prev.includes(templateId)) return prev.filter((id) => id !== templateId)
@@ -641,53 +662,6 @@ export default function Tavern() {
       setBusy(null)
     }
   }
-
-  /*
-     The two controls the screen exists for, written once and rendered in one
-     of two places.
-
-     On a desktop they sit on the heading line, where the cost reads next to
-     the button that spends it. A phone puts them in a bar of their own that
-     is docked above the tab bar — see `.tavdock`.
-  */
-  const hireControls = revealed && (
-    <div className="hire">
-      <div className="hire__cost">
-        <span className={`hire__value${canAfford ? '' : ' hire__value--short'}`}>
-          <img src={asset('/assets/icons/energy.png')} alt="" />
-          {breakdown.cost}
-        </span>
-        <span className="hire__detail">
-          {breakdown.saved > 0 ? (
-            <>
-              <s className="faint">{HIRE_BASE_AP}</s> saved {breakdown.saved}
-            </>
-          ) : (
-            <>from {HIRE_BASE_AP}</>
-          )}
-          {' · '}
-          {picked.length}/{MAX_HIRE_CARDS} cards
-        </span>
-      </div>
-
-      {/*
-        Beside Hire, because it is a decision about the fighter being hired
-        even though it cannot travel in the same transaction. Choosing it here
-        rather than hunting the new row down in My Fighters is the whole point.
-      */}
-      <MarkerPick value={marker} onChange={setMarker} disabled={busy !== null} />
-
-      <button
-        type="button"
-        className="btn btn--primary"
-        onClick={() => void doHire()}
-        disabled={busy !== null || !canAfford}
-      >
-        {(busy === 'hire' || busy === 'marker') && <span className="spinner" />}
-        {busy === 'hire' ? 'Hiring' : busy === 'marker' ? 'Marking' : 'Hire recruit'}
-      </button>
-    </div>
-  )
 
   /*
      The recruit's three readouts, written once: a desktop shows them side
@@ -966,6 +940,304 @@ export default function Tavern() {
     </Link>
   )
 
+  /*
+     A desktop gets the recruitment hall: the recruit on a stage, the deal
+     beside it — the price, three card slots and what the tavern wants — and
+     the NFTs below, the ones that take the most off first.
+  */
+  if (!phone) {
+    const saved = breakdown.saved
+    const hireLabel =
+      busy === 'hire' ? 'Hiring' : busy === 'marker' ? 'Marking' : `Hire for ${breakdown.cost}`
+    return (
+      <div className="tavern hall">
+        <header className="hall__head">
+          {/* Its name only: the map put the player here, so where is known. */}
+          <h1 className="hall__title">{tavern.displayname || 'Tavern'}</h1>
+          <span className="hall__sub">{revealed ? 'A recruit is waiting' : 'Nobody has stepped forward yet'}</span>
+        </header>
+
+        {error && <div className="alert alert--error">{error}</div>}
+
+        <div className="hall__top">
+          {/* ---- the recruit, on a stage ---- */}
+          <section className="hall__stage" aria-label="The recruit">
+            {revealed ? (
+              <>
+                <div className="hall__scene" style={{ backgroundImage: `url('${elementBackground(fighter.element)}')` }}>
+                  <GameImg
+                    className="hall__art"
+                    src={fighterArt(fighter)}
+                    alt={`${fighter.classname} ${fighter.racename}`}
+                    fallback={fighterArtFallback()}
+                  />
+                  <div className="hall__plate">
+                    <span className="hall__plateText">
+                      <small>A recruit steps forward</small>
+                      <h2 className="hall__name">{fighter.classname}</h2>
+                      <span>
+                        <span className="hall__cap1">
+                          {fighter.racename} · {fighter.element}
+                        </span>{' '}
+                        · sells for {fighter.credits} credits
+                      </span>
+                    </span>
+                    <span className="hall__level">Level {fighter.level}</span>
+                  </div>
+                </div>
+                <div className="hall__body">
+                  <div className="recruit__cols">
+                    <div className="recruit__stats">{statsList}</div>
+                    <div className="recruit__res">{resList}</div>
+                  </div>
+                  {abilityList}
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="hall__scene hall__scene--veiled">
+                  <img className="hall__art" src={asset('/assets/fighter/unknown-fighter.jpeg')} alt="" />
+                  <div className="hall__plate">
+                    <span className="hall__plateText">
+                      <small>{busy === 'reveal' ? 'Waiting for the chain' : 'Not revealed'}</small>
+                      <h2 className="hall__name">{busy === 'reveal' ? 'Revealing…' : 'A recruit is waiting'}</h2>
+                      <span>Class, race, element, stats and abilities are rolled when you reveal.</span>
+                    </span>
+                  </div>
+                </div>
+                <div className="hall__body">
+                  <button
+                    type="button"
+                    className="btn btn--primary btn--block"
+                    onClick={() => void doReveal()}
+                    disabled={busy !== null || !canAffordReveal}
+                  >
+                    {busy === 'reveal' && <span className="spinner" />}
+                    {busy === 'reveal' ? 'Revealing' : `Reveal — ${revealCost} energy`}
+                  </button>
+                  {!canAffordReveal ? (
+                    <p className="hint hint--error">
+                      You need {revealCost} energy and have {player.activestats.action_points}. A free flask refills every
+                      day in the <Link to="/shop?c=flasks">Shop</Link>.
+                    </p>
+                  ) : (
+                    !isLegend(player) && (
+                      <p className="hint">
+                        <Link to="/shop?c=account">Legend</Link> reveals every tavern's recruit for free.
+                      </p>
+                    )
+                  )}
+                </div>
+              </>
+            )}
+          </section>
+
+          {/* ---- the deal ---- */}
+          <section className="hall__deal" aria-label="The deal">
+            <div className="hall__cap">
+              <b>The deal</b>
+              <span>show up to {MAX_HIRE_CARDS} NFTs · they are not spent</span>
+            </div>
+
+            <div className="hall__price">
+              <span className="hall__priceRow">
+                {saved > 0 && <s className="mono">{HIRE_BASE_AP}</s>}
+                <b className={`mono${canAfford ? '' : ' is-short'}`}>
+                  <img src={asset('/assets/icons/energy.png')} alt="energy" />
+                  {breakdown.cost}
+                </b>
+                <small>
+                  energy to hire · you have {player.activestats.action_points.toLocaleString()}
+                </small>
+              </span>
+              <span className="hall__meter" aria-hidden="true">
+                <i style={{ width: `${breakdown.cost}%` }} />
+                <u style={{ width: `${saved}%` }} />
+              </span>
+              <span className="hall__meterText">
+                <span>
+                  {saved} of {maxSaving} taken off · {picked.length} of {MAX_HIRE_CARDS} cards
+                </span>
+                <span>every wish met: {HIRE_BASE_AP - maxSaving}</span>
+              </span>
+            </div>
+
+            {/* The three cards on the table, each with what it meets. */}
+            <div className="hall__slots">
+              {Array.from({ length: MAX_HIRE_CARDS }, (_, i) => {
+                const t = pickedCards[i]
+                if (!t)
+                  return (
+                    <div className="hall__slot is-empty" key={i}>
+                      <span className="hall__slotArt">{i + 1}</span>
+                      <b>Empty</b>
+                      <small>Pick a card below</small>
+                    </div>
+                  )
+                const meets = breakdown.matchedByCard[i] ?? []
+                const gain = meets.reduce((sum, oi) => sum + (objectives[oi]?.mod_value ?? 0), 0)
+                return (
+                  <button
+                    type="button"
+                    className={`hall__slot${gain > 0 ? ' is-on' : ''}`}
+                    key={t.templateid}
+                    onClick={() => toggle(t.templateid)}
+                    title={`${t.cardname} — click to take it back`}
+                  >
+                    <GameImg className="hall__slotArt" src={cardArt(t)} alt="" fallback={CARD_FALLBACK} />
+                    <b>{t.cardname}</b>
+                    <span className="hall__gain mono">{gain > 0 ? `−${gain}` : 'no match'}</span>
+                    <span className="hall__meets">
+                      {meets.map((oi) => (
+                        <i key={oi}>{objectiveLabel(objectives[oi]).replace(/^[^:]+:\s*/, '')}</i>
+                      ))}
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
+
+            <div className="hall__cap">
+              <b>The tavern wants</b>
+              <span>each wish is met once</span>
+            </div>
+            <div className="objectives hall__wishes">
+              {objectives.map((o, i) => (
+                <Objective
+                  key={`${o.objective_type}-${o.objective_string}-${o.objective_value}-${i}`}
+                  label={objectiveLabel(o)}
+                  mod={o.mod_value}
+                  done={breakdown.matched.has(i)}
+                  index={i}
+                />
+              ))}
+              {objectives.length === 0 && <p className="muted">This tavern is asking for nothing today.</p>}
+            </div>
+
+            <div className="hall__acts">
+              <button
+                type="button"
+                className="btn btn--ghost"
+                onClick={autoPick}
+                disabled={busy !== null || inventory.length === 0 || objectives.length === 0}
+                title="Pick the cards that take the most energy off"
+              >
+                Best pick
+              </button>
+              {leaveLink}
+              {/*
+                Beside Hire, because it is a decision about the fighter being
+                hired even though it cannot travel in the same transaction: it
+                is set straight after, as one more signature.
+              */}
+              {revealed && (
+                <span className="hall__marker">
+                  <small>Marker</small>
+                  <MarkerPick value={marker} onChange={setMarker} disabled={busy !== null} />
+                </span>
+              )}
+              <button
+                type="button"
+                className="btn btn--primary hall__hire"
+                onClick={() => void doHire()}
+                disabled={busy !== null || !revealed || !canAfford}
+                title={!revealed ? 'Reveal the recruit first' : !canAfford ? 'Not enough energy' : undefined}
+              >
+                {(busy === 'hire' || busy === 'marker') && <span className="spinner" />}
+                {hireLabel}
+                <img src={asset('/assets/icons/energy.png')} alt="" />
+              </button>
+            </div>
+          </section>
+        </div>
+
+        {/* ---- the binder: best for this tavern first ---- */}
+        <section className="hall__binder" aria-label="Your NFTs">
+          <div className="hall__binderHead">
+            <b className="hall__binderTitle">Your NFTs</b>
+            <div className="tabs" role="tablist" aria-label="Cards">
+              <button
+                type="button"
+                role="tab"
+                className="tabs__tab"
+                aria-selected={deskTab === 'best'}
+                onClick={() => setDeskTab('best')}
+              >
+                Best for this tavern
+                <span className="tabs__count">{inventory.filter((t) => (ownGain.get(t.templateid) ?? 0) > 0).length}</span>
+              </button>
+              {SCHEMA_TABS.map((sch) => (
+                <button
+                  key={sch.key}
+                  type="button"
+                  role="tab"
+                  className="tabs__tab"
+                  aria-selected={deskTab === sch.key}
+                  onClick={() => setDeskTab(sch.key)}
+                >
+                  {sch.label}
+                  <span className="tabs__count">{inventory.filter((t) => t.schema === sch.key).length}</span>
+                </button>
+              ))}
+            </div>
+            <span className="spacer" />
+            {picked.length > 0 && (
+              <button type="button" className="btn btn--ghost btn--sm" onClick={() => setPicked([])}>
+                Clear
+              </button>
+            )}
+          </div>
+          {deskTab === 'best' && (
+            <p className="hint hall__hint">
+              Sorted by what each card takes off on its own. Three together can take less than their badges add up to,
+              because each wish is met once.
+            </p>
+          )}
+
+          {!templates || !owned ? (
+            <div className="hall__grid">
+              {Array.from({ length: 10 }, (_, i) => (
+                <div className="hall__card is-loading" key={i} />
+              ))}
+            </div>
+          ) : deskCards.length === 0 ? (
+            <p className="muted hall__none">
+              {deskTab === 'best' ? 'None of your NFTs match what this tavern wants.' : 'No eligible NFTs of this type in your wallet.'}
+            </p>
+          ) : (
+            <div className="hall__grid">
+              {deskCards.map((t) => {
+                const on = picked.includes(t.templateid)
+                const own = ownGain.get(t.templateid) ?? 0
+                return (
+                  <button
+                    type="button"
+                    key={t.templateid}
+                    className={`hall__card${on ? ' is-on' : ''}`}
+                    onClick={() => toggle(t.templateid)}
+                    title={`${t.cardname} · ${t.rarity} ${t.schema}${own > 0 ? ` · takes ${own} off on its own` : ''}`}
+                  >
+                    <span className={`hall__cardArt r-edge-${(t.rarity || '').toLowerCase()}`}>
+                      <GameImg src={cardArt(t)} alt="" loading="lazy" decoding="async" fallback={CARD_FALLBACK} />
+                      {t.count > 1 && <span className="hall__count mono">×{t.count}</span>}
+                      {own > 0 && <span className="hall__off mono">−{own}</span>}
+                    </span>
+                    <span className="hall__cardName">{t.cardname}</span>
+                    <span className="hall__cardMeta">
+                      <em className={`r-${(t.rarity || '').toLowerCase()}`}>{t.rarity}</em>
+                      {t.schema.replace('.worlds', '')}
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
+          )}
+        </section>
+      </div>
+    )
+  }
+
+  /* A phone: the recruit, then the discounts in a sheet, and Hire docked at the bottom. */
   return (
     <div className="tavern">
       <img className="tavern__art" src={asset('/assets/background/bg-tavern.png')} alt="" />
@@ -979,13 +1251,6 @@ export default function Tavern() {
           </div>
           <span className="spacer" />
 
-          {/*
-            On a desktop Hire lives up here with Leave rather than in a bar
-            pinned to the bottom: it is the same decision as leaving, and the
-            cost belongs next to the button that spends it.
-          */}
-          {!phone && hireControls}
-          {!phone && leaveLink}
         </header>
 
         {/*
@@ -1310,12 +1575,6 @@ export default function Tavern() {
             </BottomSheet>
           )}
 
-          {/*
-            The discounts and the NFTs that earn them: side by side on a
-            desktop, in a sheet on a phone (opened from the row above).
-          */}
-          {!phone && discountsPanel}
-          {!phone && inventoryPanel}
         </div>
       </div>
     </div>
