@@ -980,6 +980,13 @@ export default function MapView() {
     const raw = String(building.building_name)
     const name = raw.replace(/-/g, ' ')
     const kind = name === 'tavern' || name === 'dungeon' || name === 'arena' ? name : 'other'
+    /*
+       A tavern only while it has something for the player: a recruit to hire
+       or to reveal. Once hired from, the land still has its building but
+       nothing to offer until the player has moved on, and a tag naming it
+       read as a tavern still waiting.
+    */
+    if (kind === 'tavern' && !inTavern) return null
     const who = owners[String(hereLand.asset_id)]
     const whose = who === player.wallet ? 'Your' : who ? `${tags[who] || who}’s` : ''
     /* Title case for the plate: the name is a title there, not a sentence. */
@@ -1000,7 +1007,7 @@ export default function MapView() {
       name: title(`${whose} ${name}`.trim()),
       sub: `${name}${boost ? ` · ${boost}` : ''}`.toUpperCase(),
     }
-  }, [hereLand, owners, tags, player.wallet, landsConfig])
+  }, [hereLand, owners, tags, player.wallet, landsConfig, inTavern])
 
   /*
      Hangs off the pin. Nothing while a trip is playing out: the pin is in
