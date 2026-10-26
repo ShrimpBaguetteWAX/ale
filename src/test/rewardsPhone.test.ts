@@ -38,9 +38,19 @@ describe('paymentSources', () => {
   })
 
   it('keeps an unknown source under its own words', () => {
-    const out = paymentSources([row('newpool', 'Something new', '2.0 WAX')], 'fallback.svg')
+    const paid = row('newpool', 'Something new', '2.0 WAX')
+    const out = paymentSources([paid], 'fallback.svg')
     expect(out).toEqual([
-      { key: 'Something new', label: 'Something new', icon: 'fallback.svg', count: 1, total: 2 },
+      { key: 'Something new', label: 'Something new', icon: 'fallback.svg', count: 1, total: 2, payments: [paid] },
     ])
+  })
+
+  it('keeps every payment of a source, newest first', () => {
+    const at = (timestamp: string, reward: string) => ({ ...row('tlmdung', 'Dungeon', reward), timestamp })
+    const out = paymentSources(
+      [at('2026-10-24T10:00:00', '1.0000 TLM'), at('2026-10-26T08:30:00', '3.0000 TLM'), at('2026-10-25T12:00:00', '2.0000 TLM')],
+      'fallback.svg',
+    )
+    expect(out[0].payments.map((p) => p.reward)).toEqual(['3.0000 TLM', '2.0000 TLM', '1.0000 TLM'])
   })
 })

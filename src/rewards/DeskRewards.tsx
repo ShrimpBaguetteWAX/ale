@@ -25,6 +25,7 @@ import { GameImg } from '@/components/GameImg'
 import { formatDecimals, formatNumber, formatStat } from '@/format'
 import { asset } from '@/assets'
 import { MAX_TOOLS, paymentSources } from './rules'
+import { SourceRows } from './SourceRows'
 import { useMiningTools } from './useMiningTools'
 import {
   EARNED_STAT,
@@ -773,18 +774,7 @@ function DeskCurrency({
               ) : rows.length === 0 ? (
                 <p className="prew__empty">Nothing recorded yet. The next {symbol} you earn appears here.</p>
               ) : (
-                sources.map((s) => (
-                  <div className="prew__row" key={s.key}>
-                    <img src={s.icon} alt="" />
-                    <span className="prew__rowtext">
-                      <strong>{s.label}</strong>
-                      <small>
-                        {formatNumber(s.count)} payment{s.count === 1 ? '' : 's'}
-                      </small>
-                    </span>
-                    <span className="prew__amount mono">{short(s.total)}</span>
-                  </div>
-                ))
+                <SourceRows sources={sources} places={places} symbol={symbol} short={short} />
               )}
               <div className="prew__keep">
                 <span>

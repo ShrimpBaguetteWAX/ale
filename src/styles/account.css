@@ -3281,3 +3281,70 @@ button.prew__row:hover:not(:disabled) {
   color: var(--text-dim);
   box-shadow: inset 0 1px 0 rgb(255 255 255 / 6%);
 }
+
+/* The payments: a source opens into its payments, each with its time and exact amount. */
+.prew__src {
+  cursor: pointer;
+}
+.prew__src:hover {
+  background: rgb(255 255 255 / 4%);
+}
+.prew__chev {
+  flex: none;
+  width: 7px;
+  height: 7px;
+  margin: 0 4px 0 2px;
+  border-right: 1.5px solid var(--text-faint);
+  border-bottom: 1.5px solid var(--text-faint);
+  transform: translateY(-2px) rotate(45deg);
+  transition: transform 0.15s;
+}
+.prew__src.is-open .prew__chev {
+  transform: translateY(1px) rotate(-135deg);
+}
+.prew__paid {
+  margin: 0;
+  padding: 2px 0 6px;
+  list-style: none;
+  background: rgb(0 0 0 / 22%);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 7%);
+}
+.prew__paid li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 10px 6px 46px;
+}
+.prew__paid li + li {
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 4%);
+}
+.prew__paidwhen {
+  display: flex;
+  flex: 1;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0 8px;
+  min-width: 0;
+}
+.prew__paidwhen b {
+  font-size: 11.5px;
+  font-weight: var(--fw-bold);
+}
+.prew__paidwhen small {
+  font-size: 10.5px;
+  color: var(--text-faint);
+}
+.prew__paidamt {
+  font-size: 11.5px;
+  font-weight: var(--fw-bold);
+  white-space: nowrap;
+}
+.prew__paid li.prew__paidmore {
+  justify-content: center;
+  padding-left: 10px;
+}
+.prew__src + .prew__row,
+.prew__paid + .prew__row,
+.prew__paid + .prew__keep {
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 7%);
+}

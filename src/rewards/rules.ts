@@ -15,6 +15,11 @@ export interface PaymentSource {
   icon: string
   count: number
   total: number
+  /**
+   * Each payment on its own, newest first — the history is there for the
+   * player who thinks one mine paid nothing, and a sum cannot answer them.
+   */
+  payments: RewardLogEntry[]
 }
 
 /*
@@ -52,10 +57,15 @@ export function paymentSources(rows: RewardLogEntry[], fallbackIcon: string): Pa
         icon: hit ? asset(hit.icon) : fallbackIcon,
         count: 0,
         total: 0,
+        payments: [],
       } satisfies PaymentSource)
     entry.count += 1
     entry.total += assetValue(r.reward)
+    entry.payments.push(r)
     by.set(key, entry)
   }
+  /* A Mine ×10 writes ten rows in one second; the ledger index keeps them in order. */
+  for (const entry of by.values())
+    entry.payments.sort((a, b) => b.timestamp.localeCompare(a.timestamp) || b.index - a.index)
   return [...by.values()].sort((a, b) => b.total - a.total)
 }
