@@ -533,13 +533,13 @@ function PoolSheet({
 
 /* ---------- bits ---------- */
 
-function capLine(p: PoolStatus | undefined): string {
+export function capLine(p: PoolStatus | undefined): string {
   if (!p || p.weight === 0) return 'nothing staked'
   if (p.maxed) return 'full — claim'
   return `full ${formatToCap(p.msToCap)}`
 }
 
-function ago(ms: number): string {
+export function ago(ms: number): string {
   const minutes = Math.max(0, ms) / 60_000
   if (minutes < 60) return `${Math.max(1, Math.round(minutes))} min ago`
   const hours = minutes / 60
@@ -547,7 +547,7 @@ function ago(ms: number): string {
   return `${Math.round(hours / 24)} days ago`
 }
 
-function Ring({ percent, full, big }: { percent: number; full: boolean; big?: boolean }) {
+export function Ring({ percent, full, big }: { percent: number; full: boolean; big?: boolean }) {
   const r = 40
   const c = 2 * Math.PI * r
   /* A sliver even at zero, so the ring reads as a ring and not an outline. */

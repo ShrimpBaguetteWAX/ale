@@ -17,136 +17,6 @@
   max-width: min(1700px, 100%);
 }
 
-/* ---------- header ---------- */
-
-.farming__head {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--sp-5);
-  flex-wrap: wrap;
-}
-
-.farming__title {
-  margin: 0;
-  font-family: var(--font-display);
-  font-size: var(--fs-4xl);
-  font-weight: var(--fw-bold);
-  letter-spacing: 0.04em;
-  color: var(--text-heading);
-}
-
-.farming__lede {
-  margin: var(--sp-1) 0 0;
-  max-width: 62ch;
-  font-size: var(--fs-sm);
-  line-height: 1.55;
-  color: var(--text-dim);
-}
-.farming__lede strong {
-  color: var(--gold);
-}
-
-.farming__acts {
-  display: flex;
-  gap: var(--sp-2);
-  margin-left: auto;
-  flex-wrap: wrap;
-}
-.farming__acts .btn {
-  min-height: 48px;
-  white-space: nowrap;
-}
-
-.farming__empty {
-  margin: var(--sp-10) auto;
-  max-width: 44ch;
-  text-align: center;
-  color: var(--text-dim);
-}
-
-/* ---------- pool tabs ---------- */
-
-.farmtabs {
-  display: flex;
-  gap: var(--sp-2);
-  flex-wrap: wrap;
-}
-
-.farmtab {
-  display: grid;
-  gap: 2px;
-  justify-items: start;
-  min-width: 170px;
-  padding: var(--sp-2) var(--sp-4);
-  background: rgb(0 0 0 / 35%);
-  border: 1px solid var(--ctl-edge);
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  text-align: left;
-  transition:
-    background var(--dur-fast) var(--ease),
-    border-color var(--dur-fast) var(--ease);
-}
-.farmtab:hover {
-  border-color: var(--ctl-hover);
-}
-.farmtab[aria-selected='true'] {
-  background: var(--ctl-on);
-  border-color: var(--cyan);
-}
-
-.farmtab__name {
-  font-family: var(--font-display);
-  font-size: var(--fs-md);
-  font-weight: var(--fw-bold);
-  letter-spacing: 0.04em;
-  color: var(--white);
-}
-
-.farmtab__meta {
-  font-size: var(--fs-xs);
-  font-variant-numeric: tabular-nums;
-  color: var(--text-faint);
-}
-
-/* ---------- inventory / staked ---------- */
-
-.farmmodes {
-  display: flex;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-xs);
-  overflow: hidden;
-  width: fit-content;
-}
-
-.farmmode {
-  padding: var(--sp-2) var(--sp-5);
-  min-height: 40px;
-  background: rgb(0 0 0 / 35%);
-  border: 0;
-  color: var(--text-dim);
-  font-family: var(--font-display);
-  font-size: var(--fs-sm);
-  letter-spacing: 0.06em;
-  cursor: pointer;
-  transition: background var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
-}
-.farmmode:hover {
-  color: var(--white);
-}
-.farmmode[aria-selected='true'] {
-  background: var(--ctl-on);
-  color: var(--white);
-}
-
-/* ---------- the card grid ---------- */
-
-.cardgridf {
-  display: grid;
-  gap: var(--sp-2);
-  grid-template-columns: repeat(auto-fill, minmax(118px, 1fr));
-}
-
 .cardtile {
   display: grid;
   gap: 2px;
@@ -203,13 +73,6 @@
   }
 }
 
-.cardtile__art {
-  width: 100%;
-  aspect-ratio: 1 / 1;
-  object-fit: contain;
-  border-radius: var(--radius-xs);
-}
-
 .cardtile__name {
   font-family: var(--font-display);
   font-size: 10px;
@@ -220,39 +83,6 @@
   white-space: nowrap;
 }
 
-.cardtile__rarity {
-  font-size: 9px;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--text-faint);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.r-common {
-  color: var(--r-common);
-}
-.r-rare {
-  color: var(--r-rare);
-}
-.r-epic {
-  color: var(--r-epic);
-}
-.r-legendary {
-  color: var(--r-legendary);
-}
-.r-mythical {
-  color: var(--r-mythical);
-}
-
-/* The weight is the only number that decides anything here. */
-.cardtile__weight {
-  font-family: var(--font-display);
-  font-size: var(--fs-xs);
-  font-variant-numeric: tabular-nums;
-  color: var(--gold);
-}
-
 /* ---------- rewards ---------- */
 
 .rewards {
@@ -260,214 +90,11 @@
   gap: var(--sp-4);
 }
 
-.rewards__summary {
-  display: flex;
-  gap: var(--sp-3);
-  flex-wrap: wrap;
-}
-
-.poolgrid {
-  display: grid;
-  gap: var(--sp-3);
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-}
-
-.poolcard {
-  display: grid;
-  gap: var(--sp-3);
-  align-content: start;
-  padding: var(--sp-4);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
-  background: linear-gradient(180deg, rgb(14 20 38 / 92%), rgb(6 10 24 / 96%));
-}
-
-.poolcard__facts {
-  display: grid;
-  gap: var(--sp-1);
-  margin: 0;
-}
-.poolcard__facts > div {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--sp-3);
-}
-.poolcard__facts dt {
-  font-size: var(--fs-xs);
-  color: var(--text-faint);
-}
-.poolcard__facts dd {
-  margin: 0;
-  font-family: var(--font-display);
-  font-size: var(--fs-sm);
-  font-variant-numeric: tabular-nums;
-  color: var(--white);
-}
-.poolcard__facts dd.warn {
-  color: #ffc978;
-}
-
-/*
- * How full the power cap is. Amber at the top rather than green: a full bar
- * here is not an achievement, it is earnings that have stopped accruing.
- */
-.powerbar {
-  position: relative;
-  display: grid;
-  place-items: center;
-  height: 22px;
-  border-radius: var(--radius-full);
-  background: rgb(0 0 0 / 55%);
-  border: 1px solid var(--line-soft);
-  overflow: hidden;
-}
-
-.powerbar__fill {
-  position: absolute;
-  inset: 0 auto 0 0;
-  background: linear-gradient(90deg, #0187b1, #00baff);
-  opacity: 0.7;
-  transition: width var(--dur) var(--ease);
-}
-.powerbar__fill--max {
-  background: linear-gradient(90deg, #f7a600, #ffd86b);
-}
-
-.powerbar__text {
-  position: relative;
-  font-family: var(--font-display);
-  font-size: 11px;
-  font-variant-numeric: tabular-nums;
-  color: var(--white);
-  text-shadow: 0 1px 3px rgb(0 0 0 / 80%);
-}
-
-/* ---------- stacks ---------- */
-
-/*
- * One tile per design rather than per asset.
- *
- * A farming wallet holds hundreds of copies of a dozen cards, and every copy
- * is worth what the next one is — so the grid counts them instead of listing
- * them, and the choice is an amount rather than a hundred taps.
- */
-.stackbar {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-2);
-  flex-wrap: wrap;
-  margin-bottom: var(--sp-2);
-}
-
-.stackbar__count {
-  margin: 0;
-  font-size: var(--fs-xs);
-}
-
-.cardtile--stack {
-  padding: 0;
-  cursor: default;
-  overflow: hidden;
-}
-
-/* The art and the labels are the button; the stepper below it is not. */
-.cardtile__hit {
-  display: grid;
-  gap: 2px;
-  width: 100%;
-  padding: var(--sp-2) var(--sp-2) 0;
-  color: inherit;
-  font: inherit;
-  text-align: center;
-  background: none;
-  border: 0;
-  cursor: pointer;
-}
-
-.cardtile__hit:disabled {
-  cursor: not-allowed;
-  opacity: 0.6;
-}
-
-.cardtile__frame {
-  position: relative;
-  display: block;
-}
-
-/* How many of this design the player holds, on the art it belongs to. */
-.cardtile__owned {
-  position: absolute;
-  right: 4px;
-  bottom: 4px;
-  padding: 2px 8px;
-  font-family: var(--font-display);
-  font-size: var(--fs-sm);
-  font-weight: var(--fw-bold);
-  color: var(--white);
-  background: rgb(0 0 0 / 78%);
-  border: 1px solid var(--line-soft);
-  border-radius: 999px;
-}
-
 .stepper {
   display: flex;
   align-items: center;
   gap: 2px;
   padding: var(--sp-1) var(--sp-2) var(--sp-2);
-}
-
-.stepper__btn {
-  flex: none;
-  display: grid;
-  place-items: center;
-  width: 26px;
-  height: 26px;
-  font-size: 15px;
-  font-weight: var(--fw-bold);
-  color: var(--text);
-  background: rgb(255 255 255 / 8%);
-  border: 1px solid var(--line-soft);
-  border-radius: var(--radius-xs);
-  cursor: pointer;
-}
-
-.stepper__btn:hover:not(:disabled) {
-  border-color: var(--ctl-hover);
-  color: var(--white);
-}
-
-.stepper__btn:disabled {
-  opacity: 0.35;
-  cursor: not-allowed;
-}
-
-.stepper__n {
-  flex: 1;
-  min-width: 0;
-  height: 26px;
-  padding: 0 4px;
-  color: var(--white);
-  text-align: center;
-  font-variant-numeric: tabular-nums;
-  background: rgb(0 0 0 / 45%);
-  border: 1px solid var(--ctl-line);
-  border-radius: var(--radius-xs);
-  /* The two buttons beside it are the spinner; the browser's own is a
-     6px target that appears on hover. */
-  appearance: textfield;
-  -moz-appearance: textfield;
-}
-
-.stepper__n::-webkit-outer-spin-button,
-.stepper__n::-webkit-inner-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
-
-.stepper__n:focus {
-  border-color: var(--cyan);
-  outline: none;
 }
 
 /* ---------- Farming on a phone ---------- */
@@ -900,4 +527,498 @@
 /* Disabled stays solid: a see-through bar over the list reads as part of it. */
 .prew.pfarm .pfarm__dock .btn:disabled {
   --btn-bg: rgb(12 18 32 / 96%);
+}
+
+/* A card's rarity, as its colour: built as r- on the phone's rows and the desktop's shelves. */
+.r-common {
+  color: var(--r-common);
+}
+.r-rare {
+  color: var(--r-rare);
+}
+.r-epic {
+  color: var(--r-epic);
+}
+.r-legendary {
+  color: var(--r-legendary);
+}
+.r-mythical {
+  color: var(--r-mythical);
+}
+
+/* ---------- Farming on a desktop: the card table ---------- */
+
+.dfarm {
+  display: grid;
+  gap: 14px;
+  align-content: start;
+  padding-bottom: var(--sp-6);
+}
+.dfarm__head {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+}
+.shell .main__inner .dfarm h1.dfarm__title {
+  margin: 0;
+}
+.dfarm__sub {
+  padding-bottom: 10px;
+  font-size: 13px;
+  color: var(--text-faint);
+}
+.dfarm__sp {
+  flex: 1;
+}
+
+/* the strip: what is ready, and the three pools */
+.dfarm__hud {
+  display: grid;
+  grid-template-columns: auto repeat(3, minmax(0, 1fr));
+  overflow: hidden;
+  border-radius: 16px;
+  background: rgb(8 12 26 / 82%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 10%), 0 18px 40px rgb(0 0 0 / 30%);
+}
+.dfarm__claim {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 18px;
+  background: linear-gradient(110deg, rgb(70 48 8 / 55%), transparent);
+  box-shadow: inset -1px 0 0 rgb(255 255 255 / 8%);
+}
+.dfarm__ready {
+  display: grid;
+  gap: 1px;
+}
+.dfarm__ready small {
+  font-family: var(--font-display);
+  font-size: 8.5px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #ffd979;
+}
+.dfarm__ready b {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 900;
+}
+.dfarm__ready b img {
+  width: 20px;
+  height: 20px;
+}
+.dfarm__pool {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 16px;
+  border: 0;
+  background: none;
+  color: var(--white);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.dfarm__pool + .dfarm__pool,
+.dfarm__claim + .dfarm__pool {
+  box-shadow: inset 1px 0 0 rgb(255 255 255 / 8%);
+}
+.dfarm__pool:hover {
+  background: rgb(255 255 255 / 3%);
+}
+.dfarm__pool[aria-pressed='true'] {
+  background: rgb(0 186 255 / 10%);
+  box-shadow: inset 0 -3px 0 var(--cyan);
+}
+.dfarm__pool .pfring {
+  width: 56px;
+  height: 56px;
+}
+.dfarm__pool .pfring > b {
+  font-size: 11px;
+}
+.dfarm__pooltext {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+.dfarm__pooltext b {
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 800;
+}
+.dfarm__pooltext small {
+  overflow: hidden;
+  font-size: 11px;
+  color: var(--text-faint);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.dfarm__pooltext small.is-full {
+  color: #ffd979;
+}
+.dfarm__est {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 800;
+  color: #ffd979;
+}
+.dfarm__est img {
+  width: 13px;
+  height: 13px;
+}
+.dfarm__warn {
+  margin: 0;
+  padding: 8px 14px;
+  border-radius: 10px;
+  background: rgb(246 168 0 / 10%);
+  box-shadow: inset 0 0 0 1px rgb(246 168 0 / 40%);
+  font-size: 12.5px;
+  color: #ffd979;
+}
+
+/* the line over the shelves */
+.dfarm__bar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.shell .main__inner .dfarm .dfarm__bartitle {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.dfarm__pick {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  color: var(--text-faint);
+}
+.dfarm__tabs {
+  margin: 0;
+}
+.dfarm__empty {
+  margin: 0;
+  padding: 20px;
+  border-radius: 14px;
+  background: rgb(8 12 26 / 70%);
+  color: var(--text-faint);
+}
+
+/* a shelf of one rarity */
+.dfarm__shelf {
+  --rc: var(--r-common);
+  display: grid;
+  gap: 8px;
+}
+.dfarm__shelf.is-mythical {
+  --rc: var(--r-mythical);
+}
+.dfarm__shelf.is-legendary {
+  --rc: var(--r-legendary);
+}
+.dfarm__shelf.is-epic {
+  --rc: var(--r-epic);
+}
+.dfarm__shelf.is-rare {
+  --rc: var(--r-rare);
+}
+.dfarm__shelfhead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--rc);
+}
+.dfarm__shelfhead::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, var(--rc), transparent);
+  opacity: 0.5;
+}
+.dfarm__shelfhead small {
+  font-family: var(--font-body);
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--text-faint);
+}
+.dfarm__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: 8px;
+}
+
+/* one card */
+.dfarm__card {
+  display: grid;
+  gap: 5px;
+  padding: 5px;
+  border-radius: 10px;
+  background: rgb(8 12 26 / 82%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 10%);
+}
+.dfarm__card.is-on {
+  background: rgb(6 30 52 / 90%);
+  box-shadow: inset 0 0 0 1.5px var(--cyan), 0 0 16px rgb(0 186 255 / 20%);
+}
+.dfarm__card.is-loading {
+  aspect-ratio: 73 / 128;
+  background: linear-gradient(-90deg, rgb(255 255 255 / 3%), rgb(255 255 255 / 8%), rgb(255 255 255 / 3%));
+  background-size: 400% 400%;
+  animation: lbrow-shimmer 1.2s ease-in-out infinite;
+}
+.dfarm__hit {
+  display: grid;
+  gap: 3px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--white);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.dfarm__art {
+  position: relative;
+  display: block;
+  aspect-ratio: 73 / 102;
+  overflow: hidden;
+  border-radius: 7px;
+  background: #0b1222;
+  box-shadow: 0 0 0 1.5px var(--rc);
+}
+.dfarm__art img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.dfarm__owned {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: rgb(0 0 0 / 75%);
+  font-size: 9px;
+  font-weight: 800;
+}
+.dfarm__shine {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #ffe9a8, #e0b04a);
+  color: #2a1a00;
+  font-family: var(--font-display);
+  font-size: 7.5px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+.dfarm__shine.is-stardust,
+.dfarm__shine.is-xdimension,
+.dfarm__shine.is-antimatter {
+  background: linear-gradient(180deg, #9a7dff, #5b3bd6);
+  color: var(--white);
+}
+.dfarm__chosen {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgb(0 30 52 / 55%);
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 900;
+  text-shadow: 0 2px 8px #000;
+}
+.dfarm__name {
+  overflow: hidden;
+  font-size: 11px;
+  font-weight: var(--fw-bold);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.dfarm__meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 4px;
+  font-size: 9.5px;
+}
+.dfarm__meta em {
+  font-style: normal;
+  font-weight: 800;
+}
+.dfarm__meta b {
+  font-size: 10px;
+  font-weight: 800;
+}
+.dfarm__step {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr) 22px;
+  align-items: center;
+  height: 24px;
+  overflow: hidden;
+  border-radius: 7px;
+  background: rgb(0 0 0 / 35%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 14%);
+}
+.dfarm__card.is-on .dfarm__step {
+  box-shadow: inset 0 0 0 1px var(--cyan);
+}
+.dfarm__step button {
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text-faint);
+  font-size: 14px;
+  cursor: pointer;
+}
+.dfarm__step button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+.dfarm__step input {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: none;
+  color: var(--white);
+  font-size: 11px;
+  font-weight: 800;
+  text-align: center;
+  appearance: textfield;
+}
+.dfarm__step input::-webkit-inner-spin-button,
+.dfarm__step input::-webkit-outer-spin-button {
+  appearance: none;
+  margin: 0;
+}
+
+/* the hand, pinned to the bottom of the window while there is one */
+.dfarm__hand {
+  position: sticky;
+  bottom: var(--sp-4);
+  z-index: 5;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 18px;
+  align-items: center;
+  padding: 12px 18px;
+  border-radius: 16px;
+  background: linear-gradient(180deg, rgb(10 30 52 / 94%), rgb(6 14 30 / 97%));
+  box-shadow: inset 0 0 0 1px rgb(0 186 255 / 45%), 0 -10px 40px rgb(0 0 0 / 50%);
+}
+.dfarm__hand.is-out {
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 25%), 0 -10px 40px rgb(0 0 0 / 50%);
+}
+.dfarm__fan {
+  display: flex;
+  align-items: flex-end;
+  min-height: 62px;
+}
+.dfarm__fan img {
+  --rc: var(--r-common);
+  width: 44px;
+  height: 62px;
+  border-radius: 6px;
+  object-fit: cover;
+  box-shadow: 0 0 0 1.5px var(--rc), 0 6px 14px rgb(0 0 0 / 60%);
+}
+.dfarm__fan img + img {
+  margin-left: -14px;
+}
+.dfarm__fan img:nth-child(odd) {
+  transform: rotate(-4deg);
+}
+.dfarm__fan img:nth-child(even) {
+  transform: rotate(3deg) translateY(-3px);
+}
+
+.dfarm__handtext {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.dfarm__handtext b {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 800;
+}
+.dfarm__handtext small {
+  font-size: 12px;
+  color: var(--text-faint);
+}
+.dfarm__handtext em {
+  font-style: normal;
+  font-weight: 800;
+  color: var(--teal);
+}
+.dfarm__hand.is-out .dfarm__handtext em {
+  color: #ffd979;
+}
+.dfarm__short {
+  color: #ffb3c0 !important;
+}
+.dfarm__hand .btn {
+  min-height: 46px;
+}
+.dfarm__cost {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.dfarm__cost img {
+  width: 14px;
+  height: 14px;
+}
+
+.dfarm__fan .r-edge-mythical {
+  --rc: var(--r-mythical);
+}
+.dfarm__fan .r-edge-legendary {
+  --rc: var(--r-legendary);
+}
+.dfarm__fan .r-edge-epic {
+  --rc: var(--r-epic);
+}
+.dfarm__fan .r-edge-rare {
+  --rc: var(--r-rare);
+}
+
+/* a narrower desktop: the pools wrap under the claim */
+@media (max-width: 1279px) {
+  .dfarm__hud {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .dfarm__claim {
+    grid-column: 1 / -1;
+    box-shadow: inset 0 -1px 0 rgb(255 255 255 / 8%);
+  }
+  .dfarm__claim + .dfarm__pool {
+    box-shadow: none;
+  }
 }

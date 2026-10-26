@@ -139,6 +139,30 @@ export function poolStatus(
   }
 }
 
+/**
+ * A pool as it would be with `delta` more weight in it — or less, for an
+ * unstake — for the line that says what staking the picked cards does.
+ *
+ * The same arithmetic as `poolStatus`, run on the player's row with that
+ * pool's weight changed: power is weight × days since the last claim, so more
+ * weight fills the cap sooner and less fills it later.
+ */
+export function withWeight(
+  schema: string,
+  delta: number,
+  user: FarmUser | undefined,
+  pools: FarmPool[],
+  config: FarmConfig | undefined,
+  now = Date.now(),
+): PoolStatus {
+  const weights = (user?.pool_weights ?? []).map((p) =>
+    p.first === schema ? { ...p, second: Math.max(0, Number(p.second ?? 0) + delta) } : p,
+  )
+  if (!weights.some((p) => p.first === schema)) weights.push({ first: schema, second: Math.max(0, delta) })
+  const changed = { ...(user ?? ({ last_claim: '' } as FarmUser)), pool_weights: weights }
+  return poolStatus(schema, changed, pools, config, [], now)
+}
+
 /** Every pool's status, plus the total a claim would pay. */
 export function farmBoard(
   schemas: readonly string[],

@@ -8,7 +8,6 @@ import {
 } from '@/chain/atomic'
 import {
   FARM_SCHEMAS,
-  SCHEMA_LABEL,
   fetchFarmPools,
   fetchFarmUser,
   fetchStakedCards,
@@ -29,27 +28,17 @@ import {
   selectedTemplates,
   stakedStacks,
   totalPicked,
-  type CardStack,
 } from '@/farming/stacks'
-import {
-  farmBoard,
-  formatToCap,
-  stakeable,
-  stakedByWeight,
-  weightPerDay,
-  type PoolStatus,
-} from '@/farming/rules'
+import { farmBoard, stakeable, stakedByWeight } from '@/farming/rules'
 import { claimFarming, stakeCards, unstakeCards } from '@/wharf/actions'
 import { useAction } from '@/wharf/useAction'
 import { useChainQuery } from '@/chain/useChainQuery'
 import { useLazyConfig } from '@/state/useConfig'
 import { DIRTIES } from '@/wharf/actions'
-import { formatNumber } from '@/format'
 import { ActionBanner } from '@/components/ActionBanner'
-import { asset, ipfsImage } from '@/assets'
-import { GameImg } from '@/components/GameImg'
 import { usePhone } from '@/components/usePhone'
 import { PhoneFarming, type FarmMode } from '@/farming/PhoneFarming'
+import { DeskFarming } from '@/farming/DeskFarming'
 
 /**
  * Farming.
@@ -75,7 +64,6 @@ import { PhoneFarming, type FarmMode } from '@/farming/PhoneFarming'
  * memo `nftstake`; the contract charges `gem_fee` gems per card on receipt.
  */
 
-type Tab = FarmSchema | 'rewards'
 type Mode = 'inventory' | 'staked'
 type Busy = 'stake' | 'unstake' | 'claim' | null
 
@@ -184,7 +172,7 @@ export default function Farming() {
   const player = useGame((s) => s.player)
   const session = useGame((s) => s.session)
 
-  const [tab, setTab] = useState<Tab>('tool.worlds')
+  const [tab, setTab] = useState<FarmSchema>('tool.worlds')
   const [mode, setMode] = useState<Mode>('inventory')
   /* A phone starts on the claim and the pools, and opens one pool at a time. */
   const phone = usePhone()
@@ -203,7 +191,7 @@ export default function Farming() {
   const { busy: busyKey, error, run } = useAction()
   const busy = busyKey as Busy
 
-  const schema: FarmSchema = tab === 'rewards' ? 'tool.worlds' : tab
+  const schema: FarmSchema = tab
   const data = useFarm(account, schema)
   const { config, pools, weights, user, staked } = data
 
@@ -347,469 +335,37 @@ export default function Farming() {
     )
   }
 
+  /* A desktop gets the card table: the pools along the top, the cards on shelves, a hand to stake. */
   return (
     <div className="farming">
-      <header className="farming__head">
-        <div>
-          <h1 className="farming__title">Farming</h1>
-          <p className="farming__lede">
-            Stake Alien Worlds cards to earn <strong>credits</strong> from a
-            pool shared with every other farmer. A card's weight comes from its
-            rarity and shine.
-          </p>
-        </div>
-
-        <div className="farming__acts">
-          {mode === 'inventory' ? (
-            <button
-              type="button"
-              className="btn btn--ghost"
-              disabled={!session || busy !== null || pickedCount === 0 || stakeCost > gems}
-              onClick={() => void doStake()}
-              title={
-                stakeCost > gems
-                  ? `Staking costs ${gemFee} gem per card`
-                  : 'Send these cards to the farm'
-              }
-            >
-              {busy === 'stake' && <span className="spinner" />}
-              Stake {pickedCount || ''}
-              {stakeCost > 0 && (
-                <span className={`cost${stakeCost > gems ? ' cost--short' : ''}`}>
-                  {formatNumber(stakeCost)}
-                  <img src={asset("/assets/icons/gems.png")} alt="gems" width={16} height={16} />
-                </span>
-              )}
-            </button>
-          ) : (
-            <button
-              type="button"
-              className="btn btn--ghost"
-              disabled={!session || busy !== null || pickedCount === 0}
-              onClick={() => void doUnstake()}
-              title="Returns the cards and claims what they have earned"
-            >
-              {busy === 'unstake' && <span className="spinner" />}
-              Unstake {pickedCount || ''}
-            </button>
-          )}
-
-          <button
-            type="button"
-            className="btn btn--primary"
-            disabled={!session || busy !== null || board.total <= 0}
-            onClick={() => void doClaim()}
-          >
-            {busy === 'claim' && <span className="spinner" />}
-            Claim {board.total > 0 ? formatNumber(board.total) : ''} credits
-          </button>
-        </div>
-      </header>
-
-      {/*
-        The cap is the one thing that quietly costs a farmer money, so it is
-        stated at the top rather than left inside a tab.
-      */}
-      {board.anyMaxed && (
-        <div className="alert alert--warn">
-          A pool has reached its power ceiling. Nothing more accrues there
-          until you claim.
-        </div>
-      )}
-
-      <ActionBanner error={error ?? data.error} />
-
-      <div className="farmtabs" role="tablist" aria-label="Card type">
-        {FARM_SCHEMAS.map((s) => {
-          const status = board.pools.find((p) => p.schema === s)
-          return (
-            <button
-              type="button"
-              key={s}
-              role="tab"
-              aria-selected={tab === s}
-              className="farmtab"
-              onClick={() => setTab(s)}
-            >
-              <span className="farmtab__name">{SCHEMA_LABEL[s]}</span>
-              <span className="farmtab__meta">
-                {status?.cards ?? 0} staked · {formatNumber(status?.weight ?? 0)} weight
-              </span>
-            </button>
-          )
-        })}
-        <button
-          type="button"
-          role="tab"
-          aria-selected={tab === 'rewards'}
-          className="farmtab"
-          onClick={() => setTab('rewards')}
-        >
-          <span className="farmtab__name">Rewards</span>
-          <span className="farmtab__meta">
-            {formatNumber(board.total)} credits waiting
-          </span>
-        </button>
-      </div>
-
-      {tab === 'rewards' ? (
-        <Rewards
-          board={board.pools}
-          total={board.total}
-          user={user}
-          config={config}
-        />
-      ) : (
-        <>
-          <div className="farmmodes" role="tablist" aria-label="Card source">
-            <button
-              type="button"
-              role="tab"
-              aria-selected={mode === 'inventory'}
-              className="farmmode"
-              onClick={() => setMode('inventory')}
-            >
-              Inventory
-            </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={mode === 'staked'}
-              className="farmmode"
-              onClick={() => setMode('staked')}
-            >
-              Staked ({stakedHere.length})
-            </button>
-          </div>
-
-          {mode === 'inventory' ? (
-            data.loadingInventory ? (
-              <CardSkeletons />
-            ) : inventory.length === 0 ? (
-              <p className="farming__empty">
-                {hiddenCount > 0
-                  ? `None of your ${SCHEMA_LABEL[schema].toLowerCase()} can be staked — the farm does not accept their rarity.`
-                  : `No ${SCHEMA_LABEL[schema].toLowerCase()} in your wallet.`}
-              </p>
-            ) : (
-              <>
-                <StackBar
-                  held={heldHere}
-                  picked={pickedCount}
-                  disabled={busy !== null}
-                  onAll={takeAll}
-                  onNone={takeNone}
-                />
-                <div className="cardgridf">
-                  {invStacks.map((stack) => (
-                    <StackTile
-                      key={stack.key}
-                      stack={stack}
-                      count={counts[stack.key] ?? 0}
-                      disabled={busy !== null}
-                      onChange={(n) => setCount(stack.key, n, stack.count)}
-                    />
-                  ))}
-                </div>
-              </>
-            )
-          ) : stakedHere.length === 0 ? (
-            <p className="farming__empty">
-              Nothing staked in this pool yet.
-            </p>
-          ) : (
-            <>
-              <StackBar
-                held={stakedHere.length}
-                picked={pickedCount}
-                disabled={busy !== null}
-                onAll={takeAll}
-                onNone={takeNone}
-              />
-              <div className="cardgridf">
-                {outStacks.map((stack) => (
-                  <StackTile
-                    key={stack.key}
-                    stack={stack}
-                    count={counts[stack.key] ?? 0}
-                    disabled={busy !== null}
-                    onChange={(n) => setCount(stack.key, n, stack.count)}
-                  />
-                ))}
-              </div>
-            </>
-          )}
-        </>
-      )}
+      <DeskFarming
+        schema={schema}
+        onSchema={setTab}
+        mode={mode}
+        onMode={setMode}
+        board={board}
+        user={user}
+        pools={pools}
+        config={config}
+        invStacks={invStacks}
+        outStacks={outStacks}
+        counts={counts}
+        onCount={setCount}
+        onAll={takeAll}
+        onNone={takeNone}
+        loadingInventory={data.loadingInventory}
+        hiddenCount={hiddenCount}
+        pickedCount={pickedCount}
+        stakeCost={stakeCost}
+        gems={gems}
+        busy={busy}
+        canAct={!!session}
+        onStake={() => void doStake()}
+        onUnstake={() => void doUnstake()}
+        onClaim={() => void doClaim()}
+        now={now}
+        banner={<ActionBanner error={error ?? data.error} />}
+      />
     </div>
   )
 }
-
-/* ---------- pieces ---------- */
-
-function CardSkeletons() {
-  return (
-    <div className="cardgridf">
-      {Array.from({ length: 18 }, (_, i) => (
-        <div className="cardtile cardtile--loading" key={i} />
-      ))}
-    </div>
-  )
-}
-
-/** What is held on this side, and the two amounts worth one click. */
-function StackBar({
-  held,
-  picked,
-  disabled,
-  onAll,
-  onNone,
-}: {
-  held: number
-  picked: number
-  disabled: boolean
-  onAll: () => void
-  onNone: () => void
-}) {
-  return (
-    <div className="stackbar">
-      <p className="faint stackbar__count">
-        {formatNumber(picked)} of {formatNumber(held)} selected
-      </p>
-      <span className="spacer" />
-      <button
-        type="button"
-        className="btn btn--ghost btn--sm"
-        disabled={disabled || picked >= held}
-        onClick={onAll}
-      >
-        Select all
-      </button>
-      <button
-        type="button"
-        className="btn btn--ghost btn--sm"
-        disabled={disabled || picked === 0}
-        onClick={onNone}
-      >
-        Clear
-      </button>
-    </div>
-  )
-}
-
-/**
- * One design, with how many of it to use.
- *
- * The art is a button of its own: clicking it takes the whole stack, and
- * clicking it again puts it back — which is what a player who holds forty of
- * one card almost always wants. The stepper beside it is for the times they
- * want eleven.
- */
-function StackTile({
-  stack,
-  count,
-  disabled,
-  onChange,
-}: {
-  stack: CardStack
-  count: number
-  disabled: boolean
-  onChange: (next: number) => void
-}) {
-  const max = stack.count
-  const rarity = (stack.rarity || '').toLowerCase()
-
-  return (
-    <div className={`cardtile cardtile--stack${count > 0 ? ' cardtile--picked' : ''}`}>
-      <button
-        type="button"
-        className="cardtile__hit"
-        disabled={disabled}
-        onClick={() => onChange(count > 0 ? 0 : max)}
-        title={
-          count > 0
-            ? 'Take none of these'
-            : `Take all ${max} — ${stack.rarity} · ${stack.shine}, weight ${formatNumber(stack.weight)} each`
-        }
-      >
-        <span className="cardtile__frame">
-          <GameImg
-            className="cardtile__art"
-            src={asset(`/assets/cards/${stack.template_id}.webp`)}
-            alt=""
-            loading="lazy"
-            /* Ours, then the card's own on IPFS, then the blank back. */
-            fallback={[ipfsImage(stack.img), asset('/assets/default-card.png')].filter(
-              (s): s is string => !!s,
-            )}
-          />
-          <span className="cardtile__owned mono">×{formatNumber(max)}</span>
-        </span>
-        <span className="cardtile__name">{stack.name}</span>
-        <span className={`cardtile__rarity r-${rarity}`}>
-          {stack.shine === 'Stone' ? stack.rarity : `${stack.rarity} · ${stack.shine}`}
-        </span>
-        <span className="cardtile__weight">{formatNumber(stack.weight)}</span>
-      </button>
-
-      <div className="stepper">
-        <button
-          type="button"
-          className="stepper__btn"
-          disabled={disabled || count <= 0}
-          onClick={() => onChange(count - 1)}
-          aria-label={`One fewer ${stack.name}`}
-        >
-          −
-        </button>
-        <input
-          className="stepper__n mono"
-          type="number"
-          inputMode="numeric"
-          min={0}
-          max={max}
-          step={1}
-          value={count}
-          disabled={disabled}
-          onChange={(e) => onChange(clampCount(Number(e.target.value), max))}
-          onFocus={(e) => e.currentTarget.select()}
-          aria-label={`How many ${stack.name} to use, up to ${max}`}
-        />
-        <button
-          type="button"
-          className="stepper__btn"
-          disabled={disabled || count >= max}
-          onClick={() => onChange(count + 1)}
-          aria-label={`One more ${stack.name}`}
-        >
-          +
-        </button>
-      </div>
-    </div>
-  )
-}
-
-/* ---------- the rewards tab ---------- */
-
-function Rewards({
-  board,
-  total,
-  user,
-  config,
-}: {
-  board: PoolStatus[]
-  total: number
-  user?: FarmUser
-  config?: FarmConfig
-}) {
-  const perDay = weightPerDay(user)
-
-  return (
-    <div className="rewards">
-      <section className="rewards__summary">
-        <div className="tally">
-          <img src={asset("/assets/icons/credits.png")} alt="" width={20} height={20} />
-          <strong>{formatNumber(total)}</strong>
-          <span>Estimated current claim</span>
-        </div>
-        <div className="tally">
-          <img src={asset("/assets/icons/energy.png")} alt="" width={20} height={20} />
-          <strong>{formatNumber(perDay)}</strong>
-          <span>Mining power per day</span>
-        </div>
-        <div className="tally">
-          <img src={asset("/assets/icons/credits.png")} alt="" width={20} height={20} />
-          <strong>{formatNumber(Number(user?.total_reward ?? 0))}</strong>
-          <span>Claimed all time</span>
-        </div>
-      </section>
-
-      <p className="hint">
-        Last claim:{' '}
-        {user?.last_claim
-          ? new Date(Date.parse(user.last_claim + 'Z')).toLocaleString()
-          : 'never'}
-        . Claiming resets the clock on every pool at once, so power banked in
-        one is given up along with the rest.
-      </p>
-
-      <div className="poolgrid">
-        {board.map((p) => (
-          <article className="poolcard" key={p.schema}>
-            <h3 className="panel__title">{SCHEMA_LABEL[p.schema] ?? p.schema}</h3>
-
-            {p.weight === 0 ? (
-              <p className="faint">You are not gaining minepower in this pool</p>
-            ) : (
-              <>
-                <div className="powerbar">
-                  <span
-                    className={`powerbar__fill${p.maxed ? ' powerbar__fill--max' : ''}`}
-                    style={{ width: `${p.percent}%` }}
-                  />
-                  <span className="powerbar__text">
-                    {/* Two decimals: power creeps up slowly enough that a
-                        whole-number reading sits on 0% for the first while and
-                        looks like nothing is accruing at all. */}
-                    {p.percent.toFixed(2)}% of the cap
-                  </span>
-                </div>
-
-                <dl className="poolcard__facts">
-                  <div>
-                    <dt>Estimated claim</dt>
-                    <dd>{formatNumber(p.estimate)}</dd>
-                  </div>
-                  <div>
-                    <dt>Your weight</dt>
-                    <dd>{formatNumber(p.weight)}</dd>
-                  </div>
-                  <div>
-                    <dt>Cards staked</dt>
-                    <dd>{formatNumber(p.cards)}</dd>
-                  </div>
-                  <div>
-                    <dt>Cap</dt>
-                    <dd className={p.maxed ? 'warn' : undefined}>
-                      {p.maxed
-                        ? 'You have reached the maximum'
-                        : formatToCap(p.msToCap)}
-                    </dd>
-                  </div>
-                  {/*
-                    The pot is shared, so its size is half of what a claim is
-                    worth — and it visibly shrinks as other farmers claim.
-                  */}
-                  <div>
-                    <dt>Pool holds</dt>
-                    <dd>{formatNumber(Number(p.pool?.current_size ?? 0))}</dd>
-                  </div>
-                  <div>
-                    <dt>Your share of the pool</dt>
-                    <dd>
-                      {p.pool && p.pool.total_weight > 0
-                        ? ((p.weight / p.pool.total_weight) * 100).toFixed(2) + '%'
-                        : '—'}
-                    </dd>
-                  </div>
-                </dl>
-              </>
-            )}
-          </article>
-        ))}
-      </div>
-
-      {config && (
-        <p className="hint">
-          A claim is worth the pool's size times your power, where power is
-          your weight multiplied by the days since your last claim and capped
-          at {formatNumber(Number(config.max_power))}. Staking costs{' '}
-          {formatNumber(Number(config.gem_fee))} gem per card; unstaking is
-          free and claims first.
-        </p>
-      )}
-    </div>
-  )
-}
-
-export { StackTile, Rewards }

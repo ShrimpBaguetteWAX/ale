@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import { capPerDay, formatPerDay, formatToCap } from '@/farming/rules'
+import { capPerDay, formatPerDay, formatToCap, withWeight } from '@/farming/rules'
 import { stakedStacks } from '@/farming/stacks'
-import type { FarmConfig, StakedCard } from '@/farming/types'
+import type { FarmConfig, FarmUser, StakedCard } from '@/farming/types'
 
 /* The live farm config: power stops at 100,000. */
 const config = { max_power: 100_000 } as unknown as FarmConfig
@@ -35,5 +35,34 @@ describe('stakedStacks', () => {
   it('names staked cards from the catalogue, and numbers the ones it lacks', () => {
     const names = new Map([[19630, 'Storm Giant']])
     expect(stakedStacks(staked, names).map((s) => s.name)).toEqual(['Storm Giant', '#19635'])
+  })
+})
+
+describe('withWeight', () => {
+  /* onabs.wam's Weapons pool: 180 weight, last claimed 13 minutes ago. */
+  const NOW = Date.parse('2026-10-26T18:00:13Z')
+  const user = {
+    last_claim: '2026-10-26T17:47:13',
+    pool_weights: [
+      { first: 'arms.worlds', second: 180 },
+      { first: 'tool.worlds', second: 68_649 },
+    ],
+  } as unknown as FarmUser
+
+  it('fills the cap sooner with the picked cards staked', () => {
+    const after = withWeight('arms.worlds', 400, user, [], config, NOW)
+    expect(after.weight).toBe(580)
+    expect(capPerDay(after.weight, config)).toBeCloseTo(0.58)
+    /* 100,000 / 580 days, less the 13 minutes already banked. */
+    expect(formatToCap(after.msToCap)).toBe('in 172 days')
+  })
+
+  it('fills it later with them unstaked, and never below nothing', () => {
+    expect(withWeight('tool.worlds', -675, user, [], config, NOW).weight).toBe(67_974)
+    expect(withWeight('arms.worlds', -1_000, user, [], config, NOW).weight).toBe(0)
+  })
+
+  it('starts a pool the player has never staked in', () => {
+    expect(withWeight('crew.worlds', 250, user, [], config, NOW).weight).toBe(250)
   })
 })
