@@ -491,14 +491,17 @@ export function DeskRoster(p: DeskRosterProps) {
 
       <div className="drost__toolbar">
         {!phone && <StatusSeg filter={p.filter} counts={counts} onStatus={(s) => set({ status: s })} />}
-        <input
-          className="input drost__search"
-          type="search"
-          placeholder={phone ? 'Search…' : 'Search fighters…'}
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          aria-label="Search class, race, element or ability"
-        />
+        {/* A phone keeps a search box; a desktop finds fighters with the filters. */}
+        {phone && (
+          <input
+            className="input drost__search"
+            type="search"
+            placeholder="Search…"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            aria-label="Search class, race, element or ability"
+          />
+        )}
         <span className="drost__sp" />
         {p.mode === 'market' && counts.Market > 0 && (
           <span className="drost__note">
@@ -639,11 +642,14 @@ export function DeskRoster(p: DeskRosterProps) {
         <div className={`drost__main${wide ? '' : ' is-narrow'}`}>
           <section className="drost__list" aria-label="Fighters">
             <div className={`drost__listhead${stuck ? ' is-stuck' : ''}`} ref={listHead}>
-              <span className="drost__cap">
-                {list.length === p.roster.length
-                  ? `${p.roster.length} fighters`
-                  : `${list.length} of ${p.roster.length}`}
-              </span>
+              {/* A desktop's view switch stands where the count was; a phone keeps both. */}
+              {phone && (
+                <span className="drost__cap">
+                  {list.length === p.roster.length
+                    ? `${p.roster.length} fighters`
+                    : `${list.length} of ${p.roster.length}`}
+                </span>
+              )}
               <span className="drost__seg drost__seg--sm" role="tablist" aria-label="Rows show">
                 {VIEWS.map(([v, label]) => (
                   <button type="button" role="tab" key={v} aria-selected={view === v} onClick={() => setView(v)}>
