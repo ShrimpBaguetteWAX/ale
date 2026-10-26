@@ -3072,3 +3072,218 @@ button.prew__row:hover:not(:disabled) {
     gap: 12px;
   }
 }
+
+/* ---------- A stat's leaderboard on a desktop ---------- */
+
+.dboard {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal);
+  display: grid;
+  place-items: center;
+  padding: var(--sp-5);
+  background: rgb(2 6 16 / 66%);
+  backdrop-filter: blur(4px);
+}
+.dboard__panel {
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr);
+  gap: 14px;
+  width: min(560px, 100%);
+  max-height: min(820px, 88dvh);
+  padding: 18px;
+  border-radius: 18px;
+  background: radial-gradient(90% 40% at 50% 0%, rgb(0 186 255 / 12%), transparent 70%), rgb(8 14 28 / 96%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 12%), 0 30px 80px rgb(0 0 0 / 60%);
+  animation: dboard-in var(--dur) var(--ease);
+}
+@keyframes dboard-in {
+  from {
+    transform: translateY(10px) scale(0.98);
+    opacity: 0;
+  }
+}
+:root[data-fx='low'] .dboard__panel {
+  animation: none;
+}
+.dboard__head {
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+}
+.dboard__head > img {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+}
+.dboard__title {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+.dboard__title b {
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.dboard__title small {
+  font-size: 12px;
+  color: var(--text-faint);
+}
+.dboard__close {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  background: rgb(255 255 255 / 6%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 14%);
+  color: var(--text-faint);
+  cursor: pointer;
+}
+.dboard__close:hover {
+  color: var(--white);
+}
+.dboard__close svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+}
+
+/* Where you stand, before anybody else. */
+.dboard__you {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 16px;
+  align-items: center;
+  padding: 12px 16px;
+  border-radius: 14px;
+  background: linear-gradient(110deg, rgb(0 186 255 / 14%), rgb(8 14 28 / 60%) 65%);
+  box-shadow: inset 0 0 0 1px rgb(0 186 255 / 40%);
+}
+.dboard__bigrank {
+  display: grid;
+  justify-items: center;
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 900;
+  line-height: 1;
+  color: var(--cyan);
+}
+.dboard__bigrank small {
+  margin-bottom: 4px;
+  font-size: 8.5px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.dboard__bigrank.rank--gold {
+  color: var(--gold);
+}
+.dboard__bigrank.rank--silver {
+  color: var(--r-common);
+}
+.dboard__bigrank.rank--bronze {
+  color: #cd7f32;
+}
+.dboard__youtext {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.dboard__youtext b {
+  font-size: 18px;
+  font-weight: 800;
+}
+.dboard__youtext small {
+  overflow: hidden;
+  font-size: 12.5px;
+  color: var(--text-faint);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.dboard__of {
+  font-size: 12px;
+  color: var(--text-faint);
+}
+
+/* The field. */
+.dboard__list {
+  overflow-y: auto;
+  border-radius: 14px;
+  background: rgb(255 255 255 / 3%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 8%);
+  scrollbar-width: thin;
+}
+.dboard__row {
+  display: grid;
+  grid-template-columns: 30px 32px minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  padding: 7px 14px;
+}
+.dboard__row + .dboard__row {
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 6%);
+}
+.dboard__row .rank {
+  width: 30px;
+  height: 30px;
+  font-size: 12px;
+}
+.dboard__avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  object-fit: cover;
+}
+.dboard__name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  overflow: hidden;
+  font-size: 13.5px;
+  font-weight: var(--fw-bold);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.dboard__name em {
+  flex: none;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--cyan);
+  color: #04121b;
+  font-family: var(--font-display);
+  font-size: 8.5px;
+  font-style: normal;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.dboard__v {
+  font-size: 13px;
+  font-weight: 800;
+}
+.dboard__row.is-you {
+  background: rgb(0 186 255 / 12%);
+  box-shadow: inset 3px 0 0 var(--cyan);
+}
+.dboard__row + .dboard__row.is-you {
+  box-shadow: inset 3px 0 0 var(--cyan), inset 0 1px 0 rgb(255 255 255 / 6%);
+}
+.dboard__gap {
+  padding: 6px;
+  font-size: 11.5px;
+  text-align: center;
+  color: var(--text-dim);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 6%);
+}

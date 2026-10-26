@@ -6,7 +6,7 @@ import { PlayerAvatar } from '@/components/PlayerAvatar'
 import { useModal } from '@/components/useModal'
 import { BottomSheet } from '@/components/BottomSheet'
 import { readableError } from '@/wharf/errors'
-import { formatStat } from '@/format'
+import { formatNumber, formatStat } from '@/format'
 import { asset } from '@/assets'
 
 /**
@@ -19,6 +19,15 @@ import { asset } from '@/assets'
  * already in it — a leaderboard you cannot find yourself on is a list of
  * strangers, and "you are 47th of 61" is the thing most people opened it to
  * learn.
+ */
+/* The board shows the top of the field; anything past it is one pinned row. */
+const DESK_TOP = 25
+
+/**
+ * The board on a desktop, in the Account page's own look: a dark card over
+ * the page, where you stand first — your rank, your figure and how far the
+ * player above is — then the field, with medals for the top three and your
+ * own row lit.
  */
 export function StatBoard({
   statKey,
@@ -34,32 +43,98 @@ export function StatBoard({
   onClose: () => void
 }) {
   const panel = useModal(onClose)
+  const { ranks, error } = useStatRanks(statKey)
+  const mine = ranks?.find((r) => r.wallet === wallet)
+  const above = mine && mine.rank > 1 ? ranks![mine.rank - 2] : undefined
+  const below = mine && mine.rank === 1 ? ranks![1] : undefined
+  const shown = ranks?.slice(0, DESK_TOP) ?? []
+  const pinned = mine && mine.rank > DESK_TOP ? mine : undefined
 
   return (
     <div
-      className="sheet"
+      className="dboard"
       role="dialog"
       aria-modal="true"
       aria-label={`${label} leaderboard`}
       onClick={onClose}
     >
-      <div
-        className="sheet__panel"
-        ref={panel}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="row" style={{ marginBottom: 'var(--sp-3)' }}>
-          <span className="panel__title statboard__title">
-            {icon && <img className="statline__icon" src={asset(icon)} alt="" />}
-            {label}
+      <div className="dboard__panel" ref={panel} onClick={(e) => e.stopPropagation()}>
+        <header className="dboard__head">
+          {icon ? <img src={asset(icon)} alt="" /> : <span />}
+          <span className="dboard__title">
+            <b>{label}</b>
+            <small>
+              {ranks
+                ? `${formatNumber(ranks.length)} player${ranks.length === 1 ? ' has' : 's have'} recorded this`
+                : 'Reading every player…'}
+            </small>
           </span>
-          <span className="spacer" />
-          <button type="button" className="btn btn--ghost btn--sm" onClick={onClose}>
-            Close
+          <button type="button" className="dboard__close" aria-label="Close" onClick={onClose}>
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M6 6l12 12M18 6L6 18" />
+            </svg>
           </button>
+        </header>
+
+        {error && <div className="alert alert--error">{error}</div>}
+
+        {ranks && (
+          <div className="dboard__you">
+            {mine ? (
+              <>
+                <span className={`dboard__bigrank ${rankClass(mine.rank)}`}>
+                  <small>You are</small>#{formatNumber(mine.rank)}
+                </span>
+                <span className="dboard__youtext">
+                  <b className="mono">{formatStat(statKey, mine.value)}</b>
+                  <small>
+                    {above
+                      ? `${formatStat(statKey, above.value - mine.value)} behind #${above.rank} ${above.playertag || above.wallet}`
+                      : below
+                        ? `${formatStat(statKey, mine.value - below.value)} ahead of #2 ${below.playertag || below.wallet}`
+                        : 'Nobody else has recorded this yet'}
+                  </small>
+                </span>
+                <span className="dboard__of mono">
+                  of {formatNumber(ranks.length)}
+                </span>
+              </>
+            ) : (
+              <span className="dboard__youtext">
+                <b>You are not on this board yet</b>
+                <small>It counts once you have recorded any of it.</small>
+              </span>
+            )}
+          </div>
+        )}
+
+        <div className="dboard__list">
+          {ranks && ranks.length === 0 && <p className="rsheet__hint">Nobody has recorded this yet.</p>}
+          {shown.map((r) => (
+            <DeskRow key={r.wallet} row={r} statKey={statKey} you={r.wallet === wallet} />
+          ))}
+          {pinned && (
+            <>
+              <div className="dboard__gap">{formatNumber(pinned.rank - DESK_TOP - 1)} more</div>
+              <DeskRow row={pinned} statKey={statKey} you />
+            </>
+          )}
         </div>
-        <StatBoardList statKey={statKey} wallet={wallet} />
       </div>
+    </div>
+  )
+}
+
+function DeskRow({ row, statKey, you }: { row: StatRank; statKey: string; you: boolean }) {
+  return (
+    <div className={`dboard__row${you ? ' is-you' : ''}`}>
+      <span className={`rank ${rankClass(row.rank)}`}>{row.rank}</span>
+      <PlayerAvatar id={row.avatar} name={row.playertag || row.wallet} className="dboard__avatar" size={32} />
+      <span className="dboard__name">
+        {row.playertag || row.wallet}
+        {you && <em>You</em>}
+      </span>
+      <span className="dboard__v mono">{formatStat(statKey, row.value)}</span>
     </div>
   )
 }
@@ -85,7 +160,8 @@ export function StatBoardSheet({
   )
 }
 
-function StatBoardList({ statKey, wallet }: { statKey: string; wallet: string }) {
+/** Every player ranked on one stat, read once for all of them. */
+function useStatRanks(statKey: string) {
   const [ranks, setRanks] = useState<StatRank[] | null>(null)
   const [error, setError] = useState<string | null>(null)
 
@@ -98,6 +174,12 @@ function StatBoardList({ statKey, wallet }: { statKey: string; wallet: string })
       live = false
     }
   }, [statKey])
+
+  return { ranks, error }
+}
+
+function StatBoardList({ statKey, wallet }: { statKey: string; wallet: string }) {
+  const { ranks, error } = useStatRanks(statKey)
 
   const TOP = 25
   const mine = ranks?.find((r) => r.wallet === wallet)
