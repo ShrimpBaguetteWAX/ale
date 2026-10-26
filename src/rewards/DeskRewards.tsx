@@ -492,8 +492,8 @@ function DeskMining({
 }
 
 /**
- * Landowner rewards, on the page: the bar, a slider, three presets and a
- * Save. When a player gains reward power or recruits a fighter on someone's
+ * Landowner rewards, on the page: the split bar, which is also the slider,
+ * three presets and a Save. When a player gains reward power or recruits a fighter on someone's
  * land, the landowner gets rewards too; `pools.cpp` reads the owner's
  * `landowner_tlm_share` to decide how much of that is TLM and how much
  * Shards. Without land it stays dimmed with a way to get some.
@@ -532,9 +532,23 @@ function LandCut({
         </small>
       </span>
       <span className="drew__landbar">
-        <span className="splitbar">
-          <span className="splitbar__tlm" style={{ width: `${share}%` }} />
-          <span className="splitbar__shards" style={{ width: `${100 - share}%` }} />
+        {/* The bar is the slider: its handle sits where TLM ends and Shards begin. */}
+        <span className="drew__split">
+          <span className="splitbar">
+            <span className="splitbar__tlm" style={{ width: `${share}%` }} />
+            <span className="splitbar__shards" style={{ width: `${100 - share}%` }} />
+          </span>
+          <input
+            type="range"
+            className="drew__splitrange"
+            min={0}
+            max={100}
+            step={1}
+            value={share}
+            aria-label="Share paid as TLM"
+            onChange={(e) => setShare(Number(e.target.value))}
+            disabled={off}
+          />
         </span>
         <span className="splitlabels">
           <span>
@@ -546,17 +560,6 @@ function LandCut({
             <img src={CURRENCY_ICON.shrds} alt="" width={14} height={14} />
           </span>
         </span>
-        <input
-          type="range"
-          className="landsheet__range"
-          min={0}
-          max={100}
-          step={1}
-          value={share}
-          aria-label="Share paid as TLM"
-          onChange={(e) => setShare(Number(e.target.value))}
-          disabled={off}
-        />
       </span>
       <span className="landsheet__presets drew__landpresets">
         {SHARE_PRESETS.map(([value, label]) => (

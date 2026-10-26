@@ -2696,14 +2696,73 @@ button.prew__row:hover:not(:disabled) {
 }
 .drew__landbar {
   display: grid;
-  gap: 4px;
+  gap: 10px;
+}
+.drew__split {
+  position: relative;
+  display: block;
 }
 .drew__landbar .splitbar {
-  height: 10px;
+  height: 12px;
   margin: 0;
 }
-.drew__landbar .landsheet__range {
+/*
+   A range input laid over the bar, its own track invisible. It reaches half
+   a handle past each end so the handle's centre runs the bar's full width
+   and sits exactly on the line between TLM and Shards.
+*/
+.drew__splitrange {
+  position: absolute;
+  top: 50%;
+  left: -8px;
+  width: calc(100% + 16px);
+  height: 26px;
   margin: 0;
+  transform: translateY(-50%);
+  background: none;
+  appearance: none;
+  cursor: grab;
+}
+.drew__splitrange:active {
+  cursor: grabbing;
+}
+.drew__splitrange:disabled {
+  cursor: default;
+}
+.drew__splitrange::-webkit-slider-runnable-track {
+  height: 26px;
+  background: none;
+}
+.drew__splitrange::-moz-range-track {
+  height: 26px;
+  background: none;
+}
+.drew__splitrange::-webkit-slider-thumb {
+  width: 16px;
+  height: 24px;
+  margin-top: 1px;
+  border: 0;
+  border-radius: 6px;
+  background: var(--white);
+  box-shadow: 0 0 0 3px rgb(0 186 255 / 45%), 0 2px 6px rgb(0 0 0 / 50%);
+  appearance: none;
+}
+.drew__splitrange::-moz-range-thumb {
+  width: 16px;
+  height: 24px;
+  border: 0;
+  border-radius: 6px;
+  background: var(--white);
+  box-shadow: 0 0 0 3px rgb(0 186 255 / 45%), 0 2px 6px rgb(0 0 0 / 50%);
+}
+.drew__splitrange:focus-visible {
+  outline: none;
+}
+.drew__splitrange:focus-visible::-webkit-slider-thumb {
+  box-shadow: 0 0 0 3px var(--cyan), 0 2px 6px rgb(0 0 0 / 50%);
+}
+.drew__splitrange:focus-visible::-moz-range-thumb {
+  box-shadow: 0 0 0 3px var(--cyan), 0 2px 6px rgb(0 0 0 / 50%);
 }
 .drew__landpresets button {
   flex: 0 0 auto;
