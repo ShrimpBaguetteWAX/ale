@@ -415,6 +415,22 @@ export function DeskRoster(p: DeskRosterProps) {
 
   const basket = phone && p.mode !== 'inventory' && ticked.length > 0
 
+  const modeSeg = (
+    <span className="drost__seg" role="tablist" aria-label="Roster mode">
+      {(
+        [
+          ['inventory', 'Inventory'],
+          ['sell', 'Sell'],
+          ['market', 'Sell on market'],
+        ] as [Mode, string][]
+      ).map(([m, label]) => (
+        <button type="button" role="tab" key={m} aria-selected={p.mode === m} onClick={() => p.onMode(m)}>
+          {label}
+        </button>
+      ))}
+    </span>
+  )
+
   return (
     <div className={`drost${phone ? ` drost--phone is-${p.mode}` : ''}${basket ? ' has-basket' : ''}`}>
       <header className="drost__head">
@@ -471,26 +487,25 @@ export function DeskRoster(p: DeskRosterProps) {
               </button>
             </>
           )}
-          <span className="drost__seg" role="tablist" aria-label="Roster mode">
-            {(
-              [
-                ['inventory', 'Inventory'],
-                ['sell', 'Sell'],
-                ['market', 'Sell on market'],
-              ] as [Mode, string][]
-            ).map(([m, label]) => (
-              <button type="button" role="tab" key={m} aria-selected={p.mode === m} onClick={() => p.onMode(m)}>
-                {label}
-              </button>
-            ))}
-          </span>
+          {phone && modeSeg}
         </span>
       </header>
 
       {p.banner}
 
       <div className="drost__toolbar">
-        {!phone && <StatusSeg filter={p.filter} counts={counts} onStatus={(s) => set({ status: s })} />}
+        {/*
+          A desktop's command bar: everything that changes what is listed, in
+          reading order — the mode, then which fighters, then Filters and Sort
+          at its end. The title line keeps only the roster's two chores.
+        */}
+        {!phone && (
+          <>
+            {modeSeg}
+            <span className="drost__vr" aria-hidden="true" />
+            <StatusSeg short filter={p.filter} counts={counts} onStatus={(s) => set({ status: s })} />
+          </>
+        )}
         {/* A phone keeps a search box; a desktop finds fighters with the filters. */}
         {phone && (
           <input
@@ -1432,17 +1447,20 @@ function StatusSeg({
   counts,
   onStatus,
   chips = false,
+  short = false,
 }: {
   filter: RosterFilter
   counts: Record<Status, number>
   onStatus: (s: Status) => void
   chips?: boolean
+  /** "Payday" for "Requests payday", where the command bar has the room of one word. */
+  short?: boolean
 }) {
   return (
     <span className={`drost__seg${chips ? ' drost__seg--chips' : ''}`} role="group" aria-label="Availability">
       {STATUSES.map((s) => (
         <button type="button" key={s} aria-pressed={filter.status === s} onClick={() => onStatus(s)}>
-          {STATUS_LABEL[s]}
+          {short && s === 'Requests Payday' ? 'Payday' : STATUS_LABEL[s]}
           <small>{counts[s] ?? 0}</small>
         </button>
       ))}

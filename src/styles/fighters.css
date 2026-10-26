@@ -2386,3 +2386,39 @@
 .drost:not(.drost--phone) .drost__main:not(.is-narrow):has(> .drost__list > .drost__listhead) > .drost__side {
   margin-top: 42px;
 }
+
+/*
+ * A desktop's command bar: the mode, which fighters, and Filters and Sort at
+ * its end, on one glass bar under the title — rather than four groups spread
+ * over three lines with no order between them.
+ */
+.drost:not(.drost--phone) .drost__toolbar {
+  padding: 8px;
+  border-radius: 14px;
+  background: rgb(8 14 28 / 72%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 10%);
+}
+.drost__vr {
+  width: 1px;
+  align-self: stretch;
+  margin: 4px 2px;
+  background: rgb(255 255 255 / 12%);
+}
+/* The roster's two chores, a matched pair; Payday's All/Unwilling switch is the gold half of its button. */
+.drost:not(.drost--phone) .drost__headacts .btn {
+  min-height: 40px;
+}
+.drost:not(.drost--phone) .paysplit:has(.paysplit__go:not(:disabled)) .paysplit__mode:not(:disabled) {
+  --btn-bg: linear-gradient(180deg, #f5bb2c, #d98e00);
+  --btn-line: rgb(0 0 0 / 25%);
+  color: #2a1a00;
+  text-shadow: none;
+}
+.drost:not(.drost--phone) .paysplit__mode::before {
+  display: none;
+}
+.drost:not(.drost--phone) .paysplit:has(.paysplit__go:not(:disabled)) .paysplit__mode[aria-pressed='true']:not(:disabled) {
+  --btn-bg: linear-gradient(180deg, #ffd56b, #f0a000);
+  color: #2a1a00;
+  box-shadow: inset 0 0 0 1.5px rgb(42 26 0 / 45%);
+}
