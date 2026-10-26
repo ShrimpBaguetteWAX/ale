@@ -518,18 +518,44 @@ export function DeskRoster(p: DeskRosterProps) {
           {phone ? <span className="sr-only">Filters</span> : 'Filters'}
           {active > 0 && <em>{active}</em>}
         </button>
-        {/* A phone keeps the sort in the same sheet as the filter. */}
-        <button
-          type="button"
-          className={`drost__tool${pop === 'sort' ? ' is-on' : ''}`}
-          aria-expanded={pop === 'sort'}
-          onClick={() => setPop(phone ? 'filters' : pop === 'sort' ? null : 'sort')}
-        >
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M7 4v16M3 16l4 4 4-4M17 20V4M13 8l4-4 4 4" />
-          </svg>
-          <small>Sort</small> {sortLabel}
-        </button>
+        {phone ? (
+          /*
+            A phone's sort is a dropdown of its own: the button wears the
+            current sort, and a tap opens the phone's own picker over it.
+          */
+          <label className="drost__tool drost__sortpick">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M7 4v16M3 16l4 4 4-4M17 20V4M13 8l4-4 4 4" />
+            </svg>
+            {sortLabel}
+            <span className="drost__caret" aria-hidden="true">
+              ▾
+            </span>
+            <select value={p.filter.sort} onChange={(e) => set({ sort: e.target.value })} aria-label="Sort by">
+              {SORT_GROUPS.map(([group, options]) => (
+                <optgroup key={group} label={group}>
+                  {options.map((o) => (
+                    <option key={o.value} value={o.value}>
+                      {o.label}
+                    </option>
+                  ))}
+                </optgroup>
+              ))}
+            </select>
+          </label>
+        ) : (
+          <button
+            type="button"
+            className={`drost__tool${pop === 'sort' ? ' is-on' : ''}`}
+            aria-expanded={pop === 'sort'}
+            onClick={() => setPop(pop === 'sort' ? null : 'sort')}
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M7 4v16M3 16l4 4 4-4M17 20V4M13 8l4-4 4 4" />
+            </svg>
+            <small>Sort</small> {sortLabel}
+          </button>
+        )}
         <button
           type="button"
           className="drost__dir"
@@ -565,7 +591,7 @@ export function DeskRoster(p: DeskRosterProps) {
 
       {pop && phone && (
         <BottomSheet
-          title="Filter & sort"
+          title="Filters"
           onClose={() => setPop(null)}
           foot={
             <>
@@ -580,16 +606,11 @@ export function DeskRoster(p: DeskRosterProps) {
         >
           <div className="drost__fsheet">
             <div>
-              <span className="drost__fhead">Sort</span>
-              <SortList chips filter={p.filter} onPick={(sort) => set({ sort })} />
-            </div>
-            <DirSeg filter={p.filter} onAsc={(sortAsc) => set({ sortAsc })} />
-            <div>
               <span className="drost__fhead">Show</span>
               <StatusSeg chips filter={p.filter} counts={counts} onStatus={(s) => set({ status: s })} />
             </div>
             <FilterFields {...p} />
-            <p className="drost__note">Health and damage sort, and their rules grade, after age — like the arrows.</p>
+            <p className="drost__note">Health and damage rules grade after age, like the arrows.</p>
           </div>
         </BottomSheet>
       )}
@@ -1436,16 +1457,15 @@ function DirSeg({ filter, onAsc }: { filter: RosterFilter; onAsc: (asc: boolean)
   )
 }
 
-/* `chips`: a phone's sheet, where the sorts run on as one wrap of chips with short names. */
-function SortList({ filter, onPick, chips = false }: { filter: RosterFilter; onPick: (sort: string) => void; chips?: boolean }) {
+function SortList({ filter, onPick }: { filter: RosterFilter; onPick: (sort: string) => void }) {
   return (
-    <div className={`drost__sorts${chips ? ' drost__sorts--chips' : ''}`}>
+    <div className="drost__sorts">
       {SORT_GROUPS.map(([group, options]) => (
         <div key={group}>
           <span className="drost__sorthead">{group}</span>
           {options.map((o) => (
             <button type="button" key={o.value} aria-pressed={filter.sort === o.value} onClick={() => onPick(o.value)}>
-              {chips ? o.label.replace(/ resistance$/i, ' res') : o.label}
+              {o.label}
             </button>
           ))}
         </div>

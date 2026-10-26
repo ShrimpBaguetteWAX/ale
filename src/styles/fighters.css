@@ -1813,6 +1813,38 @@
 .drost--phone .drost__tool small {
   display: none;
 }
+/* the sort as a dropdown: the phone's own picker, laid invisibly over the button */
+.drost__sortpick {
+  position: relative;
+  overflow: hidden;
+}
+.drost__sortpick select {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  font-size: 16px;
+  cursor: pointer;
+}
+/* The list a dropdown opens: dark, like the game. Left alone it took the
+   page's white text on the browser's white list, and could not be read. */
+.drost select {
+  color-scheme: dark;
+}
+.drost select option,
+.drost select optgroup {
+  color: var(--white);
+  background: #0b1324;
+}
+.drost__caret {
+  margin-left: -2px;
+  font-size: 10px;
+  color: var(--text-faint);
+}
+.drost__sortpick:focus-within {
+  box-shadow: inset 0 0 0 1.5px var(--cyan);
+}
 .drost--phone .drost__tool.is-on {
   background: rgb(124 92 255 / 30%);
   box-shadow: inset 0 0 0 1px #6f55ff;
@@ -2133,18 +2165,6 @@
   font-size: 8.5px;
   letter-spacing: 0.14em;
 }
-.drost__sorts--chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 5px;
-}
-.drost__sorts--chips > div {
-  display: contents;
-}
-.drost__sorts--chips .drost__sorthead {
-  display: none;
-}
-.drost__sorts--chips button,
 .drost__seg--chips button {
   flex: none;
   width: auto;
@@ -2156,14 +2176,10 @@
   color: var(--text-faint);
   font-size: 12px;
 }
-.drost__sorts--chips button[aria-pressed='true'],
 .drost--phone .drost__seg--chips button[aria-pressed='true'] {
   background: rgb(124 92 255 / 30%);
   box-shadow: inset 0 0 0 1px #6f55ff;
   color: var(--white);
-}
-.drost__sorts--chips button[aria-pressed='true']::after {
-  content: none;
 }
 .drost--phone .drost__seg--chips {
   flex-wrap: wrap;
