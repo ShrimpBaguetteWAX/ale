@@ -2381,3 +2381,8 @@
     padding: 0 5px;
   }
 }
+
+/* The fighter's panel level with the first row of the list, under its view switch. */
+.drost:not(.drost--phone) .drost__main:not(.is-narrow):has(> .drost__list > .drost__listhead) > .drost__side {
+  margin-top: 42px;
+}
