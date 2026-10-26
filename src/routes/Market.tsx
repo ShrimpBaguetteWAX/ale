@@ -750,6 +750,7 @@ function ListingRow({
   const { levelMod, ageDecay } = useConfig()
   const asFighter = listingAsFighter(listing)
   const bonus = ageBonus(asFighter, ageDecay, now)
+  const factor = battleFactor(asFighter, levelMod, ageDecay, now)
   return (
     <FighterRow
       stats={f}
@@ -759,9 +760,10 @@ function ListingRow({
       onToggle={onToggle}
       below={below}
       marker={marker}
+      ageFactor={factor.age}
       age={{
         bonus,
-        note: ageNote(bonus, ageDays(asFighter, now), battleFactor(asFighter, levelMod, ageDecay, now).age),
+        note: ageNote(bonus, ageDays(asFighter, now), factor.age),
       }}
       right={
         <span className="mrow__price">
@@ -775,7 +777,7 @@ function ListingRow({
     >
       {inline && (
         <>
-          <ListingBody stats={f} template={template} readout="stats" unlockLevel={unlockLevel} />
+          <ListingBody stats={f} template={template} readout="stats" unlockLevel={unlockLevel} factor={factor} />
           <div className="mrow__acts">
             <button type="button" className="btn btn--ghost btn--sm" onClick={onOpen}>
               Details
@@ -1884,6 +1886,7 @@ export function SellTab({
                     <FighterRow
                       key={f.fighter_id}
                       stats={f.stats}
+                      ageFactor={battleFactor(f, levelMod, ageDecay).age}
                       ascension={f.ascension_level}
                       marker={f.marker}
                       template={classes.get(f.classname)}
@@ -1927,6 +1930,7 @@ export function SellTab({
                 <FighterRow
                   key={f.fighter_id}
                   stats={f.stats}
+                  ageFactor={battleFactor(f, levelMod, ageDecay).age}
                   ascension={f.ascension_level}
                   marker={f.marker}
                   template={classes.get(f.classname)}

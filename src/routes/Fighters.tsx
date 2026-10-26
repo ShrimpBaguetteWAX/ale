@@ -109,8 +109,8 @@ import { GameImg } from '@/components/GameImg'
  * The reading half matters as much: a fighter's stored roll is not what it
  * fights with. The contract scales health and damage by `level_mod ^ level`
  * and `age_decay ^ (days²)` before the first blow, so those two are shown
- * scaled, with the grade arrows still measuring the underlying roll against
- * the class band.
+ * scaled. Their grade arrows measure the roll after age against the class
+ * band; level is left out, since it lifts every fighter of a level alike.
  */
 
 type Mode = 'inventory' | 'sell' | 'market'
@@ -1066,11 +1066,13 @@ export function Cost({
 /**
  * How good this roll is for its class.
  *
- * Always grades the *stored* roll, never the level-and-age figure shown
- * beside it: the class bands describe what the tavern can produce, so a
- * levelled fighter graded on its scaled health would show gold on every row
- * and say nothing about the fighter. Omitted entirely when the class band
- * has not loaded — an arrow that always means "average" is worse than none.
+ * Grades the roll, never the level figure shown beside it: the class bands
+ * describe what the tavern can produce, so a levelled fighter graded on its
+ * scaled health would show gold on every row and say nothing about the
+ * fighter. Health and damage are passed in after age, though — that loss is
+ * the fighter's own, and an old fighter should not grade like a fresh one.
+ * Omitted entirely when the class band has not loaded — an arrow that always
+ * means "average" is worse than none.
  */
 function GradeArrow({
   field,
@@ -1118,14 +1120,20 @@ function GradeIcon({ grade }: { grade: StatGrade | null }) {
 function CombatPanel({
   stats,
   factor,
+  ageFactor,
   template,
 }: {
   stats: RosterStats
   factor: number
+  /** `age_decay ^ (days²)`: health and damage are graded after it. */
+  ageFactor: number
   template?: ClassTemplate
 }) {
   const raw = stats as unknown as Record<string, number>
   const mid = (field: string) => (raw[`${field}_min`] + raw[`${field}_max`]) / 2
+  /* What the grades read: the roll, with health and damage after age. */
+  const graded = (field: string) =>
+    mid(field) * (field === 'health' || field === 'damage' ? ageFactor : 1)
 
   /* The same figures the Stats tab prints, so the arithmetic can be checked
      against the rows it came from. Only health and damage grow with level. */
@@ -1146,10 +1154,10 @@ function CombatPanel({
         </dt>
         <dd className="mono">
           {formatDecimals(dps, 2)}
-          {/* Graded on the rolled numbers, like every other arrow on the
+          {/* Graded on the roll after age, like every other arrow on the
               card: the level multiplier lifts every fighter of a level
               equally and says nothing about the roll. */}
-          <GradeIcon grade={gradeDamagePerSecond(mid('damage'), mid('attackspeed'), template)} />
+          <GradeIcon grade={gradeDamagePerSecond(graded('damage'), mid('attackspeed'), template)} />
         </dd>
       </div>
 
@@ -1167,7 +1175,7 @@ function CombatPanel({
         </dt>
         <dd className="mono">
           {Math.round(surv).toLocaleString(NUM_LOCALE)}
-          <GradeIcon grade={gradeSurvival(mid('health'), meanRes, template)} />
+          <GradeIcon grade={gradeSurvival(graded('health'), meanRes, template)} />
         </dd>
       </div>
 
@@ -1204,9 +1212,9 @@ function CombatPanel({
           {Math.round(score).toLocaleString(NUM_LOCALE)}
           <GradeIcon
             grade={gradeCombatScore(
-              mid('health'),
+              graded('health'),
               meanRes,
-              mid('damage'),
+              graded('damage'),
               mid('attackspeed'),
               template,
             )}
@@ -1878,7 +1886,7 @@ export function FighterCard({
                       {formatStat(min * scale, max * scale)}
                       <GradeArrow
                         field={field}
-                        raw={(min + max) / 2}
+                        raw={((min + max) / 2) * (field === 'health' || field === 'damage' ? factor.age : 1)}
                         template={template}
                       />
                     </dd>
@@ -1921,7 +1929,9 @@ export function FighterCard({
             </dl>
           )}
 
-          {tab === 'combat' && <CombatPanel stats={s} factor={factor.total} template={template} />}
+          {tab === 'combat' && (
+            <CombatPanel stats={s} factor={factor.total} ageFactor={factor.age} template={template} />
+          )}
 
           {tab === 'abilities' && (
             <div className="fability">
@@ -2048,6 +2058,8 @@ export function FighterCard({
 function rosterPanel(
   f: RosterFighter,
   factor: number,
+  /** `age_decay ^ (days²)`: health and damage are graded after it. */
+  age: number,
 ): PanelFighter {
   const s = f.stats
   return {
@@ -2060,12 +2072,12 @@ function rosterPanel(
     health: {
       min: s.health_min * factor,
       max: s.health_max * factor,
-      grade: (s.health_min + s.health_max) / 2,
+      grade: ((s.health_min + s.health_max) / 2) * age,
     },
     damage: {
       min: s.damage_min * factor,
       max: s.damage_max * factor,
-      grade: (s.damage_min + s.damage_max) / 2,
+      grade: ((s.damage_min + s.damage_max) / 2) * age,
     },
     taunt: { min: s.taunt_min, max: s.taunt_max },
     attackspeed: { min: s.attackspeed_min, max: s.attackspeed_max },
@@ -2112,7 +2124,7 @@ export function FighterDialog({
   const pay = paydayOf(fighter, config, now)
   const level = levelUpOf(fighter, levels)
   const days = ageDays(fighter, now)
-  const panel = rosterPanel(fighter, factor.total)
+  const panel = rosterPanel(fighter, factor.total, factor.age)
 
   return (
     <div className="sheet" role="dialog" aria-modal="true" onClick={onClose}>

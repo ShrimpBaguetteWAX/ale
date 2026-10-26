@@ -16,6 +16,7 @@ import {
   formatResistance,
   formatStat,
   gradeOfStat,
+  gradeStat,
   resolveAbilityDescription,
   statIcon,
   type ClassTemplate,
@@ -59,6 +60,30 @@ const PRIMARY_STATS = ['damage', 'health', 'taunt', 'attackspeed', 'initiative']
 /** The phone row's grades: the primary figures that have one. */
 const ROW_GRADES = ['damage', 'health', 'attackspeed', 'initiative'] as const
 
+/**
+ * A stat's grade, with health and damage taken at what the fighter fights
+ * with after age.
+ *
+ * The contract multiplies both by `age_decay ^ (days²)` before the first
+ * blow, so an old fighter's rolled health is not the health it brings. Level
+ * is left out on purpose: the class bands describe a fresh roll, and folding
+ * in `level_mod ^ level` would grade every levelled fighter gold. Everything
+ * else is fought with exactly as rolled and graded that way.
+ */
+export function gradeAged(
+  raw: Record<string, number>,
+  field: string,
+  template: ClassTemplate | undefined,
+  ageFactor = 1,
+): StatGrade | null {
+  if (ageFactor !== 1 && (field === 'damage' || field === 'health')) {
+    if (!template) return null
+    const mid = ((raw[`${field}_min`] ?? 0) + (raw[`${field}_max`] ?? 0)) / 2
+    return gradeStat(field, mid * ageFactor, template)
+  }
+  return gradeOfStat(raw, field, template)
+}
+
 const RESISTANCES: [string, string][] = [
   ['res_fire', 'Fire'],
   ['res_air', 'Air'],
@@ -87,6 +112,7 @@ export function FighterRow({
   marker,
   dim = false,
   age,
+  ageFactor,
   children,
 }: {
   stats: RosterStats
@@ -110,6 +136,8 @@ export function FighterRow({
    * fighters with the same stats can be worth very different amounts.
    */
   age?: { bonus: number; note: string }
+  /** `age_decay ^ (days²)`, so health and damage are graded as fought with. */
+  ageFactor?: number
   children?: React.ReactNode
 }) {
   const raw = f as unknown as Record<string, number>
@@ -118,7 +146,7 @@ export function FighterRow({
      which number it grades: damage, health, cooldown, windup. Taunt is a role
      rather than a quality and carries no grade.
   */
-  const grades = ROW_GRADES.map((field) => ({ field, grade: gradeOfStat(raw, field, template) }))
+  const grades = ROW_GRADES.map((field) => ({ field, grade: gradeAged(raw, field, template, ageFactor) }))
   /*
      A tag every ability, in its rarity's colour, the locked one hollow, so
      the count is the fighter's count. Sacrifice has no rarity and is the one
@@ -252,10 +280,16 @@ export function ListingBody({
   template,
   readout,
   unlockLevel,
+  factor,
 }: {
   stats: RosterFighter['stats']
   template?: ClassTemplate
   readout: Readout
+  /**
+   * Level and age, for a fighter that has them: health and damage are shown
+   * as fought with (`total`) and graded after age alone (`age`).
+   */
+  factor?: { total: number; age: number }
   /** Ascension level at which a locked ability starts working, from config. */
   unlockLevel?: number
 }) {
@@ -287,15 +321,18 @@ export function ListingBody({
 
       {shown === 'stats' && (
         <div className="listingcard__rows">
-          {PRIMARY_STATS.map((field) => (
-            <StatRow
-              key={field}
-              field={field}
-              label={STAT_LABEL[field] ?? field}
-              value={formatStat(raw[`${field}_min`] ?? 0, raw[`${field}_max`] ?? 0)}
-              grade={gradeOfStat(raw, field, template)}
-            />
-          ))}
+          {PRIMARY_STATS.map((field) => {
+            const scale = factor && (field === 'health' || field === 'damage') ? factor.total : 1
+            return (
+              <StatRow
+                key={field}
+                field={field}
+                label={STAT_LABEL[field] ?? field}
+                value={formatStat((raw[`${field}_min`] ?? 0) * scale, (raw[`${field}_max`] ?? 0) * scale)}
+                grade={gradeAged(raw, field, template, factor?.age)}
+              />
+            )
+          })}
         </div>
       )}
 

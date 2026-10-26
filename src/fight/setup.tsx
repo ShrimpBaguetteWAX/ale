@@ -303,8 +303,9 @@ export const elementIcon = (element: string) =>
  * shown raw, so the detail view disagreed with the card that opened it and
  * with the fight that followed.
  *
- * The grade arrows keep comparing the roll, since that is what the class
- * bands describe — see `PanelStat.grade`.
+ * The grade arrows compare the roll against the class bands, with health
+ * and damage taken after age (not level): an old fighter's arrows say what
+ * it brings to the fight, and level would grade every levelled fighter gold.
  */
 export function rosterPanel(
   f: RosterFighter,
@@ -325,12 +326,12 @@ export function rosterPanel(
     health: {
       min: s.health_min * factor,
       max: s.health_max * factor,
-      grade: mid(s.health_min, s.health_max),
+      grade: mid(s.health_min, s.health_max) * age,
     },
     damage: {
       min: s.damage_min * factor,
       max: s.damage_max * factor,
-      grade: mid(s.damage_min, s.damage_max),
+      grade: mid(s.damage_min, s.damage_max) * age,
     },
     taunt: { min: s.taunt_min, max: s.taunt_max },
     attackspeed: { min: s.attackspeed_min, max: s.attackspeed_max },
