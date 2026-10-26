@@ -1691,8 +1691,28 @@
 /* ---------- My Fighters on a phone: the same rows, sized for a thumb ---------- */
 
 .drost--phone {
+  /*
+     The stylesheet's edges: fields, buttons and toggles drawn in quiet white,
+     as on a desktop. Purple is kept for what is switched on, set below.
+  */
+  --ctl-line: rgb(255 255 255 / 16%);
+  --ctl-edge: rgb(255 255 255 / 12%);
+  --ctl-hover: rgb(255 255 255 / 34%);
+  --ctl-well: rgb(0 0 0 / 30%);
+  --ctl-hover-fill: rgb(255 255 255 / 6%);
   gap: 10px;
   padding-bottom: var(--sp-4);
+}
+/* a button that cannot be pressed: the stylesheet's dark glass, not a grey slab */
+.drost--phone .btn:disabled {
+  --btn-bg: rgb(255 255 255 / 6%);
+  --btn-line: rgb(255 255 255 / 14%);
+  box-shadow: none;
+  color: #8f9bb3;
+}
+.drost--phone .btn:disabled .cost,
+.drost--phone .btn:disabled .drost__cr {
+  opacity: 0.7;
 }
 .drost--phone.has-basket {
   padding-bottom: 96px;
@@ -1775,6 +1795,10 @@
   width: auto;
   min-width: 0;
   min-height: 36px;
+  padding-left: 32px;
+  border-radius: 10px;
+  background: rgb(0 0 0 / 30%) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237d889e' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m20 20-4-4'/%3E%3C/svg%3E") no-repeat 10px center / 15px;
+  font-size: 13px;
 }
 .drost--phone .drost__tool,
 .drost--phone .drost__dir {
@@ -2098,48 +2122,172 @@
   white-space: nowrap;
 }
 
-/* filter and sort, one sheet */
+/* filter and sort, one sheet: chips that wrap, tiles that fill the row, quiet fields */
 .drost__fsheet {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 14px;
 }
 .drost__fsheet .drost__fhead {
   margin-bottom: 6px;
+  font-size: 8.5px;
+  letter-spacing: 0.14em;
 }
-.drost__fsheet .drost__seg {
-  flex-wrap: wrap;
-}
-.drost__fsheet .drost__sorts {
-  gap: 8px;
-}
-.drost__fsheet .drost__sorts > div {
+.drost__sorts--chips {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
   gap: 5px;
 }
-.drost__fsheet .drost__sorthead {
-  flex-basis: 100%;
-  margin: 0;
+.drost__sorts--chips > div {
+  display: contents;
 }
-.drost__fsheet .drost__sorts button {
+.drost__sorts--chips .drost__sorthead {
+  display: none;
+}
+.drost__sorts--chips button,
+.drost__seg--chips button {
+  flex: none;
   width: auto;
-  padding: 5px 10px;
+  min-height: 30px;
+  padding: 0 10px;
   border-radius: 999px;
   background: rgb(255 255 255 / 5%);
   box-shadow: inset 0 0 0 1px rgb(255 255 255 / 12%);
+  color: var(--text-faint);
   font-size: 12px;
 }
-.drost__fsheet .drost__sorts button[aria-pressed='true'] {
+.drost__sorts--chips button[aria-pressed='true'],
+.drost--phone .drost__seg--chips button[aria-pressed='true'] {
   background: rgb(124 92 255 / 30%);
   box-shadow: inset 0 0 0 1px #6f55ff;
+  color: var(--white);
 }
-.drost__fsheet .drost__sorts button[aria-pressed='true']::after {
+.drost__sorts--chips button[aria-pressed='true']::after {
   content: none;
 }
-.drost--phone .drost__switch:checked {
-  background: #7c5cff;
+.drost--phone .drost__seg--chips {
+  flex-wrap: wrap;
+  gap: 5px;
+  padding: 0;
+  background: none;
+  box-shadow: none;
 }
+.drost--phone .drost__seg--chips button {
+  flex: none;
+  padding: 0 10px;
+}
+
+/* the element and marker toggles as tiles across the row, in their own colours */
+.drost__fsheet .filters__elements,
+.drost__fsheet .filters__markers {
+  display: flex;
+  gap: 5px;
+}
+.drost__fsheet .elembtn,
+.drost__fsheet .markbtn {
+  flex: 1;
+  width: auto;
+  height: 36px;
+  border: 0;
+  border-radius: 10px;
+  background: rgb(255 255 255 / 5%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 12%);
+  filter: none;
+  opacity: 1;
+}
+.drost__fsheet .elembtn img {
+  width: 20px;
+  height: 20px;
+}
+.drost__fsheet .markbtn img {
+  width: 17px;
+  height: 17px;
+}
+.drost__fsheet .elembtn[aria-pressed='true'],
+.drost__fsheet .markbtn[aria-pressed='true'] {
+  background: rgb(124 92 255 / 30%);
+  box-shadow: inset 0 0 0 1.5px #6f55ff;
+}
+
+/* fields: the stylesheet's 34px wells */
+.drost__fsheet .drost__two {
+  gap: 6px;
+}
+.drost__fsheet .drost__fcol {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 14px;
+}
+.drost--phone .drost__fsheet .input {
+  min-height: 36px;
+  padding: 0 11px;
+  border-radius: 10px;
+  background: rgb(0 0 0 / 30%);
+  font-size: 12.5px;
+}
+.drost__fsheet .drost__sw {
+  padding: 8px 12px;
+  font-size: 12.5px;
+}
+
+/* the quality floors: what is set as rows first, the add line under them */
+.drost__fsheet .qfilter {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+}
+.drost__fsheet .qfilter__rules {
+  order: -1;
+  display: grid;
+  gap: 5px;
+}
+.drost__fsheet .qfilter__rule {
+  justify-content: flex-start;
+  gap: 8px;
+  padding: 7px 10px;
+  border: 0;
+  border-radius: 10px;
+  background: rgb(124 92 255 / 14%);
+  box-shadow: inset 0 0 0 1px rgb(124 92 255 / 45%);
+  font-size: 12.5px;
+}
+.drost__fsheet .qfilter__x {
+  margin-left: auto;
+}
+/* the sheet's own Clear all covers these */
+.drost__fsheet .qfilter__rules .btn {
+  display: none;
+}
+.drost__fsheet .qfilter__add {
+  padding: 6px;
+  border-radius: 10px;
+  border: 1px dashed rgb(255 255 255 / 20%);
+}
+.drost__fsheet .qfilter,
+.drost__fsheet .qfilter__add {
+  min-width: 0;
+}
+/* the heading over it already names the row */
+.drost__fsheet .qfilter__lead {
+  display: none;
+}
+.drost__fsheet .drost__fcol > .drost__fhead {
+  margin-bottom: -8px;
+}
+.drost__fsheet .qfilter__add .input {
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 32px;
+  padding: 0 18px 0 8px;
+  font-size: 12px;
+}
+.drost__fsheet .qfilter__add .btn {
+  min-height: 32px;
+}
+
 .drost__grow {
   flex: 1;
 }

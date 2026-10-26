@@ -581,12 +581,12 @@ export function DeskRoster(p: DeskRosterProps) {
           <div className="drost__fsheet">
             <div>
               <span className="drost__fhead">Sort</span>
-              <SortList filter={p.filter} onPick={(sort) => set({ sort })} />
+              <SortList chips filter={p.filter} onPick={(sort) => set({ sort })} />
             </div>
             <DirSeg filter={p.filter} onAsc={(sortAsc) => set({ sortAsc })} />
             <div>
               <span className="drost__fhead">Show</span>
-              <StatusSeg filter={p.filter} counts={counts} onStatus={(s) => set({ status: s })} />
+              <StatusSeg chips filter={p.filter} counts={counts} onStatus={(s) => set({ status: s })} />
             </div>
             <FilterFields {...p} />
             <p className="drost__note">Health and damage sort, and their rules grade, after age — like the arrows.</p>
@@ -1404,13 +1404,15 @@ function StatusSeg({
   filter,
   counts,
   onStatus,
+  chips = false,
 }: {
   filter: RosterFilter
   counts: Record<Status, number>
   onStatus: (s: Status) => void
+  chips?: boolean
 }) {
   return (
-    <span className="drost__seg" role="group" aria-label="Availability">
+    <span className={`drost__seg${chips ? ' drost__seg--chips' : ''}`} role="group" aria-label="Availability">
       {STATUSES.map((s) => (
         <button type="button" key={s} aria-pressed={filter.status === s} onClick={() => onStatus(s)}>
           {STATUS_LABEL[s]}
@@ -1434,15 +1436,16 @@ function DirSeg({ filter, onAsc }: { filter: RosterFilter; onAsc: (asc: boolean)
   )
 }
 
-function SortList({ filter, onPick }: { filter: RosterFilter; onPick: (sort: string) => void }) {
+/* `chips`: a phone's sheet, where the sorts run on as one wrap of chips with short names. */
+function SortList({ filter, onPick, chips = false }: { filter: RosterFilter; onPick: (sort: string) => void; chips?: boolean }) {
   return (
-    <div className="drost__sorts">
+    <div className={`drost__sorts${chips ? ' drost__sorts--chips' : ''}`}>
       {SORT_GROUPS.map(([group, options]) => (
         <div key={group}>
           <span className="drost__sorthead">{group}</span>
           {options.map((o) => (
             <button type="button" key={o.value} aria-pressed={filter.sort === o.value} onClick={() => onPick(o.value)}>
-              {o.label}
+              {chips ? o.label.replace(/ resistance$/i, ' res') : o.label}
             </button>
           ))}
         </div>
