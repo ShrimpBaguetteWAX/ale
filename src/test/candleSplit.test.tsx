@@ -1,17 +1,17 @@
 import { describe, expect, it, afterEach, vi } from 'vitest'
 import { render, cleanup, fireEvent } from '@testing-library/react'
-import { Mission } from '@/routes/Candle'
+import { Contribute, Dossier } from '@/candle/DeskCandle'
 import type { CandleOffer, Contribution } from '@/candle/types'
 import type { Player } from '@/chain/types'
 
 /**
- * The things about the split that only exist on screen.
+ * The things about the desktop mission board that only exist on screen.
  *
  * Its shape is checked by eye against the harness, but a harness has no
- * assertions: it cannot show that the bar is drawn from the board, that a
- * player short of the requirement is refused the control, that the slider
- * and the box write the same draft, or that the pending slice appears only
- * once there is something to price. Those are here.
+ * assertions: it cannot show that the bar and the board are drawn from the
+ * stakes, that a player short of the requirement is refused the control, that
+ * the slider and the box write the same draft, or that the pending gems are
+ * drawn in only once there is something to price. Those are here.
  */
 const NOW = Date.parse('2026-09-27T12:00:00Z')
 const iso = (ms: number) => new Date(NOW + ms).toISOString().slice(0, 19)
@@ -41,22 +41,23 @@ const stakes: Contribution[] = [
   { offer_id: offer.offer_id, wallet: 'someone.wam', amount: 900 },
   { offer_id: offer.offer_id, wallet: 'other.wam', amount: 8_500 },
 ]
+const board = { stakes, contributors: 3, mine: 900 }
 
-const split = (over: Partial<Parameters<typeof Mission>[0]> = {}) =>
+const dossier = (over: Partial<Parameters<typeof Dossier>[0]> = {}) =>
+  render(<Dossier offer={offer} board={board} player={player(7_400)} now={NOW} amount={0} {...over} />)
+
+const contribute = (over: Partial<Parameters<typeof Contribute>[0]> = {}) =>
   render(
-    <Mission
+    <Contribute
       offer={offer}
+      board={board}
       player={player(7_400)}
-      mine={900}
-      stakes={stakes}
-      contributors={3}
       now={NOW}
       balance={4_200}
-      gems=""
-      amount={0}
+      draft=""
+      onDraft={() => {}}
       busy={null}
       canAct
-      onGems={() => {}}
       onContribute={() => {}}
       {...over}
     />,
@@ -64,96 +65,100 @@ const split = (over: Partial<Parameters<typeof Mission>[0]> = {}) =>
 
 afterEach(cleanup)
 
-describe('the split', () => {
-  it('draws one slice per stake, biggest first, with the player marked', () => {
-    const { container } = split()
-    const segs = [...container.querySelectorAll('.split__seg')]
+describe('the mission in full', () => {
+  it('draws one slice and one row per stake, biggest first, with the player marked', () => {
+    const { container } = dossier()
+    const segs = [...container.querySelectorAll('.dcan__seg')]
     expect(segs).toHaveLength(3)
-    /* 9,000 of 18,400 leads; the player's 900 is last and teal. */
-    expect(segs[0].textContent).toMatch(/^1\. whale\.wam/)
-    expect(segs[0].textContent).toContain('48.9%')
-    expect(segs[2].classList.contains('split__seg--you')).toBe(true)
-    expect(segs[2].textContent).toMatch(/^3\. you/)
-    /* Nothing pending: no ghost, no projection. */
-    expect(container.querySelector('.split__seg--ghost')).toBeNull()
-    expect(container.querySelector('.split__after')).toBeNull()
+    /* 9,000 of 18,400 leads; the player's 900 is last. */
+    expect(segs[0].getAttribute('title')).toMatch(/^1\. whale\.wam · 48\.9%/)
+    expect(segs[2].classList.contains('dcan__seg--you')).toBe(true)
+    const rows = [...container.querySelectorAll('.dcan__row:not(.dcan__row--head)')]
+    expect(rows).toHaveLength(3)
+    expect(rows[2].classList.contains('is-you')).toBe(true)
+    /* Nothing pending: no ghost. */
+    expect(container.querySelector('.dcan__seg--ghost')).toBeNull()
   })
 
-  it('names a slice by tag when the screen has one', () => {
-    const { container } = split({ tags: { 'whale.wam': 'Vornax' } })
-    expect(container.querySelector('.split__seg')?.textContent).toMatch(/^1\. Vornax/)
+  it('names a row by tag when the screen has one', () => {
+    const { container } = dossier({ tags: { 'whale.wam': 'Vornax' } })
+    expect(container.querySelector('.dcan__row:not(.dcan__row--head) .dcan__name')?.textContent).toBe('Vornax')
   })
 
-  it('adds a ghost slice and prices the contribution once there is one', () => {
-    const { container } = split({ gems: '1000', amount: 1_000 })
-    const ghost = container.querySelector('.split__seg--ghost')
+  it('draws the pending gems in, and every share against pot plus pending', () => {
+    const { container } = dossier({ amount: 1_000 })
+    const ghost = container.querySelector('.dcan__seg--ghost') as HTMLElement
     expect(ghost).not.toBeNull()
-    /* Every slice is a share of pot plus pending: 1,000 of 19,400. */
-    expect((ghost as HTMLElement).style.flexBasis).toMatch(/^5\.15/)
-    expect(container.querySelector('.split__after')?.textContent).toContain('Your share after')
-    expect(container.querySelector('.split__after')?.textContent).toContain('Worth per gem after')
+    /* 1,000 of 19,400. */
+    expect(ghost.style.flexBasis).toMatch(/^5\.15/)
+    /* The player's row is what it would be after: 900 + 1,000 of 19,400. */
+    const you = container.querySelector('.dcan__row.is-you')
+    expect(you?.textContent).toContain('1,900')
+    expect(you?.textContent).toContain('9.8%')
   })
 
-  it('writes the same draft from the slider and from the box', () => {
-    const onGems = vi.fn()
-    const { getByLabelText } = split({ onGems })
-    fireEvent.change(getByLabelText('Gems to contribute'), { target: { value: '750' } })
-    fireEvent.change(getByLabelText('Gems to contribute, exactly'), { target: { value: '12' } })
-    expect(onGems).toHaveBeenNthCalledWith(1, '750')
-    expect(onGems).toHaveBeenNthCalledWith(2, '12')
-  })
-
-  it('says qualified when the requirement is cleared, and how far past it', () => {
-    const { container } = split()
-    const ok = container.querySelector('.split__gate--ok')
-    expect(ok).not.toBeNull()
-    expect(ok?.getAttribute('title')).toBe(
-      'Needs 5,000 lifetime energy saved in taverns — you have 7,400',
-    )
-    expect(container.querySelector('.split--locked')).toBeNull()
-  })
-
-  it('locks the control and says what is short when it is not', () => {
-    const { container, getByText, getByLabelText } = split({
-      player: player(2_400),
-      mine: 0,
-      gems: '500',
-      amount: 500,
-    })
-    expect(container.querySelector('.split--locked')).not.toBeNull()
-    expect(getByText(/2,600 short/)).toBeTruthy()
-    expect(getByLabelText('Gems to contribute')).toHaveProperty('disabled', true)
-    expect(getByLabelText('Gems to contribute, exactly')).toHaveProperty('disabled', true)
-    expect(getByText('Locked')).toBeTruthy()
-    /* A locked mission has nothing to project, whatever is in the box. */
-    expect(container.querySelector('.split__seg--ghost')).toBeNull()
-    expect(container.querySelector('.split__after')).toBeNull()
-  })
-
-  it('counts up to the start rather than down to the close before it opens', () => {
-    const soon = { ...offer, offer_start: iso(2 * 3_600_000), offer_end: iso(11 * 3_600_000) }
-    const { container, getByText } = split({ offer: soon as CandleOffer, mine: 0 })
-    expect(container.querySelector('.split--soon')).not.toBeNull()
-    expect(getByText('Opens in')).toBeTruthy()
-    expect(getByText('Not open yet')).toBeTruthy()
-  })
-
-  it('opens the board from the player count, and does not offer it when nobody is in', () => {
-    const { container, getByTitle } = split()
-    expect(container.querySelector('[role="dialog"]')).toBeNull()
-    fireEvent.click(getByTitle('See who has contributed and how much'))
-    expect(container.querySelector('[role="dialog"]')).not.toBeNull()
-    cleanup()
-
-    const empty = split({ stakes: [], contributors: 0, offer: { ...offer, total_gems: 0 } })
-    expect(empty.container.querySelector('.split__who')).toHaveProperty('disabled', true)
-    expect(empty.container.querySelector('.split__none')?.textContent).toContain('Nobody has contributed yet')
+  it('does not draw pending gems into a mission the player is locked out of', () => {
+    const { container } = dossier({ player: player(2_400), amount: 500 })
+    expect(container.querySelector('.dcan__seg--ghost')).toBeNull()
   })
 
   it('draws a pot whose board has not arrived as one plain slice', () => {
-    const { container } = split({ stakes: [] })
-    const segs = container.querySelectorAll('.split__seg')
+    const { container } = dossier({ board: { stakes: [], contributors: 0, mine: 0 } })
+    const segs = container.querySelectorAll('.dcan__seg')
     expect(segs).toHaveLength(1)
     expect((segs[0] as HTMLElement).style.flexBasis).toBe('100%')
+  })
+
+  it('says nobody is in yet on an empty pot', () => {
+    const { container } = dossier({ board: { stakes: [], contributors: 0, mine: 0 }, offer: { ...offer, total_gems: 0 } })
+    expect(container.querySelector('.dcan__none')?.textContent).toContain('Nobody has contributed yet')
+  })
+
+  it('says qualified when the requirement is cleared, and how far past it', () => {
+    const { container } = dossier()
+    expect(container.querySelector('.dcan__gate.is-ok')?.getAttribute('title')).toBe(
+      'Needs 5,000 lifetime energy saved in taverns — you have 7,400',
+    )
+  })
+})
+
+describe('contributing', () => {
+  it('writes the same draft from the slider, the box and the quick amounts', () => {
+    const onDraft = vi.fn()
+    const { getByLabelText, getByText } = contribute({ onDraft })
+    fireEvent.change(getByLabelText('Gems to contribute'), { target: { value: '750' } })
+    fireEvent.change(getByLabelText('Gems to contribute, exactly'), { target: { value: '12' } })
+    fireEvent.click(getByText('250'))
+    expect(onDraft).toHaveBeenNthCalledWith(1, '750')
+    expect(onDraft).toHaveBeenNthCalledWith(2, '12')
+    expect(onDraft).toHaveBeenNthCalledWith(3, '250')
+  })
+
+  it('prices a contribution once there is one', () => {
+    const { container, getByText } = contribute({ draft: '1000' })
+    expect(container.querySelector('.dcan__after')?.textContent).toContain('A gem buys after')
+    expect(getByText("You'd take at close")).toBeTruthy()
+    expect(getByText('Contribute 1,000 gems')).toBeTruthy()
+  })
+
+  it('locks the control and shows how far along the requirement the player is', () => {
+    const { container, getByText, getByRole, queryByLabelText } = contribute({ player: player(2_400), draft: '500' })
+    expect(container.querySelector('.is-locked')).not.toBeNull()
+    expect(getByText('2,400 / 5,000')).toBeTruthy()
+    expect(queryByLabelText('Gems to contribute')).toBeNull()
+    expect(getByRole('button', { name: 'Locked' })).toHaveProperty('disabled', true)
+  })
+
+  it('counts up to the start rather than down to the close before it opens', () => {
+    const soon = { ...offer, offer_start: iso(2 * 3_600_000), offer_end: iso(11 * 3_600_000) } as CandleOffer
+    const { getByText } = contribute({ offer: soon })
+    expect(getByText('Opens in')).toBeTruthy()
+    expect(getByText('Not open yet')).toHaveProperty('disabled', true)
+  })
+
+  it('refuses more gems than the player holds', () => {
+    const { getByText } = contribute({ draft: '5000' })
+    expect(getByText('That is more gems than you hold.')).toBeTruthy()
+    expect(getByText('Contribute 5,000 gems')).toHaveProperty('disabled', true)
   })
 })

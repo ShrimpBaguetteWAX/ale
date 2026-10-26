@@ -42,14 +42,6 @@
   max-width: min(1400px, 100%);
 }
 
-.candle__head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: var(--sp-5);
-  flex-wrap: wrap;
-}
-
 /*
  * The title belongs to this screen's palette, not to the app's default.
  *
@@ -69,335 +61,6 @@
   color: #ffdb7d;
 }
 
-.candle__lede {
-  margin: var(--sp-1) 0 0;
-  max-width: 62ch;
-  font-size: var(--fs-sm);
-  line-height: 1.55;
-  color: var(--text-dim);
-}
-
-.candle__empty {
-  margin: var(--sp-10) auto;
-  max-width: 46ch;
-  text-align: center;
-  color: var(--text-dim);
-}
-
-/* One column: the missions have the page to themselves. */
-.candle__cols {
-  display: grid;
-  gap: var(--sp-4);
-  align-items: start;
-}
-
-/* ---------- what is waiting to be claimed ---------- */
-
-/*
- * A strip on the title's line, not a panel in a column.
- *
- * Two figures and a button do not need a third of the page. A slab with a
- * lit top edge and the tokens sunk into it, read on the way past.
- */
-.claimbar {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-3);
-  flex-wrap: wrap;
-  padding: 10px 12px;
-  border-radius: 14px;
-  background: linear-gradient(180deg, #2b3a5c, #16203a 22%, #101829 75%, #0a1120);
-  border: 1px solid rgb(148 163 184 / 30%);
-  box-shadow:
-    0 18px 40px rgb(0 0 0 / 45%),
-    inset 0 2px 0 rgb(255 255 255 / 14%);
-}
-
-.claimbar__label {
-  font-family: var(--font-display);
-  font-size: 10px;
-  letter-spacing: 0.24em;
-  text-transform: uppercase;
-  color: var(--text-faint);
-  padding-left: 4px;
-}
-
-.claimbar__amt {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  padding: 7px 12px;
-  border-radius: 9px;
-  border: 1px solid rgb(148 163 184 / 20%);
-  background: linear-gradient(180deg, #0a1220, #05090f);
-  box-shadow: inset 0 8px 14px rgb(0 0 0 / 55%);
-}
-
-.claimbar__amt img {
-  flex: none;
-  object-fit: contain;
-}
-
-.claimbar__amt b {
-  font-family: var(--font-display);
-  font-variant-numeric: tabular-nums;
-  font-size: var(--fs-md);
-  color: #ffdb7d;
-}
-
-.claimbar__amt span {
-  font-size: var(--fs-xs);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--text-faint);
-}
-
-/* Nothing waiting is not a payout, so it is not gold. */
-.claimbar--nil .claimbar__amt b {
-  color: var(--text-faint);
-}
-
-.claimbar__go {
-  margin-left: var(--sp-1);
-}
-
-@media (max-width: 720px) {
-  .claimbar {
-    width: 100%;
-  }
-
-  .claimbar__go {
-    margin-left: auto;
-  }
-}
-
-/* ---------- what is coming ---------- */
-
-/*
- * The queue behind the running mission.
- *
- * Deliberately quieter than the mission above it: these are not actionable
- * yet, and a row that looks pressable when it is not is worse than no row.
- * Each one leads with what it pays, because that — not the requirement — is
- * what decides whether to hold gems back for it.
- */
-/* The queue, in the same cabinet as everything else on the screen. */
-.upnext {
-  margin-top: var(--sp-8);
-  padding: 14px;
-  border-radius: 18px;
-  background: linear-gradient(180deg, #2b3a5c, #16203a 18%, #101829 70%, #0a1120);
-  border: 1px solid rgb(148 163 184 / 30%);
-  box-shadow:
-    0 24px 50px rgb(0 0 0 / 50%),
-    inset 0 2px 0 rgb(255 255 255 / 14%);
-}
-
-/*
- * Section headings on this screen are labels, not headlines.
- *
- * The app's default heading colour is a neon yellow, which on a panel whose
- * own labels are faint grey caps made 'COMING UP' louder than the prize
- * under it. The same pale gold as the page title, one step down in weight
- * of colour, keeps the screen to one warm accent.
- */
-.upnext .panel__title,
-.candleboard__panel .panel__title {
-  margin: 0;
-  padding: 0 4px;
-  color: rgb(255 219 125 / 72%);
-}
-
-.upnext__rows {
-  display: grid;
-  gap: var(--sp-2);
-  margin-top: var(--sp-3);
-}
-
-/* Each one a slot in the wall: sunk, lit from above, waiting its turn. */
-.upnext__row {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-3);
-  padding: 11px 14px;
-  border: 1px solid rgb(148 163 184 / 18%);
-  border-radius: 10px;
-  background: linear-gradient(180deg, #0a1220, #05090f);
-  box-shadow: inset 0 8px 16px rgb(0 0 0 / 55%);
-}
-
-.upnext__icon {
-  display: inline-block;
-  flex: none;
-}
-
-.upnext__what {
-  display: grid;
-  gap: 1px;
-  min-width: 0;
-  flex: 1;
-}
-
-/* The prize, in the same face and the same gold as the pot and the tray. */
-.upnext__amt {
-  display: flex;
-  align-items: baseline;
-  gap: 6px;
-}
-
-.upnext__amt b {
-  font-family: var(--font-display);
-  font-size: var(--fs-md);
-  font-variant-numeric: tabular-nums;
-  color: #ffdb7d;
-}
-
-.upnext__amt > span {
-  font-size: var(--fs-xs);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--text-faint);
-}
-
-/*
- * The bar and where the player stands against it.
- *
- * At 11px, clipped to one line with an ellipsis, it was a caption under the
- * reward — and the half a player is looking for is at the end of it, which
- * is the half an ellipsis eats. It wraps now, and it is readable.
- */
-.upnext__req {
-  font-size: 13px;
-  line-height: 1.4;
-  color: var(--text-dim);
-}
-
-.upnext__req b {
-  font-family: var(--font-display);
-  font-weight: 600;
-  color: var(--white);
-}
-
-/* Teal only once it is cleared. Every upcoming mission is one you have not
-   qualified for yet, so marking them all would say nothing. */
-.upnext__row--ready .upnext__req b {
-  color: var(--teal);
-}
-
-.upnext__when {
-  display: grid;
-  justify-items: end;
-  gap: 1px;
-  flex: none;
-  text-align: right;
-}
-
-.upnext__when span {
-  font-size: 9px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--text-faint);
-}
-
-.upnext__when strong {
-  font-family: var(--font-display);
-  font-size: var(--fs-sm);
-  font-variant-numeric: tabular-nums;
-  color: var(--white);
-}
-
-/* ---------- who is in ---------- */
-
-.candleboard__panel {
-  border-radius: 18px;
-  background: linear-gradient(180deg, #2b3a5c, #16203a 18%, #101829 70%, #0a1120);
-  border: 1px solid rgb(148 163 184 / 30%);
-  box-shadow:
-    0 30px 70px rgb(0 0 0 / 60%),
-    inset 0 2px 0 rgb(255 255 255 / 14%);
-}
-
-.candleboard {
-  display: grid;
-  gap: 2px;
-  max-height: 60vh;
-  overflow-y: auto;
-}
-
-/*
- * Rank, face, name, share, gems.
- *
- * The two figures are pinned to their own columns rather than allowed to
- * follow the name, because the whole point of the board is reading down them.
- */
-/*
- * One sunk row each, and the light from above.
- *
- * The board is read down two columns of figures, so the rows are the same
- * recess the tray and the hopper are cut into — it puts the numbers on a
- * surface rather than on a tint, and the cyan row reads as yours because
- * cyan is what the player's own things are everywhere else on the cabinet.
- */
-.candleboard {
-  gap: 6px;
-}
-
-.candleboard__row {
-  display: grid;
-  grid-template-columns: 28px 28px minmax(0, 1fr) auto auto;
-  align-items: center;
-  gap: var(--sp-2);
-  padding: 8px 12px;
-  border-radius: 9px;
-  border: 1px solid rgb(148 163 184 / 16%);
-  background: linear-gradient(180deg, #0a1220, #05090f);
-  box-shadow: inset 0 8px 14px rgb(0 0 0 / 50%);
-}
-
-.candleboard__row--you {
-  border-color: rgb(0 186 255 / 45%);
-  background: linear-gradient(180deg, rgb(0 186 255 / 14%), rgb(0 88 130 / 12%));
-  box-shadow: inset 0 8px 14px rgb(0 0 0 / 35%);
-}
-
-.candleboard__avatar {
-  width: 28px;
-  height: 28px;
-  border-radius: var(--radius-full);
-  object-fit: cover;
-  background: rgb(255 255 255 / 6%);
-}
-
-.candleboard__name {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.candleboard__you {
-  margin-left: var(--sp-2);
-  padding: 1px 5px;
-  border-radius: var(--radius-full);
-  background: rgb(24 179 255 / 24%);
-  font-size: 9px;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-}
-
-.candleboard__cut {
-  color: var(--text-dim);
-  font-family: var(--font-display);
-  font-size: var(--fs-xs);
-  font-variant-numeric: tabular-nums;
-}
-
-.candleboard__gems {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-variant-numeric: tabular-nums;
-}
 /* ---------- the mission, as a split ---------- */
 
 /*
@@ -431,19 +94,6 @@
   margin-top: var(--sp-4);
 }
 
-.split--loading {
-  min-height: 260px;
-  border-color: var(--line-soft);
-  background-image: linear-gradient(
-    -90deg,
-    rgb(255 255 255 / 4%),
-    rgb(255 255 255 / 10%),
-    rgb(255 255 255 / 4%)
-  );
-  background-size: 400% 400%;
-  animation: split-shimmer 1.2s ease-in-out infinite;
-}
-
 @keyframes split-shimmer {
   0% {
     background-position: 0% 50%;
@@ -453,394 +103,12 @@
   }
 }
 
-/* ---- the top line: mission, gate, clock ---- */
-
-.split__top {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  flex-wrap: wrap;
-}
-
-/* Every small label on the card is this: caps, spaced, faint. */
-.split__kick {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 11px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--text-faint);
-}
-
-.split__kick b {
-  color: var(--text-dim);
-  font-weight: 600;
-}
-
-.split__name {
-  margin: 0;
-  font-size: var(--fs-md);
-  font-weight: 600;
-  color: var(--white);
-}
-
-.split__gate {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 3px 9px;
-  border-radius: var(--radius-full);
-  font-size: var(--fs-xs);
-  font-weight: 600;
-}
-
-.split__gate--ok {
-  color: #8fe0a8;
-  background: rgb(127 212 154 / 12%);
-  cursor: help;
-}
-
-.split__gate--short {
-  color: #f4a0a0;
-  background: rgb(240 138 138 / 12%);
-  cursor: help;
-}
-
-.split__clock {
-  display: grid;
-  justify-items: end;
-  gap: 1px;
-  margin-left: auto;
-  text-align: right;
-  white-space: nowrap;
-}
-
-.split__clock > span {
-  font-size: 11px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--text-faint);
-}
-
-.split__clock b {
-  font-family: var(--font-display);
-  font-size: var(--fs-md);
-  font-variant-numeric: tabular-nums;
-  color: var(--white);
-}
-
-/* ---- the prize ---- */
-
-.split__pot {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin: 0;
-}
-
-.split__pot img {
-  flex: none;
-  object-fit: contain;
-}
-
-.split__pot b {
-  font-family: var(--font-display);
-  font-size: 2rem;
-  line-height: 1;
-  font-variant-numeric: tabular-nums;
-  color: #ffdb7d;
-}
-
-.split__pot span {
-  font-size: var(--fs-sm);
-  color: var(--text-dim);
-}
-
-/* ---- the bar ---- */
-
-.split__bar {
-  display: flex;
-  height: 46px;
-  border-radius: 8px;
-  background: rgb(0 0 0 / 40%);
-}
-
-/* The thinnest stakes still get a sliver, so every player is on the bar;
-   the big slices give up the few pixels that costs. */
-.split__seg {
-  position: relative;
-  flex: 0 1 auto;
-  min-width: 4px;
-  height: 100%;
-  background: #3b4d6e;
-  border-right: 2px solid rgb(5 9 18);
-  transition: flex-basis 0.25s ease;
-}
-
-.split__seg:first-child {
-  border-radius: 8px 0 0 8px;
-}
-
-.split__seg:last-child {
-  border-radius: 0 8px 8px 0;
-  border-right: 0;
-}
-
-.split__seg:nth-child(odd) {
-  background: #33445f;
-}
-
-.split__seg--you {
-  background: var(--teal) !important;
-}
-
-.split__seg--ghost {
-  background: repeating-linear-gradient(
-    135deg,
-    rgb(14 212 168 / 75%) 0 6px,
-    rgb(14 212 168 / 25%) 6px 12px
-  ) !important;
-}
-
-.split__seg:hover {
-  filter: brightness(1.18);
-}
-
-/* The name of a slice, on hover. The end slices pin to their own edge so a
-   wide label never leaves the card. */
-.split__tip {
-  position: absolute;
-  left: 50%;
-  bottom: calc(100% + 8px);
-  transform: translateX(-50%);
-  z-index: 2;
-  white-space: nowrap;
-  padding: 6px 10px;
-  border-radius: 8px;
-  border: 1px solid rgb(148 163 184 / 30%);
-  background: #1f2d4a;
-  font-size: var(--fs-xs);
-  color: var(--white);
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.15s;
-}
-
-.split__tip b {
-  color: #ffdb7d;
-}
-
-.split__seg:first-child .split__tip {
-  left: 0;
-  transform: none;
-}
-
-.split__seg:last-child .split__tip {
-  left: auto;
-  right: 0;
-  transform: none;
-}
-
-.split__seg:hover .split__tip {
-  opacity: 1;
-}
-
-.split--locked .split__bar,
-.split--soon .split__bar {
-  opacity: 0.55;
-}
-
-.split__none {
-  margin: -6px 0 0;
-  font-size: var(--fs-sm);
-  color: var(--text-faint);
-}
-
-/* ---- the line under the bar ---- */
-
-.split__under {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  flex-wrap: wrap;
-  font-size: var(--fs-sm);
-  color: var(--text-dim);
-}
-
-.split__under b {
-  font-family: var(--font-display);
-  font-size: var(--fs-sm);
-  font-variant-numeric: tabular-nums;
-  color: var(--white);
-}
-
-/* The player count is a link to the board, and looks like one. */
-.split__who {
-  padding: 0;
-  border: 0;
-  background: none;
-  color: var(--teal);
-  font: inherit;
-  cursor: pointer;
-  text-decoration: underline dotted;
-  text-underline-offset: 3px;
-}
-
-.split__who b {
-  color: inherit;
-}
-
-.split__who:hover:not(:disabled) {
-  text-decoration-style: solid;
-}
-
-.split__who:disabled {
-  color: var(--text-dim);
-  cursor: default;
-  text-decoration: none;
-}
-
-/* ---- the player's row ---- */
-
-.split__you {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 18px;
-  align-items: end;
-  padding: 14px 16px;
-  border-radius: 12px;
-  border: 1px solid rgb(14 212 168 / 28%);
-  background: rgb(14 212 168 / 7%);
-}
-
-.split__you .split__kick {
-  color: #7fd9cc;
-}
-
-.split__you .split__kick b {
-  color: #a9ece2;
-}
-
-/* A mission you cannot feed has no teal: the row is just a row. */
-.split--locked .split__you,
-.split--soon .split__you {
-  border-color: var(--line-soft);
-  background: rgb(255 255 255 / 3%);
-}
-
-.split--locked .split__you .split__kick,
-.split--soon .split__you .split__kick {
-  color: var(--text-faint);
-}
-
-.split__share {
-  min-width: 0;
-}
-
-.split__now {
-  margin: 4px 0 0;
-  font-family: var(--font-display);
-  font-size: 1.2rem;
-  color: var(--white);
-}
-
-.split__now small {
-  margin-left: 6px;
-  font-family: var(--font-body);
-  font-size: var(--fs-xs);
-  color: var(--text-dim);
-}
-
-.split__after {
-  margin: 6px 0 0;
-  font-size: var(--fs-sm);
-  color: var(--text-dim);
-}
-
-.split__after b {
-  color: var(--teal);
-}
-
-.split__gem {
-  display: inline-block;
-  vertical-align: -2px;
-}
-
-.split__ctl {
-  display: grid;
-  gap: 6px;
-  justify-items: end;
-}
-
-.split__field {
-  display: grid;
-  grid-template-columns: 170px 110px auto;
-  gap: 10px;
-  align-items: center;
-}
-
-.split__range {
-  width: 100%;
-  margin: 0;
-  accent-color: var(--teal);
-}
-
-.split__range:disabled {
-  opacity: 0.4;
-}
-
-.split__in {
-  min-height: 42px;
-  width: 100%;
-  padding: 0 12px;
-  border-radius: 10px;
-  border: 1px solid rgb(148 163 184 / 35%);
-  background: rgb(5 9 18 / 90%);
-  color: var(--white);
-  font: 600 var(--fs-md) var(--font-body);
-  font-variant-numeric: tabular-nums;
-}
-
-.split__in:focus {
-  outline: 2px solid var(--teal);
-  outline-offset: 1px;
-  border-color: transparent;
-}
-
-.split__in:disabled {
-  color: var(--text-faint);
-}
-
-/* Spinner buttons on a number box are a second, worse slider. */
-.split__in::-webkit-outer-spin-button,
-.split__in::-webkit-inner-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
-
-.split__in[type='number'] {
-  -moz-appearance: textfield;
-  appearance: textfield;
-}
-
 .split__go {
   min-height: 42px;
   white-space: nowrap;
 }
 
 @media (max-width: 860px) {
-  .split__you {
-    grid-template-columns: 1fr;
-  }
-
-  .split__ctl {
-    justify-items: stretch;
-  }
-
-  .split__field {
-    grid-template-columns: minmax(0, 1fr) 100px;
-  }
 
   .split__go {
     grid-column: 1 / -1;
@@ -852,24 +120,6 @@
     padding: 14px;
   }
 
-  .split__bar {
-    height: 36px;
-  }
-
-  .split__pot b {
-    font-size: 1.6rem;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .split__seg,
-  .split__tip {
-    transition: none;
-  }
-
-  .split--loading {
-    animation: none;
-  }
 }
 
 /* ---------- the Candle on a phone ---------- */
@@ -1289,4 +539,765 @@
   align-items: center;
   gap: 3px;
   white-space: nowrap;
+}
+
+/* ---------- the Candle on a desktop: a mission board ---------- */
+
+.dcan {
+  --flame: #ffb02e;
+  display: grid;
+  gap: 16px;
+  align-content: start;
+}
+.dcan__head {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+}
+.shell .main__inner .dcan h1.dcan__title {
+  margin: 0;
+}
+.dcan__sub {
+  padding-bottom: 10px;
+  font-size: 13px;
+  color: var(--text-faint);
+}
+.dcan__sp {
+  flex: 1;
+}
+.dcan__panel {
+  border-radius: 16px;
+  background: rgb(8 12 26 / 80%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 10%), 0 18px 40px rgb(0 0 0 / 35%);
+}
+.dcan__cap {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  font-family: var(--font-display);
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.dcan__cap span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--text-dim);
+}
+.dcan__cap img {
+  width: 12px;
+  height: 12px;
+}
+.dcan__note {
+  margin: 0;
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: var(--text-dim);
+}
+.dcan__empty {
+  margin: 0;
+  padding: 22px;
+  color: var(--text-faint);
+}
+
+/* what is waiting to be claimed */
+.dcan__claim {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 8px 8px 8px 16px;
+  border-radius: 14px;
+  background: rgb(8 12 26 / 80%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 12%);
+}
+.dcan__claim.is-ready {
+  box-shadow: inset 0 0 0 1px rgb(246 168 0 / 55%), 0 0 24px rgb(246 168 0 / 18%);
+}
+.dcan__claim small {
+  font-family: var(--font-display);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.dcan__claim > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: var(--text-faint);
+}
+.dcan__claim > span img {
+  width: 16px;
+  height: 16px;
+}
+.dcan__claim b {
+  font-family: var(--font-display);
+  font-size: 13px;
+  color: var(--white);
+}
+
+/* the three columns */
+.dcan__board {
+  display: grid;
+  grid-template-columns: 250px minmax(0, 1fr) 290px;
+  gap: 16px;
+  align-items: start;
+}
+
+/* the missions, down the left */
+.dcan__list {
+  display: grid;
+  gap: 8px;
+}
+.dcan__list .dcan__cap + .dcan__card {
+  margin-top: -2px;
+}
+.dcan__list .dcan__card + .dcan__cap {
+  margin-top: 8px;
+}
+.dcan__card {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr) 46px;
+  gap: 9px;
+  align-items: center;
+  width: 100%;
+  padding: 10px;
+  border: 0;
+  border-radius: 14px;
+  background: rgb(8 12 26 / 82%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 10%);
+  color: var(--white);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.dcan__card:hover {
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 22%);
+}
+.dcan__card.is-picked {
+  background: rgb(6 28 50 / 90%);
+  box-shadow: inset 0 0 0 1.5px var(--cyan), 0 0 24px rgb(0 186 255 / 20%);
+}
+.dcan__card.is-locked .dcan__icon,
+.dcan__card.is-locked .dcan__cardtext b {
+  opacity: 0.55;
+}
+.dcan__card.is-soon:not(.is-picked) {
+  background: rgb(8 12 26 / 60%);
+}
+.dcan__card.is-loading {
+  height: 68px;
+  background: linear-gradient(-90deg, rgb(255 255 255 / 3%), rgb(255 255 255 / 8%), rgb(255 255 255 / 3%));
+  background-size: 400% 400%;
+  animation: lbrow-shimmer 1.2s ease-in-out infinite;
+  cursor: default;
+}
+.dcan__icon {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: radial-gradient(circle at 50% 35%, rgb(255 255 255 / 12%), rgb(255 255 255 / 3%));
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 12%);
+}
+.dcan__icon img {
+  width: 26px;
+  height: 26px;
+}
+.dcan__cardtext {
+  display: grid;
+  justify-items: start;
+  gap: 3px;
+  min-width: 0;
+}
+.dcan__cardtext b {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 900;
+}
+.dcan__cardtext b small {
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-faint);
+}
+.dcan__cardtext > span:not(.dcan__gate) {
+  max-width: 100%;
+  overflow: hidden;
+  font-size: 12px;
+  color: #dfe6f2;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.dcan__ring {
+  --p: 0;
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: conic-gradient(var(--flame) calc(var(--p) * 1%), rgb(255 255 255 / 10%) 0);
+}
+.dcan__ring::before {
+  content: '';
+  grid-area: 1 / 1;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: #0b1020;
+}
+.dcan__ring b {
+  z-index: 1;
+  grid-area: 1 / 1;
+  font-family: var(--font-display);
+  font-size: 9px;
+  font-weight: 800;
+  line-height: 1.15;
+  text-align: center;
+}
+
+/* the gate */
+.dcan__gate {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-family: var(--font-display);
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+.dcan__gate.is-ok {
+  color: var(--teal);
+  background: rgb(14 212 168 / 10%);
+  box-shadow: inset 0 0 0 1px rgb(14 212 168 / 45%);
+}
+.dcan__gate.is-short {
+  color: #ffb3bd;
+  background: rgb(255 90 106 / 10%);
+  box-shadow: inset 0 0 0 1px rgb(255 90 106 / 45%);
+}
+
+/* the mission in full */
+.dcan__dossier {
+  display: grid;
+  gap: 14px;
+  padding: 20px;
+  min-width: 0;
+}
+.dcan__dossier.is-loading {
+  min-height: 420px;
+}
+.dcan__dhead {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.dcan__emblem {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 74px;
+  height: 74px;
+  border-radius: 20px;
+  background: radial-gradient(circle at 50% 30%, rgb(160 120 255 / 30%), rgb(30 20 70 / 60%));
+  box-shadow: inset 0 0 0 1px rgb(180 140 255 / 45%), 0 0 30px rgb(140 100 255 / 25%);
+}
+.dcan__emblem.is-wax,
+.dcan__emblem.is-tlm {
+  background: radial-gradient(circle at 50% 30%, rgb(255 200 80 / 26%), rgb(70 45 10 / 55%));
+  box-shadow: inset 0 0 0 1px rgb(246 168 0 / 45%), 0 0 30px rgb(246 168 0 / 20%);
+}
+.dcan__emblem img {
+  width: 44px;
+  height: 44px;
+}
+.dcan__dtitle {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+.dcan__dtitle small {
+  font-family: var(--font-display);
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.shell .main__inner .dcan .dcan__dtitle h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 900;
+}
+.dcan__dline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  color: var(--text-faint);
+}
+.dcan__clock {
+  display: grid;
+  justify-items: end;
+  margin-left: auto;
+  white-space: nowrap;
+}
+.dcan__clock small {
+  font-family: var(--font-display);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.dcan__clock b {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 900;
+}
+.dcan__burn {
+  display: grid;
+  gap: 5px;
+}
+.dcan__burnbar {
+  position: relative;
+  display: block;
+  height: 6px;
+  border-radius: 3px;
+  background: rgb(255 255 255 / 8%);
+}
+.dcan__burnbar i {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  border-radius: 3px;
+  background: linear-gradient(90deg, #7a3a12, var(--flame));
+}
+.dcan__burnbar b {
+  position: absolute;
+  top: -4px;
+  width: 4px;
+  height: 14px;
+  margin-left: -2px;
+  border-radius: 2px;
+  background: var(--white);
+  box-shadow: 0 0 8px var(--flame);
+}
+.dcan__burnlbl {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--text-dim);
+}
+.dcan__stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+.dcan__stat {
+  display: grid;
+  gap: 3px;
+  padding: 10px 12px;
+  border-radius: 11px;
+  background: rgb(255 255 255 / 4%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 8%);
+  min-width: 0;
+}
+.dcan__stat small {
+  font-family: var(--font-display);
+  font-size: 8.5px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.dcan__stat b {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+.dcan__stat b img {
+  width: 15px;
+  height: 15px;
+}
+.dcan__stat b em {
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 700;
+  color: var(--text-faint);
+}
+
+/* the split: gems as blue wax, the player's in gold */
+.dcan__split {
+  display: flex;
+  gap: 2px;
+  height: 22px;
+  overflow: hidden;
+  border-radius: 11px;
+  background: rgb(255 255 255 / 6%);
+}
+.dcan__seg {
+  display: block;
+  min-width: 2px;
+  height: 100%;
+  background: linear-gradient(180deg, #5fdcff, #1a8fd6);
+}
+.dcan__seg:nth-child(2n) {
+  background: linear-gradient(180deg, #46b8f0, #146fb0);
+}
+.dcan__seg--you,
+.dcan__seg--you:nth-child(2n) {
+  background: linear-gradient(180deg, #ffd979, #f6a800);
+}
+.dcan__seg--ghost,
+.dcan__seg--ghost:nth-child(2n) {
+  background: repeating-linear-gradient(135deg, #ffd979 0 6px, #f6a800 6px 12px);
+  box-shadow: 0 0 12px rgb(246 168 0 / 50%);
+}
+.dcan__none {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--text-faint);
+}
+
+/* who is in */
+.dcan__rows {
+  display: grid;
+  max-height: 340px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+.dcan__row {
+  display: grid;
+  grid-template-columns: 22px 26px minmax(0, 1fr) 70px 60px 96px;
+  gap: 10px;
+  align-items: center;
+  padding: 7px 6px;
+  font-size: 13px;
+}
+.dcan__row + .dcan__row {
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 6%);
+}
+.dcan__row--head {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding-top: 0;
+  background: rgb(8 12 26 / 96%);
+  font-family: var(--font-display);
+  font-size: 8.5px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+.dcan__row--head span:nth-child(n + 4) {
+  text-align: right;
+}
+.dcan__row.is-you {
+  border-radius: 6px;
+  background: rgb(246 168 0 / 8%);
+  box-shadow: inset 3px 0 0 var(--gold);
+}
+.dcan__rank {
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 900;
+  text-align: center;
+  color: var(--text-dim);
+}
+.dcan__rank.is-1 {
+  color: #ffd979;
+}
+.dcan__rank.is-2 {
+  color: #d9e2f2;
+}
+.dcan__rank.is-3 {
+  color: #e6a26b;
+}
+.dcan__avatar {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+.dcan__name {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.dcan__name small {
+  font-size: 11.5px;
+  color: var(--text-faint);
+}
+.dcan__num {
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 800;
+  text-align: right;
+  white-space: nowrap;
+}
+.dcan__num.is-dim {
+  color: var(--text-faint);
+}
+
+/* contributing, on the right */
+.dcan__side {
+  position: sticky;
+  top: var(--sp-4);
+  display: grid;
+  gap: 12px;
+  padding: 18px;
+}
+.shell .main__inner .dcan .dcan__sidetitle {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.dcan__amount {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 46px;
+  padding: 0 14px;
+  border-radius: 12px;
+  background: rgb(0 0 0 / 35%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 16%);
+}
+.dcan__amount:focus-within {
+  box-shadow: inset 0 0 0 1.5px var(--cyan);
+}
+.dcan__amount img {
+  width: 18px;
+  height: 18px;
+}
+.dcan__amount input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: none;
+  color: var(--white);
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 900;
+  appearance: textfield;
+}
+.dcan__amount input::-webkit-inner-spin-button,
+.dcan__amount input::-webkit-outer-spin-button {
+  appearance: none;
+  margin: 0;
+}
+.dcan__amount small {
+  font-size: 12px;
+  color: var(--text-faint);
+}
+.dcan__range {
+  --fill: 0%;
+  width: 100%;
+  height: 18px;
+  margin: 0;
+  background: none;
+  cursor: pointer;
+  appearance: none;
+}
+.dcan__range::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, #1a8fd6, var(--cyan)) 0 / var(--fill) 100% no-repeat, rgb(255 255 255 / 12%);
+}
+.dcan__range::-moz-range-track {
+  height: 6px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, #1a8fd6, var(--cyan)) 0 / var(--fill) 100% no-repeat, rgb(255 255 255 / 12%);
+}
+.dcan__range::-webkit-slider-thumb {
+  width: 18px;
+  height: 18px;
+  margin-top: -6px;
+  border-radius: 50%;
+  background: var(--white);
+  box-shadow: 0 0 0 4px rgb(0 186 255 / 30%);
+  appearance: none;
+}
+.dcan__range::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--white);
+  box-shadow: 0 0 0 4px rgb(0 186 255 / 30%);
+}
+.dcan__range:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.dcan__quick {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+}
+.dcan__quick button {
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: 9px;
+  background: rgb(255 255 255 / 5%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 12%);
+  color: var(--text-faint);
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.dcan__quick button:hover:not(:disabled) {
+  color: var(--white);
+}
+.dcan__quick button[aria-pressed='true'] {
+  background: rgb(0 186 255 / 16%);
+  box-shadow: inset 0 0 0 1px var(--cyan);
+  color: var(--white);
+}
+.dcan__quick button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.dcan__math {
+  display: grid;
+  gap: 7px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgb(255 255 255 / 4%);
+}
+.dcan__math > span {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  font-size: 12.5px;
+  color: var(--text-faint);
+}
+.dcan__math b {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--white);
+  white-space: nowrap;
+}
+.dcan__math b img {
+  width: 14px;
+  height: 14px;
+}
+.dcan__math b.is-ok {
+  color: var(--teal);
+}
+.dcan__math b.is-short {
+  color: #ffb3bd;
+}
+.dcan__math .is-sum {
+  padding-top: 7px;
+  border-top: 1px solid rgb(255 255 255 / 10%);
+  color: var(--white);
+}
+.dcan__math .is-sum b {
+  font-size: 14px;
+  color: #ffd979;
+}
+.dcan__go {
+  width: 100%;
+  min-height: 48px;
+}
+.dcan__req {
+  display: grid;
+  gap: 6px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgb(255 90 106 / 8%);
+  box-shadow: inset 0 0 0 1px rgb(255 90 106 / 30%);
+  font-size: 12.5px;
+  color: #ffd0d6;
+}
+.dcan__req > span:first-child {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 2px 10px;
+}
+.dcan__req > span:first-child b {
+  white-space: nowrap;
+}
+.dcan__req b {
+  font-family: var(--font-display);
+  font-size: 12px;
+  color: var(--white);
+}
+.dcan__reqbar {
+  display: block;
+  height: 7px;
+  overflow: hidden;
+  border-radius: 4px;
+  background: rgb(255 255 255 / 10%);
+}
+.dcan__reqbar i {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #a83246, #ff6b7d);
+}
+
+/* a narrower desktop: contributing moves under the mission */
+@media (max-width: 1279px) {
+  .dcan__board {
+    grid-template-columns: 230px minmax(0, 1fr);
+  }
+  .dcan__side {
+    position: static;
+    grid-column: 2;
+  }
+}
+@media (max-width: 1023px) {
+  .dcan__board {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .dcan__list {
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  }
+  .dcan__list .dcan__cap,
+  .dcan__list .dcan__note {
+    grid-column: 1 / -1;
+  }
+  .dcan__side {
+    grid-column: auto;
+  }
+  .dcan__head {
+    flex-wrap: wrap;
+  }
 }
