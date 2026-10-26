@@ -612,3 +612,32 @@
   color: var(--text-dim);
   text-align: center;
 }
+
+/*
+ * Connect and Signup on a desktop: the game's dark glass and cyan steps,
+ * not the violet card and purple rims of the old look. They are the first
+ * screens after Play, and were the last purple panels in the game.
+ */
+@media (min-width: 720px) {
+  .auth__card.panel {
+    background: rgb(8 14 28 / 84%);
+    border-color: rgb(255 255 255 / 12%);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 6%),
+      0 24px 60px rgb(0 0 0 / 55%);
+  }
+  .auth .step {
+    border-color: rgb(255 255 255 / 10%);
+    background: rgb(255 255 255 / 4%);
+  }
+  .auth .step--active {
+    border-color: rgb(0 186 255 / 60%);
+    background: rgb(0 186 255 / 10%);
+  }
+  .auth .step__num {
+    border-color: rgb(255 255 255 / 22%);
+  }
+  .auth .step--active .step__num {
+    border-color: var(--cyan);
+  }
+}
