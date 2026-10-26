@@ -167,86 +167,103 @@ export function DeskAscension({
   const complete = filled && !!check?.ok
   const short = credits < fee
   const plural = target ? `${cap(target.classname)}s` : ''
+  const orderPick = (
+    <select
+      className="dasc__order"
+      value={order}
+      onChange={(e) => setOrder(e.target.value as 'first' | 'last')}
+      aria-label="Order"
+    >
+      {list === 'target' ? (
+        <>
+          <option value="first">Most sockets ready</option>
+          <option value="last">Fewest sockets ready</option>
+        </>
+      ) : (
+        <>
+          <option value="first">Lowest level first</option>
+          <option value="last">Highest level first</option>
+        </>
+      )}
+    </select>
+  )
 
   return (
     <div className="dasc">
       {/* ---------- the list ---------- */}
       <div className="dasc__list">
-        <div className="dasc__chips">
-          {target
-            ? SOCKETS.map(({ key }) => {
-                const need = needOf(key, target)
-                return (
-                  <button type="button" key={key} aria-pressed={list === key} onClick={() => show(key)}>
-                    {key === 'ability' ? 'Sacrifice ability' : `${cap(need.sub)} · ${need.name}`}
-                    <em>{byRequirement[key].length}</em>
-                  </button>
-                )
-              })
-            : (
-              <>
-                <button type="button" aria-pressed={cls === null} onClick={() => setCls(null)}>
-                  All <em>{ready.length}</em>
+        {/* With a fighter on the altar: its three sockets, three chips on a line. */}
+        {target && (
+          <div className="dasc__chips">
+            {SOCKETS.map(({ key }) => {
+              const need = needOf(key, target)
+              return (
+                <button type="button" key={key} aria-pressed={list === key} onClick={() => show(key)}>
+                  {key === 'ability' ? 'Sacrifice ability' : `${cap(need.sub)} · ${need.name}`}
+                  <em>{byRequirement[key].length}</em>
                 </button>
-                {classCounts.map(([c, n]) => (
-                  <button type="button" key={c} aria-pressed={cls === c} onClick={() => setCls(c)}>
-                    {cap(c)} <em>{n}</em>
-                  </button>
-                ))}
-              </>
-            )}
-        </div>
+              )
+            })}
+          </div>
+        )}
 
-        {(markerCounts.length > 0 || unmarked > 0) && (
-          <div className="dasc__markers" role="group" aria-label="Your markers">
-            {markerCounts.map(([m, n]) => (
-              <button
-                type="button"
-                key={m}
-                aria-pressed={marker === m}
-                title={`Marked ${m}`}
-                onClick={() => setMarker((x) => (x === m ? null : m))}
-              >
-                <img src={markerIcon(m)} alt={m} />
-                <em>{n}</em>
-              </button>
-            ))}
-            {markerCounts.length > 0 && unmarked > 0 && (
-              <button type="button" aria-pressed={marker === ''} onClick={() => setMarker((x) => (x === '' ? null : ''))}>
-                None <em>{unmarked}</em>
-              </button>
-            )}
+        {/*
+          The filters in two lines rather than six. Thirteen class pills
+          wrapped into four rows and pushed the list a hand's width down; as a
+          dropdown beside the order the class takes one control's room, and
+          the markers share their line with the count.
+        */}
+        {!target && (
+          <div className="dasc__filterrow">
+            <select
+              className="dasc__order dasc__class"
+              value={cls ?? ''}
+              onChange={(e) => setCls(e.target.value || null)}
+              aria-label="Class"
+            >
+              <option value="">All classes · {ready.length}</option>
+              {classCounts.map(([c, n]) => (
+                <option key={c} value={c}>
+                  {cap(c)} · {n}
+                </option>
+              ))}
+            </select>
+            {orderPick}
           </div>
         )}
 
         <div className="dasc__tools">
-          <span>
+          {(markerCounts.length > 0 || unmarked > 0) && (
+            <div className="dasc__markers" role="group" aria-label="Your markers">
+              {markerCounts.map(([m, n]) => (
+                <button
+                  type="button"
+                  key={m}
+                  aria-pressed={marker === m}
+                  title={`Marked ${m}`}
+                  onClick={() => setMarker((x) => (x === m ? null : m))}
+                >
+                  <img src={markerIcon(m)} alt={m} />
+                  <em>{n}</em>
+                </button>
+              ))}
+              {markerCounts.length > 0 && unmarked > 0 && (
+                <button type="button" aria-pressed={marker === ''} onClick={() => setMarker((x) => (x === '' ? null : ''))}>
+                  None <em>{unmarked}</em>
+                </button>
+              )}
+            </div>
+          )}
+          <span className="dasc__count">
             <b className="mono">{rows.length}</b>
             {rows.length !== base.length && <> of {base.length}</>}{' '}
             {list === 'target'
-              ? 'at the level cap'
+              ? 'at the cap'
               : target
                 ? `${list === 'ability' ? `${plural} with Sacrifice` : `${needOf(list, target).name} ${plural}`} fit`
                 : ''}
           </span>
-          <select
-            className="dasc__order"
-            value={order}
-            onChange={(e) => setOrder(e.target.value as 'first' | 'last')}
-            aria-label="Order"
-          >
-            {list === 'target' ? (
-              <>
-                <option value="first">Most sockets ready</option>
-                <option value="last">Fewest sockets ready</option>
-              </>
-            ) : (
-              <>
-                <option value="first">Lowest level first</option>
-                <option value="last">Highest level first</option>
-              </>
-            )}
-          </select>
+          {target && orderPick}
         </div>
 
         {rows.length === 0 ? (

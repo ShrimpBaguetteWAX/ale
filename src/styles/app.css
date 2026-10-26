@@ -2346,6 +2346,31 @@ a.res {
   background: rgb(0 186 255 / 16%);
   box-shadow: inset 0 0 0 1.5px var(--cyan);
 }
+/* The class and the order, side by side; the markers share the next line with the count. */
+.dasc__filterrow {
+  display: flex;
+  gap: 8px;
+}
+.dasc__filterrow .dasc__order {
+  flex: 1 1 0;
+  min-width: 0;
+  height: 32px;
+  padding: 0 10px;
+  font-size: 13px;
+}
+.dasc__tools {
+  flex-wrap: wrap;
+}
+.dasc__count {
+  margin-left: auto;
+  white-space: nowrap;
+}
+.dasc__tools .dasc__markers {
+  gap: 4px;
+}
+.dasc__tools .dasc__markers button {
+  padding: 0 7px;
+}
 .dasc__tools {
   display: flex;
   align-items: center;
