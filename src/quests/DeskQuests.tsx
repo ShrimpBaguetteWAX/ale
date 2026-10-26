@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import type { Player } from '@/chain/types'
 import type { Quest, QuestConfig } from './types'
@@ -32,10 +32,8 @@ export function DeskQuests({
   now,
   busy,
   canAct,
-  confirmReroll,
   onClaim,
   onReroll,
-  onAskReroll,
 }: {
   board: ScopeBoard[]
   player: Player
@@ -44,19 +42,48 @@ export function DeskQuests({
   now: number
   busy: ReadonlyMap<string, string>
   canAct: boolean
-  confirmReroll: string | null
   onClaim: (q: Quest) => void
   onReroll: (q: Quest) => void
-  onAskReroll: (key: string | null) => void
 }) {
   const live = board.flatMap((b) => b.quests)
-  const [picked, setPicked] = useState<string | null>(null)
-  /* The one clicked; else the first ready to claim; else the first on the list. */
+  const liveKeys = live.map(questKey)
+  const [picked, setPicked] = useState<{ key: string; scope: string } | null>(null)
+  /* The board as it stood while the picked quest was on it. */
+  const known = useRef<Set<string>>(new Set())
+
+  /*
+     A reroll or a claim replaces the quest, and the replacement has a new
+     key — so the one to stay on is the quest in the same cadence that was
+     not on the board before. Without this the journal jumped back to the
+     top of the list the moment the chain answered.
+  */
+  const successor = (from: { scope: string }) =>
+    live.find((q) => q.quest_scope === from.scope && !known.current.has(questKey(q)))
+  const held = picked ? (live.find((q) => questKey(q) === picked.key) ?? successor(picked)) : undefined
+  /* The one picked; else the first ready to claim; else the first on the list. */
   const shown =
-    live.find((q) => questKey(q) === picked) ??
-    live.find((q) => progressOf(q, player, now).claimable) ??
-    live[0] ??
-    null
+    held ?? live.find((q) => progressOf(q, player, now).claimable) ?? live[0] ?? null
+
+  const signature = liveKeys.join('|')
+  useEffect(() => {
+    if (!picked) return
+    if (liveKeys.includes(picked.key)) {
+      known.current = new Set(liveKeys)
+      return
+    }
+    const next = successor(picked)
+    if (next) {
+      known.current = new Set(liveKeys)
+      setPicked({ key: questKey(next), scope: picked.scope })
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [signature])
+
+  /* Hold on to a quest — clicked, or acted on while it was only the default. */
+  const pick = (q: Quest) => {
+    known.current = new Set(liveKeys)
+    setPicked({ key: questKey(q), scope: q.quest_scope })
+  }
 
   return (
     <div className="dquests">
@@ -79,7 +106,7 @@ export function DeskQuests({
                   type="button"
                   key={key}
                   className={`dquests__row is-${band(p.percent)}${shown && questKey(shown) === key ? ' is-on' : ''}`}
-                  onClick={() => setPicked(key)}
+                  onClick={() => pick(q)}
                 >
                   <img src={questArt(q)} alt="" loading="lazy" />
                   <span className="dquests__rowtext">
@@ -131,11 +158,14 @@ export function DeskQuests({
           now={now}
           busy={busy}
           canAct={canAct}
-          confirming={confirmReroll === questKey(shown)}
-          onClaim={() => onClaim(shown)}
-          onReroll={() => onReroll(shown)}
-          onAskReroll={() => onAskReroll(questKey(shown))}
-          onCancelReroll={() => onAskReroll(null)}
+          onClaim={() => {
+            pick(shown)
+            onClaim(shown)
+          }}
+          onReroll={() => {
+            pick(shown)
+            onReroll(shown)
+          }}
         />
       ) : (
         <section className="dquests__detail dquests__detail--none">
@@ -160,11 +190,8 @@ function Detail({
   now,
   busy,
   canAct,
-  confirming,
   onClaim,
   onReroll,
-  onAskReroll,
-  onCancelReroll,
 }: {
   quest: Quest
   label: string
@@ -174,11 +201,8 @@ function Detail({
   now: number
   busy: ReadonlyMap<string, string>
   canAct: boolean
-  confirming: boolean
   onClaim: () => void
   onReroll: () => void
-  onAskReroll: () => void
-  onCancelReroll: () => void
 }) {
   const p = progressOf(quest, player, now)
   const r = rewardOf(quest)
@@ -242,32 +266,6 @@ function Detail({
                 Claim {r.label} {r.symbol}
               </button>
             </div>
-          ) : confirming ? (
-            <div className="dquests__confirm">
-              {/*
-                A reroll hands the escrowed reward back to the pool and prices
-                the new quest on its own, so the replacement can pay less. That
-                is the part worth pausing on, not the credits.
-              */}
-              <p>
-                Give up {r.label} {r.symbol} and any progress for a different quest? The new one is
-                priced separately.
-              </p>
-              <div className="dquests__acts">
-                <button type="button" className="btn btn--ghost" onClick={onCancelReroll}>
-                  Keep it
-                </button>
-                <button
-                  type="button"
-                  className="btn btn--danger"
-                  disabled={!canAct || working}
-                  onClick={onReroll}
-                >
-                  {doing === 'reroll' && <span className="spinner" />}
-                  Reroll
-                </button>
-              </div>
-            </div>
           ) : (
             <div className="dquests__acts">
               {go && (
@@ -279,9 +277,10 @@ function Detail({
                 type="button"
                 className="btn btn--ghost"
                 disabled={!canAct || working || tooPoor}
-                onClick={onAskReroll}
+                onClick={onReroll}
                 title={tooPoor ? `Rerolling costs ${cost} credits` : 'Trade this quest for another in the same cadence'}
               >
+                {doing === 'reroll' && <span className="spinner" />}
                 Reroll
                 <span className={`cost${tooPoor ? ' cost--short' : ''}`}>
                   {cost.toLocaleString(NUM_LOCALE)}

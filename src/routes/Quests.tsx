@@ -311,10 +311,8 @@ export default function Quests() {
             now={now}
             busy={busy}
             canAct={!!session}
-            confirmReroll={confirmReroll}
             onClaim={(q) => void doClaim(q)}
             onReroll={(q) => void doReroll(q)}
-            onAskReroll={setConfirmReroll}
           />
         )
       ) : (

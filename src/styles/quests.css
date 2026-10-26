@@ -968,15 +968,6 @@ button.dquests__row:hover {
   flex: 1;
   min-height: 44px;
 }
-.dquests__confirm {
-  display: grid;
-  gap: 10px;
-}
-.dquests__confirm p {
-  margin: 0;
-  font-size: 13px;
-  color: #ffb4bf;
-}
 
 /* a narrower desktop: the detail under the list */
 @media (max-width: 1100px) {
