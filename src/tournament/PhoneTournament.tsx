@@ -674,8 +674,26 @@ function drawnItems(board: Board, history: TournamentMatchup[][], phase: Tournam
  * The pot. `field` is who has entered, or null before signup opens — when
  * nobody can have, so no count is shown at all.
  */
-function PotCard({ stage, field }: { stage: TournamentStage | undefined; field: TournamentSignup[] | null }) {
+/**
+ * The prize pool, and while the tournament prepares, the weather it rolled.
+ *
+ * "Preparing · weather rolled, pot collected" is the step the schedule says
+ * is under way; the pot was always here and the rolls were not, so the card
+ * that answers half of it now answers both. Once signup opens the rolls have
+ * their own Conditions card, and `weather` is left off.
+ */
+function PotCard({
+  stage,
+  field,
+  weather,
+}: {
+  stage: TournamentStage | undefined
+  field: TournamentSignup[] | null
+  weather?: { planet: string; weather?: Weather }[]
+}) {
+  const desk = useContext(Desk)
   const prizes = prizesOf(stage)
+  const rolled = (weather ?? []).filter((w): w is Rolled => !!w.weather)
   return (
     <section className="ptour__card ptour__card--gold">
       <div className="ptour__cardhead">
@@ -709,28 +727,51 @@ function PotCard({ stage, field }: { stage: TournamentStage | undefined; field: 
       ) : (
         <p className="ptour__fine">The pool is still being collected.</p>
       )}
+      {rolled.length > 0 && (
+        <div className="ptour__potcond">
+          <div className="ptour__cardhead">
+            <span className="ptour__kick">Conditions</span>
+            <span className="ptour__fine">Every fight</span>
+          </div>
+          <CondRows rolled={rolled} tooltip={desk} bare={desk} />
+        </div>
+      )}
     </section>
   )
 }
 
+type Rolled = { planet: string; weather: Weather }
+
 function Conditions({ weather }: { weather: { planet: string; weather?: Weather }[] }) {
-  const rolled = weather.filter((w): w is { planet: string; weather: Weather } => !!w.weather)
+  const rolled = weather.filter((w): w is Rolled => !!w.weather)
   if (!rolled.length) return null
   return (
     <section className="ptour__card">
       <span className="ptour__kick">Conditions</span>
-      <div className="ptour__cond">
-        {rolled.map((w) => {
-          const on = weatherTargets(w.weather)
-          return (
-            <div className="ptour__condrow" key={`${w.planet}-${w.weather.weather_id}`}>
-              <WeatherPanel weather={w.weather} tooltip={false} />
-              <small>{on.length ? on.join(', ') : 'Every fighter'}</small>
-            </div>
-          )
-        })}
-      </div>
+      <CondRows rolled={rolled} tooltip={false} />
     </section>
+  )
+}
+
+/**
+ * The rolls as rows: what each does, and who it falls on.
+ *
+ * `bare` leaves the who off, for two to a line: each roll is named for who it
+ * falls on already, and the hover says it in full.
+ */
+function CondRows({ rolled, tooltip, bare = false }: { rolled: Rolled[]; tooltip: boolean; bare?: boolean }) {
+  return (
+    <div className="ptour__cond">
+      {rolled.map((w) => {
+        const on = weatherTargets(w.weather)
+        return (
+          <div className="ptour__condrow" key={`${w.planet}-${w.weather.weather_id}`}>
+            <WeatherPanel weather={w.weather} tooltip={tooltip} />
+            {!bare && <small>{on.length ? on.join(', ') : 'Every fighter'}</small>}
+          </div>
+        )
+      })}
+    </div>
   )
 }
 
@@ -1323,7 +1364,7 @@ function BeforeSignup(
             ))}
           </div>
         </div>
-        {p.phase === 'preparing' && p.stage && <PotCard stage={p.stage} field={null} />}
+        {p.phase === 'preparing' && p.stage && <PotCard stage={p.stage} field={null} weather={p.weather} />}
       </>
     )
   }
@@ -1406,7 +1447,7 @@ function BeforeSignup(
           {stage}
           <div className="ptour__spotdock">
             <section className="ptour__spotcard ptour__spotglass">{countdown}</section>
-            {p.phase === 'preparing' && p.stage && <PotCard stage={p.stage} field={null} />}
+            {p.phase === 'preparing' && p.stage && <PotCard stage={p.stage} field={null} weather={p.weather} />}
             {buttons}
           </div>
         </section>
@@ -1439,7 +1480,7 @@ function BeforeSignup(
             </div>
           </section>
         )}
-        {p.phase === 'preparing' && p.stage && <PotCard stage={p.stage} field={null} />}
+        {p.phase === 'preparing' && p.stage && <PotCard stage={p.stage} field={null} weather={p.weather} />}
         <span className="ptour__spotgap" />
         <button type="button" className="ptour__card ptour__spothof" onClick={p.onHof}>
           <img src={TROPHY} alt="" className="ptour__spotcup" />
