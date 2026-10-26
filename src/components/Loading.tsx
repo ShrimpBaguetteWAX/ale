@@ -9,8 +9,8 @@
  *
  * The page underneath stays empty and calm; the bar alone says something is
  * on its way. It runs along the top of the page area — under the phone's top
- * bar, beside the desktop's menu, or across the whole window before the game
- * has a frame at all. What is being loaded ("Entering the dungeon") is said
+ * bar or beside the desktop's menu. Before the game has a frame at all, boot
+ * shows the BootScreen instead. What is being loaded ("Entering the dungeon") is said
  * to assistive technology rather than printed.
  */
 export function Loading({ label = 'Loading' }: { label?: string }) {

@@ -1,0 +1,89 @@
+/*
+ * The boot screen: the logo inside a turning ring, over the world map
+ * darkened almost to black.
+ *
+ * index.html draws it before any JavaScript runs and links this file in its
+ * head; the game draws the very same markup (components/BootScreen.tsx) for
+ * as long as boot takes and imports it there. One copy of the look, two
+ * readers.
+ *
+ * The map is a 96x48 copy of maps/eyeke.jpg, inlined: it is blurred to
+ * nothing anyway, and inlined it is on the first frame rather than after a
+ * request.
+ */
+.bootscreen {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 26px;
+  overflow: hidden;
+  isolation: isolate;
+  background: #05101e;
+}
+.bootscreen::before {
+  content: '';
+  position: absolute;
+  inset: -40px;
+  z-index: -1;
+  background: url('data:image/jpeg;base64,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') center / cover;
+  filter: blur(16px) saturate(0.7) brightness(0.55);
+}
+.bootscreen::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: radial-gradient(circle at 50% 46%, rgb(5 16 30 / 35%), #05101e 62%);
+}
+.bootscreen__ring {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: min(300px, 62vw);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1.5px rgb(255 255 255 / 10%);
+}
+.bootscreen__ring::before {
+  content: '';
+  position: absolute;
+  inset: 9%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgb(0 186 255 / 12%), transparent 70%);
+}
+.bootscreen__ring svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  animation: bootscreen-turn 2.4s linear infinite;
+}
+.bootscreen__ring img {
+  position: relative;
+  width: 70%;
+}
+.bootscreen__word {
+  font: 700 10px/1 'Orbitron', system-ui, sans-serif;
+  letter-spacing: 0.34em;
+  text-transform: uppercase;
+  color: rgb(255 255 255 / 50%);
+}
+@keyframes bootscreen-turn {
+  to {
+    transform: rotate(360deg);
+  }
+}
+/* Without motion the arc stays put and breathes. */
+@keyframes bootscreen-breathe {
+  50% {
+    opacity: 0.35;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bootscreen__ring svg {
+    animation: bootscreen-breathe 2s ease-in-out infinite;
+  }
+}

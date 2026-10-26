@@ -3,6 +3,7 @@ import {
   Suspense,
   lazy,
   useEffect,
+  useLayoutEffect,
   type ComponentType,
   type LazyExoticComponent,
   type ReactNode,
@@ -17,7 +18,7 @@ import {
   useLocation,
 } from 'react-router-dom'
 import { AppShell } from './components/layout/AppShell'
-import { Loading } from './components/Loading'
+import { BootScreen } from './components/BootScreen'
 import { useGame } from './state/useGame'
 import { Landing } from './routes/Landing'
 import { Connect } from './routes/Connect'
@@ -228,9 +229,9 @@ export function RequirePlayer() {
      connected still lands on the picker, and a boot that fails still shows
      its error.
   */
-  if (phase === 'idle' || phase === 'probing' || !sessionChecked) return <Loading />
+  if (phase === 'idle' || phase === 'probing' || !sessionChecked) return <BootScreen />
   if (!account) return <Navigate to="/connect" replace state={{ from: location.pathname }} />
-  if (!playerLoaded) return <Loading />
+  if (!playerLoaded) return <BootScreen />
   if (!player) return <Navigate to="/signup" replace />
 
   return <Outlet />
@@ -263,6 +264,10 @@ function Boot({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     void boot()
   }, [boot])
+  /* index.html's boot screen goes in the same frame the game's first one is painted. */
+  useLayoutEffect(() => {
+    document.getElementById('boot')?.remove()
+  }, [])
   return <>{children}</>
 }
 
@@ -288,7 +293,7 @@ export default function App() {
       <Boot>
         <ScreenBoundary>
           <MaintenanceGate>
-          <Suspense fallback={<Loading />}>
+          <Suspense fallback={<BootScreen />}>
           <Routes>
             <Route path="/" element={<Landing />} />
             <Route path="/connect" element={<Connect />} />
