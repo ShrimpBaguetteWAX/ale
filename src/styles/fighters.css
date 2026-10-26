@@ -23,117 +23,6 @@
   max-width: min(1900px, 100%);
 }
 
-/* ---------- header ---------- */
-
-.roster__head {
-  display: flex;
-  align-items: flex-end;
-  gap: var(--sp-4);
-  flex-wrap: wrap;
-}
-
-.roster__title {
-  margin: 0;
-  font-family: var(--font-display);
-  font-size: var(--fs-4xl);
-  font-weight: var(--fw-bold);
-  letter-spacing: 0.04em;
-  color: var(--text-heading);
-}
-
-.roster__counts {
-  display: flex;
-  gap: var(--sp-4);
-  margin: var(--sp-1) 0 0;
-  font-size: var(--fs-sm);
-  color: var(--text-faint);
-}
-.roster__counts strong {
-  color: var(--white);
-  font-variant-numeric: tabular-nums;
-}
-
-.roster__modes {
-  display: flex;
-  margin-left: auto;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-xs);
-  overflow: hidden;
-}
-
-.roster__mode {
-  padding: var(--sp-2) var(--sp-5);
-  min-height: 44px;
-  background: rgb(0 0 0 / 35%);
-  border: 0;
-  color: var(--text-dim);
-  font-family: var(--font-display);
-  font-size: var(--fs-sm);
-  letter-spacing: 0.06em;
-  cursor: pointer;
-  transition: background var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
-}
-.roster__mode:hover {
-  color: var(--white);
-}
-.roster__mode[aria-selected='true'] {
-  background: var(--surface-3);
-  color: var(--white);
-}
-
-/* ---------- action bar ---------- */
-
-/*
- * The bar follows the list down the page.
- *
- * Everything on it acts on something below it: Payday and Level up appear the
- * moment a fighter is picked, and a fighter is picked by tapping a card that
- * is usually well past the fold. Scrolling back up to reach the button for
- * the thing you just chose is the whole of the interaction, and it is one
- * nobody should have to do twice.
- *
- * Under the top bar rather than the window, since that one is sticky too —
- * `--topbar-h` is the height the shell's grid reserves for it, so the two
- * stack without either guessing at the other. The document is the scroller
- * (`.main` sets no overflow), so this sticks against the viewport.
- */
-.roster__bar {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-2);
-  flex-wrap: wrap;
-  padding: var(--sp-2) var(--sp-3);
-  /*
-     Opaque now that cards pass behind it. At 28% black over the page they
-     showed straight through, which reads as a rendering fault rather than as
-     a bar. The blur is for the edges the colour does not cover.
-  */
-  background: rgb(8 14 30 / 96%);
-  backdrop-filter: blur(6px);
-  border: 1px solid var(--line-soft);
-  border-radius: var(--radius-sm);
-}
-
-/*
- * Under the top bar rather than the window, since that one is sticky too.
- * `--topbar-h` is the height the shell's grid reserves for it, so the two
- * stack without either guessing at the other, and the document is the
- * scroller (`.main` sets no overflow) so this sticks against the viewport.
- */
-.roster__bar--pinned {
-  position: sticky;
-  top: var(--topbar-h);
-  /* Below the top bar, above the cards sliding under it. */
-  z-index: calc(var(--z-sticky) - 1);
-}
-
-.roster__hint {
-  margin: 0;
-  font-size: var(--fs-xs);
-  color: var(--text-faint);
-  max-width: 60ch;
-}
-
 /*
  * Payday, and who it pays.
  *
@@ -175,84 +64,6 @@
 .paysplit__mode[aria-pressed=true] {
   color: var(--white);
   background: var(--surface-3);
-}
-
-/* ---------- listing on the market ---------- */
-
-/*
- * The starting bid, inline in the action bar rather than in a dialog.
- *
- * It is a term of the thing the button does, and a player pricing a batch
- * wants to see the roster while they decide. The bar already wraps, so on a
- * phone this becomes its own line rather than squeezing the button.
- */
-.roster__price {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-2);
-  font-size: var(--fs-xs);
-  color: var(--text-dim);
-}
-
-.roster__priceLabel {
-  font-family: var(--font-display);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--text-faint);
-}
-
-.roster__priceInput {
-  /* Wide enough for five figures and no wider: it is a price, not a field
-     the eye should land on before the fighters. */
-  width: 9ch;
-  padding: 4px var(--sp-2);
-  text-align: right;
-}
-
-.roster__keep {
-  font-size: var(--fs-xs);
-}
-
-@media (max-width: 719px) {
-  /*
-     Three tabs no longer fit beside the title, so the strip takes its own
-     line and splits it evenly. "Sell on market" is the long one and decides
-     the width; equal thirds keep it from making the other two look like
-     afterthoughts.
-  */
-  .roster__modes {
-    margin-left: 0;
-    width: 100%;
-  }
-
-  .roster__mode {
-    flex: 1 1 0;
-    min-width: 0;
-    padding: var(--sp-2) var(--sp-2);
-    font-size: var(--fs-xs);
-  }
-
-  .roster__price,
-  .roster__keep {
-    width: 100%;
-  }
-}
-
-/* The per-fighter actions, which only exist while a card is selected. */
-.roster__selected {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-2);
-  padding-left: var(--sp-3);
-  border-left: 1px solid var(--line-soft);
-}
-
-.roster__selectedName {
-  font-family: var(--font-display);
-  font-size: var(--fs-xs);
-  text-transform: capitalize;
-  color: var(--text-dim);
-  white-space: nowrap;
 }
 
 .roster__empty {
@@ -320,27 +131,10 @@
   text-transform: capitalize;
 }
 
-/* ---------- filters ---------- */
-
-.filters__facets {
-  display: flex;
-  gap: var(--sp-5);
-  flex-wrap: wrap;
-}
-
 .facet {
   display: grid;
   gap: var(--sp-2);
   align-content: start;
-}
-.facet--grow {
-  flex: 1;
-  min-width: 260px;
-}
-.facet__note {
-  text-transform: none;
-  letter-spacing: 0;
-  color: var(--text-faint);
 }
 
 .filters__markers {
@@ -397,69 +191,6 @@
   color: var(--white);
 }
 
-/* ---------- the grid ---------- */
-
-.rostergrid {
-  display: grid;
-  gap: var(--sp-3);
-  grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
-}
-
-@media (max-width: 520px) {
-  .rostergrid {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* ---------- one card ---------- */
-
-.fcard {
-  --state: var(--line);
-  position: relative;
-  display: grid;
-  grid-template-columns: 10px 148px minmax(0, 1fr);
-  grid-template-rows: minmax(190px, auto) 22px;
-  border: 2px solid var(--state);
-  border-radius: var(--radius-sm);
-  background: linear-gradient(180deg, rgb(14 20 38 / 92%), rgb(6 10 24 / 96%));
-  overflow: hidden;
-  transition: border-color var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease);
-}
-
-.fcard--busy {
-  --state: #ffb03a;
-}
-.fcard--overdue {
-  --state: #ff5a5a;
-}
-/*
- * Selection is a ring outside the border, not a recolouring of it.
- *
- * The border carries state — busy, overdue — and that has to stay readable
- * across the whole grid; overwriting it on the one card the player has
- * clicked hides exactly the fighter they are about to act on. So selection
- * gets its own ring beyond the frame instead.
- */
-.fcard--selected {
-  box-shadow: 0 0 0 2px #91a6ff, 0 0 20px -4px #91a6ff;
-}
-.fcard--checked {
-  --state: var(--magenta);
-}
-
-.fcard--loading {
-  min-height: 212px;
-  border-color: var(--line-soft);
-  background: linear-gradient(
-    -90deg,
-    rgb(255 255 255 / 4%),
-    rgb(255 255 255 / 10%),
-    rgb(255 255 255 / 4%)
-  );
-  background-size: 400% 400%;
-  animation: fcard-shimmer 1.2s ease-in-out infinite;
-}
-
 @keyframes fcard-shimmer {
   0% {
     background-position: 0% 50%;
@@ -467,176 +198,6 @@
   100% {
     background-position: 100% 50%;
   }
-}
-
-/*
- * The selection target.
- *
- * The card holds a tab strip, a marker button and a checkbox, so making the
- * container itself clickable would mean every one of those stopping
- * propagation — and would leave the card unreachable by keyboard. This is a
- * real button underneath everything instead.
- */
-.fcard__hit {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  padding: 0;
-  border: 0;
-  background: none;
-  cursor: pointer;
-}
-.fcard__hit:focus-visible {
-  outline: 2px solid var(--cyan);
-  outline-offset: -4px;
-}
-
-.fcard > *:not(.fcard__hit) {
-  position: relative;
-  z-index: 1;
-  pointer-events: none;
-}
-/* …but the controls inside still take clicks. */
-.fcard button:not(.fcard__hit),
-.fcard label,
-.fcard input {
-  pointer-events: auto;
-}
-
-/* ---------- experience rail ---------- */
-
-.fcard__xp {
-  grid-row: 1;
-  grid-column: 1;
-  position: relative;
-  background: rgb(0 0 0 / 55%);
-  border-right: 1px solid var(--line-soft);
-}
-
-.fcard__xpFill {
-  position: absolute;
-  left: 0;
-  bottom: 0;
-  width: 100%;
-  background: linear-gradient(0deg, #0187b1, #00baff);
-  transition: height var(--dur) var(--ease);
-}
-/* Enough banked to level: the rail says so without the player opening a tab. */
-.fcard__xpFill--full {
-  background: linear-gradient(0deg, #ebb309, #faff00);
-  box-shadow: 0 0 6px -2px var(--gold);
-}
-
-/* ---------- portrait ---------- */
-
-.fcard__art {
-  grid-row: 1;
-  grid-column: 2;
-  position: relative;
-  background-size: cover;
-  background-position: center;
-  border-right: 1px solid var(--line-soft);
-  overflow: hidden;
-}
-
-/*
- * The portrait is taken out of flow deliberately.
- *
- * The class art is around a thousand pixels tall, and inside a grid row
- * sized "auto" a "max-height: 100%" image has nothing to measure against —
- * so the image's own height becomes the row's, and the card grows to five
- * times the size of its own text. Absolutely positioned, it fills whatever
- * height the readout beside it settles on and cannot push it.
- */
-.fcard__fighter {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  object-position: bottom center;
-  filter: drop-shadow(0 6px 12px rgb(0 0 0 / 65%));
-}
-
-/* The art behind it is dense foliage or rock; without a ground of its own
-   the element icon simply disappears into it. */
-.fcard__element {
-  position: absolute;
-  top: var(--sp-2);
-  right: var(--sp-2);
-  padding: 3px;
-  border-radius: 50%;
-  background: rgb(0 0 0 / 60%);
-  box-sizing: content-box;
-  object-fit: contain;
-}
-
-.fcard__value {
-  position: absolute;
-  top: var(--sp-2);
-  left: var(--sp-2);
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  padding: 2px 5px;
-  border-radius: var(--radius-xs);
-  background: rgb(0 0 0 / 65%);
-  font-family: var(--font-display);
-  font-size: 10px;
-  font-variant-numeric: tabular-nums;
-  color: var(--white);
-}
-
-/* ---------- body ---------- */
-
-.fcard__body {
-  grid-row: 1;
-  grid-column: 3;
-  display: grid;
-  /*
-   * The single column is minmax(0, 1fr), not the default auto.
-   *
-   * An auto track takes the widest row's min-content as its floor, and the
-   * tab strip does not wrap — so the strip decided how wide the body was and
-   * everything else, the stat readout included, was pushed past the card edge
-   * and cut off by the card's overflow. Capping the floor at 0 puts the card
-   * back in charge of its own width.
-   */
-  grid-template-columns: minmax(0, 1fr);
-  grid-template-rows: auto auto minmax(0, 1fr);
-  gap: var(--sp-2);
-  padding: var(--sp-2) var(--sp-3);
-  min-width: 0;
-}
-
-.fcard__head {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--sp-2);
-}
-
-.fcard__ident {
-  display: grid;
-  gap: 4px;
-  min-width: 0;
-}
-
-.fcard__name {
-  font-family: var(--font-display);
-  font-size: var(--fs-sm);
-  font-weight: var(--fw-bold);
-  letter-spacing: 0.02em;
-  text-transform: capitalize;
-  color: var(--white);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.fcard__chips {
-  display: flex;
-  gap: 4px;
-  flex-wrap: wrap;
 }
 
 .chip {
@@ -652,103 +213,10 @@
   color: var(--text-dim);
   white-space: nowrap;
 }
-.chip--level {
-  background: rgb(0 186 255 / 20%);
-  color: #8fe0ff;
-}
 
-/* Reading the roster at level 1: the chip says so, and stops being blue. */
-.chip--lens {
-  background: rgb(246 168 0 / 22%);
-  color: #ffd469;
-}
-.chip--ready,
-.chip--max {
-  background: rgb(246 168 0 / 22%);
-  color: #ffd469;
-}
 .chip--asc {
   background: rgb(145 54 188 / 30%);
   color: #dfb2ff;
-}
-.chip--busy {
-  background: rgb(255 176 58 / 20%);
-  color: #ffc978;
-}
-.chip--overdue {
-  background: rgb(255 52 52 / 22%);
-  color: #ff9aa6;
-}
-
-.fcard__tools {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-2);
-  margin-left: auto;
-}
-
-.fcard__marker {
-  display: grid;
-  place-items: center;
-  width: 30px;
-  height: 30px;
-  padding: 0;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-xs);
-  background: rgb(0 0 0 / 45%);
-  cursor: pointer;
-}
-.fcard__marker:hover {
-  border-color: var(--cyan);
-}
-.fcard__marker img {
-  object-fit: contain;
-}
-
-/* A checkbox big enough to hit, without relying on the native control's
-   platform-dependent size. */
-.fcard__check {
-  display: grid;
-  place-items: center;
-  width: 30px;
-  height: 30px;
-  cursor: pointer;
-}
-.fcard__check input {
-  position: absolute;
-  opacity: 0;
-  width: 30px;
-  height: 30px;
-  margin: 0;
-  cursor: pointer;
-}
-.fcard__check span {
-  width: 20px;
-  height: 20px;
-  border: 2px solid var(--line-bright);
-  border-radius: 4px;
-  background: rgb(0 0 0 / 50%);
-  transition: background var(--dur-fast) var(--ease);
-}
-.fcard__check input:checked + span {
-  background: var(--magenta);
-  border-color: var(--magenta);
-  box-shadow: inset 0 0 0 2px rgb(0 0 0 / 55%);
-}
-.fcard__check input:focus-visible + span {
-  outline: 2px solid var(--cyan);
-  outline-offset: 2px;
-}
-.fcard__check--off {
-  opacity: 0.35;
-  cursor: not-allowed;
-}
-
-/* ---------- tabs ---------- */
-
-.fcard__tabs {
-  display: flex;
-  gap: 2px;
 }
 
 /*
@@ -761,56 +229,6 @@
  * the card some height and are worth it; a control you cannot read is not a
  * control.
  */
-@media (max-width: 719px) {
-  .fcard__tabs {
-    flex-wrap: wrap;
-  }
-  .fcard__tab {
-    flex: 1 1 40%;
-  }
-}
-
-.fcard__tab {
-  /*
-   * Content width first, leftover space shared after.
-   *
-   * With a zero basis the three labels split the strip evenly and the longest
-   * of them, Resistance, is ellipsised at the narrowest column the roster
-   * actually uses. Sizing from content fits all three there and still lets
-   * them give way further down.
-   */
-  flex: 1 1 auto;
-  /* Labels give way before the card does: a clipped word is readable, a
-     clipped stat column is not. */
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  padding: 4px 3px;
-  border: 0;
-  border-bottom: 2px solid transparent;
-  background: rgb(255 255 255 / 4%);
-  color: var(--text-faint);
-  font-family: var(--font-display);
-  font-size: 10px;
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
-  cursor: pointer;
-  transition: color var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease);
-}
-.fcard__tab:hover {
-  color: var(--white);
-}
-.fcard__tab[aria-selected='true'] {
-  color: var(--white);
-  border-bottom-color: var(--cyan);
-  background: rgb(0 186 255 / 12%);
-}
-
-.fcard__panel {
-  min-height: 0;
-  overflow: hidden;
-}
 
 /* ---------- stat readout ---------- */
 
@@ -847,197 +265,6 @@
   color: var(--white);
   white-space: nowrap;
   text-transform: capitalize;
-}
-
-/*
- * The bottom line, set apart from the four it is made of.
- *
- * A rule above it and a heavier figure, so it reads as the total of the rows
- * rather than a fifth one — it is the number to look at if you only look at
- * one, and at the same weight as the rest it disappeared into them.
- */
-.fstats__row--total {
-  margin-top: 3px;
-  padding-top: 4px;
-  border-top: 1px solid var(--line-soft);
-}
-.fstats__row--total dt {
-  color: var(--text-dim);
-}
-.fstats__row--total dd {
-  font-family: var(--font-display);
-  font-size: var(--fs-sm);
-  font-weight: var(--fw-bold);
-  color: var(--gold);
-}
-
-/* ---------- abilities ---------- */
-
-/*
- * Pips above the text, not beside it.
- *
- * Stacked in a column they line up with the ability's first line and then
- * dangle past the end of a short description, which reads as a rendering
- * fault rather than a control. A row of three sits over the body it switches.
- */
-.fability {
-  display: grid;
-  /* Names first, then whatever is left for the description. */
-  grid-template-rows: auto minmax(0, 1fr);
-  gap: var(--sp-3);
-  align-content: start;
-  min-height: 0;
-}
-
-/*
- * The ability names, stacked, one selectable per row.
- *
- * They sit on `auto` so the description below keeps whatever is left of the
- * panel; a fighter with four abilities gives up description lines rather than
- * pushing the card out of shape.
- */
-.fability__list {
-  display: grid;
-  gap: 2px;
-  min-width: 0;
-}
-
-.fability__pick {
-  --pip: var(--text-faint);
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  min-width: 0;
-  padding: 1px 5px;
-  border: 1px solid transparent;
-  border-left: 2px solid var(--pip);
-  border-radius: var(--radius-xs);
-  background: rgb(0 0 0 / 30%);
-  color: var(--pip);
-  font-family: var(--font-display);
-  font-size: 10px;
-  text-align: left;
-  cursor: pointer;
-  opacity: 0.55;
-  transition: opacity var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease);
-}
-.fability__pick:hover {
-  opacity: 0.85;
-}
-.fability__pick[aria-pressed='true'] {
-  opacity: 1;
-  background: color-mix(in srgb, var(--pip) 18%, transparent);
-  border-color: color-mix(in srgb, var(--pip) 45%, transparent);
-  border-left-color: var(--pip);
-}
-
-/* The name is what gives way when a card is narrow, never the rarity. */
-.fability__pickName {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/*
- * The selected ability's text, as a block of its own.
- *
- * It used to be a bare left rule, which is the same mark the rows above carry
- * — so it read as a fourth row belonging to whichever ability sat last in the
- * list rather than to the one actually selected. A filled, inset panel says
- * "this is about the highlighted name" instead.
- *
- * It clips rather than growing: the list is what must stay whole, since it is
- * the thing the player is choosing from, and the full text is in the dialog.
- */
-.fability__body {
-  display: grid;
-  gap: 2px;
-  padding: 6px var(--sp-2);
-  border-left: 2px solid var(--line);
-  border-radius: 0 var(--radius-xs) var(--radius-xs) 0;
-  background: rgb(255 255 255 / 5%);
-  min-width: 0;
-  min-height: 0;
-  overflow: hidden;
-}
-
-.fability__rarity {
-  padding: 0 4px;
-  border-radius: var(--radius-full);
-  background: rgb(255 255 255 / 10%);
-  font-size: 8px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--text-dim);
-}
-
-.fability__lock {
-  object-fit: contain;
-  opacity: 0.85;
-}
-
-.fability__desc {
-  font-size: var(--fs-xs);
-  line-height: 1.35;
-  color: var(--text-dim);
-  /* Three lines, then clipped: the card is a scan, and the dialog has the
-     full text. Three rather than four so a fighter carrying the maximum
-     number of abilities still has room to show any of it. */
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-/* ---------- upkeep rail ---------- */
-
-.fcard__pay {
-  grid-row: 2;
-  grid-column: 1 / -1;
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: var(--sp-2);
-  padding: 0 var(--sp-2);
-  background: #12162a;
-  border-top: 1px solid var(--line-soft);
-  overflow: hidden;
-}
-
-.fcard__payFill {
-  position: absolute;
-  inset: 0 auto 0 0;
-  background: linear-gradient(90deg, #0187b1, #00baff);
-  opacity: 0.35;
-  transition: width var(--dur) var(--ease);
-}
-.fcard__pay--overdue .fcard__payFill {
-  width: 100% !important;
-  background: linear-gradient(90deg, #7a0f0f, #ff3434);
-  opacity: 0.45;
-}
-
-.fcard__payText,
-.fcard__payCost {
-  position: relative;
-  font-family: var(--font-display);
-  font-size: 9px;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: var(--text-dim);
-  white-space: nowrap;
-}
-.fcard__payCost {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  margin-left: auto;
-  color: var(--white);
-}
-.fcard__payCost img {
-  object-fit: contain;
 }
 
 /* ---------- the detail dialog ---------- */
@@ -1128,92 +355,6 @@
   color: var(--white);
 }
 
-/* A locked ability is dimmed on the card too, and its name with it. */
-/*
- * The dimming goes on the description, not the whole block.
- *
- * `opacity` composites — a child cannot be 1 inside a parent at 0.6 — so
- * dimming the panel dimmed the one line that has to stay readable along with
- * the text it qualifies.
- */
-.fability__body--locked .fability__desc {
-  opacity: 0.6;
-}
-
-.fability__body--locked {
-  border-left-style: dashed;
-}
-
-/*
- * The unlock condition, leading the description rather than sitting above it.
- *
- * The dashed edge and the dimming say "not working"; neither says what would
- * change that, and the tooltip that did is unreachable on a phone.
- *
- * Inline, and deliberately not a row of its own. This column is 92px wide —
- * a pill on its own line wrapped "Unlocks at ascension 5" to five lines and
- * grew the card by 65px the moment a locked ability was picked, so choosing
- * one reflowed the grid. Running it into the text costs no row at all: it
- * flows inside the three-line clamp the description already lives in, which
- * spends the last line of flavour text on the one fact the reader needs
- * more.
- */
-.fability__unlock {
-  font-weight: var(--fw-bold);
-  font-style: normal;
-  color: var(--gold);
-}
-
-.fability__unlock img {
-  vertical-align: -1px;
-  margin-right: 2px;
-}
-.fability__pick--locked {
-  border-left-style: dashed;
-}
-
-/*
- * The age bonus, on the end of the tab strip.
- *
- * Not a row of its own: `.fcard__body` is a three-row grid whose last track
- * is what gives the card its height, and a fourth child breaks it.
- *
- * The scale is the live game's, running +100% down to -100%, so its midpoint
- * is a fighter that has already lost half its roll rather than one in fair
- * condition. The colour has to carry that, because the sign does not: "+40%"
- * still reads as positive while meaning a third of the stats are gone.
- */
-.chip--age {
-  font-variant-numeric: tabular-nums;
-  cursor: help;
-}
-
-/*
- * Tinted like the chips beside it rather than coloured text on the card.
- *
- * The band is the whole point — a worn fighter has to look different from a
- * fresh one at a glance across forty cards — so each takes a wash of its own
- * colour the way level and ascension do.
- */
-.chip--age-fresh {
-  background: rgb(14 212 168 / 18%);
-  color: var(--teal);
-}
-.chip--age-worn {
-  background: rgb(246 168 0 / 18%);
-  color: var(--gold);
-}
-.chip--age-bad {
-  background: rgb(255 90 120 / 18%);
-  color: var(--red);
-}
-
-/* ---------- a phone: one readout switch, tighter cards ---------- */
-
-.roster__readout {
-  display: none;
-}
-
 /*
  * The card as it is — portrait, name and chips, the readout, the upkeep
  * rail — at about two thirds of the height. The four tabs move off every
@@ -1221,85 +362,7 @@
  * readout and the card spends nothing on its own strip.
  */
 @media (max-width: 719px) {
-  /*
-     Pinned under the top bar while the roster scrolls. Once pinned it joins
-     the bar: the same glass, from edge to edge, as if the bar had grown a
-     second row — no dark panel floating over the cards.
-  */
-  .roster__readout {
-    position: sticky;
-    top: var(--topbar-h, 56px);
-    z-index: 4;
-    display: block;
-    /* The same box pinned or not, so nothing below it moves when it
-       attaches; only the glass appears. */
-    margin: -2px -16px -8px;
-    padding: 2px 16px 8px;
-    transition: background var(--dur-fast) var(--ease);
-  }
-  .roster__readout--stuck {
-    background: rgb(6 10 22 / 55%);
-    box-shadow: 0 1px 0 rgb(255 255 255 / 8%);
-    backdrop-filter: blur(14px) saturate(1.4);
-    -webkit-backdrop-filter: blur(14px) saturate(1.4);
-  }
-  :root[data-fx='low'] .roster__readout--stuck {
-    background: rgb(5 16 30 / 96%);
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-  }
-  .roster__readoutSeg {
-    display: flex;
-    gap: 3px;
-    padding: 3px;
-    border-radius: 10px;
-    background: rgb(0 0 0 / 30%);
-    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 12%);
-  }
-  .roster__readout button {
-    flex: 1;
-    height: 30px;
-    border: 0;
-    border-radius: 7px;
-    background: none;
-    color: var(--text-faint);
-    font: var(--fw-bold) 12px var(--font-body);
-    cursor: pointer;
-  }
-  .roster__readout button[aria-selected='true'] {
-    background: rgb(124 92 255 / 35%);
-    box-shadow: inset 0 0 0 1px #6f55ff;
-    color: var(--white);
-  }
 
-  .rostergrid {
-    gap: 6px;
-  }
-  .fcard {
-    grid-template-columns: 6px 104px minmax(0, 1fr);
-    grid-template-rows: minmax(0, auto) 20px;
-    border-width: 1px;
-    border-radius: 10px;
-  }
-  .fcard__tabs {
-    display: none;
-  }
-  .fcard__body {
-    grid-template-rows: auto minmax(0, 1fr);
-    gap: 5px;
-    padding: 6px 8px 7px;
-  }
-  .fcard__name {
-    font-size: 11.5px;
-  }
-  .fcard__chips {
-    gap: 3px;
-  }
-  .fcard__marker,
-  .fcard__check {
-    width: 26px;
-    height: 26px;
-  }
   .fstats {
     gap: 1px;
   }
@@ -1310,35 +373,7 @@
   .fstats__row dd {
     font-size: 11.5px;
   }
-  .fstats__row--total {
-    margin-top: 1px;
-    padding-top: 2px;
-  }
-  .fability {
-    gap: 5px;
-  }
-  .fability__desc {
-    -webkit-line-clamp: 2;
-    line-clamp: 2;
-    font-size: 11px;
-  }
-  .fcard__value {
-    top: 5px;
-    left: 5px;
-    font-size: 9px;
-  }
-  .fcard__element {
-    top: 5px;
-    right: 5px;
-    width: 16px;
-    height: 16px;
-  }
-}
 
-/* ---------- a phone: the head, the action row, the filter toolbar ---------- */
-
-.rtools {
-  display: none;
 }
 
 /*
@@ -1352,94 +387,7 @@
   .roster {
     gap: 8px;
   }
-  .roster__head {
-    align-items: center;
-    gap: 6px 10px;
-  }
-  .roster__head > div {
-    display: flex;
-    align-items: baseline;
-    gap: 10px;
-    flex-wrap: wrap;
-  }
-  .roster__title {
-    font-size: 20px;
-    letter-spacing: 0.08em;
-  }
-  .roster__counts {
-    gap: 8px;
-    margin: 0;
-    font-size: 12px;
-  }
 
-  .roster__modes {
-    gap: 3px;
-    padding: 3px;
-    border: 0;
-    border-radius: 10px;
-    background: rgb(0 0 0 / 30%);
-    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 12%);
-  }
-  .roster__mode {
-    min-height: 30px;
-    border-radius: 7px;
-    background: none;
-    font-family: var(--font-body);
-    font-size: 12px;
-    font-weight: var(--fw-bold);
-    letter-spacing: 0;
-    color: var(--text-faint);
-  }
-  .roster__mode[aria-selected='true'] {
-    background: rgb(124 92 255 / 35%);
-    box-shadow: inset 0 0 0 1px #6f55ff;
-    color: var(--white);
-  }
-
-  /* Payday (with All / Unwilling) and Level all, one row, plain glass. */
-  .roster__bar {
-    flex-wrap: nowrap;
-    gap: 6px;
-    padding: 0;
-    border: 0;
-    background: none;
-    backdrop-filter: none;
-  }
-  .roster__bar--pinned {
-    padding: 6px;
-    border-radius: 10px;
-    background: rgb(8 14 30 / 96%);
-  }
-  .roster__bar > .spacer {
-    display: none;
-  }
-  .roster__bar .btn {
-    --btn-bg: rgb(255 255 255 / 6%);
-    --btn-line: rgb(255 255 255 / 18%);
-    min-height: 36px;
-    padding: 0 9px;
-    font-family: var(--font-body);
-    font-size: 12px;
-    letter-spacing: 0;
-    text-shadow: none;
-    white-space: nowrap;
-  }
-  .roster__bar .btn--primary {
-    --btn-bg: linear-gradient(180deg, #2ad0ff, #00a3e6);
-    --btn-line: transparent;
-    --btn-fg: #00131f;
-  }
-  .roster__bar .btn--danger {
-    --btn-fg: #fff;
-  }
-  /* Disabled stays glass, just quieter: the grey slab it was reads as a
-     different control rather than this one, off. */
-  .roster__bar .btn:disabled {
-    --btn-bg: rgb(255 255 255 / 4%);
-    --btn-line: rgb(255 255 255 / 10%);
-    color: var(--text-faint);
-    opacity: 0.8;
-  }
   .paysplit {
     flex: 1;
     min-width: 0;
@@ -1456,140 +404,7 @@
     padding: 0 9px;
     font-size: 11px;
   }
-  .roster__bar .cost {
-    margin-left: 4px;
-    padding: 1px 5px;
-    font-size: 10.5px;
-  }
-  .roster__bar .cost img {
-    width: 13px;
-    height: 13px;
-  }
-  .roster__selected {
-    padding-left: 6px;
-  }
-  .roster__selectedName {
-    display: none;
-  }
 
-  /* The picker's toolbar. */
-  .rtools {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-  .rtools__filter {
-    flex: 1;
-    min-width: 0;
-    display: flex;
-    height: 36px;
-    border-radius: 9px;
-    background: rgb(255 255 255 / 5%);
-    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 16%);
-    overflow: hidden;
-  }
-  .rtools__filter--on {
-    background: rgb(0 186 255 / 10%);
-    box-shadow: inset 0 0 0 1px rgb(0 186 255 / 70%);
-  }
-  .rtools__main,
-  .rtools__end {
-    display: inline-flex;
-    align-items: center;
-    border: 0;
-    background: none;
-    color: #e3e9f4;
-    font: var(--fw-bold) 12px var(--font-body);
-    cursor: pointer;
-  }
-  .rtools__main {
-    flex: 1;
-    min-width: 0;
-    gap: 7px;
-    padding: 0 10px;
-    text-align: left;
-  }
-  .rtools__main svg {
-    flex: none;
-    width: 15px;
-    height: 15px;
-  }
-  .rtools__end {
-    flex: none;
-    width: 34px;
-    justify-content: center;
-    box-shadow: inset 1px 0 0 rgb(255 255 255 / 14%);
-    font-size: 11px;
-  }
-  .rtools__filter--on .rtools__main,
-  .rtools__filter--on .rtools__end {
-    color: #bff0ff;
-  }
-  .rtools__label {
-    flex: none;
-    font-size: 10px;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--text-faint);
-  }
-  .rtools__hint {
-    min-width: 0;
-    overflow: hidden;
-    font-weight: 600;
-    color: var(--text-faint);
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  .rtools__icon {
-    position: relative;
-    flex: none;
-    display: grid;
-    place-items: center;
-    width: 36px;
-    height: 36px;
-    border-radius: 9px;
-    background: rgb(255 255 255 / 5%);
-    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 16%);
-    color: #dfe6f2;
-    cursor: pointer;
-  }
-  .rtools__icon svg {
-    width: 16px;
-    height: 16px;
-  }
-  .rtools__icon select {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    opacity: 0;
-    cursor: pointer;
-  }
-  /* The list the phone or browser opens for it: dark, like the rest of the
-     game. Without this it took the icon's light text on the browser's white
-     list, which is unreadable. */
-  .rtools__icon select {
-    color-scheme: dark;
-    color: var(--white);
-    background: #0b1324;
-  }
-  .rtools__icon select option,
-  .rtools__icon select optgroup {
-    color: var(--white);
-    background: #0b1324;
-  }
-
-  /* Folded, the filters are only the toolbar; open, all of them. */
-  .filters--roster.filters--folded {
-    display: none;
-  }
-  .filters--roster .filters__toggle {
-    display: none;
-  }
-  /* The readout switch already sits above the cards. */
-  .filters--roster .field--tabs {
-    display: none;
-  }
 }
 
 /* ---------- My Fighters on a desktop: the Market's rows, with payday and age ---------- */
@@ -2539,50 +1354,7 @@
   background: var(--white);
   box-shadow: 0 0 0 2px rgb(0 0 0 / 60%);
 }
-.drost__tiles {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
-}
-.drost__tile {
-  display: grid;
-  gap: 2px;
-  padding: 9px 12px;
-  border-radius: 10px;
-  background: rgb(255 255 255 / 4%);
-  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 8%);
-  min-width: 0;
-}
-.drost__tile small {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  font-family: var(--font-display);
-  font-size: 9px;
-  font-weight: 800;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--text-faint);
-}
-.drost__tile b {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-family: var(--font-display);
-  font-size: 14px;
-  font-weight: 800;
-}
-.drost__tile b em {
-  font-family: var(--font-body);
-  font-size: 11px;
-  font-style: normal;
-  font-weight: 600;
-  color: var(--text-dim);
-}
-.drost__tile b.drost__target {
-  font-family: var(--font-body);
-  font-size: 13px;
-}
+
 .drost__abilities {
   display: grid;
   gap: 6px;
@@ -2914,4 +1686,534 @@
 }
 .drost__acts .btn {
   padding: 0 11px;
+}
+
+/* ---------- My Fighters on a phone: the same rows, sized for a thumb ---------- */
+
+.drost--phone {
+  gap: 10px;
+  padding-bottom: var(--sp-4);
+}
+.drost--phone.has-basket {
+  padding-bottom: 96px;
+}
+.drost--phone .drost__head {
+  align-items: flex-end;
+  gap: 10px;
+}
+.drost--phone .drost__head > span:first-child {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+}
+.drost--phone .drost__counts {
+  padding-bottom: 7px;
+  font-size: 12px;
+}
+.drost--phone .drost__headacts {
+  width: 100%;
+  gap: 8px;
+}
+.drost--phone .drost__headacts > .drost__seg {
+  order: -1;
+  flex: 1 1 100%;
+}
+.drost--phone .drost__headacts > .btn {
+  flex: none;
+}
+.drost--phone .drost__headacts .btn {
+  min-height: 38px;
+  padding: 0 10px;
+  font-size: 11px;
+  white-space: nowrap;
+}
+.drost--phone .drost__headacts .paysplit__mode {
+  padding: 0 9px;
+}
+
+/* the phone's controls keep the game's purple */
+.drost--phone .drost__seg {
+  display: flex;
+}
+.drost--phone .drost__seg button {
+  flex: 1 1 auto;
+  justify-content: center;
+  padding: 0 6px;
+  font-size: 12.5px;
+}
+.drost--phone .drost__seg button[aria-selected='true'],
+.drost--phone .drost__seg button[aria-pressed='true'] {
+  background: rgb(124 92 255 / 35%);
+  box-shadow: inset 0 0 0 1px #6f55ff;
+}
+.drost--phone .drost__seg button[aria-selected='true'] small,
+.drost--phone .drost__seg button[aria-pressed='true'] small {
+  color: #d9ceff;
+}
+.drost--phone .drost__seg--sm button {
+  min-height: 26px;
+  padding: 0 7px;
+  font-size: 11.5px;
+}
+
+.drost--phone .drost__toolbar {
+  gap: 6px;
+}
+.drost--phone .drost__toolbar .drost__sp {
+  display: none;
+}
+.drost--phone .drost__cap {
+  letter-spacing: 0.1em;
+  white-space: nowrap;
+}
+.drost--phone .drost__toolbar .drost__note {
+  order: -1;
+  flex-basis: 100%;
+}
+.drost--phone .drost__search {
+  flex: 1 1 0;
+  width: auto;
+  min-width: 0;
+  min-height: 36px;
+}
+.drost--phone .drost__tool,
+.drost--phone .drost__dir {
+  height: 36px;
+  padding: 0 10px;
+  font-size: 12px;
+}
+.drost--phone .drost__dir {
+  width: 36px;
+  padding: 0;
+}
+.drost--phone .drost__tool small {
+  display: none;
+}
+.drost--phone .drost__tool.is-on {
+  background: rgb(124 92 255 / 30%);
+  box-shadow: inset 0 0 0 1px #6f55ff;
+}
+.drost--phone .drost__tool em {
+  background: #7c5cff;
+  color: var(--white);
+}
+.drost__hint {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--text-faint);
+}
+
+/* what is set: one line that scrolls sideways */
+.drost--phone .drost__chipsline {
+  flex-wrap: nowrap;
+  margin: 0 -16px;
+  padding: 0 16px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.drost--phone .drost__chipsline::-webkit-scrollbar {
+  display: none;
+}
+.drost--phone .drost__chip {
+  flex: none;
+  background: rgb(124 92 255 / 20%);
+  box-shadow: inset 0 0 0 1px rgb(124 92 255 / 55%);
+  font-size: 11.5px;
+}
+.drost--phone .drost__chipsline .linklike {
+  flex: none;
+  white-space: nowrap;
+}
+
+/* the count and the view switch, pinned under the top bar */
+.drost--phone .drost__listhead {
+  position: sticky;
+  top: var(--topbar-h, 56px);
+  z-index: 4;
+  margin: -4px -16px -2px;
+  padding: 4px 16px 6px;
+  transition: background var(--dur-fast) var(--ease);
+}
+.drost--phone .drost__listhead.is-stuck {
+  background: rgb(6 10 22 / 55%);
+  box-shadow: 0 1px 0 rgb(255 255 255 / 8%);
+  backdrop-filter: blur(14px) saturate(1.4);
+  -webkit-backdrop-filter: blur(14px) saturate(1.4);
+}
+:root[data-fx='low'] .drost--phone .drost__listhead.is-stuck {
+  background: rgb(5 16 30 / 96%);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+.drost--phone .drost__listhead .drost__seg {
+  flex: none;
+}
+
+/* a row: portrait, then three lines; no payday column, the date joins the name */
+.drost--phone .drost__rows {
+  border-radius: 13px;
+}
+.drost--phone .drost__row {
+  grid-template-columns: 48px minmax(0, 1fr) auto;
+  gap: 9px;
+  padding: 5px 9px 5px 6px;
+}
+.drost--phone .drost__row.is-inlinepay {
+  grid-template-columns: 48px minmax(0, 1fr);
+}
+.drost--phone .drost__row.is-ticking {
+  grid-template-columns: 20px 48px minmax(0, 1fr) auto;
+}
+.drost--phone .drost__row.is-ticking.is-inlinepay {
+  grid-template-columns: 20px 48px minmax(0, 1fr);
+}
+.drost--phone .drost__row:hover {
+  background: none;
+}
+.drost--phone .drost__art {
+  width: 48px;
+  height: 48px;
+}
+.drost--phone .drost__lv {
+  padding: 1px 4px;
+  font-size: 8.5px;
+}
+.drost--phone .drost__mk {
+  width: 18px;
+  height: 18px;
+}
+.drost--phone .drost__mk img {
+  width: 12px;
+  height: 12px;
+}
+.drost--phone .drost__who {
+  gap: 2px;
+}
+.drost--phone .drost__l1 {
+  gap: 5px;
+  line-height: 16px;
+}
+.drost--phone .drost__l1 b {
+  font-size: 13px;
+  white-space: nowrap;
+}
+.drost--phone .drost__l1 img {
+  width: 12px;
+  height: 12px;
+}
+.drost--phone .drost__l1 small {
+  overflow: hidden;
+  font-size: 11px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.drost__when {
+  flex: none;
+  margin-left: auto;
+  font-size: 10.5px;
+  color: var(--text-faint);
+  text-transform: none;
+}
+.drost__when.is-overdue {
+  color: #ffb3bd;
+}
+.drost--phone .drost__line {
+  gap: 7px;
+  font-size: 10.5px;
+}
+.drost--phone .drost__si {
+  height: 10px;
+}
+.drost--phone .drost__l3 {
+  gap: 4px;
+  overflow: hidden;
+}
+.drost--phone .drost__l3 .drost__bar {
+  flex: 1;
+  min-width: 20px;
+  height: 4px;
+  margin-left: 4px;
+}
+.drost__bar.is-overdue i {
+  background: linear-gradient(90deg, #a83246, #ff5a6a);
+}
+.drost__days {
+  flex: none;
+  font-size: 10px;
+  color: var(--text-faint);
+}
+.drost--phone .drost__age {
+  height: 17px;
+  padding: 0 5px;
+  font-size: 9px;
+}
+.drost--phone .drost__ab {
+  min-width: 16px;
+  height: 16px;
+  font-size: 8.5px;
+}
+.drost--phone .drost__status {
+  padding: 1px 7px;
+  font-size: 8.5px;
+}
+.drost--phone .drost__row.is-picked {
+  background: rgb(124 92 255 / 16%);
+  box-shadow: inset 3px 0 0 #7c5cff;
+}
+.drost--phone .drost__tick {
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+}
+.drost--phone.is-sell .drost__tick.is-on {
+  background: var(--red);
+}
+.drost--phone.is-sell .drost__tick.is-on::after {
+  color: var(--white);
+}
+.drost--phone.is-sell .drost__row.is-checked {
+  background: rgb(255 90 106 / 9%);
+}
+
+/* focused rows: the name over the figures, beside the portrait */
+.drost--phone .drost__row.is-focused {
+  grid-template-columns: 44px minmax(0, 1fr);
+  row-gap: 4px;
+}
+.drost--phone .drost__row.is-focused.is-ticking {
+  grid-template-columns: 20px 44px minmax(0, 1fr);
+}
+.drost--phone .drost__row.is-focused > .drost__art,
+.drost--phone .drost__row.is-focused > .drost__tick {
+  grid-row: 1 / 3;
+  align-self: center;
+}
+.drost--phone .drost__row.is-focused > .drost__art {
+  width: 44px;
+  height: 44px;
+}
+.drost--phone .drost__row.is-focused > .drost__name {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.drost--phone .drost__row.is-focused > .drost__name b {
+  font-size: 13px;
+}
+.drost--phone .drost__row.is-focused > .drost__name small {
+  font-size: 11px;
+}
+.drost--phone .drost__cells {
+  gap: 3px;
+}
+.drost--phone .drost__cell {
+  padding: 4px 1px;
+  border-radius: 7px;
+}
+.drost--phone .drost__cell small {
+  gap: 2px;
+  font-size: 6.5px;
+}
+.drost--phone .drost__cell small .drost__si {
+  height: 8px;
+}
+.drost--phone .drost__cell b {
+  gap: 1px;
+  font-size: 11.5px;
+}
+.drost--phone .drost__cell em {
+  font-size: 8.5px;
+}
+.drost--phone .drost__names span {
+  padding: 1px 6px;
+  font-size: 10.5px;
+}
+
+/* the fighter in full, as a sheet from the bottom */
+.drost--phone .drost__hero {
+  grid-template-columns: 76px minmax(0, 1fr);
+  gap: 12px;
+}
+.drost--phone .drost__heroart {
+  width: 76px;
+  height: 76px;
+}
+.shell .main__inner .drost--phone .drost__heroname {
+  font-size: 18px;
+}
+.drost--phone .drost__twin {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 7px;
+}
+.drost--phone .drost__box {
+  padding: 8px 10px;
+  cursor: default;
+}
+.drost--phone .drost__boxhead small {
+  font-size: 8.5px;
+  letter-spacing: 0.12em;
+}
+.drost--phone .drost__boxhead b {
+  font-size: 15px;
+}
+.drost--phone .drost__box p {
+  font-size: 10.5px;
+}
+.drost--phone .drost__cells--big .drost__cell small {
+  font-size: 7px;
+}
+.drost--phone .drost__cells--big .drost__cell b {
+  font-size: 13px;
+}
+.drost__chipbtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 9px;
+  border: 0;
+  border-radius: 999px;
+  background: rgb(124 92 255 / 22%);
+  box-shadow: inset 0 0 0 1px rgb(124 92 255 / 55%);
+  color: var(--white);
+  font: inherit;
+  font-size: 11.5px;
+  font-weight: var(--fw-bold);
+  cursor: pointer;
+}
+.drost__chips .drost__chipbtn img {
+  height: 13px;
+  filter: none;
+  opacity: 1;
+}
+.drost--phone .rsheet__foot .drost__acts {
+  flex-wrap: nowrap;
+  gap: 5px;
+}
+.drost--phone .rsheet__foot .drost__acts .btn {
+  flex: 1 1 auto;
+  min-height: 38px;
+  padding: 0 8px;
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+/* filter and sort, one sheet */
+.drost__fsheet {
+  display: grid;
+  gap: 14px;
+}
+.drost__fsheet .drost__fhead {
+  margin-bottom: 6px;
+}
+.drost__fsheet .drost__seg {
+  flex-wrap: wrap;
+}
+.drost__fsheet .drost__sorts {
+  gap: 8px;
+}
+.drost__fsheet .drost__sorts > div {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px;
+}
+.drost__fsheet .drost__sorthead {
+  flex-basis: 100%;
+  margin: 0;
+}
+.drost__fsheet .drost__sorts button {
+  width: auto;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 5%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 12%);
+  font-size: 12px;
+}
+.drost__fsheet .drost__sorts button[aria-pressed='true'] {
+  background: rgb(124 92 255 / 30%);
+  box-shadow: inset 0 0 0 1px #6f55ff;
+}
+.drost__fsheet .drost__sorts button[aria-pressed='true']::after {
+  content: none;
+}
+.drost--phone .drost__switch:checked {
+  background: #7c5cff;
+}
+.drost__grow {
+  flex: 1;
+}
+.drost--phone .rsheet__foot:has(.drost__grow) {
+  display: flex;
+}
+
+/* the basket: who is ticked and the one button, above the tab bar */
+.drost__basketbar {
+  position: fixed;
+  right: 12px;
+  bottom: calc(var(--nav-h) + 10px + env(safe-area-inset-bottom));
+  left: 12px;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 8px 8px 12px;
+  border-radius: 14px;
+  background: rgb(14 20 38 / 97%);
+  box-shadow: inset 0 0 0 1px rgb(0 186 255 / 45%), 0 12px 30px rgb(0 0 0 / 60%);
+}
+.drost__basketbar.is-sell {
+  box-shadow: inset 0 0 0 1px rgb(255 90 106 / 45%), 0 12px 30px rgb(0 0 0 / 60%);
+}
+.drost__faces {
+  display: flex;
+  flex: none;
+}
+.drost__faces .drost__art {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px #0e1426;
+}
+.drost__faces .drost__art + .drost__art {
+  margin-left: -8px;
+}
+.drost__what {
+  display: grid;
+  flex: 1;
+  gap: 1px;
+  min-width: 0;
+}
+.drost__what b {
+  font-size: 12.5px;
+}
+.drost__what small {
+  overflow: hidden;
+  font-size: 10.5px;
+  color: var(--text-faint);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.drost__what .drost__cr {
+  font-size: 10.5px;
+}
+.drost__what .drost__cr img {
+  width: 11px;
+  height: 11px;
+}
+.drost__basketbar .btn {
+  flex: none;
+  min-height: 38px;
+}
+.drost--phone .rsheet .drost__baskettitle {
+  display: none;
+}
+/* the smallest phones: the count and the five views still share one line */
+@media (max-width: 380px) {
+  .drost--phone .drost__listhead {
+    gap: 8px;
+  }
+  .drost--phone .drost__listhead .drost__seg button {
+    padding: 0 5px;
+  }
 }

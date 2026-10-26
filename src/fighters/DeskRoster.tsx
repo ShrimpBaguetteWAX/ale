@@ -72,8 +72,10 @@ import { asset } from '@/assets'
  * Sell on market keep the same list, add a tick to each row, and turn the
  * right-hand side into what is about to happen to the ticked fighters.
  *
- * The phone keeps its cards; this is only drawn where there is room for two
- * columns.
+ * A phone gets the same screen in one column (`phone`): the rows sized for a
+ * thumb, the fighter in full as a sheet from the bottom with its actions at
+ * the foot, the filter and sort together in one sheet, and what is ticked in
+ * a bar above the tab bar.
  */
 
 export type Mode = 'inventory' | 'sell' | 'market'
@@ -215,6 +217,8 @@ function Gems({ value }: { value: number }) {
 /* ---------- the screen ---------- */
 
 export interface DeskRosterProps {
+  /** One column for a phone: sheets from the bottom rather than beside or from the side. */
+  phone?: boolean
   roster: RosterFighter[]
   /** The roster after the filter and its sort. */
   shown: RosterFighter[]
@@ -274,15 +278,39 @@ export function DeskRoster(p: DeskRosterProps) {
   const [view, setView] = useState<View>('default')
   const [query, setQuery] = useState('')
   const [pop, setPop] = useState<'filters' | 'sort' | null>(null)
+  const phone = !!p.phone
   /* Below this the picked fighter opens from the side rather than beside the list. */
-  const [wide, setWide] = useState(() => window.matchMedia(WIDE).matches)
+  const [wide, setWide] = useState(() => !phone && window.matchMedia(WIDE).matches)
   useEffect(() => {
     const mq = window.matchMedia(WIDE)
-    const on = () => setWide(mq.matches)
+    const on = () => setWide(!phone && mq.matches)
     on()
     mq.addEventListener('change', on)
     return () => mq.removeEventListener('change', on)
-  }, [])
+  }, [phone])
+  /*
+     A phone pins the list's head — the count and the view switch — under
+     the top bar while the roster scrolls. Pinned, it takes the bar's glass,
+     as if the bar had grown a second row; at rest it is plain.
+  */
+  const listHead = useRef<HTMLDivElement>(null)
+  const [stuck, setStuck] = useState(false)
+  useEffect(() => {
+    if (!phone) return
+    const check = () => {
+      const el = listHead.current
+      if (!el) return
+      const pin = parseFloat(getComputedStyle(el).top) || 0
+      setStuck(el.getBoundingClientRect().top <= pin + 0.5)
+    }
+    check()
+    window.addEventListener('scroll', check, { passive: true })
+    window.addEventListener('resize', check)
+    return () => {
+      window.removeEventListener('scroll', check)
+      window.removeEventListener('resize', check)
+    }
+  }, [phone])
   /*
      Whether that side sheet is open. Its own flag rather than "a fighter is
      picked": a pick made in two columns is still there after the window
@@ -305,6 +333,8 @@ export function DeskRoster(p: DeskRosterProps) {
     const from = lastMode.current
     lastMode.current = p.mode
     if (from === p.mode) return
+    /* "Sell" from a phone's fighter sheet: the basket bar takes over from here. */
+    if (phone) setSheet(false)
     const base =
       from === 'inventory'
         ? ((kept.current = { sort: p.filter.sort, sortAsc: p.filter.sortAsc, status: p.filter.status }), p.filter)
@@ -345,7 +375,13 @@ export function DeskRoster(p: DeskRosterProps) {
   const selected = p.roster.find((f) => f.fighter_id === p.selectedId) ?? null
   /* Inventory always shows somebody: the picked fighter, else the first row. */
   const shownFighter = selected ?? (p.mode === 'inventory' ? (list[0] ?? null) : null)
-  const active = countActiveFilters(p.filter) - (p.filter.status !== 'All' ? 1 : 0)
+  /* A desktop's availability is its own switch in the toolbar; a phone's sits in the filter sheet and counts there. */
+  const active = countActiveFilters(p.filter) - (!phone && p.filter.status !== 'All' ? 1 : 0)
+  const ticked = p.roster.filter((f) => p.checked.includes(f.fighter_id))
+  const clearFilters = () => {
+    p.onFilter({ ...EMPTY_FILTER, status: phone ? 'All' : p.filter.status, sort: p.filter.sort, sortAsc: p.filter.sortAsc })
+    p.onAtLevelOne(false)
+  }
   const sortLabel = [...ROSTER_SORTS, ...SORTS].find((s) => s.value === p.filter.sort)?.label ?? 'Level'
   const set = (patch: Partial<RosterFilter>) => p.onFilter({ ...p.filter, ...patch })
 
@@ -360,13 +396,11 @@ export function DeskRoster(p: DeskRosterProps) {
     if (gateOf(f).ok) p.onCheck(f.fighter_id)
   }
 
-  const detail = shownFighter && (
-    <Detail
-      f={shownFighter}
-      fig={figures.get(shownFighter.fighter_id) ?? figuresOf(shownFighter, p.templates.get(shownFighter.classname), p.config, p.levelMod, p.ageDecay, p.now, p.atLevelOne)}
-      {...p}
-    />
-  )
+  /* A fighter the search has hidden can still be the one picked. */
+  const figOf = (f: RosterFighter) =>
+    figures.get(f.fighter_id) ??
+    figuresOf(f, p.templates.get(f.classname), p.config, p.levelMod, p.ageDecay, p.now, p.atLevelOne)
+  const detail = shownFighter && <Detail f={shownFighter} fig={figOf(shownFighter)} {...p} />
   const side =
     p.mode === 'sell' ? (
       <div className="drost__stack">
@@ -379,8 +413,10 @@ export function DeskRoster(p: DeskRosterProps) {
       detail
     )
 
+  const basket = phone && p.mode !== 'inventory' && ticked.length > 0
+
   return (
-    <div className="drost">
+    <div className={`drost${phone ? ` drost--phone is-${p.mode}` : ''}${basket ? ' has-basket' : ''}`}>
       <header className="drost__head">
         <span>
           <h1 className="drost__title">My Fighters</h1>
@@ -454,18 +490,11 @@ export function DeskRoster(p: DeskRosterProps) {
       {p.banner}
 
       <div className="drost__toolbar">
-        <span className="drost__seg" role="group" aria-label="Availability">
-          {STATUSES.map((s) => (
-            <button type="button" key={s} aria-pressed={p.filter.status === s} onClick={() => set({ status: s })}>
-              {STATUS_LABEL[s]}
-              <small>{counts[s] ?? 0}</small>
-            </button>
-          ))}
-        </span>
+        {!phone && <StatusSeg filter={p.filter} counts={counts} onStatus={(s) => set({ status: s })} />}
         <input
           className="input drost__search"
           type="search"
-          placeholder="Search fighters…"
+          placeholder={phone ? 'Search…' : 'Search fighters…'}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           aria-label="Search class, race, element or ability"
@@ -486,14 +515,15 @@ export function DeskRoster(p: DeskRosterProps) {
           <svg viewBox="0 0 24 24" aria-hidden="true">
             <path d="M3 5h18l-7 8v5l-4 2v-7z" />
           </svg>
-          Filters
+          {phone ? <span className="sr-only">Filters</span> : 'Filters'}
           {active > 0 && <em>{active}</em>}
         </button>
+        {/* A phone keeps the sort in the same sheet as the filter. */}
         <button
           type="button"
           className={`drost__tool${pop === 'sort' ? ' is-on' : ''}`}
           aria-expanded={pop === 'sort'}
-          onClick={() => setPop(pop === 'sort' ? null : 'sort')}
+          onClick={() => setPop(phone ? 'filters' : pop === 'sort' ? null : 'sort')}
         >
           <svg viewBox="0 0 24 24" aria-hidden="true">
             <path d="M7 4v16M3 16l4 4 4-4M17 20V4M13 8l4-4 4 4" />
@@ -510,48 +540,67 @@ export function DeskRoster(p: DeskRosterProps) {
           {p.filter.sortAsc ? '↑' : '↓'}
         </button>
 
-        {pop && <button type="button" className="drost__scrim" aria-label="Close" onClick={() => setPop(null)} />}
-        {pop === 'filters' && (
+        {pop && !phone && <button type="button" className="drost__scrim" aria-label="Close" onClick={() => setPop(null)} />}
+        {pop === 'filters' && !phone && (
           <FilterPanel
             {...p}
             matching={list.length}
             onClose={() => setPop(null)}
           />
         )}
-        {pop === 'sort' && (
+        {pop === 'sort' && !phone && (
           <div className="drost__pop drost__pop--sort">
-            <span className="drost__seg drost__seg--sm" role="group" aria-label="Direction">
-              <button type="button" aria-pressed={!p.filter.sortAsc} onClick={() => set({ sortAsc: false })}>
-                Biggest first
-              </button>
-              <button type="button" aria-pressed={!!p.filter.sortAsc} onClick={() => set({ sortAsc: true })}>
-                Smallest first
-              </button>
-            </span>
-            <div className="drost__sorts">
-              {SORT_GROUPS.map(([group, options]) => (
-                <div key={group}>
-                  <span className="drost__sorthead">{group}</span>
-                  {options.map((o) => (
-                    <button
-                      type="button"
-                      key={o.value}
-                      aria-pressed={p.filter.sort === o.value}
-                      onClick={() => {
-                        set({ sort: o.value })
-                        setPop(null)
-                      }}
-                    >
-                      {o.label}
-                    </button>
-                  ))}
-                </div>
-              ))}
-            </div>
+            <DirSeg filter={p.filter} onAsc={(sortAsc) => set({ sortAsc })} />
+            <SortList
+              filter={p.filter}
+              onPick={(sort) => {
+                set({ sort })
+                setPop(null)
+              }}
+            />
             <p className="drost__note">Health and damage sort as fought with, after level and age.</p>
           </div>
         )}
       </div>
+
+      {pop && phone && (
+        <BottomSheet
+          title="Filter & sort"
+          onClose={() => setPop(null)}
+          foot={
+            <>
+              <button type="button" className="btn btn--ghost" onClick={clearFilters}>
+                Clear all
+              </button>
+              <button type="button" className="btn btn--primary drost__grow" onClick={() => setPop(null)}>
+                Show {list.length} fighter{list.length === 1 ? '' : 's'}
+              </button>
+            </>
+          }
+        >
+          <div className="drost__fsheet">
+            <div>
+              <span className="drost__fhead">Sort</span>
+              <SortList filter={p.filter} onPick={(sort) => set({ sort })} />
+            </div>
+            <DirSeg filter={p.filter} onAsc={(sortAsc) => set({ sortAsc })} />
+            <div>
+              <span className="drost__fhead">Show</span>
+              <StatusSeg filter={p.filter} counts={counts} onStatus={(s) => set({ status: s })} />
+            </div>
+            <FilterFields {...p} />
+            <p className="drost__note">Health and damage sort, and their rules grade, after age — like the arrows.</p>
+          </div>
+        </BottomSheet>
+      )}
+
+      {phone && p.mode !== 'inventory' && (
+        <p className="drost__hint">
+          {p.mode === 'sell'
+            ? "Tick fighters to sell them back to the game for credits. Busy ones can't be ticked."
+            : `Tick up to ${MAX_BULK_LISTINGS} ready fighters to put up for auction.`}
+        </p>
+      )}
 
       <ActiveChips {...p} />
 
@@ -568,7 +617,7 @@ export function DeskRoster(p: DeskRosterProps) {
       ) : (
         <div className={`drost__main${wide ? '' : ' is-narrow'}`}>
           <section className="drost__list" aria-label="Fighters">
-            <div className="drost__listhead">
+            <div className={`drost__listhead${stuck ? ' is-stuck' : ''}`} ref={listHead}>
               <span className="drost__cap">
                 {list.length === p.roster.length
                   ? `${p.roster.length} fighters`
@@ -589,7 +638,7 @@ export function DeskRoster(p: DeskRosterProps) {
                   type="button"
                   className="linklike"
                   onClick={() => {
-                    p.onFilter({ ...EMPTY_FILTER, sort: p.filter.sort, sortAsc: p.filter.sortAsc })
+                    clearFilters()
                     setQuery('')
                   }}
                 >
@@ -607,6 +656,7 @@ export function DeskRoster(p: DeskRosterProps) {
                     view={view}
                     mode={p.mode}
                     now={p.now}
+                    phone={phone}
                     picked={p.mode === 'inventory' && f.fighter_id === (wide ? shownFighter : selected)?.fighter_id}
                     checked={p.checked.includes(f.fighter_id)}
                     gate={gateOf(f)}
@@ -620,8 +670,59 @@ export function DeskRoster(p: DeskRosterProps) {
         </div>
       )}
 
+      {/*
+        A phone's basket: who is ticked, what it comes to, and the one
+        button — above the tab bar, wherever the list has scrolled to.
+        Selling goes straight to its confirmation, which lists them again;
+        listing has terms to set first, so it opens them.
+      */}
+      {basket && (
+        <div className={`drost__basketbar is-${p.mode}`}>
+          <span className="drost__faces" aria-hidden="true">
+            {ticked.slice(0, 3).map((f) => (
+              <span className="drost__art" key={f.fighter_id} style={{ backgroundImage: `url('${elementBackground(f.element)}')` }}>
+                <GameImg src={fighterAvatar(f)} alt="" fallback={fighterArtFallback()} />
+              </span>
+            ))}
+          </span>
+          <span className="drost__what">
+            <b>
+              {p.mode === 'sell' ? 'Sell' : 'List'} {ticked.length} fighter{ticked.length === 1 ? '' : 's'}
+            </b>
+            <small>
+              {p.mode === 'sell' ? (
+                <>
+                  Permanent · you get <Credits value={p.sellValue} />
+                </>
+              ) : (
+                <>
+                  {gemsOf(p.listPlan.gems)} to list · from {gemsOf(p.startPrice)} each
+                </>
+              )}
+            </small>
+          </span>
+          {p.mode === 'sell' ? (
+            <button type="button" className="btn btn--danger" disabled={!p.canAct || !!p.busy} onClick={p.onSell}>
+              {p.busy === 'sell' && <span className="spinner" />}
+              Sell
+            </button>
+          ) : (
+            <button
+              type="button"
+              className="btn btn--primary"
+              onClick={() => {
+                p.onSelect(p.checked[p.checked.length - 1])
+                setSheet(true)
+              }}
+            >
+              Review
+            </button>
+          )}
+        </div>
+      )}
+
       {/* Too narrow for two columns: the side opens over the page instead. */}
-      {!wide && p.mode !== 'inventory' && p.checked.length > 0 && (
+      {!wide && !phone && p.mode !== 'inventory' && p.checked.length > 0 && (
         <div className="drost__dock">
           <span>
             {p.checked.length} ticked ·{' '}
@@ -641,9 +742,14 @@ export function DeskRoster(p: DeskRosterProps) {
       )}
       {!wide && sheet && selected && (
         <BottomSheet
-          side
+          side={!phone}
           title={p.mode === 'inventory' ? `${cap(selected.racename)} ${cap(selected.classname)}` : p.mode === 'sell' ? 'Sell' : 'List on the market'}
           onClose={() => setSheet(false)}
+          foot={
+            phone && p.mode === 'inventory' ? (
+              <Acts {...p} f={selected} fig={figOf(selected)} />
+            ) : undefined
+          }
         >
           {p.mode === 'inventory' ? detail : side}
         </BottomSheet>
@@ -664,12 +770,14 @@ function Row({
   checked,
   gate,
   onClick,
+  phone,
 }: {
   f: RosterFighter
   fig: Figures
   view: View
   mode: Mode
   now: number
+  phone: boolean
   picked: boolean
   checked: boolean
   gate: { ok: boolean; reason?: string }
@@ -679,6 +787,9 @@ function Row({
   const state = fighterState(f, now)
   const ticking = mode !== 'inventory'
   const abilities = s.abilities ?? []
+  /* A phone has no room for the payday column: the date joins the name, the bar the age. */
+  const inlinePay = phone && mode !== 'sell'
+  const daysLeft = Math.max(0, Math.ceil(fig.pay.msLeft / DAY))
   const art = (
     <span className="drost__art" style={{ backgroundImage: `url('${elementBackground(f.element)}')` }}>
       <GameImg src={fighterAvatar(f)} alt="" loading="lazy" fallback={fighterArtFallback()} />
@@ -712,6 +823,7 @@ function Row({
   const classes = [
     'drost__row',
     view === 'default' ? '' : 'is-focused',
+    view === 'default' && inlinePay ? 'is-inlinepay' : '',
     ticking ? 'is-ticking' : '',
     picked ? 'is-picked' : '',
     checked ? 'is-checked' : '',
@@ -737,6 +849,11 @@ function Row({
               <b>{f.classname}</b>
               <img src={asset(`/assets/icons/elements/${f.element}.png`)} alt={f.element} />
               <small>{f.racename}</small>
+              {inlinePay && (
+                <span className={`drost__when${fig.pay.overdue ? ' is-overdue' : ''}`}>
+                  {fig.pay.overdue ? 'Payday due' : `Payday ${payDay(f)}`}
+                </span>
+              )}
             </span>
             <span className="drost__line">
               {fig.stats
@@ -767,9 +884,17 @@ function Row({
                 })}
               </span>
               {status}
+              {inlinePay && (
+                <>
+                  <span className={`drost__bar${fig.pay.overdue ? ' is-overdue' : ''}`}>
+                    <i style={{ width: `${Math.max(2, fig.pay.progress * 100)}%` }} />
+                  </span>
+                  <small className="drost__days">{fig.pay.overdue ? 'now' : `${daysLeft}d`}</small>
+                </>
+              )}
             </span>
           </span>
-          {mode === 'sell' ? (
+          {inlinePay ? null : mode === 'sell' ? (
             <span className="drost__pay">
               {gate.ok ? (
                 <>
@@ -787,7 +912,7 @@ function Row({
             <span className={`drost__pay${fig.pay.overdue ? ' is-overdue' : ''}`}>
               <small>Payday {payDay(f)}</small>
               <small>
-                {fig.pay.overdue ? 'due now' : `in ${Math.max(0, Math.ceil(fig.pay.msLeft / DAY))}d`} ·{' '}
+                {fig.pay.overdue ? 'due now' : `in ${daysLeft}d`} ·{' '}
                 <Credits value={fig.pay.cost} />
               </small>
               <span className="drost__bar">
@@ -904,23 +1029,8 @@ function Row({
 
 /* ---------- the fighter in full ---------- */
 
-function Detail({
-  f,
-  fig,
-  config,
-  levels,
-  canAct,
-  busy,
-  credits,
-  gems,
-  onPayOne,
-  onLevelOne,
-  onOpen,
-  onMode,
-  onChecked,
-  onSelect,
-  now,
-}: DeskRosterProps & { f: RosterFighter; fig: Figures }) {
+function Detail(props: DeskRosterProps & { f: RosterFighter; fig: Figures }) {
+  const { f, fig, config, levels, onOpen, now, phone } = props
   const s = f.stats
   const level = levelUpOf(f, levels)
   const state = fighterState(f, now)
@@ -961,6 +1071,13 @@ function Detail({
               <img src={statIcon('target')} alt="" />
               {s.target ? formatTarget(s.target) : 'Highest Taunt'}
             </span>
+            {/* A phone's foot has room for four buttons; the marker rides up here. */}
+            {phone && (
+              <button type="button" className="drost__chipbtn" onClick={() => onOpen(f.fighter_id)}>
+                <img src={markerIcon(f.marker)} alt="" />
+                Marker &amp; history
+              </button>
+            )}
           </span>
         </span>
       </div>
@@ -1055,47 +1172,73 @@ function Detail({
         })}
       </div>
 
-      <div className="drost__acts">
-        <button
-          type="button"
-          className="btn btn--primary btn--sm"
-          disabled={!canAct || fig.pay.cost <= 1 || !!busy}
-          onClick={() => onPayOne(f)}
-        >
-          {busy === 'pay-one' && <span className="spinner" />}
-          Payday <Credits value={fig.pay.cost} />
-        </button>
-        <button
-          type="button"
-          className="btn btn--ghost btn--sm"
-          disabled={!canAct || !level.ready || level.cost.credits > credits || level.cost.gems > gems || !!busy}
-          onClick={() => onLevelOne(f)}
-          title={level.atMax ? 'Already at the maximum level' : level.ready ? 'Spend the banked experience' : 'Not enough experience yet'}
-        >
-          {busy === 'level-one' && <span className="spinner" />}
-          {level.atMax ? 'Max level' : 'Level up'}
-          {!level.atMax && level.cost.credits > 0 && <Credits value={level.cost.credits} />}
-        </button>
-        <Link className="btn btn--ghost btn--sm" to="/ascension">
-          Ascend
-        </Link>
+      {!phone && <Acts {...props} />}
+    </div>
+  )
+}
+
+/* What can be done to one fighter: under it on a desktop, at the sheet's foot on a phone. */
+function Acts({
+  f,
+  fig,
+  levels,
+  canAct,
+  busy,
+  credits,
+  gems,
+  onPayOne,
+  onLevelOne,
+  onOpen,
+  onMode,
+  onChecked,
+  onSelect,
+  phone,
+}: DeskRosterProps & { f: RosterFighter; fig: Figures }) {
+  const s = f.stats
+  const level = levelUpOf(f, levels)
+  return (
+    <div className="drost__acts">
+      <button
+        type="button"
+        className="btn btn--primary btn--sm"
+        disabled={!canAct || fig.pay.cost <= 1 || !!busy}
+        onClick={() => onPayOne(f)}
+      >
+        {busy === 'pay-one' && <span className="spinner" />}
+        Payday <Credits value={fig.pay.cost} />
+      </button>
+      <button
+        type="button"
+        className="btn btn--ghost btn--sm"
+        disabled={!canAct || !level.ready || level.cost.credits > credits || level.cost.gems > gems || !!busy}
+        onClick={() => onLevelOne(f)}
+        title={level.atMax ? 'Already at the maximum level' : level.ready ? 'Spend the banked experience' : 'Not enough experience yet'}
+      >
+        {busy === 'level-one' && <span className="spinner" />}
+        {level.atMax ? 'Max level' : 'Level up'}
+        {!level.atMax && level.cost.credits > 0 && <Credits value={level.cost.credits} />}
+      </button>
+      <Link className="btn btn--ghost btn--sm" to="/ascension">
+        Ascend
+      </Link>
+      {!phone && (
         <button type="button" className="btn btn--ghost btn--sm" onClick={() => onOpen(f.fighter_id)}>
           Marker &amp; history
         </button>
-        <button
-          type="button"
-          className="btn btn--ghost btn--sm"
-          disabled={!sellable(f)}
-          title={sellable(f) ? 'Sell this fighter back to the game' : `${useLabel(f)} — cannot be sold`}
-          onClick={() => {
-            onMode('sell')
-            onChecked([f.fighter_id])
-            onSelect(f.fighter_id)
-          }}
-        >
-          Sell <Credits value={s.credits ?? 0} />
-        </button>
-      </div>
+      )}
+      <button
+        type="button"
+        className="btn btn--ghost btn--sm"
+        disabled={!sellable(f)}
+        title={sellable(f) ? 'Sell this fighter back to the game' : `${useLabel(f)} — cannot be sold`}
+        onClick={() => {
+          onMode('sell')
+          onChecked([f.fighter_id])
+          onSelect(f.fighter_id)
+        }}
+      >
+        Sell <Credits value={s.credits ?? 0} />
+      </button>
     </div>
   )
 }
@@ -1257,7 +1400,81 @@ function ListPanel(p: DeskRosterProps) {
 
 /* ---------- the filter, the sort and what is set ---------- */
 
+function StatusSeg({
+  filter,
+  counts,
+  onStatus,
+}: {
+  filter: RosterFilter
+  counts: Record<Status, number>
+  onStatus: (s: Status) => void
+}) {
+  return (
+    <span className="drost__seg" role="group" aria-label="Availability">
+      {STATUSES.map((s) => (
+        <button type="button" key={s} aria-pressed={filter.status === s} onClick={() => onStatus(s)}>
+          {STATUS_LABEL[s]}
+          <small>{counts[s] ?? 0}</small>
+        </button>
+      ))}
+    </span>
+  )
+}
+
+function DirSeg({ filter, onAsc }: { filter: RosterFilter; onAsc: (asc: boolean) => void }) {
+  return (
+    <span className="drost__seg drost__seg--sm" role="group" aria-label="Direction">
+      <button type="button" aria-pressed={!filter.sortAsc} onClick={() => onAsc(false)}>
+        Biggest first
+      </button>
+      <button type="button" aria-pressed={!!filter.sortAsc} onClick={() => onAsc(true)}>
+        Smallest first
+      </button>
+    </span>
+  )
+}
+
+function SortList({ filter, onPick }: { filter: RosterFilter; onPick: (sort: string) => void }) {
+  return (
+    <div className="drost__sorts">
+      {SORT_GROUPS.map(([group, options]) => (
+        <div key={group}>
+          <span className="drost__sorthead">{group}</span>
+          {options.map((o) => (
+            <button type="button" key={o.value} aria-pressed={filter.sort === o.value} onClick={() => onPick(o.value)}>
+              {o.label}
+            </button>
+          ))}
+        </div>
+      ))}
+    </div>
+  )
+}
+
 function FilterPanel(p: DeskRosterProps & { matching: number; onClose: () => void }) {
+  return (
+    <div className="drost__pop drost__pop--filters" role="dialog" aria-label="Filters">
+      <FilterFields {...p} />
+      <div className="drost__pfoot">
+        <button
+          type="button"
+          className="linklike"
+          onClick={() => p.onFilter({ ...EMPTY_FILTER, status: p.filter.status, sort: p.filter.sort, sortAsc: p.filter.sortAsc })}
+        >
+          Clear all
+        </button>
+        <span className="drost__note">Health and damage rules grade after age, like the arrows.</span>
+        <span className="drost__sp" />
+        <button type="button" className="btn btn--primary" onClick={p.onClose}>
+          Show {p.matching} fighter{p.matching === 1 ? '' : 's'}
+        </button>
+      </div>
+    </div>
+  )
+}
+
+/* Element, class, race, ability, markers, the roster switches and the quality floors. */
+function FilterFields(p: DeskRosterProps) {
   const { races } = useMemo(() => facetsOf(p.roster), [p.roster])
   const set = (patch: Partial<RosterFilter>) => p.onFilter({ ...p.filter, ...patch })
   const toggle = <T,>(list: T[], value: T): T[] => (list.includes(value) ? list.filter((x) => x !== value) : [...list, value])
@@ -1269,7 +1486,7 @@ function FilterPanel(p: DeskRosterProps & { matching: number; onClose: () => voi
   }, [p.roster])
 
   return (
-    <div className="drost__pop drost__pop--filters" role="dialog" aria-label="Filters">
+    <>
       <div className="drost__fcol">
         <div>
           <span className="drost__fhead">Element</span>
@@ -1377,22 +1594,7 @@ function FilterPanel(p: DeskRosterProps & { matching: number; onClose: () => voi
         <span className="drost__fhead">At least · quality floors</span>
         <QualityFilters filter={p.filter} onChange={p.onFilter} />
       </div>
-
-      <div className="drost__pfoot">
-        <button
-          type="button"
-          className="linklike"
-          onClick={() => p.onFilter({ ...EMPTY_FILTER, status: p.filter.status, sort: p.filter.sort, sortAsc: p.filter.sortAsc })}
-        >
-          Clear all
-        </button>
-        <span className="drost__note">Health and damage rules grade after age, like the arrows.</span>
-        <span className="drost__sp" />
-        <button type="button" className="btn btn--primary" onClick={p.onClose}>
-          Show {p.matching} fighter{p.matching === 1 ? '' : 's'}
-        </button>
-      </div>
-    </div>
+    </>
   )
 }
 
@@ -1401,6 +1603,7 @@ function ActiveChips(p: DeskRosterProps) {
   const set = (patch: Partial<RosterFilter>) => p.onFilter({ ...f, ...patch })
   const label = (field: string) => FILTER_STATS.find((s) => s.field === field)?.label ?? field
   const chips: { key: string; body: React.ReactNode; drop: () => void }[] = []
+  if (p.phone && f.status !== 'All') chips.push({ key: 'status', body: STATUS_LABEL[f.status], drop: () => set({ status: 'All' }) })
   for (const el of f.elements)
     chips.push({
       key: `el-${el}`,
@@ -1456,7 +1659,7 @@ function ActiveChips(p: DeskRosterProps) {
         type="button"
         className="linklike"
         onClick={() => {
-          p.onFilter({ ...EMPTY_FILTER, status: f.status, sort: f.sort, sortAsc: f.sortAsc })
+          p.onFilter({ ...EMPTY_FILTER, status: p.phone ? 'All' : f.status, sort: f.sort, sortAsc: f.sortAsc })
           p.onAtLevelOne(false)
         }}
       >

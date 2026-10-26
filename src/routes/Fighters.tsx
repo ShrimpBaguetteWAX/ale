@@ -1,43 +1,28 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useGame } from '@/state/useGame'
 import { FighterPanel, type PanelFighter } from '@/components/FighterPanel'
 import { fetchRoster } from '@/dungeon/queries'
-import type { RosterFighter, RosterStats } from '@/dungeon/types'
+import type { RosterFighter } from '@/dungeon/types'
 import {
-  ELEMENTS,
   EMPTY_FILTER,
   MARKERS,
-  SORTS,
-  STATUSES,
   applyFilter,
-  countActiveFilters,
-  facetsOf,
-  isFilterActive,
   markerIcon,
-  type Element,
   type RosterFilter,
-  type Status,
 } from '@/dungeon/filters'
 import { useConfig, useLazyConfig } from '@/state/useConfig'
 import type { FighterLevel, FightersConfig } from '@/fighters/types'
 import {
-  ageBand,
-  ageBonus,
   ageDays,
   battleFactor,
-  fighterState,
   formatDate,
   formatDateTime,
-  formatRelativeDays,
-  ageNote,
   levelAllPlan,
   levelUpOf,
-  msUntilDeletion,
   paydayAllPlan,
   type PaydayScope,
   paydayOf,
-  sellable,
   useLabel,
   wantsPayday,
 } from '@/fighters/rules'
@@ -49,44 +34,16 @@ import {
   setFighterMarker,
 } from '@/wharf/actions'
 
-import { MAX_BULK_LISTINGS, bulkListPlan, listable } from '@/market/rules'
+import { MAX_BULK_LISTINGS, bulkListPlan } from '@/market/rules'
 import { useAction } from '@/wharf/useAction'
 import { useChainQuery } from '@/chain/useChainQuery'
 import { useModal } from '@/components/useModal'
 import { DIRTIES } from '@/wharf/actions'
 import type { ClassTemplate } from '@/tavern/fighterStats'
-import {
-  abilityColor,
-  abilityName,
-  abilityRarity,
-  elementBackground,
-  fighterArt,
-  fighterArtFallback,
-  formatResistance,
-  formatStat,
-  formatTarget,
-  gradeStat,
-  GRADE_ICON,
-  GRADE_LABEL,
-  resolveAbilityDescription,
-  statDisplay,
-  statIcon,
-  STAT_LABEL,
-  type StatGrade,
-} from '@/tavern/fighterStats'
-import {
-  combatFigures,
-  gradeCombatScore,
-  gradeDamagePerSecond,
-  gradeSurvival,
-  meanResistance,
-} from '@/fighters/derived'
-import { formatDecimals, NUM_LOCALE } from '@/format'
-import { QualityFilters } from '@/fight/setup'
+import { NUM_LOCALE } from '@/format'
 import { ActionBanner } from '@/components/ActionBanner'
 import { asset } from '@/assets'
 import { recallPayScope, rememberPayScope } from '@/fighters/payScope'
-import { GameImg } from '@/components/GameImg'
 import { usePhone } from '@/components/usePhone'
 import { DeskRoster } from '@/fighters/DeskRoster'
 
@@ -124,25 +81,6 @@ type Mode = 'inventory' | 'sell' | 'market'
 function gemsWord(n: number): string {
   return `${n.toLocaleString(NUM_LOCALE)} gem${n === 1 ? '' : 's'}`
 }
-type CardTab = 'primary' | 'resistance' | 'combat' | 'abilities'
-
-const CARD_TABS: [CardTab, string][] = [
-  ['primary', 'Stats'],
-  ['resistance', 'Res'],
-  ['combat', 'Combat'],
-  ['abilities', 'Abilities'],
-]
-
-const PRIMARY_FIELDS = ['damage', 'health', 'taunt', 'attackspeed', 'initiative'] as const
-
-const RESISTANCES: [string, string][] = [
-  ['res_gem', 'Gem'],
-  ['res_metal', 'Metal'],
-  ['res_air', 'Air'],
-  ['res_fire', 'Fire'],
-  ['res_nature', 'Nature'],
-  ['res_neutral', 'Neutral'],
-]
 
 /* ---------- data ---------- */
 
@@ -228,29 +166,6 @@ export default function Fighters() {
   const phone = usePhone()
 
   const [mode, setMode] = useState<Mode>('inventory')
-  const [tab, setTab] = useState<CardTab>('primary')
-  /*
-     Whether the phone's readout switch is pinned under the top bar. Pinned,
-     it joins the bar — the same glass, edge to edge — rather than floating
-     over the cards; at rest it is the plain switch.
-  */
-  const readoutRef = useRef<HTMLDivElement>(null)
-  const [readoutStuck, setReadoutStuck] = useState(false)
-  useEffect(() => {
-    const check = () => {
-      const el = readoutRef.current
-      if (!el || getComputedStyle(el).position !== 'sticky') return setReadoutStuck(false)
-      const pin = parseFloat(getComputedStyle(el).top) || 0
-      setReadoutStuck(el.getBoundingClientRect().top <= pin + 0.5)
-    }
-    check()
-    window.addEventListener('scroll', check, { passive: true })
-    window.addEventListener('resize', check)
-    return () => {
-      window.removeEventListener('scroll', check)
-      window.removeEventListener('resize', check)
-    }
-  }, [])
   /*
      A lens on the roster rather than part of the filter.
 
@@ -296,7 +211,7 @@ export default function Fighters() {
    * Every derived figure is a function of "now", and a payday cost creeps up
    * by the second. Recomputing on a slow tick keeps the quoted numbers from
    * drifting away from what the contract will charge, without re-rendering
-   * a hundred cards every frame.
+   * a hundred rows every frame.
    */
   const [now, setNow] = useState(() => Date.now())
   useEffect(() => {
@@ -332,7 +247,6 @@ export default function Fighters() {
     return matched.filter((f) => levelUpOf(f, levels).ready)
   }, [roster, filter, ageDecay, now, templates, levels, levelMod, atLevelOne])
 
-  const selected = roster.find((f) => f.fighter_id === selectedId) ?? null
   const opened = roster.find((f) => f.fighter_id === openedId) ?? null
 
   const lockedCount = useMemo(
@@ -513,7 +427,7 @@ export default function Fighters() {
            The market caps a batch; selling to the game does not.
 
            Refused at the tick rather than at the button, so the eleventh
-           card simply does not go on — a player who can select fifteen and
+           tick simply does not go on — a player who can select fifteen and
            then reads "10 at a time" has to work out which five to undo.
         */
         if (mode === 'market' && prev.length >= MAX_BULK_LISTINGS) {
@@ -538,9 +452,6 @@ export default function Fighters() {
     setMode(next)
     if (next !== mode) setChecked([])
   }
-
-  const selectedPay = selected ? paydayOf(selected, config, now) : null
-  const selectedLevel = selected ? levelUpOf(selected, levels) : null
 
   const dialogs = (
     <>
@@ -636,456 +547,67 @@ export default function Fighters() {
   )
 
   /*
-     A desktop gets the Market's rows: the roster as a list with the picked
-     fighter in full beside it. Same data, same actions and the same dialogs —
-     only the layout differs. The phone keeps its cards.
+     The Market's rows: the roster as a list, with the picked fighter in
+     full beside it on a desktop and as a sheet from the bottom on a phone.
+     Same data, same actions and the same dialogs on both.
   */
-  if (!phone) {
-    return (
-      <>
-        <DeskRoster
-          roster={roster}
-          shown={shown}
-          filter={filter}
-          onFilter={setFilter}
-          templates={templates}
-          levels={levels}
-          config={config}
-          levelMod={levelMod}
-          ageDecay={ageDecay}
-          now={now}
-          atLevelOne={atLevelOne}
-          onAtLevelOne={setAtLevelOne}
-          readyToLevel={readyToLevel}
-          lockedCount={lockedCount}
-          loading={data.loading}
-          banner={<ActionBanner error={error ?? data.error} />}
-          mode={mode}
-          onMode={switchMode}
-          checked={checked}
-          onCheck={toggleChecked}
-          onChecked={setChecked}
-          selectedId={selectedId}
-          onSelect={setSelectedId}
-          onOpen={setOpenedId}
-          canAct={!!session}
-          busy={busy}
-          credits={credits}
-          gems={gems}
-          payAll={payAll}
-          payScope={payScope}
-          onPayScope={(next) => {
-            setPayScope(next)
-            rememberPayScope(next)
-          }}
-          overdue={overdue}
-          levelAll={levelAll}
-          onPayAll={() => void doPayAll()}
-          onLevelAll={() => void doLevelAll()}
-          onPayOne={(f) => void doPayOne(f)}
-          onLevelOne={(f) => void doLevelOne(f)}
-          sellValue={sellValue}
-          onSell={() => setConfirmSell(true)}
-          marketConfig={marketConfig}
-          listPlan={listPlan}
-          startPrice={startPrice}
-          onStartPrice={setStartPrice}
-          minStart={minStart}
-          keepListed={keepListed}
-          onKeepListed={setKeepListed}
-          onList={() => setConfirmList(true)}
-        />
-        {dialogs}
-      </>
-    )
-  }
-
   return (
-    <div className="roster">
-      <header className="roster__head">
-        <div>
-          <h1 className="roster__title">My Fighters</h1>
-          <p className="roster__counts">
-            <span>
-              <strong>{roster.length}</strong> owned
-            </span>
-            <span>
-              <strong>{lockedCount}</strong> locked
-            </span>
-            {shown.length !== roster.length && (
-              <span>
-                <strong>{shown.length}</strong> shown
-              </span>
-            )}
-          </p>
-        </div>
-
-        <div className="roster__modes" role="tablist" aria-label="Roster mode">
-          <button
-            type="button"
-            role="tab"
-            aria-selected={mode === 'inventory'}
-            className="roster__mode"
-            onClick={() => switchMode('inventory')}
-          >
-            Inventory
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={mode === 'sell'}
-            className="roster__mode"
-            onClick={() => switchMode('sell')}
-          >
-            Sell
-          </button>
-          {/*
-            Selling to the game and selling to a player are different trades
-            — one is instant credits at a fixed value, the other is gems from
-            somebody else two days later — so they are separate modes rather
-            than one Sell mode with a destination picker.
-          */}
-          <button
-            type="button"
-            role="tab"
-            aria-selected={mode === 'market'}
-            className="roster__mode"
-            onClick={() => switchMode('market')}
-          >
-            Sell on market
-          </button>
-        </div>
-      </header>
-
-      {/*
-        Pinned only once there is something on it to press.
-
-        Its buttons act on fighters picked from a grid of a hundred and fifty,
-        so the card you tap is usually far below the bar that acts on it —
-        which meant scrolling back up for every single one. Sticky fixes that,
-        and `position: sticky` on an element already scrolled past pins it
-        immediately, so the bar arrives the moment you choose something.
-
-        Left unpinned while the selection is empty, because the cost is real:
-        on a phone this is 114px of a 844px screen, and paying it for the
-        whole time you are browsing — when every control on it is disabled
-        anyway — buys nothing.
-      */}
-      <div
-        className={
-          'roster__bar' +
-          (selected || checked.length > 0 ? ' roster__bar--pinned' : '')
-        }
-      >
-        {mode === 'market' ? (
-          <>
-            {/*
-              The two terms of the listing, then the button.
-
-              One starting bid and one keep-flag for the whole batch rather
-              than per fighter: `addauction` takes them per call, but a form
-              with a price box against each of ten cards is a different screen
-              from "put these on the market", and the players who want to price
-              individually already have the market's own one-at-a-time tab.
-            */}
-            <label className="roster__price">
-              <span className="roster__priceLabel">Start at</span>
-              <input
-                className="input mono roster__priceInput"
-                type="number"
-                min={minStart}
-                step={1}
-                value={startPrice}
-                onChange={(e) =>
-                  setStartPrice(Math.max(0, Math.floor(Number(e.target.value) || 0)))
-                }
-              />
-              <img src={asset('/assets/icons/gems.png')} alt="gems" width={14} height={14} />
-              <em className="faint">min {minStart}</em>
-            </label>
-
-            <label className="checkline roster__keep">
-              <input
-                type="checkbox"
-                checked={keepListed}
-                onChange={(e) => setKeepListed(e.target.checked)}
-              />
-              <span>
-                Keep listed if nobody bids
-                <em className="faint">
-                  {' '}
-                  — it becomes a fixed-price instant buy offer at your starting
-                  price instead of coming back to you
-                </em>
-              </span>
-            </label>
-
-            <span className="spacer" />
-
-            <button
-              type="button"
-              className="btn btn--primary"
-              disabled={!session || !listPlan.gate.ok || !!busy}
-              onClick={() => setConfirmList(true)}
-              title={listPlan.gate.ok ? undefined : listPlan.gate.reason}
-            >
-              {busy === 'list' && <span className="spinner" />}
-              List {checked.length || ''}
-              <Cost value={listPlan.gems} icon="gems" short={gems} />
-            </button>
-          </>
-        ) : mode === 'sell' ? (
-          <>
-            <p className="roster__hint">
-              Selling is permanent — a sold fighter cannot be bought back.
-              Fighters in use cannot be sold.
-            </p>
-            <span className="spacer" />
-            <button
-              type="button"
-              className="btn btn--danger"
-              disabled={!session || checked.length === 0 || !!busy}
-              onClick={() => setConfirmSell(true)}
-            >
-              {busy === 'sell' && <span className="spinner" />}
-              Sell {checked.length || ''}
-              <Cost value={sellValue} icon="credits" gain />
-            </button>
-          </>
-        ) : (
-          <>
-            <span className="paysplit">
-              <button
-                type="button"
-                className="btn btn--ghost paysplit__go"
-                disabled={!session || payAll.ids.length === 0 || !!busy}
-                onClick={() => void doPayAll()}
-                title={
-                  payScope === 'overdue'
-                    ? 'Upkeep for the fighters that are benched until they are paid'
-                    : 'Upkeep for every fighter with time on the clock'
-                }
-              >
-                {busy === 'pay-all' && <span className="spinner" />}
-                Payday {payScope === 'overdue' ? 'unwilling' : 'all'} ({payAll.ids.length})
-                <Cost value={payAll.credits} icon="credits" short={credits} />
-              </button>
-              <button
-                type="button"
-                className="btn btn--ghost paysplit__mode"
-                aria-pressed={payScope === 'overdue'}
-                disabled={!!busy}
-                onClick={() => {
-                  const next = payScope === 'overdue' ? 'all' : 'overdue'
-                  setPayScope(next)
-                  rememberPayScope(next)
-                }}
-                title={
-                  payScope === 'overdue'
-                    ? `Paying only the ${overdue} unwilling to fight. Switch to the whole roster.`
-                    : `Paying all ${payAll.ids.length}. Switch to the ${overdue} unwilling to fight.`
-                }
-              >
-                {payScope === 'overdue' ? 'Unwilling' : 'All'}
-              </button>
-            </span>
-
-            <button
-              type="button"
-              className="btn btn--ghost"
-              disabled={
-                !session ||
-                levelAll.ids.length === 0 ||
-                levelAll.credits > credits ||
-                levelAll.gems > gems ||
-                !!busy
-              }
-              onClick={() => void doLevelAll()}
-              title={
-                levelAll.skipped
-                  ? `${levelAll.skipped} more fighter${levelAll.skipped === 1 ? '' : 's'} can level, but one transaction cannot spend over 65,535 credits — press again afterwards`
-                  : `Every level banked, across ${levelAll.fighters} fighter${levelAll.fighters === 1 ? '' : 's'} — a fighter owed several takes them all`
-              }
-            >
-              {busy === 'level-all' && <span className="spinner" />}
-              {/*
-                The count is levels, not fighters: experience is spent a level
-                at a time and a week of fighting routinely banks three of them,
-                so counting heads promised a third of what the button does.
-              */}
-              Level all ({levelAll.ids.length})
-              <Cost value={levelAll.credits} icon="credits" short={credits} />
-            </button>
-
-            <span className="spacer" />
-
-            {selected && (
-              <div className="roster__selected">
-                <span className="roster__selectedName">
-                  {selected.racename} {selected.classname}
-                </span>
-
-                <button
-                  type="button"
-                  className="btn btn--ghost"
-                  disabled={!session || !selectedPay || selectedPay.cost <= 1 || !!busy}
-                  onClick={() => void doPayOne(selected)}
-                >
-                  {busy === 'pay-one' && <span className="spinner" />}
-                  Payday
-                  <Cost
-                    value={selectedPay?.cost ?? 0}
-                    icon="credits"
-                    short={credits}
-                  />
-                </button>
-
-                <button
-                  type="button"
-                  className="btn btn--primary"
-                  disabled={
-                    !session ||
-                    !selectedLevel?.ready ||
-                    (selectedLevel?.cost.credits ?? 0) > credits ||
-                    (selectedLevel?.cost.gems ?? 0) > gems ||
-                    !!busy
-                  }
-                  onClick={() => void doLevelOne(selected)}
-                  title={
-                    selectedLevel?.atMax
-                      ? 'Already at the maximum level'
-                      : selectedLevel?.ready
-                        ? 'Spend the banked experience'
-                        : 'Not enough experience yet'
-                  }
-                >
-                  {busy === 'level-one' && <span className="spinner" />}
-                  {selectedLevel?.atMax ? 'Max level' : 'Level up'}
-                  {!selectedLevel?.atMax && (
-                    <Cost
-                      value={selectedLevel?.cost.credits ?? 0}
-                      icon="credits"
-                      short={credits}
-                    />
-                  )}
-                </button>
-
-                <button
-                  type="button"
-                  className="btn btn--ghost"
-                  onClick={() => setSelectedId(null)}
-                  aria-label="Clear selection"
-                >
-                  ×
-                </button>
-              </div>
-            )}
-          </>
-        )}
-      </div>
-
-      <ActionBanner error={error ?? data.error} />
-
-      <RosterFilters
-        filter={filter}
-        onChange={setFilter}
+    <>
+      <DeskRoster
+        phone={phone}
         roster={roster}
-        classes={templates}
-        readyToLevel={readyToLevel}
-        tab={tab}
-        onTab={setTab}
+        shown={shown}
+        filter={filter}
+        onFilter={setFilter}
+        templates={templates}
+        levels={levels}
+        config={config}
+        levelMod={levelMod}
+        ageDecay={ageDecay}
+        now={now}
         atLevelOne={atLevelOne}
         onAtLevelOne={setAtLevelOne}
+        readyToLevel={readyToLevel}
+        lockedCount={lockedCount}
+        loading={data.loading}
+        banner={<ActionBanner error={error ?? data.error} />}
+        mode={mode}
+        onMode={switchMode}
+        checked={checked}
+        onCheck={toggleChecked}
+        onChecked={setChecked}
+        selectedId={selectedId}
+        onSelect={setSelectedId}
+        onOpen={setOpenedId}
+        canAct={!!session}
+        busy={busy}
+        credits={credits}
+        gems={gems}
+        payAll={payAll}
+        payScope={payScope}
+        onPayScope={(next) => {
+          setPayScope(next)
+          rememberPayScope(next)
+        }}
+        overdue={overdue}
+        levelAll={levelAll}
+        onPayAll={() => void doPayAll()}
+        onLevelAll={() => void doLevelAll()}
+        onPayOne={(f) => void doPayOne(f)}
+        onLevelOne={(f) => void doLevelOne(f)}
+        sellValue={sellValue}
+        onSell={() => setConfirmSell(true)}
+        marketConfig={marketConfig}
+        listPlan={listPlan}
+        startPrice={startPrice}
+        onStartPrice={setStartPrice}
+        minStart={minStart}
+        keepListed={keepListed}
+        onKeepListed={setKeepListed}
+        onList={() => setConfirmList(true)}
       />
-
-      {/*
-        Skeletons are for the first read, not for every re-read.
-
-        `query.data` survives a reload — the rows stay on screen the whole
-        time — so swapping them for six grey blocks says "gone" about
-        something that is still there. Every action on this screen re-reads
-        when it lands, and a confirm wait re-reads several times, which had
-        the whole grid blinking between cards and skeletons for as long as
-        the wait ran.
-      */}
-      {data.loading && roster.length === 0 ? (
-        <div className="rostergrid">
-          {Array.from({ length: 6 }, (_, i) => (
-            <div className="fcard fcard--loading" key={i} />
-          ))}
-        </div>
-      ) : roster.length === 0 ? (
-        <p className="roster__empty">
-          You have no fighters yet. Recruits are hired at a tavern — stand on
-          one on the map to reveal and hire.
-        </p>
-      ) : shown.length === 0 ? (
-        <p className="roster__empty">
-          No fighter matches these filters.{' '}
-          <button
-            type="button"
-            className="linklike"
-            onClick={() => setFilter({ ...EMPTY_FILTER, sort: filter.sort })}
-          >
-            Clear them
-          </button>
-          .
-        </p>
-      ) : (
-        <>
-        {/*
-          A phone's readout switch, out where it is used rather than behind
-          More filters: every card shows the same one of Stats, Res, Combat
-          and Abilities, so comparing the roster on any of them is one tap.
-          The cards drop their own tab strip on a phone for it.
-        */}
-        <div
-          className={`roster__readout${readoutStuck ? ' roster__readout--stuck' : ''}`}
-          ref={readoutRef}
-        >
-          <div className="roster__readoutSeg" role="tablist" aria-label="Readout">
-            {CARD_TABS.map(([t, label]) => (
-              <button
-                type="button"
-                key={t}
-                role="tab"
-                aria-selected={tab === t}
-                onClick={() => setTab(t)}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-        </div>
-        <div className="rostergrid">
-          {shown.map((f) => (
-            <FighterCard
-              key={f.fighter_id}
-              fighter={f}
-              levels={levels}
-              config={config}
-              template={templates.get(f.classname)}
-              levelMod={levelMod}
-              ageDecay={ageDecay}
-              now={now}
-              mode={mode}
-              tab={tab}
-              atLevelOne={atLevelOne}
-              selected={f.fighter_id === selectedId}
-              checked={checked.includes(f.fighter_id)}
-              onSelect={() =>
-                setSelectedId((cur) => (cur === f.fighter_id ? null : f.fighter_id))
-              }
-              onCheck={() => toggleChecked(f.fighter_id)}
-              onOpen={() => setOpenedId(f.fighter_id)}
-            />
-          ))}
-        </div>
-        </>
-      )}
-
       {dialogs}
-    </div>
+    </>
   )
 }
 
@@ -1148,32 +670,7 @@ export function Cost({
  * Omitted entirely when the class band has not loaded — an arrow that always
  * means "average" is worse than none.
  */
-function GradeArrow({
-  field,
-  raw,
-  template,
-}: {
-  field: string
-  raw: number
-  template?: ClassTemplate
-}) {
-  if (!template) return null
-  return <GradeIcon grade={gradeStat(field, raw, template)} />
-}
 
-function GradeIcon({ grade }: { grade: StatGrade | null }) {
-  if (!grade) return null
-  return (
-    <img
-      className="grade"
-      src={GRADE_ICON[grade]}
-      alt={GRADE_LABEL[grade]}
-      title={GRADE_LABEL[grade]}
-      width={13}
-      height={13}
-    />
-  )
-}
 
 /**
  * What the fighter does, rather than what it rolled.
@@ -1191,113 +688,6 @@ function GradeIcon({ grade }: { grade: StatGrade | null }) {
  * and one that survives everything and does nothing are both bad in a way
  * neither half shows on its own.
  */
-function CombatPanel({
-  stats,
-  factor,
-  ageFactor,
-  template,
-}: {
-  stats: RosterStats
-  factor: number
-  /** `age_decay ^ (days²)`: health and damage are graded after it. */
-  ageFactor: number
-  template?: ClassTemplate
-}) {
-  const raw = stats as unknown as Record<string, number>
-  const mid = (field: string) => (raw[`${field}_min`] + raw[`${field}_max`]) / 2
-  /* What the grades read: the roll, with health and damage after age. */
-  const graded = (field: string) =>
-    mid(field) * (field === 'health' || field === 'damage' ? ageFactor : 1)
-
-  /* The same figures the Stats tab prints, so the arithmetic can be checked
-     against the rows it came from. Only health and damage grow with level. */
-  const shown = (field: string, grow = false) =>
-    statDisplay(raw[`${field}_min`] * (grow ? factor : 1), raw[`${field}_max`] * (grow ? factor : 1))
-      .value
-
-  const meanRes = meanResistance(raw)
-  /* Shared with the sorts, so an order and a card cannot disagree. */
-  const { dps, survival: surv, score } = combatFigures(raw, factor)
-
-  return (
-    <dl className="fstats">
-      <div className="fstats__row">
-        <dt>
-          <img src={statIcon('damage')} alt="" width={13} height={13} />
-          DPS
-        </dt>
-        <dd className="mono">
-          {formatDecimals(dps, 2)}
-          {/* Graded on the roll after age, like every other arrow on the
-              card: the level multiplier lifts every fighter of a level
-              equally and says nothing about the roll. */}
-          <GradeIcon grade={gradeDamagePerSecond(graded('damage'), mid('attackspeed'), template)} />
-        </dd>
-      </div>
-
-      {/*
-        The two halves of the score first, then the two that qualify them.
-
-        DPS and Survival are what the bottom line multiplies, so they read as
-        its working; Windup and Taunt are conditions on the fight rather than
-        parts of the sum.
-      */}
-      <div className="fstats__row">
-        <dt>
-          <img src={statIcon('survival')} alt="" width={13} height={13} />
-          Survival
-        </dt>
-        <dd className="mono">
-          {Math.round(surv).toLocaleString(NUM_LOCALE)}
-          <GradeIcon grade={gradeSurvival(graded('health'), meanRes, template)} />
-        </dd>
-      </div>
-
-      <div className="fstats__row">
-        <dt>
-          <img src={statIcon('initiative')} alt="" width={13} height={13} />
-          {STAT_LABEL.initiative}
-        </dt>
-        <dd className="mono">
-          {shown('initiative')}
-          <GradeArrow field="initiative" raw={mid('initiative')} template={template} />
-        </dd>
-      </div>
-
-      {/*
-        No arrow on taunt, here as everywhere else. It is a role rather than a
-        quality — a high-taunt fighter is a tank, not a better fighter — and
-        the game has never marked it.
-      */}
-      <div className="fstats__row">
-        <dt>
-          <img src={statIcon('taunt')} alt="" width={13} height={13} />
-          {STAT_LABEL.taunt}
-        </dt>
-        <dd className="mono">{shown('taunt')}</dd>
-      </div>
-
-      <div className="fstats__row fstats__row--total">
-        <dt>
-          <img src={statIcon('block')} alt="" width={13} height={13} />
-          Combat score
-        </dt>
-        <dd className="mono">
-          {Math.round(score).toLocaleString(NUM_LOCALE)}
-          <GradeIcon
-            grade={gradeCombatScore(
-              graded('health'),
-              meanRes,
-              graded('damage'),
-              mid('attackspeed'),
-              template,
-            )}
-          />
-        </dd>
-      </div>
-    </dl>
-  )
-}
 
 function Confirm({
   title,
@@ -1338,794 +728,9 @@ function Confirm({
 
 /* ---------- filters ---------- */
 
-function RosterFilters({
-  filter,
-  onChange,
-  roster,
-  classes,
-  readyToLevel,
-  tab,
-  onTab,
-  atLevelOne,
-  onAtLevelOne,
-}: {
-  filter: RosterFilter
-  onChange: (f: RosterFilter) => void
-  roster: RosterFighter[]
-  classes: Map<string, ClassTemplate>
-  /** How many fighters have a level banked, shown on the toggle. */
-  readyToLevel: number
-  tab: CardTab
-  onTab: (t: CardTab) => void
-  atLevelOne: boolean
-  onAtLevelOne: (on: boolean) => void
-}) {
-  const { races } = useMemo(() => facetsOf(roster), [roster])
-  const set = (patch: Partial<RosterFilter>) => onChange({ ...filter, ...patch })
-
-  const toggle = <T,>(list: T[], value: T): T[] =>
-    list.includes(value) ? list.filter((x) => x !== value) : [...list, value]
-
-  /*
-   * Only markers this roster actually carries are offered.
-   *
-   * The vocabulary is thirty icons, and one a player has never pinned can
-   * never match anything — so offering all thirty is a wall of dead controls
-   * on a fresh account and a haystack on an organised one. The full set is
-   * still in the detail dialog, which is where markers are pinned.
-   */
-  const used = useMemo(() => {
-    const counts = new Map<string, number>()
-    for (const f of roster) {
-      if (f.marker) counts.set(f.marker, (counts.get(f.marker) ?? 0) + 1)
-    }
-    return counts
-  }, [roster])
-
-  /*
-     Folded to the markers by default, the rest behind the button.
-
-     The count of what is switched on rides on the button: a filter that is
-     still filtering while out of sight leaves a short roster with nothing on
-     screen to explain it.
-  */
-  const [open, setOpen] = useState(false)
-  const active = countActiveFilters(filter)
-
-  return (
-    <>
-      {/*
-        A phone's toolbar, the one the dungeon's fighter picker uses: a
-        Filter button that opens every filter (markers too) and clears them
-        with its end, and the sort as an icon over the native select. It
-        takes the place of the marker row and More filters.
-      */}
-      <div className="rtools">
-        <div className={`rtools__filter${active > 0 ? ' rtools__filter--on' : ''}`}>
-          <button
-            type="button"
-            className="rtools__main"
-            aria-expanded={open}
-            onClick={() => setOpen((v) => !v)}
-          >
-            <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-              <path d="M1.5 3h13l-5 6v4.5l-3-1.5V9z" />
-            </svg>
-            <span className="rtools__label">Filter</span>
-            <span className="rtools__hint">
-              {active > 0
-                ? `${active} on · ${open ? 'tap to close' : 'tap to change'}`
-                : 'Markers, element, class…'}
-            </span>
-          </button>
-          {active > 0 ? (
-            <button
-              type="button"
-              className="rtools__end"
-              aria-label="Clear filters"
-              onClick={() => onChange({ ...EMPTY_FILTER, sort: filter.sort })}
-            >
-              ✕
-            </button>
-          ) : (
-            <button
-              type="button"
-              className="rtools__end"
-              aria-hidden="true"
-              tabIndex={-1}
-              onClick={() => setOpen((v) => !v)}
-            >
-              {open ? '▴' : '▾'}
-            </button>
-          )}
-        </div>
-        <label className="rtools__icon" title="Sort by">
-          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <path d="M5 2.5v11M2.5 11 5 13.5 7.5 11M11 13.5v-11M8.5 5 11 2.5 13.5 5" />
-          </svg>
-          <select aria-label="Sort by" value={filter.sort} onChange={(e) => set({ sort: e.target.value })}>
-            {SORTS.map((s) => (
-              <option key={s.value} value={s.value}>
-                {s.label}
-              </option>
-            ))}
-          </select>
-        </label>
-      </div>
-
-      <div className={`filters filters--roster${open ? '' : ' filters--folded'}`}>
-      {/*
-         The markers stay out of the fold, and are lifted clear of the facet
-         row to do it: a player who has labelled a fighter is looking for that
-         fighter, and every other control here is a way of describing one they
-         have not found yet.
-      */}
-      {used.size > 0 && (
-        <div className="facet facet--grow filters__keep">
-          <span className="field__label">Marker</span>
-          <div className="filters__markers" role="group" aria-label="Marker">
-            {MARKERS.filter((m) => m && used.has(m)).map((m) => (
-              <button
-                type="button"
-                key={m}
-                className="markbtn"
-                aria-pressed={filter.markers.includes(m)}
-                onClick={() => set({ markers: toggle(filter.markers, m) })}
-                title={`${m} (${used.get(m)})`}
-              >
-                <img src={markerIcon(m)} alt={m} />
-                <span className="markbtn__count">{used.get(m)}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      <button
-        type="button"
-        className="filters__toggle"
-        aria-expanded={open}
-        onClick={() => setOpen((v) => !v)}
-      >
-        <span className="filters__togglelabel">
-          {open ? 'Fewer filters' : 'More filters'}
-        </span>
-        {active > 0 && <span className="filters__badge">{active}</span>}
-        <span className="filters__chev" aria-hidden="true">
-          {open ? '▴' : '▾'}
-        </span>
-      </button>
-
-      <div className="filters__facets">
-        <div className="facet">
-          <span className="field__label">Element</span>
-          <div className="filters__elements" role="group" aria-label="Element">
-            {ELEMENTS.map((el) => (
-              <button
-                type="button"
-                key={el}
-                className="elembtn"
-                aria-pressed={filter.elements.includes(el)}
-                onClick={() => set({ elements: toggle(filter.elements, el as Element) })}
-                title={el}
-              >
-                <img src={asset(`/assets/icons/elements/${el}.png`)} alt={el} />
-              </button>
-            ))}
-          </div>
-        </div>
-
-      </div>
-
-      <div className="filters__row">
-        <label className="field">
-          <span className="field__label">Class</span>
-          <select
-            className="input"
-            value={filter.classname}
-            onChange={(e) => set({ classname: e.target.value })}
-          >
-            <option value="">Any</option>
-            {[...classes.keys()].sort().map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <label className="field">
-          <span className="field__label">Race</span>
-          <select
-            className="input"
-            value={filter.racename}
-            onChange={(e) => set({ racename: e.target.value })}
-          >
-            <option value="">Any</option>
-            {races.map((r) => (
-              <option key={r} value={r}>
-                {r}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <label className="field">
-          <span className="field__label">Availability</span>
-          <select
-            className="input"
-            value={filter.status}
-            onChange={(e) => set({ status: e.target.value as Status })}
-          >
-            {STATUSES.map((s) => (
-              <option key={s} value={s}>
-                {s}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <label className="field">
-          <span className="field__label">Sort by</span>
-          <select
-            className="input"
-            value={filter.sort}
-            onChange={(e) => set({ sort: e.target.value })}
-          >
-            {SORTS.map((s) => (
-              <option key={s.value} value={s.value}>
-                {s.label}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <label className="field field--grow">
-          <span className="field__label">Ability</span>
-          <input
-            className="input"
-            placeholder="Search ability names"
-            value={filter.ability}
-            onChange={(e) => set({ ability: e.target.value })}
-          />
-        </label>
-
-        {/*
-          A toggle rather than another entry in Availability: that picker
-          answers "can this fighter be sent out", which is about the fight,
-          and a level waiting is about the roster. It is also the one question
-          here a player asks in order to act on the answer — press it, then
-          press Level all — so it reads better as a switch than as one option
-          buried in a list of five.
-        */}
-        <div className="field">
-          <span className="field__label">Levelling</span>
-          <div className="showtabs" role="group" aria-label="Levelling">
-            <button
-              type="button"
-              className="showtabs__btn"
-              aria-pressed={filter.levelReady}
-              onClick={() => set({ levelReady: !filter.levelReady })}
-              title="Fighters with enough experience banked to take a level"
-            >
-              Ready ({readyToLevel})
-            </button>
-          </div>
-        </div>
-
-        {/*
-          The same switch shape as Levelling, because it is the same kind of
-          thing: a state the roster is in rather than a subset of it.
-
-          Health and damage are fought with at `level_mod ^ level`, so a level
-          10 fighter shows about four times the damage of the same roll at
-          level 1 — which makes every derived figure and every sort on this
-          screen a ranking of who has been levelled rather than who rolled
-          well. Holding the exponent at 1 puts the whole roster on the terms
-          the newest fighter is on.
-        */}
-        <div className="field">
-          <span className="field__label">Compare</span>
-          <div className="showtabs" role="group" aria-label="Compare">
-            <button
-              type="button"
-              className="showtabs__btn"
-              aria-pressed={atLevelOne}
-              onClick={() => onAtLevelOne(!atLevelOne)}
-              title="Show every fighter's stats as they would be at level 1, so rolls can be compared across levels"
-            >
-              At level 1
-            </button>
-          </div>
-        </div>
-
-        {/*
-          One readout for every card at once. Comparing forty fighters on
-          fire resistance is the roster's whole job, and per-card tabs turn
-          that into forty clicks — a card can still be flipped on its own,
-          and changing this brings them all back into step.
-        */}
-        <div className="field field--tabs">
-          <span className="field__label">Show</span>
-          <div className="showtabs" role="group" aria-label="Readout">
-            {/* The same four names the cards use, so the switch and the thing
-                it switches are talking about the same readouts. */}
-            {CARD_TABS.map(([t, label]) => (
-              <button
-                type="button"
-                key={t}
-                className="showtabs__btn"
-                aria-pressed={tab === t}
-                onClick={() => onTab(t)}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {isFilterActive(filter) && (
-          <button
-            type="button"
-            className="btn btn--ghost btn--sm filters__clear"
-            onClick={() => onChange({ ...EMPTY_FILTER, sort: filter.sort })}
-          >
-            Clear
-          </button>
-        )}
-      </div>
-      </div>
-
-      {/*
-         The roll-quality filter, folded with the rest of them.
-
-         It answers "which of these rolled well", which is the question this
-         screen exists for — deciding who to ascend, who to field, and which
-         of forty to sell. It sits beside `.filters` rather than inside
-         because `.filters select.input` sets a full width that would stack
-         its two selects one per line, and it is rendered here rather than by
-         the screen so that it folds with the controls it belongs to.
-      */}
-      {open && <QualityFilters filter={filter} onChange={onChange} />}
-    </>
-  )
-}
 
 /* ---------- one fighter ---------- */
 
-export function FighterCard({
-  fighter,
-  levels,
-  config,
-  template,
-  levelMod,
-  ageDecay,
-  now,
-  mode,
-  tab: sharedTab,
-  atLevelOne = false,
-  selected,
-  checked,
-  onSelect,
-  onCheck,
-  onOpen,
-}: {
-  fighter: RosterFighter
-  levels: FighterLevel[]
-  config?: FightersConfig
-  template?: ClassTemplate
-  levelMod: number
-  ageDecay: number
-  now: number
-  mode: Mode
-  /**
-   * Which readout every card is showing.
-   *
-   * Held by the screen rather than the card because the question a roster
-   * answers is comparative — "which of these has the best fire resistance" —
-   * and per-card tabs make that a sixty-click job. A card can still be
-   * switched on its own, which is what the local override below is for; the
-   * next change to the shared tab takes every card back in step.
-   */
-  tab: CardTab
-  /**
-   * Show the stats as they would be at level 1.
-   *
-   * Health and damage are fought with at `level_mod ^ level`, so the figures
-   * on a level 10 card are about four times the same roll on a level 1 one
-   * and no comparison between them means anything. Off by default: the
-   * fought-with number is the true one, and this is a lens.
-   */
-  atLevelOne?: boolean
-  selected: boolean
-  checked: boolean
-  onSelect: () => void
-  onCheck: () => void
-  onOpen: () => void
-}) {
-  const [override, setOverride] = useState<CardTab | null>(null)
-  const [ability, setAbility] = useState(0)
-
-  useEffect(() => setOverride(null), [sharedTab])
-  const tab = override ?? sharedTab
-
-  const s = fighter.stats
-  const state = fighterState(fighter, now)
-  const pay = paydayOf(fighter, config, now)
-  const level = levelUpOf(fighter, levels)
-  const factor = battleFactor(fighter, levelMod, ageDecay, now, atLevelOne ? 1 : undefined)
-  const bonus = ageBonus(fighter, ageDecay, now)
-  const abilities = s.abilities ?? []
-  const shownAbility = abilities[Math.min(ability, Math.max(0, abilities.length - 1))]
-  /*
-     What the tick means depends on the mode, and so does who can be ticked.
-
-     Selling to the game only needs the fighter to be idle. The market is
-     stricter — `addauction` also refuses an inactive fighter and one whose
-     payday has come due — and the check is `listable`, the same function the
-     bar's gate uses, so a card that lets itself be ticked cannot be a card
-     the transaction will then reject.
-  */
-  const gate = mode === 'market' ? listable(fighter, now) : { ok: sellable(fighter) }
-  const canCheck = gate.ok
-  const checkTitle = canCheck
-    ? mode === 'market'
-      ? 'Select for the market'
-      : 'Select for selling'
-    : ('reason' in gate && gate.reason) || 'In use — cannot be sold'
-  /* Every fighter rolls with its last ability locked, so this note is on
-     every card in the game rather than an edge case. */
-  const unlockNote = config?.asc_ability_unlock_lvl
-    ? `Unlocks at ascension ${config.asc_ability_unlock_lvl}`
-    : 'Unlocks on ascension'
-
-  const classes = [
-    'fcard',
-    `fcard--${state}`,
-    selected ? 'fcard--selected' : '',
-    checked ? 'fcard--checked' : '',
-  ]
-    .filter(Boolean)
-    .join(' ')
-
-  return (
-    <article className={classes}>
-      {/* The whole card selects, but the tab strip, the marker and the sell
-          checkbox all sit inside it — so the hit area is an explicit layer
-          underneath rather than a click handler on the container that every
-          control would then have to stop. */}
-      <button
-        type="button"
-        className="fcard__hit"
-        onClick={onSelect}
-        aria-pressed={selected}
-        aria-label={`${fighter.racename} ${fighter.classname}, level ${s.level}`}
-      />
-
-      <div
-        className="fcard__xp"
-        title={
-          level.atMax
-            ? 'Maximum level'
-            : `${s.experience.toLocaleString(NUM_LOCALE)} / ${s.required_experience.toLocaleString(NUM_LOCALE)} XP`
-        }
-      >
-        <span
-          className={`fcard__xpFill${level.ready ? ' fcard__xpFill--full' : ''}`}
-          style={{ height: `${level.atMax ? 100 : level.xpPercent}%` }}
-        />
-      </div>
-
-      <div
-        className="fcard__art"
-        style={{ backgroundImage: `url('${elementBackground(fighter.element)}')` }}
-      >
-        <GameImg
-          className="fcard__fighter"
-          src={fighterArt(fighter)}
-          alt=""
-          loading="lazy"
-          fallback={fighterArtFallback()}
-        />
-        <img
-          className="fcard__element"
-          src={asset(`/assets/icons/elements/${fighter.element}.png`)}
-          alt={fighter.element}
-          title={`${fighter.element} damage`}
-          width={22}
-          height={22}
-        />
-        <span className="fcard__value" title="Sell value">
-          {s.credits.toLocaleString(NUM_LOCALE)}
-          <img src={asset("/assets/icons/credits.png")} alt="credits" width={14} height={14} />
-        </span>
-      </div>
-
-      <div className="fcard__body">
-        <div className="fcard__head">
-          <div className="fcard__ident">
-            <span className="fcard__name">
-              {fighter.racename} {fighter.classname}
-            </span>
-            <span className="fcard__chips">
-              {/*
-                The chip says what the numbers below it are, not what the
-                fighter is. Without it a level 10 card showing level 1 damage
-                is simply wrong, and there is nothing on the card to say the
-                roster is being read through a lens.
-              */}
-              <span className={`chip chip--level${atLevelOne ? ' chip--lens' : ''}`}>
-                Lv {s.level}
-                {atLevelOne && s.level !== 1 && <> → 1</>}
-              </span>
-              {level.atMax ? (
-                <span className="chip chip--max">MAX</span>
-              ) : (
-                <span className={`chip${level.ready ? ' chip--ready' : ''}`}>
-                  {s.experience.toLocaleString(NUM_LOCALE)} / {s.required_experience.toLocaleString(NUM_LOCALE)} XP
-                </span>
-              )}
-              {/*
-                Age sits with level and experience because it is the third
-                thing that says how much fighter is left: level is what it
-                has grown into, XP how far to the next one, and this how much
-                of the roll time has already taken back.
-              */}
-              <span
-                className={`chip chip--age chip--age-${ageBand(bonus)}`}
-                title={ageNote(bonus, ageDays(fighter, now), factor.age)}
-              >
-                {bonus > 0 ? '+' : ''}
-                {bonus.toFixed(0)}%
-              </span>
-              {fighter.ascension_level > 0 && (
-                <span className="chip chip--asc">Asc {fighter.ascension_level}</span>
-              )}
-              {state === 'busy' && (
-                <span className="chip chip--busy">{useLabel(fighter)}</span>
-              )}
-              {state === 'overdue' && (
-                <span className="chip chip--overdue">Requests payday</span>
-              )}
-            </span>
-          </div>
-
-          <div className="fcard__tools">
-            {mode !== 'inventory' && (
-              <label
-                className={`fcard__check${canCheck ? '' : ' fcard__check--off'}`}
-                title={checkTitle}
-              >
-                <input
-                  type="checkbox"
-                  checked={checked}
-                  disabled={!canCheck}
-                  onChange={onCheck}
-                />
-                <span />
-              </label>
-            )}
-            <button
-              type="button"
-              className="fcard__marker"
-              onClick={onOpen}
-              title={fighter.marker ? `Marked ${fighter.marker}` : 'Details and marker'}
-              aria-label="Open details"
-            >
-              <img src={markerIcon(fighter.marker)} alt="" width={18} height={18} />
-            </button>
-          </div>
-        </div>
-
-        {/*
-          The strip is four tabs and nothing else.
-
-          The age bonus used to ride here because `.fcard__body` is a
-          three-row grid — head, tabs, panel — and a fourth child pushed the
-          panel into an implicit row and cost the card its shape. Putting the
-          figure in the chip row solves that without spending 45px of a strip
-          that has four names to fit.
-        */}
-        <div className="fcard__tabs" role="tablist">
-          {CARD_TABS.map(([t, label]) => (
-            <button
-              type="button"
-              key={t}
-              role="tab"
-              aria-selected={tab === t}
-              className="fcard__tab"
-              onClick={() => setOverride(t)}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-
-        <div className="fcard__panel">
-          {tab === 'primary' && (
-            <dl className="fstats">
-              {PRIMARY_FIELDS.map((field) => {
-                const min = s[`${field}_min` as keyof typeof s] as number
-                const max = s[`${field}_max` as keyof typeof s] as number
-                /* Only health and damage are scaled by level and age; the
-                   rest are fought with exactly as rolled. */
-                const scale = field === 'health' || field === 'damage' ? factor.total : 1
-                return (
-                  <div className="fstats__row" key={field}>
-                    <dt>
-                      <img src={statIcon(field)} alt="" width={13} height={13} />
-                      {STAT_LABEL[field] ?? field}
-                    </dt>
-                    <dd className="mono">
-                      {formatStat(min * scale, max * scale)}
-                      <GradeArrow
-                        field={field}
-                        raw={((min + max) / 2) * (field === 'health' || field === 'damage' ? factor.age : 1)}
-                        template={template}
-                      />
-                    </dd>
-                  </div>
-                )
-              })}
-              <div className="fstats__row">
-                <dt>
-                  <img src={statIcon('target')} alt="" width={13} height={13} />
-                  Targets
-                </dt>
-                <dd>{s.target ? formatTarget(s.target) : 'Highest Taunt'}</dd>
-              </div>
-            </dl>
-          )}
-
-          {tab === 'resistance' && (
-            <dl className="fstats">
-              {RESISTANCES.map(([key, label]) => (
-                <div className="fstats__row" key={key}>
-                  <dt>
-                    <img
-                      src={asset(`/assets/icons/elements/${label.toLowerCase()}.png`)}
-                      alt=""
-                      width={13}
-                      height={13}
-                    />
-                    {label}
-                  </dt>
-                  <dd className="mono">
-                    {formatResistance((s as unknown as Record<string, number>)[key])}
-                    <GradeArrow
-                      field={key}
-                      raw={(s as unknown as Record<string, number>)[key]}
-                      template={template}
-                    />
-                  </dd>
-                </div>
-              ))}
-            </dl>
-          )}
-
-          {tab === 'combat' && (
-            <CombatPanel stats={s} factor={factor.total} ageFactor={factor.age} template={template} />
-          )}
-
-          {tab === 'abilities' && (
-            <div className="fability">
-              {abilities.length === 0 ? (
-                <p className="faint">No abilities.</p>
-              ) : (
-                <>
-                  {/*
-                    The names, not a row of numbers.
-
-                    Abilities are what distinguishes two fighters of the same
-                    class, and a player scanning the roster is looking for a
-                    particular one. Numbered pips made them open every fighter
-                    to find out what it had; the names answer that from the
-                    grid. The description belongs to whichever is selected, so
-                    it is the one thing the row below has to say.
-                  */}
-                  <div className="fability__list">
-                    {abilities.map((a, i) => (
-                      <button
-                        type="button"
-                        key={`${a.ability}-${i}`}
-                        className={`fability__pick${a.locked ? ' fability__pick--locked' : ''}`}
-                        aria-pressed={i === ability}
-                        style={{ '--pip': abilityColor(a.displayname) } as React.CSSProperties}
-                        onClick={() => setAbility(i)}
-                        title={abilityName(a.displayname)}
-                      >
-                        <span className="fability__pickName">
-                          {abilityName(a.displayname)}
-                        </span>
-                        {abilityRarity(a.displayname) && (
-                          <span className="fability__rarity">
-                            {abilityRarity(a.displayname)}
-                          </span>
-                        )}
-                        {!!a.locked && (
-                          <img
-                            className="fability__lock"
-                            src={asset("/assets/icons/lock.svg")}
-                            alt="Locked"
-                            title={unlockNote}
-                            width={11}
-                            height={11}
-                          />
-                        )}
-                      </button>
-                    ))}
-                  </div>
-                  <div
-                    className={`fability__body${shownAbility.locked ? ' fability__body--locked' : ''}`}
-                    style={{ borderLeftColor: abilityColor(shownAbility.displayname) }}
-                  >
-                    <span className="fability__desc">
-                      {/*
-                        What would unlock it, leading the description.
-
-                        The lock glyph on the pick above says "not yet" and
-                        nothing about what changes that; the answer was in a
-                        `title`, which a phone cannot reach at all — and every
-                        fighter in the game rolls with its last ability
-                        locked, so that tooltip was the only place the most
-                        common question on this screen had an answer.
-
-                        Inside the description rather than above it because
-                        this column is 92px wide: on its own line the sentence
-                        wrapped five times and grew the card by 65px, so
-                        picking a locked ability reflowed the grid.
-                      */}
-                      {!!shownAbility.locked && (
-                        <em className="fability__unlock">
-                          <img
-                            src={asset('/assets/icons/lock.svg')}
-                            alt=""
-                            width={10}
-                            height={10}
-                          />
-                          {unlockNote}.{' '}
-                        </em>
-                      )}
-                      {resolveAbilityDescription(shownAbility)}
-                    </span>
-                  </div>
-                </>
-              )}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/*
-        Upkeep, along the foot of the card.
-
-        The bar fills as the paid interval runs down, so a roster reads at a
-        glance: full bars are about to cost money, and a red one is already
-        costing the fighter their place.
-      */}
-      <div className={`fcard__pay${pay.overdue ? ' fcard__pay--overdue' : ''}`}>
-        <span
-          className="fcard__payFill"
-          style={{ width: `${Math.round(pay.progress * 100)}%` }}
-        />
-        <span className="fcard__payText">
-          {pay.overdue ? (
-            <>
-              Deleted {formatRelativeDays(msUntilDeletion(fighter, now))} ·{' '}
-              {formatDate(fighter.final_deletion_date)}
-            </>
-          ) : (
-            <>Payday {formatDate(fighter.next_payday)}</>
-          )}
-        </span>
-        <span className="fcard__payCost mono">
-          {pay.cost.toLocaleString(NUM_LOCALE)}
-          <img src={asset("/assets/icons/credits.png")} alt="credits" width={12} height={12} />
-        </span>
-      </div>
-    </article>
-  )
-}
 
 /* ---------- the detail dialog ---------- */
 
