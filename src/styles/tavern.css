@@ -458,7 +458,7 @@
 }
 .tabs__tab[aria-selected='true'] {
   color: var(--white);
-  background: var(--violet-glass);
+  background: var(--ctl-glass);
   border-color: var(--cyan);
 }
 

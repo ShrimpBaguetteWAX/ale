@@ -1152,7 +1152,7 @@
 .maprail__btn:hover,
 .maprail__btn[aria-expanded='true'],
 .maprail__btn[aria-pressed='true'] {
-  background: var(--violet-glass);
+  background: var(--ctl-glass);
   color: var(--white);
 }
 .maprail__btn svg {
@@ -1517,7 +1517,7 @@
   gap: var(--sp-2);
   height: 40px;
   padding: 0 var(--sp-2) 0 var(--sp-3);
-  border: 1px solid var(--line-bright);
+  border: 1px solid var(--ctl-line);
   border-radius: var(--radius-sm);
   background: rgb(5 16 30 / 85%);
   color: var(--white);
@@ -1526,7 +1526,7 @@
 }
 .planetpill:hover,
 .planetpill[aria-expanded='true'] {
-  background: var(--violet-glass);
+  background: var(--ctl-glass);
 }
 .planetpill__name {
   display: flex;
@@ -1643,7 +1643,7 @@
   color: var(--white);
 }
 .planetrow[aria-selected='true'] {
-  background: var(--violet-glass);
+  background: var(--ctl-glass);
   border-left-color: var(--cyan);
   color: var(--white);
 }

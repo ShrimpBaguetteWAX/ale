@@ -1495,7 +1495,7 @@
   height: 44px;
   padding: 0;
   background: rgb(0 0 0 / 40%);
-  border: 1px solid var(--line);
+  border: 1px solid var(--ctl-edge);
   border-radius: var(--radius-xs);
   cursor: pointer;
   /* Unselected elements read as available rather than disabled: desaturated
@@ -1509,7 +1509,7 @@
 }
 .elembtn:hover {
   opacity: 0.85;
-  border-color: var(--purple);
+  border-color: var(--ctl-hover);
 }
 .elembtn[aria-pressed='true'] {
   filter: none;
@@ -1633,7 +1633,7 @@
 }
 
 .filters__foot .field--sort .input:hover {
-  border-color: var(--purple);
+  border-color: var(--ctl-hover);
 }
 
 /* A phone gives it the rest of the line rather than a fixed width. */
@@ -2668,7 +2668,7 @@
   aspect-ratio: 5 / 8;
   min-height: 104px;
   border-style: dashed;
-  border-color: var(--line);
+  border-color: var(--ctl-edge);
   background: rgb(0 0 0 / 22%);
 }
 .combatcard--empty > * {
@@ -2690,8 +2690,8 @@ button.combatcard--empty {
   cursor: pointer;
 }
 button.combatcard--empty:hover {
-  border-color: var(--purple);
-  background: rgb(145 54 188 / 14%);
+  border-color: var(--ctl-hover);
+  background: var(--ctl-hover-fill);
 }
 
 .combatcard__plus {
@@ -2979,7 +2979,7 @@ button.combatcard--empty:hover {
 }
 
 .filters__toggle:hover {
-  border-color: var(--purple);
+  border-color: var(--ctl-hover);
   color: var(--white);
 }
 
@@ -4571,8 +4571,8 @@ button.combatcard--empty:hover {
   background: rgb(255 255 255 / 5%);
 }
 .autosplit__opt[aria-checked='true'] {
-  background: var(--surface-3);
-  border-color: var(--line);
+  background: var(--ctl-on);
+  border-color: var(--ctl-edge);
 }
 
 .autosplit__opticon {
@@ -4751,8 +4751,8 @@ button.combatcard--empty:hover {
 .autosplit__switch {
   display: inline-flex;
   align-items: stretch;
-  background: rgb(71 23 172 / 35%);
-  border: 1px solid var(--line);
+  background: var(--ctl-well);
+  border: 1px solid var(--ctl-edge);
   border-right: 0;
   border-radius: 8px 0 0 8px;
   overflow: hidden;

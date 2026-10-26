@@ -52,6 +52,23 @@
   --line-bright: var(--purple);
   --line-soft: rgb(255 255 255 / 10%);
 
+  /*
+     ---- Controls ----
+
+     What buttons, fields, toggles and tabs are drawn with. A phone keeps the
+     game's purple; a desktop has moved to the newer look — white edges, and
+     cyan for whatever is switched on — so the values change at 720px below
+     rather than in every rule that uses them.
+  */
+  --ctl-line: var(--line-bright); /* buttons and fields */
+  --ctl-edge: var(--line); /* toggles and tabs */
+  --ctl-hover: var(--purple);
+  --ctl-on: var(--surface-3); /* a selected tab or option */
+  --ctl-glass: var(--violet-glass);
+  --ctl-well: rgb(71 23 172 / 35%);
+  --ctl-count: var(--violet);
+  --ctl-hover-fill: rgb(145 54 188 / 14%);
+
   /* ---- Text ---- */
   --text: #ffffff;
   --text-dim: #b9c2d6;
@@ -159,5 +176,18 @@
   :root {
     --dur-fast: 0ms;
     --dur: 0ms;
+  }
+}
+
+@media (min-width: 720px) {
+  :root {
+    --ctl-line: rgb(255 255 255 / 18%);
+    --ctl-edge: rgb(255 255 255 / 12%);
+    --ctl-hover: rgb(255 255 255 / 34%);
+    --ctl-on: rgb(0 186 255 / 16%);
+    --ctl-glass: rgb(0 186 255 / 16%);
+    --ctl-well: rgb(0 0 0 / 30%);
+    --ctl-count: #0b6f99;
+    --ctl-hover-fill: rgb(255 255 255 / 6%);
   }
 }

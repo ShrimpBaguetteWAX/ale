@@ -358,7 +358,7 @@
   height: 30px;
   padding: 0;
   background: rgb(0 0 0 / 40%);
-  border: 1px solid var(--line);
+  border: 1px solid var(--ctl-edge);
   border-radius: var(--radius-xs);
   cursor: pointer;
   transition:
@@ -372,7 +372,7 @@
   object-fit: contain;
 }
 .markbtn:hover:not(:disabled) {
-  border-color: var(--purple);
+  border-color: var(--ctl-hover);
 }
 .markbtn[aria-pressed='true'] {
   border-color: var(--cyan);
@@ -389,7 +389,7 @@
   min-width: 13px;
   padding: 0 2px;
   border-radius: var(--radius-full);
-  background: var(--violet);
+  background: var(--ctl-count);
   font-family: var(--font-display);
   font-size: 8px;
   line-height: 13px;
@@ -1094,7 +1094,7 @@
 .showtabs {
   display: flex;
   min-height: 44px;
-  border: 1px solid var(--line);
+  border: 1px solid var(--ctl-edge);
   border-radius: var(--radius-xs);
   overflow: hidden;
 }
@@ -2243,9 +2243,9 @@
   white-space: nowrap;
 }
 .drost__status.is-busy {
-  background: rgb(124 92 255 / 18%);
-  box-shadow: inset 0 0 0 1px rgb(124 92 255 / 55%);
-  color: #c7b8ff;
+  background: rgb(255 255 255 / 7%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 24%);
+  color: #dfe6f2;
 }
 .drost__status.is-market {
   background: rgb(0 186 255 / 12%);

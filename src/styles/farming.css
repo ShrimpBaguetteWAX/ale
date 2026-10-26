@@ -79,7 +79,7 @@
   min-width: 170px;
   padding: var(--sp-2) var(--sp-4);
   background: rgb(0 0 0 / 35%);
-  border: 1px solid var(--line);
+  border: 1px solid var(--ctl-edge);
   border-radius: var(--radius-sm);
   cursor: pointer;
   text-align: left;
@@ -88,10 +88,10 @@
     border-color var(--dur-fast) var(--ease);
 }
 .farmtab:hover {
-  border-color: var(--purple);
+  border-color: var(--ctl-hover);
 }
 .farmtab[aria-selected='true'] {
-  background: var(--surface-3);
+  background: var(--ctl-on);
   border-color: var(--cyan);
 }
 
@@ -135,7 +135,7 @@
   color: var(--white);
 }
 .farmmode[aria-selected='true'] {
-  background: var(--surface-3);
+  background: var(--ctl-on);
   color: var(--white);
 }
 
@@ -433,7 +433,7 @@
 }
 
 .stepper__btn:hover:not(:disabled) {
-  border-color: var(--purple);
+  border-color: var(--ctl-hover);
   color: var(--white);
 }
 
@@ -451,7 +451,7 @@
   text-align: center;
   font-variant-numeric: tabular-nums;
   background: rgb(0 0 0 / 45%);
-  border: 1px solid var(--line-bright);
+  border: 1px solid var(--ctl-line);
   border-radius: var(--radius-xs);
   /* The two buttons beside it are the spinner; the browser's own is a
      6px target that appears on hover. */

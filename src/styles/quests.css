@@ -60,7 +60,7 @@
   min-width: 160px;
   padding: var(--sp-2) var(--sp-4);
   background: rgb(0 0 0 / 35%);
-  border: 1px solid var(--line);
+  border: 1px solid var(--ctl-edge);
   border-radius: var(--radius-sm);
   cursor: pointer;
   text-align: left;
@@ -69,10 +69,10 @@
     border-color var(--dur-fast) var(--ease);
 }
 .scopetab:hover {
-  border-color: var(--purple);
+  border-color: var(--ctl-hover);
 }
 .scopetab[aria-selected='true'] {
-  background: var(--surface-3);
+  background: var(--ctl-on);
   border-color: var(--cyan);
 }
 

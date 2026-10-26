@@ -3666,7 +3666,7 @@
   display: grid;
   place-items: center;
   border-radius: 7px;
-  border: 1px solid var(--line);
+  border: 1px solid var(--ctl-edge);
   background: #0a1220;
   color: var(--white);
   cursor: pointer;

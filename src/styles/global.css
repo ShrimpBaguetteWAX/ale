@@ -114,7 +114,7 @@ a:hover {
 .btn {
   --btn-bg: var(--grad-tertiary);
   --btn-fg: var(--white);
-  --btn-line: var(--line-bright);
+  --btn-line: var(--ctl-line);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -175,7 +175,7 @@ a:hover {
 
 .btn--ghost {
   --btn-bg: rgb(255 255 255 / 4%);
-  --btn-line: var(--line-bright);
+  --btn-line: var(--ctl-line);
 }
 
 .btn--lg {
@@ -217,7 +217,7 @@ a:hover {
   padding: 0 var(--sp-4);
   color: var(--text);
   background: rgb(0 0 0 / 45%);
-  border: 1px solid var(--line-bright);
+  border: 1px solid var(--ctl-line);
   border-radius: var(--radius-sm);
 }
 .input::placeholder {
