@@ -7,12 +7,12 @@ import {
   firstMission,
   offerState,
   perGemPlaces,
-  placesFor,
   projectShare,
   shareOf,
   tokenAmount,
   tokenIcon,
   tokenSymbol,
+  wholeTokens,
   type OfferState,
 } from '@/candle/rules'
 import type { Board } from '@/routes/Candle'
@@ -155,8 +155,6 @@ export function DeskCandle({
 }
 
 const amountOf = (v: string | undefined) => Math.max(0, Math.floor(Number(v) || 0))
-/* A pot in whole tokens, the same figure on the card, the title and the tiles; only a pot under one keeps its decimals. */
-const wholeOr = (v: number, type: string) => (v >= 1 ? formatNumber(Math.floor(v)) : formatDecimals(v, placesFor(v, type)))
 
 /* How much of the mission's day is left, 0–1; nothing yet before it opens. */
 function dayLeft(state: OfferState): number {
@@ -209,7 +207,7 @@ function MissionCard({
       </span>
       <span className="dcan__cardtext">
         <b>
-          {wholeOr(prize, offer.reward_type)} <small>{tokenSymbol(offer.reward_type)}</small>
+          {wholeTokens(prize, offer.reward_type)} <small>{tokenSymbol(offer.reward_type)}</small>
         </b>
         <span>{offer.requirements}</span>
         <Gate offer={offer} player={player} compact />
@@ -281,7 +279,7 @@ export function Dossier({
         <span className="dcan__dtitle">
           <small>Mission · {offer.requirements}</small>
           <h2>
-            {wholeOr(prize, type)} {symbol}
+            {wholeTokens(prize, type)} {symbol}
           </h2>
           <span className="dcan__dline">
             <Gate offer={offer} player={player} />
@@ -327,7 +325,7 @@ export function Dossier({
         <span className="dcan__stat">
           <small>Pot</small>
           <b>
-            {wholeOr(prize, type)} <img src={icon} alt="" />
+            {wholeTokens(prize, type)} <img src={icon} alt="" />
           </b>
         </span>
         <span className="dcan__stat">
@@ -402,7 +400,7 @@ export function Dossier({
                 </span>
                 <span className="dcan__num is-dim">{formatNumber(r.gems)}</span>
                 <span className="dcan__num">{whole > 0 ? ((r.gems / whole) * 100).toFixed(1) : '0.0'}%</span>
-                <span className="dcan__num">{wholeOr(takes, type)}</span>
+                <span className="dcan__num">{wholeTokens(takes, type)}</span>
               </div>
             )
           })}
@@ -564,7 +562,7 @@ export function Contribute({
           <b>
             {board.mine > 0 ? (
               <>
-                {wholeOr(share.payout, type)} <img src={icon} alt={symbol} /> ·{' '}
+                {wholeTokens(share.payout, type)} <img src={icon} alt={symbol} /> ·{' '}
                 {(share.fraction * 100).toFixed(1)}%
               </>
             ) : (
@@ -583,7 +581,7 @@ export function Contribute({
             <span className="is-sum">
               You'd take at close
               <b>
-                {wholeOr(after.payout, type)} <img src={icon} alt={symbol} /> ·{' '}
+                {wholeTokens(after.payout, type)} <img src={icon} alt={symbol} /> ·{' '}
                 {(after.fraction * 100).toFixed(1)}%
               </b>
             </span>

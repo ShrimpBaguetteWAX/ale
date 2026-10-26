@@ -205,9 +205,31 @@
   box-shadow: inset 0 0 0 1px rgb(0 186 255 / 55%);
   color: var(--white);
 }
-.pcandle__tab > img {
-  width: 18px;
-  height: 18px;
+/* The reward icon inside a ring of what is left of the mission's day. */
+.pcandle__ring {
+  --p: 0;
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: conic-gradient(#ffb02e calc(var(--p) * 1%), rgb(255 255 255 / 12%) 0);
+}
+.pcandle__ring::before {
+  content: '';
+  position: absolute;
+  inset: 2.5px;
+  border-radius: 50%;
+  background: #0b1222;
+}
+.pcandle__ring.is-soon {
+  background: rgb(255 255 255 / 14%);
+}
+.pcandle__ring img {
+  position: relative;
+  width: 15px;
+  height: 15px;
 }
 .pcandle__tab > b {
   font-family: var(--font-display);
@@ -218,7 +240,7 @@
   font-size: 9.5px;
   font-weight: 600;
 }
-.pcandle__tab.is-locked > img,
+.pcandle__tab.is-locked > .pcandle__ring img,
 .pcandle__tab.is-locked > b {
   opacity: 0.55;
 }
@@ -348,31 +370,7 @@
 .pcandle__bar i.is-add {
   opacity: 0.7;
 }
-.pcandle__under {
-  display: flex;
-  justify-content: space-between;
-  gap: 8px;
-  font-size: 11px;
-  color: var(--text-faint);
-}
-.pcandle__under b {
-  color: var(--white);
-}
-.pcandle__under button {
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
-  padding: 0;
-  border: 0;
-  background: none;
-  font-size: 11px;
-  font-weight: var(--fw-bold);
-  color: var(--cyan);
-}
-.pcandle__under button:disabled {
-  color: var(--text-faint);
-}
-.pcandle__under img,
+
 .pcandle__gem,
 .pcandle__gems img {
   width: 13px;
@@ -381,19 +379,36 @@
 }
 .pcandle__locked {
   display: grid;
-  gap: 2px;
-  padding: 8px 12px;
+  gap: 6px;
+  padding: 10px 12px;
   border-radius: 12px;
   background: rgb(255 109 133 / 10%);
   box-shadow: inset 0 0 0 1px rgb(255 109 133 / 45%);
   color: #ffb3c0;
 }
-.pcandle__locked b {
-  font-size: var(--fs-xs);
+.pcandle__locked > span:first-child {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 2px 10px;
+  font-size: 12.5px;
 }
-.pcandle__locked small {
-  font-size: 11px;
-  line-height: 1.4;
+.pcandle__locked b {
+  font-size: 11.5px;
+  color: var(--white);
+  white-space: nowrap;
+}
+.pcandle__lockbar {
+  display: block;
+  height: 7px;
+  overflow: hidden;
+  border-radius: 4px;
+  background: rgb(255 255 255 / 10%);
+}
+.pcandle__lockbar i {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #a83246, #ff6b7d);
 }
 .pcandle__range {
   width: 100%;
@@ -473,17 +488,32 @@
   box-shadow: inset 0 0 0 1px rgb(255 255 255 / 10%);
 }
 .pcandle__whorow {
-  display: flex;
+  display: grid;
+  grid-template-columns: 22px 24px minmax(0, 1fr) 46px 64px;
   align-items: center;
-  gap: 10px;
-  min-height: 42px;
-  padding: 6px 10px;
+  gap: 8px;
+  min-height: 38px;
+  padding: 5px 10px;
+}
+.pcandle__whorow--head {
+  min-height: 0;
+  padding: 7px 10px 2px;
+  font-family: var(--font-display);
+  font-size: 7.5px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+.pcandle__whorow--head span:nth-child(n + 4) {
+  text-align: right;
 }
 .pcandle__whorow + .pcandle__whorow {
   box-shadow: inset 0 1px 0 rgb(255 255 255 / 7%);
 }
 .pcandle__whorow.is-you {
   background: rgb(14 212 168 / 12%);
+  box-shadow: inset 3px 0 0 var(--teal);
 }
 .pcandle__rank {
   display: grid;
@@ -519,6 +549,7 @@
 }
 .pcandle__cut {
   flex: none;
+  text-align: right;
   font-family: var(--font-display);
   font-size: 11px;
   font-weight: 800;
@@ -530,9 +561,9 @@
   align-items: center;
   justify-content: flex-end;
   gap: 3px;
-  min-width: 58px;
+  font-family: var(--font-display);
   font-size: 11px;
-  font-weight: var(--fw-bold);
+  font-weight: 800;
 }
 .pcandle .rsheet__cap span {
   display: inline-flex;
@@ -1300,4 +1331,121 @@
   .dcan__head {
     flex-wrap: wrap;
   }
+}
+
+/* ---------- the phone Candle: the desktop's details ---------- */
+
+/* How far through its day the mission is. */
+.pcandle__burn {
+  display: grid;
+  gap: 4px;
+}
+.pcandle__burnbar {
+  position: relative;
+  display: block;
+  height: 5px;
+  border-radius: 3px;
+  background: rgb(255 255 255 / 8%);
+}
+.pcandle__burnbar i {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  border-radius: 3px;
+  background: linear-gradient(90deg, #7a3a12, #ffb02e);
+}
+.pcandle__burnbar b {
+  position: absolute;
+  top: -3px;
+  width: 3px;
+  height: 11px;
+  margin-left: -1.5px;
+  border-radius: 2px;
+  background: var(--white);
+  box-shadow: 0 0 6px #ffb02e;
+}
+.pcandle__burnlbl {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10.5px;
+  color: var(--text-dim);
+}
+
+/* what a gem buys, gems in, players */
+.pcandle__tiles {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+.pcandle__tile {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+  padding: 7px 9px;
+  border-radius: 10px;
+  background: rgb(8 14 28 / 72%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 10%);
+}
+.pcandle__tile small {
+  font-family: var(--font-display);
+  font-size: 7.5px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.pcandle__tile b {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font-display);
+  font-size: 13.5px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+.pcandle__tile b img {
+  width: 12px;
+  height: 12px;
+}
+.pcandle__tile b em {
+  font-family: var(--font-body);
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 700;
+  color: var(--text-faint);
+}
+
+/* a mission still to come: when, the bar, and where the player stands */
+.pcandle__facts {
+  display: grid;
+  gap: 6px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgb(8 14 28 / 72%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 10%);
+}
+.pcandle__facts div {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 12.5px;
+  color: var(--text-faint);
+}
+.pcandle__facts b {
+  font-size: 12px;
+  color: var(--white);
+}
+.pcandle__facts b.is-ok {
+  color: var(--teal);
+}
+.pcandle__facts b.is-short {
+  color: #ffb3c0;
+}
+
+/* who is in, on the page */
+.pcandle__whobox {
+  display: grid;
+  gap: 6px;
+  margin-top: 4px;
 }

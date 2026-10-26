@@ -1,21 +1,21 @@
 import { useMemo, useState } from 'react'
 import type { Player } from '@/chain/types'
-import type { CandleClaim, CandleOffer, CandleTracking, Contribution } from '@/candle/types'
+import type { CandleClaim, CandleOffer, CandleTracking } from '@/candle/types'
 import {
   countdown,
   eligibility,
   firstMission,
   offerState,
   perGemPlaces,
-  placesFor,
   projectShare,
   shareOf,
   tokenAmount,
   tokenIcon,
   tokenSymbol,
+  wholeTokens,
+  type OfferState,
 } from '@/candle/rules'
 import type { Board } from '@/routes/Candle'
-import { BottomSheet } from '@/components/BottomSheet'
 import { PlayerAvatar } from '@/components/PlayerAvatar'
 import { formatCompact, formatDecimals, formatNumber } from '@/format'
 import { asset } from '@/assets'
@@ -29,8 +29,10 @@ const EMPTY_BOARD: Board = { stakes: [], contributors: 0, mine: 0 }
  * A switch along the top holds every mission — the running ones and the ones
  * coming up — each with its reward, its time and whether the player can get
  * in, so a locked one is known before it is opened. The page under it is that
- * one mission in full: the pot, the split, and the contribution with its
- * button docked at the bottom.
+ * one mission in full: the pot and how far through its day it is, the split,
+ * the contribution with its button docked at the bottom, and under it everyone
+ * who is in with what each would take — the player's own row as it would be
+ * with the gems they have picked.
  */
 export function PhoneCandle({
   running,
@@ -73,7 +75,6 @@ export function PhoneCandle({
   const [picked, setPicked] = useState<string | null>(null)
   const offer =
     all.find((o) => o.offer_id === picked) ?? firstMission(running, upcoming, player)
-  const [whoOpen, setWhoOpen] = useState(false)
 
   const tlm = tokenAmount(Number(claim?.tlm ?? 0), 'tlm')
   const wax = tokenAmount(Number(claim?.wax ?? 0), 'wax')
@@ -130,7 +131,12 @@ export function PhoneCandle({
                   className={`pcandle__tab${gate.qualified ? '' : ' is-locked'}`}
                   onClick={() => setPicked(o.offer_id)}
                 >
-                  <img src={tokenIcon(o.reward_type)} alt="" />
+                  <span
+                    className={`pcandle__ring${soon ? ' is-soon' : ''}`}
+                    style={{ '--p': dayLeft(state) * 100 } as React.CSSProperties}
+                  >
+                    <img src={tokenIcon(o.reward_type)} alt="" />
+                  </span>
                   <b className="mono">{formatCompact(Math.floor(prize))}</b>
                   <small>
                     {soon ? 'opens ' : ''}
@@ -160,19 +166,9 @@ export function PhoneCandle({
             busy={busy}
             canAct={canAct}
             onContribute={() => onContribute(offer)}
-            onWho={() => setWhoOpen(true)}
+            tags={tags}
+            avatars={avatars}
           />
-
-          {whoOpen && (
-            <WhoSheet
-              stakes={(boards.get(offer.offer_id) ?? EMPTY_BOARD).stakes}
-              total={Number(offer.total_gems ?? 0)}
-              wallet={player.wallet}
-              tags={tags}
-              avatars={avatars}
-              onClose={() => setWhoOpen(false)}
-            />
-          )}
         </>
       )}
     </div>
@@ -194,7 +190,8 @@ function MissionPage({
   busy,
   canAct,
   onContribute,
-  onWho,
+  tags,
+  avatars,
 }: {
   offer: CandleOffer
   board: Board
@@ -206,7 +203,8 @@ function MissionPage({
   busy: string | null
   canAct: boolean
   onContribute: () => void
-  onWho: () => void
+  tags: Record<string, string>
+  avatars: Record<string, number>
 }) {
   const state = offerState(offer, now)
   const gate = eligibility(offer, player)
@@ -221,7 +219,6 @@ function MissionPage({
   const usable = canAct && busy === null && open && gate.qualified
   const tooPoor = amount > balance
   const priced = amount > 0 && open && gate.qualified
-  const dp = (v: number) => placesFor(v, type)
   const rate = (v: number) => formatDecimals(v, perGemPlaces(v, type))
 
   const slices = useMemo(
@@ -235,7 +232,7 @@ function MissionPage({
       <div className="pcandle__hero">
         <span className="pcandle__pot">
           <img src={tokenIcon(type)} alt="" />
-          <b className="mono">{formatDecimals(prize, dp(prize))}</b>
+          <b className="mono">{wholeTokens(prize, type)}</b>
           <em>{symbol}</em>
         </span>
         <span className="pcandle__clock">
@@ -243,6 +240,26 @@ function MissionPage({
           <b className="mono">{open || soon ? countdown(state.msLeft) : 'settling'}</b>
         </span>
       </div>
+
+      {/* How far through its day the mission is. */}
+      {!soon && (
+        <div className="pcandle__burn">
+          <span className="pcandle__burnbar">
+            <i style={{ width: `${(1 - dayLeft(state)) * 100}%` }} />
+            <b style={{ left: `${(1 - dayLeft(state)) * 100}%` }} />
+          </span>
+          <span className="pcandle__burnlbl">
+            {open ? (
+              <>
+                <span>Opened {countdown(now - state.startsAt)} ago</span>
+                <span>Settles in {countdown(state.msLeft)}</span>
+              </>
+            ) : (
+              <span>Closed · settling</span>
+            )}
+          </span>
+        </div>
+      )}
 
       <div className="pcandle__req">
         <span>
@@ -278,38 +295,61 @@ function MissionPage({
               <i className="is-add" style={{ flexBasis: `${(amount / whole) * 100}%` }} />
             )}
           </div>
-          <div className="pcandle__under">
-            <span>
-              A gem buys{' '}
-              <b>{share.total > 0 ? `${rate(share.perGem)} ${symbol}` : '—'}</b>
+          <div className="pcandle__tiles">
+            <span className="pcandle__tile">
+              <small>A gem buys</small>
+              <b className="mono">
+                {share.total > 0 ? rate(share.perGem) : '—'} <em>{symbol}</em>
+              </b>
             </span>
-            <button
-              type="button"
-              onClick={onWho}
-              disabled={board.contributors === 0}
-              title="See who has contributed and how much"
-            >
-              {formatNumber(share.total)}
-              <img src={GEMS} alt="gems" /> · {formatNumber(board.contributors)} player
-              {board.contributors === 1 ? '' : 's'} ›
-            </button>
+            <span className="pcandle__tile">
+              <small>Gems in</small>
+              <b className="mono">
+                {formatNumber(share.total)} <img src={GEMS} alt="gems" />
+              </b>
+            </span>
+            <span className="pcandle__tile">
+              <small>Players</small>
+              <b className="mono">{formatNumber(board.contributors)}</b>
+            </span>
           </div>
         </>
       )}
 
       {soon ? (
-        <p className="pcandle__note pcandle__note--left">
-          {gate.qualified
-            ? 'You can put gems in when it opens.'
-            : `Needs ${formatNumber(gate.need)} lifetime ${offer.requirements.toLowerCase()} — you have ${formatNumber(gate.have)}.`}
-        </p>
+        <>
+          <div className="pcandle__facts">
+            <div>
+              <span>Opens in</span>
+              <b className="mono">{countdown(state.msLeft)}</b>
+            </div>
+            <div>
+              <span>Requirement</span>
+              <b className="mono">{formatNumber(gate.need)}</b>
+            </div>
+            <div>
+              <span>You have</span>
+              <b className={`mono ${gate.qualified ? 'is-ok' : 'is-short'}`}>
+                {formatNumber(gate.have)} · {gate.qualified ? 'qualified' : `${formatNumber(gate.short)} short`}
+              </b>
+            </div>
+          </div>
+          <p className="pcandle__note pcandle__note--left">
+            Nobody can put gems in until it opens. A gem starts out worth the whole pot, and that falls with every
+            contribution.
+          </p>
+        </>
       ) : !gate.qualified ? (
         <div className="pcandle__locked">
-          <b>Locked</b>
-          <small>
-            Needs {formatNumber(gate.need)} lifetime {offer.requirements.toLowerCase()} — you have{' '}
-            {formatNumber(gate.have)}.
-          </small>
+          <span>
+            Lifetime {offer.requirements.toLowerCase()}
+            <b className="mono">
+              {formatNumber(gate.have)} / {formatNumber(gate.need)}
+            </b>
+          </span>
+          <span className="pcandle__lockbar">
+            <i style={{ width: `${Math.min(100, (gate.have / Math.max(1, gate.need)) * 100)}%` }} />
+          </span>
         </div>
       ) : open ? (
         <>
@@ -358,7 +398,7 @@ function MissionPage({
                 <span>In already</span>
                 <b className="mono">
                   {formatNumber(board.mine)} · {(share.fraction * 100).toFixed(1)}% ·{' '}
-                  {formatDecimals(share.payout, dp(share.payout))} {symbol}
+                  {wholeTokens(share.payout, type)} {symbol}
                 </b>
               </div>
             )}
@@ -366,7 +406,7 @@ function MissionPage({
               <span>Your share</span>
               <b className="mono">
                 {priced
-                  ? `${(after.fraction * 100).toFixed(1)}% · ${formatDecimals(after.payout, dp(after.payout))} ${symbol}`
+                  ? `${(after.fraction * 100).toFixed(1)}% · ${wholeTokens(after.payout, type)} ${symbol}`
                   : '— pick an amount'}
               </b>
             </div>
@@ -394,7 +434,7 @@ function MissionPage({
             </button>
             <small>
               {priced
-                ? `About ${formatDecimals(after.payout, dp(after.payout))} ${symbol} if nobody else adds`
+                ? `About ${wholeTokens(after.payout, type)} ${symbol} if nobody else adds`
                 : 'Gems are spent at once'}
             </small>
           </div>
@@ -402,64 +442,103 @@ function MissionPage({
       ) : (
         <p className="pcandle__note">This mission has closed and is being settled.</p>
       )}
+
+      {!soon && (
+        <WhoBoard
+          offer={offer}
+          board={board}
+          player={player}
+          amount={priced ? amount : 0}
+          tags={tags}
+          avatars={avatars}
+        />
+      )}
     </div>
   )
 }
 
 /* ---------- who is in ---------- */
 
-function WhoSheet({
-  stakes,
-  total,
-  wallet,
+/**
+ * Everyone in, with what each would take if the mission closed now.
+ *
+ * On the page rather than in a sheet behind a player count: who else is in
+ * and how big their stakes are is what decides what a gem is worth. With gems
+ * picked, the player's row is drawn as it would be after they go in, and
+ * every share is of the pot plus those gems — so adding them visibly shrinks
+ * everyone else's.
+ */
+export function WhoBoard({
+  offer,
+  board,
+  player,
+  amount,
   tags,
   avatars,
-  onClose,
 }: {
-  stakes: Contribution[]
-  total: number
-  wallet: string
+  offer: CandleOffer
+  board: Board
+  player: Player
+  /** Gems picked and able to go in; 0 when there is nothing to project. */
+  amount: number
   tags: Record<string, string>
   avatars: Record<string, number>
-  onClose: () => void
 }) {
-  const rows = [...stakes].sort((a, b) => Number(b.amount) - Number(a.amount))
+  const type = offer.reward_type
+  const prize = tokenAmount(offer.reward_amount, type)
+  const whole = Number(offer.total_gems ?? 0) + amount
+  const rows = useMemo(() => {
+    const list = board.stakes.map((s) => ({ wallet: s.wallet, gems: Number(s.amount) }))
+    if (amount > 0) {
+      const mine = list.find((r) => r.wallet === player.wallet)
+      if (mine) mine.gems += amount
+      else list.push({ wallet: player.wallet, gems: amount })
+    }
+    return list.sort((x, y) => y.gems - x.gems)
+  }, [board.stakes, amount, player.wallet])
+
   return (
-    <BottomSheet title="Who is in" onClose={onClose}>
-      <p className="rsheet__hint">
-        {formatNumber(total)} gems from {formatNumber(rows.length)} player
-        {rows.length === 1 ? '' : 's'}. Each share is that player&apos;s gems over everyone&apos;s.
-      </p>
-      <div className="pcandle__who">
-        {rows.map((r, i) => {
-          const amount = Number(r.amount)
-          const you = r.wallet === wallet
-          return (
-            <div className={`pcandle__whorow${you ? ' is-you' : ''}`} key={r.wallet}>
-              <span className={`pcandle__rank${i < 3 ? ' is-top' : ''}`}>{i + 1}</span>
-              <PlayerAvatar
-                id={avatars[r.wallet]}
-                name={tags[r.wallet] || r.wallet}
-                className="pcandle__avatar"
-                size={26}
-              />
-              <span className="pcandle__name">
-                {tags[r.wallet] || r.wallet}
-                {you && <em> · you</em>}
-              </span>
-              <span className="pcandle__cut mono">
-                {total > 0 ? ((amount / total) * 100).toFixed(1) : '0.0'}%
-              </span>
-              <span className="pcandle__gems mono">
-                {formatNumber(amount)}
-                <img src={GEMS} alt="gems" />
-              </span>
-            </div>
-          )
-        })}
+    <section className="pcandle__whobox" aria-label="Who is in">
+      <div className="rsheet__cap">
+        Who is in
+        <span>{amount > 0 ? `if your ${formatNumber(amount)} go in` : `${rows.length} player${rows.length === 1 ? '' : 's'}`}</span>
       </div>
-    </BottomSheet>
+      {rows.length === 0 ? (
+        <p className="pcandle__note pcandle__note--left">Nobody has contributed yet.</p>
+      ) : (
+        <div className="pcandle__who">
+          <div className="pcandle__whorow pcandle__whorow--head">
+            <span>#</span>
+            <span />
+            <span>Player</span>
+            <span>Share</span>
+            <span>Takes</span>
+          </div>
+          {rows.map((r, i) => {
+            const you = r.wallet === player.wallet
+            return (
+              <div className={`pcandle__whorow${you ? ' is-you' : ''}`} key={r.wallet}>
+                <span className={`pcandle__rank${i < 3 ? ' is-top' : ''}`}>{i + 1}</span>
+                <PlayerAvatar id={avatars[r.wallet]} name={tags[r.wallet] || r.wallet} className="pcandle__avatar" size={24} />
+                <span className="pcandle__name">
+                  {you ? <b>You</b> : tags[r.wallet] || r.wallet}
+                  {you && amount > 0 && <em> +{formatNumber(amount)}</em>}
+                </span>
+                <span className="pcandle__cut mono">{whole > 0 ? ((r.gems / whole) * 100).toFixed(1) : '0.0'}%</span>
+                <span className="pcandle__gems mono">{wholeTokens(whole > 0 ? (prize * r.gems) / whole : 0, type)}</span>
+              </div>
+            )
+          })}
+        </div>
+      )}
+    </section>
   )
+}
+
+/* How much of the mission's day is left, 0–1; nothing yet before it opens. */
+function dayLeft(state: OfferState): number {
+  const day = state.endsAt - state.startsAt
+  return state.phase === 'open' && day > 0 ? state.msLeft / day : 0
 }
 
 /* ---------- bits ---------- */

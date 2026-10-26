@@ -1,6 +1,7 @@
 import type { KeyValue, Player } from '@/chain/types'
 import type { CandleOffer } from './types'
 import { asset } from '@/assets'
+import { formatDecimals, formatNumber } from '@/format'
 
 /**
  * How the candle works, from `recovery.ale`.
@@ -60,6 +61,18 @@ export function placesFor(value: number, type: string): number {
  */
 export function perGemPlaces(value: number, type: string): number {
   return Number.isFinite(value) && Math.abs(value) >= 1 ? 1 : placesFor(value, type)
+}
+
+/**
+ * A token figure as it is shown: whole tokens, cut rather than rounded.
+ *
+ * One rule for the pot, a share and what a contributor takes, so the same
+ * pot is the same number on a tab, a title and a tile — rounding in one
+ * place and cutting in another put 46,585 and 46,584 side by side. Under one
+ * it keeps the places `placesFor` gives, so a small payout still says what it is.
+ */
+export function wholeTokens(value: number, type: string): string {
+  return value >= 1 ? formatNumber(Math.floor(value)) : formatDecimals(value, placesFor(value, type))
 }
 
 /** The token's own precision, for anywhere the raw scale is wanted. */
