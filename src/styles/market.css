@@ -2036,3 +2036,43 @@ i.mrow__arrow {
     height: 88px;
   }
 }
+
+/*
+ * The age bonus, on the row and on the open fighter. +100% is an untouched
+ * roll and 0% has lost half of it, so the colour carries what the sign does
+ * not: "+40%" still reads as positive while a third of the stats are gone.
+ */
+.mrow__age {
+  display: inline-grid;
+  place-items: center;
+  height: 15px;
+  padding: 0 5px;
+  border-radius: 4px;
+  font-family: var(--font-display);
+  font-size: 8.5px;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  background: rgb(255 255 255 / 8%);
+}
+.mrow__age.is-fresh,
+.mfighter__meta .mfighter__age.is-fresh {
+  color: var(--teal);
+}
+.mrow__age.is-worn,
+.mfighter__meta .mfighter__age.is-worn {
+  color: var(--gold);
+}
+.mrow__age.is-bad,
+.mfighter__meta .mfighter__age.is-bad {
+  color: var(--red);
+}
+.mrow__age.is-fresh {
+  box-shadow: inset 0 0 0 1px rgb(14 212 168 / 40%);
+}
+.mrow__age.is-worn {
+  box-shadow: inset 0 0 0 1px rgb(246 168 0 / 45%);
+}
+.mrow__age.is-bad {
+  box-shadow: inset 0 0 0 1px rgb(255 90 106 / 50%);
+}

@@ -36,7 +36,7 @@ import { GameImg } from '@/components/GameImg'
 import { useAction } from '@/wharf/useAction'
 import { DIRTIES } from '@/wharf/actions'
 import { fighterAvailable } from '@/dungeon/rules'
-import { ageNote } from '@/fighters/rules'
+import { ageBand, ageBonus, ageDays, ageNote, battleFactor } from '@/fighters/rules'
 import {
   EMPTY_FILTER,
   applyFilter,
@@ -747,6 +747,9 @@ function ListingRow({
   onOpen: () => void
 }) {
   const f = listing.fighter
+  const { levelMod, ageDecay } = useConfig()
+  const asFighter = listingAsFighter(listing)
+  const bonus = ageBonus(asFighter, ageDecay, now)
   return (
     <FighterRow
       stats={f}
@@ -756,6 +759,10 @@ function ListingRow({
       onToggle={onToggle}
       below={below}
       marker={marker}
+      age={{
+        bonus,
+        note: ageNote(bonus, ageDays(asFighter, now), battleFactor(asFighter, levelMod, ageDecay, now).age),
+      }}
       right={
         <span className="mrow__price">
           <span className="mono">
@@ -1077,7 +1084,10 @@ function MarketFighter({
               <span key={t}>{t}</span>
             ))}
             {panel.age && (
-              <span title={ageNote(panel.age.bonus, panel.age.days, panel.age.factor)}>
+              <span
+                className={`mfighter__age is-${ageBand(panel.age.bonus)}`}
+                title={ageNote(panel.age.bonus, panel.age.days, panel.age.factor)}
+              >
                 Age {panel.age.bonus > 0 ? '+' : ''}
                 {panel.age.bonus.toFixed(0)}%
               </span>

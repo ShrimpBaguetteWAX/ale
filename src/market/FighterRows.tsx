@@ -22,6 +22,7 @@ import {
   type StatGrade,
 } from '@/tavern/fighterStats'
 import { asset } from '@/assets'
+import { ageBand } from '@/fighters/rules'
 
 /**
  * A fighter as a row, the market's way: portrait with level, ascension, the
@@ -85,6 +86,7 @@ export function FighterRow({
   below,
   marker,
   dim = false,
+  age,
   children,
 }: {
   stats: RosterStats
@@ -102,6 +104,12 @@ export function FighterRow({
   open: boolean
   onToggle: () => void
   below?: React.ReactNode
+  /**
+   * The age bonus, +100% down to -100%. A buyer has to see it on the row:
+   * health and damage fight at `age_decay ^ (days²)` of the roll, so two
+   * fighters with the same stats can be worth very different amounts.
+   */
+  age?: { bonus: number; note: string }
   children?: React.ReactNode
 }) {
   const raw = f as unknown as Record<string, number>
@@ -167,8 +175,14 @@ export function FighterRow({
               ))}
             </span>
           </small>
-          {abilities.length > 0 && (
+          {(abilities.length > 0 || age) && (
             <span className="mrow__abilities">
+              {age && (
+                <span className={`mrow__age is-${ageBand(age.bonus)}`} title={age.note}>
+                  Age {age.bonus > 0 ? '+' : ''}
+                  {age.bonus.toFixed(0)}%
+                </span>
+              )}
               {abilities.map((a, i) => {
                 const rarity = abilityRarity(a.displayname)
                 const skull = isSacrifice(a)
