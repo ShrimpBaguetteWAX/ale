@@ -730,11 +730,22 @@
 }
 
 /* The phone's claim strip and building switch, side by side and a size up. */
+/*
+ * Side by side while they fit, the tabs on a line of their own when not:
+ * squeezed into a grid cell the claim wrapped "0.0 TLM" over two lines and
+ * the building tabs were cut off at the edge.
+ */
 .dlands__top {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
+  display: flex;
+  flex-wrap: wrap;
   gap: var(--sp-3);
-  align-items: stretch;
+  align-items: center;
+}
+.dlands__top > .plands__claim {
+  flex: none;
+}
+.dlands .plands__claimtext {
+  white-space: nowrap;
 }
 .dlands .plands__claim {
   gap: 12px;
@@ -755,6 +766,7 @@
 /* The shop's tabs; the page's own gaps space them, and a due building's dot sits in the label. */
 .dlands__tabs {
   align-self: center;
+  flex-wrap: wrap;
   margin: 0;
 }
 .dlands__tabs .plands__dot {
@@ -916,7 +928,7 @@
  * The sheet's own head, body and foot, held in the page and kept in view.
  */
 .dlands.has-open {
-  grid-template-columns: minmax(0, 1fr) minmax(340px, 400px);
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 380px);
   align-items: start;
   column-gap: 20px;
 }

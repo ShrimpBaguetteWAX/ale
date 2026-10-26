@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useGame } from '@/state/useGame'
 import { fetchOwnedLands, type LandAsset } from '@/chain/atomic'
 import { fetchPlanetLands } from '@/chain/queries'
@@ -491,6 +491,21 @@ function DeskLands({
   const [tab, setTab] = useState<PhoneTab>('all')
   const [openKey, setOpenKey] = useState<string | null>(null)
   const decay = Number(config?.boost_decay_per_hour ?? 0)
+  /*
+     The column only where it fits beside four tiles; a narrower page opens
+     the land as a drawer, as before. Measured on the page, not the window —
+     the menu takes its share, and a column squeezed into what is left
+     wrapped the claim strip and cut the building tabs off.
+  */
+  const root = useRef<HTMLDivElement>(null)
+  const [roomy, setRoomy] = useState(true)
+  useLayoutEffect(() => {
+    const el = root.current
+    if (!el || typeof ResizeObserver === 'undefined') return
+    const ro = new ResizeObserver(([entry]) => setRoomy(entry.contentRect.width >= COLUMN_MIN_WIDTH))
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
 
   const scoreOf = (land: OwnedLand) => {
     const b = land.buildings[0]
@@ -507,8 +522,8 @@ function DeskLands({
   const empty = tab === 'all' ? inTab.filter((l) => !l.buildings[0]) : []
   const fine = inTab.filter((l) => l.buildings[0] && stateOf(l) === 'ok').sort(byBoost)
   /* The column always shows a land: the one clicked, else the first on the page. */
-  const open =
-    inTab.find((l) => landKey(l) === openKey) ?? needs[0] ?? empty[0] ?? fine[0] ?? null
+  const clicked = inTab.find((l) => landKey(l) === openKey) ?? null
+  const open = roomy ? (clicked ?? needs[0] ?? empty[0] ?? fine[0] ?? null) : clicked
   const tabs: [PhoneTab, string][] = [
     ['all', `All ${lands.length}`],
     ...(['dungeon', 'arena', 'tavern'] as BuildingName[]).map(
@@ -577,7 +592,7 @@ function DeskLands({
     )
 
   return (
-    <div className={`dlands${open ? ' has-open' : ''}`}>
+    <div className={`dlands${roomy && open ? ' has-open' : ''}`} ref={root}>
       <div className="dlands__main">
         <div className="dlands__top">
           <div className="plands__claim">
@@ -636,7 +651,7 @@ function DeskLands({
 
       {open && (
         <LandSheet
-          side
+          frame={roomy ? 'inline' : 'drawer'}
           key={landKey(open)}
           land={open}
           costs={costs}
@@ -657,6 +672,9 @@ function DeskLands({
     </div>
   )
 }
+
+/** Room for the land's column beside four tiles, as the page measures it. */
+const COLUMN_MIN_WIDTH = 1000
 
 /* A tile's corner badge: the phone's flag, in two words. */
 const BOOST_BADGE: Record<Exclude<BoostState, 'ok'>, string> = {
@@ -913,22 +931,25 @@ export function PhoneLands({
  * with Boost pinned to the window's foot. The classes stay the sheet's, so
  * everything drawn inside it looks the same either way.
  */
+/** Up from the bottom on a phone; in from the right, or in the page, on a desktop. */
+type LandFrame = 'sheet' | 'drawer' | 'inline'
+
 function SheetFrame({
-  side,
+  frame,
   title,
   onClose,
   foot,
   children,
 }: {
-  side: boolean
+  frame: LandFrame
   title: string
   onClose: () => void
   foot?: React.ReactNode
   children: React.ReactNode
 }) {
-  if (!side) {
+  if (frame !== 'inline') {
     return (
-      <BottomSheet title={title} onClose={onClose} foot={foot}>
+      <BottomSheet side={frame === 'drawer'} title={title} onClose={onClose} foot={foot}>
         {children}
       </BottomSheet>
     )
@@ -961,7 +982,7 @@ function LandSheet({
   onBuild,
   onBoost,
   onDestroy,
-  side = false,
+  frame = 'sheet',
 }: {
   land: OwnedLand
   costs: Map<string, BuildingCost[]>
@@ -972,8 +993,8 @@ function LandSheet({
   credits: number
   gems: number
   canAct: boolean
-  /** A desktop's: a column beside the tiles, in the page, rather than a sheet up from the bottom. */
-  side?: boolean
+  /** A desktop's: a column beside the tiles, or a drawer where there is no room for one. */
+  frame?: LandFrame
   onClose: () => void
   onClaim: () => void
   onBuild: (opt: BuildOption) => void
@@ -1054,7 +1075,7 @@ function LandSheet({
   if (!building) {
     return (
       <SheetFrame
-        side={side}
+        frame={frame}
         title={shortName(land.name)}
         onClose={onClose}
         foot={
@@ -1132,7 +1153,7 @@ function LandSheet({
   if (confirm) {
     return (
       <SheetFrame
-        side={side}
+        frame={frame}
         title={`Destroy the ${buildingLabel(name, costs).toLowerCase()}?`}
         onClose={onClose}
         foot={
@@ -1192,7 +1213,7 @@ function LandSheet({
   /* ---- a building: claim and boost ---- */
   return (
     <SheetFrame
-      side={side}
+      frame={frame}
       title={shortName(land.name)}
       onClose={onClose}
       foot={
