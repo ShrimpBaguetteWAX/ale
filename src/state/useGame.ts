@@ -162,6 +162,11 @@ export const useGame = create<GameState>((set, get) => ({
 
     const player = await fetchPlayer(account, force)
     if (player) {
+      /* A row from a node that has not caught up is not allowed to undo a newer one. */
+      if (isOlderRow(player, get().player)) {
+        set({ playerLoaded: true, signupPending: false })
+        return
+      }
       set({ player, playerLoaded: true, signupPending: false })
       return
     }
@@ -179,6 +184,23 @@ export const useGame = create<GameState>((set, get) => ({
     })
   },
 }))
+
+/**
+ * Whether a freshly read player row is older than the one already held.
+ *
+ * Reads rotate across API nodes, and one a block or two behind still answers
+ * with the row as it was — after a travel, that row puts the player back on
+ * the land they left, and the map drew them there. `users::travel` stamps
+ * `last_action` along with the new position (as does spending currency), so
+ * a row whose `last_action` is earlier than the one on screen is simply a
+ * node that has not caught up, and is ignored until one that has answers.
+ */
+export function isOlderRow(next: Player, current: Player | null): boolean {
+  if (!current || current.wallet !== next.wallet) return false
+  const a = Date.parse(next.last_action + 'Z')
+  const b = Date.parse(current.last_action + 'Z')
+  return Number.isFinite(a) && Number.isFinite(b) && a < b
+}
 
 // Dev-only handle so the store can be inspected and driven from the console.
 // Stripped from production builds by the bundler's dead-code elimination.
