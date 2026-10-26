@@ -490,7 +490,6 @@ function DeskLands({
 }: Parameters<typeof PhoneLands>[0]) {
   const [tab, setTab] = useState<PhoneTab>('all')
   const [openKey, setOpenKey] = useState<string | null>(null)
-  const open = lands.find((l) => landKey(l) === openKey) ?? null
   const decay = Number(config?.boost_decay_per_hour ?? 0)
 
   const scoreOf = (land: OwnedLand) => {
@@ -507,6 +506,9 @@ function DeskLands({
   const needs = inTab.filter((l) => l.buildings[0] && stateOf(l) !== 'ok').sort(byBoost)
   const empty = tab === 'all' ? inTab.filter((l) => !l.buildings[0]) : []
   const fine = inTab.filter((l) => l.buildings[0] && stateOf(l) === 'ok').sort(byBoost)
+  /* The column always shows a land: the one clicked, else the first on the page. */
+  const open =
+    inTab.find((l) => landKey(l) === openKey) ?? needs[0] ?? empty[0] ?? fine[0] ?? null
   const tabs: [PhoneTab, string][] = [
     ['all', `All ${lands.length}`],
     ...(['dungeon', 'arena', 'tavern'] as BuildingName[]).map(
@@ -575,60 +577,62 @@ function DeskLands({
     )
 
   return (
-    <div className="dlands">
-      <div className="dlands__top">
-        <div className="plands__claim">
-          <TlmIcon />
-          <span className="plands__claimtext">
-            <small>Ready to claim</small>
-            <b className="mono">{tlm(totalTlm)} TLM</b>
-          </span>
-          <button
-            type="button"
-            className="btn btn--gold btn--sm"
-            disabled={!canAct || busy !== null || claimableCount === 0}
-            onClick={onClaimAll}
-          >
-            {busy?.kind === 'claim-all' && <span className="spinner" />}
-            Claim all
-          </button>
-        </div>
-        {/* The shop's tabs, as on every desktop screen. */}
-        <div className="tabs dlands__tabs" role="tablist" aria-label="Buildings">
-          {tabs.map(([key, label]) => (
+    <div className={`dlands${open ? ' has-open' : ''}`}>
+      <div className="dlands__main">
+        <div className="dlands__top">
+          <div className="plands__claim">
+            <TlmIcon />
+            <span className="plands__claimtext">
+              <small>Ready to claim</small>
+              <b className="mono">{tlm(totalTlm)} TLM</b>
+            </span>
             <button
               type="button"
-              key={key}
-              role="tab"
-              className="tabs__tab"
-              aria-selected={tab === key}
-              onClick={() => setTab(key)}
+              className="btn btn--gold btn--sm"
+              disabled={!canAct || busy !== null || claimableCount === 0}
+              onClick={onClaimAll}
             >
-              {label}
-              {lands.some(
-                (l) => (key === 'all' || landBuilding(l) === key) && l.buildings[0] && stateOf(l) !== 'ok',
-              ) && <i className="plands__dot" aria-label="needs a boost" />}
+              {busy?.kind === 'claim-all' && <span className="spinner" />}
+              Claim all
             </button>
-          ))}
+          </div>
+          {/* The shop's tabs, as on every desktop screen. */}
+          <div className="tabs dlands__tabs" role="tablist" aria-label="Buildings">
+            {tabs.map(([key, label]) => (
+              <button
+                type="button"
+                key={key}
+                role="tab"
+                className="tabs__tab"
+                aria-selected={tab === key}
+                onClick={() => setTab(key)}
+              >
+                {label}
+                {lands.some(
+                  (l) => (key === 'all' || landBuilding(l) === key) && l.buildings[0] && stateOf(l) !== 'ok',
+                ) && <i className="plands__dot" aria-label="needs a boost" />}
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
 
-      {group('Needs a boost', 'players cannot see or use these, or soon will not', needs)}
-      {group('Empty land', 'build a tavern, dungeon or arena and earn from every use', empty)}
-      {/*
-        Open, but never finished: a higher boost is more players and bigger
-        rewards, so the heading says so rather than that there is nothing to do.
-      */}
-      {group(
-        'Open for players',
-        'boost higher for bigger rewards and more players',
-        fine,
-      )}
-      {inTab.length === 0 && (
-        <p className="plands__sum">
-          <small>No {tab === 'all' ? 'lands' : buildingLabel(tab, costs).toLowerCase() + 's'} yet.</small>
-        </p>
-      )}
+        {group('Needs a boost', 'players cannot see or use these, or soon will not', needs)}
+        {group('Empty land', 'build a tavern, dungeon or arena and earn from every use', empty)}
+        {/*
+          Open, but never finished: a higher boost is more players and bigger
+          rewards, so the heading says so rather than that there is nothing to do.
+        */}
+        {group(
+          'Open for players',
+          'boost higher for bigger rewards and more players',
+          fine,
+        )}
+        {inTab.length === 0 && (
+          <p className="plands__sum">
+            <small>No {tab === 'all' ? 'lands' : buildingLabel(tab, costs).toLowerCase() + 's'} yet.</small>
+          </p>
+        )}
+      </div>
 
       {open && (
         <LandSheet
@@ -900,6 +904,48 @@ export function PhoneLands({
   )
 }
 
+/**
+ * The land's frame: the phone's bottom sheet, or on a desktop the same head,
+ * body and foot as a column beside the tiles.
+ *
+ * Market, My Fighters and Ascension all show what was picked beside the list;
+ * a drawer over the page was the one screen that did not, half of it empty
+ * with Boost pinned to the window's foot. The classes stay the sheet's, so
+ * everything drawn inside it looks the same either way.
+ */
+function SheetFrame({
+  side,
+  title,
+  onClose,
+  foot,
+  children,
+}: {
+  side: boolean
+  title: string
+  onClose: () => void
+  foot?: React.ReactNode
+  children: React.ReactNode
+}) {
+  if (!side) {
+    return (
+      <BottomSheet title={title} onClose={onClose} foot={foot}>
+        {children}
+      </BottomSheet>
+    )
+  }
+  return (
+    <aside className="rsheet rsheet--inline" aria-label={title}>
+      <div className="rsheet__panel">
+        <div className="rsheet__head">
+          <h2 className="rsheet__title">{title}</h2>
+        </div>
+        <div className="rsheet__body">{children}</div>
+        {foot && <div className="rsheet__foot">{foot}</div>}
+      </div>
+    </aside>
+  )
+}
+
 function LandSheet({
   land,
   costs,
@@ -926,7 +972,7 @@ function LandSheet({
   credits: number
   gems: number
   canAct: boolean
-  /** A desktop's: in from the right, beside the tiles, rather than up from the bottom. */
+  /** A desktop's: a column beside the tiles, in the page, rather than a sheet up from the bottom. */
   side?: boolean
   onClose: () => void
   onClaim: () => void
@@ -1007,7 +1053,7 @@ function LandSheet({
   /* ---- an empty land: build ---- */
   if (!building) {
     return (
-      <BottomSheet
+      <SheetFrame
         side={side}
         title={shortName(land.name)}
         onClose={onClose}
@@ -1078,14 +1124,14 @@ function LandSheet({
             </button>
           )
         })}
-      </BottomSheet>
+      </SheetFrame>
     )
   }
 
   /* ---- a building: destroy, after asking ---- */
   if (confirm) {
     return (
-      <BottomSheet
+      <SheetFrame
         side={side}
         title={`Destroy the ${buildingLabel(name, costs).toLowerCase()}?`}
         onClose={onClose}
@@ -1139,13 +1185,13 @@ function LandSheet({
             </b>
           </div>
         </div>
-      </BottomSheet>
+      </SheetFrame>
     )
   }
 
   /* ---- a building: claim and boost ---- */
   return (
-    <BottomSheet
+    <SheetFrame
       side={side}
       title={shortName(land.name)}
       onClose={onClose}
@@ -1281,6 +1327,6 @@ function LandSheet({
           </>
         )}
       </div>
-    </BottomSheet>
+    </SheetFrame>
   )
 }
