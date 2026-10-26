@@ -328,7 +328,7 @@ function AvatarTracks({
   )
 }
 
-function TrackIcon({ stat }: { stat: string }) {
+export function TrackIcon({ stat }: { stat: string }) {
   const icon = statIconFor(stat)
   return icon ? (
     <img className="ptrack__icon" src={asset(icon)} alt="" />
@@ -423,7 +423,7 @@ function TrackSheet({
 
 /* ---------- CPU ---------- */
 
-function Ring({ share, tone, children }: { share: number; tone: 'go' | 'ok' | 'low'; children: React.ReactNode }) {
+export function Ring({ share, tone, children }: { share: number; tone: 'go' | 'ok' | 'low'; children: React.ReactNode }) {
   const r = 40
   const c = 2 * Math.PI * r
   return (

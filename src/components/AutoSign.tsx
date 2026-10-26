@@ -5,7 +5,7 @@ import { AUTO_SIGN_GROUPS, savedGroups, type AutoSignGroup } from '@/wharf/autoS
 import { applyAutoSign, autoSignState } from '@/wharf/autoSignSetup'
 import { isUserCancel, readableError } from '@/wharf/errors'
 
-/**
+/*
  * Auto-signing, on the Account screen.
  *
  * The player picks what the game may sign by itself, and one wallet
@@ -13,67 +13,115 @@ import { isUserCancel, readableError } from '@/wharf/errors'
  * WAX, Trilium or NFTs is never on the list — see `autoSign.ts` — so the
  * worst a key in this browser can do is play the game.
  */
-export function AutoSign() {
-  const { session, chosen, live, active, elsewhere, loading, saving, error, changed, toggle, save } =
-    useAutoSign()
 
-  const row = (group: AutoSignGroup) => (
-    <AutoSignRow
-      key={group.id}
-      group={group}
-      on={chosen.includes(group.id)}
-      disabled={!session || loading || saving}
-      onToggle={(on) => toggle(group.id, on)}
-    />
-  )
+type Mode = 'off' | 'all' | 'custom'
+
+/**
+ * Auto-signing on a desktop: the phone's three choices across the top and all
+ * fourteen switches under them, in two columns. Off and Everything set the
+ * switches; touching a switch makes it Custom.
+ *
+ * The state comes from the page, which also shows on/off in its identity
+ * card, so the two never disagree.
+ */
+export function DeskAutoSign({ state }: { state: ReturnType<typeof useAutoSign> }) {
+  const { session, chosen, setChosen, live, elsewhere, loading, saving, error, changed, toggle, save } = state
+  const all = AUTO_SIGN_GROUPS.map((g) => g.id)
+  const picked: Mode =
+    chosen.length === 0 ? 'off' : all.every((id) => chosen.includes(id)) ? 'all' : 'custom'
+  const locked = !session || loading || saving
+
+  const options: [Mode, string, string][] = [
+    ['off', 'Off', 'Your wallet asks every time.'],
+    ['all', 'Everything', `All ${all.length} — still never WAX, Trilium or NFTs.`],
+    [
+      'custom',
+      'Custom',
+      picked === 'custom'
+        ? `Choose each one yourself · ${chosen.length} of ${all.length}`
+        : 'Choose each one yourself.',
+    ],
+  ]
+  const choose = (next: Mode) => {
+    if (next === 'off') setChosen([])
+    if (next === 'all') setChosen(all)
+    /* Custom from Off starts from what was saved, so it is not an empty list to fill. */
+    if (next === 'custom' && picked !== 'custom') setChosen(live.length && live.length < all.length ? live : [])
+  }
 
   return (
-    <section className="panel autosign">
-      <div className="row" style={{ alignItems: 'baseline', gap: 10 }}>
-        <h2 className="panel__title">Sign by itself</h2>
-        {active && <span className="autosign__on">ON</span>}
+    <div className="dauto">
+      <div className="dauto__modes">
+        {options.map(([key, label, note]) => (
+          <button
+            type="button"
+            key={key}
+            className={`pauto__opt${picked === key ? ' is-on' : ''}`}
+            aria-pressed={picked === key}
+            disabled={locked}
+            onClick={() => choose(key)}
+          >
+            <span className="pauto__radio" aria-hidden="true" />
+            <span className="pauto__text">
+              <b>{label}</b>
+              <small>{note}</small>
+            </span>
+          </button>
+        ))}
       </div>
 
-      <p className="autosign__lead">
-        Pick what the game may sign without opening your wallet. A key for exactly those actions is
-        kept in this browser and added to your account; everything else still asks, and you can
-        turn it off here at any time.
-      </p>
-      <p className="autosign__never">
-        Sending WAX, Trilium or NFTs always needs manual confirmation.
-      </p>
+      <div className="dauto__groups">
+        {AUTO_SIGN_GROUPS.map((group) => (
+          <AutoSignRow
+            key={group.id}
+            group={group}
+            on={chosen.includes(group.id)}
+            disabled={locked}
+            onToggle={(on) => toggle(group.id, on)}
+          />
+        ))}
+      </div>
 
+      <p className="pauto__never">Sending WAX, Trilium or NFTs always needs your wallet, whatever is picked here.</p>
       {elsewhere && (
-        <p className="autosign__hint autosign__hint--warn">
+        <p className="pauto__hint pauto__hint--warn">
           A key is on your account but not in this browser. Applying here replaces it.
         </p>
       )}
 
-      <div className="autosign__groups">{AUTO_SIGN_GROUPS.map(row)}</div>
-
-      <div className="autosign__actions">
+      <div className="dauto__apply">
+        <span className="dauto__applytext">
+          <b>
+            {chosen.length === 0
+              ? live.length > 0
+                ? 'Auto-signing will be turned off'
+                : 'Auto-signing is off'
+              : `${chosen.length === all.length ? 'All' : chosen.length} of ${all.length} kinds of action sign by themselves`}
+          </b>
+          <small>
+            {!loading && !session
+              ? 'Connect your wallet to set this up.'
+              : changed
+                ? 'A key for exactly these is kept in this browser and added to your account. Your wallet asks once to confirm.'
+                : chosen.length === 0
+                  ? 'Pick Everything or Custom to let the game sign without opening your wallet.'
+                  : 'Saved. You can turn it off here at any time.'}
+          </small>
+          {error && <small className="pauto__hint--warn">{error}</small>}
+        </span>
         <button
           type="button"
           className="btn btn--primary"
-          disabled={!session || loading || saving || !changed}
+          disabled={locked || !changed}
           onClick={() => void save()}
         >
           {saving && <span className="spinner" />}
           {chosen.length === 0 && live.length > 0 ? 'Turn auto-signing off' : 'Apply'}
         </button>
-        {changed && !saving && session && (
-          <span className="autosign__hint">Your wallet asks once to confirm.</span>
-        )}
-        {!loading && !session && (
-          <span className="autosign__hint">Connect your wallet to set this up.</span>
-        )}
-        {error && <span className="autosign__hint autosign__hint--warn">{error}</span>}
       </div>
-    </section>
+    </div>
   )
 }
-
-type Mode = 'off' | 'all' | 'custom'
 
 /**
  * Auto-signing on a phone: three choices instead of fourteen switches up
@@ -207,8 +255,8 @@ function AutoSignRow({
   )
 }
 
-/** What is set, what is being chosen, and saving it — shared by both layouts. */
-function useAutoSign() {
+/** What is set, what is being chosen, and saving it — shared by every layout. */
+export function useAutoSign() {
   const session = useGame((s) => s.session)
   const [chosen, setChosen] = useState<string[]>(savedGroups)
   const [live, setLive] = useState<string[]>([])
