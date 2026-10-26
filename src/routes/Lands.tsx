@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useGame } from '@/state/useGame'
 import { fetchOwnedLands, type LandAsset } from '@/chain/atomic'
 import { fetchPlanetLands } from '@/chain/queries'
@@ -497,14 +497,16 @@ function DeskLands({
      the menu takes its share, and a column squeezed into what is left
      wrapped the claim strip and cut the building tabs off.
   */
-  const root = useRef<HTMLDivElement>(null)
   const [roomy, setRoomy] = useState(true)
-  useLayoutEffect(() => {
-    const el = root.current
+  const watcher = useRef<ResizeObserver | null>(null)
+  /* A callback ref, so the watch follows the element rather than the first one mounted. */
+  const root = useCallback((el: HTMLDivElement | null) => {
+    watcher.current?.disconnect()
+    watcher.current = null
     if (!el || typeof ResizeObserver === 'undefined') return
     const ro = new ResizeObserver(([entry]) => setRoomy(entry.contentRect.width >= COLUMN_MIN_WIDTH))
     ro.observe(el)
-    return () => ro.disconnect()
+    watcher.current = ro
   }, [])
 
   const scoreOf = (land: OwnedLand) => {
@@ -593,44 +595,45 @@ function DeskLands({
 
   return (
     <div className={`dlands${roomy && open ? ' has-open' : ''}`} ref={root}>
-      <div className="dlands__main">
-        <div className="dlands__top">
-          <div className="plands__claim">
-            <TlmIcon />
-            <span className="plands__claimtext">
-              <small>Ready to claim</small>
-              <b className="mono">{tlm(totalTlm)} TLM</b>
-            </span>
+      {/* Across the page; the land's column starts beside the first row of tiles. */}
+      <div className="dlands__top">
+        <div className="plands__claim">
+          <TlmIcon />
+          <span className="plands__claimtext">
+            <small>Ready to claim</small>
+            <b className="mono">{tlm(totalTlm)} TLM</b>
+          </span>
+          <button
+            type="button"
+            className="btn btn--gold btn--sm"
+            disabled={!canAct || busy !== null || claimableCount === 0}
+            onClick={onClaimAll}
+          >
+            {busy?.kind === 'claim-all' && <span className="spinner" />}
+            Claim all
+          </button>
+        </div>
+        {/* The shop's tabs, as on every desktop screen. */}
+        <div className="tabs dlands__tabs" role="tablist" aria-label="Buildings">
+          {tabs.map(([key, label]) => (
             <button
               type="button"
-              className="btn btn--gold btn--sm"
-              disabled={!canAct || busy !== null || claimableCount === 0}
-              onClick={onClaimAll}
+              key={key}
+              role="tab"
+              className="tabs__tab"
+              aria-selected={tab === key}
+              onClick={() => setTab(key)}
             >
-              {busy?.kind === 'claim-all' && <span className="spinner" />}
-              Claim all
+              {label}
+              {lands.some(
+                (l) => (key === 'all' || landBuilding(l) === key) && l.buildings[0] && stateOf(l) !== 'ok',
+              ) && <i className="plands__dot" aria-label="needs a boost" />}
             </button>
-          </div>
-          {/* The shop's tabs, as on every desktop screen. */}
-          <div className="tabs dlands__tabs" role="tablist" aria-label="Buildings">
-            {tabs.map(([key, label]) => (
-              <button
-                type="button"
-                key={key}
-                role="tab"
-                className="tabs__tab"
-                aria-selected={tab === key}
-                onClick={() => setTab(key)}
-              >
-                {label}
-                {lands.some(
-                  (l) => (key === 'all' || landBuilding(l) === key) && l.buildings[0] && stateOf(l) !== 'ok',
-                ) && <i className="plands__dot" aria-label="needs a boost" />}
-              </button>
-            ))}
-          </div>
+          ))}
         </div>
+      </div>
 
+      <div className="dlands__main">
         {group('Needs a boost', 'players cannot see or use these, or soon will not', needs)}
         {group('Empty land', 'build a tavern, dungeon or arena and earn from every use', empty)}
         {/*

@@ -932,6 +932,13 @@
   align-items: start;
   column-gap: 20px;
 }
+/* The claim strip across both; the column level with the first row of tiles, under the group's heading. */
+.dlands.has-open > .dlands__top {
+  grid-column: 1 / -1;
+}
+.dlands.has-open > .rsheet--inline {
+  margin-top: 25px;
+}
 .dlands__main {
   display: grid;
   gap: var(--sp-5);
