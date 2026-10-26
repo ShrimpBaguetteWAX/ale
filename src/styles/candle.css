@@ -1449,3 +1449,22 @@
   gap: 6px;
   margin-top: 4px;
 }
+
+/*
+ * The panels level with the first mission card, under the list's "Running"
+ * caption — only beside the list: once Contribute drops under the mission,
+ * or everything stacks, the offset would only be a gap.
+ */
+.dcan__board > .dcan__panel {
+  margin-top: 22px;
+}
+@media (max-width: 1279px) {
+  .dcan__board > .dcan__side {
+    margin-top: 0;
+  }
+}
+@media (max-width: 1023px) {
+  .dcan__board > .dcan__panel {
+    margin-top: 0;
+  }
+}
