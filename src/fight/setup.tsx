@@ -2040,7 +2040,9 @@ export function FighterGrid({
         </div>
       )}
       {rows && density === 'full' ? (
-        <div className={`pickrows drost--stack${phone ? ' drost--phone' : ''}`}>
+        /* My Fighters' own list, in its own wrapper, so the cards are drawn exactly as there. */
+        <div className={`drost pickdrost${phone ? ' drost--phone drost--stack' : ''}`}>
+        <div className="drost__rows">
           {shown.map((f) => {
             const state = fighterAvailable(f)
             const inTeam = teamIds.includes(f.fighter_id)
@@ -2054,6 +2056,7 @@ export function FighterGrid({
               </Fragment>
             )
           })}
+        </div>
         </div>
       ) : (
       <div
@@ -3416,44 +3419,9 @@ export function VersusFloors({
 
 /**
  * What a fight's fighter card adds at its end: in the team, or why it cannot
- * be picked, and the way to its details. Inside the card's own button, so the
- * details are a span that stops the click from reaching it.
+ * be picked. Nothing when neither, so the card keeps My Fighters' layout.
  */
-export function PickRowAside({
-  inTeam,
-  reason,
-  onInspect,
-}: {
-  inTeam: boolean
-  reason?: string
-  onInspect: () => void
-}) {
-  return (
-    <span className="pickrow__aside">
-      {inTeam ? (
-        <span className="pickrow__state is-in">In team</span>
-      ) : (
-        reason && <span className="pickrow__state">{reason}</span>
-      )}
-      <span
-        className="pickrow__info"
-        role="button"
-        tabIndex={0}
-        aria-label="Details"
-        onClick={(e) => {
-          e.stopPropagation()
-          onInspect()
-        }}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault()
-            e.stopPropagation()
-            onInspect()
-          }
-        }}
-      >
-        i
-      </span>
-    </span>
-  )
+export function PickRowAside({ inTeam, reason }: { inTeam: boolean; reason?: string }) {
+  if (!inTeam && !reason) return null
+  return <span className={`pickrow__state${inTeam ? ' is-in' : ''}`}>{inTeam ? 'In team' : reason}</span>
 }

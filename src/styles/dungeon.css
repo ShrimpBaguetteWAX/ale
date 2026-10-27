@@ -6315,46 +6315,17 @@ button.combatcard--empty:hover {
 }
 
 /*
- * The fight pickers' cards: My Fighters' card, in a grid of their own — each
- * framed, since they stand apart rather than as rows of one list — with the
- * team's state on the art and the matchup along the foot.
+ * The fight pickers' cards: My Fighters' list itself (`.drost__rows` in a
+ * `.drost`), so the cards are drawn exactly as there. The team's state is a
+ * chip at the card's end; the matchup runs along its foot.
  */
-.pickrows {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
-  gap: 10px;
-  align-content: start;
-}
-.pickrows.drost--phone {
-  grid-template-columns: minmax(0, 1fr);
-  gap: 8px;
-}
-.pickrows > .drost__row {
-  border-radius: 14px;
-  background: rgb(8 14 28 / 78%);
-  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 10%);
-}
-.pickrows > .drost__row + .drost__row {
-  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 10%);
-}
-.pickrows > .drost__row.is-picked,
-.pickrows.drost--phone > .drost__row.is-picked {
-  background: rgb(0 186 255 / 9%);
-  box-shadow:
-    inset 0 0 0 2px var(--cyan),
-    0 0 18px -6px rgb(0 186 255 / 70%);
-}
-.pickrows > .drost__row.is-dim {
-  opacity: 0.45;
-}
-.pickrow__aside {
-  display: grid;
-  justify-items: center;
-  gap: 5px;
+.drost.pickdrost {
+  padding-bottom: 0;
 }
 .pickrow__state {
-  padding: 1px 6px;
+  padding: 2px 7px;
   border-radius: 6px;
+  background: rgb(255 255 255 / 8%);
   font-family: var(--font-display);
   font-size: 9.5px;
   font-weight: 900;
@@ -6362,29 +6333,238 @@ button.combatcard--empty:hover {
   text-transform: uppercase;
   color: #dfe6f3;
   text-align: center;
+  white-space: nowrap;
 }
 .pickrow__state.is-in {
   background: var(--cyan);
   color: #04121b;
 }
-.pickrow__info {
-  display: grid;
-  place-items: center;
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  background: rgb(255 255 255 / 10%);
-  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 28%);
-  font-family: var(--font-display);
-  font-size: 11px;
-  font-weight: 900;
-  cursor: pointer;
-}
-.pickrow__info:hover {
-  background: rgb(255 255 255 / 20%);
-}
-.pickrows .drost__rownote .vsbadges {
+.pickdrost .drost__rownote .vsbadges {
   display: flex;
   flex-wrap: wrap;
+  justify-content: flex-start;
   gap: 5px;
+}
+
+/*
+ * The team dock: the team and its chance to win at the foot of the screen
+ * while the matchup is scrolled away. Sticky at the end of the page, so it
+ * keeps the page's width; it slides up when the matchup leaves the screen.
+ */
+.teamdock {
+  position: sticky;
+  bottom: 12px;
+  z-index: 30;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 18px;
+  align-items: center;
+  margin-top: 14px;
+  padding: 12px 18px;
+  border-radius: 16px;
+  background: rgb(8 14 28 / 96%);
+  box-shadow:
+    inset 0 0 0 1px rgb(255 255 255 / 14%),
+    0 14px 40px rgb(0 0 0 / 60%);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  opacity: 0;
+  transform: translateY(calc(100% + 24px));
+  pointer-events: none;
+  transition:
+    transform 260ms cubic-bezier(0.2, 0.8, 0.3, 1),
+    opacity 200ms ease;
+}
+.teamdock.is-shown {
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
+}
+.teamdock__faces {
+  display: flex;
+  gap: 5px;
+}
+.teamdock__face {
+  position: relative;
+  width: 42px;
+  height: 42px;
+  overflow: hidden;
+  border-radius: 10px;
+  background-position: center;
+  background-size: cover;
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 18%);
+}
+.teamdock__face > img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.teamdock__face.is-empty {
+  background: rgb(255 255 255 / 4%);
+  box-shadow: none;
+  border: 1px dashed rgb(255 255 255 / 22%);
+}
+.teamdock__tug {
+  --tone: var(--cyan);
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+.teamdock__tug.is-even {
+  --tone: var(--gold);
+}
+.teamdock__tug.is-poor {
+  --tone: #e0344f;
+}
+.teamdock__top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+.teamdock__cap {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  font-family: var(--font-display);
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+.teamdock__pct {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 900;
+  line-height: 1;
+  color: var(--tone);
+  text-shadow: 0 0 14px color-mix(in srgb, var(--tone) 45%, transparent);
+}
+.teamdock__pct i {
+  font-size: 0.55em;
+  font-style: normal;
+  opacity: 0.75;
+}
+.teamdock__bar {
+  position: relative;
+  display: block;
+  height: 10px;
+  overflow: hidden;
+  border-radius: 5px;
+  background: rgb(224 52 79 / 55%);
+}
+.teamdock__bar > i {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  border-radius: 5px;
+  background: linear-gradient(90deg, #0ed4a8, #00baff);
+  transition: width 450ms cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+.teamdock__bar::after {
+  content: '';
+  position: absolute;
+  top: -2px;
+  bottom: -2px;
+  left: 50%;
+  width: 2px;
+  background: rgb(255 255 255 / 70%);
+}
+.teamdock__sides {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 11.5px;
+  color: var(--text-dim);
+}
+.teamdock__delta {
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0;
+  animation: teamdock-delta 1.6s ease-out forwards;
+}
+.teamdock__delta.is-up {
+  color: #3ddc84;
+}
+.teamdock__delta.is-down {
+  color: #ff5a6a;
+}
+@keyframes teamdock-delta {
+  0% {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  12% {
+    opacity: 1;
+    transform: none;
+  }
+  70% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+}
+.teamdock__go {
+  white-space: nowrap;
+}
+
+/* A phone's picker sheet: at its foot, the bar over the faces and Done. */
+.teamdock--sheet {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  flex: none;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    'tug tug'
+    'faces act';
+  gap: 8px 10px;
+  margin: var(--sp-2) -12px -12px;
+  padding: 10px 12px calc(12px + env(safe-area-inset-bottom));
+  border-radius: 0;
+  background: rgb(8 12 26 / 97%);
+  box-shadow:
+    0 -8px 20px rgb(8 12 26 / 90%),
+    inset 0 1px 0 rgb(255 255 255 / 10%);
+}
+.teamdock--sheet > .teamdock__tug {
+  grid-area: tug;
+}
+.teamdock--sheet > .teamdock__faces {
+  grid-area: faces;
+  gap: 4px;
+}
+.teamdock--sheet > .teamdock__act {
+  grid-area: act;
+}
+.teamdock--sheet .teamdock__face {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+}
+.teamdock--sheet .teamdock__pct {
+  font-size: 18px;
+}
+.teamdock--sheet .picker__done {
+  position: static;
+  width: auto;
+  min-width: 96px;
+  margin: 0;
+  box-shadow: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .teamdock,
+  .teamdock__bar > i {
+    transition: none;
+  }
+  .teamdock__delta {
+    animation: none;
+  }
 }

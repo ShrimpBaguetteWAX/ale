@@ -26,6 +26,7 @@ import {
 } from '@/dungeon/rules'
 import { EMPTY_FILTER, type RosterFilter } from '@/dungeon/filters'
 import { FilterDrop, Row, ViewSeg, figuresOf, type View } from '@/fighters/DeskRoster'
+import { TeamDock, useScrolledAway } from '@/fight/TeamDock'
 import {
   NFT_FIGHTER_ART,
   combineNftFighter,
@@ -347,6 +348,10 @@ export default function Dungeon() {
     () => matchupsFor(roster ?? [], enemies, levelMod, ageDecay),
     [roster, enemies, levelMod, ageDecay],
   )
+
+  /* The team dock comes in as soon as the chance to win has scrolled out of sight. */
+  const [oddsEl, setOddsEl] = useState<HTMLElement | null>(null)
+  const matchupAway = useScrolledAway(oddsEl)
 
   /* My Fighters' card in the picker: its figures, worked out once per roster rather than in every render. */
   const cardFigures = useMemo(
@@ -990,7 +995,7 @@ export default function Dungeon() {
       onClick={() => {
         if (state.inTeam || !state.blocked) toggleFighter(f)
       }}
-      aside={<PickRowAside inTeam={state.inTeam} reason={state.reason} onInspect={() => showFighter(f)} />}
+      aside={state.inTeam || state.reason ? <PickRowAside inTeam={state.inTeam} reason={state.reason} /> : undefined}
       note={enemies.length > 0 ? <VersusBadges matchup={matchups.get(f.fighter_id)} /> : undefined}
     />
   )
@@ -1290,7 +1295,7 @@ export default function Dungeon() {
           </div>
 
         {!phone && (
-        <div className="versus__divider">
+        <div className="versus__divider" ref={setOddsEl}>
             <OddsCentre odds={odds} />
             {/*
                Each side's share of the matchup as one bar under the odds,
@@ -1564,12 +1569,50 @@ export default function Dungeon() {
               kind={tab}
             />
           )}
+          {/* A phone's sheet: the team and its chance at the foot, beside Done, so a pick shows what it does. */}
           {phone && (
-            <button type="button" className="btn btn--primary picker__done" onClick={() => setSheet(false)}>
-              Done
-            </button>
+            <TeamDock
+              sheet
+              slots={team}
+              share={myShare}
+              winRate={odds ? odds.winRate : null}
+              against="The dungeon"
+              action={
+                <button type="button" className="btn btn--primary picker__done" onClick={() => setSheet(false)}>
+                  Done
+                </button>
+              }
+            />
           )}
         </section>
+        {/* A desktop: the team and its chance docked at the foot of the screen while the matchup is out of sight. */}
+        {!phone && (
+          <TeamDock
+            shown={matchupAway}
+            slots={team}
+            share={myShare}
+            winRate={odds ? odds.winRate : null}
+            against="The dungeon"
+            action={
+              <button
+                type="button"
+                className="btn btn--primary teamdock__go"
+                onClick={() => void start()}
+                disabled={busy || !block.ready || alreadyPlayed}
+                title={block.reason}
+              >
+                {busy && <span className="spinner" />}
+                {busy ? (status ?? 'Fighting…') : 'Start Fight'}
+                {!busy && (
+                  <span className="dungeon__cost">
+                    −{energyCost}
+                    <img src={asset('/assets/icons/energy.svg')} alt="energy" width={16} height={16} />
+                  </span>
+                )}
+              </button>
+            }
+          />
+        )}
       </div>
 
       {detail && (
