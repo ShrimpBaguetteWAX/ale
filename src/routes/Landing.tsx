@@ -41,7 +41,7 @@ const ROWS: { id: string; kick: string; title: [string, string]; body: string; c
     kick: 'Build',
     title: ['Own a piece ', 'of the map'],
     body: 'Claim land, raise a tavern, dungeon or arena on it, and take a cut of everything it earns. The hottest arenas and dungeons burn on the map.',
-    art: asset('/assets/landing/build-veles.webp'),
+    art: asset('/assets/landing/map-live.webp'),
   },
 ]
 
@@ -95,7 +95,7 @@ export function Landing() {
       <div className="kart__rows">
         {ROWS.map((r, i) => (
           <section className={`kart__row${i % 2 ? ' is-flip' : ''}`} key={r.id}>
-            <div className={`kart__media${r.id === 'build' ? ' is-map' : ''}`} style={{ backgroundImage: `url(${r.art})` }}>
+            <div className="kart__media" style={{ backgroundImage: `url(${r.art})` }}>
               {r.id === 'recruit' && (
                 <div className="kart__squad">
                   {SQUAD.map((f) => (

@@ -853,11 +853,6 @@
   width: 22%;
   filter: drop-shadow(0 10px 20px rgb(0 0 0 / 60%)) brightness(0.85);
 }
-/* The map close enough that the burning buildings read. */
-.kart__media.is-map {
-  background-size: 150%;
-  background-position: 55% 42%;
-}
 .kart__text {
   display: grid;
   gap: 16px;
