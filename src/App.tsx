@@ -218,7 +218,7 @@ export function RequirePlayer() {
      One spinner for the whole of boot, rather than three states in a row.
 
      A refresh used to read as "Connecting to WAX", then a flash of the wallet
-     picker, then "Loading your commander", then the game. Only the last of
+     picker, then "Loading your trainer", then the game. Only the last of
      those was a real destination: the picker appeared because boot reaches
      `ready` before the wallet SDK has been imported, so for a moment a
      returning player looked like a visitor with no wallet.

@@ -69,7 +69,7 @@ export function Landing() {
   const primary = player
     ? { to: '/map', label: 'Play' }
     : account
-      ? { to: '/signup', label: 'Create commander' }
+      ? { to: '/signup', label: 'Become a trainer' }
       : { to: '/connect', label: 'Play' }
 
   return (

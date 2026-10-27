@@ -465,39 +465,6 @@
   background: rgb(0 186 255 / 10%);
 }
 
-.step__num {
-  display: grid;
-  place-items: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  border: 1px solid var(--line-bright);
-  font-family: var(--font-display);
-  font-size: var(--fs-xs);
-  font-weight: var(--fw-bold);
-  color: var(--text-dim);
-}
-.step--done .step__num {
-  background: var(--teal);
-  border-color: var(--teal);
-  color: var(--black);
-}
-.step--active .step__num {
-  border-color: var(--cyan);
-  color: var(--cyan);
-}
-
-.step__title {
-  font-family: var(--font-display);
-  font-size: var(--fs-sm);
-  font-weight: var(--fw-medium);
-  color: var(--white);
-}
-.step__body {
-  font-size: var(--fs-sm);
-  color: var(--text-dim);
-}
-
 /* ---------- logo glow and sparks ---------- */
 
 /*
@@ -605,14 +572,6 @@
   --charge-glow: 57 198 240;
 }
 
-/* The wallet line on the signup card, where the fee makes it worth a look. */
-.auth__wallet {
-  margin-top: var(--sp-4);
-  font-size: var(--fs-sm);
-  color: var(--text-dim);
-  text-align: center;
-}
-
 /*
  * Connect and Signup on a desktop: the game's dark glass and cyan steps,
  * not the violet card and purple rims of the old look. They are the first
@@ -634,12 +593,7 @@
     border-color: rgb(0 186 255 / 60%);
     background: rgb(0 186 255 / 10%);
   }
-  .auth .step__num {
-    border-color: rgb(255 255 255 / 22%);
-  }
-  .auth .step--active .step__num {
-    border-color: var(--cyan);
-  }
+
 }
 
 /*
@@ -721,4 +675,402 @@
   font-size: 13px;
   line-height: 1.4;
   text-align: left;
+}
+
+/* ---------- Sign-up: the arrival ----------
+ * A new trainer's welcome: a slowly turning world on the right (one of the
+ * six, a different one each visit), and on the left the greeting, what they
+ * start with, the three steps as a rail and the one button for the step
+ * they are on. On a phone the world rises behind the logo and the rest sits
+ * under it.
+ */
+.arrive {
+  position: relative;
+  min-height: 100dvh;
+  overflow: hidden;
+  background: #040812;
+  color: var(--white);
+}
+.arrive__bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.35;
+  filter: blur(2px) saturate(1.2);
+}
+.arrive__stars {
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(1px 1px at 20% 30%, #fff8, transparent),
+    radial-gradient(1px 1px at 70% 20%, #fff6, transparent),
+    radial-gradient(1.5px 1.5px at 85% 60%, #fff7, transparent),
+    radial-gradient(1px 1px at 40% 80%, #fff5, transparent),
+    radial-gradient(1px 1px at 60% 50%, #fff4, transparent);
+}
+.arrive__planet {
+  position: absolute;
+  top: 50%;
+  right: -8vw;
+  width: min(62vw, 92vh);
+  aspect-ratio: 1;
+  transform: translateY(-50%);
+  border-radius: 50%;
+  background-size: auto 100%;
+  background-repeat: repeat-x;
+  filter: saturate(1.15) contrast(1.1);
+  box-shadow: 0 0 90px rgb(0 186 255 / 28%);
+  animation: arrive-turn 120s linear infinite;
+}
+/* Lit from the upper left: a highlight, then the night side. */
+.arrive__planet::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 34% 30%, rgb(255 255 255 / 22%), transparent 28%),
+    radial-gradient(circle closest-side at 42% 40%, transparent 52%, rgb(2 6 16 / 55%) 80%, rgb(2 6 16 / 92%) 100%),
+    linear-gradient(120deg, transparent 35%, rgb(2 6 16 / 65%) 85%),
+    linear-gradient(135deg, rgb(0 120 200 / 18%), rgb(40 0 90 / 30%));
+}
+.arrive__planet::after {
+  content: '';
+  position: absolute;
+  inset: -1.5%;
+  border-radius: 50%;
+  box-shadow:
+    0 0 0 1px rgb(120 220 255 / 18%),
+    inset 0 0 30px rgb(120 220 255 / 25%);
+}
+@keyframes arrive-turn {
+  to {
+    background-position: 200% 0;
+  }
+}
+:root[data-fx='low'] .arrive__planet {
+  animation: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .arrive__planet {
+    animation: none;
+  }
+}
+.arrive__fade {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, #040812 28%, rgb(4 8 18 / 70%) 52%, transparent 78%),
+    linear-gradient(0deg, #040812, transparent 35%);
+}
+.arrive__drop {
+  position: absolute;
+  right: 12vw;
+  bottom: 6vh;
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  text-align: center;
+}
+.arrive__drop small {
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--cyan);
+}
+.arrive__drop b {
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+}
+.arrive__drop span {
+  font-size: 13.5px;
+  color: var(--text-faint);
+}
+
+.arrive__col {
+  position: relative;
+  display: grid;
+  gap: 20px;
+  align-content: center;
+  width: min(calc(520px + clamp(24px, 6vw, 96px)), 100%);
+  min-height: 100dvh;
+  padding: 48px 0 48px clamp(24px, 6vw, 96px);
+}
+.arrive__logo {
+  justify-self: start;
+  width: 180px;
+}
+.arrive__logo canvas,
+.arrive__logo img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.arrive__kicker {
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--cyan);
+}
+.arrive h1.arrive__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(34px, 3.4vw, 50px);
+  font-weight: 900;
+  line-height: 1.08;
+  letter-spacing: 0.01em;
+  color: var(--white);
+}
+.arrive__title em {
+  font-style: normal;
+  background: linear-gradient(180deg, #ffe08a, #f6a800);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.arrive__lead {
+  margin: 0;
+  max-width: 440px;
+  font-size: 17px;
+  line-height: 1.5;
+  color: #c5cee0;
+}
+.arrive__perks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.arrive__perk {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 13px;
+  border-radius: 10px;
+  background: rgb(255 255 255 / 5%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 12%);
+  font-size: 14px;
+  color: #dfe6f2;
+}
+.arrive__perk img {
+  width: 18px;
+  height: 18px;
+}
+.arrive__perk b {
+  font-family: var(--font-display);
+  color: var(--white);
+}
+
+/* Register · Name · Land, as a rail. */
+.arrive__rail {
+  display: grid;
+  grid-template-columns: auto 1fr auto 1fr auto;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.arrive__rail > li:not(.arrive__bar) {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-display);
+  font-size: 12.5px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+.arrive__rail > li > span {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1.5px rgb(255 255 255 / 22%);
+  font-size: 11.5px;
+}
+.arrive__rail > li.is-now {
+  color: var(--white);
+}
+.arrive__rail > li.is-now > span {
+  box-shadow:
+    inset 0 0 0 1.5px var(--cyan),
+    0 0 14px rgb(0 186 255 / 45%);
+}
+.arrive__rail > li.is-done:not(.arrive__bar) {
+  color: #6ff0cf;
+}
+.arrive__rail > li.is-done > span {
+  background: rgb(14 212 168 / 18%);
+  box-shadow: inset 0 0 0 1.5px #0ed4a8;
+}
+.arrive__bar {
+  height: 2px;
+  border-radius: 2px;
+  background: rgb(255 255 255 / 12%);
+}
+.arrive__bar.is-done {
+  background: linear-gradient(90deg, #0ed4a8, var(--cyan));
+}
+
+.arrive__act {
+  display: grid;
+  gap: 12px;
+}
+.arrive__btn {
+  height: 54px;
+  font-family: var(--font-display);
+  font-size: 16px;
+  letter-spacing: 0.04em;
+}
+.arrive__btn img {
+  width: 22px;
+  height: 22px;
+}
+.arrive__fee {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.45;
+  color: var(--text-faint);
+}
+.arrive__fee b {
+  color: #ffd979;
+}
+.arrive__field {
+  display: grid;
+  gap: 7px;
+}
+.arrive__field > span:first-child {
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.arrive__input {
+  width: 100%;
+  height: 54px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 12px;
+  outline: 0;
+  background: rgb(0 0 0 / 40%);
+  box-shadow:
+    inset 0 0 0 1.5px rgb(0 186 255 / 55%),
+    0 0 18px rgb(0 186 255 / 15%);
+  color: var(--white);
+  font-family: var(--font-display);
+  font-size: 19px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+.arrive__input::placeholder {
+  color: rgb(255 255 255 / 28%);
+}
+.arrive__input:focus {
+  box-shadow:
+    inset 0 0 0 2px var(--cyan),
+    0 0 22px rgb(0 186 255 / 30%);
+}
+.arrive__count {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--text-faint);
+}
+.arrive__count b {
+  color: #6ff0cf;
+}
+.arrive__count.is-error {
+  color: #ff8a8a;
+}
+.arrive__foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 18px;
+}
+/* The wallet in use, as a pill. */
+.arrive__foot .switchwallet {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 6%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 14%);
+  font-size: 13.5px;
+  color: var(--text-faint);
+}
+.arrive__foot .switchwallet__who strong {
+  color: var(--white);
+}
+.arrive__back {
+  font-size: 13.5px;
+  color: var(--text-faint);
+}
+.arrive .alert {
+  margin: 0;
+}
+
+/* A phone: the world rises behind the logo, everything else under it. */
+@media (max-width: 719px) {
+  .arrive__planet {
+    top: -80px;
+    right: auto;
+    left: 50%;
+    width: 380px;
+    transform: translateX(-50%);
+  }
+  .arrive__fade {
+    background: linear-gradient(0deg, #040812 50%, rgb(4 8 18 / 60%) 72%, transparent);
+  }
+  .arrive__drop {
+    display: none;
+  }
+  .arrive__col {
+    gap: 15px;
+    align-content: end;
+    width: 100%;
+    padding: 0 20px calc(24px + env(safe-area-inset-bottom));
+  }
+  .arrive__logo {
+    position: absolute;
+    top: 90px;
+    left: 50%;
+    width: 130px;
+    transform: translateX(-50%);
+  }
+  .arrive h1.arrive__title {
+    font-size: 29px;
+  }
+  .arrive__lead {
+    font-size: 15px;
+  }
+  .arrive__perk {
+    padding: 6px 10px;
+    font-size: 13px;
+  }
+  .arrive__rail > li > b {
+    display: none;
+  }
+  .arrive__foot .switchwallet {
+    border-radius: 14px;
+  }
+  .arrive__back {
+    display: none;
+  }
 }

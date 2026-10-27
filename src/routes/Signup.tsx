@@ -43,9 +43,11 @@ export default function Signup() {
   const [touched, setTouched] = useState(false)
   const [busy, setBusy] = useState<'fee' | 'signup' | null>(null)
   const [error, setError] = useState<string | null>(null)
+  /* The world behind the greeting: one of the six, a different one each visit. */
+  const [world] = useState(() => WORLDS[Math.floor(Math.random() * WORLDS.length)])
 
   useEffect(() => {
-    document.title = 'Create your commander | Alien Legends'
+    document.title = 'Become a trainer | Alien Legends'
   }, [])
 
   if (!account) return <Navigate to="/connect" replace />
@@ -61,7 +63,7 @@ export default function Signup() {
     setError(null)
     try {
       await paySignupFee(session, config)
-      showToast('Fee received. Now pick your commander name.')
+      showToast('Fee received. Now pick your trainer name.')
       // The transfer's side effects need a block to land before the
       // signupstat row is readable, so poll briefly instead of guessing.
       for (let i = 0; i < 6; i++) {
@@ -101,87 +103,106 @@ export default function Signup() {
     }
   }
 
-  return (
-    <div className="auth">
-      <img className="auth__art" src={asset("/assets/background/bg-sign.jpeg")} alt="" />
-      <div className="auth__scrim" />
+  const fee = feeLabel(config?.signup_fee)
+  const paid = signupPending
 
-      <div className="auth__card panel">
-        <Link to="/">
-          <GameLogo className="auth__logo" />
+  return (
+    <div className="arrive">
+      <img className="arrive__bg" src={asset('/assets/background/bg-menu.jpeg')} alt="" />
+      <div className="arrive__stars" />
+      <div className="arrive__planet" style={{ backgroundImage: `url(${asset(`/assets/maps/${world}.jpg`)})` }} />
+      <div className="arrive__fade" />
+      <div className="arrive__drop" aria-hidden="true">
+        <small>Drop zone</small>
+        <b>???</b>
+        <span>One of six worlds — revealed on landing</span>
+      </div>
+
+      <div className="arrive__col">
+        <Link to="/" className="arrive__logo">
+          <GameLogo />
         </Link>
 
-        <h1 className="auth__title">Create your commander</h1>
-        <p className="auth__lead">
-          You will be dropped onto a random planet with{' '}
-          {config ? config.start_action_points.toLocaleString(NUM_LOCALE) : '—'} action points.
+        <div className="arrive__kicker">{paid ? 'Registered · one step left' : 'Welcome, trainer'}</div>
+        <h1 className="arrive__title">
+          {paid ? (
+            <>
+              Now, what do they <em>call you?</em>
+            </>
+          ) : (
+            <>
+              Your legend <em>starts here</em>
+            </>
+          )}
+        </h1>
+        <p className="arrive__lead">
+          {paid
+            ? "Pick the name the frontier will know you by — it's how every other player sees you."
+            : 'Recruit fighters, raid dungeons, rise through the arenas.'}
         </p>
 
-        {/* The fee is paid from this account, so it is worth a second look. */}
-        <p className="auth__wallet">
-          <SwitchWallet label="Signing up as" />
-        </p>
+        {!paid && (
+          <div className="arrive__perks">
+            <span className="arrive__perk">
+              <img src={asset('/assets/icons/energy.png')} alt="" />
+              <b>{config ? config.start_action_points.toLocaleString(NUM_LOCALE) : '—'}</b> energy to start
+            </span>
+            <span className="arrive__perk">A random planet</span>
+          </div>
+        )}
+
+        <ol className="arrive__rail" aria-label="Steps">
+          <li className={paid ? 'is-done' : 'is-now'}>
+            <span>{paid ? '✓' : '1'}</span>
+            <b>Register</b>
+          </li>
+          <li className={`arrive__bar${paid ? ' is-done' : ''}`} aria-hidden="true" />
+          <li className={paid ? 'is-now' : undefined}>
+            <span>2</span>
+            <b>Name</b>
+          </li>
+          <li className="arrive__bar" aria-hidden="true" />
+          <li>
+            <span>3</span>
+            <b>Land</b>
+          </li>
+        </ol>
 
         {blocked && (
-          <div className="alert alert--warn" style={{ margin: 'var(--sp-5) 0' }}>
-            The allowlist is currently active and this account is not on it.
-            Signup will be rejected until it is added.
+          <div className="alert alert--warn">
+            The allowlist is currently active and this account is not on it. Signup will be rejected until it is
+            added.
           </div>
         )}
+        {error && <div className="alert alert--error">{error}</div>}
 
-        <div className="steps">
-          <div className={`step ${signupPending ? 'step--done' : 'step--active'}`}>
-            <span className="step__num">{signupPending ? '✓' : '1'}</span>
-            <div>
-              <div className="step__title">Pay the signup fee</div>
-              <p className="step__body">
-                {signupPending
-                  ? 'Already paid. Nothing more to send.'
-                  : `A one-off ${config?.signup_fee ?? '—'} transfer that covers the
-                     RAM your commander occupies on chain.`}
-              </p>
-            </div>
+        {!paid ? (
+          <div className="arrive__act">
+            <button
+              type="button"
+              className="btn btn--gold btn--block arrive__btn"
+              onClick={() => void payFee()}
+              disabled={busy !== null || !config || blocked}
+            >
+              {busy === 'fee' ? <span className="spinner" /> : <img src={asset('/assets/icons/wax-coin.png')} alt="" />}
+              {busy === 'fee' ? 'Confirm in wallet' : `Register for ${fee}`}
+            </button>
+            <p className="arrive__fee">
+              A one-off fee that pays for your trainer's storage on the WAX chain. <b>Never charged again.</b>
+            </p>
           </div>
-
-          <div className={`step ${signupPending ? 'step--active' : ''}`}>
-            <span className="step__num">2</span>
-            <div>
-              <div className="step__title">Choose a name</div>
-              <p className="step__body">
-                {PLAYERTAG_MIN}–{PLAYERTAG_MAX} characters. This is how other
-                players see you.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {error && (
-          <div className="alert alert--error" style={{ marginBottom: 'var(--sp-4)' }}>
-            {error}
-          </div>
-        )}
-
-        {!signupPending ? (
-          <button
-            type="button"
-            className="btn btn--gold btn--block"
-            onClick={() => void payFee()}
-            disabled={busy !== null || !config || blocked}
-          >
-            {busy === 'fee' && <span className="spinner" />}
-            {busy === 'fee' ? 'Confirm in wallet' : `Pay ${config?.signup_fee ?? ''}`}
-          </button>
         ) : (
           <form
+            className="arrive__act"
             onSubmit={(e) => {
               e.preventDefault()
               void claim()
             }}
           >
-            <label className="field" style={{ marginBottom: 'var(--sp-4)' }}>
-              <span className="field__label">Commander name</span>
+            <label className="arrive__field">
+              <span>Trainer name</span>
               <input
-                className="input"
+                className="arrive__input"
                 value={tag}
                 onChange={(e) => setTag(e.target.value)}
                 onBlur={() => setTouched(true)}
@@ -193,26 +214,39 @@ export default function Signup() {
                 aria-invalid={!!tagError}
                 disabled={busy !== null}
               />
-              <span className={`hint${tagError ? ' hint--error' : ''}`}>
-                {tagError ?? `${tag.trim().length}/${PLAYERTAG_MAX} characters`}
+              <span className={`arrive__count${tagError ? ' is-error' : ''}`}>
+                <span>
+                  {tagError ?? `${PLAYERTAG_MIN}–${PLAYERTAG_MAX} characters · how other players see you`}
+                </span>
+                <b>
+                  {tag.trim().length}/{PLAYERTAG_MAX}
+                </b>
               </span>
             </label>
-
-            <button
-              type="submit"
-              className="btn btn--primary btn--block"
-              disabled={busy !== null || blocked}
-            >
+            <button type="submit" className="btn btn--primary btn--block arrive__btn" disabled={busy !== null || blocked}>
               {busy === 'signup' && <span className="spinner" />}
-              {busy === 'signup' ? 'Creating' : 'Enter the frontier'}
+              {busy === 'signup' ? 'Landing' : 'Land on your planet'}
             </button>
           </form>
         )}
 
-        <p className="hint" style={{ textAlign: 'center' }}>
-          <Link to="/">Back to the home page</Link>
-        </p>
+        <div className="arrive__foot">
+          <SwitchWallet label="Signed in as" />
+          <Link to="/" className="arrive__back">
+            Back to the home page
+          </Link>
+        </div>
       </div>
     </div>
   )
+}
+
+/* The six worlds a new trainer can land on, as the map's own artwork names them. */
+const WORLDS = ['eyeke', 'kavian', 'magor', 'naron', 'neri', 'veles']
+
+/* "15.00000000 WAX" as a player reads it: "15 WAX". */
+function feeLabel(fee: string | undefined): string {
+  if (!fee) return ''
+  const [amount, symbol] = fee.split(' ')
+  return `${Number(amount).toLocaleString(NUM_LOCALE, { maximumFractionDigits: 2 })} ${symbol ?? ''}`.trim()
 }
