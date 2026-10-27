@@ -102,7 +102,7 @@ export function DeskBriefing({
           )}
           {!!roster?.defending && (
             <Link className="dbrief__chip" to="/fighters">
-              <img src={asset('/assets/icons/arena.svg')} alt="" />
+              <img src={asset('/assets/markers/buildings/arena.svg')} alt="" />
               {formatNumber(roster.defending)} defending
             </Link>
           )}
