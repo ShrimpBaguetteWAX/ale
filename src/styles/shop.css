@@ -1776,3 +1776,147 @@
     flex-basis: 30%;
   }
 }
+
+/*
+ * The shop on a desktop, a size up — the step the other screens took. Phones
+ * (below 720px, as usePhone) keep their own sizes.
+ */
+@media (min-width: 720px) {
+  .shop .tabs__tab,
+  .shop .btn--sm {
+    font-size: 13px;
+  }
+  .shop .hint {
+    font-size: 13px;
+  }
+  /* Pack rows: gems, credits, energy, legend */
+  .shop .shop__main .pack__badge {
+    font-size: 10px;
+  }
+  .shop .shop__main .pack__title {
+    font-size: 14.5px;
+  }
+  .shop .shop__main .pack__value {
+    font-size: 12.5px;
+  }
+  .shop .shop__main .pack__rate {
+    font-size: 13px;
+  }
+  .shop .shop__main .pack .btn {
+    font-size: 14.5px;
+  }
+  .shop .shop__main .legendvs__row {
+    font-size: 15px;
+  }
+  .shop .shop__main .legendvs__row--head {
+    font-size: 11.5px;
+  }
+  .shop .shop__main .legendvs__row > span:nth-child(n + 2) {
+    font-size: 11.5px;
+  }
+  /* Outpost: type and time left get a line each, so neither is clipped at the bigger size */
+  .shop .shop__main .outpost__card .pack__title {
+    white-space: normal;
+  }
+  .shop .shop__main .outpost__meta {
+    grid-column: 1 / 3;
+    max-width: none;
+  }
+  .shop .shop__main .outpost__window {
+    grid-row: 3;
+    grid-column: 1 / 3;
+  }
+  .shop .shop__main .outpost__window::before {
+    content: none;
+  }
+  .shop .shop__main .outpost__card .btn,
+  .shop .shop__main .outpost__soon {
+    grid-row: 1 / span 3;
+  }
+  .shop .outpost__heading {
+    font-size: 15px;
+  }
+  .shop .outpost__count,
+  .shop .shop__main .outpost__window,
+  .shop .shop__main .outpost__meta {
+    font-size: 13px;
+  }
+  .shop .outpost__rarity {
+    font-size: 13px;
+  }
+  .shop .outpost__rarity i {
+    font-size: 11.5px;
+  }
+  /* The currency guide beside the board */
+  .shell .main__inner .shop .cguide .cguide__title {
+    font-size: 12px;
+  }
+  .shop .cguide__head b,
+  .shop .cguide__bal {
+    font-size: 14px;
+  }
+  .shop .cguide__head em {
+    font-size: 11.5px;
+  }
+  .shop .cguide__uses {
+    font-size: 13.5px;
+  }
+  /* NFT Market rows */
+  .shell .main__inner .shop .amk .amk__name {
+    font-size: 14px;
+  }
+  .shop .amk__rarity {
+    font-size: 11px;
+  }
+  .shop .amk__owned {
+    font-size: 12px;
+  }
+  .shop .amk__ben {
+    font-size: 13px;
+  }
+  .shop .amk__ben b {
+    font-size: 12.5px;
+  }
+  .shop .amk__power > span {
+    font-size: 14px;
+  }
+  .shop .amk__gain,
+  .shop .amk__gain small {
+    font-size: 13px;
+  }
+  .shop .amk__use b {
+    font-size: 13.5px;
+  }
+  .shop .amk__use span,
+  .shop .amk__safe,
+  .shop .amk__note {
+    font-size: 13px;
+  }
+  /* A row opened */
+  .shell .main__inner .shop .amk .amk__morecap {
+    font-size: 11.5px;
+  }
+  .shop .amk__more .statline,
+  .shop .amk__more .statline__v,
+  .shop .amk__more .resgrid__value {
+    font-size: 13px;
+  }
+  .shop .amk__more .resgrid__label {
+    font-size: 10.5px;
+  }
+  .shop .amk__facts span {
+    font-size: 12.5px;
+  }
+  .shop .amk__facts b {
+    font-size: 17.5px;
+  }
+  .shop .amk__baglist li {
+    font-size: 13.5px;
+  }
+  .shop .amk__baglist li.is-out > span:first-child::after {
+    font-size: 12.5px;
+  }
+  .shop .amk__with > span {
+    font-size: 12.5px;
+  }
+}
