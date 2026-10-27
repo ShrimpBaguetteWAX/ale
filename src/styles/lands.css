@@ -972,3 +972,91 @@
 .rsheet--inline .rsheet__foot {
   padding: 12px 18px 16px;
 }
+
+/*
+ * My Lands on a desktop, a size up — the step the other screens took: the
+ * cards' names, places and badges, the land's panel, its boost and its notes.
+ * Scoped to the desktop board; the phone's sheet keeps its own sizes.
+ */
+.dlands .plands__claimtext small {
+  font-size: 11.5px;
+}
+.shell .main__inner .dlands .dlands__cap {
+  font-size: 12px;
+}
+.dlands .dlands__cap span {
+  font-size: 13px;
+}
+.dlands .tabs__tab {
+  font-size: 13px;
+}
+.dlands .dlands__plot {
+  font-size: 11px;
+}
+.dlands .dlands__badge {
+  font-size: 11px;
+}
+.dlands .dlands__boost {
+  font-size: 13.5px;
+}
+.dlands .dlands__name {
+  font-size: 15.5px;
+}
+.dlands .dlands__where {
+  font-size: 13px;
+}
+.dlands .dlands__tlm {
+  font-size: 14px;
+}
+.dlands .rsheet__cap {
+  font-size: 11.5px;
+}
+.dlands .lsheet__text small {
+  font-size: 12px;
+}
+.dlands .lsheet__text b {
+  font-size: 16.5px;
+}
+.dlands .lsheet__alert b {
+  font-size: 13.5px;
+}
+.dlands .lsheet__alert small {
+  font-size: 12.5px;
+}
+.dlands .lsheet__income small {
+  font-size: 11px;
+}
+.dlands .lsheet__income b {
+  font-size: 17px;
+}
+.dlands .lsheet__income .btn {
+  font-size: 12.5px;
+}
+.dlands .lsheet__look small {
+  font-size: 11px;
+}
+.dlands .lsheet__look b {
+  font-size: 16.5px;
+}
+.dlands .lsheet__look.is-to b {
+  font-size: 20px;
+}
+.dlands .lsheet__ticks em {
+  font-size: 11px;
+}
+.dlands .lsheet__onelook {
+  font-size: 12.5px;
+}
+.dlands .lsheet__line {
+  font-size: 13px;
+}
+.dlands .lsheet__line b {
+  font-size: 13.5px;
+}
+.dlands .lsheet__destroy {
+  font-size: 12.5px;
+}
+.dlands .lsheet__warn small,
+.dlands .lsheet__lines div {
+  font-size: 13px;
+}
