@@ -96,6 +96,14 @@ const STAT_NAMES: Record<string, string> = {
   attackspeed: 'Cooldown',
   initiative: 'Windup',
 }
+/* The column heads over a desktop's default rows, where a whole word would not fit. */
+const STAT_SHORT: Record<string, string> = {
+  damage: 'Dmg',
+  health: 'HP',
+  taunt: 'Taunt',
+  attackspeed: 'Cool',
+  initiative: 'Wind',
+}
 const RES: [string, string][] = [
   ['res_gem', 'gem'],
   ['res_metal', 'metal'],
@@ -690,6 +698,23 @@ export function DeskRoster(p: DeskRosterProps) {
               </p>
             ) : (
               <div className="drost__rows">
+                {!phone && view === 'default' && (
+                  <div
+                    className={`drost__colhead${p.mode === 'inventory' ? '' : ' is-ticking'}${p.mode === 'sell' ? ' is-sellcol' : ''}`}
+                    aria-hidden="true"
+                  >
+                    {p.mode !== 'inventory' && <span />}
+                    <span />
+                    <span className="drost__colname">Fighter</span>
+                    {STAT_FIELDS.map((k) => (
+                      <span key={k}>
+                        <img className="drost__si" src={statIcon(k)} alt="" />
+                        {STAT_SHORT[k]}
+                      </span>
+                    ))}
+                    {p.mode === 'sell' && <span>Sells for</span>}
+                  </div>
+                )}
                 {list.map((f) => (
                   <Row
                     key={f.fighter_id}
@@ -831,6 +856,8 @@ function Row({
   const abilities = s.abilities ?? []
   /* A phone has no room for the payday column: the date joins the name, the bar the age. */
   const inlinePay = phone && mode !== 'sell'
+  /* A desktop's default row: payday as a ring round the portrait, the stats in columns. */
+  const ring = !phone && view === 'default'
   const daysLeft = Math.max(0, Math.ceil(fig.pay.msLeft / DAY))
   const art = (
     <span className="drost__art" style={{ backgroundImage: `url('${elementBackground(f.element)}')` }}>
@@ -866,6 +893,8 @@ function Row({
     'drost__row',
     view === 'default' ? '' : 'is-focused',
     view === 'default' && inlinePay ? 'is-inlinepay' : '',
+    ring ? 'is-ring' : '',
+    ring && mode === 'sell' ? 'is-sellcol' : '',
     ticking ? 'is-ticking' : '',
     picked ? 'is-picked' : '',
     checked ? 'is-checked' : '',
@@ -883,8 +912,65 @@ function Row({
       title={ticking && !gate.ok ? gate.reason : undefined}
     >
       {ticking && <span className={`drost__tick${checked ? ' is-on' : ''}${gate.ok ? '' : ' is-off'}`} aria-hidden="true" />}
-      {art}
-      {view === 'default' ? (
+      {ring ? (
+        <span
+          className={`drost__ring${fig.pay.overdue ? ' is-overdue' : ''}`}
+          style={{ '--p': `${Math.max(2, fig.pay.progress * 100)}%` } as React.CSSProperties}
+          title={
+            fig.pay.overdue
+              ? `Payday due · ${fig.pay.cost.toLocaleString(NUM_LOCALE)} credits`
+              : `Payday ${payDay(f)} · in ${daysLeft}d · ${fig.pay.cost.toLocaleString(NUM_LOCALE)} credits`
+          }
+        >
+          {art}
+          <span className="drost__days">{fig.pay.overdue ? 'Due' : `${daysLeft}d`}</span>
+        </span>
+      ) : (
+        art
+      )}
+      {ring ? (
+        <>
+          <span className="drost__who">
+            <span className="drost__l1">
+              <b>{f.classname}</b>
+              <img src={asset(`/assets/icons/elements/${f.element}.png`)} alt={f.element} />
+              <small>{f.racename}</small>
+            </span>
+            <span className="drost__l3">
+              <AgeChip bonus={fig.age} />
+              {status}
+            </span>
+          </span>
+          {fig.stats.map((x) => (
+            <span className="drost__num" key={x.field} title={STAT_NAMES[x.field]}>
+              {x.value}
+              <Grade grade={x.grade} />
+            </span>
+          ))}
+          {mode === 'sell' && (
+            <span className="drost__pay">
+              {gate.ok ? <Credits value={s.credits ?? 0} /> : <small>Busy</small>}
+            </span>
+          )}
+          {/* Under the name and the figures, the full width of the row: whole names fit on one line. */}
+          <span className="drost__abn">
+            {abilities.map((a, i) => {
+              const r = abilityRarity(a.displayname)
+              return (
+                <span
+                  key={`${a.ability}-${i}`}
+                  className={`drost__abp${a.locked ? ' is-locked' : ''}`}
+                  style={{ '--ab': rarityColor(a.displayname) } as React.CSSProperties}
+                  title={`${abilityName(a.displayname)}${r ? ` · ${r}` : ''}${a.locked ? ' · locked' : ''}`}
+                >
+                  {!!a.locked && <img src={asset('/assets/icons/lock.svg')} alt="" />}
+                  <span>{abilityName(a.displayname)}</span>
+                </span>
+              )
+            })}
+          </span>
+        </>
+      ) : view === 'default' ? (
         <>
           <span className="drost__who">
             <span className="drost__l1">
@@ -936,7 +1022,8 @@ function Row({
               )}
             </span>
           </span>
-          {inlinePay ? null : mode === 'sell' ? (
+          {/* Only a phone reaches here (a desktop's default row is the ring above); selling, it shows the price. */}
+          {mode === 'sell' && (
             <span className="drost__pay">
               {gate.ok ? (
                 <>
@@ -949,17 +1036,6 @@ function Row({
                   <small>while busy</small>
                 </>
               )}
-            </span>
-          ) : (
-            <span className={`drost__pay${fig.pay.overdue ? ' is-overdue' : ''}`}>
-              <small>Payday {payDay(f)}</small>
-              <small>
-                {fig.pay.overdue ? 'due now' : `in ${daysLeft}d`} ·{' '}
-                <Credits value={fig.pay.cost} />
-              </small>
-              <span className="drost__bar">
-                <i style={{ width: `${Math.max(2, fig.pay.progress * 100)}%` }} />
-              </span>
             </span>
           )}
         </>
