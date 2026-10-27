@@ -289,16 +289,15 @@ export function valueAgainst(items: ShopItem[]): Map<string, PackValue> {
 
 /**
  * The badge as a sentence that names what it is measured against, for the
- * purchase dialog: "+8% more gems per WAX than Gem Pack S (2.04 gems per
- * WAX)", or for a pass, "17% less a month than Legend - 1 Month (999 gems a
- * month)".
+ * purchase dialog: "+8% more gems per WAX than Gem Pack S", or for a pass,
+ * "17% less a month than Legend - 1 Month".
  */
 export function valueLine(item: ShopItem, value: PackValue): string {
   if (item.gain_legend_acct_seconds > 0) {
-    return `${value.badge.replace('save ', '')} less a month than ${value.base.title} (${rateOf(value.base)})`
+    return `${value.badge.replace('save ', '')} less a month than ${value.base.title}`
   }
   const per = costUnit(item)
-  return `${value.badge} more ${gainUnit(item)} per ${per === 'gems' ? 'gem' : per === 'credits' ? 'credit' : per} than ${value.base.title} (${rateOf(value.base)})`
+  return `${value.badge} more ${gainUnit(item)} per ${per === 'gems' ? 'gem' : per === 'credits' ? 'credit' : per} than ${value.base.title}`
 }
 
 /** What a purchase leaves of the currency it is paid in, or nothing for a free one. */
