@@ -37,7 +37,7 @@ import { GameImg } from '@/components/GameImg'
 import { useAction } from '@/wharf/useAction'
 import { DIRTIES } from '@/wharf/actions'
 import { fighterAvailable } from '@/dungeon/rules'
-import { ageBand, ageBonus, ageDays, ageNote, battleFactor } from '@/fighters/rules'
+import { ageBand, ageNote } from '@/fighters/rules'
 import {
   EMPTY_FILTER,
   applyFilter,
@@ -56,7 +56,6 @@ import { elementBackground, fighterArt, fighterArtFallback, type ClassTemplate, 
 import { addAuction, bidAuction, buyOffer, cancelAuction } from '@/wharf/actions'
 import { SACRIFICE_ABILITY } from '@/ascension/rules'
 import { asset } from '@/assets'
-import { FighterRow, ListingBody } from '@/market/FighterRows'
 import { Row, figuresOf } from '@/fighters/DeskRoster'
 
 /**
@@ -794,7 +793,17 @@ function MarketCard({
 }
 
 /** One of your own fighters on the desktop Sell board: My Fighters' card, as it is there. */
-function OwnCard({ f, picked, onPick }: { f: RosterFighter; picked: boolean; onPick: () => void }) {
+function OwnCard({
+  f,
+  picked,
+  onPick,
+  cue = 'Sell ›',
+}: {
+  f: RosterFighter
+  picked: boolean
+  onPick: () => void
+  cue?: string
+}) {
   const { classes, fighters, levelMod, ageDecay } = useConfig()
   const [now] = useState(() => Date.now())
   const fig = useMemo(
@@ -812,7 +821,7 @@ function OwnCard({ f, picked, onPick }: { f: RosterFighter; picked: boolean; onP
       checked={false}
       gate={{ ok: true }}
       onClick={onPick}
-      aside={<span className="mrow__cue">Sell ›</span>}
+      aside={<span className="mrow__cue">{cue}</span>}
     />
   )
 }
@@ -820,12 +829,13 @@ function OwnCard({ f, picked, onPick }: { f: RosterFighter; picked: boolean; onP
 /* ---------- the phone: a row a listing, opened in place ---------- */
 
 /**
- * One listing as a phone row: portrait, who it is, price and clock.
+ * One listing on the phone, as My Fighters draws a fighter there: the same
+ * card, the price and its clock at the end of the name line. Tapping it opens
+ * Details and the bid or the buy under it in place — the list never goes away
+ * behind a dialog just to look.
  *
- * A card a listing was a screenful each on a phone, so forty listings were
- * forty screens. The row is what is scanned; tapping it opens the same three
- * readouts the card has, and the bid or the buy, under it in place — the
- * list never goes away behind a dialog just to look.
+ * As on the desktop board, the card is drawn as if free: "In Market" on every
+ * card of the market says nothing.
  */
 function ListingRow({
   listing,
@@ -833,12 +843,9 @@ function ListingRow({
   closing,
   open,
   onToggle,
-  template,
-  unlockLevel,
   now,
   below,
   marker,
-  inline = true,
   action,
   onOpen,
 }: {
@@ -850,57 +857,56 @@ function ListingRow({
   template?: ClassTemplate
   unlockLevel?: number
   now: number
-  /** What a listing of your own is doing, under the row. */
+  /** What a listing of your own is doing, under the card. */
   below?: React.ReactNode
   /** The player's marker, for a listing of their own. */
   marker?: string
-  /** Opens in place (the phone); false only marks it picked (the desktop board). */
-  inline?: boolean
   /** The bid or buy button, or nothing on a listing of your own. */
   action?: React.ReactNode
   onOpen: () => void
 }) {
-  const f = listing.fighter
-  const { levelMod, ageDecay } = useConfig()
-  const asFighter = listingAsFighter(listing)
-  const bonus = ageBonus(asFighter, ageDecay, now)
-  const factor = battleFactor(asFighter, levelMod, ageDecay, now)
+  const { classes, fighters, levelMod, ageDecay } = useConfig()
+  const f = useMemo(
+    () => ({ ...listingAsFighter(listing), in_use: 0, marker: marker ?? '' }),
+    [listing, marker],
+  )
+  const fig = useMemo(
+    () => figuresOf(f, classes.get(f.classname), fighters, levelMod, ageDecay, now, false),
+    [f, classes, fighters, levelMod, ageDecay, now],
+  )
   return (
-    <FighterRow
-      stats={f}
-      ascension={listing.ascension_level}
-      template={template}
-      open={open}
-      onToggle={onToggle}
-      below={below}
-      marker={marker}
-      ageFactor={factor.age}
-      age={{
-        bonus,
-        note: ageNote(bonus, ageDays(asFighter, now), factor.age),
-      }}
-      right={
-        <span className="mrow__price">
-          <span className="mono">
-            {price.toLocaleString(NUM_LOCALE)}
-            <img src={asset('/assets/icons/gems.png')} alt="gems" width={14} height={14} />
+    <div className={`drost--stack mcard${open ? ' is-open' : ''}`}>
+      <Row
+        f={f}
+        fig={fig}
+        view="default"
+        mode="inventory"
+        now={now}
+        picked={open}
+        checked={false}
+        gate={{ ok: true }}
+        onClick={onToggle}
+        note={below}
+        wideAside
+        aside={
+          <span className="mcard__price">
+            <b className="mono">
+              {price.toLocaleString(NUM_LOCALE)}
+              <img src={asset('/assets/icons/gems.png')} alt="gems" />
+            </b>
+            <small className={closing ? 'is-closing' : ''}>{timeLeftLabel(msLeft(listing, now))}</small>
           </span>
-          <small className={closing ? 'is-closing' : ''}>{timeLeftLabel(msLeft(listing, now))}</small>
-        </span>
-      }
-    >
-      {inline && (
-        <>
-          <ListingBody stats={f} template={template} readout="stats" unlockLevel={unlockLevel} factor={factor} />
-          <div className="mrow__acts">
-            <button type="button" className="btn btn--ghost btn--sm" onClick={onOpen}>
-              Details
-            </button>
-            {action}
-          </div>
-        </>
+        }
+      />
+      {open && (
+        <div className="mcard__acts">
+          <button type="button" className="btn btn--ghost btn--sm" onClick={onOpen}>
+            Details
+          </button>
+          {action}
+        </div>
       )}
-    </FighterRow>
+    </div>
   )
 }
 
@@ -1999,19 +2005,15 @@ export function SellTab({
                 {shown.map((f) => {
                   const open = f.fighter_id === pickedId
                   return (
-                    <FighterRow
-                      key={f.fighter_id}
-                      stats={f.stats}
-                      ageFactor={battleFactor(f, levelMod, ageDecay).age}
-                      ascension={f.ascension_level}
-                      marker={f.marker}
-                      template={classes.get(f.classname)}
-                      open={open}
-                      onToggle={() => setPickedId(open ? null : f.fighter_id)}
-                      right={<span className="mrow__price mrow__cue">{open ? 'Close' : 'Sell ›'}</span>}
-                    >
-                      {terms(f, () => onInspect(f))}
-                    </FighterRow>
+                    <div key={f.fighter_id} className={`drost--stack mcard${open ? ' is-open' : ''}`}>
+                      <OwnCard
+                        f={f}
+                        picked={open}
+                        cue={open ? 'Close' : 'Sell ›'}
+                        onPick={() => setPickedId(open ? null : f.fighter_id)}
+                      />
+                      {open && <div className="mcard__terms">{terms(f, () => onInspect(f))}</div>}
+                    </div>
                   )
                 })}
               </div>

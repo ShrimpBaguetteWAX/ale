@@ -2891,10 +2891,26 @@
 .drost__row.is-dim {
   opacity: 0.5;
 }
-/* A two-column aside: the market's price over its clock. */
+/* The market's price and clock, under the portrait like a tag: the name line keeps its width. */
 .drost--stack .drost__row.is-ring.is-aside-wide > .drost__who {
-  grid-column: 2 / -3;
+  grid-column: 2 / -1;
+}
+.drost--stack .drost__row.is-ring.is-aside-wide > .drost__ring {
+  grid-row: 1 / span 2;
 }
 .drost--stack .drost__row.is-ring.is-aside-wide > .drost__aside {
-  grid-column: -3 / -1;
+  grid-row: 3 / span 2;
+  grid-column: 1;
+  align-self: start;
+  justify-self: center;
+  margin-right: 10px;
+}
+/* A stacked card narrower than a phone's own list (inside a panel, say): its tiles keep the word only. */
+.drost--stack .drost__row.is-ring {
+  container: dcard / inline-size;
+}
+@container dcard (max-width: 330px) {
+  .drost__numhead .drost__si {
+    display: none;
+  }
 }
