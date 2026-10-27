@@ -706,7 +706,7 @@ export function MarketGuide({ wax }: { wax: number }) {
       "Stake spare cards for credits. Power comes from rarity and shine; Abundant can't be staked.",
     ],
     [
-      '/assets/markers/tavern.svg',
+      '/assets/markers/buildings/tavern.svg',
       'Taverns · cheaper hires',
       "Cards that match a tavern's objectives cut the energy a hire costs.",
     ],

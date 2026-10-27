@@ -51,9 +51,9 @@ const STAT_ICONS: [RegExp, string][] = [
   [/^alf_credits/, '/assets/icons/credits.svg'],
 
   /* Places and activities. */
-  [/^arenas/, '/assets/icons/arena.svg'],
-  [/dungeon/, '/assets/icons/dungeons.svg'],
-  [/^taverns/, '/assets/markers/tavern.svg'],
+  [/^arenas/, '/assets/markers/buildings/arena.svg'],
+  [/dungeon/, '/assets/markers/buildings/dungeon.svg'],
+  [/^taverns/, '/assets/markers/buildings/tavern.svg'],
   [/^buildings/, '/assets/icons/build.webp'],
   [/^portals/, '/assets/old-markers/portal.svg'],
   [/^quests/, '/assets/icons/menu/quests.svg'],

@@ -349,8 +349,8 @@ export default function Leaderboard() {
       <div className={phone ? 'lbtabs' : 'tabs lbtabs--desk'} role="tablist" aria-label="Leaderboard">
         {(
           [
-            ['dungeons', 'Dungeons', asset('/assets/icons/dungeons.svg')],
-            ['arena', 'Arena', asset('/assets/icons/arena.svg')],
+            ['dungeons', 'Dungeons', asset('/assets/markers/buildings/dungeon.svg')],
+            ['arena', 'Arena', asset('/assets/markers/buildings/arena.svg')],
             ['tournament', 'Tournament', asset('/assets/icons/tournament.svg')],
           ] as [Tab, string, string][]
         ).map(([key, label, icon]) => (
@@ -631,7 +631,7 @@ export function ArenaBoards({
                   setScope(s.scope)
                 }}
               >
-                <img src={asset('/assets/icons/arena.svg')} alt="" />
+                <img src={asset('/assets/markers/buildings/arena.svg')} alt="" />
                 <span className="dseason__text">
                   <b>{s.displayname}</b>
                   <small>

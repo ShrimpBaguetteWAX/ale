@@ -79,9 +79,9 @@ export function landThumbStyle(
  * effect.
  */
 export const MARKER_SRC = {
-  tavern: asset('/assets/markers/tavern.svg'),
-  dungeon: asset('/assets/markers/dungeons.svg'),
-  arena: asset('/assets/markers/arena.svg'),
+  tavern: asset('/assets/markers/buildings/tavern.svg'),
+  dungeon: asset('/assets/markers/buildings/dungeon.svg'),
+  arena: asset('/assets/markers/buildings/arena.svg'),
   portal: asset('/assets/old-markers/portal.svg'),
 } as const
 

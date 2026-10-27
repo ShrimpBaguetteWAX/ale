@@ -31,9 +31,9 @@ export interface PaymentSource {
 const SOURCES: { test: RegExp; label: string; icon: string }[] = [
   { test: /lndowner|landowner/i, label: 'Landowner rewards', icon: '/assets/icons/menu/lands.svg' },
   { test: /quest/i, label: 'Quests', icon: '/assets/icons/menu/quests.svg' },
-  { test: /arenadom|domination/i, label: 'Arena domination', icon: '/assets/icons/arena.svg' },
-  { test: /arena/i, label: 'Arena wins', icon: '/assets/icons/arena.svg' },
-  { test: /dung/i, label: 'Dungeon wins', icon: '/assets/icons/dungeons.svg' },
+  { test: /arenadom|domination/i, label: 'Arena domination', icon: '/assets/markers/buildings/arena.svg' },
+  { test: /arena/i, label: 'Arena wins', icon: '/assets/markers/buildings/arena.svg' },
+  { test: /dung/i, label: 'Dungeon wins', icon: '/assets/markers/buildings/dungeon.svg' },
   { test: /candle|rec$|recovery/i, label: 'Candle recovery', icon: '/assets/icons/menu/candle.svg' },
 ]
 

@@ -815,8 +815,8 @@ export function earnLink(pool: string): { label: string; to: string } | null {
 
 /* A pool's picture: where its power is earned, or the currency it pays. */
 export function poolIcon(pool: string, currency: Currency): string {
-  if (/arena/i.test(pool)) return asset('/assets/icons/arena.svg')
-  if (/dung/i.test(pool)) return asset('/assets/icons/dungeons.svg')
+  if (/arena/i.test(pool)) return asset('/assets/markers/buildings/arena.svg')
+  if (/dung/i.test(pool)) return asset('/assets/markers/buildings/dungeon.svg')
   return CURRENCY_ICON[currency]
 }
 
