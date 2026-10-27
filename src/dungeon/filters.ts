@@ -40,6 +40,7 @@ export const STATUSES = [
   'Requests Payday',
   'Arena',
   'Market',
+  'Tournament',
 ] as const
 export type Status = (typeof STATUSES)[number]
 
@@ -281,6 +282,9 @@ export function matchesStatus(f: RosterFighter, status: Status, now: number): bo
       return !!f.in_use && f.use_type.toLowerCase() === 'arena'
     case 'Market':
       return !!f.in_use && f.use_type.toLowerCase() === 'market'
+    /* The tournament contract's setinuse writes "Tournament" while a fighter is entered. */
+    case 'Tournament':
+      return !!f.in_use && f.use_type.toLowerCase() === 'tournament'
     default:
       return true
   }

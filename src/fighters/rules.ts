@@ -347,6 +347,8 @@ export function useLabel(f: RosterFighter): string {
       return 'Defending Arena'
     case 'dungeon':
       return 'In Dungeon'
+    case 'tournament':
+      return 'In Tournament'
     default:
       return 'In Use'
   }

@@ -121,6 +121,7 @@ const STATUS_LABEL: Record<Status, string> = {
   'Requests Payday': 'Requests payday',
   Arena: 'Arena',
   Market: 'Market',
+  Tournament: 'Tournament',
 }
 const SORT_GROUPS: [string, SortOption[]][] = [
   ['Roster', [...ROSTER_SORTS, ...SORTS.filter((s) => s.value === 'level')]],
