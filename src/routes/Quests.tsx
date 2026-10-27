@@ -25,6 +25,7 @@ import { asset } from '@/assets'
 import { usePhone } from '@/components/usePhone'
 import { claimedRecently, holdsReplaced, rememberClaimed } from '@/quests/claimed'
 import { DeskQuests } from '@/quests/DeskQuests'
+import { QuestName } from '@/quests/QuestName'
 
 /**
  * Quests.
@@ -313,7 +314,12 @@ export default function Quests() {
         large beside the list, so there is no switch to draw.
       */}
       {!phone ? (
-        data.loading ? (
+        /*
+           The skeleton only before the first board: a refresh after a claim
+           or a reroll keeps the journal mounted, so it stays on the quest
+           that was open instead of starting over at the top.
+        */
+        data.loading && !active ? (
           <div className="dquests dquests--loading" aria-busy="true">
             <div className="dquests__list" />
             <div className="dquests__detail" />
@@ -531,7 +537,9 @@ function QuestCard({
       </div>
 
       <div className="qcard__body">
-        <h3 className="qcard__title">{quest.quest_title}</h3>
+        <h3 className="qcard__title">
+          <QuestName quest={quest} />
+        </h3>
         <p className="qcard__desc">{questText(quest)}</p>
 
         <div className="qcard__reward" title="Set aside for you when this quest was issued">

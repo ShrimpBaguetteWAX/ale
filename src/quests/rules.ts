@@ -292,3 +292,15 @@ const GO: Record<string, QuestGo> = {
 export function questGo(quest: Quest): QuestGo | null {
   return GO[quest.task_type] ?? null
 }
+
+/**
+ * A quest's name and the amount it asks for. The contract's titles end in a
+ * size word — "Distance Traveled Large" — which says nothing a player can
+ * act on; the amount does, so the word goes and the goal takes its place.
+ */
+export function questName(quest: Quest): { name: string; amount: number } {
+  return {
+    name: quest.quest_title.replace(/\s+(small|medium|large)\s*$/i, '').trim(),
+    amount: Math.max(0, quest.task_end_value - quest.task_start_value),
+  }
+}

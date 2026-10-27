@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { DeskQuests } from '@/quests/DeskQuests'
 import { ScopePanel } from '@/routes/Quests'
@@ -63,16 +63,38 @@ describe('the quest journal', () => {
     const onReroll = vi.fn()
     const { rerender } = render(view(boardOf([a], [b, c]), onReroll))
 
-    fireEvent.click(screen.getByRole('button', { name: /Weekly two/ }))
-    expect(screen.getByRole('heading', { level: 2, name: 'Weekly two' })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: /^Weekly two/ }))
+    expect(screen.getByRole('heading', { level: 2, name: /^Weekly two/ })).toBeInTheDocument()
 
     /* No confirmation: Reroll goes straight through. */
-    fireEvent.click(screen.getByRole('button', { name: /Reroll/ }))
+    const detail = document.querySelector('.dquests__detail') as HTMLElement
+    fireEvent.click(within(detail).getByRole('button', { name: /Reroll/ }))
     expect(onReroll).toHaveBeenCalledWith(c)
 
     const fresh = quest('d', 'week', 'Weekly three')
     rerender(view(boardOf([a], [b, fresh]), onReroll))
-    expect(screen.getByRole('heading', { level: 2, name: 'Weekly three' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 2, name: /^Weekly three/ })).toBeInTheDocument()
+  })
+
+  it('rerolls from the list without moving off the quest on show', () => {
+    const a = quest('a', 'day', 'Daily one')
+    const b = quest('b', 'week', 'Weekly one')
+    const c = quest('c', 'week', 'Weekly two')
+    const onReroll = vi.fn()
+    const { rerender } = render(view(boardOf([a], [b, c]), onReroll))
+
+    fireEvent.click(screen.getByRole('button', { name: /^Weekly two/ }))
+    fireEvent.click(screen.getByRole('button', { name: /^Reroll Weekly one/ }))
+    expect(onReroll).toHaveBeenCalledWith(b)
+
+    const fresh = quest('d', 'week', 'Weekly three')
+    rerender(view(boardOf([a], [fresh, c]), onReroll))
+    expect(screen.getByRole('heading', { level: 2, name: /^Weekly two/ })).toBeInTheDocument()
+  })
+
+  it('names a quest by its goal, not its size', () => {
+    render(view(boardOf([quest('a', 'day', 'Distance Traveled Large')], [])))
+    expect(screen.getByRole('heading', { level: 2, name: 'Distance Traveled 4' })).toBeInTheDocument()
   })
 })
 

@@ -7,6 +7,7 @@ import { fetchActiveQuests } from '@/quests/queries'
 import { progressOf, questArt, questKey, questText, rewardOf } from '@/quests/rules'
 import { claimedRecently, rememberClaimed } from '@/quests/claimed'
 import type { ActiveQuests, Quest } from '@/quests/types'
+import { QuestName } from '@/quests/QuestName'
 
 /**
  * Quests that are done, claimable from the map.
@@ -85,7 +86,9 @@ export function QuestClaims({
           <div className="questclaim" key={key}>
             <img className="questclaim__art" src={questArt(q)} alt="" loading="lazy" />
             <div className="questclaim__text">
-              <strong>{q.quest_title}</strong>
+              <strong>
+                <QuestName quest={q} />
+              </strong>
               <small>{questText(q)}</small>
             </div>
             <button

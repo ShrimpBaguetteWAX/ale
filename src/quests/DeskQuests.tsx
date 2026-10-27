@@ -14,6 +14,7 @@ import {
 } from './rules'
 import { NUM_LOCALE } from '@/format'
 import { asset } from '@/assets'
+import { QuestName, questNameText } from './QuestName'
 
 /**
  * Quests on a desktop: the journal.
@@ -85,6 +86,20 @@ export function DeskQuests({
     setPicked({ key: questKey(q), scope: q.quest_scope })
   }
 
+  /*
+     A reroll straight from the list, without opening the quest first. The
+     journal stays on whatever it was showing: pinned now if it was only the
+     default, so the board changing under it does not move it; and if the
+     quest rerolled is the one on show, it follows its replacement.
+  */
+  const cost = config?.reroll_cost ?? 0
+  const tooPoor = cost > credits
+  const rerollRow = (q: Quest) => {
+    if (shown && !picked) pick(shown)
+    else known.current = new Set(liveKeys)
+    onReroll(q)
+  }
+
   return (
     <div className="dquests">
       <nav className="dquests__list" aria-label="Your quests">
@@ -101,16 +116,19 @@ export function DeskQuests({
               const p = progressOf(q, player, now)
               const r = rewardOf(q)
               const key = questKey(q)
+              const doing = busy.get(key)
               return (
+                <div className={`dquests__item${p.claimable ? '' : ' has-reroll'}`} key={key}>
                 <button
                   type="button"
-                  key={key}
                   className={`dquests__row is-${band(p.percent)}${shown && questKey(shown) === key ? ' is-on' : ''}`}
                   onClick={() => pick(q)}
                 >
                   <img src={questArt(q)} alt="" loading="lazy" />
                   <span className="dquests__rowtext">
-                    <b title={q.quest_title}>{q.quest_title}</b>
+                    <b title={questNameText(q)}>
+                      <QuestName quest={q} />
+                    </b>
                     <span className="dquests__bar">
                       <i style={{ width: `${Math.max(2, p.percent)}%` }} />
                     </span>
@@ -124,6 +142,32 @@ export function DeskQuests({
                     </span>
                   )}
                 </button>
+                {!p.claimable && (
+                  <button
+                    type="button"
+                    className="dquests__reroll"
+                    disabled={!canAct || busy.has(key) || tooPoor}
+                    onClick={() => rerollRow(q)}
+                    aria-label={`Reroll ${questNameText(q)} for ${cost.toLocaleString(NUM_LOCALE)} credits`}
+                    title={tooPoor ? `Rerolling costs ${cost.toLocaleString(NUM_LOCALE)} credits` : `Reroll for ${cost.toLocaleString(NUM_LOCALE)} credits`}
+                  >
+                    {doing === 'reroll' ? (
+                      <span className="spinner" />
+                    ) : (
+                      <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M20 11a8 8 0 0 0-14.3-4.9L4 8" />
+                        <path d="M4 3v5h5" />
+                        <path d="M4 13a8 8 0 0 0 14.3 4.9L20 16" />
+                        <path d="M20 21v-5h-5" />
+                      </svg>
+                    )}
+                    <span className={`dquests__rrcost${tooPoor ? ' is-short' : ''}`}>
+                      {cost.toLocaleString(NUM_LOCALE)}
+                      <img src={asset('/assets/icons/credits.png')} alt="" />
+                    </span>
+                  </button>
+                )}
+                </div>
               )
             })}
             {Array.from({ length: b.emptySlots }, (_, i) => (
@@ -139,7 +183,9 @@ export function DeskQuests({
               <div className="dquests__row is-expired" key={questKey(q)} title="Ran out before it was finished; pays nothing">
                 <img src={questArt(q)} alt="" loading="lazy" />
                 <span className="dquests__rowtext">
-                  <b>{q.quest_title}</b>
+                  <b>
+                    <QuestName quest={q} />
+                  </b>
                   <small>Expired · clears with New quests</small>
                 </span>
               </div>
@@ -221,7 +267,9 @@ function Detail({
         <div className="dquests__plate">
           <span>
             <small>{label} quest</small>
-            <h2>{quest.quest_title}</h2>
+            <h2>
+              <QuestName quest={quest} />
+            </h2>
           </span>
           {p.claimable && <span className="dquests__readychip">Ready to claim</span>}
           <span className="dquests__clock mono">ends in {formatTimeLeft(p.msLeft)}</span>
