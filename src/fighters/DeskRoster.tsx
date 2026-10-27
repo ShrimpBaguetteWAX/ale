@@ -31,7 +31,14 @@ import {
   useLabel,
   type PaydayScope,
 } from '@/fighters/rules'
-import { combatFigures, gradeCombatScore, gradeDamagePerSecond, gradeSurvival, meanResistance } from '@/fighters/derived'
+import {
+  combatFigures,
+  gradeCombatScore,
+  gradeDamagePerSecond,
+  gradeSurvival,
+  meanResistance,
+  roleOf,
+} from '@/fighters/derived'
 import { listable, MAX_BULK_LISTINGS, processingFee, sellerPayout } from '@/market/rules'
 import type { MarketConfig } from '@/market/queries'
 import {
@@ -191,6 +198,13 @@ const GRADE_REACH: Record<StatGrade, number> = {
   middle: 0.55,
   'red-down': 0.36,
   'red-duble-down': 0.2,
+}
+
+/* A figure's tile tinted by its grade: green above the class, red below. */
+function toneOf(grade: StatGrade | null): string | undefined {
+  if (grade === 'gold-up' || grade === 'green-duble-up' || grade === 'green-up') return 'is-up'
+  if (grade === 'red-down' || grade === 'red-duble-down') return 'is-down'
+  return undefined
 }
 
 function Grade({ grade }: { grade: StatGrade | null }) {
@@ -871,6 +885,7 @@ export function Row({
   /* The default row: payday as a ring round the portrait, the stats in columns. A phone stacks it. */
   const ring = view === 'default'
   const daysLeft = Math.max(0, Math.ceil(fig.pay.msLeft / DAY))
+  const role = roleOf(fig.combat.dpsG, fig.combat.survG)
   /*
      The fighter down the card's whole height, in every view: the level and
      the marker on the art, the days to payday at its foot over a bar that
@@ -1078,54 +1093,51 @@ export function Row({
               </span>
             </span>
           )}
+          {/*
+            What the fighter is for, in a word, from its DPS and survival grades;
+            both grade it against its own class, so the caption says so.
+          */}
           {view === 'combat' && (
-            <span className="drost__cells drost__cells--5">
-              <span className="drost__cell">
-                <small>
-                  <img className="drost__si" src={statIcon('damage')} alt="" />
-                  DPS
+            <span className="drost__role">
+              <span className="drost__rolewho">
+                <small title={`Graded against other ${f.classname}s, not against other classes`}>
+                  Role among {f.classname}s
                 </small>
-                <b>
-                  {formatDecimals(fig.combat.dps, 2)}
-                  <Grade grade={fig.combat.dpsG} />
-                </b>
+                <span className={`drost__rolename is-${role.key}`}>
+                  <b>{role.name}</b>
+                  <span>{role.line}</span>
+                </span>
               </span>
-              <span className="drost__cell">
-                <small>
-                  <img className="drost__si" src={statIcon('survival')} alt="" />
-                  Survival
-                </small>
-                <b>
-                  {Math.round(fig.combat.survival).toLocaleString(NUM_LOCALE)}
-                  <Grade grade={fig.combat.survG} />
-                </b>
+              <span className="drost__roletiles">
+                <span className={toneOf(fig.combat.dpsG)} title="Damage per second">
+                  <small>DPS</small>
+                  <b>
+                    {formatDecimals(fig.combat.dps, 2)}
+                    <Grade grade={fig.combat.dpsG} />
+                  </b>
+                </span>
+                <span className={toneOf(fig.combat.survG)} title="Survival: how much damage it takes to bring down">
+                  <small>Survival</small>
+                  <b>
+                    {Math.round(fig.combat.survival).toLocaleString(NUM_LOCALE)}
+                    <Grade grade={fig.combat.survG} />
+                  </b>
+                </span>
+                <span className={toneOf(fig.stats[4].grade)} title="Windup: how soon it strikes">
+                  <small>Windup</small>
+                  <b>
+                    {fig.stats[4].value}
+                    <Grade grade={fig.stats[4].grade} />
+                  </b>
+                </span>
+                <span title="Who it strikes">
+                  <small>Targets</small>
+                  <b className="is-text">{s.target ? formatTarget(s.target) : 'Highest Taunt'}</b>
+                </span>
               </span>
-              <span className="drost__cell">
-                <small>
-                  <img className="drost__si" src={statIcon('initiative')} alt="" />
-                  Windup
-                </small>
-                <b>
-                  {fig.stats[4].value}
-                  <Grade grade={fig.stats[4].grade} />
-                </b>
-              </span>
-              <span className="drost__cell">
-                <small>
-                  <img className="drost__si" src={statIcon('taunt')} alt="" />
-                  Taunt
-                </small>
-                <b>{fig.stats[2].value}</b>
-              </span>
-              <span className="drost__cell">
-                <small>
-                  <img className="drost__si" src={statIcon('block')} alt="" />
-                  Score
-                </small>
-                <b>
-                  {Math.round(fig.combat.score).toLocaleString(NUM_LOCALE)}
-                  <Grade grade={fig.combat.scoreG} />
-                </b>
+              <span className="drost__badge drost__badge--role" title="Combat score: damage and survival together">
+                <b>{Math.round(fig.combat.score).toLocaleString(NUM_LOCALE)}</b>
+                <small>Score</small>
               </span>
             </span>
           )}

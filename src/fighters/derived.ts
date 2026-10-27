@@ -206,3 +206,59 @@ export function gradeCombatScore(
   const d = position(damagePerSecond(damage, cooldown), dps)
   return gradeInBand(Math.sqrt(s * d), 0, 1)
 }
+
+/* ---------- the role ---------- */
+
+export type RoleKey =
+  | 'powerhouse'
+  | 'striker'
+  | 'glasscannon'
+  | 'bulwark'
+  | 'allrounder'
+  | 'daredevil'
+  | 'wall'
+  | 'lightweight'
+  | 'underdog'
+
+export interface Role {
+  key: RoleKey
+  name: string
+  line: string
+}
+
+type Band3 = 'high' | 'mid' | 'low'
+
+/* A grade in three: the arrows up, the flat dash (or no grade), the arrows down. */
+function band3(grade: StatGrade | null): Band3 {
+  if (grade === 'gold-up' || grade === 'green-duble-up' || grade === 'green-up') return 'high'
+  if (grade === 'red-down' || grade === 'red-duble-down') return 'low'
+  return 'mid'
+}
+
+const ROLES: Record<Band3, Record<Band3, Role>> = {
+  high: {
+    high: { key: 'powerhouse', name: 'Powerhouse', line: 'Hits hard and holds on' },
+    mid: { key: 'striker', name: 'Striker', line: 'Hits hard' },
+    low: { key: 'glasscannon', name: 'Glass cannon', line: 'Hits hard, falls fast' },
+  },
+  mid: {
+    high: { key: 'bulwark', name: 'Bulwark', line: 'Takes a beating' },
+    mid: { key: 'allrounder', name: 'All-rounder', line: 'Steady on both sides' },
+    low: { key: 'daredevil', name: 'Daredevil', line: 'Trades blows, falls early' },
+  },
+  low: {
+    high: { key: 'wall', name: 'Wall', line: 'Outlasts, rarely hurts' },
+    mid: { key: 'lightweight', name: 'Lightweight', line: 'Light hits, holds a while' },
+    low: { key: 'underdog', name: 'Underdog', line: 'Below its class on both' },
+  },
+}
+
+/**
+ * What a fighter is for, in a word, from its DPS and survival grades.
+ *
+ * Both grades measure the fighter against its own class, so the role does
+ * too: a Wall arcanist is sturdy for an arcanist, not against every class.
+ */
+export function roleOf(dpsGrade: StatGrade | null, survivalGrade: StatGrade | null): Role {
+  return ROLES[band3(dpsGrade)][band3(survivalGrade)]
+}

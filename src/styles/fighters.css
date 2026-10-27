@@ -3593,3 +3593,184 @@ h2.drost__bname {
     height: 12px;
   }
 }
+
+/*
+ * The Combat view: the fighter's role among its own class in a word, the four
+ * figures behind it tinted by their grades, and the score badge at the end.
+ */
+.drost__row.is-view > .drost__role {
+  grid-row: 2;
+  grid-column: 1;
+  align-self: center;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 9px 18px;
+  min-width: 0;
+}
+.drost__rolewho {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+.drost__rolewho > small {
+  font-family: var(--font-display);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+.drost__rolename {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  min-width: 0;
+  white-space: nowrap;
+}
+.drost__rolename > b {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 900;
+  color: #dfe6f3;
+}
+.drost__rolename > span {
+  overflow: hidden;
+  font-size: 13px;
+  color: #c5cee0;
+  text-overflow: ellipsis;
+}
+.drost__rolename.is-powerhouse > b {
+  color: #ffd979;
+}
+.drost__rolename.is-striker > b {
+  color: #ffb35c;
+}
+.drost__rolename.is-glasscannon > b {
+  color: #ff9aa4;
+}
+.drost__rolename.is-bulwark > b,
+.drost__rolename.is-wall > b {
+  color: #8fd3ff;
+}
+.drost__rolename.is-daredevil > b {
+  color: #e9a6ff;
+}
+.drost__rolename.is-lightweight > b,
+.drost__rolename.is-underdog > b {
+  color: #a8b2c6;
+}
+.drost__roletiles {
+  grid-column: 1;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) minmax(0, 1.45fr);
+  gap: 6px;
+  min-width: 0;
+}
+.drost__roletiles > span {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+  padding: 6px 9px;
+  border-radius: 9px;
+  background: rgb(255 255 255 / 4%);
+}
+.drost__roletiles > span.is-up {
+  background: rgb(61 220 132 / 9%);
+  box-shadow: inset 0 0 0 1px rgb(61 220 132 / 26%);
+}
+.drost__roletiles > span.is-down {
+  background: rgb(255 90 106 / 9%);
+  box-shadow: inset 0 0 0 1px rgb(255 90 106 / 26%);
+}
+.drost__roletiles small {
+  font-family: var(--font-display);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+.drost__roletiles b {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  overflow: hidden;
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+.drost__roletiles b.is-text {
+  display: block;
+  font-family: var(--font-body);
+  font-size: 12.5px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+}
+.drost__badge.drost__badge--role {
+  grid-row: 1 / span 2;
+  grid-column: 2;
+  align-self: center;
+  width: 70px;
+  height: 82px;
+  padding-bottom: 5px;
+}
+.drost__badge--role > b {
+  font-size: 24px;
+}
+.drost__badge--role > small {
+  font-size: 8.5px;
+}
+/* Stacked: the role over its line, the four figures two by two, the badge on the default view. */
+.drost--stack .drost__row.is-view > .drost__role {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 7px;
+}
+.drost--stack .drost__badge--role {
+  display: none;
+}
+.drost--stack .drost__rolename {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0;
+}
+.drost--stack .drost__rolename > b {
+  font-size: 16px;
+}
+.drost--stack .drost__rolename > span {
+  font-size: 12px;
+}
+.drost--stack .drost__roletiles {
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+}
+.drost--stack .drost__roletiles > span {
+  padding: 4px 7px;
+}
+.drost--stack .drost__roletiles small {
+  font-size: 7.5px;
+  letter-spacing: 0.08em;
+}
+.drost--stack .drost__roletiles b {
+  font-size: 12px;
+}
+.drost--stack .drost__roletiles b.is-text {
+  font-size: 11.5px;
+}
+.drost--stack .drost__roletiles > span {
+  padding: 3px 7px;
+}
+.drost--stack .drost__roletiles small {
+  line-height: 11px;
+}
+.drost--stack .drost__roletiles b {
+  line-height: 16px;
+}
+@container fcard (max-width: 320px) {
+  .drost--stack .drost__roletiles b.is-text {
+    font-size: 10.5px;
+  }
+  .drost--stack .drost__roletiles > span {
+    padding: 3px 5px;
+  }
+}
