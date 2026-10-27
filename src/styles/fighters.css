@@ -2827,6 +2827,7 @@
 }
 .drost--phone .drost__num {
   display: grid;
+  justify-content: center;
   justify-items: center;
   gap: 1px;
   padding: 4px 0 5px;
@@ -2856,11 +2857,17 @@
   display: none;
 }
 .drost--phone .drost__num > b {
+  position: relative;
   font-size: 14px;
 }
+/* The number sits on the tile's centre line, under its name; the grade hangs off its right. */
 .drost--phone .drost__num .drost__grade {
-  width: 10px;
-  height: 12px;
+  position: absolute;
+  left: calc(100% + 1px);
+  top: 50%;
+  width: 9px;
+  height: 11px;
+  transform: translateY(-50%);
 }
 .drost--phone .drost__abp {
   height: 21px;
@@ -2877,4 +2884,9 @@
   height: 18px;
   filter: none;
   opacity: 1;
+}
+/* Selling, the tiles are about 40px: no room to hang the grade outside a three-digit figure. */
+.drost--phone .drost__row.is-ticking .drost__num .drost__grade {
+  position: static;
+  transform: none;
 }
