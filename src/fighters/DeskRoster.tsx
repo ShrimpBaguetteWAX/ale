@@ -82,12 +82,11 @@ import { asset } from '@/assets'
  */
 
 export type Mode = 'inventory' | 'sell' | 'market'
-export type View = 'default' | 'stats' | 'res' | 'combat' | 'abilities'
+export type View = 'default' | 'stats' | 'combat' | 'abilities'
 
 export const VIEWS: [View, string][] = [
   ['default', 'Default'],
   ['stats', 'Stats'],
-  ['res', 'Res'],
   ['combat', 'Combat'],
   ['abilities', 'Abilities'],
 ]
@@ -1030,29 +1029,46 @@ export function Row({
       ) : (
         <>
           {name}
+          {/* The stats and the resistances in two columns, each a bar against the class as on the default view. */}
           {view === 'stats' && (
-            <span className="drost__cellset">
-              <span className="drost__cells drost__cells--5">
+            <span className="drost__statcols">
+              <span className="drost__bars">
                 {fig.stats.map((x) => (
-                  <span className="drost__cell" key={x.field}>
+                  <span
+                    className="drost__bar"
+                    key={x.field}
+                    title={`${STAT_NAMES[x.field]}${x.grade ? ` · ${GRADE_LABEL[x.grade]}` : ''}`}
+                  >
                     <small>
                       <img className="drost__si" src={statIcon(x.field)} alt="" />
-                      {STAT_NAMES[x.field]}
+                      <span className="drost__lname">{STAT_NAMES[x.field]}</span>
+                      <span className="drost__sname">{STAT_SHORT[x.field]}</span>
                     </small>
+                    <span className={`drost__track is-${x.grade ?? 'none'}`}>
+                      <i style={{ width: `${GRADE_REACH[x.grade ?? 'middle'] * 100}%` }} />
+                    </span>
                     <b>
                       {x.value}
                       <Grade grade={x.grade} />
+                      {x.spread > 0 && <em>±{x.spread}</em>}
                     </b>
-                    {x.spread > 0 && <em>±{x.spread}</em>}
                   </span>
                 ))}
               </span>
-              <span className="drost__cells drost__cells--6 drost__cells--res">
+              <span className="drost__bars drost__bars--res">
                 {fig.res.map((x) => (
-                  <span className="drost__cell" key={x.field} title={`${x.el} resistance`}>
+                  <span
+                    className="drost__bar"
+                    key={x.field}
+                    title={`${cap(x.el)} resistance${x.grade ? ` · ${GRADE_LABEL[x.grade]}` : ''}`}
+                  >
                     <small>
-                      <img className="drost__ei" src={elementIcon(x.el)} alt={x.el} />
+                      <img className="drost__ei" src={elementIcon(x.el)} alt="" />
+                      <span className="drost__lname">{x.el}</span>
                     </small>
+                    <span className={`drost__track is-${x.grade ?? 'none'}`}>
+                      <i style={{ width: `${GRADE_REACH[x.grade ?? 'middle'] * 100}%` }} />
+                    </span>
                     <b>
                       {x.value}
                       <Grade grade={x.grade} />
@@ -1060,21 +1076,6 @@ export function Row({
                   </span>
                 ))}
               </span>
-            </span>
-          )}
-          {view === 'res' && (
-            <span className="drost__cells drost__cells--6">
-              {fig.res.map((x) => (
-                <span className="drost__cell" key={x.field} title={`${x.el} resistance`}>
-                  <small>
-                    <img className="drost__ei" src={elementIcon(x.el)} alt={x.el} />
-                  </small>
-                  <b>
-                    {x.value}
-                    <Grade grade={x.grade} />
-                  </b>
-                </span>
-              ))}
             </span>
           )}
           {view === 'combat' && (

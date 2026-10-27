@@ -2736,7 +2736,6 @@
   grid-column: 1;
 }
 .drost__row.is-view > .drost__cells,
-.drost__row.is-view > .drost__cellset,
 .drost__row.is-view > .drost__names {
   grid-row: 2;
   grid-column: 1;
@@ -2752,11 +2751,6 @@
 }
 .drost--stack .drost__row.is-view.is-aside {
   grid-template-columns: minmax(0, 1fr);
-}
-.drost__row.is-view > .drost__cellset {
-  display: grid;
-  gap: 6px;
-  min-width: 0;
 }
 .drost__row.is-view > .drost__names {
   gap: 5px;
@@ -3502,4 +3496,100 @@ h2.drost__bname {
 }
 .rsheet .drost__abitem > p {
   font-size: 12px;
+}
+
+/*
+ * The Stats view: the stats and the resistances in two columns, each a bar
+ * against the class as on the default view, the stats with their range.
+ */
+.drost__row.is-view > .drost__statcols {
+  grid-row: 2;
+  grid-column: 1;
+  align-self: center;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 0 26px;
+  min-width: 0;
+}
+.drost__statcols > .drost__bars {
+  gap: 5px;
+  align-content: center;
+}
+.drost__statcols .drost__bar {
+  grid-template-columns: 86px minmax(0, 1fr) 70px;
+  gap: 9px;
+}
+.drost__statcols .drost__bars--res .drost__bar {
+  grid-template-columns: 72px minmax(0, 1fr) 50px;
+}
+.drost__statcols .drost__bar > small .drost__ei {
+  width: 12px;
+  height: 12px;
+}
+.drost__statcols .drost__bar > b {
+  font-size: 13px;
+  line-height: 15px;
+}
+.drost__statcols .drost__bar > b em {
+  margin-left: 2px;
+  font-family: var(--font-body);
+  font-size: 10.5px;
+  font-style: normal;
+  font-weight: 700;
+  color: var(--text-dim);
+}
+.drost__statcols .drost__sname {
+  display: none;
+}
+/* Stacked: the short names, the element icons alone, no range. */
+.drost--stack .drost__row.is-view > .drost__statcols {
+  gap: 0 10px;
+}
+.drost--stack .drost__statcols > .drost__bars {
+  gap: 4px;
+}
+.drost--stack .drost__statcols .drost__bar {
+  grid-template-columns: 33px minmax(0, 1fr) 40px;
+  gap: 4px;
+}
+.drost--stack .drost__statcols .drost__bars--res .drost__bar {
+  grid-template-columns: 13px minmax(0, 1fr) 44px;
+}
+.drost--stack .drost__statcols .drost__lname {
+  display: none;
+}
+.drost--stack .drost__statcols .drost__sname {
+  display: inline;
+}
+.drost--stack .drost__statcols .drost__bar > small .drost__si {
+  display: none;
+}
+.drost--stack .drost__statcols .drost__bar > b {
+  gap: 2px;
+  font-size: 11.5px;
+}
+.drost--stack .drost__statcols .drost__bars--res .drost__bar > b {
+  font-size: 10.5px;
+}
+.drost--stack .drost__statcols .drost__bar > b em {
+  display: none;
+}
+.drost--stack .drost__statcols .drost__grade {
+  width: 8px;
+  height: 10px;
+}
+/* In a card narrower than a phone's list (the market's), the stat's icon stands for its name. */
+@container fcard (max-width: 320px) {
+  .drost--stack .drost__statcols .drost__bar,
+  .drost--stack .drost__statcols .drost__bars--res .drost__bar {
+    grid-template-columns: 12px minmax(0, 1fr) 38px;
+  }
+  .drost--stack .drost__statcols .drost__sname {
+    display: none;
+  }
+  .drost--stack .drost__statcols .drost__bar > small .drost__si {
+    display: block;
+    width: 12px;
+    height: 12px;
+  }
 }
