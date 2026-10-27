@@ -841,7 +841,7 @@
 /* What can be collected: gold, one a row, the button at the end. */
 .dbrief__tile {
   display: grid;
-  grid-template-columns: 30px minmax(0, 1fr) auto;
+  grid-template-columns: 52px minmax(0, 1fr) auto;
   align-items: center;
   gap: 0 var(--sp-3);
   padding: 11px 12px 11px 13px;
@@ -849,9 +849,14 @@
   background: linear-gradient(110deg, rgb(246 168 0 / 15%), rgb(8 14 28 / 74%) 60%);
   box-shadow: inset 0 0 0 1px rgb(246 168 0 / 32%);
 }
+/* In the menu's socket, a size up, so the Briefing and the menu read as one set. */
 .dbrief__tileicon {
-  width: 30px;
-  height: 30px;
+  width: 52px;
+  height: 52px;
+  padding: 7px;
+  border-radius: 14px;
+  background: rgb(255 255 255 / 6%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 8%);
   object-fit: contain;
 }
 .dbrief__tiletext {
@@ -999,17 +1004,23 @@
 /* What today holds, and the slower things: a card, one way in. */
 .dbrief__card {
   display: grid;
-  grid-template-columns: 26px minmax(0, 1fr);
-  gap: 6px 10px;
+  grid-template-columns: 48px minmax(0, 1fr);
+  gap: 6px 12px;
   align-items: center;
   padding: 11px 12px;
   border-radius: 12px;
   background: rgb(8 14 28 / 72%);
   box-shadow: inset 0 0 0 1px rgb(255 255 255 / 10%);
 }
+/* The icon in the menu's socket, beside both the title and its line. */
 .dbrief__card > img {
-  width: 26px;
-  height: 26px;
+  grid-row: span 2;
+  width: 48px;
+  height: 48px;
+  padding: 6px;
+  border-radius: 12px;
+  background: rgb(255 255 255 / 6%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 8%);
   object-fit: contain;
 }
 .dbrief__card > b {
