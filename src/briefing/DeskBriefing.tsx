@@ -137,7 +137,7 @@ export function DeskBriefing({
         <div className="dbrief__warns">
           {warns.map((item) => (
             <div className="dbrief__warn" key={item.id}>
-              <img src={asset(item.icon)} alt="" />
+              <img className={iconClass(item.icon)} src={asset(item.icon)} alt="" />
               <span className="dbrief__warntext">
                 <b>{item.title}</b>
                 {item.figure && <small>{item.figure}</small>}
@@ -216,11 +216,23 @@ function LaneCap({ title, count }: { title: string; count?: number }) {
 }
 
 /** A thing to collect: icon, the amount large, its button at the end. */
+/*
+   Icons drawn edge to edge (the coins, the medal, the Legend badge) sit a
+   little deeper in the socket, so their artwork comes out the size of the
+   menu icons, which leave a margin of their own.
+*/
+const FULL_BLEED = /\/icons\/(tlm|shards|energy|credits|gems|medal|account-legend|build)\./
+const iconClass = (src: string, base = '') => (FULL_BLEED.test(src) ? `${base} is-full`.trim() : base) || undefined
+
 function WaitTile({ item, meters }: { item: BriefItem; meters?: BriefMeter[] }) {
   const t = tileOf(item)
   return (
     <article className="dbrief__tile">
-      <img className="dbrief__tileicon" src={asset(item.id === 'mine' ? '/assets/icons/menu/rewards.svg' : item.icon)} alt="" />
+      <img
+        className={iconClass(item.id === 'mine' ? '' : item.icon, 'dbrief__tileicon')}
+        src={asset(item.id === 'mine' ? '/assets/icons/menu/rewards.svg' : item.icon)}
+        alt=""
+      />
       <span className="dbrief__tiletext">
         {t.amount && (
           <span className="dbrief__amount mono">
@@ -310,7 +322,7 @@ function LaneCard({ item, quiet }: { item: BriefItem; quiet?: boolean }) {
   const note = cardLine(item)
   return (
     <article className={`dbrief__card${done ? ' is-done' : ''}`}>
-      <img src={asset(item.icon)} alt="" />
+      <img className={iconClass(item.icon)} src={asset(item.icon)} alt="" />
       <b>{item.title}</b>
       <div className="dbrief__cardfoot">
         <small className={item.figure?.endsWith(' left') ? 'is-hot' : undefined}>{note}</small>
