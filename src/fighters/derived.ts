@@ -262,3 +262,24 @@ const ROLES: Record<Band3, Record<Band3, Role>> = {
 export function roleOf(dpsGrade: StatGrade | null, survivalGrade: StatGrade | null): Role {
   return ROLES[band3(dpsGrade)][band3(survivalGrade)]
 }
+
+/* The nine in reading order: DPS high to low, survival high to low within each. */
+export const ROLE_LIST: Role[] = (['high', 'mid', 'low'] as Band3[]).flatMap((d) =>
+  (['high', 'mid', 'low'] as Band3[]).map((v) => ROLES[d][v]),
+)
+
+/**
+ * The role from a fighter's rolled stats, graded as the card grades them:
+ * health and damage after age, never level.
+ */
+export function roleOfStats(
+  stats: Record<string, number>,
+  template: ClassTemplate | undefined,
+  ageFactor: number,
+): Role {
+  const mid = (field: string) => (stats[`${field}_min`] + stats[`${field}_max`]) / 2
+  return roleOf(
+    gradeDamagePerSecond(mid('damage') * ageFactor, mid('attackspeed'), template),
+    gradeSurvival(mid('health') * ageFactor, meanResistance(stats), template),
+  )
+}

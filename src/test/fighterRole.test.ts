@@ -28,3 +28,13 @@ describe('roleOf', () => {
     ])
   })
 })
+
+describe('the role filter', () => {
+  it('counts as one active filter and clears with the rest', async () => {
+    const { countActiveFilters, isFilterActive, EMPTY_FILTER } = await import('@/dungeon/filters')
+    expect(isFilterActive(EMPTY_FILTER)).toBe(false)
+    const f = { ...EMPTY_FILTER, roles: ['wall' as const, 'glasscannon' as const] }
+    expect(isFilterActive(f)).toBe(true)
+    expect(countActiveFilters(f)).toBe(1)
+  })
+})

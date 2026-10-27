@@ -2,7 +2,7 @@ import type { RosterFighter } from './types'
 import type { Matchup } from '@/fight/matchup'
 import { fighterAvailable } from './rules'
 import { ageBonus, battleFactor } from '@/fighters/rules'
-import { combatFigures } from '@/fighters/derived'
+import { combatFigures, roleOfStats, type RoleKey } from '@/fighters/derived'
 import {
   STAT_SCALE,
   gradeAged,
@@ -212,6 +212,11 @@ export interface RosterFilter {
    * vocabulary the player writes themselves.
    */
   markers: string[]
+  /**
+   * Roles (Glass cannon, Wall, …), each read against the fighter's own class.
+   * Empty means any. Optional, so the pickers that never offer it are unchanged.
+   */
+  roles?: RoleKey[]
   classname: string
   racename: string
   status: Status
@@ -256,6 +261,7 @@ export function isFilterActive(f: RosterFilter): boolean {
   return (
     f.elements.length > 0 ||
     f.markers.length > 0 ||
+    (f.roles?.length ?? 0) > 0 ||
     f.classname !== '' ||
     f.racename !== '' ||
     f.status !== 'All' ||
@@ -335,6 +341,15 @@ export function applyFilter(
       return false
     }
     if (filter.markers?.length && !filter.markers.includes(f.marker ?? '')) return false
+    /* A role is a grade against the class, so without the class bands nothing is hidden. */
+    if (filter.roles?.length && templates) {
+      const role = roleOfStats(
+        f.stats as unknown as Record<string, number>,
+        templates.get(f.classname),
+        battleFactor(f, 1, ageDecay, now).age,
+      )
+      if (!filter.roles.includes(role.key)) return false
+    }
     if (filter.classname && f.classname !== filter.classname) return false
     if (filter.racename && f.racename !== filter.racename) return false
     if (!matchesStatus(f, filter.status, now)) return false
@@ -520,6 +535,7 @@ export function countActiveFilters(f: RosterFilter): number {
   return (
     (f.elements.length > 0 ? 1 : 0) +
     (f.markers.length > 0 ? 1 : 0) +
+    ((f.roles?.length ?? 0) > 0 ? 1 : 0) +
     (f.classname !== '' ? 1 : 0) +
     (f.racename !== '' ? 1 : 0) +
     (f.status !== 'All' ? 1 : 0) +

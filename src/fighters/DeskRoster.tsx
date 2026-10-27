@@ -37,6 +37,7 @@ import {
   gradeDamagePerSecond,
   gradeSurvival,
   meanResistance,
+  ROLE_LIST,
   roleOf,
 } from '@/fighters/derived'
 import { listable, MAX_BULK_LISTINGS, processingFee, sellerPayout } from '@/market/rules'
@@ -1899,6 +1900,24 @@ function FilterFields(p: DeskRosterProps) {
           </div>
         )}
         <div>
+          {/* Each role is read against the fighter's own class, as the Combat view says. */}
+          <span className="drost__fhead">Role · within its class</span>
+          <div className="filters__roles" role="group" aria-label="Role">
+            {ROLE_LIST.map((r) => (
+              <button
+                type="button"
+                key={r.key}
+                className={`rolebtn is-${r.key}`}
+                aria-pressed={(p.filter.roles ?? []).includes(r.key)}
+                onClick={() => set({ roles: toggle(p.filter.roles ?? [], r.key) })}
+                title={`${r.line}, for its class`}
+              >
+                {r.name}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div>
           <span className="drost__fhead">Roster</span>
           <label className="drost__sw">
             <span>
@@ -1962,6 +1981,12 @@ function ActiveChips(p: DeskRosterProps) {
         </>
       ),
       drop: () => set({ markers: f.markers.filter((x) => x !== m) }),
+    })
+  for (const r of f.roles ?? [])
+    chips.push({
+      key: `role-${r}`,
+      body: ROLE_LIST.find((x) => x.key === r)?.name ?? r,
+      drop: () => set({ roles: (f.roles ?? []).filter((x) => x !== r) }),
     })
   if (f.classname) chips.push({ key: 'class', body: cap(f.classname), drop: () => set({ classname: '' }) })
   if (f.racename) chips.push({ key: 'race', body: cap(f.racename), drop: () => set({ racename: '' }) })
