@@ -6278,3 +6278,38 @@ button.combatcard--empty:hover {
   flex-wrap: wrap;
   max-width: 100%;
 }
+/* The phone: the same panel in the sheet, under its filter bar, one column; the foot stays in reach at the bottom. */
+.picker--sheet > .pickfilters--sheet {
+  flex: none;
+  padding: 12px;
+  border-radius: 14px;
+  background: rgb(255 255 255 / 3%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 10%);
+}
+.pickfilters--sheet > .drost__pfoot {
+  position: sticky;
+  bottom: -12px;
+  flex-wrap: wrap;
+  margin: 0 -12px -12px;
+  padding: 10px 12px 12px;
+  border-radius: 0 0 14px 14px;
+  background: rgb(10 16 32 / 96%);
+}
+.pickfilters--sheet > .drost__pfoot .drost__note {
+  display: none;
+}
+.pickfilters--sheet .drost__vfloors {
+  grid-template-columns: 1fr;
+}
+/*
+ * The phone's roster sheet draws its fields, buttons and toggles in quiet
+ * white, as My Fighters on a phone does, keeping purple for what is switched
+ * on: the game's purple edges on every field read as the old style.
+ */
+.picker--sheet {
+  --ctl-line: rgb(255 255 255 / 16%);
+  --ctl-edge: rgb(255 255 255 / 12%);
+  --ctl-hover: rgb(255 255 255 / 34%);
+  --ctl-well: rgb(0 0 0 / 30%);
+  --ctl-hover-fill: rgb(255 255 255 / 6%);
+}

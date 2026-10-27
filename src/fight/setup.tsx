@@ -66,6 +66,7 @@ import {
   gradeDamagePerSecond,
   gradeSurvival,
   meanResistance,
+  ROLE_LIST,
 } from '@/fighters/derived'
 import { useConfigStore } from '@/state/useConfig'
 import { formatDecimals, NUM_LOCALE } from '@/format'
@@ -1165,6 +1166,8 @@ export function RosterFilters({
     density?: PickDensity
     onDensity?: (density: PickDensity) => void
     sort?: { value: string; options: { value: string; label: string }[]; onChange: (value: string) => void }
+    /** The filter panel itself, in place of the old fields when Filter is open; as `bar.filters`. */
+    filters?: (close: () => void) => ReactNode
   }
   /**
    * Drawn as My Fighters' desktop toolbar: what the cards show on the left,
@@ -1401,7 +1404,8 @@ export function RosterFilters({
     )}
     {drop && !folded && <div className="filters__dropshade" onClick={() => setOpen(false)} />}
     {bar?.filters && !folded && bar.filters(() => setOpen(false))}
-    {(!drop || !folded) && !bar?.filters && (
+    {sheet?.filters && !folded && sheet.filters(() => setOpen(false))}
+    {(!drop || !folded) && !bar?.filters && !sheet?.filters && (
     <div className={drop ? 'filters__drop' : 'filters__inpage'}>
     <div className={`filters${folded ? ' filters--folded' : ''}${sheet ? ' filters--sheet' : ''}`}>
 
@@ -1682,6 +1686,7 @@ function filterSummary(f: RosterFilter): string {
   const parts: string[] = []
   if (f.markers.length) parts.push(f.markers.length === 1 ? `${cap(f.markers[0] || 'Unmarked')} marker` : `${f.markers.length} markers`)
   if (f.elements.length) parts.push(f.elements.map(cap).join(', '))
+  if (f.roles?.length) parts.push(f.roles.length === 1 ? (ROLE_LIST.find((r) => r.key === f.roles![0])?.name ?? 'Role') : `${f.roles.length} roles`)
   if (f.classname) parts.push(f.classname)
   if (f.racename) parts.push(f.racename)
   if (f.status !== 'All') parts.push(f.status)
@@ -1956,6 +1961,7 @@ export function FighterGrid({
     rememberDensity(next)
   }
 
+  const classes = useConfigStore((st) => st.classes)
   const shown = useMemo(
     () =>
       roster
@@ -1964,13 +1970,14 @@ export function FighterGrid({
             filter,
             ageDecay,
             undefined,
-            undefined,
+            /* The class bands: the role and the quality floors are graded against them, and without them hide nothing. */
+            classes,
             matchups,
             levelMod,
             atLevelOne,
           )
         : [],
-    [roster, filter, ageDecay, matchups, levelMod, atLevelOne],
+    [roster, filter, ageDecay, classes, matchups, levelMod, atLevelOne],
   )
 
   /* Reported after render, never during one, so the filters redraw with the

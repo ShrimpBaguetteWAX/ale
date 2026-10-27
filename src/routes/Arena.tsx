@@ -920,6 +920,24 @@ export default function Arena() {
     return <Loading label="Entering the arena" />
   }
 
+  /* My Fighters' filter panel, with what only a fight asks under "Against this team". */
+  const filterPanel = (close: () => void, className: string) => (
+    <FilterDrop
+      className={className}
+      fields={{
+        roster: roster ?? [],
+        filter,
+        onFilter: setFilter,
+        atLevelOne,
+        onAtLevelOne: setAtLevelOne,
+        versus: enemies.length > 0 && <VersusFloors filter={filter} onChange={setFilter} labelClass="drost__fhead" />,
+      }}
+      matching={shownCount?.shown ?? 0}
+      onClear={() => setFilter({ ...EMPTY_FILTER, sort: filter.sort })}
+      onClose={close}
+    />
+  )
+
   return (
     <div className="dungeon arena">
       <img className="dungeon__art" src={asset("/assets/background/bg-arena.png")} alt="" />
@@ -1380,32 +1398,22 @@ export default function Arena() {
                 atLevelOne={atLevelOne}
                 onAtLevelOne={setAtLevelOne}
                 count={shownCount}
-                sheet={phone ? { density: sheetDensity, onDensity: chooseSheetDensity } : undefined}
+                sheet={
+                  phone
+                    ? {
+                        density: sheetDensity,
+                        onDensity: chooseSheetDensity,
+                        filters: (close) => filterPanel(close, 'drost__fsheet pickfilters pickfilters--sheet'),
+                      }
+                    : undefined
+                }
                 bar={
                   phone
                     ? undefined
                     : {
                         lead: deskDensity === 'full' && <PickViewSwitch view={pickView} onChange={setPickView} />,
                         tail: <PickDensitySwitch density={deskDensity} onChange={chooseDeskDensity} />,
-                        /* My Fighters' filter panel, with what only a fight asks under "Against this team". */
-                        filters: (close) => (
-                          <FilterDrop
-                            className="drost__pop--filters pickfilters"
-                            fields={{
-                              roster: roster ?? [],
-                              filter,
-                              onFilter: setFilter,
-                              atLevelOne,
-                              onAtLevelOne: setAtLevelOne,
-                              versus: enemies.length > 0 && (
-                                <VersusFloors filter={filter} onChange={setFilter} labelClass="drost__fhead" />
-                              ),
-                            }}
-                            matching={shownCount?.shown ?? 0}
-                            onClear={() => setFilter({ ...EMPTY_FILTER, sort: filter.sort })}
-                            onClose={close}
-                          />
-                        ),
+                        filters: (close) => filterPanel(close, 'drost__pop--filters pickfilters'),
                       }
                 }
               />

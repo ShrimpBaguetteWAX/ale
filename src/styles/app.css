@@ -173,9 +173,11 @@
   /*
    * ...at about half the strength, so the glass and the map come through
    * them the way they come through behind the difficulty and the weather.
-   * Still dark enough to read a long list on.
+   * Still dark enough to read a long list on. A sheet keeps its own solid
+   * ground: it lies over the page, and the page showing through it made the
+   * fighter list unreadable.
    */
-  .shell:not(.shell--flush) > .main .panel:not(.sheet__panel),
+  .shell:not(.shell--flush) > .main .panel:not(.sheet__panel):not(.picker--sheet),
   .shell:not(.shell--flush) > .main .versus,
   .shell__leaving .panel,
   .shell__leaving .versus {
@@ -1563,7 +1565,7 @@ a.res {
     --surface-3: rgb(16 24 44 / 92%);
     --line: rgb(255 255 255 / 11%);
   }
-  .shell:not(.shell--flush) > .main .panel:not(.sheet__panel),
+  .shell:not(.shell--flush) > .main .panel:not(.sheet__panel):not(.picker--sheet),
   .shell:not(.shell--flush) > .main .versus {
     background: linear-gradient(180deg, rgb(10 18 34 / 42%), rgb(4 9 20 / 52%));
   }
