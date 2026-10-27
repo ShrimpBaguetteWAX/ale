@@ -2158,8 +2158,7 @@ i.mrow__arrow {
   .mdesk.mdesk--wide {
     grid-template-columns: minmax(660px, 780px) minmax(0, 1fr) minmax(260px, 300px);
   }
-  .mdesk__list:not(.drost--stack) .drost__row.is-ring.is-aside,
-  .mdesk__list:not(.drost--stack) .drost__colhead.is-aside {
+  .mdesk__list:not(.drost--stack) .drost__row.is-ring.is-aside {
     grid-template-columns: 72px minmax(0, 1fr) repeat(5, var(--col)) 104px;
   }
   /* The price and the clock beside the whole card, not just its first line. */

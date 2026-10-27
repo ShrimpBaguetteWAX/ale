@@ -1020,20 +1020,17 @@
  * reads like a table, and the most damage is a glance down one column. A size
  * up from the phone's rows too: these were read at arm's length.
  */
-.drost__row.is-ring,
-.drost__colhead {
+.drost__row.is-ring {
   --col: 56px;
   display: grid;
   grid-template-columns: 72px minmax(0, 1fr) repeat(5, var(--col));
   gap: 12px;
   align-items: center;
 }
-.drost__row.is-ring.is-ticking,
-.drost__colhead.is-ticking {
+.drost__row.is-ring.is-ticking {
   grid-template-columns: 18px 72px minmax(0, 1fr) repeat(5, var(--col));
 }
-.drost__row.is-ring.is-sellcol,
-.drost__colhead.is-sellcol {
+.drost__row.is-ring.is-sellcol {
   grid-template-columns: 18px 72px minmax(0, 1fr) repeat(5, var(--col)) 72px;
 }
 .drost__row.is-ring {
@@ -1052,31 +1049,9 @@
 .drost__row.is-ring.is-ticking > .drost__abn {
   grid-column: 3 / -1;
 }
-.drost__colhead {
-  padding: 10px 14px 8px 10px;
-  box-shadow: inset 0 -1px 0 rgb(255 255 255 / 8%);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--text-faint);
-}
-.drost__colhead > span {
-  display: inline-flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 4px;
-  white-space: nowrap;
-}
-.drost__colhead > .drost__colname {
-  justify-content: flex-start;
-}
-.drost__colhead .drost__si {
-  opacity: 0.55;
-}
+
 @container drostlist (max-width: 640px) {
-  .drost__row.is-ring,
-  .drost__colhead {
+  .drost__row.is-ring {
     --col: 46px;
     gap: 8px;
   }
@@ -1199,32 +1174,58 @@
   height: 11px;
   opacity: 0.7;
 }
+/*
+ * Each stat a small tile: its icon and short name over the figure, the grade
+ * hanging off the figure's right. The same on a desktop's row as on a phone's
+ * card, so every number is named where it stands and no column head is needed.
+ */
 .drost__num {
-  display: inline-flex;
-  align-items: center;
-  justify-content: flex-end;
+  display: grid;
+  justify-content: center;
+  justify-items: center;
   gap: 2px;
+  padding: 5px 0 6px;
+  border-radius: 8px;
+  background: rgb(255 255 255 / 4%);
   font-family: var(--font-display);
   font-size: 15px;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
 }
-.drost__num .drost__grade {
-  width: 12px;
-  height: 14px;
-}
-.drost__num > b {
+.drost__numhead {
   display: inline-flex;
   align-items: center;
-  gap: 2px;
+  gap: 3px;
+  font-family: var(--font-body);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.drost__numhead .drost__si {
+  height: 10px;
+  opacity: 0.65;
+}
+.drost__num > b {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
   font: inherit;
 }
-.drost__numhead {
-  display: none;
+.drost__num .drost__grade {
+  position: absolute;
+  left: calc(100% + 1px);
+  top: 50%;
+  width: 10px;
+  height: 12px;
+  transform: translateY(-50%);
 }
-/* Taunt is not graded; keep its figure in line with the graded ones. */
-.drost__num:not(:has(.drost__grade)) {
-  padding-right: 14px;
+/* A narrow list's tiles are about 46px: the word alone fits. */
+@container drostlist (max-width: 640px) {
+  .drost__numhead .drost__si {
+    display: none;
+  }
 }
 .is-ring .drost__pay .drost__cr {
   font-size: 13px;
@@ -2702,35 +2703,20 @@
  * the list's one head, the abilities by name — and everything is a size up
  * from the old phone row.
  */
-.drost--stack .drost__row.is-ring,
-.drost--stack .drost__colhead {
+.drost--stack .drost__row.is-ring {
   /* The portrait column is wider than the ring: room between it and the lines beside it. */
   grid-template-columns: 74px repeat(5, minmax(0, 1fr));
   column-gap: 6px;
 }
 .drost--stack .drost__row.is-ring.is-ticking,
-.drost--stack .drost__colhead.is-ticking,
-.drost--stack .drost__row.is-ring.is-sellcol,
-.drost--stack .drost__colhead.is-sellcol {
+.drost--stack .drost__row.is-ring.is-sellcol {
   grid-template-columns: 20px 74px repeat(5, minmax(0, 1fr));
 }
 .drost--stack .drost__row.is-ring {
   row-gap: 6px;
   padding: 10px 10px 10px 8px;
 }
-.drost--stack .drost__colhead {
-  padding: 8px 10px 6px 8px;
-  font-size: 10px;
-  letter-spacing: 0.04em;
-}
-.drost--stack .drost__colhead .drost__colname,
-.drost--stack .drost__colhead.is-sellcol > span:last-child {
-  display: none;
-}
-/* Words only on a phone: with a tick column the five heads have about 40px each. */
-.drost--stack .drost__colhead .drost__si {
-  display: none;
-}
+
 .drost--stack .drost__row.is-ring > .drost__ring,
 .drost--stack .drost__row.is-ring > .drost__tick {
   grid-row: 1 / span 3;
@@ -2811,14 +2797,7 @@
   padding: 2px 7px;
   font-size: 10px;
 }
-/*
- * Every figure named in place: on a phone the column head scrolled away and
- * left five bare numbers, so each stat is a small tile with its icon and
- * word over the number, as in the fighter's panel.
- */
-.drost--stack .drost__colhead {
-  display: none;
-}
+
 .drost--stack .drost__row.is-ring {
   column-gap: 4px;
 }

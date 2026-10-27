@@ -57,7 +57,7 @@ import { addAuction, bidAuction, buyOffer, cancelAuction } from '@/wharf/actions
 import { SACRIFICE_ABILITY } from '@/ascension/rules'
 import { asset } from '@/assets'
 import { FighterRow, ListingBody } from '@/market/FighterRows'
-import { ColHead, Row, figuresOf } from '@/fighters/DeskRoster'
+import { Row, figuresOf } from '@/fighters/DeskRoster'
 
 /**
  * The fighter market.
@@ -341,8 +341,6 @@ export default function Market() {
       wide={wide}
     />
   )
-  /* The column heads, over a wide board's rows. */
-  const colHead = wide ? <ColHead key="head" end="Price" /> : null
 
   const show = useCallback(
     (listing: Auction | InstantOffer) => {
@@ -479,10 +477,7 @@ export default function Market() {
                               </span>
                               <small>{note}</small>
                             </p>
-                            <div className="mrows">
-                              {colHead}
-                              {ls.map(deskRow)}
-                            </div>
+                            <div className="mrows">{ls.map(deskRow)}</div>
                           </Fragment>
                         ),
                     )
@@ -498,7 +493,7 @@ export default function Market() {
                           : 'Nothing is on sale at a fixed price. These only appear when an auction ends unsold and the seller chose to keep it listed.'
                       }
                     >
-                      {board.length > 0 && colHead ? [colHead, ...board.map(deskRow)] : board.map(deskRow)}
+                      {board.map(deskRow)}
                     </PhoneRows>
                   </>
                 )
@@ -1814,7 +1809,6 @@ export function SellTab({
 }) {
   const minStart = Number(config?.gems_min_start_bid ?? 0)
   const [pickedId, setPickedId] = useState<number | null>(null)
-  const wide = useContext(WideBoard)
 
   /*
      Its own filter, not the board’s.
@@ -2048,7 +2042,6 @@ export function SellTab({
             <p className="faint">No fighter you can sell matches these filters.</p>
           ) : (
             <div className="mrows">
-              {wide && <ColHead end=" " />}
               {shown.map((f) => (
                 <OwnCard key={f.fighter_id} f={f} picked={f === deskPicked} onPick={() => setPickedId(f.fighter_id)} />
               ))}
