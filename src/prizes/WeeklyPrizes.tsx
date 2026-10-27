@@ -23,7 +23,7 @@ export function useWeeklyPrizes(): WeeklyPrizes | undefined {
 const TOKENS = [
   { key: 'tlm', label: 'TLM', icon: '/assets/icons/tlm.svg' },
   { key: 'shards', label: 'Shards', icon: '/assets/icons/shards.svg' },
-  { key: 'wax', label: 'WAX', icon: '/assets/icons/wax-coin.png' },
+  { key: 'wax', label: 'WAX', icon: '/assets/icons/wax-coin.webp' },
 ] as const
 
 /**

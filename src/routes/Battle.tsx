@@ -55,7 +55,7 @@ import { MineToast, type MineToastState } from '@/pools/MineToast'
 import { NUM_LOCALE } from '@/format'
 import { rememberWinPower } from '@/briefing/winPower'
 import { GameImg } from '@/components/GameImg'
-import { asset } from '@/assets'
+import { asset, artSet } from '@/assets'
 import {
   fetchShardPools,
   fetchTlmPools,
@@ -775,7 +775,7 @@ function Arena({
 
   return (
     <div className="battle">
-      <img className="battle__art" src={asset("/assets/background/bg-fight.png")} alt="" />
+      <img className="battle__art" {...artSet('bg-fight')} alt="" />
       <div className="battle__scrim" />
 
       {!finished && (
@@ -1019,7 +1019,7 @@ function Battlefield({
       className={`bfield${wide ? ' bfield--wide' : ''}${broadcast ? ' bfield--bcast' : ''}`}
       style={
         {
-          '--bf-bg': `url('${asset('/assets/background/bg-fight.png')}')`,
+          '--bf-bg': `url('${asset('/assets/background/bg-fight.webp')}')`,
         } as React.CSSProperties
       }
     >

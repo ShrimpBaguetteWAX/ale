@@ -4,7 +4,7 @@ import { useChainQuery } from '@/chain/useChainQuery'
 import { useAction } from '@/wharf/useAction'
 import { usePhone } from '@/components/usePhone'
 import { buyMarketSale } from '@/wharf/actions'
-import { asset, ipfsImage } from '@/assets'
+import { asset, ipfsImage, ipfsPreview } from '@/assets'
 import { GameImg } from '@/components/GameImg'
 import { formatNumber } from '@/format'
 import {
@@ -607,7 +607,8 @@ function ConfirmBuy({
   return (
     <Showcase
       label={title}
-      art={ipfsImage(card.img)}
+      art={ipfsPreview(card.img) ?? ipfsImage(card.img)}
+      artFallback={ipfsImage(card.img)}
       edge={rarityEdge(card.rarity)}
       name={card.name}
       tags={<CardTags rarity={card.rarity} shine={card.shine} owned={owned} />}
@@ -643,7 +644,7 @@ function ConfirmBuy({
   )
 }
 
-const WAX_ICON = asset('/assets/icons/wax-coin.png')
+const WAX_ICON = asset('/assets/icons/wax-coin.webp')
 
 /** What the card does here, as the showcase's tiles and the line under them. */
 function cardFigures(
@@ -714,7 +715,7 @@ export function MarketGuide({ wax }: { wax: number }) {
     <aside className="cguide amk__guide" aria-label="What these cards do here">
       <section className="cguide__card is-here">
         <header className="cguide__head">
-          <img src={asset('/assets/icons/wax-coin.png')} alt="" />
+          <img src={asset('/assets/icons/wax-coin.webp')} alt="" />
           <b>Your WAX</b>
           <span className="cguide__bal mono">{balanceLabel(wax)}</span>
         </header>

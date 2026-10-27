@@ -82,7 +82,7 @@ import { OddsCentre, WinChance } from '@/fight/OddsCentre'
 import { DIRTIES, playArena } from '@/wharf/actions'
 import { settle } from '@/wharf/settle'
 import { readableError } from '@/wharf/errors'
-import { asset } from '@/assets'
+import { asset, artSet } from '@/assets'
 import { Loading } from '@/components/Loading'
 import { usePhone } from '@/components/usePhone'
 import { useSwipeToClose } from '@/components/useSwipeToClose'
@@ -940,7 +940,7 @@ export default function Arena() {
 
   return (
     <div className="dungeon arena">
-      <img className="dungeon__art" src={asset("/assets/background/bg-arena.png")} alt="" />
+      <img className="dungeon__art" {...artSet('bg-arena')} alt="" />
       <div className="dungeon__scrim" />
 
       <div className="dungeon__inner">

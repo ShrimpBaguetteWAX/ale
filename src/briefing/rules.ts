@@ -158,7 +158,7 @@ const ICON = {
   fighters: '/assets/icons/menu/sword.png',
   recruit: '/assets/markers/tavern.svg',
   lands: '/assets/icons/menu/my-land.png',
-  build: '/assets/icons/build.png',
+  build: '/assets/icons/build.webp',
   rewards: '/assets/icons/menu/rewards.png',
   legend: '/assets/icons/account-legend.svg',
   farming: '/assets/icons/menu/card.png',

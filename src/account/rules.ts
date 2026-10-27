@@ -207,7 +207,7 @@ export const CURRENCY_LABEL: Record<Currency, string> = {
 
 export const CURRENCY_ICON: Record<Currency, string> = {
   tlm: asset('/assets/icons/tlm.svg'),
-  wax: asset('/assets/icons/wax-coin.png'),
+  wax: asset('/assets/icons/wax-coin.webp'),
   shrds: asset('/assets/icons/shards.svg'),
 }
 

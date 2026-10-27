@@ -39,7 +39,7 @@ const HOVERED = '/quests'
 const rail = `
 <nav class="rail" aria-label="Game menu">
   <div class="rail__brand">
-    <a href="#"><img src="/assets/logo.png" alt="Alien Legends" width="337" height="152"></a>
+    <a href="#"><img src="/assets/logo.webp" alt="Alien Legends" width="337" height="152"></a>
   </div>
   ${NAV_ITEMS.map((item) => {
     const soon = item.soon

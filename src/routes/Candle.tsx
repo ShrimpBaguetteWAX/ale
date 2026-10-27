@@ -14,7 +14,7 @@ import { DIRTIES } from '@/wharf/actions'
 import { readableError } from '@/wharf/errors'
 import { fetchPlayerTags } from '@/chain/queries'
 import { ActionBanner } from '@/components/ActionBanner'
-import { asset } from '@/assets'
+import { artSet } from '@/assets'
 import { usePhone } from '@/components/usePhone'
 import { PhoneCandle } from '@/candle/PhoneCandle'
 import { DeskCandle } from '@/candle/DeskCandle'
@@ -243,7 +243,7 @@ export default function Candle() {
   if (phone) {
     return (
       <div className="candle candle--phone">
-        <img className="candle__art" src={asset('/assets/background/bg-candle.png')} alt="" />
+        <img className="candle__art" {...artSet('bg-candle')} alt="" />
         <div className="candle__scrim" />
         <ActionBanner error={error ?? data.error} />
         <PhoneCandle
@@ -275,7 +275,7 @@ export default function Candle() {
   */
   return (
     <div className="candle candle--desk">
-      <img className="candle__art" src={asset('/assets/background/bg-candle.png')} alt="" />
+      <img className="candle__art" {...artSet('bg-candle')} alt="" />
       <div className="candle__scrim" />
       <DeskCandle
         running={running}

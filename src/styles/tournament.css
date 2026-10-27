@@ -2942,7 +2942,7 @@
 .bcast__bg {
   position: absolute;
   inset: 0;
-  background-image: url('/assets/background/bg-fight.png');
+  background-image: url('/assets/background/bg-fight.webp');
   background-size: cover;
   background-position: center;
   filter: saturate(0.6) brightness(0.3) contrast(1.1);
@@ -5325,7 +5325,7 @@
   border-radius: 16px;
   background:
     linear-gradient(180deg, rgb(4 7 14 / 30%), rgb(4 7 14 / 92%)),
-    url('/assets/background/bg-fight.png') center / cover;
+    url('/assets/background/bg-fight.webp') center / cover;
   box-shadow: inset 0 0 0 1px rgb(246 168 0 / 40%);
 }
 .ptour__livedot {
@@ -6411,7 +6411,7 @@
   background:
     radial-gradient(70% 60% at 50% 72%, rgb(246 168 0 / 20%), transparent 70%),
     linear-gradient(180deg, rgb(4 7 14 / 35%), rgb(4 7 14 / 92%)),
-    url('/assets/background/bg-arena.png') center / cover;
+    url('/assets/background/bg-arena.webp') center / cover;
   box-shadow: inset 0 0 0 1px rgb(246 168 0 / 30%);
 }
 .ptour__spottop {
@@ -6537,7 +6537,7 @@
   background:
     radial-gradient(55% 70% at 28% 75%, rgb(246 168 0 / 22%), transparent 70%),
     linear-gradient(180deg, rgb(4 7 14 / 25%), rgb(4 7 14 / 90%)),
-    url('/assets/background/bg-arena.png') center / cover;
+    url('/assets/background/bg-arena.webp') center / cover;
 }
 .ptour__spotleft {
   position: relative;
@@ -6758,7 +6758,7 @@
   background:
     radial-gradient(70% 40% at 50% 62%, rgb(246 168 0 / 22%), transparent 70%),
     linear-gradient(180deg, rgb(4 7 14 / 35%), rgb(4 7 14 / 70%) 55%, rgb(4 7 14 / 96%)),
-    url('/assets/background/bg-arena.png') center / cover;
+    url('/assets/background/bg-arena.webp') center / cover;
 }
 .ptour__spot--phone .ptour__spotstage {
   position: relative;
@@ -6933,7 +6933,7 @@
   background:
     radial-gradient(60% 50% at 50% 100%, rgb(246 168 0 / 20%), transparent 70%),
     linear-gradient(180deg, rgb(4 7 14 / 30%), rgb(4 7 14 / 90%)),
-    url('/assets/background/bg-arena.png') center / cover;
+    url('/assets/background/bg-arena.webp') center / cover;
   box-shadow: inset 0 0 0 1px rgb(246 168 0 / 30%);
 }
 .ptour__lutop {
@@ -7567,7 +7567,7 @@
   border-radius: 16px;
   background:
     linear-gradient(180deg, rgb(4 9 18 / 55%), rgb(4 9 18 / 94%)),
-    url('/assets/background/bg-arena.png') center / cover;
+    url('/assets/background/bg-arena.webp') center / cover;
   box-shadow: inset 0 0 0 1px rgb(255 255 255 / 10%);
 }
 .ptour__roadhead {

@@ -330,7 +330,7 @@ function StageWaiting() {
         <div className="bfmain">
           <div
             className={`bfield bfield--bcast${phone ? '' : ' bfield--wide'}`}
-            style={{ ['--bf-bg' as string]: `url('${asset('/assets/background/bg-fight.png')}')` }}
+            style={{ ['--bf-bg' as string]: `url('${asset('/assets/background/bg-fight.webp')}')` }}
           >
             <span className="spinner boutstage__spin" />
           </div>

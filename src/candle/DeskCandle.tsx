@@ -632,7 +632,7 @@ function ClaimBar({
         <b>{whole(tlm)}</b> TLM
       </span>
       <span>
-        <img src={asset('/assets/icons/wax-coin.png')} alt="" />
+        <img src={asset('/assets/icons/wax-coin.webp')} alt="" />
         <b>{whole(wax)}</b> WAX
       </span>
       <button

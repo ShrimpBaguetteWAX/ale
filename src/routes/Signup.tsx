@@ -16,7 +16,7 @@ import {
 import { settle } from '@/wharf/settle'
 import { fetchSignupStat } from '@/chain/queries'
 import { NUM_LOCALE } from '@/format'
-import { asset } from '@/assets'
+import { asset, artSet } from '@/assets'
 
 /**
  * Signup is two on-chain steps, because that is how the contract works:
@@ -108,9 +108,9 @@ export default function Signup() {
 
   return (
     <div className="arrive">
-      <img className="arrive__bg" src={asset('/assets/background/bg-menu.jpeg')} alt="" />
+      <img className="arrive__bg" {...artSet('bg-menu')} alt="" />
       <div className="arrive__stars" />
-      <div className="arrive__planet" style={{ backgroundImage: `url(${asset(`/assets/maps/${world}.jpg`)})` }} />
+      <div className="arrive__planet" style={{ backgroundImage: `url(${asset(`/assets/maps/${world}.webp`)})` }} />
       <div className="arrive__fade" />
       <div className="arrive__drop" aria-hidden="true">
         <small>Drop zone</small>
@@ -184,7 +184,7 @@ export default function Signup() {
               onClick={() => void payFee()}
               disabled={busy !== null || !config || blocked}
             >
-              {busy === 'fee' ? <span className="spinner" /> : <img src={asset('/assets/icons/wax-coin.png')} alt="" />}
+              {busy === 'fee' ? <span className="spinner" /> : <img src={asset('/assets/icons/wax-coin.webp')} alt="" />}
               {busy === 'fee' ? 'Confirm in wallet' : `Register for ${fee}`}
             </button>
             <p className="arrive__fee">

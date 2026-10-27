@@ -26,7 +26,7 @@ const CURRENCIES: { key: Key; name: string; icon: string; uses: string[] }[] = [
   {
     key: 'wax',
     name: 'WAX',
-    icon: '/assets/icons/wax-coin.png',
+    icon: '/assets/icons/wax-coin.webp',
     uses: ['Buy gem packs'],
   },
   {

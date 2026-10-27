@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import { useModal } from '@/components/useModal'
 import { useSwipeToClose } from '@/components/useSwipeToClose'
 import { usePhone } from '@/components/usePhone'
+import { GameImg } from '@/components/GameImg'
 
 /** The edge each rarity lights a card in, as the market rows colour it. */
 const RARITY_EDGE: Record<string, string> = {
@@ -60,6 +61,7 @@ const SHIELD = (
 export function Showcase({
   label,
   art,
+  artFallback,
   pack,
   edge,
   name,
@@ -76,6 +78,8 @@ export function Showcase({
 }: {
   label: string
   art?: string
+  /** Where the art comes from if `art` does not load: an NFT's IPFS original behind its resized copy. */
+  artFallback?: string
   /** A pack's art is a square scene, not a card: no frame. */
   pack?: boolean
   edge?: string
@@ -115,7 +119,14 @@ export function Showcase({
           <button type="button" className="bshow__x" aria-label="Close" onClick={onCancel}>
             ✕
           </button>
-          {art && <img className={`bshow__art${pack ? ' is-pack' : ''}`} src={art} alt="" />}
+          {art && (
+            <GameImg
+              className={`bshow__art${pack ? ' is-pack' : ''}`}
+              src={art}
+              fallback={artFallback ? [artFallback] : []}
+              alt=""
+            />
+          )}
           <h2 className="bshow__name">{name}</h2>
           {tags && <div className="bshow__tags">{tags}</div>}
         </div>

@@ -275,7 +275,7 @@ export function GameLogo({
       <img
         {...(priority ? { fetchpriority: 'high' } : {})}
         className={className}
-        src={asset("/assets/logo.png")}
+        src={asset("/assets/logo.webp")}
         alt="Alien Legends"
         width={width}
         height={height}

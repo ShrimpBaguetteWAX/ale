@@ -7,7 +7,7 @@
  * as long as boot takes and imports it there. One copy of the look, two
  * readers.
  *
- * The map is a 96x48 copy of maps/eyeke.jpg, inlined: it is blurred to
+ * The map is a 96x48 copy of maps/eyeke.webp, inlined: it is blurred to
  * nothing anyway, and inlined it is on the first frame rather than after a
  * request.
  */

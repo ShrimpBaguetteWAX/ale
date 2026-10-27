@@ -8,7 +8,7 @@ import { Link } from 'react-router-dom'
 import { useGame } from '@/state/useGame'
 import { SwitchWallet } from '@/components/SwitchWallet'
 import { GameLogo } from '@/components/GameLogo'
-import { asset } from '@/assets'
+import { asset, artSet } from '@/assets'
 import { useChainQuery } from '@/chain/useChainQuery'
 import { fetchArenaRanks, fetchArenaSeasons } from '@/leaderboard/queries'
 import { defaultSeason, displayName } from '@/leaderboard/rules'
@@ -33,14 +33,14 @@ const ROWS: { id: string; kick: string; title: [string, string]; body: string; c
     title: ['A squad that ', 'fits together'],
     body: 'Hire fighters at taverns across six planets and field five of them. Class, race and element decide who holds the line and who hits hardest, and every fighter brings its own abilities into the fight.',
     chips: ['Class', 'Race', 'Element', 'Abilities'],
-    art: asset('/assets/background/bg-tavern.png'),
+    art: asset('/assets/background/bg-tavern.webp'),
   },
   {
     id: 'battle',
     kick: 'Battle',
     title: ['Dungeons, arenas, ', 'tournaments'],
     body: 'Fight through dungeons for rewards, take on other trainers in the arena, and fight for rewards in the weekly tournament.',
-    art: asset('/assets/background/bg-fight.png'),
+    art: asset('/assets/background/bg-fight.webp'),
   },
   {
     id: 'build',
@@ -68,7 +68,7 @@ export function Landing() {
         <img
           {...HIGH_PRIORITY}
           className="kart__art"
-          src={asset('/assets/background/bg-catch-and-conquer.jpeg')}
+          {...artSet('bg-catch-and-conquer')}
           alt=""
           decoding="async"
         />
@@ -148,7 +148,7 @@ export function Landing() {
       <section
         className="kart__band"
         style={{
-          backgroundImage: `linear-gradient(100deg, rgb(0 120 220 / 55%), rgb(80 30 160 / 70%)), url(${asset('/assets/background/bg-dungeon.png')})`,
+          backgroundImage: `linear-gradient(100deg, rgb(0 120 220 / 55%), rgb(80 30 160 / 70%)), url(${asset('/assets/background/bg-dungeon.webp')})`,
         }}
       >
         <div>

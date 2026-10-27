@@ -297,7 +297,7 @@ export function AppShell() {
   return (
     <div
       className={`shell${isMap ? ' shell--flush' : ''}${fightScreen ? ' shell--notabs' : ''}`}
-      style={{ '--shell-art': `url('${asset('/assets/background/bg-menu.jpeg')}')` } as React.CSSProperties}
+      style={{ '--shell-art': `url('${asset('/assets/background/bg-menu.webp')}')` } as React.CSSProperties}
     >
       <div className="shell__bg" aria-hidden="true">
         <MapBackdrop planet={player?.planet} />
@@ -312,7 +312,7 @@ export function AppShell() {
         */}
         <div className="rail__brand">
           <NavLink to="/map" aria-label="World map">
-            <img src={asset("/assets/logo.png")} alt="Alien Legends" width={337} height={152} />
+            <img src={asset("/assets/logo.webp")} alt="Alien Legends" width={337} height={152} />
           </NavLink>
         </div>
 
@@ -380,7 +380,7 @@ export function AppShell() {
           from the rail, so this only ever matters on a narrow screen.
         */}
         <NavLink className="topbar__home" to="/map" aria-label="World map">
-          <img className="topbar__logo" src={asset("/assets/logo.png")} alt="Alien Legends" />
+          <img className="topbar__logo" src={asset("/assets/logo.webp")} alt="Alien Legends" />
         </NavLink>
         {player && <ResourceStrip player={player} />}
         <span className="spacer" />

@@ -28,6 +28,34 @@ export function asset(path: string): string {
 }
 
 /**
+ * A page background as an `<img>`'s source, with its phone-sized copy.
+ *
+ * Each background ships twice (scripts/make-lean.mjs): at its own size for a
+ * desktop and 800px wide as `-800.webp`. The art sits dimmed behind the
+ * screen, so on a phone the small one is plenty — and `sizes` says the image
+ * is narrow there on purpose, so a sharp phone screen (three device pixels a
+ * CSS pixel) still takes the 800px copy rather than the full one.
+ */
+export function artSet(name: string): { src: string; srcSet: string; sizes: string } {
+  const full = asset(`/assets/background/${name}.webp`)
+  return {
+    src: full,
+    srcSet: `${asset(`/assets/background/${name}-800.webp`)} 800w, ${full} 1600w`,
+    sizes: '(max-width: 719px) 260px, 100vw',
+  }
+}
+
+/**
+ * An Alien Worlds NFT's artwork at a size for showing it large: AtomicHub's
+ * resizer, a WebP of a few dozen kilobytes where the IPFS original runs to
+ * megabytes. Undefined without a hash; `ipfsImage` is the fallback behind it.
+ */
+export function ipfsPreview(hash: string | undefined, size = 370): string | undefined {
+  if (!hash || /^https?:\/\//.test(hash)) return undefined
+  return `https://resizer.atomichub.io/images/v1/preview?ipfs=${encodeURIComponent(hash)}&size=${size}`
+}
+
+/**
  * An Alien Worlds NFT's own artwork, from IPFS.
  *
  * The card art in `/assets/cards` is a snapshot taken at build time, so a

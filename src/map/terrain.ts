@@ -34,7 +34,7 @@ const BUILDING_ICONS: Record<string, string> = {
 
 export function buildingIcon(name: string): string {
   const key = BUILDING_ICONS[name?.toLowerCase()] ?? 'no-build'
-  return asset(`/assets/buildings/${key}.png`)
+  return asset(`/assets/buildings/${key}.webp`)
 }
 
 /** Planet artwork: 2000x1000, i.e. 50px per tile across the 40x20 grid. */
@@ -43,7 +43,7 @@ export const PLANET_MAP_H = 1000
 export const PLANET_TILE = 50
 
 export function planetMapSrc(planet: string): string {
-  return asset(`/assets/maps/${planet}.jpg`)
+  return asset(`/assets/maps/${planet}.webp`)
 }
 
 /**

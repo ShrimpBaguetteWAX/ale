@@ -783,7 +783,7 @@
     background:
       radial-gradient(60% 90% at 70% 100%, rgb(246 168 0 / 26%), transparent 70%),
       linear-gradient(180deg, rgb(4 7 14 / 20%), rgb(4 7 14 / 85%)),
-      url('/assets/background/bg-leaderboard.png') center / cover;
+      url('/assets/background/bg-leaderboard.webp') center / cover;
     box-shadow:
       inset 0 0 0 1.5px rgb(246 168 0 / 55%),
       0 18px 40px rgb(0 0 0 / 40%);
@@ -1254,7 +1254,7 @@
   background:
     radial-gradient(70% 90% at 75% 100%, rgb(246 168 0 / 26%), transparent 70%),
     linear-gradient(180deg, rgb(4 7 14 / 20%), rgb(4 7 14 / 88%)),
-    url('/assets/background/bg-leaderboard.png') center / cover;
+    url('/assets/background/bg-leaderboard.webp') center / cover;
   box-shadow:
     inset 0 0 0 1.5px rgb(246 168 0 / 55%),
     0 14px 30px rgb(0 0 0 / 40%);

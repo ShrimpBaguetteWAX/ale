@@ -4,7 +4,7 @@ import { useChainQuery } from '@/chain/useChainQuery'
 import { useAction } from '@/wharf/useAction'
 import { redeemOutpostOffer } from '@/wharf/actions'
 import { ActionBanner } from '@/components/ActionBanner'
-import { asset } from '@/assets'
+import { asset, ipfsPreview } from '@/assets'
 import { GameImg } from '@/components/GameImg'
 import {
   canRedeem,
@@ -436,7 +436,8 @@ function ConfirmRedeem({ entry, balance, onCancel, onConfirm }: RedeemProps) {
   return (
       <Showcase
         label="Confirm Outpost redemption"
-        art={art || undefined}
+        art={ipfsPreview(template?.img) ?? (art || undefined)}
+        artFallback={art || undefined}
         edge={rarityEdge(template?.rarity)}
         name={template?.name || `Template ${offer.template_id}`}
         tags={<CardTags rarity={template?.rarity} shine={template?.shine} extra={template?.kind} />}

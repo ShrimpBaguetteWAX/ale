@@ -111,7 +111,7 @@ export function PortalWarp({
       <div className="warpgate__arrival" aria-hidden="true">
         <span
           className="warpgate__globe"
-          style={{ backgroundImage: `url('${asset(`/assets/maps/${to}.jpg`)}')` }}
+          style={{ backgroundImage: `url('${asset(`/assets/maps/${to}.webp`)}')` }}
         />
         <span className="warpgate__limb" />
       </div>

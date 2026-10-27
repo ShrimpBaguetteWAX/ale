@@ -33,7 +33,7 @@ import { buyShopItem, buyShopItemWithWax, DIRTIES } from '@/wharf/actions'
 import { useAction } from '@/wharf/useAction'
 import { useChainQuery } from '@/chain/useChainQuery'
 import { useLazyConfig } from '@/state/useConfig'
-import { asset } from '@/assets'
+import { asset, artSet } from '@/assets'
 import { NUM_LOCALE } from '@/format'
 import { OutpostTab } from '@/outpost/OutpostTab'
 import { CurrencyGuide } from '@/shop/CurrencyGuide'
@@ -150,7 +150,7 @@ export default function Shop() {
 
   return (
     <div className="shop">
-      <img className="shop__art" src={asset("/assets/background/bg-shop.png")} alt="" />
+      <img className="shop__art" {...artSet('bg-shop')} alt="" />
       <div className="shop__scrim" />
 
       <div className="shop__inner">
@@ -405,7 +405,7 @@ function ConfirmPurchase({
       tiles={tiles}
       line={value && <span className="bshow__bonus">{valueLine(item, value)}</span>}
       price={price.label}
-      priceIcon={isWaxPriced(item) ? asset('/assets/icons/wax-coin.png') : price.icon}
+      priceIcon={isWaxPriced(item) ? asset('/assets/icons/wax-coin.webp') : price.icon}
       leaves={leftAfter(item, player, wax)}
       fine={
         free

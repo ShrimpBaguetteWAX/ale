@@ -57,7 +57,7 @@ export function EmblemRing({ delay, className }: { delay?: string; className?: s
           strokeDasharray="80 229"
         />
       </svg>
-      <img src={asset('/assets/logo.png')} alt="Alien Legends" />
+      <img src={asset('/assets/logo.webp')} alt="Alien Legends" />
     </div>
   )
 }

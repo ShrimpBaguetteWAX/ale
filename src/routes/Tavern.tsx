@@ -42,7 +42,7 @@ import { MARKERS, markerIcon } from '@/dungeon/filters'
 import { DIRTIES, hireFighter, revealFighter, setFighterMarker } from '@/wharf/actions'
 import { settle } from '@/wharf/settle'
 import { readableError } from '@/wharf/errors'
-import { asset } from '@/assets'
+import { asset, artSet } from '@/assets'
 import { GameImg } from '@/components/GameImg'
 import { usePhone } from '@/components/usePhone'
 import { BottomSheet } from '@/components/BottomSheet'
@@ -1241,7 +1241,7 @@ export default function Tavern() {
   /* A phone: the recruit, then the discounts in a sheet, and Hire docked at the bottom. */
   return (
     <div className="tavern">
-      <img className="tavern__art" src={asset('/assets/background/bg-tavern.png')} alt="" />
+      <img className="tavern__art" {...artSet('bg-tavern')} alt="" />
       <div className="tavern__scrim" />
 
       <div className="tavern__inner">

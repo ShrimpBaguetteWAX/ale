@@ -87,7 +87,7 @@ import {
 import { DIRTIES, playDungeon } from '@/wharf/actions'
 import { settle } from '@/wharf/settle'
 import { readableError } from '@/wharf/errors'
-import { asset } from '@/assets'
+import { asset, artSet } from '@/assets'
 import { usePhone } from '@/components/usePhone'
 import { useSwipeToClose } from '@/components/useSwipeToClose'
 import { useConfig, useLazyConfig } from '@/state/useConfig'
@@ -981,7 +981,7 @@ export default function Dungeon() {
 
   return (
     <div className="dungeon">
-      <img className="dungeon__art" src={asset("/assets/background/bg-dungeon.png")} alt="" />
+      <img className="dungeon__art" {...artSet('bg-dungeon')} alt="" />
       <div className="dungeon__scrim" />
 
       <div className="dungeon__inner">

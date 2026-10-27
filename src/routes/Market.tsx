@@ -55,7 +55,7 @@ import {
 import { elementBackground, fighterArt, fighterArtFallback, type ClassTemplate, elementIcon } from '@/tavern/fighterStats'
 import { addAuction, bidAuction, buyOffer, cancelAuction } from '@/wharf/actions'
 import { SACRIFICE_ABILITY } from '@/ascension/rules'
-import { asset } from '@/assets'
+import { asset, artSet } from '@/assets'
 import { Row, VIEWS, figuresOf, type View } from '@/fighters/DeskRoster'
 
 /**
@@ -396,7 +396,7 @@ export default function Market() {
     <WideBoard.Provider value={wide}>
     <CardView.Provider value={view}>
     <div className={`market${pinned ? ' market--pinned' : ''}`}>
-      <img className="market__art" src={asset("/assets/background/bg-shop.png")} alt="" />
+      <img className="market__art" {...artSet('bg-shop')} alt="" />
       <div className="market__scrim" />
 
       <div className="market__inner">

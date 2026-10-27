@@ -450,7 +450,7 @@ export function PrizeBar({
               {/* The same coin the wallet, the candle and the profile use —
                   a currency a player has seen elsewhere should not need
                   reading twice. */}
-              <img src={asset('/assets/icons/wax-coin.png')} alt="" width={30} height={30} />
+              <img src={asset('/assets/icons/wax-coin.webp')} alt="" width={30} height={30} />
               {figure(wax)}
               <small>WAX</small>
             </span>

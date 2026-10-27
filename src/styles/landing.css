@@ -234,7 +234,7 @@
   position: absolute;
   inset: -40px;
   z-index: -1;
-  background: url('/assets/maps/eyeke.jpg') center / cover;
+  background: url('/assets/maps/eyeke.webp') center / cover;
   filter: blur(16px) saturate(0.7) brightness(0.55);
 }
 .connect::after {

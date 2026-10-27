@@ -38,7 +38,7 @@ const STAT_ICONS: [RegExp, string][] = [
   [/^energy/, '/assets/icons/energy.svg'],
   [/^shards/, '/assets/icons/shards.svg'],
   [/^tlm/, '/assets/icons/tlm.svg'],
-  [/^wax/, '/assets/icons/wax-coin.png'],
+  [/^wax/, '/assets/icons/wax-coin.webp'],
   /*
      Two currency stats that do not start with the currency's own name, so
      the rules above cannot reach them. Both are checked against the
@@ -54,7 +54,7 @@ const STAT_ICONS: [RegExp, string][] = [
   [/^arenas/, '/assets/icons/arena.svg'],
   [/dungeon/, '/assets/icons/dungeons.svg'],
   [/^taverns/, '/assets/markers/tavern.svg'],
-  [/^buildings/, '/assets/icons/build.png'],
+  [/^buildings/, '/assets/icons/build.webp'],
   [/^portals/, '/assets/old-markers/portal.svg'],
   [/^quests/, '/assets/icons/menu/quests.png'],
   [/^recruits/, '/assets/icons/add-fighter.svg'],

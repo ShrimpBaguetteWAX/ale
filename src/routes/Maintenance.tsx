@@ -1,7 +1,7 @@
 import { useLayoutEffect, useRef, useState } from 'react'
 import { GameLogo } from '@/components/GameLogo'
 import { NetworkStatus } from '@/components/NetworkStatus'
-import { asset } from '@/assets'
+import { artSet } from '@/assets'
 
 /**
  * The game, paused.
@@ -46,7 +46,7 @@ export function Maintenance({ updates }: { updates: string[] }) {
     <div className="auth maint">
       <img
         className="auth__art"
-        src={asset('/assets/background/bg-maintenance.png')}
+        {...artSet('bg-maintenance')}
         alt=""
       />
       <div className="auth__scrim" />

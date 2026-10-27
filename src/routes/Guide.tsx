@@ -190,7 +190,7 @@ export default function Guide() {
         </Link>
       </header>
 
-      <div className="guide__hero" style={{ backgroundImage: `url(${asset('/assets/background/bg-catch-and-conquer.jpeg')})` }}>
+      <div className="guide__hero" style={{ backgroundImage: `url(${asset('/assets/background/bg-catch-and-conquer.webp')})` }}>
         <div className="guide__heroin">
           <div className="guide__kick">Trainer's guide</div>
           <h1 className="guide__title">

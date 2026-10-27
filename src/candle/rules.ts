@@ -95,7 +95,7 @@ export function tokenSymbol(type: string): string {
 
 export function tokenIcon(type: string): string {
   const t = (type ?? '').toLowerCase()
-  if (t === 'wax') return asset('/assets/icons/wax-coin.png')
+  if (t === 'wax') return asset('/assets/icons/wax-coin.webp')
   if (t === 'shards') return asset('/assets/icons/shards.svg')
   return asset('/assets/icons/tlm.svg')
 }
