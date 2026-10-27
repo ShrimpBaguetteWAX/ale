@@ -1213,6 +1213,15 @@
   width: 12px;
   height: 14px;
 }
+.drost__num > b {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font: inherit;
+}
+.drost__numhead {
+  display: none;
+}
 /* Taunt is not graded; keep its figure in line with the graded ones. */
 .drost__num:not(:has(.drost__grade)) {
   padding-right: 14px;
@@ -2802,15 +2811,56 @@
   padding: 2px 7px;
   font-size: 10px;
 }
+/*
+ * Every figure named in place: on a phone the column head scrolled away and
+ * left five bare numbers, so each stat is a small tile with its icon and
+ * word over the number, as in the fighter's panel.
+ */
+.drost--phone .drost__colhead {
+  display: none;
+}
+.drost--phone .drost__row.is-ring {
+  column-gap: 4px;
+}
+.drost--phone .drost__row.is-ring > .drost__ring {
+  margin-right: 2px;
+}
 .drost--phone .drost__num {
+  display: grid;
+  justify-items: center;
+  gap: 1px;
+  padding: 4px 0 5px;
+  border-radius: 8px;
+  background: rgb(255 255 255 / 4%);
+}
+.drost--phone .drost__num:not(:has(.drost__grade)) {
+  padding-right: 0;
+}
+.drost--phone .drost__numhead {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-family: var(--font-body, inherit);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.drost--phone .drost__numhead .drost__si {
+  height: 9px;
+  opacity: 0.65;
+}
+/* With a tick column the tiles are about 40px: the word alone fits, the icon beside it did not. */
+.drost--phone .drost__row.is-ticking .drost__numhead .drost__si {
+  display: none;
+}
+.drost--phone .drost__num > b {
   font-size: 14px;
 }
 .drost--phone .drost__num .drost__grade {
   width: 10px;
   height: 12px;
-}
-.drost--phone .drost__num:not(:has(.drost__grade)) {
-  padding-right: 12px;
 }
 .drost--phone .drost__abp {
   height: 21px;

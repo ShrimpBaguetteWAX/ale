@@ -939,8 +939,15 @@ function Row({
           </span>
           {fig.stats.map((x) => (
             <span className="drost__num" key={x.field} title={STAT_NAMES[x.field]}>
-              {x.value}
-              <Grade grade={x.grade} />
+              {/* A phone names each figure in place; a desktop has the column head. */}
+              <small className="drost__numhead">
+                <img className="drost__si" src={statIcon(x.field)} alt="" />
+                {STAT_SHORT[x.field]}
+              </small>
+              <b>
+                {x.value}
+                <Grade grade={x.grade} />
+              </b>
             </span>
           ))}
           {mode === 'sell' && (
