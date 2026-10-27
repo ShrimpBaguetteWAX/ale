@@ -59,40 +59,40 @@ export const NAV_ITEMS: NavItem[] = [
      player who has not been told does not click a wordmark to find out what
      is waiting for them.
   */
-  { to: '/briefing', label: 'Briefing', icon: asset('/assets/icons/menu/briefing.png'), line: 'Check what you can do right now' },
-  { to: '/map', label: 'World Map', icon: asset('/assets/icons/menu/world.png'), primary: true },
-  { to: '/shop', label: 'Shop', icon: asset('/assets/icons/menu/coin.png'), primary: true },
+  { to: '/briefing', label: 'Briefing', icon: asset('/assets/icons/menu/briefing.svg'), line: 'Check what you can do right now' },
+  { to: '/map', label: 'World Map', icon: asset('/assets/icons/menu/world.svg'), primary: true },
+  { to: '/shop', label: 'Shop', icon: asset('/assets/icons/menu/shop.svg'), primary: true },
   {
     to: '/leaderboard',
     label: 'Leaderboards',
-    icon: asset('/assets/icons/menu/leaderboard.png'),
+    icon: asset('/assets/icons/menu/leaderboard.svg'),
     line: 'Dungeon, arena and tournament ranks',
   },
   {
     to: '/fighters',
     label: 'My Fighters',
-    icon: asset('/assets/icons/menu/sword.png'),
+    icon: asset('/assets/icons/menu/fighters.svg'),
     primary: true,
   },
   {
     to: '/ascension',
     label: 'Ascension',
-    icon: asset('/assets/icons/menu/ascension.png'),
+    icon: asset('/assets/icons/menu/ascension.svg'),
     line: 'Sacrifice fighters to raise one',
   },
-  { to: '/quests', label: 'Quests', icon: asset('/assets/icons/menu/quests.png'), primary: true },
-  { to: '/candle', label: 'Candle', icon: asset('/assets/icons/menu/candle.png'), line: 'Burn gems for a share of the pot' },
+  { to: '/quests', label: 'Quests', icon: asset('/assets/icons/menu/quests.svg'), primary: true },
+  { to: '/candle', label: 'Candle', icon: asset('/assets/icons/menu/candle.svg'), line: 'Burn gems for a share of the pot' },
   {
     to: '/tournament',
     label: 'Tournament',
-    icon: asset('/assets/icons/menu/tournament.png'),
+    icon: asset('/assets/icons/menu/tournament.svg'),
     /* The screen is built and everything behind it stays where it is; only
        the way in is closed while it is not ready to be found. */
     soon: true,
     line: 'Fight other players for the prize pot',
   },
-  { to: '/market', label: 'Market', icon: asset('/assets/icons/menu/market.png'), line: 'Buy and sell fighters' },
-  { to: '/lands', label: 'My Lands', icon: asset('/assets/icons/menu/my-land.png'), line: 'Your lands and what they earn' },
+  { to: '/market', label: 'Market', icon: asset('/assets/icons/menu/market.svg'), line: 'Buy and sell fighters' },
+  { to: '/lands', label: 'My Lands', icon: asset('/assets/icons/menu/lands.svg'), line: 'Your lands and what they earn' },
   /*
      Rewards is everything the account screen held that pays out — the
      mine and the three ledgers — and Account is what is left: who you
@@ -101,9 +101,9 @@ export const NAV_ITEMS: NavItem[] = [
      three were a profile, and the dot on it could only ever mean one of
      those things at a time.
   */
-  { to: '/rewards', label: 'Rewards', icon: asset('/assets/icons/menu/rewards.png'), line: 'Mine your reward pools' },
-  { to: '/profile', label: 'Account', icon: asset('/assets/icons/menu/settings.png'), line: 'Avatar, wallet and settings' },
-  { to: '/farming', label: 'Farming', icon: asset('/assets/icons/menu/card.png'), line: 'Stake cards for rewards' },
+  { to: '/rewards', label: 'Rewards', icon: asset('/assets/icons/menu/rewards.svg'), line: 'Mine your reward pools' },
+  { to: '/profile', label: 'Account', icon: asset('/assets/icons/menu/account.svg'), line: 'Avatar, wallet and settings' },
+  { to: '/farming', label: 'Farming', icon: asset('/assets/icons/menu/farming.svg'), line: 'Stake cards for rewards' },
   /* Last on the rail, as help usually is; near the top of the phone's More page, where a new trainer looks first. */
   { to: '/guide', label: 'Guide', icon: asset('/assets/icons/menu/guide.svg'), line: 'The basics, chapter by chapter' },
 ]

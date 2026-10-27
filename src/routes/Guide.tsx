@@ -615,13 +615,13 @@ export default function Guide() {
             <div className="guide__next">
               {(
                 [
-                  ['menu/quests.png', 'Quests', 'Daily, weekly and monthly goals that pay TLM or Shards.'],
-                  ['menu/tournament.png', 'Tournament', 'Five level-10 fighters plus crew and weapon, for TLM and WAX prizes, on a schedule.'],
-                  ['menu/ascension.png', 'Ascension', 'A level-10 fighter plus three sacrifices of its class: pick one of three upgrades.'],
-                  ['menu/market.png', 'Market', 'Buy and sell fighters for gems.'],
-                  ['menu/my-land.png', 'Lands', 'Own AW land, build a tavern, dungeon or arena, earn from it. Keep its boost up.'],
-                  ['menu/card.png', 'Farming', 'Stake AW tools, crew or weapons for credits.'],
-                  ['menu/candle.png', 'Candle', 'Put gems into a campaign for a share of a fixed prize.'],
+                  ['menu/quests.svg', 'Quests', 'Daily, weekly and monthly goals that pay TLM or Shards.'],
+                  ['menu/tournament.svg', 'Tournament', 'Five level-10 fighters plus crew and weapon, for TLM and WAX prizes, on a schedule.'],
+                  ['menu/ascension.svg', 'Ascension', 'A level-10 fighter plus three sacrifices of its class: pick one of three upgrades.'],
+                  ['menu/market.svg', 'Market', 'Buy and sell fighters for gems.'],
+                  ['menu/lands.svg', 'Lands', 'Own AW land, build a tavern, dungeon or arena, earn from it. Keep its boost up.'],
+                  ['menu/farming.svg', 'Farming', 'Stake AW tools, crew or weapons for credits.'],
+                  ['menu/candle.svg', 'Candle', 'Put gems into a campaign for a share of a fixed prize.'],
                   ['account-legend.svg', 'Legend', 'Free reveals, full reward power, a bigger daily flask, full tournament prizes.'],
                 ] as const
               ).map(([icon, name, body]) => (

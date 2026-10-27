@@ -230,7 +230,7 @@ function PhoneMining({
   return (
     <>
       <div className="prew__hero">
-        <img src={asset('/assets/icons/menu/rewards.png')} alt="" className="prew__heroicon" />
+        <img src={asset('/assets/icons/menu/rewards.svg')} alt="" className="prew__heroicon" />
         <span className="prew__herolabel">Your mining power</span>
         {loading ? (
           <span className="prew__power prew__power--big">—</span>
@@ -279,7 +279,7 @@ function PhoneMining({
 
       <div className="prew__rows">
         <button type="button" className="prew__row" onClick={() => setOpen('tools')}>
-          <img src={asset('/assets/icons/menu/rewards.png')} alt="" />
+          <img src={asset('/assets/icons/menu/rewards.svg')} alt="" />
           <span className="prew__rowtext">
             <strong>Change tools</strong>
             <small>
@@ -296,7 +296,7 @@ function PhoneMining({
           disabled={!ownsLand}
           onClick={() => setOpen('land')}
         >
-          <img src={asset('/assets/icons/menu/my-land.png')} alt="" />
+          <img src={asset('/assets/icons/menu/lands.svg')} alt="" />
           <span className="prew__rowtext">
             <strong>Landowner settings</strong>
             <small>
@@ -310,7 +310,7 @@ function PhoneMining({
           {ownsLand && <Chevron />}
         </button>
         <button type="button" className="prew__row" onClick={() => setOpen('all')}>
-          <img src={asset('/assets/icons/menu/card.png')} alt="" />
+          <img src={asset('/assets/icons/menu/farming.svg')} alt="" />
           <span className="prew__rowtext">
             <strong>All tools</strong>
             <small>

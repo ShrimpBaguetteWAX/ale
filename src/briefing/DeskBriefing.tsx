@@ -96,7 +96,7 @@ export function DeskBriefing({
           </Link>
           {roster && (
             <Link className="dbrief__chip" to="/fighters">
-              <img src={asset('/assets/icons/menu/sword.png')} alt="" />
+              <img src={asset('/assets/icons/menu/fighters.svg')} alt="" />
               {formatNumber(roster.total)} fighter{roster.total === 1 ? '' : 's'}
             </Link>
           )}
@@ -220,7 +220,7 @@ function WaitTile({ item, meters }: { item: BriefItem; meters?: BriefMeter[] }) 
   const t = tileOf(item)
   return (
     <article className="dbrief__tile">
-      <img className="dbrief__tileicon" src={asset(item.id === 'mine' ? '/assets/icons/menu/rewards.png' : item.icon)} alt="" />
+      <img className="dbrief__tileicon" src={asset(item.id === 'mine' ? '/assets/icons/menu/rewards.svg' : item.icon)} alt="" />
       <span className="dbrief__tiletext">
         {t.amount && (
           <span className="dbrief__amount mono">

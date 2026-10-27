@@ -56,13 +56,13 @@ const STAT_ICONS: [RegExp, string][] = [
   [/^taverns/, '/assets/markers/tavern.svg'],
   [/^buildings/, '/assets/icons/build.webp'],
   [/^portals/, '/assets/old-markers/portal.svg'],
-  [/^quests/, '/assets/icons/menu/quests.png'],
+  [/^quests/, '/assets/icons/menu/quests.svg'],
   [/^recruits/, '/assets/icons/add-fighter.svg'],
-  [/^nfts_staked/, '/assets/icons/menu/card.png'],
+  [/^nfts_staked/, '/assets/icons/menu/farming.svg'],
   [/^premium/, '/assets/icons/account-legend.svg'],
-  [/travel/, '/assets/icons/menu/world.png'],
+  [/travel/, '/assets/icons/menu/world.svg'],
   [/^level_ups/, '/assets/icons/medal.svg'],
-  [/^ascensions/, '/assets/icons/menu/ascension.png'],
+  [/^ascensions/, '/assets/icons/menu/ascension.svg'],
   /*
      The game's own "raised" mark, which is what boosting does: `maps.cpp`
      records the distance a top-up moves a building's boost score, so the

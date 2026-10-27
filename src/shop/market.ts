@@ -9,8 +9,8 @@ import type { AwSchema, MarketCard } from '@/chain/atomic'
  */
 
 export const MARKET_SCHEMAS: { key: AwSchema; label: string; icon: string }[] = [
-  { key: 'tool.worlds', label: 'Tools', icon: '/assets/icons/menu/rewards.png' },
-  { key: 'crew.worlds', label: 'Crew', icon: '/assets/icons/menu/sword.png' },
+  { key: 'tool.worlds', label: 'Tools', icon: '/assets/icons/menu/rewards.svg' },
+  { key: 'crew.worlds', label: 'Crew', icon: '/assets/icons/menu/fighters.svg' },
   { key: 'arms.worlds', label: 'Weapons', icon: '/assets/icons/stats/damage.svg' },
 ]
 

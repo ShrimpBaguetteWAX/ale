@@ -691,17 +691,17 @@ function cardFigures(
 export function MarketGuide({ wax }: { wax: number }) {
   const uses: [string, string, string][] = [
     [
-      '/assets/icons/menu/rewards.png',
+      '/assets/icons/menu/rewards.svg',
       'Tools · mining',
       'Equip up to three. Their TLM and shard power set the Reward Power every win banks.',
     ],
     [
-      '/assets/icons/menu/sword.png',
+      '/assets/icons/menu/fighters.svg',
       'Crew + weapon · a sixth fighter',
       'Bring one of each into a dungeon, arena or tournament. Their stats add up; the weapon sets the element.',
     ],
     [
-      '/assets/icons/menu/card.png',
+      '/assets/icons/menu/farming.svg',
       'Farming · credits',
       "Stake spare cards for credits. Power comes from rarity and shine; Abundant can't be staked.",
     ],
