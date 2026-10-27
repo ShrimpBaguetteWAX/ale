@@ -43,7 +43,7 @@ const ROWS: { id: string; kick: string; title: [string, string]; body: string; c
     id: 'build',
     kick: 'Build',
     title: ['Own a piece ', 'of the map'],
-    body: 'Claim land, raise taverns, mines and arenas, and take a cut of everything they earn. The hottest arenas and dungeons burn on the map.',
+    body: 'Claim land, raise a tavern, dungeon or arena on it, and take a cut of everything it earns. The hottest arenas and dungeons burn on the map.',
     art: asset('/assets/landing/build-veles.webp'),
   },
 ]
