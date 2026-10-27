@@ -31,7 +31,7 @@ import { claimLeaderboardReward, DIRTIES } from '@/wharf/actions'
 import { useAction } from '@/wharf/useAction'
 import { useChainQuery } from '@/chain/useChainQuery'
 import { formatNumber, formatDecimals } from '@/format'
-import { fighterArt, fighterArtFallback } from '@/tavern/fighterStats'
+import { fighterArt, fighterArtFallback, fighterAvatar } from '@/tavern/fighterStats'
 import { ActionBanner } from '@/components/ActionBanner'
 import { asset } from '@/assets'
 import { PlayerAvatar } from '@/components/PlayerAvatar'
@@ -39,7 +39,7 @@ import { GameImg } from '@/components/GameImg'
 import { usePhone } from '@/components/usePhone'
 import { FighterHoverCard } from '@/components/FighterPanel'
 import { HoverPopover, useHoverCard } from '@/components/HoverPopover'
-import { battlePanel, enemyNftPanel, nftCards } from '@/fight/setup'
+import { DetailSheet, battlePanel, enemyNftPanel, nftCards } from '@/fight/setup'
 import { fetchSchemaTemplates } from '@/chain/atomic'
 import { useConfig } from '@/state/useConfig'
 import { NFT_FIGHTER_ID } from '@/dungeon/rules'
@@ -433,7 +433,7 @@ export function DungeonBoard({
   return (
     <>
       {phone && ranks.length > 0 && (
-        <Podium
+        <PhonePodium
           places={ranks.slice(0, 3).map((r, i) => ({
             rank: i + 1,
             wallet: r.wallet,
@@ -442,6 +442,9 @@ export function DungeonBoard({
             rating: r.rating,
             pays: payNow(i + 1),
           }))}
+          wallet={wallet}
+          title="Dungeon champion"
+          lineup={{ fighters: ranks[0].recent_fighters ?? [], templateIds: ranks[0].used_template_ids }}
         />
       )}
       {phone && wallet && (
@@ -777,7 +780,7 @@ export function ArenaBoards({
             </header>
 
             {phone && rows.length > 0 && (
-              <Podium
+              <PhonePodium
                 places={rows.slice(0, 3).map((r, i) => ({
                   rank: rankOf(r, i),
                   wallet: r.wallet,
@@ -786,6 +789,23 @@ export function ArenaBoards({
                   rating: r.rating,
                   pays: placePays(rankOf(r, i), r),
                 }))}
+                wallet={wallet}
+                title={showing ? `${season.displayname} winner` : `${season.displayname} leader`}
+                stage={
+                  <span className="ppod__season">
+                    <b className="mono">
+                      <img src={asset('/assets/icons/tlm.svg')} alt="" width={16} height={16} />
+                      {formatDecimals(pot, 0)}
+                    </b>
+                    <span>
+                      {showing
+                        ? 'Settled — the final standings'
+                        : `Top ${formatNumber(season.winners)} share it · ${
+                            timing.phase === 'ended' ? 'ended' : `${countdown(timing.msLeft)} left`
+                          }`}
+                    </span>
+                  </span>
+                }
               />
             )}
             {!phone && rows.length > 0 && (
@@ -1241,28 +1261,104 @@ interface Place {
 }
 
 /**
- * The top three on a podium: first in the middle and highest, gold, silver
- * and bronze. A phone shows this above the list, which carries on from
- * fourth.
+ * The champion's spotlight on a phone.
+ *
+ * First on a compact banner — avatar, name, rating and pay, and under them
+ * the team they defend as six portraits, each opening its stat card on a tap
+ * (a phone has no hover). The arena has no team; its banner carries the
+ * season's prize instead. Second and third are two cards side by side.
  */
-function Podium({ places }: { places: Place[] }) {
+function PhonePodium({
+  places,
+  wallet,
+  title,
+  lineup,
+  stage,
+}: {
+  places: Place[]
+  wallet: string
+  title: string
+  lineup?: { fighters: BattleFighter[]; templateIds: number[] }
+  stage?: React.ReactNode
+}) {
+  const { classes } = useConfig()
+  const [open, setOpen] = useState<BattleFighter | null>(null)
+  const [first, ...rest] = places
+  if (!first) return null
+  const you = (p: Place) => p.wallet === wallet
+  const faces = (lineup?.fighters ?? []).slice(0, 6)
+  const nft = (f: BattleFighter) => Number(f.fighter_id) === NFT_FIGHTER_ID
+
   return (
-    <div className="podium">
-      {places.map((p) => (
-        <div className={`podium__place podium__place--${p.rank}`} key={p.wallet}>
-          <PlayerAvatar
-            id={p.avatar}
-            name={p.name}
-            className="podium__avatar"
-            size={p.rank === 1 ? 58 : 46}
-          />
-          <span className="podium__name">{p.name}</span>
-          <span className="podium__rating mono">{formatNumber(p.rating)}</span>
-          <span className="podium__pays">{p.pays}</span>
-          <span className="podium__step">{p.rank}</span>
+    <>
+      <div className="ppod">
+        <section className={`ppod__hero${you(first) ? ' is-you' : ''}`} aria-label={`First: ${first.name}`}>
+          <div className="ppod__who">
+            <PlayerAvatar id={first.avatar} name={first.name} className="ppod__avatar" size={58} />
+            <span className="ppod__text">
+              <span className="ppod__kick">#1 · {title}</span>
+              <b className="ppod__name">
+                {first.name}
+                {you(first) && <em className="ppod__you">You</em>}
+              </b>
+              <span className="ppod__line">
+                <span className="mono">{formatNumber(first.rating)}</span> rating
+                {first.pays && <span className="lbrow__pays ppod__pays">{first.pays}</span>}
+              </span>
+            </span>
+          </div>
+          {faces.length > 0 ? (
+            <div className="ppod__faces">
+              {faces.map((f, n) => (
+                <button
+                  type="button"
+                  className="ppod__face"
+                  key={`${first.wallet}-${n}`}
+                  onClick={() => setOpen(f)}
+                  aria-label={nft(f) ? 'NFT Fighter' : `${f.racename} ${f.classname}`}
+                >
+                  <GameImg
+                    src={nft(f) ? NFT_FIGHTER_ART : fighterAvatar({ classname: f.classname, racename: f.racename })}
+                    alt=""
+                    loading="lazy"
+                    fallback={fighterArtFallback()}
+                  />
+                </button>
+              ))}
+            </div>
+          ) : (
+            stage
+          )}
+        </section>
+
+        <div className="ppod__pair">
+          {rest.map((p) => (
+            <div className={`ppod__card ppod__card--${p.rank}${you(p) ? ' is-you' : ''}`} key={p.wallet}>
+              <span className="ppod__num">{p.rank}</span>
+              <span className="ppod__cardtop">
+                <PlayerAvatar id={p.avatar} name={p.name} className="ppod__avatar" size={38} />
+                <b className="ppod__cardname">{p.name}</b>
+              </span>
+              {you(p) && <em className="ppod__you">You</em>}
+              <span className="ppod__cardline">
+                <span>
+                  <span className="mono">{formatNumber(p.rating)}</span> rating
+                </span>
+                {p.pays && <span className="lbrow__pays ppod__pays">{p.pays}</span>}
+              </span>
+            </div>
+          ))}
         </div>
-      ))}
-    </div>
+      </div>
+
+      {open && (
+        <DetailSheet
+          panel={nft(open) ? enemyNftPanel(open) : battlePanel(open)}
+          template={nft(open) ? undefined : classes.get(open.classname)}
+          onClose={() => setOpen(null)}
+        />
+      )}
+    </>
   )
 }
 

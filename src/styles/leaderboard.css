@@ -518,7 +518,6 @@
 
 .lboard__info,
 .lboard__claimshort,
-.podium,
 .lbpin {
   display: none;
 }
@@ -686,93 +685,6 @@
     height: 26px;
     font-size: 12px;
     background: none;
-  }
-
-  /* The podium: second, first, third; first tallest. */
-  .podium {
-    display: grid;
-    grid-template-columns: 1fr 1.15fr 1fr;
-    align-items: end;
-    gap: 8px;
-    margin-top: 4px;
-  }
-  .podium__place {
-    --medal: #e5a06a;
-    display: grid;
-    justify-items: center;
-    gap: 3px;
-    min-width: 0;
-    text-align: center;
-  }
-  .podium__place--1 {
-    --medal: #ffd25a;
-    grid-column: 2;
-    grid-row: 1;
-  }
-  .podium__place--2 {
-    --medal: #d6dde8;
-    grid-column: 1;
-    grid-row: 1;
-  }
-  .podium__place--3 {
-    grid-column: 3;
-    grid-row: 1;
-  }
-  .podium__avatar {
-    border-radius: 50%;
-    object-fit: cover;
-    box-shadow:
-      0 0 0 3px var(--medal),
-      0 0 14px var(--medal);
-  }
-  .podium__name {
-    max-width: 100%;
-    margin-top: 4px;
-    overflow: hidden;
-    font-size: 12px;
-    font-weight: var(--fw-bold);
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  .podium__rating {
-    font-family: var(--font-display);
-    font-size: 13px;
-    font-weight: var(--fw-bold);
-  }
-  .podium__pays {
-    display: inline-flex;
-    align-items: center;
-    gap: 3px;
-    min-height: 14px;
-    font-size: 11px;
-    font-weight: var(--fw-bold);
-    color: #ffd25a;
-  }
-  .podium__pays img {
-    width: 12px;
-    height: 12px;
-  }
-  .podium__step {
-    display: grid;
-    place-items: center;
-    width: 100%;
-    height: 34px;
-    border-radius: 10px 10px 0 0;
-    background: linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--medal) 33%, transparent),
-      color-mix(in srgb, var(--medal) 6%, transparent)
-    );
-    color: var(--medal);
-    font-family: var(--font-display);
-    font-size: 22px;
-    font-weight: 900;
-  }
-  .podium__place--1 .podium__step {
-    height: 66px;
-  }
-  .podium__place--2 .podium__step {
-    height: 46px;
   }
 
   /* You, above the tab bar. */
@@ -1326,4 +1238,215 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
     grid-template-rows: none;
   }
+}
+
+/* ---------- the phone's champion spotlight ---------- */
+
+.ppod {
+  display: grid;
+  gap: 10px;
+}
+.ppod__hero {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 16px;
+  background:
+    radial-gradient(70% 90% at 75% 100%, rgb(246 168 0 / 26%), transparent 70%),
+    linear-gradient(180deg, rgb(4 7 14 / 20%), rgb(4 7 14 / 88%)),
+    url('/assets/background/bg-leaderboard.png') center / cover;
+  box-shadow:
+    inset 0 0 0 1.5px rgb(246 168 0 / 55%),
+    0 14px 30px rgb(0 0 0 / 40%);
+}
+.ppod__hero.is-you {
+  box-shadow:
+    inset 0 0 0 2px var(--cyan),
+    0 0 24px -8px var(--cyan);
+}
+.ppod__who {
+  display: grid;
+  grid-template-columns: 58px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+}
+.ppod__avatar {
+  --medal: #f6a800;
+  border-radius: 50%;
+  object-fit: cover;
+  box-shadow:
+    0 0 0 3px var(--medal),
+    0 0 20px color-mix(in srgb, var(--medal) 45%, transparent);
+}
+.ppod__text {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.ppod__kick {
+  font-family: var(--font-display);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #ffd979;
+}
+.ppod__name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow: hidden;
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 900;
+  line-height: 1.1;
+  white-space: nowrap;
+  text-shadow: 0 2px 10px #000;
+}
+.ppod__line {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  color: var(--text-faint);
+}
+.ppod__line .mono {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--white);
+}
+.ppod__line .ppod__pays {
+  margin-left: 6px;
+}
+/* The team, six portraits; a tap opens a fighter's stat card. */
+.ppod__faces {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 6px;
+}
+.ppod__face {
+  padding: 0;
+  overflow: hidden;
+  aspect-ratio: 1;
+  border: 0;
+  border-radius: 10px;
+  background: rgb(0 0 0 / 30%);
+  box-shadow:
+    inset 0 0 0 1px rgb(255 255 255 / 15%),
+    0 0 0 1px rgb(246 168 0 / 30%);
+  cursor: pointer;
+}
+.ppod__face img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+/* The arena's banner: the season's prize where the team would be. */
+.ppod__season {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 11px;
+  background: rgb(4 9 20 / 72%);
+  box-shadow: inset 0 0 0 1px rgb(246 168 0 / 35%);
+}
+.ppod__season b {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 900;
+  color: #ffd979;
+}
+.ppod__season span {
+  font-size: 11px;
+  color: var(--text-dim);
+  text-align: right;
+}
+/* Second and third, side by side. */
+.ppod__pair {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+.ppod__card {
+  --medal: #cd7f32;
+  position: relative;
+  display: grid;
+  gap: 6px;
+  align-content: start;
+  min-width: 0;
+  padding: 10px;
+  border-radius: 13px;
+  background: rgb(8 14 28 / 84%);
+  box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--medal) 55%, transparent);
+}
+.ppod__card--2,
+.ppod__card--2 .ppod__avatar {
+  --medal: #c9d1e3;
+}
+.ppod__card--3 .ppod__avatar {
+  --medal: #cd7f32;
+}
+.ppod__card.is-you {
+  box-shadow:
+    inset 0 0 0 2px var(--cyan),
+    0 0 18px -6px var(--cyan);
+}
+.ppod__num {
+  position: absolute;
+  top: 6px;
+  right: 10px;
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 900;
+  color: var(--medal);
+}
+.ppod__cardtop {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding-right: 22px;
+}
+.ppod__cardname {
+  min-width: 0;
+  overflow: hidden;
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 900;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.ppod__cardline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--text-faint);
+}
+.ppod__cardline .mono {
+  font-weight: 800;
+  color: var(--white);
+}
+.ppod__you {
+  justify-self: start;
+  flex: none;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--cyan);
+  color: #04121b;
+  font-family: var(--font-display);
+  font-size: 8.5px;
+  font-style: normal;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  text-shadow: none;
 }
