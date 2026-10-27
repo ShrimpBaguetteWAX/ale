@@ -1,392 +1,7 @@
 /*
- * Landing page.
- *
- * Keeps the original's shape — full-bleed key art, centred logo, one cyan
- * Play button, a "learn more" chevron — and fixes what was broken: the
- * sections below the fold used to render as dark cards on an unstyled white
- * page. Here the artwork carries through behind everything.
+ * Landing, connect and sign-up: the screens before the game. The landing
+ * page itself (.kart) is at the end of the file.
  */
-
-/*
- * No background of its own, deliberately.
- *
- * The art below is a negative-z-index child, and a negative-z-index child
- * paints *behind* its parent's background — so a colour here hid the
- * illustration completely. `body` already carries the navy, which is the
- * fallback a slow or failed load wants anyway, and it paints first.
- */
-.landing {
-  position: relative;
-  min-height: 100dvh;
-}
-
-/*
- * The page's one illustration, fixed behind everything.
- *
- * It used to be the hero's alone, with the sections carrying a ground of
- * their own underneath — which is what created a boundary to solve in the
- * first place. There is no boundary now: the art is pinned to the viewport
- * and the whole page scrolls over it.
- *
- * A real <img> rather than a CSS background so it can take a priority hint;
- * `fixed` on the element rather than `background-attachment: fixed`, which
- * mobile Safari has never handled and which repaints the whole surface on
- * every scroll frame where it does work.
- */
-/*
- * Sized to the *large* viewport, not the current one.
- *
- * A phone's address bar collapses as you scroll, which resizes the visual
- * viewport under everything pinned to it. With `inset: 0` this element
- * resized too, and since it is an `object-fit: cover` crop, resizing it
- * recomputes the crop — so the illustration visibly shifted every time the
- * bar moved. That is the jumping.
- *
- * `lvh` is the viewport with the bar retracted, and it does not change while
- * scrolling. The bar collapsing now uncovers more of an image that was
- * already that tall rather than restretching it. Bottom is left alone for
- * the same reason: pinning it would put the height back under the viewport's
- * control. `100vh` first, because that is what older mobile browsers have
- * always meant by this and it is already the right number there.
- */
-.landing__art {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100vh;
-  height: 100lvh;
-  object-fit: cover;
-  object-position: center;
-  z-index: -2;
-}
-
-/*
- * Legibility floor over a busy, bright illustration.
- *
- * Also fixed, so it stays with the art it is darkening: a scrim that scrolls
- * away leaves the copy at the bottom of the page sitting on raw jungle.
- * Heavier at the foot than the head because the hero's logo and button have
- * the middle to themselves, while everything below is prose.
- */
-.landing__scrim {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  /* Matched to the art, or the gradient re-scales while the art does not
-     and the darkening slides across the picture as the bar moves. */
-  height: 100vh;
-  height: 100lvh;
-  z-index: -1;
-  pointer-events: none;
-  background:
-    radial-gradient(ellipse 60% 45% at 50% 40%, rgb(5 16 30 / 45%), transparent 70%),
-    linear-gradient(180deg, rgb(5 16 30 / 40%) 0%, rgb(5 16 30 / 20%) 28%, rgb(5 16 30 / 72%) 100%);
-}
-
-/* ---------- Hero ---------- */
-
-.hero {
-  position: relative;
-  min-height: 100dvh;
-  min-height: 100svh;
-  display: grid;
-  place-items: center;
-  padding: var(--sp-16) var(--sp-5) var(--sp-20);
-  text-align: center;
-  /*
-     The logo's effect canvas is drawn wider than the logo on purpose, and
-     this is what keeps it off the page's scroll width — without it a phone
-     gets 39px of horizontal scroll to nowhere. Safe now that the artwork is
-     a fixed sibling rather than a child.
-  */
-  overflow: hidden;
-}
-
-.hero__inner {
-  position: relative;
-  z-index: 2;
-  display: grid;
-  justify-items: center;
-  gap: var(--sp-6);
-  width: 100%;
-  max-width: 720px;
-}
-
-.hero__logo {
-  width: min(420px, 72vw);
-  height: auto;
-  filter: drop-shadow(0 4px 18px rgb(0 0 0 / 70%));
-}
-
-.hero__tagline {
-  font-family: var(--font-display);
-  font-size: clamp(var(--fs-md), 1.2vw + 10px, var(--fs-2xl));
-  font-weight: var(--fw-medium);
-  color: var(--white);
-  text-shadow: 0 2px 10px rgb(0 0 0 / 85%);
-  max-width: 24ch;
-}
-
-.hero__cta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--sp-3);
-  justify-content: center;
-}
-
-.hero__note {
-  font-size: var(--fs-sm);
-  color: var(--text-dim);
-  text-shadow: 0 1px 6px rgb(0 0 0 / 90%);
-}
-
-/* Scroll affordance — the original's "LEARN MORE" chevron. */
-.hero__more {
-  position: absolute;
-  left: 50%;
-  bottom: var(--sp-6);
-  transform: translateX(-50%);
-  z-index: 2;
-  display: grid;
-  justify-items: center;
-  gap: var(--sp-1);
-  font-family: var(--font-display);
-  font-size: var(--fs-xs);
-  font-weight: var(--fw-medium);
-  letter-spacing: 0.22em;
-  color: var(--white);
-  text-shadow: 0 2px 8px rgb(0 0 0 / 90%);
-  cursor: pointer;
-}
-.hero__more:hover {
-  text-decoration: none;
-  color: var(--cyan);
-}
-.hero__more svg {
-  width: 28px;
-  height: 18px;
-  animation: nudge 1.8s ease-in-out infinite;
-}
-@keyframes nudge {
-  50% {
-    transform: translateY(5px);
-  }
-}
-:root[data-fx='low'] .hero__more svg {
-  animation: none;
-}
-@media (prefers-reduced-motion: reduce) {
-  .hero__more svg {
-    animation: none;
-  }
-}
-
-/* ---------- Content sections ---------- */
-
-/*
- * Transparent: the page has one background and this is not it.
- *
- * This carried a ground of its own — first the footer artwork, then a flat
- * colour, with a curve between it and the hero to hide where one stopped and
- * the other started. With a single illustration fixed behind the whole page
- * there is nothing to hide and nothing to join: the copy sits on the art, and
- * each slab brings the only darkness it needs.
- */
-.sections {
-  position: relative;
-}
-
-.sections__inner {
-  position: relative;
-  max-width: var(--maxw);
-  margin: 0 auto;
-  padding: var(--sp-16) var(--sp-5);
-  display: grid;
-  gap: var(--sp-6);
-}
-
-/* ---------- the pitch cascade ---------- */
-
-/*
- * Two narrow panels stepping in from the right, then a wide close.
- *
- * The live site does not run its copy across the page; it floats it in
- * half-width slabs offset to the right, so the artwork behind carries the
- * left of the column and the eye moves down a diagonal rather than reading
- * three identical bars. The last block breaks the pattern and spans the
- * whole width, which is what makes it read as a conclusion.
- *
- * The offsets are desktop-only. On a phone there is no room to be off to one
- * side of anything, and a 60% panel indented 20% is a column of text nobody
- * can read.
- */
-.pitches {
-  display: grid;
-  gap: var(--sp-5);
-}
-
-.pitch {
-  display: grid;
-  gap: var(--sp-3);
-  padding: var(--sp-5);
-  border-radius: var(--radius-sm);
-  /*
-     Solid and dark rather than the panel gradient, so the slab sits *on* the
-     background art instead of tinting it — the live site uses a flat warm
-     near-black for exactly that reason.
-  */
-  background: rgb(9 13 24 / 88%);
-  box-shadow: var(--shadow);
-}
-
-/*
- * A thick edge on one side, in the game's own accents.
- *
- * The live site puts a 4px border right around these. Confined to the
- * leading edge here: a full box at this size reads as a form field, and the
- * single heavy rule is what says "this is a statement" without shouting.
- */
-.pitch--far {
-  border-left: 4px solid var(--gold);
-}
-
-.pitch--near {
-  border-left: 4px solid var(--purple);
-}
-
-.pitch--wide {
-  border-left: 4px solid var(--cyan);
-}
-
-.pitch__title {
-  font-size: var(--fs-2xl);
-  color: var(--text-heading);
-}
-
-.pitch__body {
-  /* Cap the measure, not the panel: prose is read, not filled. */
-  max-width: 74ch;
-  color: var(--text-dim);
-  line-height: 1.6;
-}
-
-@media (min-width: 900px) {
-  .pitch--far,
-  .pitch--near {
-    max-width: 620px;
-    justify-self: end;
-  }
-
-  /* The step: the second slab sits in from the first, not under it. */
-  .pitch--near {
-    margin-right: 9%;
-  }
-
-  .pitch--wide {
-    margin-top: var(--sp-4);
-  }
-}
-
-/* ---------- the three pillars ---------- */
-
-/*
- * Artwork first, at something like the size it was drawn.
- *
- * These were 48px thumbnails above a heading, which is a 523px illustration
- * spent on an icon. They are the only look at the game the page gives before
- * the Play button, so they lead the card and the words sit under them.
- *
- * The three are drawn to different crops and aspect ratios, so the art gets a
- * box of one height and stands on the floor of it. Bottom-aligning the cards
- * instead lines up the *text* underneath, which left the illustrations at
- * three different heights — 819, 819 and 841 — because the captions are not
- * the same length.
- */
-.cards {
-  display: grid;
-  gap: var(--sp-5);
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  align-items: start;
-}
-
-.card {
-  display: grid;
-  justify-items: center;
-  text-align: center;
-  gap: var(--sp-2);
-  min-width: 0;
-}
-
-.card__art {
-  width: 100%;
-  max-width: 260px;
-  height: 220px;
-  object-fit: contain;
-  object-position: bottom;
-  /*
-     The art is cut out on transparency, so it needs no frame — a drop shadow
-     grounds it against the background instead of a box drawn around it.
-  */
-  filter: drop-shadow(0 12px 26px rgb(0 0 0 / 55%));
-}
-
-.card__title {
-  font-size: var(--fs-xl);
-  margin: 0;
-  color: var(--text-heading);
-}
-
-.card__body {
-  font-size: var(--fs-sm);
-  color: var(--text-dim);
-  max-width: 34ch;
-}
-
-@media (max-width: 719px) {
-  .pitch {
-    padding: var(--sp-4);
-  }
-
-  .pitch__title {
-    font-size: var(--fs-xl);
-  }
-
-  /*
-     Two across rather than one.
-
-     Stacked, three 260px illustrations are most of a phone screen each and
-     the section becomes a scroll to nowhere; side by side they still read as
-     a set, and the third centres itself under them.
-  */
-  .cards {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: var(--sp-4);
-  }
-
-  .card:last-child {
-    grid-column: 1 / -1;
-  }
-
-  .card__art {
-    max-width: 200px;
-    height: 150px;
-  }
-
-  .card__title {
-    font-size: var(--fs-lg);
-  }
-}
-
-.landing__foot {
-  position: relative;
-  padding: var(--sp-6) var(--sp-5);
-  border-top: 1px solid var(--line);
-  text-align: center;
-  font-size: var(--fs-xs);
-  color: var(--text-faint);
-}
 
 /* ---------- Auth screens ---------- */
 
@@ -1072,5 +687,394 @@
   }
   .arrive__back {
     display: none;
+  }
+}
+
+/* ---------- Landing: the key art ----------
+ * The game's illustration shown whole — the trainer on the left, the floating
+ * city above — with the promise and Play on the right. Then recruit, battle
+ * and build, each beside real game art, the six worlds, and Play again.
+ */
+.kart {
+  position: relative;
+  min-height: 100dvh;
+  overflow-x: hidden;
+  background: #050913;
+  color: var(--white);
+}
+
+.kart__hero {
+  position: relative;
+  min-height: max(100svh, 640px);
+  overflow: hidden;
+}
+.kart__art {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 8%;
+}
+.kart__shade {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, transparent 30%, rgb(4 8 18 / 75%) 58%, #040812 80%),
+    linear-gradient(0deg, #050913, transparent 30%);
+}
+.kart__status {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 3;
+}
+.kart__copy {
+  position: absolute;
+  top: 50%;
+  right: clamp(24px, 7.5vw, 140px);
+  z-index: 2;
+  display: grid;
+  gap: 22px;
+  width: min(540px, 44vw);
+  transform: translateY(-50%);
+}
+.kart__logo {
+  justify-self: start;
+  width: 260px;
+  height: auto;
+}
+.kart h1.kart__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(44px, 4.3vw, 66px);
+  font-weight: 900;
+  line-height: 1.02;
+  letter-spacing: 0.01em;
+  color: var(--white);
+}
+.kart__title span {
+  display: block;
+  color: #ffd979;
+}
+.kart__lead {
+  margin: 0;
+  font-size: 18px;
+  line-height: 1.6;
+  color: #c5cee0;
+}
+.kart__btns {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+.kart__play {
+  min-width: 180px;
+}
+.kart__how {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 52px;
+  padding: 0 24px;
+  border: 0;
+  border-radius: 14px;
+  background: rgb(255 255 255 / 6%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 20%);
+  color: var(--white);
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+}
+.kart__how:hover {
+  background: rgb(255 255 255 / 10%);
+}
+.kart__how svg {
+  width: 18px;
+  height: 18px;
+  fill: currentColor;
+}
+.kart__note {
+  margin: 0;
+  font-size: 14px;
+  color: var(--text-faint);
+}
+.kart__note .switchwallet {
+  align-items: flex-start;
+}
+
+/* Recruit, battle, build: art and words, alternating sides. */
+.kart__rows {
+  display: grid;
+  gap: 100px;
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 110px clamp(20px, 6vw, 120px);
+  scroll-margin-top: 20px;
+}
+.kart__row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(32px, 5vw, 70px);
+  align-items: center;
+}
+.kart__row.is-flip > .kart__media {
+  order: 2;
+}
+.kart__media {
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 16 / 10;
+  border-radius: 22px;
+  background: #0b1222 center / cover;
+  box-shadow:
+    0 30px 70px rgb(0 0 0 / 55%),
+    inset 0 0 0 1px rgb(255 255 255 / 10%);
+}
+/* Five fighters standing in the tavern, the middle one forward. */
+.kart__squad {
+  position: absolute;
+  inset: auto 0 0;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  background: linear-gradient(0deg, rgb(5 9 19 / 70%), transparent 40%);
+}
+.kart__squad img {
+  width: 26%;
+  height: auto;
+  margin: 0 -4%;
+  filter: drop-shadow(0 10px 20px rgb(0 0 0 / 60%));
+}
+.kart__squad img:nth-child(3) {
+  position: relative;
+  z-index: 1;
+  width: 30%;
+}
+.kart__squad img:nth-child(1),
+.kart__squad img:nth-child(5) {
+  width: 22%;
+  filter: drop-shadow(0 10px 20px rgb(0 0 0 / 60%)) brightness(0.85);
+}
+/* The map close enough that the burning buildings read. */
+.kart__media.is-map {
+  background-size: 150%;
+  background-position: 55% 42%;
+}
+.kart__text {
+  display: grid;
+  gap: 16px;
+}
+.kart__kick {
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--cyan);
+}
+.kart h2.kart__h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(30px, 2.8vw, 40px);
+  font-weight: 900;
+  line-height: 1.1;
+  letter-spacing: 0.01em;
+  color: var(--white);
+}
+.kart__h2 em {
+  font-style: normal;
+  color: #ffd979;
+}
+.kart__body {
+  margin: 0;
+  font-size: 18px;
+  line-height: 1.6;
+  color: #c5cee0;
+}
+.kart__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.kart__chips span {
+  padding: 6px 13px;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 6%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 12%);
+  font-size: 14px;
+  color: #dfe6f2;
+}
+
+/* The six worlds, turning. */
+.kart__worlds {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  padding: 90px clamp(20px, 6vw, 120px);
+  text-align: center;
+  background: radial-gradient(60% 80% at 50% 50%, rgb(0 120 200 / 12%), transparent 70%);
+}
+.kart__orbs {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 40px;
+  margin-top: 28px;
+}
+.kart__orb {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #c5cee0;
+}
+.kart__planet {
+  position: relative;
+  width: 130px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background-size: auto 100%;
+  background-repeat: repeat-x;
+  box-shadow: 0 0 40px rgb(0 186 255 / 22%);
+  animation: kart-turn 80s linear infinite;
+}
+.kart__planet::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 34% 30%, rgb(255 255 255 / 22%), transparent 28%),
+    radial-gradient(circle closest-side at 42% 40%, transparent 52%, rgb(2 6 16 / 55%) 80%, rgb(2 6 16 / 92%) 100%),
+    linear-gradient(120deg, transparent 35%, rgb(2 6 16 / 65%) 85%);
+}
+@keyframes kart-turn {
+  to {
+    background-position: 200% 0;
+  }
+}
+:root[data-fx='low'] .kart__planet {
+  animation: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .kart__planet {
+    animation: none;
+  }
+}
+
+.kart__band {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 30px;
+  max-width: 1200px;
+  margin: 0 auto 90px;
+  padding: 56px;
+  border-radius: 26px;
+  background: #101a3a center / cover;
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 14%);
+}
+.kart__band .kart__body {
+  margin-top: 8px;
+  color: #e2e8f4;
+}
+.kart__foot {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 10px 24px;
+  padding: 30px clamp(20px, 6vw, 120px);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 8%);
+  font-size: 14px;
+  color: var(--text-dim);
+}
+
+/* A phone: the art fills the top, the words sit under the trainer. */
+@media (max-width: 719px) {
+  .kart__hero {
+    min-height: 100svh;
+  }
+  .kart__art {
+    object-position: 22% 0;
+  }
+  .kart__shade {
+    background: linear-gradient(0deg, #050913 34%, rgb(5 9 19 / 70%) 55%, transparent 80%);
+  }
+  .kart__copy {
+    top: auto;
+    right: 18px;
+    bottom: 26px;
+    left: 18px;
+    gap: 14px;
+    width: auto;
+    transform: none;
+  }
+  .kart__logo {
+    display: none;
+  }
+  .kart h1.kart__title {
+    font-size: 36px;
+  }
+  .kart__lead,
+  .kart__body {
+    font-size: 15.5px;
+  }
+  .kart__btns {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .kart__how {
+    justify-content: center;
+    height: 48px;
+  }
+  .kart__rows {
+    gap: 46px;
+    padding: 50px 18px;
+  }
+  .kart__row {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+  .kart__row.is-flip > .kart__media {
+    order: 0;
+  }
+  .kart h2.kart__h2 {
+    font-size: 26px;
+  }
+  .kart__worlds {
+    padding: 50px 18px;
+  }
+  .kart__orbs {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px 10px;
+    margin-top: 16px;
+  }
+  .kart__orb {
+    font-size: 11px;
+  }
+  .kart__planet {
+    width: 76px;
+  }
+  .kart__band {
+    flex-direction: column;
+    align-items: stretch;
+    margin: 0 18px 50px;
+    padding: 28px 22px;
+    text-align: center;
+  }
+  .kart__foot {
+    flex-direction: column;
+    align-items: center;
+    padding: 24px 18px;
+    text-align: center;
   }
 }
