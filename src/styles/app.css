@@ -2973,3 +2973,24 @@ a.res {
 .dasc .pasc__sock--right {
   right: -18px;
 }
+
+/* Ascension on a phone: My Fighters' cards in the pick sheets, Details and Choose under the one tapped. */
+.pasc__picks {
+  padding-bottom: 0;
+}
+.pasc__pick + .pasc__pick {
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 6%);
+}
+.pasc__pick.is-open {
+  background: rgb(124 92 255 / 10%);
+}
+.pasc__pickacts {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 0 10px 10px 82px;
+}
+.pasc__pickacts .btn {
+  flex: 1;
+  min-height: 38px;
+}

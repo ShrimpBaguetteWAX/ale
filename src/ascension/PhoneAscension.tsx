@@ -17,7 +17,7 @@ import {
 } from '@/ascension/rules'
 import { fighterArt, fighterArtFallback } from '@/tavern/fighterStats'
 import { BottomSheet } from '@/components/BottomSheet'
-import { FighterRow, ListingBody } from '@/market/FighterRows'
+import { Row, figuresOf } from '@/fighters/DeskRoster'
 import { DetailSheet, rosterPanel } from '@/fight/setup'
 import { useConfig } from '@/state/useConfig'
 import { GameImg } from '@/components/GameImg'
@@ -287,14 +287,12 @@ export function PhoneAscension({
 /* ---------- choosing ---------- */
 
 /**
- * A fighter to choose, as the market draws it: portrait with level, the
- * Sacrifice skull and the player's own marker, then the graded stats and a
- * tag an ability. Nineteen Tacticians at the cap were nineteen identical
- * lines of "Tactician · Human · Nature · L10"; this is how they are told
- * apart.
+ * A fighter to choose, as My Fighters draws it: the same card, so a player
+ * who knows their roster knows this list. The choice circle sits at the end
+ * of the name line, and a note under the abilities says where else it fits.
  *
- * Tapping opens it in place on the full readouts, Details for everything,
- * and Choose — so looking is never the same tap as choosing.
+ * Tapping opens Details and Choose under the card — so looking is never the
+ * same tap as choosing.
  */
 function PickRow({
   fighter: f,
@@ -315,30 +313,39 @@ function PickRow({
   onDetails: () => void
   onChoose: () => void
 }) {
-  const { classes, fighters } = useConfig()
-  const template = classes.get(f.classname)
+  const { classes, fighters, levelMod, ageDecay } = useConfig()
+  const [now] = useState(() => Date.now())
+  const fig = useMemo(
+    () => figuresOf(f, classes.get(f.classname), fighters, levelMod, ageDecay, now, false),
+    [f, classes, fighters, levelMod, ageDecay, now],
+  )
   return (
-    <FighterRow
-      stats={f.stats}
-      ascension={f.ascension_level}
-      template={template}
-      marker={f.marker}
-      dim={dim}
-      open={open}
-      onToggle={onToggle}
-      below={note ? <span className="mrow__line">{note}</span> : undefined}
-      right={<span className={`pasc__radio${on ? ' is-on' : ''}`} aria-hidden="true" />}
-    >
-      <ListingBody stats={f.stats} template={template} readout="stats" unlockLevel={fighters?.asc_ability_unlock_lvl} />
-      <div className="mrow__acts">
-        <button type="button" className="btn btn--ghost btn--sm" onClick={onDetails}>
-          Details
-        </button>
-        <button type="button" className="btn btn--primary btn--sm" onClick={onChoose}>
-          {on ? 'Chosen' : 'Choose'}
-        </button>
-      </div>
-    </FighterRow>
+    <div className={`pasc__pick${open ? ' is-open' : ''}`}>
+      <Row
+        f={f}
+        fig={fig}
+        view="default"
+        mode="inventory"
+        now={now}
+        picked={on || open}
+        checked={false}
+        gate={{ ok: true }}
+        onClick={onToggle}
+        dim={dim}
+        note={note}
+        aside={<span className={`pasc__radio${on ? ' is-on' : ''}`} aria-hidden="true" />}
+      />
+      {open && (
+        <div className="pasc__pickacts">
+          <button type="button" className="btn btn--ghost btn--sm" onClick={onDetails}>
+            Details
+          </button>
+          <button type="button" className="btn btn--primary btn--sm" onClick={onChoose}>
+            {on ? 'Chosen' : 'Choose'}
+          </button>
+        </div>
+      )}
+    </div>
   )
 }
 
@@ -394,7 +401,7 @@ function TargetSheet({
               </button>
             ))}
           </div>
-          <div className="mrows">
+          <div className="drost--phone drost--stack drost__rows pasc__picks">
             {shown.map((f) => (
               <PickRow
                 key={f.fighter_id}
@@ -455,7 +462,7 @@ function SocketSheet({
           is not busy or mid-ascension.
         </p>
       ) : (
-        <div className="mrows">
+        <div className="drost--phone drost--stack drost__rows pasc__picks">
           {rows.map((f) => {
             const met = requirementsMet(f, target)
             const elsewhere = REQUIREMENTS.find(
