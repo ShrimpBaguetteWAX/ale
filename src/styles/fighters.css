@@ -2305,9 +2305,10 @@
   padding: 2px 9px;
   border: 0;
   border-radius: 999px;
-  background: rgb(124 92 255 / 22%);
-  box-shadow: inset 0 0 0 1px rgb(124 92 255 / 55%);
-  color: var(--white);
+  /* A chip like its neighbours, not a highlighted one: it is a menu, not a state. */
+  background: rgb(255 255 255 / 5%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 12%);
+  color: #dfe6f2;
   font: inherit;
   font-size: 11.5px;
   font-weight: var(--fw-bold);
@@ -2643,9 +2644,11 @@
   padding: 10px;
   border-radius: 12px;
 }
+/* From a phone's chip, six across: eight ran off the right edge of a 375px screen. */
 .drost__pop--marker.is-down {
   top: calc(100% + 8px);
   bottom: auto;
+  grid-template-columns: repeat(6, 32px);
 }
 .drost__pop--marker .markbtn {
   width: 32px;
@@ -2813,4 +2816,15 @@
   height: 21px;
   padding: 0 7px 0 6px;
   font-size: 12px;
+}
+/* In the hero's chips the picker is a wrapper, not a chip of its own; and its markers keep their colour. */
+.drost__chips > span.drost__markpick {
+  padding: 0;
+  background: none;
+  box-shadow: none;
+}
+.drost__chips .drost__pop--marker .markbtn img {
+  height: 18px;
+  filter: none;
+  opacity: 1;
 }
