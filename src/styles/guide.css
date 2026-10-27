@@ -622,12 +622,13 @@
 .guide__squad {
   display: grid;
   grid-template-columns: repeat(5, 1fr) 24px 1.15fr;
-  align-items: end;
+  align-items: stretch;
   gap: 10px;
   max-width: 860px;
 }
 .guide__squad > span {
   display: grid;
+  align-content: end;
   justify-items: center;
   gap: 6px;
   padding: 10px 4px;
@@ -667,8 +668,8 @@
 .guide__squad .is-nft > div > span {
   display: grid;
   place-items: center;
-  width: 46px;
-  height: 64px;
+  width: 52px;
+  height: 104px;
   border-radius: 7px;
   background: #0b1222;
   box-shadow: inset 0 0 0 1.5px rgb(246 168 0 / 60%);
@@ -942,6 +943,9 @@
   }
   .guide__squad > span > img {
     height: 80px;
+  }
+  .guide__squad .is-nft > div > span {
+    height: 76px;
   }
   .guide__squad > .is-nft {
     grid-column: span 3;
