@@ -9,10 +9,14 @@
  * its own size for a desktop and an 800px one for a phone (`-800.webp`),
  * which `artSet` in src/assets.ts offers the browser. The planet maps keep
  * their 2000px, since the map zooms; the buildings and icons come down to
- * the largest size they are drawn at. Run once after replacing a source
- * picture; the originals are not kept beside the WebP.
+ * the largest size they are drawn at. The fighter avatars (the head and
+ * shoulders crops) are already WebP but were 512px for a face drawn at most
+ * about 120px; they come down to 256px, in place.
+ *
+ * Safe to run again: a source already converted is gone and is skipped.
  */
-import { readdir, stat, unlink } from 'node:fs/promises'
+import { readFile, readdir, stat, unlink, writeFile } from 'node:fs/promises'
+import { existsSync } from 'node:fs'
 import { join, extname, basename } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import sharp from 'sharp'
@@ -50,6 +54,7 @@ async function write(src, out, opts) {
 
 for (const f of BACKGROUNDS) {
   const src = join(PUB, 'background', f)
+  if (!existsSync(src)) continue
   const base = basename(f, extname(f))
   const full = await write(src, join(PUB, 'background', base + '.webp'), { quality: 78 })
   const phone = await write(src, join(PUB, 'background', base + '-800.webp'), { width: 800, quality: 74 })
@@ -81,12 +86,29 @@ for (const f of await readdir(join(PUB, 'buildings'))) {
 
 for (const [f, width] of ICONS) {
   const src = join(PUB, f)
+  if (!existsSync(src) || (f === 'logo.png' && existsSync(join(PUB, 'logo.webp')))) continue
   const r = await write(src, join(PUB, f.replace(/\.png$/, '.webp')), { width, quality: 82 })
   before += r.s
   after += r.o
   console.log(`${f}: ${kb(r.s)} -> ${kb(r.o)}`)
   /* The logo's PNG stays: pages outside the game may link to it. */
   if (f !== 'logo.png') await unlink(src)
+}
+
+/* The avatars: in place, only those still larger than they are ever drawn. */
+const AVATAR = 256
+for (const f of await readdir(join(PUB, 'fighters'))) {
+  if (!f.endsWith('_avatar.webp')) continue
+  const src = join(PUB, 'fighters', f)
+  /* Read whole, so the file is not held open while it is written over (Windows refuses that). */
+  const buf = await readFile(src)
+  const { width, height } = await sharp(buf).metadata()
+  if (Math.min(width, height) <= AVATAR) continue
+  /* The shorter side to 256, so a face drawn square is as sharp across as down. */
+  const out = await sharp(buf).resize({ width: AVATAR, height: AVATAR, fit: 'outside' }).webp({ quality: 82 }).toBuffer()
+  await writeFile(src, out)
+  before += buf.length
+  after += out.length
 }
 
 console.log(`total ${kb(before)} -> ${kb(after)}`)
