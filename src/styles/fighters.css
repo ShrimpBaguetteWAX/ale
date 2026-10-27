@@ -887,20 +887,7 @@
   font-size: 11.5px;
   color: var(--text-faint);
 }
-.drost__line {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-family: var(--font-display);
-  font-size: 11px;
-  font-weight: 800;
-  white-space: nowrap;
-}
-.drost__line > span {
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
-}
+
 .drost__si {
   height: 11px;
   filter: brightness(0) invert(1);
@@ -946,10 +933,7 @@
   color: var(--red);
   box-shadow: inset 0 0 0 1px rgb(255 90 106 / 50%);
 }
-.drost__abs {
-  display: inline-flex;
-  gap: 3px;
-}
+
 .drost__ab {
   display: inline-grid;
   place-items: center;
@@ -1986,10 +1970,11 @@
 .drost--phone .drost__seg button[aria-pressed='true'] small {
   color: #d9ceff;
 }
+/* The view switch at the size of the mode switch above it, as on a desktop. */
 .drost--phone .drost__seg--sm button {
-  min-height: 26px;
+  min-height: 32px;
   padding: 0 7px;
-  font-size: 11.5px;
+  font-size: 12.5px;
 }
 
 .drost--phone .drost__toolbar {
@@ -2131,14 +2116,8 @@
   gap: 9px;
   padding: 5px 9px 5px 6px;
 }
-.drost--phone .drost__row.is-inlinepay {
-  grid-template-columns: 48px minmax(0, 1fr);
-}
 .drost--phone .drost__row.is-ticking {
   grid-template-columns: 20px 48px minmax(0, 1fr) auto;
-}
-.drost--phone .drost__row.is-ticking.is-inlinepay {
-  grid-template-columns: 20px 48px minmax(0, 1fr);
 }
 .drost--phone .drost__row:hover {
   background: none;
@@ -2180,32 +2159,13 @@
   white-space: nowrap;
   text-overflow: ellipsis;
 }
-.drost__when {
-  flex: none;
-  margin-left: auto;
-  font-size: 10.5px;
-  color: var(--text-faint);
-  text-transform: none;
-}
-.drost__when.is-overdue {
-  color: #ffb3bd;
-}
-.drost--phone .drost__line {
-  gap: 7px;
-  font-size: 10.5px;
-}
+
 .drost--phone .drost__si {
   height: 10px;
 }
 .drost--phone .drost__l3 {
   gap: 4px;
   overflow: hidden;
-}
-.drost--phone .drost__l3 .drost__bar {
-  flex: 1;
-  min-width: 20px;
-  height: 4px;
-  margin-left: 4px;
 }
 .drost__bar.is-overdue i {
   background: linear-gradient(90deg, #a83246, #ff5a6a);
@@ -2722,4 +2682,131 @@
   .drost:not(.drost--phone) .drost__cells--6.drost__cells--big {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
+}
+
+/*
+ * A phone's default row: the desktop's ring and columns, stacked. The ring
+ * stands beside three lines — the name, the five figures in columns under
+ * the list's one head, the abilities by name — and everything is a size up
+ * from the old phone row.
+ */
+.drost--phone .drost__row.is-ring,
+.drost--phone .drost__colhead {
+  grid-template-columns: 62px repeat(5, minmax(0, 1fr));
+  column-gap: 6px;
+}
+.drost--phone .drost__row.is-ring.is-ticking,
+.drost--phone .drost__colhead.is-ticking,
+.drost--phone .drost__row.is-ring.is-sellcol,
+.drost--phone .drost__colhead.is-sellcol {
+  grid-template-columns: 20px 62px repeat(5, minmax(0, 1fr));
+}
+.drost--phone .drost__row.is-ring {
+  row-gap: 6px;
+  padding: 10px 10px 10px 8px;
+}
+.drost--phone .drost__colhead {
+  padding: 8px 10px 6px 8px;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+}
+.drost--phone .drost__colhead .drost__colname,
+.drost--phone .drost__colhead.is-sellcol > span:last-child {
+  display: none;
+}
+/* Words only on a phone: with a tick column the five heads have about 40px each. */
+.drost--phone .drost__colhead .drost__si {
+  display: none;
+}
+.drost--phone .drost__row.is-ring > .drost__ring,
+.drost--phone .drost__row.is-ring > .drost__tick {
+  grid-row: 1 / span 3;
+  align-self: start;
+}
+.drost--phone .drost__row.is-ring > .drost__who {
+  grid-row: 1;
+  grid-column: 2 / -1;
+}
+.drost--phone .drost__row.is-ring.is-ticking > .drost__who {
+  grid-column: 3 / -1;
+}
+/* Selling: the price at the end of the name line. */
+.drost--phone .drost__row.is-ring.is-sellcol > .drost__who {
+  grid-column: 3 / -2;
+}
+.drost--phone .drost__row.is-ring.is-sellcol > .drost__pay {
+  grid-row: 1;
+  grid-column: -2 / -1;
+}
+.drost--phone .drost__row.is-ring > .drost__abn {
+  grid-row: 3;
+  grid-column: 2 / -1;
+}
+.drost--phone .drost__row.is-ring.is-ticking > .drost__abn {
+  grid-column: 3 / -1;
+}
+.drost--phone .drost__ring {
+  width: 62px;
+  height: 62px;
+  padding: 4px;
+  border-radius: 14px;
+}
+.drost--phone .drost__ring .drost__art {
+  width: 54px;
+  height: 54px;
+  border-radius: 10px;
+}
+.drost--phone .drost__ring .drost__days {
+  font-size: 10.5px;
+}
+.drost--phone .is-ring .drost__lv {
+  font-size: 10px;
+}
+.drost--phone .is-ring .drost__who {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.drost--phone .is-ring .drost__l1 {
+  min-width: 0;
+}
+.drost--phone .is-ring .drost__l1 b {
+  font-size: 15.5px;
+}
+.drost--phone .is-ring .drost__l1 img {
+  width: 14px;
+  height: 14px;
+}
+.drost--phone .is-ring .drost__l1 small {
+  font-size: 12.5px;
+}
+.drost--phone .is-ring .drost__l3 {
+  flex: none;
+  margin-left: auto;
+  overflow: visible;
+}
+.drost--phone .is-ring .drost__age {
+  height: 20px;
+  padding: 0 6px;
+  font-size: 10.5px;
+}
+.drost--phone .is-ring .drost__status {
+  padding: 2px 7px;
+  font-size: 10px;
+}
+.drost--phone .drost__num {
+  font-size: 14px;
+}
+.drost--phone .drost__num .drost__grade {
+  width: 10px;
+  height: 12px;
+}
+.drost--phone .drost__num:not(:has(.drost__grade)) {
+  padding-right: 12px;
+}
+.drost--phone .drost__abp {
+  height: 21px;
+  padding: 0 7px 0 6px;
+  font-size: 12px;
 }

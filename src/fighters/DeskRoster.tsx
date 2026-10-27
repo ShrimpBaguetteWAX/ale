@@ -700,7 +700,7 @@ export function DeskRoster(p: DeskRosterProps) {
               </p>
             ) : (
               <div className="drost__rows">
-                {!phone && view === 'default' && (
+                {view === 'default' && (
                   <div
                     className={`drost__colhead${p.mode === 'inventory' ? '' : ' is-ticking'}${p.mode === 'sell' ? ' is-sellcol' : ''}`}
                     aria-hidden="true"
@@ -725,7 +725,6 @@ export function DeskRoster(p: DeskRosterProps) {
                     view={view}
                     mode={p.mode}
                     now={p.now}
-                    phone={phone}
                     picked={p.mode === 'inventory' && f.fighter_id === (wide ? shownFighter : selected)?.fighter_id}
                     checked={p.checked.includes(f.fighter_id)}
                     gate={gateOf(f)}
@@ -839,14 +838,12 @@ function Row({
   checked,
   gate,
   onClick,
-  phone,
 }: {
   f: RosterFighter
   fig: Figures
   view: View
   mode: Mode
   now: number
-  phone: boolean
   picked: boolean
   checked: boolean
   gate: { ok: boolean; reason?: string }
@@ -856,10 +853,8 @@ function Row({
   const state = fighterState(f, now)
   const ticking = mode !== 'inventory'
   const abilities = s.abilities ?? []
-  /* A phone has no room for the payday column: the date joins the name, the bar the age. */
-  const inlinePay = phone && mode !== 'sell'
-  /* A desktop's default row: payday as a ring round the portrait, the stats in columns. */
-  const ring = !phone && view === 'default'
+  /* The default row: payday as a ring round the portrait, the stats in columns. A phone stacks it. */
+  const ring = view === 'default'
   const daysLeft = Math.max(0, Math.ceil(fig.pay.msLeft / DAY))
   const art = (
     <span className="drost__art" style={{ backgroundImage: `url('${elementBackground(f.element)}')` }}>
@@ -894,7 +889,6 @@ function Row({
   const classes = [
     'drost__row',
     view === 'default' ? '' : 'is-focused',
-    view === 'default' && inlinePay ? 'is-inlinepay' : '',
     ring ? 'is-ring' : '',
     ring && mode === 'sell' ? 'is-sellcol' : '',
     ticking ? 'is-ticking' : '',
@@ -971,75 +965,6 @@ function Row({
               )
             })}
           </span>
-        </>
-      ) : view === 'default' ? (
-        <>
-          <span className="drost__who">
-            <span className="drost__l1">
-              <b>{f.classname}</b>
-              <img src={asset(`/assets/icons/elements/${f.element}.png`)} alt={f.element} />
-              <small>{f.racename}</small>
-              {inlinePay && (
-                <span className={`drost__when${fig.pay.overdue ? ' is-overdue' : ''}`}>
-                  {fig.pay.overdue ? 'Payday due' : `Payday ${payDay(f)}`}
-                </span>
-              )}
-            </span>
-            <span className="drost__line">
-              {fig.stats
-                .filter((x) => x.field !== 'taunt')
-                .map((x) => (
-                  <span key={x.field} title={STAT_NAMES[x.field]}>
-                    <img className="drost__si" src={statIcon(x.field)} alt="" />
-                    {x.value}
-                    <Grade grade={x.grade} />
-                  </span>
-                ))}
-            </span>
-            <span className="drost__l3">
-              <AgeChip bonus={fig.age} />
-              <span className="drost__abs">
-                {abilities.map((a, i) => {
-                  const r = abilityRarity(a.displayname)
-                  return (
-                    <span
-                      key={`${a.ability}-${i}`}
-                      className={`drost__ab${a.locked ? ' is-locked' : ''}`}
-                      style={{ '--ab': rarityColor(a.displayname) } as React.CSSProperties}
-                      title={`${abilityName(a.displayname)}${r ? ` · ${r}` : ''}${a.locked ? ' · locked' : ''}`}
-                    >
-                      {r ? r.charAt(0).toUpperCase() : '·'}
-                    </span>
-                  )
-                })}
-              </span>
-              {status}
-              {inlinePay && (
-                <>
-                  <span className={`drost__bar${fig.pay.overdue ? ' is-overdue' : ''}`}>
-                    <i style={{ width: `${Math.max(2, fig.pay.progress * 100)}%` }} />
-                  </span>
-                  <small className="drost__days">{fig.pay.overdue ? 'now' : `${daysLeft}d`}</small>
-                </>
-              )}
-            </span>
-          </span>
-          {/* Only a phone reaches here (a desktop's default row is the ring above); selling, it shows the price. */}
-          {mode === 'sell' && (
-            <span className="drost__pay">
-              {gate.ok ? (
-                <>
-                  <small>Sells for</small>
-                  <Credits value={s.credits ?? 0} />
-                </>
-              ) : (
-                <>
-                  <small>Can't sell</small>
-                  <small>while busy</small>
-                </>
-              )}
-            </span>
-          )}
         </>
       ) : (
         <>
