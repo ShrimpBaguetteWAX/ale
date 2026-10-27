@@ -774,7 +774,7 @@
 .drost__main {
   display: grid;
   /* The list first: its rows are the screen, the panel beside them a detail. */
-  grid-template-columns: minmax(520px, 700px) minmax(360px, 1fr);
+  grid-template-columns: minmax(520px, 700px) minmax(400px, 1fr);
   gap: 16px;
   align-items: start;
 }
@@ -1897,6 +1897,95 @@
   padding: 0 11px;
 }
 
+/*
+ * A desktop's fighter in full, on the same scale as its rows: the rows went
+ * up a size (16px names, 15px figures), and a panel left at the old size
+ * beside them read as the small print.
+ */
+.drost:not(.drost--phone) .drost__detail {
+  gap: 11px;
+  padding: 16px;
+}
+.drost:not(.drost--phone) .drost__hero {
+  grid-template-columns: 104px minmax(0, 1fr);
+}
+.drost:not(.drost--phone) .drost__heroart {
+  width: 104px;
+  height: 104px;
+}
+.drost:not(.drost--phone) .drost__kick,
+.drost:not(.drost--phone) .drost__kick .drost__cr {
+  font-size: 11px;
+}
+.shell .main__inner .drost:not(.drost--phone) .drost__heroname {
+  font-size: 22px;
+}
+.drost:not(.drost--phone) .drost__heroline {
+  font-size: 14px;
+}
+.drost:not(.drost--phone) .drost__chips > span:not(.drost__age) {
+  padding: 3px 10px;
+  font-size: 12.5px;
+}
+.drost:not(.drost--phone) .drost__chips img {
+  height: 12px;
+}
+.drost:not(.drost--phone) .drost__boxhead small {
+  font-size: 11px;
+}
+.drost:not(.drost--phone) .drost__boxhead b {
+  font-size: 18px;
+}
+.drost:not(.drost--phone) .drost__box p {
+  font-size: 13px;
+}
+.drost:not(.drost--phone) .drost__box p .drost__cr {
+  font-size: 12.5px;
+}
+.drost:not(.drost--phone) .drost__detail > .drost__cap {
+  font-size: 11px;
+}
+.drost:not(.drost--phone) .drost__cells--big .drost__cell {
+  padding: 8px 2px;
+}
+.drost:not(.drost--phone) .drost__cells--big .drost__cell small {
+  font-size: 10.5px;
+}
+.drost:not(.drost--phone) .drost__cells--big .drost__cell small .drost__si {
+  height: 11px;
+}
+.drost:not(.drost--phone) .drost__cells--big .drost__cell b {
+  font-size: 16px;
+}
+.drost:not(.drost--phone) .drost__cells--big .drost__cell em {
+  font-size: 11px;
+}
+.drost:not(.drost--phone) .drost__ability {
+  gap: 3px;
+  padding: 8px 12px;
+}
+.drost:not(.drost--phone) .drost__abname {
+  font-size: 15px;
+}
+.drost:not(.drost--phone) .drost__abname small {
+  font-size: 11px;
+}
+.drost:not(.drost--phone) .drost__abname em {
+  font-size: 12px;
+}
+.drost:not(.drost--phone) .drost__ability p {
+  font-size: 13px;
+}
+.drost:not(.drost--phone) .drost__acts .btn {
+  font-size: 13px;
+}
+/* The view switch over the rows at the size of the mode switch above it. */
+.drost:not(.drost--phone) .drost__listhead .drost__seg--sm button {
+  min-height: 32px;
+  padding: 0 13px;
+  font-size: 13px;
+}
+
 /* ---------- My Fighters on a phone: the same rows, sized for a thumb ---------- */
 
 .drost--phone {
@@ -2593,7 +2682,7 @@
 
 /* The fighter's panel level with the first row of the list, under its view switch. */
 .drost:not(.drost--phone) .drost__main:not(.is-narrow):has(> .drost__list > .drost__listhead) > .drost__side {
-  margin-top: 42px;
+  margin-top: 46px;
 }
 
 /*
