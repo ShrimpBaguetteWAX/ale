@@ -2257,3 +2257,32 @@ i.mrow__arrow {
 .drost--stack .mcard__price small {
   font-size: 11px;
 }
+
+/* What the cards show, under the tabs: My Fighters' view switch, at its size. */
+.mview {
+  justify-self: start;
+}
+.mview button {
+  min-height: 32px;
+  padding: 0 13px;
+  font-size: 13px;
+}
+@media (min-width: 720px) {
+  /* A wide board's focused card: the price in its own column, as on the default card. */
+  .mdesk__list:not(.drost--stack) .drost__row.is-focused.is-aside {
+    grid-template-columns: 56px 110px minmax(0, 1fr) 104px;
+  }
+  .mdesk__list:not(.drost--stack) .drost__row.is-focused > .drost__aside {
+    justify-self: end;
+  }
+}
+@media (max-width: 719px) {
+  .mview {
+    justify-self: stretch;
+  }
+  .mview button {
+    flex: 1 1 auto;
+    padding: 0 6px;
+    font-size: 12.5px;
+  }
+}

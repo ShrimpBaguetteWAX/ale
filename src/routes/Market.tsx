@@ -56,7 +56,7 @@ import { elementBackground, fighterArt, fighterArtFallback, type ClassTemplate, 
 import { addAuction, bidAuction, buyOffer, cancelAuction } from '@/wharf/actions'
 import { SACRIFICE_ABILITY } from '@/ascension/rules'
 import { asset } from '@/assets'
-import { Row, figuresOf } from '@/fighters/DeskRoster'
+import { Row, VIEWS, figuresOf, type View } from '@/fighters/DeskRoster'
 
 /**
  * The fighter market.
@@ -92,6 +92,8 @@ type Dialog =
  */
 const WIDE_BOARD = 1360
 const WideBoard = createContext(false)
+/* What the cards show — Default, Stats, Res, Combat, Abilities — as on My Fighters. */
+const CardView = createContext<View>('default')
 
 export default function Market() {
   const player = useGame((s) => s.player)!
@@ -142,6 +144,7 @@ export default function Market() {
     sizeObs.current.observe(el)
   }, [])
   const wide = !phone && boardW >= WIDE_BOARD
+  const [view, setView] = useState<View>('default')
   const toggleRow = (key: string) => setOpenRow((k) => (k === key ? null : key))
   /* A desktop shows one listing in full beside the list: which one. */
   const [pick, setPick] = useState<string | null>(null)
@@ -391,6 +394,7 @@ export default function Market() {
 
   return (
     <WideBoard.Provider value={wide}>
+    <CardView.Provider value={view}>
     <div className={`market${pinned ? ' market--pinned' : ''}`}>
       <img className="market__art" src={asset("/assets/background/bg-shop.png")} alt="" />
       <div className="market__scrim" />
@@ -439,6 +443,15 @@ export default function Market() {
             ))}
           </div>
           )}
+
+          {/* What the cards show, as on My Fighters: one switch, for every tab. */}
+          <span className="drost__seg drost__seg--sm mview" role="tablist" aria-label="Cards show">
+            {VIEWS.map(([v, label]) => (
+              <button type="button" role="tab" key={v} aria-selected={view === v} onClick={() => setView(v)}>
+                {label}
+              </button>
+            ))}
+          </span>
 
           {!phone && (tab === 'auctions' || tab === 'offers' || tab === 'mine') && (
             <DeskBoard
@@ -721,6 +734,7 @@ export default function Market() {
         />
       )}
     </div>
+    </CardView.Provider>
     </WideBoard.Provider>
   )
 }
@@ -759,6 +773,7 @@ function MarketCard({
   wide: boolean
 }) {
   const { classes, fighters, levelMod, ageDecay } = useConfig()
+  const view = useContext(CardView)
   const f = useMemo(
     () => ({ ...listingAsFighter(listing), in_use: 0, marker: marker ?? '' }),
     [listing, marker],
@@ -771,7 +786,7 @@ function MarketCard({
     <Row
       f={f}
       fig={fig}
-      view="default"
+      view={view}
       mode="inventory"
       now={now}
       picked={picked}
@@ -805,6 +820,7 @@ function OwnCard({
   cue?: string
 }) {
   const { classes, fighters, levelMod, ageDecay } = useConfig()
+  const view = useContext(CardView)
   const [now] = useState(() => Date.now())
   const fig = useMemo(
     () => figuresOf(f, classes.get(f.classname), fighters, levelMod, ageDecay, now, false),
@@ -814,7 +830,7 @@ function OwnCard({
     <Row
       f={f}
       fig={fig}
-      view="default"
+      view={view}
       mode="inventory"
       now={now}
       picked={picked}
@@ -866,6 +882,7 @@ function ListingRow({
   onOpen: () => void
 }) {
   const { classes, fighters, levelMod, ageDecay } = useConfig()
+  const view = useContext(CardView)
   const f = useMemo(
     () => ({ ...listingAsFighter(listing), in_use: 0, marker: marker ?? '' }),
     [listing, marker],
@@ -879,7 +896,7 @@ function ListingRow({
       <Row
         f={f}
         fig={fig}
-        view="default"
+        view={view}
         mode="inventory"
         now={now}
         picked={open}

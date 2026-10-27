@@ -84,7 +84,7 @@ import { asset } from '@/assets'
 export type Mode = 'inventory' | 'sell' | 'market'
 export type View = 'default' | 'stats' | 'res' | 'combat' | 'abilities'
 
-const VIEWS: [View, string][] = [
+export const VIEWS: [View, string][] = [
   ['default', 'Default'],
   ['stats', 'Stats'],
   ['res', 'Res'],
@@ -1066,6 +1066,7 @@ export function Row({
               </span>
             </span>
           )}
+          {aside && <span className="drost__aside">{aside}</span>}
           {view === 'abilities' && (
             <span className="drost__names">
               {abilities.map((a, i) => (

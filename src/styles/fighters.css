@@ -2213,55 +2213,55 @@
 }
 
 /* focused rows: the name over the figures, beside the portrait */
-.drost--phone .drost__row.is-focused {
+.drost--stack .drost__row.is-focused {
   grid-template-columns: 44px minmax(0, 1fr);
   row-gap: 4px;
 }
-.drost--phone .drost__row.is-focused.is-ticking {
+.drost--stack .drost__row.is-focused.is-ticking {
   grid-template-columns: 20px 44px minmax(0, 1fr);
 }
-.drost--phone .drost__row.is-focused > .drost__art,
-.drost--phone .drost__row.is-focused > .drost__tick {
+.drost--stack .drost__row.is-focused > .drost__art,
+.drost--stack .drost__row.is-focused > .drost__tick {
   grid-row: 1 / 3;
   align-self: center;
 }
-.drost--phone .drost__row.is-focused > .drost__art {
+.drost--stack .drost__row.is-focused > .drost__art {
   width: 44px;
   height: 44px;
 }
-.drost--phone .drost__row.is-focused > .drost__name {
+.drost--stack .drost__row.is-focused > .drost__name {
   display: flex;
   align-items: center;
   gap: 5px;
 }
-.drost--phone .drost__row.is-focused > .drost__name b {
+.drost--stack .drost__row.is-focused > .drost__name b {
   font-size: 13px;
 }
-.drost--phone .drost__row.is-focused > .drost__name small {
+.drost--stack .drost__row.is-focused > .drost__name small {
   font-size: 11px;
 }
-.drost--phone .drost__cells {
+.drost--stack .drost__cells {
   gap: 3px;
 }
-.drost--phone .drost__cell {
+.drost--stack .drost__cell {
   padding: 4px 1px;
   border-radius: 7px;
 }
-.drost--phone .drost__cell small {
+.drost--stack .drost__cell small {
   gap: 2px;
   font-size: max(6.5px, var(--fs-floor));
 }
-.drost--phone .drost__cell small .drost__si {
+.drost--stack .drost__cell small .drost__si {
   height: 8px;
 }
-.drost--phone .drost__cell b {
+.drost--stack .drost__cell b {
   gap: 1px;
   font-size: 11.5px;
 }
-.drost--phone .drost__cell em {
+.drost--stack .drost__cell em {
   font-size: max(8.5px, var(--fs-floor));
 }
-.drost--phone .drost__names span {
+.drost--stack .drost__names span {
   padding: 1px 6px;
   font-size: 10.5px;
 }
@@ -2907,4 +2907,18 @@
   .drost__numhead .drost__si {
     display: none;
   }
+}
+
+/* A focused card (Stats, Res, Combat, Abilities) with an aside: the market's price at the end of the name line. */
+.drost--stack .drost__row.is-focused.is-aside {
+  grid-template-columns: 44px minmax(0, 1fr) auto;
+}
+.drost--stack .drost__row.is-focused.is-aside > .drost__aside {
+  grid-row: 1;
+  grid-column: 3;
+  justify-self: end;
+}
+.drost--stack .drost__row.is-focused.is-aside > .drost__cells,
+.drost--stack .drost__row.is-focused.is-aside > .drost__names {
+  grid-column: 2 / -1;
 }
