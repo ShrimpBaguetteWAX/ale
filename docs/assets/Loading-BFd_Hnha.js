@@ -1,0 +1,1 @@
+import{j as a}from"./react-BnBjmWcX.js";function r({label:i="Loading"}){return a.jsx("div",{className:"pageload",role:"status","aria-live":"polite","aria-label":i,children:a.jsx("i",{"aria-hidden":"true"})})}export{r as L};

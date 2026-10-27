@@ -1,1 +1,0 @@
-import{r as n}from"./react-BnBjmWcX.js";const a="(max-width: 719px)";function c(){const[o,r]=n.useState(!1);return n.useEffect(()=>{if(typeof window.matchMedia!="function")return;const e=window.matchMedia(a),t=()=>r(e.matches);return t(),e.addEventListener("change",t),()=>e.removeEventListener("change",t)},[]),o}export{c as u};
