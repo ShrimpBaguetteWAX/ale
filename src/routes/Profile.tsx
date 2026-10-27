@@ -21,6 +21,7 @@ import {
   avatarBoard,
   logCapacity,
   CURRENCIES,
+  claimPays,
   CURRENCY_LABEL,
   type Currency,
 } from '@/account/rules'
@@ -46,7 +47,7 @@ import {
 } from '@/pools/MineCelebration'
 import { MineToast, type MineToastState } from '@/pools/MineToast'
 import { usePhone } from '@/components/usePhone'
-import { PhoneRewards } from '@/rewards/PhoneRewards'
+import { PhoneRewards, unclaimed } from '@/rewards/PhoneRewards'
 import { DeskRewards } from '@/rewards/DeskRewards'
 import { PhoneAccount, type AccountTab } from '@/account/PhoneAccount'
 import { DeskAccount } from '@/account/DeskAccount'
@@ -144,8 +145,15 @@ export default function Profile({ section = 'account' }: { section?: Section }) 
   */
   useEffect(() => {
     setTab(askedTab())
+    opened.current = false
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [section, params])
+  /* Set once Rewards has chosen where to open, or the player has picked a tab. */
+  const opened = useRef(false)
+  const pickTab = (next: Tab) => {
+    opened.current = true
+    setTab(next)
+  }
   const { busy: busyKey, error, run } = useAction()
   const busy = busyKey as Busy
   /* Which pool the running mine belongs to, so only its button spins. */
@@ -185,6 +193,23 @@ export default function Profile({ section = 'account' }: { section?: Section }) 
   const logCap = own.data?.logCap
   const tlmPools = own.data?.tlmPools ?? EMPTY_TLM_POOLS
   const shardPools = own.data?.shardPools ?? EMPTY_SHARD_POOLS
+
+  /*
+     Rewards opens where there is something to do: the first of TLM, Shards
+     and WAX with something to mine or to claim, and Mining only when none
+     has. Decided once the pools are read — and never over a tab the link
+     asked for, or one the player has already picked.
+  */
+  useEffect(() => {
+    if (section !== 'rewards' || params.get('tab') || opened.current || !own.data) return
+    opened.current = true
+    const ready = (c: Currency) =>
+      (c === 'tlm' || c === 'shrds') && poolBoard(c, player, tlmPools, shardPools, poolNames).some((e) => e.ready)
+    const first = (['tlm', 'shrds', 'wax'] as Currency[]).find(
+      (c) => ready(c) || (claimPays(c) && unclaimed(player, c) > 0),
+    )
+    if (first) setTab(first)
+  }, [section, params, own.data, player, tlmPools, shardPools, poolNames])
   /*
      The reward log is read one currency at a time, so it is cached per tab
      rather than fetched as one page — a mixed page would hide a quiet
@@ -380,7 +405,7 @@ export default function Profile({ section = 'account' }: { section?: Section }) 
         <RewardsFor
           phone={phoneRewards}
           tab={tab === 'mining' || currencyTab ? (tab as 'mining' | Currency) : 'mining'}
-          onTab={setTab}
+          onTab={pickTab}
           player={player}
           account={account ?? ''}
           busy={busy}

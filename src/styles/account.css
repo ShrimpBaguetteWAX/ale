@@ -3348,3 +3348,97 @@ button.prew__row:hover:not(:disabled) {
 .prew__paid + .prew__keep {
   box-shadow: inset 0 1px 0 rgb(255 255 255 / 7%);
 }
+
+/*
+ * Rewards on a desktop, a size up — the step the other screens took. Scoped
+ * to the desktop board (.drew); the phone's Rewards keeps its own sizes.
+ */
+.drew .tabs__tab {
+  font-size: 13px;
+}
+.drew .btn--sm {
+  font-size: 13px;
+}
+.shell .main__inner .drew .drew__cap {
+  font-size: 12px;
+}
+.drew .drew__cap span,
+.drew span.drew__cap {
+  font-size: 13.5px;
+}
+.drew .rsheet__hint {
+  font-size: 13.5px;
+}
+.drew .drew__minetext small {
+  font-size: 13px;
+}
+.drew .prew__rowtext strong {
+  font-size: 14px;
+}
+.drew .prew__rowtext small {
+  font-size: 12px;
+}
+.drew .prew__amount {
+  font-size: 14px;
+}
+.drew .prew__keep {
+  font-size: 12px;
+}
+.drew .pring__togo {
+  font-size: 13.5px;
+}
+.drew .poolsheet__stats small {
+  font-size: 11.5px;
+}
+.drew .poolsheet__banked,
+.drew .poolsheet__power {
+  font-size: 12.5px;
+}
+.drew .poolsheet__pays,
+.drew em.mono {
+  font-size: 12px;
+}
+/* Mining */
+.drew .drew__bagpower small {
+  font-size: 11.5px;
+}
+.drew .drew__bagnote small,
+.drew .drew__save small,
+.drew .drew__landtext small {
+  font-size: 13px;
+}
+.drew .drew__landtext b {
+  font-size: 14px;
+}
+.drew .drew__landlink {
+  font-size: 13.5px;
+}
+.drew .drew__seg button {
+  font-size: 13.5px;
+}
+.drew .drew__slotpick span {
+  font-size: 13.5px;
+}
+.drew .drew__slotpick small {
+  font-size: 12px;
+}
+.drew .drew__slottag em,
+.drew em.drew__slottag {
+  font-size: 11px;
+}
+.drew .drew__toolname b {
+  font-size: 14.5px;
+}
+.drew .drew__toolname small {
+  font-size: 12.5px;
+}
+.drew .drew__toolfoot span,
+.drew .drew__toolfoot em {
+  font-size: 13px;
+}
+.drew small.drew__bagnote {
+  font-size: 13px;
+}
+.drew small.drew__bagpower {
+  font-size: 11.5px;
+}
