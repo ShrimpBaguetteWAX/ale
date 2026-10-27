@@ -6285,6 +6285,10 @@ button.combatcard--empty:hover {
 .picker:has(> .tabs > .pickmarks.is-wrapped) > .pickbar > .pickbar__sp {
   display: none;
 }
+/* The card size keeps the right. */
+.picker:has(> .tabs > .pickmarks.is-wrapped) > .pickbar > .showtabs:last-child {
+  margin-left: auto;
+}
 /* The phone: the same panel in the sheet, under its filter bar, one column; the foot stays in reach at the bottom. */
 .picker--sheet > .pickfilters--sheet {
   flex: none;
