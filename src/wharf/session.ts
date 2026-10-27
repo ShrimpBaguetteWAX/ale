@@ -17,6 +17,8 @@ import { isUserCancel, SESSION_STORAGE_PREFIX } from './errors'
 import { isAuthorityError, signsWithKey, syncAutoSign, walletOnly } from './autoSignSync'
 
 let kit: SessionKit | null = null
+/* WharfKit's window, kept so a screen can tell when the player shut it. */
+let ui: WebRenderer | null = null
 
 /**
  * SessionKit is built lazily, after the endpoint pool has been probed, so the
@@ -46,9 +48,10 @@ export async function getSessionKit(): Promise<SessionKit> {
      the others, and each is taken away only from its own browser.
   */
   const renderer = () => {
-    const ui = new WebRenderer()
-    ui.onSessionKeyConflict = async () => 'add'
-    return ui
+    const r = new WebRenderer()
+    r.onSessionKeyConflict = async () => 'add'
+    ui = r
+    return r
   }
 
   kit = new SessionKit(
@@ -83,6 +86,32 @@ export async function login(): Promise<Session | null> {
     // WharfKit throws on user cancellation; that isn't an error worth raising.
     if (isUserCancel(err)) return null
     throw err
+  }
+}
+
+/**
+ * Call `cb` when WharfKit's window closes; returns the unsubscribe.
+ *
+ * Shutting the window with its × leaves the login it opened pending for good
+ * (web-renderer 4.0.2), so the Connect button sat on "Waiting for wallet"
+ * until a reload. A screen waiting on a login watches the window instead. The
+ * login itself is left alone: a Cloud Wallet popup still open can finish it.
+ */
+export function onLoginWindowClosed(cb: () => void): () => void {
+  let stopped = false
+  let off = () => {}
+  const watch = () => {
+    if (stopped) return
+    const dialog = ui?.shadow?.querySelector('dialog')
+    /* Only a window that has opened can close. */
+    if (!dialog?.open) return void setTimeout(watch, 150)
+    dialog.addEventListener('close', cb, { once: true })
+    off = () => dialog.removeEventListener('close', cb)
+  }
+  watch()
+  return () => {
+    stopped = true
+    off()
   }
 }
 

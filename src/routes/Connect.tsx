@@ -33,11 +33,15 @@ export function Connect() {
   const onConnect = async () => {
     setBusy(true)
     setError(null)
+    /* Loaded on the press, like the rest of the wallet code: the landing never downloads it. */
+    const { onLoginWindowClosed } = await import('@/wharf/session')
+    const off = onLoginWindowClosed(() => setBusy(false))
     try {
       await connect()
     } catch (err) {
       setError(readableError(err))
     } finally {
+      off()
       setBusy(false)
     }
   }
