@@ -354,7 +354,7 @@ export function DeskRoster(p: DeskRosterProps) {
     if (p.mode === 'sell') p.onFilter({ ...base, sort: 'age', sortAsc: true })
     else if (p.mode === 'market') p.onFilter({ ...base, status: 'Available' })
     else p.onFilter(base)
-    setView(p.mode === 'market' ? 'abilities' : 'default')
+    /* The view the player chose stays: switching to Sell or Sell on market leaves the columns as they were. */
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [p.mode])
 
