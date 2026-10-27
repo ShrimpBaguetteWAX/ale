@@ -288,7 +288,6 @@ export interface DeskRosterProps {
 
 export function DeskRoster(p: DeskRosterProps) {
   const [view, setView] = useState<View>('default')
-  const [query, setQuery] = useState('')
   const [pop, setPop] = useState<'filters' | 'sort' | null>(null)
   const phone = !!p.phone
   /* Below this the picked fighter opens from the side rather than beside the list. */
@@ -363,18 +362,7 @@ export function DeskRoster(p: DeskRosterProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [p.mode])
 
-  /* The search box: class, race, element or an ability, on top of the filter. */
-  const list = useMemo(() => {
-    const q = query.trim().toLowerCase()
-    if (!q) return p.shown
-    return p.shown.filter(
-      (f) =>
-        f.classname.toLowerCase().includes(q) ||
-        f.racename.toLowerCase().includes(q) ||
-        f.element.toLowerCase().includes(q) ||
-        (f.stats.abilities ?? []).some((a) => abilityName(a.displayname).toLowerCase().includes(q)),
-    )
-  }, [p.shown, query])
+  const list = p.shown
 
   const counts = useMemo(() => {
     const c = {} as Record<Status, number>
@@ -424,7 +412,7 @@ export function DeskRoster(p: DeskRosterProps) {
     setSheet(true)
   }
 
-  /* A fighter the search has hidden can still be the one picked. */
+  /* A fighter the filter has hidden can still be the one picked. */
   const figOf = (f: RosterFighter) =>
     figures.get(f.fighter_id) ??
     figuresOf(f, p.templates.get(f.classname), p.config, p.levelMod, p.ageDecay, p.now, p.atLevelOne)
@@ -545,17 +533,8 @@ export function DeskRoster(p: DeskRosterProps) {
             <StatusSeg short filter={p.filter} counts={counts} onStatus={(s) => set({ status: s })} />
           </>
         )}
-        {/* A phone keeps a search box; a desktop finds fighters with the filters. */}
-        {phone && (
-          <input
-            className="input drost__search"
-            type="search"
-            placeholder="Search…"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            aria-label="Search class, race, element or ability"
-          />
-        )}
+        {/* A phone's markers at hand where its search box was; a desktop has them over the rows. */}
+        {phone && <MarkerSeg roster={p.roster} filter={p.filter} onFilter={p.onFilter} />}
         <span className="drost__sp" />
         {p.mode === 'market' && counts.Market > 0 && (
           <span className="drost__note">
@@ -711,6 +690,8 @@ export function DeskRoster(p: DeskRosterProps) {
                   </button>
                 ))}
               </span>
+              {/* The markers at hand beside the views on a desktop; the filter keeps them too, as a phone's does. */}
+              {!phone && <MarkerSeg roster={p.roster} filter={p.filter} onFilter={p.onFilter} />}
             </div>
             {list.length === 0 ? (
               <p className="roster__empty">
@@ -718,10 +699,7 @@ export function DeskRoster(p: DeskRosterProps) {
                 <button
                   type="button"
                   className="linklike"
-                  onClick={() => {
-                    clearFilters()
-                    setQuery('')
-                  }}
+                  onClick={clearFilters}
                 >
                   Clear them
                 </button>
@@ -1777,17 +1755,48 @@ function FilterPanel(p: DeskRosterProps & { matching: number; onClose: () => voi
   )
 }
 
+/* Only the markers this roster carries, with how many carry each — one never pinned can never match. */
+function useMarkerCounts(roster: RosterFighter[]) {
+  return useMemo(() => {
+    const counts = new Map<string, number>()
+    for (const f of roster) if (f.marker) counts.set(f.marker, (counts.get(f.marker) ?? 0) + 1)
+    return counts
+  }, [roster])
+}
+
+/* The marker filter as a switch over the rows: each marker in or out, as in the filter. */
+function MarkerSeg({ roster, filter, onFilter }: Pick<DeskRosterProps, 'roster' | 'filter' | 'onFilter'>) {
+  const used = useMarkerCounts(roster)
+  if (used.size === 0) return null
+  return (
+    <span className="drost__seg drost__seg--sm drost__markseg" role="group" aria-label="Marker">
+      {MARKERS.filter((m) => m && used.has(m)).map((m) => {
+        const on = filter.markers.includes(m)
+        return (
+          <button
+            type="button"
+            key={m}
+            aria-pressed={on}
+            onClick={() =>
+              onFilter({ ...filter, markers: on ? filter.markers.filter((x) => x !== m) : [...filter.markers, m] })
+            }
+            title={`${m} (${used.get(m)})`}
+          >
+            <img src={markerIcon(m)} alt={m} />
+            <small>{used.get(m)}</small>
+          </button>
+        )
+      })}
+    </span>
+  )
+}
+
 /* Element, class, race, ability, markers, the roster switches and the quality floors. */
 function FilterFields(p: DeskRosterProps) {
   const { races } = useMemo(() => facetsOf(p.roster), [p.roster])
   const set = (patch: Partial<RosterFilter>) => p.onFilter({ ...p.filter, ...patch })
   const toggle = <T,>(list: T[], value: T): T[] => (list.includes(value) ? list.filter((x) => x !== value) : [...list, value])
-  /* Only the markers this roster carries — one never pinned can never match. */
-  const used = useMemo(() => {
-    const counts = new Map<string, number>()
-    for (const f of p.roster) if (f.marker) counts.set(f.marker, (counts.get(f.marker) ?? 0) + 1)
-    return counts
-  }, [p.roster])
+  const used = useMarkerCounts(p.roster)
 
   return (
     <>

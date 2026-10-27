@@ -429,10 +429,6 @@
   align-items: center;
   gap: 10px;
 }
-.drost__search {
-  width: 200px;
-  min-height: 38px;
-}
 .drost__sp {
   flex: 1;
 }
@@ -1913,16 +1909,6 @@
   order: -1;
   flex-basis: 100%;
 }
-.drost--phone .drost__search {
-  flex: 1 1 0;
-  width: auto;
-  min-width: 0;
-  min-height: 36px;
-  padding-left: 32px;
-  border-radius: 10px;
-  background: rgb(0 0 0 / 30%) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237d889e' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m20 20-4-4'/%3E%3C/svg%3E") no-repeat 10px center / 15px;
-  font-size: 13px;
-}
 .drost--phone .drost__tool,
 .drost--phone .drost__dir {
   height: 36px;
@@ -3395,4 +3381,32 @@
 }
 .drost--stack .drost__row.is-focused.is-aside > .drost__cellset {
   grid-column: 2 / -1;
+}
+
+/* The marker filter beside the view switch on a desktop: each marker with how many carry it. */
+.drost:not(.drost--phone) .drost__listhead .drost__markseg button {
+  gap: 5px;
+  padding: 0 9px;
+}
+.drost__markseg img {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+}
+/* A phone: the markers where the search box was, taking the room it took. */
+.drost--phone .drost__toolbar > .drost__markseg {
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 2px;
+}
+.drost--phone .drost__markseg button {
+  flex: 1 1 0;
+  justify-content: center;
+  min-width: 0;
+  min-height: 32px;
+  padding: 0;
+}
+/* The counts stay in the filter sheet; here the markers alone keep the line. */
+.drost--phone .drost__markseg button small {
+  display: none;
 }
