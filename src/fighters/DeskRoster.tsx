@@ -191,7 +191,7 @@ function Grade({ grade }: { grade: StatGrade | null }) {
 
 function AgeChip({ bonus }: { bonus: number }) {
   return (
-    <span className={`drost__age is-${ageBand(bonus)}`}>
+    <span className="drost__age">
       Age {bonus > 0 ? '+' : ''}
       {bonus.toFixed(0)}%
     </span>

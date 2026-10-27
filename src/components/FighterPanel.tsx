@@ -454,7 +454,7 @@ export function FighterHoverCard({
           <span className="tag">Level {fighter.level}</span>
         )}
         {fighter.age && (
-          <span className={`fhover__age fpanel__age--${ageBand(fighter.age.bonus)}`}>
+          <span className="fhover__age">
             {/* The percentage alone. The factor beside it said the same thing
                 a second way, on a card read at a glance. */}
             <span className="fpanel__ageValue mono">

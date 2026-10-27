@@ -921,17 +921,11 @@
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
-.drost__age.is-fresh {
-  color: var(--teal);
-  box-shadow: inset 0 0 0 1px rgb(14 212 168 / 40%);
-}
-.drost__age.is-worn {
-  color: var(--gold);
-  box-shadow: inset 0 0 0 1px rgb(246 168 0 / 45%);
-}
-.drost__age.is-bad {
-  color: var(--red);
-  box-shadow: inset 0 0 0 1px rgb(255 90 106 / 50%);
+/* Age on a card in one light grey, whatever it is: its sign and size say enough, and a
+   coloured chip on every card read as a warning. The panel's age bar keeps its colours. */
+.drost__age {
+  color: #c5cee0;
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 16%);
 }
 
 .drost__ab {

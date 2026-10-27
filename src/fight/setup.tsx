@@ -3,7 +3,7 @@ import type { CardTemplate } from '@/chain/atomic'
 import { FighterHoverCard, FighterPanel, type PanelFighter } from '@/components/FighterPanel'
 import { HoverPopover, useHoverCard } from '@/components/HoverPopover'
 import { fighterAvailable } from '@/dungeon/rules'
-import { ageBand, ageBonus, ageDays, ageNote } from '@/fighters/rules'
+import { ageBonus, ageDays, ageNote } from '@/fighters/rules'
 import { ageFactor, levelFactor } from '@/fight/scaling'
 import {
   ELEMENTS,
@@ -2230,7 +2230,7 @@ export function PickCard({
 
   const ageChip = ageDecay > 0 && (
     <span
-      className={`fightercard__age fightercard__age--${ageBand(bonus)}`}
+      className="fightercard__age"
       title={ageNote(bonus, ageDays(f), age)}
     >
       {bonus > 0 ? '+' : ''}
@@ -2393,7 +2393,7 @@ export function PickCard({
           */}
           {ageDecay > 0 && (
             <span
-              className={`fightercard__age fightercard__age--${ageBand(bonus)}`}
+              className="fightercard__age"
               title={ageNote(bonus, ageDays(f), age)}
             >
               {bonus > 0 ? '+' : ''}

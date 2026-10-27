@@ -37,7 +37,7 @@ import { GameImg } from '@/components/GameImg'
 import { useAction } from '@/wharf/useAction'
 import { DIRTIES } from '@/wharf/actions'
 import { fighterAvailable } from '@/dungeon/rules'
-import { ageBand, ageNote } from '@/fighters/rules'
+import { ageNote } from '@/fighters/rules'
 import {
   EMPTY_FILTER,
   applyFilter,
@@ -1209,7 +1209,7 @@ function MarketFighter({
             ))}
             {panel.age && (
               <span
-                className={`mfighter__age is-${ageBand(panel.age.bonus)}`}
+                className="mfighter__age"
                 title={ageNote(panel.age.bonus, panel.age.days, panel.age.factor)}
               >
                 Age {panel.age.bonus > 0 ? '+' : ''}

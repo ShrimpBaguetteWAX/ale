@@ -1073,18 +1073,11 @@
   padding: 0 4px;
   border-radius: var(--radius-full);
   background: rgb(255 255 255 / 8%);
+  /* One light grey, as on every fighter card. */
+  color: #c5cee0;
   font-family: var(--font-display);
   font-size: 10px;
   font-variant-numeric: tabular-nums;
-}
-.fightercard__age--fresh {
-  color: var(--teal);
-}
-.fightercard__age--worn {
-  color: var(--gold);
-}
-.fightercard__age--bad {
-  color: var(--red);
 }
 
 /*
@@ -3936,6 +3929,7 @@ button.combatcard--empty:hover {
   padding: 3px var(--sp-2);
   border-radius: var(--radius-sm);
   background: rgb(255 255 255 / 6%);
+  color: #c5cee0;
   white-space: nowrap;
 }
 

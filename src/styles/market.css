@@ -2056,17 +2056,9 @@ i.mrow__arrow {
   white-space: nowrap;
   background: rgb(255 255 255 / 8%);
 }
-.mrow__age.is-fresh,
-.mfighter__meta .mfighter__age.is-fresh {
-  color: var(--teal);
-}
-.mrow__age.is-worn,
-.mfighter__meta .mfighter__age.is-worn {
-  color: var(--gold);
-}
-.mrow__age.is-bad,
-.mfighter__meta .mfighter__age.is-bad {
-  color: var(--red);
+/* Age in one light grey, as on every fighter card. */
+.mfighter__meta .mfighter__age {
+  color: #c5cee0;
 }
 .mrow__age.is-fresh {
   box-shadow: inset 0 0 0 1px rgb(14 212 168 / 40%);
