@@ -368,7 +368,7 @@ export default function Market() {
       <span className="spacer" />
       <span className="market__purse mono">
         {player.activestats.gems.toLocaleString(NUM_LOCALE)}
-        <img src={asset("/assets/icons/gems.png")} alt="gems" width={18} height={18} />
+        <img src={asset("/assets/icons/gems.svg")} alt="gems" width={18} height={18} />
       </span>
     </header>
   )
@@ -798,7 +798,7 @@ function MarketCard({
         <span className="mcard__price">
           <b className="mono">
             {price.toLocaleString(NUM_LOCALE)}
-            <img src={asset('/assets/icons/gems.png')} alt="gems" />
+            <img src={asset('/assets/icons/gems.svg')} alt="gems" />
           </b>
           <small className={closing ? 'is-closing' : ''}>{timeLeftLabel(msLeft(listing, now))}</small>
         </span>
@@ -909,7 +909,7 @@ function ListingRow({
           <span className="mcard__price">
             <b className="mono">
               {price.toLocaleString(NUM_LOCALE)}
-              <img src={asset('/assets/icons/gems.png')} alt="gems" />
+              <img src={asset('/assets/icons/gems.svg')} alt="gems" />
             </b>
             <small className={closing ? 'is-closing' : ''}>{timeLeftLabel(msLeft(listing, now))}</small>
           </span>
@@ -1307,7 +1307,7 @@ function AuctionDeal({
   const n = Number(a.bids)
   const closing = extendsOnBid(a, config, now)
   const quick = [...new Set([min, roundUp(min * 1.1, 5), roundUp(min * 1.4, 10), roundUp(min * 1.85, 10)])]
-  const gemIcon = <img src={asset('/assets/icons/gems.png')} alt="gems" width={14} height={14} />
+  const gemIcon = <img src={asset('/assets/icons/gems.svg')} alt="gems" width={14} height={14} />
 
   return (
     <aside className="mdeal" aria-label="The auction">
@@ -1315,7 +1315,7 @@ function AuctionDeal({
       <div className="mdeal__price">
         <span className="mono">
           {a.current_bid.toLocaleString(NUM_LOCALE)}
-          <img src={asset('/assets/icons/gems.png')} alt="gems" width={20} height={20} />
+          <img src={asset('/assets/icons/gems.svg')} alt="gems" width={20} height={20} />
         </span>
         <small>
           {n > 0
@@ -1464,7 +1464,7 @@ function OfferDeal({
       <div className="mdeal__price">
         <span className="mono">
           {o.gems.toLocaleString(NUM_LOCALE)}
-          <img src={asset('/assets/icons/gems.png')} alt="gems" width={20} height={20} />
+          <img src={asset('/assets/icons/gems.svg')} alt="gems" width={20} height={20} />
         </span>
         <small>fixed price</small>
       </div>
@@ -1512,7 +1512,7 @@ function OfferDeal({
             {gate.ok ? (
               <span className="msell__go">
                 Buy for {o.gems}
-                <img src={asset('/assets/icons/gems.png')} alt="gems" width={14} height={14} />
+                <img src={asset('/assets/icons/gems.svg')} alt="gems" width={14} height={14} />
               </span>
             ) : (
               gate.reason
@@ -1879,7 +1879,7 @@ export function SellTab({
   const resetHours = Math.round(Number(config?.reset_duration_below_minutes ?? 0) / 60)
   const payout = sellerPayout(price, config)
   const quick = [10, 25, 50, 100, 250].filter((q) => q >= minStart)
-  const gemIcon = <img src={asset('/assets/icons/gems.png')} alt="gems" width={13} height={13} />
+  const gemIcon = <img src={asset('/assets/icons/gems.svg')} alt="gems" width={13} height={13} />
 
   /*
      The terms, the same on both layouts: the price, whether to keep it

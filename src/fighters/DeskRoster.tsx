@@ -236,7 +236,7 @@ function Credits({ value }: { value: number }) {
   return (
     <span className="drost__cr">
       {value.toLocaleString(NUM_LOCALE)}
-      <img src={asset('/assets/icons/credits.png')} alt="credits" />
+      <img src={asset('/assets/icons/credits.svg')} alt="credits" />
     </span>
   )
 }
@@ -245,7 +245,7 @@ function Gems({ value }: { value: number }) {
   return (
     <span className="drost__cr">
       {value.toLocaleString(NUM_LOCALE)}
-      <img src={asset('/assets/icons/gems.png')} alt="gems" />
+      <img src={asset('/assets/icons/gems.svg')} alt="gems" />
     </span>
   )
 }

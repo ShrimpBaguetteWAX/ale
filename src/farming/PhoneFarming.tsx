@@ -10,8 +10,8 @@ import { asset, ipfsImage } from '@/assets'
 
 export type FarmMode = 'inventory' | 'staked'
 
-const CREDITS = asset('/assets/icons/credits.png')
-const GEMS = asset('/assets/icons/gems.png')
+const CREDITS = asset('/assets/icons/credits.svg')
+const GEMS = asset('/assets/icons/gems.svg')
 
 /**
  * Farming on a phone.

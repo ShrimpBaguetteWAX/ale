@@ -1142,7 +1142,7 @@ export function EntryActions({
           /* The price, not a deduction: the button is a purchase. */
           <span className="tour__cost">
             {energyCost}
-            <img src={asset('/assets/icons/energy.png')} alt="energy" width={16} height={16} />
+            <img src={asset('/assets/icons/energy.svg')} alt="energy" width={16} height={16} />
           </span>
         )}
       </button>

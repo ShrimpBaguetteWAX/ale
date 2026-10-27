@@ -1044,7 +1044,7 @@ export default function Tavern() {
               <span className="hall__priceRow">
                 {saved > 0 && <s className="mono">{HIRE_BASE_AP}</s>}
                 <b className={`mono${canAfford ? '' : ' is-short'}`}>
-                  <img src={asset('/assets/icons/energy.png')} alt="energy" />
+                  <img src={asset('/assets/icons/energy.svg')} alt="energy" />
                   {breakdown.cost}
                 </b>
                 <small>
@@ -1146,7 +1146,7 @@ export default function Tavern() {
               >
                 {(busy === 'hire' || busy === 'marker') && <span className="spinner" />}
                 {hireLabel}
-                <img src={asset('/assets/icons/energy.png')} alt="" />
+                <img src={asset('/assets/icons/energy.svg')} alt="" />
               </button>
             </div>
           </section>
@@ -1273,7 +1273,7 @@ export default function Tavern() {
                 {busy === 'hire' ? 'Hiring' : busy === 'marker' ? 'Marking' : 'Hire recruit'}
                 <span className={`tavdock__cost${canAfford ? '' : ' tavdock__cost--short'}`}>
                   {breakdown.cost}
-                  <img src={asset('/assets/icons/energy.png')} alt="energy" />
+                  <img src={asset('/assets/icons/energy.svg')} alt="energy" />
                 </span>
               </button>
             )}
@@ -1291,7 +1291,7 @@ export default function Tavern() {
                   className={`tavdock__cost${canAffordReveal ? '' : ' tavdock__cost--short'}`}
                 >
                   {revealCost}
-                  <img src={asset('/assets/icons/energy.png')} alt="energy" />
+                  <img src={asset('/assets/icons/energy.svg')} alt="energy" />
                 </span>
               </button>
             )}
@@ -1490,7 +1490,7 @@ export default function Tavern() {
                 className="tavdisc__open"
                 onClick={() => setDiscountsOpen(true)}
               >
-                <img src={asset('/assets/icons/energy.png')} alt="" />
+                <img src={asset('/assets/icons/energy.svg')} alt="" />
                 <span className="tavdisc__text">
                   <strong>Discounts</strong>
                   <small>

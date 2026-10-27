@@ -976,7 +976,7 @@ export default function Arena() {
                 <span className="dungeon__cost">
                   −{energyCost}
                   <img
-                    src={asset("/assets/icons/energy.png")}
+                    src={asset("/assets/icons/energy.svg")}
                     alt="energy"
                     width={16}
                     height={16}

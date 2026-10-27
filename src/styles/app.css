@@ -355,15 +355,16 @@
   opacity: 0.4;
 }
 
+/* Each currency in its icon's colour: energy the bolt's green, gems the gem's violet, credits the coin's gold. */
 .res--energy {
-  --tone: var(--teal);
-  --tone-line: rgb(14 212 168 / 55%);
-  --tone-glow: rgb(14 212 168 / 55%);
+  --tone: #3ddc84;
+  --tone-line: rgb(61 220 132 / 55%);
+  --tone-glow: rgb(61 220 132 / 55%);
 }
 .res--gems {
-  --tone: var(--cyan);
-  --tone-line: rgb(0 186 255 / 55%);
-  --tone-glow: rgb(0 186 255 / 55%);
+  --tone: #a77bff;
+  --tone-line: rgb(167 123 255 / 55%);
+  --tone-glow: rgb(167 123 255 / 55%);
 }
 .res--credits {
   --tone: var(--gold);

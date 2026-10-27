@@ -1305,7 +1305,7 @@ function PhoneCurrency({
                 </button>
                 <span>
                   {formatNumber(capacity.step)} rows ·{' '}
-                  <img src={asset('/assets/icons/gems.png')} alt="" width={13} height={13} />{' '}
+                  <img src={asset('/assets/icons/gems.svg')} alt="" width={13} height={13} />{' '}
                   {formatNumber(capacity.price)} gems
                 </span>
               </div>
@@ -1347,7 +1347,7 @@ function PhoneCurrency({
                 <>
                   <span className="prew__keepprice">
                     +{formatNumber(capacity.step)} rows ·{' '}
-                    <img src={asset('/assets/icons/gems.png')} alt="" width={13} height={13} />{' '}
+                    <img src={asset('/assets/icons/gems.svg')} alt="" width={13} height={13} />{' '}
                     {formatNumber(capacity.price)}
                   </span>
                   <button

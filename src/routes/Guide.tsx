@@ -262,7 +262,7 @@ export default function Guide() {
             <div className="guide__spend">
               {['Travel', 'Reveal a recruit', 'Hire', 'Dungeon run', 'Arena challenge', 'Tournament entry'].map((s) => (
                 <span key={s}>
-                  <img src={I('energy.png')} alt="" />
+                  <img src={I('energy.svg')} alt="" />
                   {s}
                 </span>
               ))}
@@ -275,12 +275,12 @@ export default function Guide() {
             <div className="guide__curr">
               {(
                 [
-                  ['credits.png', 'Credits', 'Pay paydays, level-ups, ascension, quest rerolls and land boosts. Earned from Farming, land and selling fighters back.'],
-                  ['gems.png', 'Gems', 'Bought with WAX. Buy credits and Legend, trade on the Market, enter the Candle.'],
+                  ['credits.svg', 'Credits', 'Pay paydays, level-ups, ascension, quest rerolls and land boosts. Earned from Farming, land and selling fighters back.'],
+                  ['gems.svg', 'Gems', 'Bought with WAX. Buy credits and Legend, trade on the Market, enter the Candle.'],
                   ['wax-coin.png', 'WAX', "The chain's own coin. Pays the sign-up fee and gem packs."],
                   ['tlm.svg', 'TLM', 'Trilium, the main payout from reward pools, quests, tournaments and land.'],
                   ['shards.svg', 'Shards', 'Alien Worlds shards: paid by reward pools, spent at the AW Outpost in the Shop.'],
-                  ['energy.png', 'Energy', 'Your action budget (see above). Bought with credits.'],
+                  ['energy.svg', 'Energy', 'Your action budget (see above). Bought with credits.'],
                 ] as const
               ).map(([icon, name, body]) => (
                 <div key={name}>

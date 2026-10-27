@@ -150,7 +150,7 @@ const SHARD_PLACES = 1
 const ICON = {
   tlm: '/assets/icons/tlm.svg',
   shards: '/assets/icons/shards.svg',
-  energy: '/assets/icons/energy.png',
+  energy: '/assets/icons/energy.svg',
   dungeon: '/assets/icons/dungeons.svg',
   arena: '/assets/icons/arena.svg',
   quests: '/assets/icons/menu/quests.png',

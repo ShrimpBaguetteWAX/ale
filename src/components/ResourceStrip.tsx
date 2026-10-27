@@ -97,15 +97,15 @@ export function ResourceStrip({ player }: { player: Player }) {
   const s = player.activestats
   return (
     <div className="resources">
-      <Res icon={asset("/assets/icons/gems.png")} label="Gems" value={s.gems} tone="gems" />
+      <Res icon={asset("/assets/icons/gems.svg")} label="Gems" value={s.gems} tone="gems" />
       <Res
-        icon={asset("/assets/icons/credits.png")}
+        icon={asset("/assets/icons/credits.svg")}
         label="Credits"
         value={s.credits}
         tone="credits"
       />
       <Res
-        icon={asset("/assets/icons/energy.png")}
+        icon={asset("/assets/icons/energy.svg")}
         label="Action points"
         value={s.action_points}
         tone="energy"

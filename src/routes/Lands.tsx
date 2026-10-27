@@ -450,11 +450,11 @@ function TlmIcon() {
 }
 
 function CreditIcon() {
-  return <img className="plands__coin" src={asset('/assets/icons/credits.png')} alt="Credits" />
+  return <img className="plands__coin" src={asset('/assets/icons/credits.svg')} alt="Credits" />
 }
 
 function GemIcon() {
-  return <img className="plands__coin" src={asset('/assets/icons/gems.png')} alt="Gems" />
+  return <img className="plands__coin" src={asset('/assets/icons/gems.svg')} alt="Gems" />
 }
 
 type BuildOption = ReturnType<typeof buildOptions>[number]

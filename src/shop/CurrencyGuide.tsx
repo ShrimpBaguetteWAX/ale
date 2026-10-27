@@ -32,7 +32,7 @@ const CURRENCIES: { key: Key; name: string; icon: string; uses: string[] }[] = [
   {
     key: 'gems',
     name: 'Gems',
-    icon: '/assets/icons/gems.png',
+    icon: '/assets/icons/gems.svg',
     uses: [
       'Buy credits and Legend passes',
       'Bid on and buy fighters at the Market, and list your own',
@@ -44,7 +44,7 @@ const CURRENCIES: { key: Key; name: string; icon: string; uses: string[] }[] = [
   {
     key: 'credits',
     name: 'Credits',
-    icon: '/assets/icons/credits.png',
+    icon: '/assets/icons/credits.svg',
     uses: [
       'Level up fighters',
       'Pay your fighters on payday',
@@ -57,7 +57,7 @@ const CURRENCIES: { key: Key; name: string; icon: string; uses: string[] }[] = [
   {
     key: 'energy',
     name: 'Energy',
-    icon: '/assets/icons/energy.png',
+    icon: '/assets/icons/energy.svg',
     uses: [
       'Travel on the World Map',
       'Reveal and hire recruits at taverns',

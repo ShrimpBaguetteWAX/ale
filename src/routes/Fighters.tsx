@@ -584,7 +584,7 @@ export function Cost({
     <span className={`cost${cannot ? ' cost--short' : ''}`}>
       {gain ? '+' : null}
       {value.toLocaleString(NUM_LOCALE)}
-      <img src={asset(`/assets/icons/${icon}.png`)} alt={icon} width={16} height={16} />
+      <img src={asset(`/assets/icons/${icon}.svg`)} alt={icon} width={16} height={16} />
     </span>
   )
 }

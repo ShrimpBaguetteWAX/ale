@@ -144,7 +144,7 @@ export default function Signup() {
         {!paid && (
           <div className="arrive__perks">
             <span className="arrive__perk">
-              <img src={asset('/assets/icons/energy.png')} alt="" />
+              <img src={asset('/assets/icons/energy.svg')} alt="" />
               <b>{config ? config.start_action_points.toLocaleString(NUM_LOCALE) : '—'}</b> energy to start
             </span>
             <span className="arrive__perk">A random planet</span>

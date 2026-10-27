@@ -25,7 +25,7 @@ import { asset } from '@/assets'
 
 type Busy = 'ascend' | 'reroll' | 'claim' | null
 
-const CREDITS = asset('/assets/icons/credits.png')
+const CREDITS = asset('/assets/icons/credits.svg')
 const cap = (s: string) => (s ? s[0].toUpperCase() + s.slice(1) : s)
 const levelOf = (f: RosterFighter) => Number(f.stats?.level ?? 0)
 

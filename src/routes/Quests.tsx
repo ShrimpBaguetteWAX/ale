@@ -588,7 +588,7 @@ function QuestCard({
             Reroll
             <span className={`cost${tooPoor ? ' cost--short' : ''}`}>
               {cost.toLocaleString(NUM_LOCALE)}
-              <img src={asset("/assets/icons/credits.png")} alt="credits" width={16} height={16} />
+              <img src={asset("/assets/icons/credits.svg")} alt="credits" width={16} height={16} />
             </span>
           </button>
         )}

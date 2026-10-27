@@ -58,7 +58,7 @@ import { asset, ipfsImage } from '@/assets'
 const TLM_ICON = asset('/assets/icons/tlm.svg')
 const WAX_ICON = asset('/assets/icons/wax-coin.png')
 const TROPHY = asset('/assets/icons/trophy-gold.svg')
-const ENERGY = asset('/assets/icons/energy.png')
+const ENERGY = asset('/assets/icons/energy.svg')
 
 /** A tournament no longer on the board, kept for its results and replays. */
 export interface PastTournament {

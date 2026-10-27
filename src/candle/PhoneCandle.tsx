@@ -20,7 +20,7 @@ import { PlayerAvatar } from '@/components/PlayerAvatar'
 import { formatCompact, formatDecimals, formatNumber } from '@/format'
 import { asset } from '@/assets'
 
-const GEMS = asset('/assets/icons/gems.png')
+const GEMS = asset('/assets/icons/gems.svg')
 const EMPTY_BOARD: Board = { stakes: [], contributors: 0, mine: 0 }
 
 /**

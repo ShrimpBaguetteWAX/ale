@@ -8,8 +8,8 @@ import { GameImg } from '@/components/GameImg'
 import { formatNumber } from '@/format'
 import { asset, ipfsImage } from '@/assets'
 
-const CREDITS = asset('/assets/icons/credits.png')
-const GEMS = asset('/assets/icons/gems.png')
+const CREDITS = asset('/assets/icons/credits.svg')
+const GEMS = asset('/assets/icons/gems.svg')
 /* Best first, the way a player reads their own collection. */
 const SHELVES = [...RARITIES].reverse()
 

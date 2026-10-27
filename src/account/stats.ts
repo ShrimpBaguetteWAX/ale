@@ -33,9 +33,9 @@ export function prettyStat(key: string): string {
  */
 const STAT_ICONS: [RegExp, string][] = [
   /* Currencies first: several activity words appear in currency stats. */
-  [/^credits/, '/assets/icons/credits.png'],
-  [/^gems/, '/assets/icons/gems.png'],
-  [/^energy/, '/assets/icons/energy.png'],
+  [/^credits/, '/assets/icons/credits.svg'],
+  [/^gems/, '/assets/icons/gems.svg'],
+  [/^energy/, '/assets/icons/energy.svg'],
   [/^shards/, '/assets/icons/shards.svg'],
   [/^tlm/, '/assets/icons/tlm.svg'],
   [/^wax/, '/assets/icons/wax-coin.png'],
@@ -47,8 +47,8 @@ const STAT_ICONS: [RegExp, string][] = [
      and `nftstake.cpp` hands `alf_credits_claimed` to `inline_gaincur` in
      the same argument slot that `sellfighter` fills with credits.
   */
-  [/^market_(earned|spent)/, '/assets/icons/gems.png'],
-  [/^alf_credits/, '/assets/icons/credits.png'],
+  [/^market_(earned|spent)/, '/assets/icons/gems.svg'],
+  [/^alf_credits/, '/assets/icons/credits.svg'],
 
   /* Places and activities. */
   [/^arenas/, '/assets/icons/arena.svg'],

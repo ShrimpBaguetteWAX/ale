@@ -1140,7 +1140,7 @@ export default function MapView() {
               {travelling ? 'Travelling' : canAfford ? 'Travel' : 'Need'}
               {cost !== null && (
                 <span className="traveltag__cost">
-                  <img src={asset('/assets/icons/energy.png')} alt="energy" />
+                  <img src={asset('/assets/icons/energy.svg')} alt="energy" />
                   {cost}
                 </span>
               )}

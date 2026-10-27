@@ -164,15 +164,15 @@ export function priceOf(item: ShopItem): Price {
     return { label: waxAmount(item.cost_wax).toLocaleString(NUM_LOCALE) + ' WAX' }
   }
   if (item.cost_gem > 0) {
-    return { label: item.cost_gem.toLocaleString(NUM_LOCALE), icon: asset('/assets/icons/gems.png') }
+    return { label: item.cost_gem.toLocaleString(NUM_LOCALE), icon: asset('/assets/icons/gems.svg') }
   }
   if (item.cost_dust > 0) {
-    return { label: item.cost_dust.toLocaleString(NUM_LOCALE), icon: asset('/assets/icons/credits.png') }
+    return { label: item.cost_dust.toLocaleString(NUM_LOCALE), icon: asset('/assets/icons/credits.svg') }
   }
   if (item.cost_action_points > 0) {
     return {
       label: item.cost_action_points.toLocaleString(NUM_LOCALE),
-      icon: asset('/assets/icons/energy.png'),
+      icon: asset('/assets/icons/energy.svg'),
     }
   }
   return { label: 'Free' }
@@ -181,15 +181,15 @@ export function priceOf(item: ShopItem): Price {
 /** What this gives, as one line. */
 export function rewardOf(item: ShopItem): Price {
   if (item.gain_gem > 0) {
-    return { label: item.gain_gem.toLocaleString(NUM_LOCALE), icon: asset('/assets/icons/gems.png') }
+    return { label: item.gain_gem.toLocaleString(NUM_LOCALE), icon: asset('/assets/icons/gems.svg') }
   }
   if (item.gain_dust > 0) {
-    return { label: item.gain_dust.toLocaleString(NUM_LOCALE), icon: asset('/assets/icons/credits.png') }
+    return { label: item.gain_dust.toLocaleString(NUM_LOCALE), icon: asset('/assets/icons/credits.svg') }
   }
   if (item.gain_action_points > 0) {
     return {
       label: item.gain_action_points.toLocaleString(NUM_LOCALE),
-      icon: asset('/assets/icons/energy.png'),
+      icon: asset('/assets/icons/energy.svg'),
     }
   }
   if (item.gain_legend_acct_seconds > 0) {

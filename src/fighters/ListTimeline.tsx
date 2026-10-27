@@ -14,7 +14,7 @@ function Gems({ value }: { value: number }) {
   return (
     <span className="lstep__gems">
       {value.toLocaleString(NUM_LOCALE)}
-      <img src={asset('/assets/icons/gems.png')} alt="gems" />
+      <img src={asset('/assets/icons/gems.svg')} alt="gems" />
     </span>
   )
 }
