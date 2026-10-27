@@ -2177,37 +2177,31 @@
 .drost--stack .drost__cell em {
   font-size: max(8.5px, var(--fs-floor));
 }
-/* A stacked list keeps the abilities as pills: names only, the words in the panel. */
+/*
+ * A stacked list, phones among them: the abilities under the fighter, the
+ * card's full width, two by two — the name in its rarity colour and what it
+ * does in two lines (all of it on hover, and in the fighter's sheet).
+ */
+.drost--stack .drost__row.is-focused > .drost__names,
+.drost--stack .drost__row.is-focused.is-aside > .drost__names {
+  grid-row: 3;
+  grid-column: 1 / -1;
+  margin-top: 4px;
+}
 .drost--stack .drost__names {
-  display: flex;
-  flex-wrap: wrap;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 4px;
 }
 .drost--stack .drost__names > span {
-  display: inline-block;
-  padding: 1px 6px;
-  border-radius: 5px;
-  background: var(--ab);
-  box-shadow: none;
-  color: #08101e;
+  padding: 5px 8px 6px;
+  border-radius: 9px;
 }
 .drost--stack .drost__names > span > b {
-  display: inline;
-  font-size: 10.5px;
-  font-weight: var(--fw-bold);
-  color: inherit;
+  font-size: 12px;
 }
-.drost--stack .drost__names > span > b::before,
 .drost--stack .drost__names > span > small {
-  display: none;
-}
-.drost--stack .drost__names > span.is-locked {
-  background: none;
-  box-shadow: inset 0 0 0 1px var(--ab);
-  color: var(--ab);
-}
-.drost--stack .drost__names > span.is-locked > b {
-  color: inherit;
+  font-size: 11px;
+  line-height: 1.35;
 }
 
 /* the fighter in full, as a sheet from the bottom */
@@ -3058,4 +3052,22 @@
 /* Stats and resistances name themselves in their tiles; beside the list their captions give way to the fighter. */
 .drost:not(.drost--phone) .drost__side .drost__cap.is-named {
   display: none;
+}
+
+/*
+ * Every fighter card one height, in every view: the height the Abilities view
+ * needs, so switching views never moves the list and no view crams its
+ * figures. What a view shows sits centred in it, with room round it. A
+ * desktop's card is 168px; a stacked one (phones) 194px, which its default
+ * view needs when the ability names run to a third line.
+ */
+.drost__row {
+  min-height: 168px;
+  align-content: center;
+}
+.drost__row.is-ring {
+  row-gap: 12px;
+}
+.drost--stack .drost__row {
+  min-height: 194px;
 }
