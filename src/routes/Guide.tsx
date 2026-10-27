@@ -130,15 +130,17 @@ export default function Guide() {
   }
 
   const play = player ? '/map' : account ? '/signup' : '/connect'
+  /* Opened from the game's menu, the way back is the game; from the landing page, home. */
+  const back = player ? { to: '/map', label: 'Back to game' } : { to: '/', label: 'Home' }
 
   return (
     <div className="guide">
       <header className="guide__bar">
-        <Link to="/" className="guide__back" aria-label="Back to the home page">
+        <Link to={back.to} className="guide__back" aria-label={back.label}>
           <svg viewBox="0 0 24 24" aria-hidden="true">
             <path d="M15 5l-7 7 7 7" />
           </svg>
-          <span>Home</span>
+          <span>{back.label}</span>
         </Link>
         <Link to="/" className="guide__logo" aria-label="Alien Legends home">
           <GameLogo />
@@ -597,8 +599,8 @@ export default function Guide() {
                 <p>Once you're in, open Briefing: it lists what you can do right now.</p>
               </div>
               <div className="guide__endbtns">
-                <Link to="/" className="guide__home">
-                  Back to home
+                <Link to={back.to} className="guide__home">
+                  {player ? 'Back to the game' : 'Back to home'}
                 </Link>
                 <Link to={play} className="btn btn--primary btn--lg">
                   Play

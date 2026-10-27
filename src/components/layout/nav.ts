@@ -104,6 +104,8 @@ export const NAV_ITEMS: NavItem[] = [
   { to: '/rewards', label: 'Rewards', icon: asset('/assets/icons/menu/rewards.png'), line: 'Mine your reward pools' },
   { to: '/profile', label: 'Account', icon: asset('/assets/icons/menu/settings.png'), line: 'Avatar, wallet and settings' },
   { to: '/farming', label: 'Farming', icon: asset('/assets/icons/menu/card.png'), line: 'Stake cards for rewards' },
+  /* Last on the rail, as help usually is; near the top of the phone's More page, where a new trainer looks first. */
+  { to: '/guide', label: 'Guide', icon: asset('/assets/icons/menu/guide.svg'), line: 'The basics, chapter by chapter' },
 ]
 
 /**
@@ -124,6 +126,7 @@ export const TABBAR_ORDER = ['/map', '/fighters', '/quests', '/shop']
  */
 export const MORE_ORDER = [
   '/briefing',
+  '/guide',
   '/leaderboard',
   '/tournament',
   '/ascension',
