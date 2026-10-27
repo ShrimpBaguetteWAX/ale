@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { useGame } from '@/state/useGame'
-import { GameLogo } from '@/components/GameLogo'
 import { asset } from '@/assets'
 
 /**
@@ -183,7 +182,8 @@ export default function Guide() {
           <span>{back.label}</span>
         </Link>
         <Link to="/" className="guide__logo" aria-label="Alien Legends home">
-          <GameLogo />
+          {/* Still here: the sparks and the glow belong to the front pages, not to a page that is read. */}
+          <img src={asset('/assets/logo.webp')} alt="Alien Legends" width={337} height={152} decoding="async" />
         </Link>
         <Link to={play} className="btn btn--primary guide__play">
           Play
