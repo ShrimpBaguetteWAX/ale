@@ -439,7 +439,7 @@ export default function Tavern() {
      The same `calculateHire` the contract's arithmetic is mirrored in, run on
      one card at a time — so a badge never promises a discount the hire would
      not give. Three cards together can take less than their badges add up
-     to, because a wish is met once; the slots show what they actually take.
+     to, because an objective is met once; the slots show what they actually take.
   */
   const ownGain = useMemo(
     () => new Map(inventory.map((t) => [t.templateid, calculateHire(objectives, [t]).saved])),
@@ -1100,7 +1100,7 @@ export default function Tavern() {
 
             <div className="hall__cap">
               <b>The tavern wants</b>
-              <span>each wish is met once</span>
+              <span>each objective is met once</span>
             </div>
             <div className="objectives hall__wishes">
               {objectives.map((o, i) => (
@@ -1191,7 +1191,7 @@ export default function Tavern() {
           {deskTab === 'best' && (
             <p className="hint hall__hint">
               Sorted by what each card takes off on its own. Three together can take less than their badges add up to,
-              because each wish is met once.
+              because each objective is met once.
             </p>
           )}
 
