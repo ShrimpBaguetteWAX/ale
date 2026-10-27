@@ -9612,3 +9612,46 @@ button.ptour__rfplay {
     height: min(235px, 32cqi);
   }
 }
+
+/*
+ * The phone's champion, smaller: the team a size down on a stage that no
+ * longer stretches to fill the screen, so the countdown and the prize sit
+ * under it rather than half a screen below. The dock's one column holds the
+ * phone's width — the conditions rows had pushed it wider than the panel.
+ */
+.ptour__spot--phone {
+  min-height: 0;
+}
+.ptour__spot--phone .ptour__spotstage {
+  flex: none;
+  min-height: 200px;
+}
+.ptour__spot--phone .ptour__spotlight {
+  height: 56px;
+}
+.ptour__spot--phone .ptour__spotteam {
+  bottom: 14px;
+}
+.ptour__spot--phone .ptour__spotteam img {
+  height: 150px;
+  margin: 0 -22px;
+}
+.ptour__spot--phone .ptour__spotteam img:nth-child(2) {
+  height: 180px;
+}
+.ptour__spotdock {
+  grid-template-columns: minmax(0, 1fr);
+}
+.ptour__spotdock .ptour__condrow .weather {
+  min-width: 0;
+}
+.ptour__spotdock .ptour__card {
+  grid-template-columns: minmax(0, 1fr);
+}
+.ptour__spotdock .ptour__potcond,
+.ptour__spotdock .ptour__cond {
+  grid-template-columns: minmax(0, 1fr);
+}
+.ptour__spotdock .ptour__condrow {
+  min-width: 0;
+}
