@@ -14,6 +14,7 @@ import { fetchArenaRanks, fetchArenaSeasons } from '@/leaderboard/queries'
 import { defaultSeason, displayName } from '@/leaderboard/rules'
 import { PlayerAvatar } from '@/components/PlayerAvatar'
 import { formatNumber } from '@/format'
+import { PrizeStrip } from '@/prizes/WeeklyPrizes'
 
 /**
  * The landing page, as the key art leads it: the game's own illustration
@@ -93,6 +94,7 @@ export function Landing() {
               How it works
             </Link>
           </div>
+          <PrizeStrip />
           <p className="kart__note">{account ? <SwitchWallet /> : 'Play with Anchor or MyCloudWallet.'}</p>
         </div>
       </header>

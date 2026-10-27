@@ -8,6 +8,7 @@ import { CHORE_CHECKS } from '@/chores/checks'
 import { ResourceStrip } from '../ResourceStrip'
 import { MORE_ORDER, NAV_ITEMS, TABBAR_ORDER, type NavItem } from './nav'
 import { asset } from '@/assets'
+import { PrizeCard } from '@/prizes/WeeklyPrizes'
 import { planetMapSrc } from '@/map/terrain'
 import { useMapPicture } from '@/map/snapshot'
 
@@ -117,6 +118,7 @@ function MorePage({
     <div className="more" role="dialog" aria-modal="true" aria-label="More" ref={layer}>
       <div className="more__inner" ref={panel}>
         <h1 className="more__title">More</h1>
+        <PrizeCard className="prizecard--more" />
         <div className="more__list">
           {items.map((item) => {
             const body = (
@@ -364,6 +366,11 @@ export function AppShell() {
             </NavLink>
           ),
         )}
+
+        {/* Last week's prizes, in the room under the menu. */}
+        <div className="rail__prizes">
+          <PrizeCard />
+        </div>
       </nav>
 
       <header className="topbar">

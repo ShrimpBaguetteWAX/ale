@@ -1,0 +1,197 @@
+/*
+ * Weekly prizes: what went into the reward pools last week. On the landing
+ * page a strip under Play with the tokens big enough to recognise at a
+ * glance; in the game a card at the foot of the desktop menu and at the head
+ * of the phone's More page.
+ */
+
+/* ---------- landing strip ---------- */
+.prizestrip {
+  display: grid;
+  gap: 12px;
+  padding: 16px 18px 18px;
+  border-radius: 18px;
+  background:
+    radial-gradient(80% 120% at 0% 0%, rgb(246 168 0 / 16%), transparent 60%),
+    rgb(6 10 22 / 80%);
+  box-shadow:
+    inset 0 0 0 1px rgb(246 168 0 / 38%),
+    0 18px 44px rgb(0 0 0 / 45%);
+  backdrop-filter: blur(6px);
+}
+.prizestrip__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 12px;
+}
+.prizestrip__head b {
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: #ffd979;
+}
+.prizestrip__head span {
+  font-size: 13px;
+  color: var(--text-faint);
+}
+.prizestrip__row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+.prizestrip__tok {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.prizestrip__tok img {
+  flex: none;
+  width: 56px;
+  height: 56px;
+  object-fit: contain;
+  filter: drop-shadow(0 0 14px var(--glow));
+}
+.prizestrip__tok > span {
+  display: grid;
+  min-width: 0;
+}
+.prizestrip__tok b {
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 900;
+  line-height: 1.05;
+  color: var(--tone);
+  white-space: nowrap;
+}
+.prizestrip__tok small {
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.is-tlm {
+  --tone: #ffd979;
+  --glow: rgb(246 168 0 / 55%);
+}
+.is-shards {
+  --tone: #c8b4ff;
+  --glow: rgb(160 120 255 / 55%);
+}
+.is-wax {
+  --tone: #ffbe85;
+  --glow: rgb(255 150 70 / 55%);
+}
+
+/* ---------- game card ---------- */
+.prizecard {
+  display: grid;
+  gap: 5px;
+  padding: 8px 11px;
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgb(246 168 0 / 11%), rgb(246 168 0 / 3%));
+  box-shadow: inset 0 0 0 1px rgb(246 168 0 / 34%);
+  color: var(--white);
+  text-decoration: none;
+}
+.prizecard:hover {
+  box-shadow: inset 0 0 0 1px rgb(246 168 0 / 60%);
+}
+.prizecard__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+.prizecard__head b {
+  font-family: var(--font-display);
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #ffd979;
+}
+.prizecard__head span {
+  font-size: 11.5px;
+  color: var(--text-faint);
+}
+.prizecard__row {
+  display: grid;
+  grid-template-columns: 18px 1fr auto;
+  align-items: center;
+  gap: 8px;
+}
+.prizecard__row img {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+  filter: drop-shadow(0 0 6px var(--glow));
+}
+.prizecard__row > span {
+  font-size: 13px;
+  color: var(--text-dim);
+}
+.prizecard__row b {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 900;
+  color: var(--tone);
+}
+/* The desktop menu: pushed to the foot of the rail, never closer than 6px to the last item. */
+.rail__prizes {
+  flex: none;
+  margin-top: auto;
+  padding-top: 6px;
+}
+.rail__prizes:empty {
+  display: none;
+}
+/* The phone's More page: above the list. */
+.prizecard--more {
+  margin: 0 0 14px;
+}
+
+/* A small laptop: the copy column is narrower, so the tokens come down a size. */
+@media (min-width: 720px) and (max-width: 1279px) {
+  .prizestrip__tok img {
+    width: 42px;
+    height: 42px;
+  }
+  .prizestrip__tok b {
+    font-size: 21px;
+  }
+}
+
+@media (max-width: 719px) {
+  .prizestrip {
+    padding: 12px 12px 14px;
+    gap: 10px;
+  }
+  .prizestrip__head span {
+    font-size: 11.5px;
+  }
+  .prizestrip__row {
+    gap: 6px;
+  }
+  .prizestrip__tok {
+    flex-direction: column;
+    gap: 6px;
+    text-align: center;
+  }
+  .prizestrip__tok img {
+    width: 38px;
+    height: 38px;
+  }
+  .prizestrip__tok > span {
+    justify-items: center;
+  }
+  .prizestrip__tok b {
+    font-size: 19px;
+  }
+}
