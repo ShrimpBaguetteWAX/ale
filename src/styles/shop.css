@@ -2069,11 +2069,31 @@
   margin: 0;
 }
 
-/* A phone: the same dialog, the hero a size down so the button stays in reach. */
+/*
+ * A phone: the same showcase as a bottom sheet, rising from the foot of the
+ * screen; its head (the hero) is the grip a swipe down closes it by.
+ */
+.rsheet__panel.bshow {
+  overflow: hidden;
+  background: linear-gradient(180deg, #1b1348, #0a1222);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 14%),
+    0 -14px 30px rgb(0 0 0 / 45%);
+}
+.bshow-sheet .bshow__hero {
+  flex: none;
+  padding-top: 26px;
+  touch-action: none;
+}
+.bshow-sheet .bshow__body {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-bottom: calc(14px + env(safe-area-inset-bottom));
+}
+
+/* On a phone the hero is a size down, so the button stays in reach. */
 @media (max-width: 719px) {
-  .confirm:has(.bshow) {
-    padding: var(--sp-3);
-  }
   .bshow__hero {
     gap: 8px;
     padding: 20px 16px 12px;
