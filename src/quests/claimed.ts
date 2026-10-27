@@ -1,11 +1,13 @@
 /**
- * Quests claimed in this browser, by `questKey`, with when.
+ * Quests claimed or rerolled in this browser, by `questKey`, with when.
  *
- * A claim replaces the quest on chain, but a node that has not caught up
- * yet still answers with the row from before it — and then the quest just
- * claimed comes back, ready to claim again, because the player's counters
- * have long since passed its target. Nothing can be done about the node, so
- * the screens remember what was claimed and leave it out.
+ * Both replace the quest on chain, but a node that has not caught up yet
+ * still answers with the row from before — and then the quest just claimed
+ * comes back, ready to claim again, because the player's counters have long
+ * since passed its target, or the quest just rerolled flashes back as if the
+ * reroll had undone itself. Nothing can be done about the node, so the
+ * screens remember what was replaced and treat a read that still holds it as
+ * a read from behind.
  *
  * A key cannot come back legitimately: it folds in the scope, the name, the
  * target and the reward, and a fresh quest in the slot has its own target
@@ -43,7 +45,7 @@ function write(claimed: Claimed) {
   }
 }
 
-/** Note a quest as claimed, the moment its claim is signed. */
+/** Note a quest as replaced: a claim the moment it is signed, a reroll once the board shows it. */
 export function rememberClaimed(key: string, now = Date.now()): void {
   write({ ...read(now), [key]: now })
 }
@@ -51,6 +53,13 @@ export function rememberClaimed(key: string, now = Date.now()): void {
 /** Whether this quest was claimed here within the last hour. */
 export function claimedRecently(key: string, now = Date.now()): boolean {
   return key in read(now)
+}
+
+/** Whether a board still holds a quest replaced here — a read from a node behind. */
+export function holdsReplaced(keys: Iterable<string>, now = Date.now()): boolean {
+  const replaced = read(now)
+  for (const key of keys) if (key in replaced) return true
+  return false
 }
 
 /** For tests. */

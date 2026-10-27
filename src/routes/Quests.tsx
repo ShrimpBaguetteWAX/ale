@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useGame } from '@/state/useGame'
 import { fetchActiveQuests, fetchQuestScopes } from '@/quests/queries'
 import type { ActiveQuests, Quest, QuestConfig, QuestScope } from '@/quests/types'
@@ -23,7 +23,7 @@ import type { Player } from '@/chain/types'
 import { NUM_LOCALE, formatDecimals } from '@/format'
 import { asset } from '@/assets'
 import { usePhone } from '@/components/usePhone'
-import { claimedRecently, rememberClaimed } from '@/quests/claimed'
+import { claimedRecently, holdsReplaced, rememberClaimed } from '@/quests/claimed'
 import { DeskQuests } from '@/quests/DeskQuests'
 
 /**
@@ -151,18 +151,32 @@ export default function Quests() {
     return () => clearInterval(id)
   }, [])
 
+  /*
+     A read that still holds a quest replaced here comes from a node that has
+     not caught up. Once a read has caught up, that one is the better answer:
+     a refresh landing on a node behind used to flash the old quest back for a
+     moment, as if the reroll had undone itself. Right after a claim there is
+     no such read yet, and the filter below leaves the claimed quest out.
+  */
+  const caughtUp = useRef<{ account: string | null; active: ActiveQuests } | null>(null)
+  const behind = (a: ActiveQuests) => holdsReplaced(a.quests.map(questKey))
+  let shown = active
+  if (active && !behind(active)) caughtUp.current = { account, active }
+  else if (active && caughtUp.current?.account === account && !behind(caughtUp.current.active))
+    shown = caughtUp.current.active
+
   const board = useMemo(
     () =>
       player
         ? boardOf(
             /* A quest claimed here is gone, whatever a lagging node says. */
-            (active?.quests ?? []).filter((q) => !claimedRecently(questKey(q))),
+            (shown?.quests ?? []).filter((q) => !claimedRecently(questKey(q))),
             scopes,
             player,
             now,
           )
         : [],
-    [active, scopes, player, now],
+    [shown, scopes, player, now],
   )
 
   const current = board.find((b) => b.scope === scope)
@@ -239,7 +253,16 @@ export default function Quests() {
       busyKey('reroll', key),
       () => rerollQuest(session!, quest),
       'Quest rerolled.',
-      { ...opts('rerollQuest'), settled: gone(key) },
+      {
+        ...opts('rerollQuest'),
+        /* Remembered only once the new quest is on the board: until then the
+           old card stays, with its spinner, rather than an empty slot. */
+        settled: (fresh) => {
+          if (!gone(key)(fresh)) return false
+          rememberClaimed(key)
+          return true
+        },
+      },
     )
   }
 
