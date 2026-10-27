@@ -2692,14 +2692,15 @@
  */
 .drost--phone .drost__row.is-ring,
 .drost--phone .drost__colhead {
-  grid-template-columns: 62px repeat(5, minmax(0, 1fr));
+  /* The portrait column is wider than the ring: room between it and the lines beside it. */
+  grid-template-columns: 74px repeat(5, minmax(0, 1fr));
   column-gap: 6px;
 }
 .drost--phone .drost__row.is-ring.is-ticking,
 .drost--phone .drost__colhead.is-ticking,
 .drost--phone .drost__row.is-ring.is-sellcol,
 .drost--phone .drost__colhead.is-sellcol {
-  grid-template-columns: 20px 62px repeat(5, minmax(0, 1fr));
+  grid-template-columns: 20px 74px repeat(5, minmax(0, 1fr));
 }
 .drost--phone .drost__row.is-ring {
   row-gap: 6px;
@@ -2722,6 +2723,9 @@
 .drost--phone .drost__row.is-ring > .drost__tick {
   grid-row: 1 / span 3;
   align-self: start;
+}
+.drost--phone .drost__row.is-ring > .drost__ring {
+  justify-self: start;
 }
 .drost--phone .drost__row.is-ring > .drost__who {
   grid-row: 1;
