@@ -260,13 +260,12 @@ export default function Guide() {
             </p>
             <div className="guide__planets">
               {WORLDS.map((w) => (
-                <span key={w}>
-                  <span className="guide__orb" style={{ backgroundImage: `url(${asset(`/assets/landing/world-${w}.webp`)})` }} />
-                  {w}
+                <span key={w} style={{ backgroundImage: `url(${asset(`/assets/landing/worldcard-${w}.webp`)})` }}>
+                  <b>{w}</b>
                 </span>
               ))}
             </div>
-            <div className="guide__mapfig" style={{ backgroundImage: `url(${asset('/assets/landing/build-veles.webp')})` }} />
+            <div className="guide__mapfig" style={{ backgroundImage: `url(${asset('/assets/landing/map-live.webp')})` }} />
             <div className="guide__bldg">
               {(
                 [
