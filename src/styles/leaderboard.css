@@ -171,7 +171,6 @@
   }
 }
 
-
 /* ---------- cells ---------- */
 
 .rank {
@@ -849,78 +848,251 @@
     object-fit: contain;
   }
 
-  /* The top three: second, first, third; first larger, in gold. */
+  /*
+   * The champion's spotlight: first on a wide banner with their team standing
+   * beside them (or, on the arena board, the season's prize), second and
+   * third as medal cards beside it.
+   */
   .dpodium {
     display: grid;
-    grid-template-columns: 1fr 1.15fr 1fr;
+    grid-template-columns: minmax(0, 1fr) minmax(300px, 340px);
     gap: 14px;
-    align-items: end;
   }
-  .dpodium__place {
-    --medal: #cd7f32;
+  .dpodium__hero {
     position: relative;
+    overflow: hidden;
     display: grid;
-    justify-items: center;
-    gap: 6px;
-    min-width: 0;
-    padding: 18px 14px 14px;
+    grid-template-columns: minmax(200px, 240px) minmax(0, 1fr);
+    align-items: end;
+    gap: 12px;
+    min-height: 280px;
+    padding: 22px 26px;
     border-radius: 16px;
     background:
-      radial-gradient(80% 60% at 50% 0%, color-mix(in srgb, var(--medal) 18%, transparent), transparent 70%),
-      rgb(8 14 28 / 76%);
-    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--medal) 50%, transparent);
-    text-align: center;
-  }
-  .dpodium__place--1 {
-    --medal: #f6a800;
-    grid-column: 2;
-    grid-row: 1;
-    padding-top: 24px;
+      radial-gradient(60% 90% at 70% 100%, rgb(246 168 0 / 26%), transparent 70%),
+      linear-gradient(180deg, rgb(4 7 14 / 20%), rgb(4 7 14 / 85%)),
+      url('/assets/background/bg-leaderboard.png') center / cover;
     box-shadow:
-      inset 0 0 0 1.5px color-mix(in srgb, var(--medal) 60%, transparent),
-      0 0 30px -12px var(--medal);
+      inset 0 0 0 1.5px rgb(246 168 0 / 55%),
+      0 18px 40px rgb(0 0 0 / 40%);
   }
-  .dpodium__place--2 {
-    --medal: #c9d1e3;
-    grid-column: 1;
-    grid-row: 1;
-  }
-  .dpodium__place--3 {
-    grid-column: 3;
-    grid-row: 1;
-  }
-  .dpodium__place.is-you {
+  .dpodium__hero.is-you {
     box-shadow:
       inset 0 0 0 2px var(--cyan),
-      0 0 24px -10px var(--cyan);
+      0 0 30px -8px var(--cyan);
   }
-  .dpodium__num {
-    position: absolute;
-    top: 10px;
-    left: 16px;
-    font-family: var(--font-display);
-    font-size: 26px;
-    font-weight: 900;
-    color: var(--medal);
-    opacity: 0.9;
+  /* Above the team, so a long name may run on over the stage rather than be cut. */
+  .dpodium__who {
+    position: relative;
+    z-index: 3;
+    align-self: start;
+    display: grid;
+    justify-items: start;
+    gap: 6px;
+    min-width: 0;
+  }
+  .dpodium__hero .dpodium__avatar {
+    --medal: #f6a800;
+    width: 92px;
+    height: 92px;
   }
   .dpodium__avatar {
+    --medal: #cd7f32;
     border-radius: 50%;
     object-fit: cover;
     box-shadow:
       0 0 0 3px var(--medal),
-      0 0 22px color-mix(in srgb, var(--medal) 45%, transparent);
+      0 0 26px color-mix(in srgb, var(--medal) 45%, transparent);
+  }
+  .dpodium__kick {
+    margin-top: 6px;
+    font-family: var(--font-display);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: #ffd979;
+  }
+  .shell .main__inner .dpodium h3.dpodium__champ {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: max-content;
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: 32px;
+    font-weight: 900;
+    line-height: 1.1;
+    color: var(--white);
+    white-space: nowrap;
+    text-shadow: 0 2px 12px #000, 0 0 3px #000;
+  }
+  .dpodium__rating {
+    font-family: var(--font-display);
+    font-size: 22px;
+    font-weight: 800;
+  }
+  .dpodium__rating small {
+    margin-left: 6px;
+    font-family: var(--font-body);
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-faint);
+  }
+  .dpodium__stage {
+    position: relative;
+    align-self: stretch;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    min-width: 0;
+  }
+  /* The defending team, standing in the light. */
+  .dpodium__lineup {
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+  }
+  .dpodium__lineup::after {
+    content: '';
+    position: absolute;
+    z-index: -1;
+    right: 8%;
+    bottom: -6px;
+    left: 8%;
+    height: 40px;
+    border-radius: 50%;
+    background: radial-gradient(closest-side, rgb(246 168 0 / 45%), transparent);
+  }
+  .dpodium__figure {
+    display: block;
+    margin: 0 -24px;
+  }
+  .dpodium__figure img {
+    display: block;
+    height: 190px;
+    filter: drop-shadow(0 12px 16px rgb(0 0 0 / 70%));
+  }
+  .dpodium__figure:nth-child(2),
+  .dpodium__figure:nth-child(4) {
+    z-index: 1;
+  }
+  .dpodium__figure:nth-child(2) img,
+  .dpodium__figure:nth-child(4) img {
+    height: 205px;
+  }
+  .dpodium__figure:nth-child(3) {
+    z-index: 2;
+  }
+  .dpodium__figure:nth-child(3) img {
+    height: 225px;
+  }
+  /* The arena's banner: the season's prize where a team would stand. */
+  .dpodium__season {
+    align-self: center;
+    display: grid;
+    justify-items: center;
+    gap: 6px;
+    padding: 18px 26px;
+    border-radius: 14px;
+    background: rgb(4 9 20 / 72%);
+    box-shadow: inset 0 0 0 1px rgb(246 168 0 / 35%);
+    text-align: center;
+  }
+  .dpodium__season small {
+    font-family: var(--font-display);
+    font-size: 10.5px;
+    font-weight: 800;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+  }
+  .dpodium__season b {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--font-display);
+    font-size: 34px;
+    font-weight: 900;
+    color: #ffd979;
+  }
+  .dpodium__season span {
+    font-size: 13px;
+    color: var(--text-dim);
+  }
+
+  /* Second and third, beside the banner. */
+  .dpodium__side {
+    display: grid;
+    gap: 14px;
+    align-content: start;
+  }
+  .dpodium__card {
+    --medal: #cd7f32;
+    display: grid;
+    grid-template-columns: 54px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 12px;
+    padding: 14px;
+    border-radius: 14px;
+    background: rgb(8 14 28 / 82%);
+    box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--medal) 55%, transparent);
+  }
+  .dpodium__card--2,
+  .dpodium__card--2 .dpodium__avatar {
+    --medal: #c9d1e3;
+  }
+  .dpodium__card.is-you {
+    box-shadow:
+      inset 0 0 0 2px var(--cyan),
+      0 0 24px -8px var(--cyan);
+  }
+  .dpodium__card .dpodium__avatar {
+    width: 54px;
+    height: 54px;
+  }
+  .dpodium__cardtext {
+    display: grid;
+    gap: 4px;
+    min-width: 0;
   }
   .dpodium__name {
-    max-width: 100%;
-    margin-top: 4px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
     overflow: hidden;
+    font-family: var(--font-display);
     font-size: 15px;
-    font-weight: var(--fw-bold);
-    text-overflow: ellipsis;
+    font-weight: 900;
     white-space: nowrap;
   }
+  .dpodium__line {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--text-faint);
+  }
+  .dpodium__line .mono {
+    color: var(--white);
+    font-weight: 800;
+  }
+  .dpodium__line .dpodium__pays {
+    margin-left: 4px;
+  }
+  .dpodium__card .lbrow__team img {
+    width: 26px;
+    height: 26px;
+  }
+  .dpodium__num {
+    font-family: var(--font-display);
+    font-size: 34px;
+    font-weight: 900;
+    color: var(--medal);
+  }
   .dpodium__you {
+    flex: none;
     padding: 1px 8px;
     border-radius: 999px;
     background: var(--cyan);
@@ -931,17 +1103,7 @@
     font-weight: 800;
     letter-spacing: 0.12em;
     text-transform: uppercase;
-  }
-  .dpodium__rating {
-    font-size: 19px;
-    font-weight: 800;
-  }
-  .dpodium__pays {
-    justify-content: center;
-    min-height: 16px;
-  }
-  .dpodium .lbrow__team {
-    justify-content: center;
+    text-shadow: none;
   }
 
   /* Your place, under the podium. */
@@ -1121,5 +1283,18 @@
   }
   .season__head--desk .season__clock {
     display: none;
+  }
+}
+
+/*
+ * A narrower desktop: the banner across the page, so the team keeps its
+ * stage, and second and third side by side under it.
+ */
+@media (min-width: 720px) and (max-width: 1279px) {
+  .dpodium {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .dpodium__side {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }

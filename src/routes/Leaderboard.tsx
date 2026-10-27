@@ -472,6 +472,8 @@ export function DungeonBoard({
             team: <Team row={r} />,
           }))}
           wallet={wallet}
+          title="Dungeon champion"
+          lineup={{ fighters: ranks[0].recent_fighters ?? [], templateIds: ranks[0].used_template_ids }}
         />
       )}
       {!phone && wallet && (
@@ -797,6 +799,23 @@ export function ArenaBoards({
                   pays: placePays(rankOf(r, i), r),
                 }))}
                 wallet={wallet}
+                title={showing ? `${season.displayname} winner` : `${season.displayname} leader`}
+                stage={
+                  <span className="dpodium__season">
+                    <small>{season.displayname}</small>
+                    <b className="mono">
+                      <img src={asset('/assets/icons/tlm.svg')} alt="" width={22} height={22} />
+                      {formatDecimals(pot, 0)}
+                    </b>
+                    <span>
+                      {showing
+                        ? 'Settled — the final standings'
+                        : `Top ${formatNumber(season.winners)} share it · ${
+                            timing.phase === 'ended' ? 'ended' : `${countdown(timing.msLeft)} left`
+                          }`}
+                    </span>
+                  </span>
+                }
               />
             )}
             {!phone && wallet && (
@@ -959,7 +978,16 @@ function Team({ row }: { row: DungeonRank }) {
  * The card catalogue that names those two cards is only read once one of
  * them is hovered — a board of twenty rows should not cost it otherwise.
  */
-function TeamFace({ fighter: f, templateIds }: { fighter: BattleFighter; templateIds: number[] }) {
+function TeamFace({
+  fighter: f,
+  templateIds,
+  full = false,
+}: {
+  fighter: BattleFighter
+  templateIds: number[]
+  /** Standing full-size in the champion's spotlight, rather than a portrait in a row. */
+  full?: boolean
+}) {
   const phone = usePhone()
   const { classes } = useConfig()
   /* A uint64 on chain, so the row hands it over as a string. */
@@ -995,7 +1023,7 @@ function TeamFace({ fighter: f, templateIds }: { fighter: BattleFighter; templat
   const name = nft ? 'NFT Fighter' : `${f.racename} ${f.classname}`
   return (
     <span
-      className="lbrow__face"
+      className={full ? 'dpodium__figure' : 'lbrow__face'}
       ref={ref}
       onMouseEnter={() => {
         setWanted(true)
@@ -1048,32 +1076,93 @@ function dungeonLine(ranks: DungeonRank[], mine: number, paid: number): string {
 /* ---------- a desktop's podium and your place ---------- */
 
 /**
- * The phone's podium, given width: first in the middle and larger, second
- * and third either side, each a card in its medal's colour with the rating,
- * what the place pays and — on the dungeon board — the defending team.
+ * The top of a desktop board: the champion's spotlight.
+ *
+ * First place gets the stage — a wide banner with their avatar, name, rating
+ * and pay, and on the dungeon board the team they defend with standing
+ * full-size beside them, each fighter opening its stat card on a hover. The
+ * arena has no team to show, so its banner holds the season instead: what it
+ * shares and how long is left. Second and third are compact medal cards
+ * beside it, their teams as rows of portraits.
  */
-function DeskPodium({ places, wallet }: { places: (Place & { team?: React.ReactNode })[]; wallet: string }) {
+function DeskPodium({
+  places,
+  wallet,
+  title,
+  lineup,
+  stage,
+}: {
+  places: (Place & { team?: React.ReactNode })[]
+  wallet: string
+  /** "Dungeon champion", "Arena leader"... — what first place is. */
+  title: string
+  /** The champion's defending team, for the dungeon board. */
+  lineup?: { fighters: BattleFighter[]; templateIds: number[] }
+  /** What stands beside the champion where there is no team. */
+  stage?: React.ReactNode
+}) {
+  const [first, ...rest] = places
+  if (!first) return null
+  const you = (p: Place) => p.wallet === wallet
+  /* The five who fight; the fused NFT fighter is a portrait, not a figure. */
+  const figures = (lineup?.fighters ?? []).filter((f) => Number(f.fighter_id) !== NFT_FIGHTER_ID).slice(0, 5)
+
   return (
     <div className="dpodium">
-      {places.map((p) => (
-        <div
-          className={`dpodium__place dpodium__place--${p.rank}${p.wallet === wallet ? ' is-you' : ''}`}
-          key={p.wallet}
-        >
-          <span className="dpodium__num">{p.rank}</span>
-          <PlayerAvatar
-            id={p.avatar}
-            name={p.name}
-            className="dpodium__avatar"
-            size={p.rank === 1 ? 92 : 72}
-          />
-          <span className="dpodium__name">{p.name}</span>
-          {p.wallet === wallet && <em className="dpodium__you">You</em>}
-          <span className="dpodium__rating mono">{formatNumber(p.rating)}</span>
-          <span className="lbrow__pays dpodium__pays">{p.pays}</span>
-          {p.team}
+      <section className={`dpodium__hero${you(first) ? ' is-you' : ''}`} aria-label={`First: ${first.name}`}>
+        <div className="dpodium__who">
+          <PlayerAvatar id={first.avatar} name={first.name} className="dpodium__avatar" size={92} />
+          <span className="dpodium__kick">#1 · {title}</span>
+          <h3 className="dpodium__champ">
+            {first.name}
+            {you(first) && <em className="dpodium__you">You</em>}
+          </h3>
+          <span className="dpodium__rating mono">
+            {formatNumber(first.rating)}
+            <small>rating</small>
+          </span>
+          {first.pays && <span className="lbrow__pays dpodium__pays">{first.pays}</span>}
         </div>
-      ))}
+        <div className="dpodium__stage">
+          {figures.length > 0 ? (
+            <span className="dpodium__lineup">
+              {figures.map((f, n) => (
+                <TeamFace
+                  key={`${first.wallet}-${n}`}
+                  fighter={f}
+                  templateIds={lineup?.templateIds ?? []}
+                  full
+                />
+              ))}
+            </span>
+          ) : (
+            stage
+          )}
+        </div>
+      </section>
+
+      <div className="dpodium__side">
+        {rest.map((p) => (
+          <div
+            className={`dpodium__card dpodium__card--${p.rank}${you(p) ? ' is-you' : ''}`}
+            key={p.wallet}
+          >
+            <PlayerAvatar id={p.avatar} name={p.name} className="dpodium__avatar" size={54} />
+            <span className="dpodium__cardtext">
+              <b className="dpodium__name">
+                {p.name}
+                {you(p) && <em className="dpodium__you">You</em>}
+              </b>
+              <span className="dpodium__line">
+                <span className="mono">{formatNumber(p.rating)}</span> rating
+                {p.pays && <span className="lbrow__pays dpodium__pays">{p.pays}</span>}
+              </span>
+              {p.team}
+            </span>
+            <span className="dpodium__num">{p.rank}</span>
+          </div>
+        ))}
+      </div>
     </div>
   )
 }
