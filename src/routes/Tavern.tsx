@@ -33,6 +33,7 @@ import {
   statIcon,
   midpoint,
   type ClassTemplate,
+  elementIcon,
 } from '@/tavern/fighterStats'
 import { fetchRoster } from '@/dungeon/queries'
 import { useChainQuery } from '@/chain/useChainQuery'
@@ -735,7 +736,7 @@ export default function Tavern() {
           <span className="statline__k">
             <img
               className="statline__icon"
-              src={asset(`/assets/icons/elements/${label.toLowerCase()}.png`)}
+              src={elementIcon(label.toLowerCase())}
               alt=""
             />
             {label}

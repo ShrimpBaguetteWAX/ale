@@ -54,6 +54,7 @@ import {
   statIcon,
   type ClassTemplate,
   type StatGrade,
+  elementIcon,
 } from '@/tavern/fighterStats'
 import { QualityFilters } from '@/fight/setup'
 import { BottomSheet } from '@/components/BottomSheet'
@@ -874,7 +875,7 @@ function Row({
     <span className="drost__name">
       <b>{f.classname}</b>
       <small>
-        <img src={asset(`/assets/icons/elements/${f.element}.png`)} alt={f.element} />
+        <img src={elementIcon(f.element)} alt={f.element} />
         {f.racename}
       </small>
     </span>
@@ -929,7 +930,7 @@ function Row({
           <span className="drost__who">
             <span className="drost__l1">
               <b>{f.classname}</b>
-              <img src={asset(`/assets/icons/elements/${f.element}.png`)} alt={f.element} />
+              <img src={elementIcon(f.element)} alt={f.element} />
               <small>{f.racename}</small>
             </span>
             <span className="drost__l3">
@@ -998,7 +999,7 @@ function Row({
               {fig.res.map((x) => (
                 <span className="drost__cell" key={x.field} title={`${x.el} resistance`}>
                   <small>
-                    <img className="drost__ei" src={asset(`/assets/icons/elements/${x.el}.png`)} alt={x.el} />
+                    <img className="drost__ei" src={elementIcon(x.el)} alt={x.el} />
                   </small>
                   <b>
                     {x.value}
@@ -1110,7 +1111,7 @@ function Detail(props: DeskRosterProps & { f: RosterFighter; fig: Figures }) {
           </span>
           <h2 className="drost__heroname">{f.classname}</h2>
           <span className="drost__heroline">
-            <img src={asset(`/assets/icons/elements/${f.element}.png`)} alt="" />
+            <img src={elementIcon(f.element)} alt="" />
             {f.racename} · {f.element}
           </span>
           <span className="drost__chips">
@@ -1189,7 +1190,7 @@ function Detail(props: DeskRosterProps & { f: RosterFighter; fig: Figures }) {
         {fig.res.map((x) => (
           <span className="drost__cell" key={x.field} title={`${cap(x.el)} resistance`}>
             <small>
-              <img className="drost__ei" src={asset(`/assets/icons/elements/${x.el}.png`)} alt="" />
+              <img className="drost__ei" src={elementIcon(x.el)} alt="" />
               {x.el}
             </small>
             <b>
@@ -1625,7 +1626,7 @@ function FilterFields(p: DeskRosterProps) {
                 onClick={() => set({ elements: toggle(p.filter.elements, el as Element) })}
                 title={el}
               >
-                <img src={asset(`/assets/icons/elements/${el}.png`)} alt={el} />
+                <img src={elementIcon(el)} alt={el} />
               </button>
             ))}
           </div>
@@ -1734,7 +1735,7 @@ function ActiveChips(p: DeskRosterProps) {
       key: `el-${el}`,
       body: (
         <>
-          <img src={asset(`/assets/icons/elements/${el}.png`)} alt="" />
+          <img src={elementIcon(el)} alt="" />
           {cap(el)}
         </>
       ),

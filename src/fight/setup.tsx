@@ -53,6 +53,7 @@ import {
   type ClassTemplate,
   gradeStat,
   type StatGrade,
+  elementIcon,
 } from '@/tavern/fighterStats'
 import { asset, ipfsImage } from '@/assets'
 import { rarityColor } from '@/map/terrain'
@@ -285,10 +286,6 @@ function PickGrade({ grade }: { grade: StatGrade | null | undefined }) {
     />
   )
 }
-
-/** Element icons live alongside the resistance icons the panel already uses. */
-export const elementIcon = (element: string) =>
-  asset("/assets/icons/elements/") + (element || "neutral") + ".png"
 
 /* ---------- adapters into the shared panel ---------- */
 
@@ -935,7 +932,7 @@ export function CombatCard({
           {element && (
             <img
               className="combatcard__element"
-              src={asset(`/assets/icons/elements/${element}.png`)}
+              src={elementIcon(element)}
               alt={element}
               title={element}
               width={20}
@@ -1490,7 +1487,7 @@ export function RosterFilters({
             onClick={() => toggleElement(el)}
             title={el}
           >
-            <img src={asset(`/assets/icons/elements/${el}.png`)} alt={el} />
+            <img src={elementIcon(el)} alt={el} />
           </button>
         ))}
       </div>
@@ -1609,7 +1606,7 @@ export function RosterFilters({
             <span className="matchupbar__label">They field</span>
             {versus.elements.map((e) => (
               <span className="matchupbar__tally" key={e.name} title={e.name}>
-                <img src={asset(`/assets/icons/elements/${e.name}.png`)} alt={e.name} width={14} height={14} />
+                <img src={elementIcon(e.name)} alt={e.name} width={14} height={14} />
                 {e.count}
               </span>
             ))}

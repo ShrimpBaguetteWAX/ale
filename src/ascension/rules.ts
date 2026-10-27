@@ -1,7 +1,6 @@
 import type { RosterFighter } from '@/dungeon/types'
-import { statIcon } from '@/tavern/fighterStats'
+import { statIcon, elementIcon } from '@/tavern/fighterStats'
 import { NUM_LOCALE } from '@/format'
-import { asset } from '@/assets'
 import type { AscensionConfig, StatCaps } from './queries'
 
 /**
@@ -508,6 +507,6 @@ export function upgradeRange(
  */
 export function upgradeIcon(stat: string): string {
   return isResistance(stat)
-    ? asset(`/assets/icons/elements/${stat.slice(4)}.png`)
+    ? elementIcon(stat.slice(4))
     : statIcon(stat)
 }

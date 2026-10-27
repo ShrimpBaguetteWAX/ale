@@ -52,7 +52,7 @@ import {
   rosterPanel,
   type Detail,
 } from '@/fight/setup'
-import { elementBackground, fighterArt, fighterArtFallback, type ClassTemplate } from '@/tavern/fighterStats'
+import { elementBackground, fighterArt, fighterArtFallback, type ClassTemplate, elementIcon } from '@/tavern/fighterStats'
 import { addAuction, bidAuction, buyOffer, cancelAuction } from '@/wharf/actions'
 import { SACRIFICE_ABILITY } from '@/ascension/rules'
 import { asset } from '@/assets'
@@ -1083,7 +1083,7 @@ function MarketFighter({
           <span className="mfighter__kick">Fighter #{id}</span>
           <h2 className="mfighter__name">{f.classname}</h2>
           <span className="mfighter__line">
-            <img src={asset(`/assets/icons/elements/${f.element}.png`)} alt="" width={18} height={18} />
+            <img src={elementIcon(f.element)} alt="" width={18} height={18} />
             {f.racename} · {f.element}
           </span>
           <div className="mfighter__meta">

@@ -12,6 +12,7 @@ import {
   fighterAvatar,
   fighterSilhouette,
   fighterSilhouetteFallback,
+  elementIcon,
 } from '@/tavern/fighterStats'
 import { BoutBroadcast } from '@/tournament/BoutBroadcast'
 import { fetchFightersByIds } from '@/tournament/queries'
@@ -1635,7 +1636,7 @@ function LineupStage({ team, crew, weapon, onSlot, onRemove, onClear }: {
             <span className="ptour__pedglow" />
             <b className="ptour__pedname">
               {f?.element && (
-                <img className="ptour__pedel" src={asset(`/assets/icons/elements/${f.element}.png`)} alt={f.element} title={f.element} />
+                <img className="ptour__pedel" src={elementIcon(f.element)} alt={f.element} title={f.element} />
               )}
               {f ? f.classname : ' '}
             </b>
@@ -1710,7 +1711,7 @@ function EnteredStage({ faces, crewId, armsId }: { faces: CrewFace[]; crewId?: n
             <span className="ptour__pedglow" />
             <b className="ptour__pedname">
               {f?.element && (
-                <img className="ptour__pedel" src={asset(`/assets/icons/elements/${f.element}.png`)} alt={f.element} title={f.element} />
+                <img className="ptour__pedel" src={elementIcon(f.element)} alt={f.element} title={f.element} />
               )}
               {f ? f.classname : ' '}
             </b>

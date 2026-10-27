@@ -8,7 +8,7 @@ import { usePhone } from '@/components/usePhone'
 import { simulateBout, type BoutSide } from '@/tournament/bout'
 import { combineNftFlat } from '@/dungeon/nftFighter'
 import { stateAt } from '@/dungeon/standing'
-import { fighterArt, fighterArtFallback } from '@/tavern/fighterStats'
+import { fighterArt, fighterArtFallback, elementIcon } from '@/tavern/fighterStats'
 import { GameImg } from '@/components/GameImg'
 import { PlayerAvatar } from '@/components/PlayerAvatar'
 import { asset } from '@/assets'
@@ -542,7 +542,7 @@ export function Feed({
             {turn && (
               <img
                 className="bcast__el"
-                src={asset(`/assets/icons/elements/${turn.element}.png`)}
+                src={elementIcon(turn.element)}
                 alt={turn.element}
               />
             )}

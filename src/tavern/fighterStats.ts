@@ -366,6 +366,16 @@ export function elementBackground(element: string): string {
   return asset(`/assets/fighter/classes/backgrounds/full/full_background_${key}.jpeg`)
 }
 
+/**
+ * An element's badge: the cut hexagon in the element's colour, with its
+ * symbol. Vector, on one 24px grid, so all six match at any size. A name
+ * that is not an element gets neutral's rather than a broken image.
+ */
+export function elementIcon(element: string): string {
+  const known = ['air', 'fire', 'gem', 'metal', 'nature', 'neutral']
+  return asset('/assets/icons/elements/' + (known.includes(element) ? element : 'neutral') + '.svg')
+}
+
 /** Icon beside a stat name, from the original set. */
 export function statIcon(field: string): string {
   return asset('/assets/icons/stats/') + field + '.svg'

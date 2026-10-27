@@ -39,6 +39,7 @@ import {
   fighterFace,
   fighterName,
   formatScaled,
+  elementIcon,
 } from '@/tavern/fighterStats'
 import { DIRTIES, claimPoolRewards, levelUpFighters } from '@/wharf/actions'
 import { useAction } from '@/wharf/useAction'
@@ -1041,7 +1042,7 @@ function Battlefield({
             <span className="mono">Attack {turn}</span>
             {current.element && (
               <img
-                src={asset(`/assets/icons/elements/${current.element}.png`)}
+                src={elementIcon(current.element)}
                 alt={current.element}
                 width={16}
                 height={16}
@@ -1337,7 +1338,7 @@ function FieldUnit({
         {fighter.element && (
           <img
             className="bunit__element"
-            src={asset(`/assets/icons/elements/${fighter.element}.png`)}
+            src={elementIcon(fighter.element)}
             alt={fighter.element}
           />
         )}

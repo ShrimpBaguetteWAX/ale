@@ -21,6 +21,7 @@ import {
   statIcon,
   type ClassTemplate,
   type StatGrade,
+  elementIcon,
 } from '@/tavern/fighterStats'
 import { asset } from '@/assets'
 import { ageBand } from '@/fighters/rules'
@@ -167,7 +168,7 @@ export function FighterRow({
         <span className="mrow__who">
           <b>{f.classname}</b>
           <small>
-            <img src={asset(`/assets/icons/elements/${f.element}.png`)} alt="" width={14} height={14} />
+            <img src={elementIcon(f.element)} alt="" width={14} height={14} />
             {/* A fixed slot, so the grades stand in the same place on every row
                 and the rows can be compared down the list. */}
             <span className="mrow__race">{f.racename}</span>

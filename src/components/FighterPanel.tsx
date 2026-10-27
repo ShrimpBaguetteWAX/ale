@@ -19,6 +19,7 @@ import {
   resolveAbilityDescription,
   statIcon,
   STAT_LABEL,
+  elementIcon,
 } from '@/tavern/fighterStats'
 import { ageBand, ageNote } from '@/fighters/rules'
 import { asset, ipfsImage } from '@/assets'
@@ -265,7 +266,7 @@ export function FighterStats({
                 key={key}
                 title={lit?.note}
               >
-                <img src={asset(`/assets/icons/elements/${label.toLowerCase()}.png`)} alt="" />
+                <img src={elementIcon(label.toLowerCase())} alt="" />
                 <span className="resgrid__label">{label}</span>
                 <span className="resgrid__value mono">
                   {lit ? lit.to : formatResistance(raw)}
@@ -488,7 +489,7 @@ export function FighterHoverCard({
                 <span className="statline__k">
                   <img
                     className="statline__icon"
-                    src={asset(`/assets/icons/elements/${label.toLowerCase()}.png`)}
+                    src={elementIcon(label.toLowerCase())}
                     alt=""
                   />
                   {label}
