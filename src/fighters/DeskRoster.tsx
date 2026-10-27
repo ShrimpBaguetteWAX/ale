@@ -184,6 +184,16 @@ export function figuresOf(
   return { factor, stats, res, combat, age: ageBonus(f, ageDecay, now), pay: paydayOf(f, config, now) }
 }
 
+/* How far along its bar a grade reaches; the class's average stands at 55%. */
+const GRADE_REACH: Record<StatGrade, number> = {
+  'gold-up': 1,
+  'green-duble-up': 0.9,
+  'green-up': 0.74,
+  middle: 0.55,
+  'red-down': 0.36,
+  'red-duble-down': 0.2,
+}
+
 function Grade({ grade }: { grade: StatGrade | null }) {
   if (!grade) return null
   return <img className="drost__grade" src={GRADE_ICON[grade]} alt={GRADE_LABEL[grade]} title={GRADE_LABEL[grade]} />
@@ -862,18 +872,39 @@ export function Row({
   /* The default row: payday as a ring round the portrait, the stats in columns. A phone stacks it. */
   const ring = view === 'default'
   const daysLeft = Math.max(0, Math.ceil(fig.pay.msLeft / DAY))
-  const art = (
-    <span className="drost__art" style={{ backgroundImage: `url('${elementBackground(f.element)}')` }}>
-      <GameImg src={fighterAvatar(f)} alt="" loading="lazy" fallback={fighterArtFallback()} />
-      <span className="drost__lv">
-        L{s.level}
-        {f.ascension_level > 0 && <em>✦{f.ascension_level}</em>}
-      </span>
+  /*
+     The fighter down the card's whole height, in every view: the level and
+     the marker on the art, the days to payday at its foot over a bar that
+     fills as the day comes.
+  */
+  const hero = (
+    <span
+      className={`drost__hero${fig.pay.overdue ? ' is-overdue' : ''}`}
+      style={
+        {
+          backgroundImage: `url('${elementBackground(f.element)}')`,
+          '--p': `${Math.max(2, fig.pay.progress * 100)}%`,
+        } as React.CSSProperties
+      }
+      title={
+        fig.pay.overdue
+          ? `Payday due · ${fig.pay.cost.toLocaleString(NUM_LOCALE)} credits`
+          : `Payday ${payDay(f)} · in ${daysLeft}d · ${fig.pay.cost.toLocaleString(NUM_LOCALE)} credits`
+      }
+    >
+      <GameImg src={fighterArt(f)} alt="" loading="lazy" fallback={fighterArtFallback()} />
       {f.marker && (
         <span className="drost__mk">
           <img src={markerIcon(f.marker)} alt={f.marker} />
         </span>
       )}
+      <span className="drost__herofoot">
+        <span className="drost__lv">
+          L{s.level}
+          {f.ascension_level > 0 && <em>✦{f.ascension_level}</em>}
+        </span>
+        <span className="drost__days">{fig.pay.overdue ? 'Due' : `${daysLeft}d`}</span>
+      </span>
     </span>
   )
   /* The same name line as the default view's, so class, element and race stand in one place in every view. */
@@ -895,10 +926,9 @@ export function Row({
 
   const classes = [
     'drost__row',
-    view === 'default' ? '' : 'is-focused',
-    ring ? 'is-ring' : '',
-    ring && mode === 'sell' ? 'is-sellcol' : '',
-    ticking ? 'is-ticking' : '',
+    'is-card',
+    ring ? 'is-overview' : 'is-view',
+    ticking ? 'is-tick' : '',
     picked ? 'is-picked' : '',
     checked ? 'is-checked' : '',
     ticking && !gate.ok ? 'is-locked' : '',
@@ -933,19 +963,7 @@ export function Row({
           }
         />
       )}
-      {/* The portrait in its payday ring in every view, so it stands in the same place whichever is open. */}
-      <span
-        className={`drost__ring${fig.pay.overdue ? ' is-overdue' : ''}`}
-        style={{ '--p': `${Math.max(2, fig.pay.progress * 100)}%` } as React.CSSProperties}
-        title={
-          fig.pay.overdue
-            ? `Payday due · ${fig.pay.cost.toLocaleString(NUM_LOCALE)} credits`
-            : `Payday ${payDay(f)} · in ${daysLeft}d · ${fig.pay.cost.toLocaleString(NUM_LOCALE)} credits`
-        }
-      >
-        {art}
-        <span className="drost__days">{fig.pay.overdue ? 'Due' : `${daysLeft}d`}</span>
-      </span>
+      {hero}
       {ring ? (
         <>
           <span className="drost__who">
@@ -959,53 +977,38 @@ export function Row({
               {status}
             </span>
           </span>
-          {fig.stats.map((x) => (
-            <span className="drost__num" key={x.field} title={STAT_NAMES[x.field]}>
-              {/* A phone names each figure in place; a desktop has the column head. */}
-              <small className="drost__numhead">
-                <img className="drost__si" src={statIcon(x.field)} alt="" />
-                {STAT_SHORT[x.field]}
-              </small>
-              <b>
-                {x.value}
-                <Grade grade={x.grade} />
-              </b>
-            </span>
-          ))}
-          {/* What the figures come to in a fight: damage per second, survival and the combat score. */}
-          <span className="drost__fight">
-            <span title="Damage per second">
-              <img className="drost__si" src={statIcon('damage')} alt="" />
-              <small>DPS</small>
-              <b>
-                {formatDecimals(fig.combat.dps, 2)}
-                <Grade grade={fig.combat.dpsG} />
-              </b>
-            </span>
-            <span title="Survival: how much damage it takes to bring down">
-              <img className="drost__si" src={statIcon('survival')} alt="" />
-              <small>Survival</small>
-              <b>
-                {Math.round(fig.combat.survival).toLocaleString(NUM_LOCALE)}
-                <Grade grade={fig.combat.survG} />
-              </b>
-            </span>
-            <span title="Combat score: damage and survival together">
-              <img className="drost__si" src={statIcon('block')} alt="" />
-              <small>Score</small>
-              <b>
-                {Math.round(fig.combat.score).toLocaleString(NUM_LOCALE)}
-                <Grade grade={fig.combat.scoreG} />
-              </b>
-            </span>
+          {/* Each stat against its class: the tick is the class's average, the bar how far past or short of it. */}
+          <span className="drost__bars">
+            {fig.stats.map((x) => (
+              <span className="drost__bar" key={x.field} title={`${STAT_NAMES[x.field]}${x.grade ? ` · ${GRADE_LABEL[x.grade]}` : ''}`}>
+                <small>
+                  <img className="drost__si" src={statIcon(x.field)} alt="" />
+                  {STAT_SHORT[x.field]}
+                </small>
+                <span className={`drost__track is-${x.grade ?? 'none'}`}>
+                  <i style={{ width: `${GRADE_REACH[x.grade ?? 'middle'] * 100}%` }} />
+                </span>
+                <b>
+                  {x.value}
+                  <Grade grade={x.grade} />
+                </b>
+              </span>
+            ))}
           </span>
-          {mode === 'sell' && (
-            <span className="drost__pay">
-              {gate.ok ? <Credits value={s.credits ?? 0} /> : <small>Busy</small>}
+          {/* The card's end: the combat score as a rating, then what the screen adds — a sale's credits, a price. */}
+          <span className="drost__end">
+            <span className="drost__badge" title="Combat score: damage and survival together">
+              <b>{Math.round(fig.combat.score).toLocaleString(NUM_LOCALE)}</b>
+              <small>Score</small>
+              <img src={elementIcon(f.element)} alt="" />
             </span>
-          )}
-          {aside && <span className="drost__aside">{aside}</span>}
-          {/* Under the name and the figures, the full width of the row: whole names fit on one line. */}
+            {mode === 'sell' && (
+              <span className="drost__pay">
+                {gate.ok ? <Credits value={s.credits ?? 0} /> : <small>Busy</small>}
+              </span>
+            )}
+            {aside && <span className="drost__aside">{aside}</span>}
+          </span>
           <span className="drost__abn">
             {abilities.map((a, i) => {
               const r = abilityRarity(a.displayname)
@@ -1764,7 +1767,7 @@ function useMarkerCounts(roster: RosterFighter[]) {
   }, [roster])
 }
 
-/* The marker filter as a switch over the rows: each marker in or out, as in the filter. */
+/* The marker filter as a switch over the rows: each marker in or out, as in the filter, without its count. */
 function MarkerSeg({ roster, filter, onFilter }: Pick<DeskRosterProps, 'roster' | 'filter' | 'onFilter'>) {
   const used = useMarkerCounts(roster)
   if (used.size === 0) return null
@@ -1780,10 +1783,9 @@ function MarkerSeg({ roster, filter, onFilter }: Pick<DeskRosterProps, 'roster' 
             onClick={() =>
               onFilter({ ...filter, markers: on ? filter.markers.filter((x) => x !== m) : [...filter.markers, m] })
             }
-            title={`${m} (${used.get(m)})`}
+            title={m}
           >
             <img src={markerIcon(m)} alt={m} />
-            <small>{used.get(m)}</small>
           </button>
         )
       })}

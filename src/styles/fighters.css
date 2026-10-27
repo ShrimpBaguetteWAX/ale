@@ -752,15 +752,6 @@
 .drost__row:hover {
   background: rgb(255 255 255 / 3%);
 }
-.drost__row.is-ticking {
-  grid-template-columns: 18px 56px minmax(0, 1fr) 96px;
-}
-.drost__row.is-focused {
-  grid-template-columns: 56px 100px minmax(0, 1fr);
-}
-.drost__row.is-focused.is-ticking {
-  grid-template-columns: 18px 56px 100px minmax(0, 1fr);
-}
 .drost__row.is-picked {
   background: rgb(0 186 255 / 10%);
   box-shadow: inset 3px 0 0 var(--cyan);
@@ -986,66 +977,6 @@
   color: #ffb3bd;
 }
 
-/*
- * A desktop's default rows: payday as a ring round the portrait, filling as
- * the day comes, and the five stats in columns under one head — so the list
- * reads like a table, and the most damage is a glance down one column. A size
- * up from the phone's rows too: these were read at arm's length.
- */
-.drost__row.is-ring {
-  --col: 56px;
-  display: grid;
-  grid-template-columns: 72px minmax(0, 1fr) repeat(5, var(--col));
-  gap: 12px;
-  align-items: center;
-}
-.drost__row.is-ring.is-ticking {
-  grid-template-columns: 18px 72px minmax(0, 1fr) repeat(5, var(--col));
-}
-.drost__row.is-ring.is-sellcol {
-  grid-template-columns: 18px 72px minmax(0, 1fr) repeat(5, var(--col)) 72px;
-}
-.drost__row.is-ring {
-  row-gap: 7px;
-  padding: 10px 14px 10px 10px;
-}
-/* The portrait and the tick stand beside both lines; the abilities run under the name and the figures. */
-.drost__row.is-ring > .drost__ring,
-.drost__row.is-ring > .drost__tick {
-  grid-row: 1 / span 2;
-}
-.drost__row.is-ring > .drost__abn {
-  grid-row: 2;
-  grid-column: 2 / -1;
-}
-.drost__row.is-ring.is-ticking > .drost__abn {
-  grid-column: 3 / -1;
-}
-
-@container drostlist (max-width: 640px) {
-  .drost__row.is-ring {
-    --col: 46px;
-    gap: 8px;
-  }
-}
-
-.drost__ring {
-  position: relative;
-  display: block;
-  width: 72px;
-  height: 72px;
-  padding: 4px;
-  border-radius: 15px;
-  background: conic-gradient(var(--cyan) var(--p), rgb(255 255 255 / 10%) 0);
-}
-.drost__ring.is-overdue {
-  background: #ff5a6a;
-}
-.drost__ring .drost__art {
-  width: 64px;
-  height: 64px;
-  border-radius: 11px;
-}
 .drost__days {
   position: absolute;
   right: -5px;
@@ -1058,46 +989,6 @@
   font-size: 11px;
   font-weight: 900;
   white-space: nowrap;
-}
-.drost__ring.is-overdue .drost__days {
-  box-shadow: inset 0 0 0 1px #ff5a6a;
-  color: #ffb3bd;
-}
-.is-ring .drost__lv {
-  font-size: 11px;
-}
-.is-ring .drost__mk {
-  width: 22px;
-  height: 22px;
-}
-.is-ring .drost__mk img {
-  width: 14px;
-  height: 14px;
-}
-.is-ring .drost__who {
-  gap: 6px;
-}
-.is-ring .drost__l1 b {
-  font-size: 16px;
-}
-.is-ring .drost__l1 img {
-  width: 15px;
-  height: 15px;
-}
-.is-ring .drost__l1 small {
-  font-size: 13px;
-}
-.is-ring .drost__l3 {
-  gap: 6px;
-}
-.is-ring .drost__age {
-  height: 21px;
-  padding: 0 8px;
-  font-size: 11.5px;
-}
-.is-ring .drost__status {
-  padding: 3px 9px;
-  font-size: 11px;
 }
 .drost__abn {
   display: flex;
@@ -1145,61 +1036,6 @@
   width: 11px;
   height: 11px;
   opacity: 0.7;
-}
-/*
- * Each stat a small tile: its icon and short name over the figure, the grade
- * hanging off the figure's right. The same on a desktop's row as on a phone's
- * card, so every number is named where it stands and no column head is needed.
- */
-.drost__num {
-  display: grid;
-  justify-content: center;
-  justify-items: center;
-  gap: 2px;
-  padding: 5px 0 6px;
-  border-radius: 8px;
-  background: rgb(255 255 255 / 4%);
-  font-family: var(--font-display);
-  font-size: 15px;
-  font-weight: 800;
-  font-variant-numeric: tabular-nums;
-}
-.drost__numhead {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  font-family: var(--font-body);
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: var(--text-faint);
-}
-.drost__numhead .drost__si {
-  height: 10px;
-}
-.drost__num > b {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  font: inherit;
-}
-.drost__num .drost__grade {
-  position: absolute;
-  left: calc(100% + 1px);
-  top: 50%;
-  width: 10px;
-  height: 12px;
-  transform: translateY(-50%);
-}
-/* A narrow list's tiles are about 46px: the word alone fits. */
-@container drostlist (max-width: 640px) {
-  .drost__numhead .drost__si {
-    display: none;
-  }
-}
-.is-ring .drost__pay .drost__cr {
-  font-size: 13px;
 }
 
 /* focused rows: the name, then one kind of figure across the row */
@@ -2024,9 +1860,6 @@
   gap: 9px;
   padding: 5px 9px 5px 6px;
 }
-.drost--stack .drost__row.is-ticking {
-  grid-template-columns: 20px 48px minmax(0, 1fr) auto;
-}
 .drost--phone .drost__row:hover {
   background: none;
 }
@@ -2114,34 +1947,6 @@
   background: rgb(255 90 106 / 9%);
 }
 
-/* focused rows: the name over the figures, beside the portrait */
-.drost--stack .drost__row.is-focused {
-  grid-template-columns: 44px minmax(0, 1fr);
-  row-gap: 4px;
-}
-.drost--stack .drost__row.is-focused.is-ticking {
-  grid-template-columns: 20px 44px minmax(0, 1fr);
-}
-.drost--stack .drost__row.is-focused > .drost__art,
-.drost--stack .drost__row.is-focused > .drost__tick {
-  grid-row: 1 / 3;
-  align-self: center;
-}
-.drost--stack .drost__row.is-focused > .drost__art {
-  width: 44px;
-  height: 44px;
-}
-.drost--stack .drost__row.is-focused > .drost__name {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-.drost--stack .drost__row.is-focused > .drost__name b {
-  font-size: 13px;
-}
-.drost--stack .drost__row.is-focused > .drost__name small {
-  font-size: 11px;
-}
 .drost--stack .drost__cells {
   gap: 3px;
 }
@@ -2163,17 +1968,7 @@
 .drost--stack .drost__cell em {
   font-size: max(8.5px, var(--fs-floor));
 }
-/*
- * A stacked list, phones among them: the abilities under the fighter, the
- * card's full width, two by two — the name in its rarity colour and what it
- * does in two lines (all of it on hover, and in the fighter's sheet).
- */
-.drost--stack .drost__row.is-focused > .drost__names,
-.drost--stack .drost__row.is-focused.is-aside > .drost__names {
-  grid-row: 3;
-  grid-column: 1 / -1;
-  margin-top: 4px;
-}
+
 .drost--stack .drost__names {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 4px;
@@ -2598,156 +2393,6 @@
   }
 }
 
-/*
- * A phone's default row: the desktop's ring and columns, stacked. The ring
- * stands beside three lines — the name, the five figures in columns under
- * the list's one head, the abilities by name — and everything is a size up
- * from the old phone row.
- */
-.drost--stack .drost__row.is-ring {
-  /* The portrait column is wider than the ring: room between it and the lines beside it. */
-  grid-template-columns: 74px repeat(5, minmax(0, 1fr));
-  column-gap: 6px;
-}
-.drost--stack .drost__row.is-ring.is-ticking,
-.drost--stack .drost__row.is-ring.is-sellcol {
-  grid-template-columns: 20px 74px repeat(5, minmax(0, 1fr));
-}
-.drost--stack .drost__row.is-ring {
-  row-gap: 6px;
-  padding: 10px 10px 10px 8px;
-}
-
-.drost--stack .drost__row.is-ring > .drost__ring,
-.drost--stack .drost__row.is-ring > .drost__tick {
-  grid-row: 1 / span 3;
-  align-self: start;
-}
-.drost--stack .drost__row.is-ring > .drost__ring {
-  justify-self: start;
-}
-.drost--stack .drost__row.is-ring > .drost__who {
-  grid-row: 1;
-  grid-column: 2 / -1;
-}
-.drost--stack .drost__row.is-ring.is-ticking > .drost__who {
-  grid-column: 3 / -1;
-}
-/* Selling: the price at the end of the name line. */
-.drost--stack .drost__row.is-ring.is-sellcol > .drost__who {
-  grid-column: 3 / -2;
-}
-.drost--stack .drost__row.is-ring.is-sellcol > .drost__pay {
-  grid-row: 1;
-  grid-column: -2 / -1;
-}
-.drost--stack .drost__row.is-ring > .drost__abn {
-  grid-row: 3;
-  grid-column: 2 / -1;
-}
-.drost--stack .drost__row.is-ring.is-ticking > .drost__abn {
-  grid-column: 3 / -1;
-}
-.drost--stack .drost__ring {
-  width: 62px;
-  height: 62px;
-  padding: 4px;
-  border-radius: 14px;
-}
-.drost--stack .drost__ring .drost__art {
-  width: 54px;
-  height: 54px;
-  border-radius: 10px;
-}
-.drost--stack .drost__ring .drost__days {
-  font-size: 10.5px;
-}
-.drost--stack .is-ring .drost__lv {
-  font-size: 10px;
-}
-.drost--stack .is-ring .drost__who {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
-}
-.drost--stack .is-ring .drost__l1 {
-  min-width: 0;
-}
-.drost--stack .is-ring .drost__l1 b {
-  font-size: 15.5px;
-}
-.drost--stack .is-ring .drost__l1 img {
-  width: 14px;
-  height: 14px;
-}
-.drost--stack .is-ring .drost__l1 small {
-  font-size: 12.5px;
-}
-.drost--stack .is-ring .drost__l3 {
-  flex: none;
-  margin-left: auto;
-  overflow: visible;
-}
-.drost--stack .is-ring .drost__age {
-  height: 20px;
-  padding: 0 6px;
-  font-size: 10.5px;
-}
-.drost--stack .is-ring .drost__status {
-  padding: 2px 7px;
-  font-size: 10px;
-}
-
-.drost--stack .drost__row.is-ring {
-  column-gap: 4px;
-}
-.drost--stack .drost__row.is-ring > .drost__ring {
-  margin-right: 2px;
-}
-.drost--stack .drost__num {
-  display: grid;
-  justify-content: center;
-  justify-items: center;
-  gap: 1px;
-  padding: 4px 0 5px;
-  border-radius: 8px;
-  background: rgb(255 255 255 / 4%);
-}
-.drost--stack .drost__num:not(:has(.drost__grade)) {
-  padding-right: 0;
-}
-.drost--stack .drost__numhead {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  font-family: var(--font-body, inherit);
-  font-size: 9.5px;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: var(--text-faint);
-}
-.drost--stack .drost__numhead .drost__si {
-  height: 10px;
-}
-/* With a tick column the tiles are about 40px: the word alone fits, the icon beside it did not. */
-.drost--stack .drost__row.is-ticking .drost__numhead .drost__si {
-  display: none;
-}
-.drost--stack .drost__num > b {
-  position: relative;
-  font-size: 14px;
-}
-/* The number sits on the tile's centre line, under its name; the grade hangs off its right. */
-.drost--stack .drost__num .drost__grade {
-  position: absolute;
-  left: calc(100% + 1px);
-  top: 50%;
-  width: 9px;
-  height: 11px;
-  transform: translateY(-50%);
-}
 .drost--stack .drost__abp {
   height: 21px;
   padding: 0 7px 0 6px;
@@ -2764,69 +2409,9 @@
   filter: none;
   opacity: 1;
 }
-/* Selling, the tiles are about 40px: no room to hang the grade outside a three-digit figure. */
-.drost--stack .drost__row.is-ticking .drost__num .drost__grade {
-  position: static;
-  transform: none;
-}
 
-/* What another screen adds to the stacked card: Ascension's "2/3" or choice circle, a note, a dimmed card. */
-.drost--stack .drost__row.is-ring.is-aside > .drost__who {
-  grid-column: 2 / -2;
-}
-.drost--stack .drost__row.is-ring > .drost__aside {
-  grid-row: 1;
-  grid-column: -2 / -1;
-  justify-self: end;
-  display: inline-flex;
-  align-items: center;
-}
-.drost--stack .drost__row.is-ring > .drost__rownote {
-  grid-row: 4;
-  grid-column: 2 / -1;
-  font-size: 12.5px;
-  line-height: 1.35;
-  color: var(--text-faint);
-}
 .drost__row.is-dim {
   opacity: 0.5;
-}
-/* The market's price and clock, under the portrait like a tag: the name line keeps its width. */
-.drost--stack .drost__row.is-ring.is-aside-wide > .drost__who {
-  grid-column: 2 / -1;
-}
-.drost--stack .drost__row.is-ring.is-aside-wide > .drost__ring {
-  grid-row: 1 / span 2;
-}
-.drost--stack .drost__row.is-ring.is-aside-wide > .drost__aside {
-  grid-row: 3 / span 2;
-  grid-column: 1;
-  align-self: start;
-  justify-self: center;
-  margin-right: 10px;
-}
-/* A stacked card narrower than a phone's own list (inside a panel, say): its tiles keep the word only. */
-.drost--stack .drost__row.is-ring {
-  container: dcard / inline-size;
-}
-@container dcard (max-width: 330px) {
-  .drost__numhead .drost__si {
-    display: none;
-  }
-}
-
-/* A focused card (Stats, Res, Combat, Abilities) with an aside: the market's price at the end of the name line. */
-.drost--stack .drost__row.is-focused.is-aside {
-  grid-template-columns: 44px minmax(0, 1fr) auto;
-}
-.drost--stack .drost__row.is-focused.is-aside > .drost__aside {
-  grid-row: 1;
-  grid-column: 3;
-  justify-self: end;
-}
-.drost--stack .drost__row.is-focused.is-aside > .drost__cells,
-.drost--stack .drost__row.is-focused.is-aside > .drost__names {
-  grid-column: 2 / -1;
 }
 
 /*
@@ -3056,341 +2641,32 @@
   min-height: 182px;
   align-content: start;
 }
-.drost__row.is-ring {
-  row-gap: 12px;
-}
 .drost--stack .drost__row {
   min-height: 194px;
 }
-.drost__row.is-focused {
-  grid-template-columns: 72px 100px minmax(0, 1fr);
-  column-gap: 12px;
-  padding: 10px 14px 10px 10px;
-}
-.drost__row.is-focused.is-ticking {
-  grid-template-columns: 18px 72px 100px minmax(0, 1fr);
-}
-.drost__row > .drost__ring,
 .drost__row > .drost__tick {
   align-self: start;
-}
-.drost__row.is-focused > .drost__ring {
-  grid-row: 1 / span 2;
 }
 .drost__row > .drost__tick {
   margin-top: 27px;
 }
-.drost--stack .drost__row.is-focused {
-  grid-template-columns: 74px minmax(0, 1fr);
-  column-gap: 4px;
-  padding: 10px 10px 10px 8px;
-}
-.drost--stack .drost__row.is-focused.is-ticking {
-  grid-template-columns: 20px 74px minmax(0, 1fr);
-}
-.drost--stack .drost__row.is-focused > .drost__ring {
-  grid-row: 1 / span 2;
-  justify-self: start;
-}
 .drost--stack .drost__row > .drost__tick {
   margin-top: 22px;
 }
-/* The abilities beside the portrait, under the name, so their card keeps the common height. */
-.drost--stack .drost__row.is-focused > .drost__names,
-.drost--stack .drost__row.is-focused.is-aside > .drost__names {
-  grid-row: 2;
-  grid-column: 2 / -1;
-  margin-top: 2px;
-}
-.drost--stack .drost__row.is-focused.is-ticking > .drost__names {
-  grid-column: 3 / -1;
-}
-/* The tick and the portrait in fixed columns: a portrait pinned to its rows would otherwise be placed before the tick. */
-.drost__row.is-focused > .drost__ring {
-  grid-column: 1;
-}
-.drost__row.is-focused.is-ticking > .drost__ring {
-  grid-column: 2;
-}
-.drost__row.is-focused.is-ticking > .drost__tick {
-  grid-row: 1 / span 2;
-  grid-column: 1;
-}
 
-/*
- * The name line in one place in every view: class, element and race at the
- * top beside the portrait, as the default view sets them, and the view's own
- * figures under it — never squeezed into a column beside them.
- */
-.drost__row.is-focused {
-  grid-template-columns: 72px minmax(0, 1fr);
-  row-gap: 7px;
-}
-.drost__row.is-focused.is-ticking {
-  grid-template-columns: 18px 72px minmax(0, 1fr);
-}
-.drost__row.is-focused.is-aside {
-  grid-template-columns: 72px minmax(0, 1fr) auto;
-}
-.drost__row.is-focused.is-ticking.is-aside {
-  grid-template-columns: 18px 72px minmax(0, 1fr) auto;
-}
-.drost__row.is-focused > .drost__name {
-  grid-row: 1;
-  grid-column: 2;
-}
-.drost__row.is-focused > .drost__cells,
-.drost__row.is-focused > .drost__names {
-  grid-row: 2;
-  grid-column: 2;
-}
-.drost__row.is-focused.is-ticking > .drost__name,
-.drost__row.is-focused.is-ticking > .drost__cells,
-.drost__row.is-focused.is-ticking > .drost__names {
-  grid-column: 3;
-}
-.drost__row.is-focused > .drost__aside {
-  grid-row: 1 / span 2;
-  grid-column: -2 / -1;
-}
 .drost__row > .drost__who,
 .drost__row > .drost__name {
   align-self: start;
 }
-/* The same sizes as the default view's name line. */
-.is-focused .drost__l1 b {
-  font-size: 16px;
-}
-.is-focused .drost__l1 img {
-  width: 15px;
-  height: 15px;
-}
-.is-focused .drost__l1 small {
-  font-size: 13px;
-}
-.drost--stack .is-focused .drost__l1 b {
-  font-size: 15.5px;
-}
-.drost--stack .is-focused .drost__l1 img {
-  width: 14px;
-  height: 14px;
-}
-.drost--stack .is-focused .drost__l1 small {
-  font-size: 12.5px;
-}
-/* A phone's name line as tall as the default view's (which sets the age chip beside it), the name centred in it. */
-.drost--stack .drost__row.is-focused > .drost__name {
-  display: flex;
-  align-items: center;
-  min-height: 20px;
-}
-.drost--stack .drost__row.is-focused > .drost__name .drost__l1 b {
-  font-size: 15.5px;
-}
-.drost--stack .drost__row.is-focused > .drost__name .drost__l1 small {
-  font-size: 12.5px;
-}
 
-/*
- * The default view's second line: what the figures come to in a fight —
- * DPS, survival and the combat score — between the stats and the
- * abilities, so the card is full rather than top-heavy.
- */
-.drost__fight {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  min-width: 0;
-}
-.drost__fight > span {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  height: 26px;
-  padding: 0 10px;
-  border-radius: 8px;
-  background: rgb(255 255 255 / 4%);
-  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 8%);
-  white-space: nowrap;
-}
-.drost__fight .drost__si {
-  width: 13px;
-  height: 13px;
-}
-.drost__fight small {
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: var(--text-faint);
-}
-.drost__fight b {
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
-  font-family: var(--font-display);
-  font-size: 13.5px;
-}
-.drost__row.is-ring > .drost__fight {
-  grid-row: 2;
-  grid-column: 2 / -1;
-}
-.drost__row.is-ring.is-ticking > .drost__fight {
-  grid-column: 3 / -1;
-}
-.drost__row.is-ring > .drost__abn {
-  grid-row: 3;
-}
-.drost__row.is-ring > .drost__ring {
-  grid-row: 1 / span 3;
-  align-self: start;
-}
-.drost__row.is-ring > .drost__tick {
-  grid-row: 1 / span 3;
-}
-/* A phone: the fight line under the stats, the abilities under that. */
-.drost--stack .drost__row.is-ring > .drost__fight {
-  grid-row: 3;
-  grid-column: 2 / -1;
-}
-.drost--stack .drost__row.is-ring.is-ticking > .drost__fight {
-  grid-column: 3 / -1;
-}
-.drost--stack .drost__row.is-ring > .drost__abn {
-  grid-row: 4;
-}
-.drost--stack .drost__row.is-ring > .drost__ring,
-.drost--stack .drost__row.is-ring > .drost__tick {
-  grid-row: 1 / span 4;
-}
-.drost--stack .drost__fight {
-  gap: 4px;
-}
-.drost--stack .drost__fight > span {
-  gap: 4px;
-  height: 22px;
-  padding: 0 7px;
-}
-.drost--stack .drost__fight small {
-  font-size: 10px;
-}
-.drost--stack .drost__fight b {
-  font-size: 12px;
-}
-
-/* Stats, resistances and the fight figures centred in the room under the name, not hung from it. */
-.drost__row.is-focused {
-  grid-template-rows: auto minmax(0, 1fr);
-}
-.drost__row.is-focused > .drost__cells {
-  align-self: center;
-}
-
-/* Abilities under the name: tiles a touch tighter, so the card keeps the common height. */
-.drost__row.is-focused > .drost__names {
-  gap: 5px;
-}
-.drost__row.is-focused > .drost__names > span {
-  padding: 5px 9px 6px;
-}
-.drost__row.is-focused > .drost__names > span > b {
-  font-size: 13px;
-}
-.drost__row.is-focused > .drost__names > span > small {
-  font-size: 12px;
-  line-height: 1.35;
-}
-/* The default view's three lines spread over the card: stats at the top, the fight line between, abilities at the foot. */
-.drost__row.is-ring {
-  align-content: space-between;
-}
-.drost__row.is-focused > .drost__names > span > b {
-  line-height: 1.25;
-}
-.drost__row.is-focused > .drost__names > span > small {
-  line-height: 1.3;
-}
-/* A phone: under the portrait the card has its full width, so the fight line and the abilities run across all of it. */
-.drost--stack .drost__row.is-ring > .drost__ring,
-.drost--stack .drost__row.is-ring > .drost__tick {
-  grid-row: 1 / span 2;
-}
-.drost--stack .drost__row.is-ring > .drost__fight,
-.drost--stack .drost__row.is-ring.is-ticking > .drost__fight,
-.drost--stack .drost__row.is-ring > .drost__abn {
-  grid-column: 1 / -1;
-}
-.drost--stack .drost__fight {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-}
-.drost--stack .drost__fight > span {
-  justify-content: center;
-}
-.drost--stack .drost__row.is-ring {
-  row-gap: 5px;
-}
-.drost--stack .drost__fight .drost__si {
-  display: none;
-}
-.drost--stack .drost__fight > span {
-  gap: 3px;
-  padding: 0 5px;
-}
-.drost--stack .drost__fight small {
-  letter-spacing: 0.02em;
-}
-/* The tick in one place in every view, level with the portrait, whichever view is open. */
-.drost--stack .drost__row.is-focused > .drost__tick,
-.drost__row.is-focused > .drost__tick {
-  align-self: start;
-}
-.drost--stack .drost__row.is-ring.is-ticking > .drost__abn {
-  grid-column: 1 / -1;
-}
-/* The default view's fight line and abilities flush with the card's right edge. */
-.drost__row.is-ring > .drost__fight,
-.drost__row.is-ring > .drost__abn {
-  justify-content: flex-end;
-}
-.drost--stack .drost__fight {
-  display: flex;
-}
-/* The market's price hangs under the portrait: the fight line and the abilities keep beside it. */
-.drost--stack .drost__row.is-ring.is-aside-wide > .drost__fight,
-.drost--stack .drost__row.is-ring.is-aside-wide > .drost__abn {
-  grid-column: 2 / -1;
-}
-/* Stats with the resistances under them: one block in the cells' place, centred under the name. */
-.drost__row.is-focused > .drost__cellset {
-  grid-row: 2;
-  grid-column: 2;
-  align-self: center;
-  display: grid;
-  gap: 6px;
-  min-width: 0;
-}
-.drost__row.is-focused.is-ticking > .drost__cellset {
-  grid-column: 3;
-}
-.drost--stack .drost__row.is-focused > .drost__cellset {
-  grid-column: 2 / -1;
-}
-.drost--stack .drost__row.is-focused.is-ticking > .drost__cellset {
-  grid-column: 3 / -1;
-}
-.drost--stack .drost__row.is-focused.is-aside > .drost__cellset {
-  grid-column: 2 / -1;
-}
-
-/* The marker filter beside the view switch on a desktop: each marker with how many carry it. */
+/* The marker filter beside the view switch on a desktop. */
 .drost:not(.drost--phone) .drost__listhead .drost__markseg button {
   gap: 5px;
   padding: 0 9px;
 }
 .drost__markseg img {
-  width: 16px;
-  height: 16px;
+  width: 22px;
+  height: 22px;
   object-fit: contain;
 }
 /* A phone: the markers where the search box was, taking the room it took. */
@@ -3406,7 +2682,550 @@
   min-height: 32px;
   padding: 0;
 }
-/* The counts stay in the filter sheet; here the markers alone keep the line. */
-.drost--phone .drost__markseg button small {
+
+/*
+ * ---------- The fighter card ----------
+ *
+ * The fighter's art down the card's whole height at its left, in every view,
+ * with the level, the marker and the days to payday on it. The default view
+ * reads the fighter at a glance: the name and abilities, each stat as a bar
+ * against its class (the white tick is the class's average), and the combat
+ * score as a rating badge. The other views keep the name at the top and set
+ * their figures in the room under it.
+ */
+.drost__row.is-card {
+  --hw: 128px;
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 8px 18px;
+  align-content: stretch;
+  align-items: start;
+  min-height: 182px;
+  padding: 10px 16px 10px calc(var(--hw) + 18px);
+  overflow: hidden;
+}
+.drost--stack .drost__row.is-card {
+  --hw: 84px;
+  gap: 8px 10px;
+  min-height: 194px;
+  padding: 10px 10px 10px calc(var(--hw) + 10px);
+}
+
+/* the art */
+.drost__hero {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: var(--hw);
+  overflow: hidden;
+  background-position: center;
+  background-size: cover;
+  box-shadow: inset -1px 0 0 rgb(255 255 255 / 10%);
+}
+.drost__hero > img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 16%;
+}
+.drost__hero::before {
+  content: '';
+  position: absolute;
+  inset: auto 0 0;
+  height: 52px;
+  background: linear-gradient(transparent, rgb(3 7 18 / 78%));
+}
+/* The days to payday as a bar along the art's foot, filling as the day comes. */
+.drost__hero::after {
+  content: '';
+  position: absolute;
+  inset: auto 0 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--cyan) var(--p), rgb(255 255 255 / 14%) 0);
+}
+.drost__hero.is-overdue::after {
+  background: #ff5a6a;
+}
+.drost__row.is-picked > .drost__hero {
+  box-shadow: inset 3px 0 0 var(--cyan);
+}
+.drost--phone .drost__row.is-picked > .drost__hero {
+  box-shadow: inset 3px 0 0 #7c5cff;
+}
+.drost__hero .drost__mk {
+  top: 7px;
+  right: 7px;
+  z-index: 1;
+  width: 22px;
+  height: 22px;
+}
+.drost__hero .drost__mk img {
+  width: 14px;
+  height: 14px;
+}
+.drost__herofoot {
+  position: absolute;
+  right: 8px;
+  bottom: 9px;
+  left: 8px;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+}
+.drost__hero .drost__lv {
+  position: static;
+  padding: 0 6px;
+  border-radius: 6px;
+  background: rgb(0 0 0 / 62%);
+  font-size: 11px;
+  line-height: 19px;
+}
+.drost__hero .drost__days {
+  position: static;
+  padding: 0 6px;
+  border-radius: 6px;
+  background: rgb(0 0 0 / 62%);
+  box-shadow: inset 0 0 0 1.5px var(--cyan);
+  color: #bfeaff;
+  font-size: 11px;
+  line-height: 19px;
+}
+.drost__hero.is-overdue .drost__days {
+  box-shadow: inset 0 0 0 1.5px #ff5a6a;
+  color: #ffb3bd;
+}
+.drost--stack .drost__herofoot {
+  right: 5px;
+  bottom: 8px;
+  left: 5px;
+}
+.drost--stack .drost__hero .drost__lv,
+.drost--stack .drost__hero .drost__days {
+  padding: 0 4px;
+  font-size: 10px;
+  line-height: 17px;
+}
+.drost--stack .drost__hero .drost__mk {
+  top: 5px;
+  right: 5px;
+  width: 20px;
+  height: 20px;
+}
+
+/* The tick in a sale or a listing, on the art's top corner. */
+.drost__row.is-card > .drost__tick {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 2;
+  margin: 0;
+  background: rgb(3 7 18 / 70%);
+}
+.drost__row.is-card > .drost__tick.is-on {
+  background: var(--cyan);
+}
+.drost--phone.is-sell .drost__row.is-card > .drost__tick.is-on {
+  background: var(--red);
+}
+
+/* the name line, the same in every view */
+.drost__row.is-card .drost__l1 b {
+  font-size: 16px;
+}
+.drost__row.is-card .drost__l1 img {
+  width: 15px;
+  height: 15px;
+}
+.drost__row.is-card .drost__l1 small {
+  font-size: 13px;
+}
+.drost--stack .drost__row.is-card .drost__l1 b {
+  font-size: 15px;
+}
+.drost--stack .drost__row.is-card .drost__l1 img {
+  width: 14px;
+  height: 14px;
+}
+.drost--stack .drost__row.is-card .drost__l1 small {
+  font-size: 12.5px;
+}
+.drost__row.is-card > .drost__who,
+.drost__row.is-card > .drost__name {
+  display: grid;
+  gap: 6px;
+  min-height: 24px;
+  align-content: center;
+  min-width: 0;
+}
+.drost__row.is-card .drost__l3 {
+  gap: 6px;
+}
+.drost__row.is-card .drost__age {
+  height: 21px;
+  padding: 0 8px;
+  font-size: 11.5px;
+}
+.drost__row.is-card .drost__status {
+  padding: 3px 9px;
+  font-size: 11px;
+}
+
+/* ---------- the default view on a desktop ---------- */
+.drost__row.is-overview {
+  grid-template-columns: 190px minmax(0, 1fr) auto;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+}
+.drost__row.is-overview > .drost__who {
+  grid-row: 1;
+  grid-column: 1;
+}
+.drost__row.is-overview > .drost__abn {
+  grid-row: 2;
+  grid-column: 1;
+  flex-direction: column;
+  flex-wrap: nowrap;
+  align-items: flex-start;
+  gap: 4px;
+}
+.drost__row.is-overview > .drost__bars {
+  grid-row: 1 / span 2;
+  grid-column: 2;
+  align-self: center;
+}
+.drost__row.is-overview > .drost__end {
+  grid-row: 1 / span 2;
+  grid-column: 3;
+  align-self: center;
+}
+.drost__row.is-overview > .drost__rownote {
+  grid-row: 3;
+  grid-column: 1 / -1;
+  font-size: 12.5px;
+  line-height: 1.35;
+  color: var(--text-faint);
+}
+/* The abilities as a list by the name: the rarity's square, the name, a lock if it is shut. */
+.drost__row.is-overview > .drost__abn .drost__abp {
+  height: 20px;
+  padding: 0;
+  background: none;
+  box-shadow: none;
+  font-size: 13px;
+  font-weight: 600;
+  color: #dfe6f3;
+}
+.drost__row.is-overview > .drost__abn .drost__abp::before {
+  width: 8px;
+  height: 8px;
+}
+.drost__row.is-overview > .drost__abn .drost__abp.is-locked {
+  color: var(--text-dim);
+}
+
+/* each stat against its class */
+.drost__bars {
+  display: grid;
+  gap: 9px;
+  min-width: 0;
+}
+.drost__bar {
+  display: grid;
+  grid-template-columns: 62px minmax(0, 1fr) 56px;
+  align-items: center;
+  gap: 10px;
+}
+.drost__bar > small {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-display);
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.drost__bar > small .drost__si {
+  height: 12px;
+}
+.drost__track {
+  position: relative;
+  height: 8px;
+  border-radius: 4px;
+  background: rgb(255 255 255 / 7%);
+}
+.drost__track > i {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  border-radius: 4px;
+  background: #9aa6bd;
+}
+.drost__track::after {
+  content: '';
+  position: absolute;
+  top: -3px;
+  bottom: -3px;
+  left: 55%;
+  width: 2px;
+  border-radius: 1px;
+  background: rgb(255 255 255 / 55%);
+}
+.drost__track.is-gold-up > i {
+  background: #ffc23d;
+}
+.drost__track.is-green-duble-up > i {
+  background: #3ddc84;
+}
+.drost__track.is-green-up > i {
+  background: #7fe3a9;
+}
+.drost__track.is-red-down > i {
+  background: #ff5a6a;
+}
+.drost__track.is-red-duble-down > i {
+  background: #ff3048;
+}
+/* The figures start in one place, the grade after them: a stat without one (taunt) keeps the line. */
+.drost__bar > b {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 3px;
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 900;
+}
+
+/* the combat score as a rating badge */
+.drost__end {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+}
+.drost__badge {
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 2px;
+  width: 78px;
+  height: 92px;
+  padding-bottom: 6px;
+  background: linear-gradient(180deg, #ffd979, #b87900);
+  clip-path: polygon(50% 0, 100% 12%, 100% 70%, 50% 100%, 0 70%, 0 12%);
+  color: #1b1200;
+}
+.drost__badge > b {
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 900;
+  line-height: 1;
+}
+.drost__badge > small {
+  font-family: var(--font-display);
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.drost__badge > img {
+  width: 14px;
+  height: 14px;
+  filter: brightness(0) opacity(0.75);
+}
+
+/* ---------- the default view stacked: phones, and lists too narrow for columns ---------- */
+.drost--stack .drost__row.is-overview {
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-rows: auto auto auto;
+  align-content: center;
+}
+.drost--stack .drost__row.is-overview > .drost__who {
+  grid-row: 1;
+  grid-column: 1;
+  align-self: center;
+}
+.drost--stack .drost__row.is-overview > .drost__end {
+  grid-row: 1;
+  grid-column: 2;
+}
+.drost--stack .drost__row.is-overview > .drost__bars {
+  grid-row: 2;
+  grid-column: 1 / -1;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px 10px;
+}
+.drost--stack .drost__row.is-overview > .drost__abn {
+  grid-row: 3;
+  grid-column: 1 / -1;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.drost--stack .drost__row.is-overview > .drost__rownote {
+  grid-row: 4;
+}
+.drost--stack .drost__row.is-overview > .drost__abn .drost__abp {
+  height: 20px;
+  padding: 0 6px;
+  background: color-mix(in srgb, var(--ab) 14%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ab) 45%, transparent);
+  font-size: 11px;
+  font-weight: 700;
+}
+.drost--stack .drost__row.is-overview > .drost__abn .drost__abp.is-locked {
+  background: none;
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 14%);
+}
+.drost--stack .drost__row.is-overview > .drost__abn .drost__abp::before {
+  width: 7px;
+  height: 7px;
+}
+.drost--stack .drost__row.is-card .drost__who .drost__age {
   display: none;
+}
+.drost--stack .drost__bar {
+  grid-template-columns: 30px minmax(0, 1fr) 34px;
+  gap: 4px;
+}
+.drost--stack .drost__bar > small {
+  font-size: 8.5px;
+  letter-spacing: 0.04em;
+}
+.drost--stack .drost__bar > small .drost__si {
+  display: none;
+}
+.drost--stack .drost__bar > b {
+  font-size: 12px;
+}
+.drost--stack .drost__badge {
+  width: 46px;
+  height: 52px;
+  padding-bottom: 3px;
+  gap: 0;
+}
+.drost--stack .drost__badge > b {
+  font-size: 16px;
+}
+.drost--stack .drost__badge > small {
+  font-size: 7px;
+  letter-spacing: 0.1em;
+}
+.drost--stack .drost__badge > img {
+  display: none;
+}
+/* Stacked, what a screen adds (a sale's credits, a price and its clock, a choice) rides on the art over its foot. */
+.drost--stack .drost__row.is-card .drost__end > .drost__pay,
+.drost--stack .drost__row.is-card .drost__end > .drost__aside,
+.drost--stack .drost__row.is-view > .drost__aside {
+  position: absolute;
+  bottom: 32px;
+  left: 5px;
+  z-index: 1;
+  display: grid;
+  justify-items: center;
+  width: calc(var(--hw) - 10px);
+  padding: 4px 2px;
+  border-radius: 7px;
+  background: rgb(3 7 18 / 78%);
+}
+
+/* ---------- the other views: the name at the top, the view's figures centred under it ---------- */
+.drost__row.is-view > .drost__name {
+  grid-row: 1;
+  grid-column: 1;
+}
+.drost__row.is-view > .drost__cells,
+.drost__row.is-view > .drost__cellset,
+.drost__row.is-view > .drost__names {
+  grid-row: 2;
+  grid-column: 1;
+  align-self: center;
+}
+.drost__row.is-view.is-aside {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+.drost__row.is-view > .drost__aside {
+  grid-row: 1 / span 2;
+  grid-column: 2;
+  align-self: center;
+}
+.drost--stack .drost__row.is-view.is-aside {
+  grid-template-columns: minmax(0, 1fr);
+}
+.drost__row.is-view > .drost__cellset {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+.drost__row.is-view > .drost__names {
+  gap: 5px;
+}
+.drost__row.is-view > .drost__names > span {
+  padding: 5px 9px 6px;
+}
+.drost__row.is-view > .drost__names > span > b {
+  font-size: 13px;
+  line-height: 1.25;
+}
+.drost__row.is-view > .drost__names > span > small {
+  font-size: 12px;
+  line-height: 1.3;
+}
+.drost__row.is-view > .drost__rownote {
+  grid-row: 3;
+  grid-column: 1 / -1;
+}
+/* A phone: the name at the top as in every view, and the lines close enough for three of abilities. */
+.drost--stack .drost__row.is-overview {
+  row-gap: 6px;
+  align-content: start;
+}
+.drost--stack .drost__row.is-overview > .drost__who {
+  align-self: start;
+}
+.drost--stack .drost__row.is-overview > .drost__bars {
+  gap: 4px 10px;
+}
+.drost--stack .drost__bar,
+.drost--stack .drost__bar > b {
+  line-height: 15px;
+}
+.drost--stack .drost__badge {
+  width: 40px;
+  height: 44px;
+}
+.drost--stack .drost__badge > b {
+  font-size: 14px;
+}
+.drost--stack .drost__row.is-overview > .drost__abn {
+  gap: 3px;
+}
+.drost--stack .drost__row.is-overview > .drost__abn .drost__abp {
+  height: 19px;
+}
+/* A stacked card narrower than a phone's own list (the market's, say): a slimmer art, the abilities two by two. */
+.drost--stack .drost__row.is-card {
+  container: fcard / inline-size;
+}
+@container fcard (max-width: 320px) {
+  .drost__row.is-overview > .drost__abn {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .drost__row.is-overview > .drost__abn .drost__abp {
+    padding: 0 5px;
+    font-size: 10.5px;
+  }
+}
+.drost--stack .drost__row.is-card:has(> .drost__end > .drost__aside) {
+  --hw: 76px;
 }
