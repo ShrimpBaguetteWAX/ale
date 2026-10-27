@@ -1108,6 +1108,8 @@ function DeskPodium({
   const figures = (lineup?.fighters ?? []).filter((f) => Number(f.fighter_id) !== NFT_FIGHTER_ID).slice(0, 5)
 
   return (
+    /* Measured by its own width, not the window's: the menu takes a different share at each size. */
+    <div className="dpodium-wrap">
     <div className="dpodium">
       <section className={`dpodium__hero${you(first) ? ' is-you' : ''}`} aria-label={`First: ${first.name}`}>
         <div className="dpodium__who">
@@ -1163,6 +1165,7 @@ function DeskPodium({
           </div>
         ))}
       </div>
+    </div>
     </div>
   )
 }

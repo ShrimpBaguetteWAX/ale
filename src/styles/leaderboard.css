@@ -1287,14 +1287,43 @@
 }
 
 /*
- * A narrower desktop: the banner across the page, so the team keeps its
- * stage, and second and third side by side under it.
+ * The spotlight at any width.
+ *
+ * Second and third together stand as tall as the banner beside them. The
+ * team is sized by its stage, not overlapped into it: five figures crowded
+ * into a narrow banner read as squeezed. And where the podium is too narrow
+ * for the banner and the cards side by side — measured on the podium, not
+ * the window — the banner runs across and the two cards sit under it.
  */
-@media (min-width: 720px) and (max-width: 1279px) {
+.dpodium-wrap {
+  container: dpodium / inline-size;
+}
+.dpodium__side {
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+  align-content: stretch;
+}
+.dpodium__stage {
+  container: dpstage / inline-size;
+}
+.dpodium__figure {
+  margin: 0 max(-24px, -3.6cqi);
+}
+.dpodium__figure img {
+  height: min(190px, 34cqi);
+}
+.dpodium__figure:nth-child(2) img,
+.dpodium__figure:nth-child(4) img {
+  height: min(205px, 36.5cqi);
+}
+.dpodium__figure:nth-child(3) img {
+  height: min(225px, 40cqi);
+}
+@container dpodium (max-width: 1100px) {
   .dpodium {
     grid-template-columns: minmax(0, 1fr);
   }
   .dpodium__side {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: none;
   }
 }
