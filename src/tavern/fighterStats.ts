@@ -125,12 +125,12 @@ export type StatGrade =
   | 'red-duble-down'
 
 export const GRADE_ICON: Record<StatGrade, string> = {
-  'gold-up': asset('/assets/icons/arrows/gold-up.png'),
-  'green-duble-up': asset('/assets/icons/arrows/green-duble-up.png'),
-  'green-up': asset('/assets/icons/arrows/green-up.png'),
-  middle: asset('/assets/icons/arrows/middle.png'),
-  'red-down': asset('/assets/icons/arrows/red-down.png'),
-  'red-duble-down': asset('/assets/icons/arrows/red-duble-down.png'),
+  'gold-up': asset('/assets/icons/arrows/gold-up.svg'),
+  'green-duble-up': asset('/assets/icons/arrows/green-duble-up.svg'),
+  'green-up': asset('/assets/icons/arrows/green-up.svg'),
+  middle: asset('/assets/icons/arrows/middle.svg'),
+  'red-down': asset('/assets/icons/arrows/red-down.svg'),
+  'red-duble-down': asset('/assets/icons/arrows/red-duble-down.svg'),
 }
 
 export const GRADE_LABEL: Record<StatGrade, string> = {
