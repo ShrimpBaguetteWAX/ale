@@ -6313,3 +6313,18 @@ button.combatcard--empty:hover {
   --ctl-well: rgb(0 0 0 / 30%);
   --ctl-hover-fill: rgb(255 255 255 / 6%);
 }
+
+/*
+ * Between a phone and a wide desktop the two teams stack, as on a phone, but
+ * the cards kept the desktop's tall portraits: two rows of six 280px cards
+ * and the screen was mostly scrolling. Square cards keep both teams and the
+ * odds on one screen; the figure is fitted whole, only smaller.
+ */
+@media (min-width: 720px) and (max-width: 1079px) {
+  .combatcard__art,
+  .combatcard--empty,
+  .combatcard--loading {
+    aspect-ratio: 1;
+    min-height: 0;
+  }
+}
