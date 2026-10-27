@@ -24,6 +24,7 @@ import { useChainQuery } from '@/chain/useChainQuery'
 import { GameImg } from '@/components/GameImg'
 import { formatDecimals, formatNumber, formatStat } from '@/format'
 import { asset } from '@/assets'
+import { ABILITY_RARITY_COLOR, GRADE_ICON, type StatGrade } from '@/tavern/fighterStats'
 import { MAX_TOOLS, paymentSources } from './rules'
 import { SourceRows } from './SourceRows'
 import { useMiningTools } from './useMiningTools'
@@ -245,6 +246,47 @@ function DeskMining({
   const shown = everything ? catalogue : catalogue.slice(0, CATALOGUE_FIRST)
 
   const signed = (n: number) => (n > 0 ? '+' : n < 0 ? '−' : '±') + formatNumber(Math.abs(n))
+  const targetTemplate = targetTool ? templates.find((t) => t.template_id === targetTool.template_id) : undefined
+  /*
+     A tool against the one in the slot, once a currency: the change, and the
+     fighter cards' grade chevrons for how big it is — two chevrons from a
+     ±40% swing, gold from +50%. Against an empty slot every tool only adds.
+  */
+  const vs = (d: number, base: number) => {
+    const p = base > 0 ? d / base : d > 0 ? 1 : 0
+    const g: StatGrade =
+      p >= 0.5 ? 'gold-up' : p >= 0.15 ? 'green-duble-up' : p > 0 ? 'green-up' : p === 0 ? 'middle' : p > -0.4 ? 'red-down' : 'red-duble-down'
+    return (
+      <span className={`drew__vs${d > 0 ? ' is-up' : d < 0 ? ' is-down' : ''}`}>
+        <img src={GRADE_ICON[g]} alt="" />
+        {signed(d)}
+      </span>
+    )
+  }
+  const power = (cur: 'tlm' | 'shrds', n: number) => (
+    <span className="drew__pw">
+      <img src={CURRENCY_ICON[cur]} alt={cur === 'tlm' ? 'TLM' : 'Shards'} />
+      {formatNumber(n)}
+    </span>
+  )
+  const toolCell = (templateId: number, name: string, rarity?: string, shine?: string) => (
+    <span className="drew__who">
+      <GameImg
+        src={asset(`/assets/cards/${templateId}.webp`)}
+        alt=""
+        loading="lazy"
+        fallback={asset('/assets/default-card.png')}
+      />
+      <span>
+        <b>{name}</b>
+        {rarity && (
+          <small style={{ '--r': ABILITY_RARITY_COLOR[rarity.toLowerCase()] ?? '#939393' } as React.CSSProperties}>
+            {rarity} · {shine}
+          </small>
+        )}
+      </span>
+    </span>
+  )
   const delta = (n: number) =>
     n === 0 ? null : <em className={n > 0 ? 'up' : 'down'}>{signed(n)}</em>
 
@@ -418,71 +460,78 @@ function DeskMining({
             : 'No Alien Worlds tools in this wallet yet. Every tool in the game is under Every tool.'}
         </p>
       ) : (
-        <div className="drew__catalog">
-          {shown.map((t) => {
-            const ids = held.get(t.template_id) ?? []
-            const spare = ids.filter((id) => !picked.includes(id)).length
-            const here = targetTool?.template_id === t.template_id
-            const dt = t.tlm_mp - Number(targetPower?.tlm_mp ?? 0)
-            const ds = t.shrd_mp - Number(targetPower?.shrd_mp ?? 0)
-            return (
-              <div
-                className={`drew__tool${spare > 0 ? ' is-yours' : ''}${here ? ' is-here' : ''}`}
-                key={t.template_id}
-              >
-                <GameImg
-                  src={asset(`/assets/cards/${t.template_id}.webp`)}
-                  alt=""
-                  loading="lazy"
-                  fallback={asset('/assets/default-card.png')}
-                />
-                <span className="drew__toolname">
-                  <b>{t.toolname}</b>
-                  <small>
-                    {t.rarity} · {t.shine}
-                  </small>
-                </span>
-                <span className="drew__gain">
-                  <span className={dt < 0 ? 'down' : dt > 0 ? 'up' : undefined}>
-                    <img src={CURRENCY_ICON.tlm} alt="TLM" />
-                    {signed(dt)}
-                  </span>
-                  <span className={ds < 0 ? 'down' : ds > 0 ? 'up' : undefined}>
-                    <img src={CURRENCY_ICON.shrds} alt="Shards" />
-                    {signed(ds)}
-                  </span>
-                </span>
-                <span className="drew__toolfoot">
-                  {here ? (
-                    <>
-                      <span>In this slot</span>
-                      <em>Current</em>
-                    </>
-                  ) : spare > 0 ? (
-                    <>
-                      <span>{formatNumber(spare)} spare</span>
-                      <button
-                        type="button"
-                        className="btn btn--primary btn--sm"
-                        disabled={busy !== null}
-                        onClick={() => equip(t.template_id)}
-                      >
-                        Equip
-                      </button>
-                    </>
-                  ) : ids.length > 0 ? (
-                    <span>{ids.length === 1 ? 'Equipped' : `All ${formatNumber(ids.length)} equipped`}</span>
-                  ) : (
-                    <>
-                      <span>Not owned</span>
-                      <Link to="/shop?c=market">NFT Market ›</Link>
-                    </>
-                  )}
-                </span>
-              </div>
-            )
-          })}
-        </div>
+        /*
+           A table, the slot's own tool pinned on top: each tool's power, and
+           against the one in the slot once for TLM and once for Shards — a
+           grid of cards with two red numbers each said nothing at a glance.
+        */
+        <table className="drew__table">
+          <thead>
+            <tr>
+              <th>Tool</th>
+              <th className="is-num">TLM power</th>
+              <th className="is-num">vs current</th>
+              <th className="is-num">Shard power</th>
+              <th className="is-num">vs current</th>
+              <th className="is-end" />
+            </tr>
+          </thead>
+          <tbody>
+            {targetTool && (
+              <tr className="is-current">
+                <td>{toolCell(targetTool.template_id, targetTool.name, targetTemplate?.rarity, targetTemplate?.shine)}</td>
+                <td className="is-num">{power('tlm', Number(targetPower?.tlm_mp ?? 0))}</td>
+                <td className="is-num" />
+                <td className="is-num">{power('shrds', Number(targetPower?.shrd_mp ?? 0))}</td>
+                <td className="is-num" />
+                <td className="is-end">
+                  <em>In slot {target + 1}</em>
+                </td>
+              </tr>
+            )}
+            {shown
+              .filter((t) => targetTool?.template_id !== t.template_id)
+              .map((t) => {
+                const ids = held.get(t.template_id) ?? []
+                const spare = ids.filter((id) => !picked.includes(id)).length
+                const baseT = Number(targetPower?.tlm_mp ?? 0)
+                const baseS = Number(targetPower?.shrd_mp ?? 0)
+                const dt = t.tlm_mp - baseT
+                const ds = t.shrd_mp - baseS
+                return (
+                  <tr key={t.template_id} className={spare > 0 ? 'is-yours' : undefined}>
+                    <td>{toolCell(t.template_id, t.toolname, t.rarity, t.shine)}</td>
+                    <td className="is-num">{power('tlm', t.tlm_mp)}</td>
+                    <td className="is-num">{vs(dt, baseT)}</td>
+                    <td className="is-num">{power('shrds', t.shrd_mp)}</td>
+                    <td className="is-num">{vs(ds, baseS)}</td>
+                    <td className="is-end">
+                      {spare > 0 ? (
+                        <span className="drew__act">
+                          <small>{formatNumber(spare)} spare</small>
+                          <button
+                            type="button"
+                            className={`btn btn--sm ${dt + ds > 0 ? 'btn--primary' : 'btn--ghost'}`}
+                            disabled={busy !== null}
+                            onClick={() => equip(t.template_id)}
+                          >
+                            Equip
+                          </button>
+                        </span>
+                      ) : ids.length > 0 ? (
+                        <small>{ids.length === 1 ? 'Equipped' : `All ${formatNumber(ids.length)} equipped`}</small>
+                      ) : (
+                        <span className="drew__act">
+                          <small>Not owned</small>
+                          <Link to="/shop?c=market">NFT Market ›</Link>
+                        </span>
+                      )}
+                    </td>
+                  </tr>
+                )
+              })}
+          </tbody>
+        </table>
       )}
       {!loading && catalogue.length > CATALOGUE_FIRST && (
         <button type="button" className="btn btn--ghost drew__more" onClick={() => setEverything((v) => !v)}>
