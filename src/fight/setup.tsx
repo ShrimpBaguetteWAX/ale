@@ -1,4 +1,4 @@
-import { Fragment, useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { Fragment, useCallback, useEffect, useLayoutEffect, useMemo, useState, type ReactNode } from 'react'
 import type { CardTemplate } from '@/chain/atomic'
 import { FighterHoverCard, FighterPanel, type PanelFighter } from '@/components/FighterPanel'
 import { HoverPopover, useHoverCard } from '@/components/HoverPopover'
@@ -3318,9 +3318,37 @@ export function MarkerLine({
   onChange: (filter: RosterFilter) => void
 }) {
   const used = useMemo(() => new Set(roster.map((f) => f.marker).filter(Boolean)), [roster])
+  /*
+     Whether the line has dropped under the tabs for want of room: then it,
+     and the bar of Filters and Sort under it, stand at the left with the
+     tabs rather than hanging off the right.
+  */
+  const [el, setEl] = useState<HTMLElement | null>(null)
+  const [wrapped, setWrapped] = useState(false)
+  useLayoutEffect(() => {
+    const row = el?.parentElement
+    if (!el || !row) return
+    const check = () => {
+      const first = row.firstElementChild as HTMLElement | null
+      setWrapped(!!first && first !== el && el.offsetTop > first.offsetTop + first.offsetHeight / 2)
+    }
+    check()
+    window.addEventListener('resize', check)
+    const ro = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(check)
+    ro?.observe(row)
+    return () => {
+      window.removeEventListener('resize', check)
+      ro?.disconnect()
+    }
+  }, [el, used.size])
   if (used.size === 0) return null
   return (
-    <span className="drost__seg drost__seg--sm drost__markseg pickmarks" role="group" aria-label="Marker">
+    <span
+      ref={setEl}
+      className={`drost__seg drost__seg--sm drost__markseg pickmarks${wrapped ? ' is-wrapped' : ''}`}
+      role="group"
+      aria-label="Marker"
+    >
       {MARKERS.filter((m) => m && used.has(m)).map((m) => {
         const on = filter.markers.includes(m)
         return (

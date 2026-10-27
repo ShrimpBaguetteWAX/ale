@@ -6278,6 +6278,13 @@ button.combatcard--empty:hover {
   flex-wrap: wrap;
   max-width: 100%;
 }
+/* Once on a line of their own, the markers start at the left, and so do Filters and Sort under them. */
+.tabs > .pickmarks.is-wrapped {
+  margin-left: 0;
+}
+.picker:has(> .tabs > .pickmarks.is-wrapped) > .pickbar > .pickbar__sp {
+  display: none;
+}
 /* The phone: the same panel in the sheet, under its filter bar, one column; the foot stays in reach at the bottom. */
 .picker--sheet > .pickfilters--sheet {
   flex: none;
