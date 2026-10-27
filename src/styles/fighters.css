@@ -888,10 +888,9 @@
   color: var(--text-faint);
 }
 
+/* The stat icons in their own colours: gold damage, red health, violet taunt and so on. */
 .drost__si {
   height: 11px;
-  filter: brightness(0) invert(1);
-  opacity: 0.8;
 }
 .drost__ei {
   width: 13px;
@@ -1199,7 +1198,6 @@
 }
 .drost__numhead .drost__si {
   height: 10px;
-  opacity: 0.65;
 }
 .drost__num > b {
   position: relative;
@@ -1739,8 +1737,6 @@
 }
 .drost__chips img {
   height: 11px;
-  filter: brightness(0) invert(1);
-  opacity: 0.8;
 }
 .drost__twin {
   grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
@@ -2822,8 +2818,7 @@
   color: var(--text-faint);
 }
 .drost--stack .drost__numhead .drost__si {
-  height: 9px;
-  opacity: 0.65;
+  height: 10px;
 }
 /* With a tick column the tiles are about 40px: the word alone fits, the icon beside it did not. */
 .drost--stack .drost__row.is-ticking .drost__numhead .drost__si {
