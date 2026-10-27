@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Listing dialog — harness</title>
+  <!--
+    The market listing dialog, open, over nothing — the button that opens it
+    in My Fighters needs a signed-in wallet.
+
+      npm run dev
+      open http://localhost:5273/scripts/list-harness.html?as=wallet&n=3&keep=1
+
+    n is how many of the wallet's fighters go up; keep=0 shows the unsold
+    fighters coming back instead of staying up as instant buy.
+  -->
+</head>
+<body>
+  <div id="root"></div>
+  <script type="module" src="./list-harness.tsx"></script>
+</body>
+</html>

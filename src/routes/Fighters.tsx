@@ -37,6 +37,7 @@ import { asset } from '@/assets'
 import { recallPayScope, rememberPayScope } from '@/fighters/payScope'
 import { usePhone } from '@/components/usePhone'
 import { DeskRoster } from '@/fighters/DeskRoster'
+import { ListTimeline } from '@/fighters/ListTimeline'
 
 /**
  * My Fighters — the roster screen.
@@ -64,14 +65,6 @@ import { DeskRoster } from '@/fighters/DeskRoster'
  */
 
 type Mode = 'inventory' | 'sell' | 'market'
-
-/*
- * The listing fee is one gem today, and "1 gems each" is what a config value
- * printed straight into a sentence reads like the day somebody sets it to 1.
- */
-function gemsWord(n: number): string {
-  return `${n.toLocaleString(NUM_LOCALE)} gem${n === 1 ? '' : 's'}`
-}
 
 /* ---------- data ---------- */
 
@@ -469,48 +462,13 @@ export default function Fighters() {
       )}
 
       {confirmList && (
-        <Confirm
-          title={`List ${listPlan.ids.length} fighter${listPlan.ids.length === 1 ? '' : 's'} on the market?`}
-          body={
-            <>
-              <p>
-                Each starts at <strong>{gemsWord(startPrice)}</strong> and runs
-                for{' '}
-                {Math.round(
-                  Number(marketConfig?.standard_duration_minutes ?? 0) / 60,
-                )}
-                h.
-              </p>
-              {/*
-                The fee is the part worth stating twice. It is charged per
-                fighter, it is charged whether or not anybody bids, and it is
-                the one number a player cannot get back by cancelling.
-              */}
-              <p>
-                The listing fee is{' '}
-                <strong>
-                  {gemsWord(Number(marketConfig?.gems_listing_price ?? 0))} each
-                  — {listPlan.gems.toLocaleString(NUM_LOCALE)} in total
-                </strong>
-                , spent whether or not they sell. They cannot fight while
-                listed.
-              </p>
-              <p className="faint">
-                {keepListed
-                  ? 'Unsold fighters stay up as fixed-price instant buy offers at your starting price.'
-                  : 'Unsold fighters come back to you.'}
-              </p>
-              <ul className="confirm__list">
-                {checkedFighters.map((f) => (
-                  <li key={f.fighter_id}>
-                    {f.racename} {f.classname} · level {f.stats.level}
-                    {f.ascension_level > 0 ? ` · asc ${f.ascension_level}` : ''}
-                  </li>
-                ))}
-              </ul>
-            </>
-          }
-          confirmLabel="List them"
+        <ListTimeline
+          fighters={checkedFighters.filter((f) => listPlan.ids.includes(f.fighter_id))}
+          startPrice={startPrice}
+          hours={Math.round(Number(marketConfig?.standard_duration_minutes ?? 0) / 60)}
+          feeTotal={listPlan.gems}
+          cutPercent={Number(marketConfig?.gems_processing_fee_percent ?? 0)}
+          keepListed={keepListed}
           onConfirm={() => void doList()}
           onCancel={() => setConfirmList(false)}
         />
