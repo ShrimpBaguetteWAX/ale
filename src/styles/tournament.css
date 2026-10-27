@@ -9543,11 +9543,35 @@ button.ptour__rfplay {
     grid-template-columns: minmax(0, 1fr);
     min-height: 0;
   }
+  /* A banner, not a stage: the champion and the team in about 270px, the cards straight under. */
+  .ptour--desk .ptour__spot {
+    gap: 20px;
+    padding: 24px 28px;
+  }
   .ptour--desk .ptour__spotleft {
     position: relative;
     top: auto;
-    height: 460px;
+    height: 270px;
     min-height: 0;
+  }
+  .ptour--desk .ptour__spotav {
+    width: 64px;
+    height: 64px;
+  }
+  .ptour--desk .ptour__spottag {
+    font-size: 34px;
+  }
+  .ptour--desk .ptour__spotname .ptour__sub {
+    font-size: 15px;
+  }
+  .ptour--desk .ptour__spotstage {
+    height: 100%;
+  }
+  .ptour--desk .ptour__spotlight {
+    height: 70px;
+  }
+  .ptour--desk .ptour__spotteam {
+    bottom: 14px;
   }
   .ptour--desk .ptour__spotright {
     display: grid;
@@ -9581,9 +9605,10 @@ button.ptour__rfplay {
   .ptour--desk .ptour__spotteam img,
   .ptour--desk .ptour__spotteam img:nth-child(2),
   .ptour--desk .ptour__spotteam img:nth-child(4) {
-    height: min(230px, 32cqi);
+    height: min(190px, 26cqi);
+    margin: 0 -22px;
   }
   .ptour--desk .ptour__spotteam img:nth-child(3) {
-    height: min(280px, 39cqi);
+    height: min(235px, 32cqi);
   }
 }
