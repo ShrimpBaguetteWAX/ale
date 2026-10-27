@@ -2917,3 +2917,22 @@
 .drost--stack .drost__row.is-focused.is-aside > .drost__names {
   grid-column: 2 / -1;
 }
+
+/*
+ * Selling on a desktop: a click on the row opens the fighter, and the tick
+ * alone puts it in the sale — so the tick takes a finger-sized target and
+ * answers the pointer.
+ */
+.drost__tick.is-hit {
+  position: relative;
+  cursor: pointer;
+}
+.drost__tick.is-hit::before {
+  content: '';
+  position: absolute;
+  inset: -10px;
+}
+.drost__tick.is-hit:not(.is-on):hover {
+  box-shadow: inset 0 0 0 1.5px var(--cyan);
+  background: rgb(0 186 255 / 14%);
+}

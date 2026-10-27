@@ -399,12 +399,20 @@ export function DeskRoster(p: DeskRosterProps) {
 
   const gateOf = (f: RosterFighter) =>
     p.mode === 'market' ? listable(f, p.now) : p.mode === 'sell' ? { ok: sellable(f), reason: useLabel(f) } : { ok: true }
+  /*
+     Selling on a desktop shows the fighter beside the list, so a click on a
+     row is for looking: it opens the fighter without putting it in the sale.
+     The tick on the row, or Add to sale under the fighter, does that. A
+     phone has no panel to look in, so a tap there still ticks.
+  */
+  const looks = p.mode === 'sell' && wide
   const onRow = (f: RosterFighter) => {
     p.onSelect(f.fighter_id)
     if (p.mode === 'inventory') {
       if (!wide) setSheet(true)
       return
     }
+    if (looks) return
     if (gateOf(f).ok) p.onCheck(f.fighter_id)
   }
 
@@ -710,10 +718,11 @@ export function DeskRoster(p: DeskRosterProps) {
                     view={view}
                     mode={p.mode}
                     now={p.now}
-                    picked={p.mode === 'inventory' && f.fighter_id === (wide ? shownFighter : selected)?.fighter_id}
+                    picked={(p.mode === 'inventory' || looks) && f.fighter_id === (wide ? shownFighter : selected)?.fighter_id}
                     checked={p.checked.includes(f.fighter_id)}
                     gate={gateOf(f)}
                     onClick={() => onRow(f)}
+                    onTick={looks && gateOf(f).ok ? () => p.onCheck(f.fighter_id) : undefined}
                   />
                 ))}
               </div>
@@ -827,6 +836,7 @@ export function Row({
   checked,
   gate,
   onClick,
+  onTick,
   aside,
   note,
   dim = false,
@@ -841,6 +851,8 @@ export function Row({
   checked: boolean
   gate: { ok: boolean; reason?: string }
   onClick: () => void
+  /** Set where a click on the row only looks: the tick alone puts the fighter in or out. */
+  onTick?: () => void
   /** At the end of the name line: Ascension's "2/3", or its choice circle. */
   aside?: React.ReactNode
   /** One line under the abilities, for what the screen needs to add. */
@@ -912,7 +924,21 @@ export function Row({
       aria-pressed={ticking ? checked : picked}
       title={ticking && !gate.ok ? gate.reason : undefined}
     >
-      {ticking && <span className={`drost__tick${checked ? ' is-on' : ''}${gate.ok ? '' : ' is-off'}`} aria-hidden="true" />}
+      {ticking && (
+        <span
+          className={`drost__tick${checked ? ' is-on' : ''}${gate.ok ? '' : ' is-off'}${onTick ? ' is-hit' : ''}`}
+          aria-hidden="true"
+          title={onTick ? (checked ? 'Take out of the sale' : 'Add to the sale') : undefined}
+          onClick={
+            onTick
+              ? (e) => {
+                  e.stopPropagation()
+                  onTick()
+                }
+              : undefined
+          }
+        />
+      )}
       {ring ? (
         <span
           className={`drost__ring${fig.pay.overdue ? ' is-overdue' : ''}`}
@@ -1301,11 +1327,13 @@ function Acts({
   onLevelOne,
   onMode,
   onChecked,
+  onCheck,
   onSelect,
   phone,
   roster,
   ...rest
 }: DeskRosterProps & { f: RosterFighter; fig: Figures }) {
+  const inSale = rest.checked.includes(f.fighter_id)
   const s = f.stats
   const level = levelUpOf(f, levels)
   /* Of the three sacrifice slots, how many the roster could fill today. */
@@ -1354,19 +1382,32 @@ function Acts({
         </button>
       )}
       {!phone && <MarkerPick {...rest} f={f} canAct={canAct} busy={busy} />}
-      <button
-        type="button"
-        className="btn btn--ghost btn--sm"
-        disabled={!sellable(f)}
-        title={sellable(f) ? 'Sell this fighter back to the game' : `${useLabel(f)} — cannot be sold`}
-        onClick={() => {
-          onMode('sell')
-          onChecked([f.fighter_id])
-          onSelect(f.fighter_id)
-        }}
-      >
-        Sell <Credits value={s.credits ?? 0} />
-      </button>
+      {rest.mode === 'sell' ? (
+        /* Already selling: this puts the fighter in the sale or takes it out, and leaves the rest alone. */
+        <button
+          type="button"
+          className={`btn btn--sm ${inSale ? 'btn--ghost' : 'btn--primary'}`}
+          disabled={!sellable(f)}
+          title={sellable(f) ? undefined : `${useLabel(f)} — cannot be sold`}
+          onClick={() => onCheck(f.fighter_id)}
+        >
+          {inSale ? 'Remove from sale' : 'Add to sale'} <Credits value={s.credits ?? 0} />
+        </button>
+      ) : (
+        <button
+          type="button"
+          className="btn btn--ghost btn--sm"
+          disabled={!sellable(f)}
+          title={sellable(f) ? 'Sell this fighter back to the game' : `${useLabel(f)} — cannot be sold`}
+          onClick={() => {
+            onMode('sell')
+            onChecked([f.fighter_id])
+            onSelect(f.fighter_id)
+          }}
+        >
+          Sell <Credits value={s.credits ?? 0} />
+        </button>
+      )}
     </div>
   )
 }
