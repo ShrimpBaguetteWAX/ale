@@ -1184,120 +1184,6 @@
   background: none;
   box-shadow: none;
 }
-.drost__hero {
-  display: grid;
-  grid-template-columns: 120px minmax(0, 1fr);
-  gap: 16px;
-  align-items: center;
-}
-.drost__heroart {
-  position: relative;
-  display: block;
-  width: 120px;
-  height: 120px;
-  overflow: hidden;
-  border-radius: 14px;
-  background-position: center;
-  background-size: cover;
-}
-.drost__heroart > img {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: top;
-}
-.drost__herotext {
-  display: grid;
-  gap: 3px;
-  min-width: 0;
-}
-.drost__kick {
-  font-family: var(--font-display);
-  font-size: max(9.5px, var(--fs-floor));
-  font-weight: 800;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--text-faint);
-}
-.shell .main__inner .drost .drost__heroname {
-  margin: 0;
-  font-family: var(--font-display);
-  font-size: 22px;
-  font-weight: 900;
-  text-transform: capitalize;
-}
-.drost__heroline {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-bottom: 6px;
-  font-size: 13px;
-  color: var(--text-faint);
-  text-transform: capitalize;
-}
-.drost__heroline img {
-  width: 16px;
-  height: 16px;
-}
-.drost__chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-.drost__chips > span:not(.drost__age) {
-  padding: 3px 9px;
-  border-radius: 999px;
-  background: rgb(255 255 255 / 5%);
-  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 12%);
-  font-size: 12px;
-  color: #dfe6f2;
-}
-
-.drost__abilities {
-  display: grid;
-  gap: 6px;
-}
-.drost__ability {
-  display: grid;
-  gap: 3px;
-  padding: 9px 12px;
-  border-radius: 10px;
-  background: rgb(255 255 255 / 4%);
-  box-shadow: inset 3px 0 0 var(--ab);
-}
-.drost__abname {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 13.5px;
-  font-weight: var(--fw-bold);
-}
-.drost__abname em {
-  font-size: 11px;
-  font-style: normal;
-  color: #ffd979;
-}
-.drost__abname small {
-  margin-left: auto;
-  font-family: var(--font-display);
-  font-size: max(9.5px, var(--fs-floor));
-  font-weight: 800;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--ab);
-}
-.drost__ability p {
-  margin: 0;
-  font-size: 12px;
-  line-height: 1.45;
-  color: #c5cee0;
-}
-.drost__ability.is-locked .drost__abname,
-.drost__ability.is-locked p {
-  opacity: 0.7;
-}
 .drost__acts {
   display: flex;
   flex-wrap: wrap;
@@ -1490,71 +1376,10 @@
   gap: 9px;
   padding: 14px;
 }
-.drost__hero {
-  grid-template-columns: 92px minmax(0, 1fr);
-  gap: 14px;
-}
-.drost__heroart {
-  width: 92px;
-  height: 92px;
-  border-radius: 12px;
-}
-.drost__kick .drost__cr {
-  font-size: max(9.5px, var(--fs-floor));
-  vertical-align: -1px;
-}
-.drost__kick .drost__cr img {
-  width: 11px;
-  height: 11px;
-}
-.shell .main__inner .drost .drost__heroname {
-  font-size: 19px;
-  line-height: 1.15;
-}
-.drost__heroline {
-  margin-bottom: 4px;
-  font-size: 12.5px;
-}
-.drost__chips > span:not(.drost__age) {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 2px 8px;
-  font-size: 11.5px;
-}
-.drost__chips img {
-  height: 11px;
-}
 
 .drost__detail > .drost__cap {
   margin: 2px 0 -3px;
   font-size: max(9.5px, var(--fs-floor));
-}
-.drost__cells--big .drost__cell {
-  padding: 6px 2px;
-}
-.drost__cells--big .drost__cell small {
-  font-size: max(8px, var(--fs-floor));
-}
-.drost__cells--big .drost__cell b {
-  font-size: 14px;
-}
-.drost__cells--big .drost__cell em {
-  font-size: 10px;
-}
-.drost__abilities {
-  gap: 5px;
-}
-.drost__ability {
-  gap: 2px;
-  padding: 6px 10px;
-}
-.drost__abname {
-  font-size: 13px;
-}
-.drost__ability p {
-  font-size: 11.5px;
-  line-height: 1.35;
 }
 .drost__acts {
   gap: 6px;
@@ -1573,64 +1398,9 @@
   gap: 11px;
   padding: 16px;
 }
-.drost:not(.drost--phone) .drost__hero {
-  grid-template-columns: 104px minmax(0, 1fr) auto;
-}
-.drost:not(.drost--phone) .drost__heroart {
-  width: 104px;
-  height: 104px;
-}
-.drost:not(.drost--phone) .drost__kick,
-.drost:not(.drost--phone) .drost__kick .drost__cr {
-  font-size: 11px;
-}
-.shell .main__inner .drost:not(.drost--phone) .drost__heroname {
-  font-size: 22px;
-}
-.drost:not(.drost--phone) .drost__heroline {
-  font-size: 14px;
-}
-.drost:not(.drost--phone) .drost__chips > span:not(.drost__age) {
-  padding: 3px 10px;
-  font-size: 12.5px;
-}
-.drost:not(.drost--phone) .drost__chips img {
-  height: 12px;
-}
 
 .drost:not(.drost--phone) .drost__detail > .drost__cap {
   font-size: 11px;
-}
-.drost:not(.drost--phone) .drost__cells--big .drost__cell {
-  padding: 8px 2px;
-}
-.drost:not(.drost--phone) .drost__cells--big .drost__cell small {
-  font-size: 10.5px;
-}
-.drost:not(.drost--phone) .drost__cells--big .drost__cell small .drost__si {
-  height: 11px;
-}
-.drost:not(.drost--phone) .drost__cells--big .drost__cell b {
-  font-size: 16px;
-}
-.drost:not(.drost--phone) .drost__cells--big .drost__cell em {
-  font-size: 11px;
-}
-.drost:not(.drost--phone) .drost__ability {
-  gap: 3px;
-  padding: 8px 12px;
-}
-.drost:not(.drost--phone) .drost__abname {
-  font-size: 15px;
-}
-.drost:not(.drost--phone) .drost__abname small {
-  font-size: 11px;
-}
-.drost:not(.drost--phone) .drost__abname em {
-  font-size: 12px;
-}
-.drost:not(.drost--phone) .drost__ability p {
-  font-size: 13px;
 }
 .drost:not(.drost--phone) .drost__acts .btn {
   font-size: 13px;
@@ -1985,25 +1755,6 @@
   line-height: 1.35;
 }
 
-/* the fighter in full, as a sheet from the bottom */
-.drost--phone .drost__hero {
-  grid-template-columns: 76px minmax(0, 1fr);
-  gap: 12px;
-}
-.drost--phone .drost__heroart {
-  width: 76px;
-  height: 76px;
-}
-.shell .main__inner .drost--phone .drost__heroname {
-  font-size: 18px;
-}
-
-.drost--phone .drost__cells--big .drost__cell small {
-  font-size: max(7px, var(--fs-floor));
-}
-.drost--phone .drost__cells--big .drost__cell b {
-  font-size: 13px;
-}
 .drost__chipbtn {
   display: inline-flex;
   align-items: center;
@@ -2019,11 +1770,6 @@
   font-size: 11.5px;
   font-weight: var(--fw-bold);
   cursor: pointer;
-}
-.drost__chips .drost__chipbtn img {
-  height: 13px;
-  filter: none;
-  opacity: 1;
 }
 .drost--phone .rsheet__foot .drost__acts {
   flex-wrap: nowrap;
@@ -2374,40 +2120,15 @@
 .drost__detail {
   container: drostdetail / inline-size;
 }
-.drost__sname {
-  display: none;
-}
 .drost__cell small {
   max-width: 100%;
   overflow: hidden;
-}
-@container drostdetail (max-width: 470px) {
-  .drost:not(.drost--phone) .drost__cells--big .drost__lname {
-    display: none;
-  }
-  .drost:not(.drost--phone) .drost__cells--big .drost__sname {
-    display: inline;
-  }
-  .drost:not(.drost--phone) .drost__cells--6.drost__cells--big {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
 }
 
 .drost--stack .drost__abp {
   height: 21px;
   padding: 0 7px 0 6px;
   font-size: 12px;
-}
-/* In the hero's chips the picker is a wrapper, not a chip of its own; and its markers keep their colour. */
-.drost__chips > span.drost__markpick {
-  padding: 0;
-  background: none;
-  box-shadow: none;
-}
-.drost__chips .drost__pop--marker .markbtn img {
-  height: 18px;
-  filter: none;
-  opacity: 1;
 }
 
 .drost__row.is-dim {
@@ -2431,71 +2152,6 @@
 .drost__tick.is-hit:not(.is-on):hover {
   box-shadow: inset 0 0 0 1.5px var(--cyan);
   background: rgb(0 186 255 / 14%);
-}
-
-/*
- * The fighter's two clocks in its header, where the boxes were: age bonus,
- * payday and what paying costs now, a figure each. A desktop sets them in a
- * column at the header's end; a phone in a row under it.
- */
-.drost__hero {
-  grid-template-columns: 92px minmax(0, 1fr) auto;
-}
-.drost__heromini {
-  display: grid;
-  gap: 5px;
-  align-self: center;
-  min-width: 128px;
-  padding: 8px 10px;
-  border-radius: 10px;
-  background: rgb(255 255 255 / 4%);
-  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 8%);
-}
-.drost__heromini > span {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 10px;
-  cursor: help;
-}
-.drost__heromini small {
-  font-size: 11.5px;
-  color: var(--text-faint);
-  white-space: nowrap;
-}
-.drost__heromini b {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  font-family: var(--font-display);
-  font-size: 13px;
-  white-space: nowrap;
-}
-.drost__heromini b.is-fresh {
-  color: #6ff0cf;
-}
-.drost__heromini b.is-worn {
-  color: #ffd979;
-}
-.drost__heromini b.is-bad {
-  color: #ff8a8a;
-}
-.drost__heromini > .is-overdue b {
-  color: #ff8a8a;
-}
-.drost--phone .drost__hero {
-  grid-template-columns: 76px minmax(0, 1fr);
-}
-.drost--phone .drost__heromini {
-  grid-column: 1 / -1;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
-  min-width: 0;
-}
-.drost--phone .drost__heromini > span {
-  display: grid;
-  justify-items: center;
-  gap: 1px;
 }
 
 /* The sale or the listing folded to one bar over the fighter. */
@@ -2541,77 +2197,17 @@
   cursor: pointer;
 }
 
-/*
- * The desktop side fits the screen: the fighter beside the list, with its
- * sale or listing folded to a bar over it, never needs its own scrollbar.
- * Resistances on one row, abilities two by two with their words held to
- * three lines (all of them on hover), the actions on one line.
- */
-.drost:not(.drost--phone) .drost__side .drost__hero {
-  grid-template-columns: 84px minmax(0, 1fr);
-  column-gap: 12px;
-  row-gap: 6px;
-  align-items: start;
-}
-.drost:not(.drost--phone) .drost__side .drost__heroart {
-  grid-row: 1 / span 2;
-}
-/* Age, payday and its price as one line under the name. */
-.drost:not(.drost--phone) .drost__side .drost__heromini {
-  grid-column: 2;
-  grid-template-columns: repeat(3, auto);
-  justify-content: start;
-  gap: 14px;
-  min-width: 0;
-  padding: 4px 10px;
-}
-.drost:not(.drost--phone) .drost__side .drost__heromini > span {
-  justify-content: start;
-  gap: 6px;
-}
-.drost:not(.drost--phone) .drost__side .drost__heroart {
-  width: 84px;
-  height: 84px;
-}
 .drost:not(.drost--phone) .drost__side .drost__detail {
   gap: 9px;
   padding: 14px;
 }
-.drost:not(.drost--phone) .drost__side .drost__cells--6.drost__cells--big {
-  grid-template-columns: repeat(6, minmax(0, 1fr));
-}
-.drost:not(.drost--phone) .drost__side .drost__cells--big .drost__cell {
-  padding: 6px 2px;
-}
 .drost:not(.drost--phone) .drost__side .drost__cells--6 .drost__cell small {
   font-size: 9.5px;
-}
-.drost:not(.drost--phone) .drost__side .drost__abilities {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-.drost:not(.drost--phone) .drost__side .drost__ability p {
-  display: -webkit-box;
-  overflow: hidden;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
 }
 .drost:not(.drost--phone) .drost__side .drost__acts {
   gap: 5px;
 }
-.drost:not(.drost--phone) .drost__side .drost__abname {
-  gap: 6px;
-  overflow: hidden;
-  white-space: nowrap;
-}
-/* The unlock note is the lock alone here; the full line is on hover. */
-.drost:not(.drost--phone) .drost__side .drost__abname em {
-  overflow: hidden;
-  width: 1.2em;
-  flex: none;
-}
-.drost:not(.drost--phone) .drost__side .drost__abname small {
-  display: none;
-}
+
 .drost:not(.drost--phone) .drost__side .drost__acts .btn {
   height: 32px;
   padding: 0 9px;
@@ -2619,10 +2215,6 @@
 }
 .drost:not(.drost--phone) .drost__side .drost__bbar {
   padding: 10px 12px;
-}
-/* Stats and resistances name themselves in their tiles; beside the list their captions give way to the fighter. */
-.drost:not(.drost--phone) .drost__side .drost__cap.is-named {
-  display: none;
 }
 
 /*
@@ -3496,4 +3088,418 @@ h2.lstep__title {
 }
 .lstep-sheet .lstep__cancel {
   margin-bottom: 4px;
+}
+
+/*
+ * ---------- The fighter in full: the card, opened up ----------
+ *
+ * The art as a banner with the name on it and the score badge at its corner,
+ * the upkeep in one slim line, the stats as bars against the class (as on
+ * the card), the resistances in a row, the abilities with what they do, and
+ * the actions at the foot.
+ */
+.drost__banner {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  min-height: 150px;
+  padding: 14px 16px;
+  overflow: hidden;
+  border-radius: 12px;
+  background-position: center;
+  background-size: cover;
+}
+/* On a desktop the banner runs to the panel's edges, under its rounded top. */
+.drost:not(.drost--phone) .drost__side .drost__banner {
+  margin: -14px -14px 0;
+  border-radius: 14px 14px 0 0;
+}
+.drost__bannerart {
+  position: absolute;
+  top: -8px;
+  right: -12px;
+  height: 230px;
+  pointer-events: none;
+}
+.drost__banner::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, rgb(8 14 28 / 92%) 18%, rgb(8 14 28 / 40%) 58%, transparent 82%),
+    linear-gradient(transparent 50%, rgb(8 14 28 / 92%));
+}
+.drost__banner > .drost__mk {
+  top: 12px;
+  right: 14px;
+  z-index: 1;
+  width: 26px;
+  height: 26px;
+}
+.drost__banner > .drost__mk img {
+  width: 16px;
+  height: 16px;
+}
+.drost__bannertext {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+.drost__bkick {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #9ee7ff;
+}
+.drost__bkick .drost__cr img {
+  width: 12px;
+  height: 12px;
+}
+.shell .main__inner h2.drost__bname,
+h2.drost__bname {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 900;
+  line-height: 1.05;
+  color: var(--white);
+  text-transform: capitalize;
+}
+.drost__bline {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text-faint);
+  text-transform: capitalize;
+}
+.drost__bline img {
+  width: 14px;
+  height: 14px;
+}
+.drost__bchips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 2px;
+}
+.drost__bchips > span:not(.drost__markpick),
+.drost__bchips .drost__chipbtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 24px;
+  padding: 0 9px;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 7%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 16%);
+  font-size: 12px;
+  color: #dfe6f3;
+  white-space: nowrap;
+}
+.drost__bchips img {
+  width: 13px;
+  height: 13px;
+}
+.drost__badge.drost__badge--detail {
+  position: relative;
+  z-index: 1;
+  flex: none;
+  width: 70px;
+  height: 82px;
+  padding-bottom: 5px;
+  gap: 2px;
+}
+.drost__badge--detail > b {
+  font-size: 25px;
+}
+.drost__badge--detail > small {
+  font-size: 8.5px;
+  letter-spacing: 0.14em;
+}
+
+/* the upkeep, one slim line */
+.drost__upkeep {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 7px 12px;
+  border-radius: 10px;
+  background: rgb(255 255 255 / 4%);
+  font-size: 12px;
+  color: var(--text-faint);
+  white-space: nowrap;
+}
+.drost__upkeep > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.drost__upkeep b {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 900;
+  color: var(--white);
+}
+.drost__upkeep b.is-fresh {
+  color: #7fe3a9;
+}
+.drost__upkeep b.is-worn {
+  color: #ffc46b;
+}
+.drost__upkeep b.is-bad {
+  color: #ff8a96;
+}
+.drost__upkeep > .is-overdue b {
+  color: #ffb3bd;
+}
+.drost__upkeep .drost__cr {
+  font-size: 13px;
+}
+.drost__upkeep .drost__cr img {
+  width: 13px;
+  height: 13px;
+}
+
+/* the stats against the class, the card's bars a size up */
+.drost__bars--detail {
+  gap: 7px;
+}
+.drost__bars--detail .drost__bar {
+  grid-template-columns: 92px minmax(0, 1fr) 86px;
+}
+.drost__bars--detail .drost__bar > small {
+  font-size: 9.5px;
+}
+.drost__bars--detail .drost__bar > b em {
+  margin-left: 2px;
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 700;
+  color: var(--text-dim);
+}
+.drost--stack .drost__bars--detail .drost__bar {
+  grid-template-columns: 86px minmax(0, 1fr) 80px;
+  gap: 8px;
+}
+.drost--stack .drost__bars--detail .drost__bar > small {
+  font-size: 9px;
+  letter-spacing: 0.06em;
+}
+.drost--stack .drost__bars--detail .drost__bar > small .drost__si {
+  display: block;
+}
+.drost--stack .drost__bars--detail .drost__bar > b {
+  font-size: 13.5px;
+  line-height: inherit;
+}
+
+/* the resistances, one row */
+.drost__resrow {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 5px;
+}
+.drost__resrow > span {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  padding: 6px 0 5px;
+  border-radius: 9px;
+  background: rgb(255 255 255 / 4%);
+}
+.drost__resrow img {
+  width: 15px;
+  height: 15px;
+}
+.drost__resrow b {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-family: var(--font-display);
+  font-size: 12.5px;
+  font-weight: 900;
+}
+
+/* the abilities with what they do */
+.drost__ablist {
+  display: grid;
+  gap: 5px;
+}
+.drost__abitem {
+  position: relative;
+  display: grid;
+  gap: 2px;
+  padding: 7px 11px 8px 13px;
+  border-radius: 10px;
+  background: rgb(255 255 255 / 4%);
+}
+.drost__abitem::before {
+  content: '';
+  position: absolute;
+  top: 8px;
+  bottom: 8px;
+  left: 0;
+  width: 3px;
+  border-radius: 2px;
+  background: var(--ab);
+}
+.drost__abitem > b {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+  font-size: 13.5px;
+}
+.drost__abitem > b > img {
+  width: 11px;
+  height: 11px;
+  opacity: 0.7;
+}
+.drost__abitem > b > small {
+  margin-left: auto;
+  font-family: var(--font-display);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ab);
+  white-space: nowrap;
+}
+.drost__abitem > p {
+  display: -webkit-box;
+  overflow: hidden;
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: #c5cee0;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+.drost__abitem.is-locked {
+  opacity: 0.62;
+}
+.drost__abitem.is-locked > b > small {
+  color: var(--text-dim);
+  letter-spacing: 0.04em;
+  text-transform: none;
+  font-family: var(--font-body);
+  font-size: 11px;
+}
+
+/* the actions at the foot: one row, the marker as its icon, selling in red */
+.drost:not(.drost--phone) .drost__side .drost__acts {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 6px;
+  margin: 2px -14px -14px;
+  padding: 12px 14px 14px;
+  border-top: 1px solid rgb(255 255 255 / 10%);
+  background: rgb(3 7 18 / 50%);
+  border-radius: 0 0 14px 14px;
+}
+.drost:not(.drost--phone) .drost__side .drost__acts > .btn,
+.drost:not(.drost--phone) .drost__side .drost__acts > .drost__markpick {
+  flex: 1 1 0;
+  min-width: 0;
+  height: 38px;
+  justify-content: center;
+}
+.drost:not(.drost--phone) .drost__side .drost__acts > .drost__markpick {
+  flex: none;
+}
+.drost:not(.drost--phone) .drost__side .drost__acts > .drost__markpick > .btn {
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  justify-content: center;
+}
+.drost__acts .drost__marktext {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+.drost__chipbtn .drost__marktext {
+  position: static;
+  width: auto;
+  height: auto;
+  clip-path: none;
+}
+.drost__acts .drost__markpick .drost__markicon {
+  width: 18px;
+  height: 18px;
+}
+.drost__acts .btn.drost__sellbtn:not(:disabled) {
+  border-color: transparent;
+  background: linear-gradient(180deg, #ff6b7a, #d93448);
+  color: var(--white);
+}
+/*
+ * The fighter's sheet: the banner says who it is, so the sheet's head folds to
+ * its grip and close button, laid over the banner's top.
+ */
+.rsheet__panel:has(> .rsheet__body > .drost__detail) {
+  position: relative;
+}
+.rsheet__panel:has(> .rsheet__body > .drost__detail) > .rsheet__head {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  z-index: 3;
+  justify-content: flex-end;
+  padding: 10px 22px 0 14px;
+}
+.rsheet__panel:has(> .rsheet__body > .drost__detail) > .rsheet__head > .rsheet__title {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+.rsheet__panel:has(> .rsheet__body > .drost__detail) > .rsheet__body {
+  padding-top: 8px;
+}
+.rsheet .drost__banner {
+  min-height: 0;
+  padding: 12px 14px;
+}
+/* The close button has the corner; the marker stands beside it. */
+.rsheet .drost__banner > .drost__mk {
+  right: 50px;
+}
+.rsheet .drost__bchips > span:not(.drost__markpick),
+.rsheet .drost__bchips .drost__chipbtn {
+  height: 22px;
+}
+.rsheet .drost__ablist {
+  gap: 4px;
+}
+.rsheet h2.drost__bname,
+.shell .main__inner .rsheet h2.drost__bname {
+  font-size: 22px;
+}
+.rsheet .drost__upkeep {
+  padding: 6px 11px;
+}
+.rsheet .drost__abitem {
+  padding: 6px 10px 7px 12px;
+}
+.rsheet .drost__abitem > p {
+  font-size: 12px;
 }

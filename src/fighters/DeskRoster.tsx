@@ -1174,28 +1174,32 @@ function Detail(props: DeskRosterProps & { f: RosterFighter; fig: Figures }) {
     ? `Unlocks at ascension ${config.asc_ability_unlock_lvl}`
     : 'Unlocks on ascension'
   const daysLeft = Math.max(0, Math.ceil(fig.pay.msLeft / DAY))
+  /*
+     The card from the list, opened up: the art as a banner with the name on
+     it and the score badge at its corner, the upkeep in one slim line, the
+     stats as bars against the class, the resistances in a row, the abilities
+     with what they do, and the actions at the foot.
+  */
   return (
     <div className="drost__detail">
-      <div className="drost__hero">
-        <span className="drost__heroart" style={{ backgroundImage: `url('${elementBackground(f.element)}')` }}>
-          <GameImg src={fighterArt(f)} alt="" fallback={fighterArtFallback()} />
-          {f.marker && (
-            <span className="drost__mk">
-              <img src={markerIcon(f.marker)} alt={f.marker} />
-            </span>
-          )}
-        </span>
-        <span className="drost__herotext">
-          <span className="drost__kick">
+      <div className="drost__banner" style={{ backgroundImage: `url('${elementBackground(f.element)}')` }}>
+        <GameImg className="drost__bannerart" src={fighterArt(f)} alt="" fallback={fighterArtFallback()} />
+        {f.marker && (
+          <span className="drost__mk">
+            <img src={markerIcon(f.marker)} alt={f.marker} />
+          </span>
+        )}
+        <span className="drost__bannertext">
+          <span className="drost__bkick">
             {state === 'busy' ? useLabel(f) : state === 'overdue' ? 'Requests payday' : 'Ready'} · sells for{' '}
             <Credits value={s.credits ?? 0} />
           </span>
-          <h2 className="drost__heroname">{f.classname}</h2>
-          <span className="drost__heroline">
+          <h2 className="drost__bname">{f.classname}</h2>
+          <span className="drost__bline">
             <img src={elementIcon(f.element)} alt="" />
             {f.racename} · {f.element}
           </span>
-          <span className="drost__chips">
+          <span className="drost__bchips">
             <span>
               Level {s.level}
               {level.atMax ? ' · max' : ''}
@@ -1209,92 +1213,94 @@ function Detail(props: DeskRosterProps & { f: RosterFighter; fig: Figures }) {
             {phone && <MarkerPick {...props} chip />}
           </span>
         </span>
-        {/*
-          The two clocks a fighter runs on, in the header: the figure each
-          and one line, the long explanations in the hover text. They were
-          two boxes of their own, and the panel's height went on them.
-        */}
-        <span className="drost__heromini">
-          <span title={`${ageNote(fig.age, days, fig.factor.age)} Health & damage ×${fig.factor.age.toFixed(2)} · ${days} day${days === 1 ? '' : 's'} old. It only goes down.`}>
-            <small>Age bonus</small>
-            <b className={`is-${ageBand(fig.age)}`}>
-              {fig.age > 0 ? '+' : ''}
-              {fig.age.toFixed(0)}%
-            </b>
-          </span>
-          <span
-            className={fig.pay.overdue ? 'is-overdue' : undefined}
-            title={`${fig.pay.overdue ? 'Due now · benched until paid.' : `In ${daysLeft} day${daysLeft === 1 ? '' : 's'}.`} Paying covers the time since the last payday, so paying early saves nothing. Miss it and the fighter is benched, then deleted.`}
-          >
-            <small>Payday</small>
-            <b>{fig.pay.overdue ? 'Due' : payDay(f)}</b>
-          </span>
-          <span>
-            <small>Pay now</small>
-            <b>
-              <Credits value={fig.pay.cost} />
-            </b>
-          </span>
+        <span className="drost__badge drost__badge--detail" title="Combat score: damage and survival together">
+          <b>{Math.round(fig.combat.score).toLocaleString(NUM_LOCALE)}</b>
+          <small>Score</small>
         </span>
       </div>
 
-      <span className="drost__cap is-named">Stats</span>
-      <span className="drost__cells drost__cells--5 drost__cells--big">
+      {/* The two clocks a fighter runs on and what the next payday costs, in one slim line; the long words on hover. */}
+      <div className="drost__upkeep">
+        <span
+          title={`${ageNote(fig.age, days, fig.factor.age)} Health & damage ×${fig.factor.age.toFixed(2)} · ${days} day${days === 1 ? '' : 's'} old. It only goes down.`}
+        >
+          Age bonus
+          <b className={`is-${ageBand(fig.age)}`}>
+            {fig.age > 0 ? '+' : ''}
+            {fig.age.toFixed(0)}%
+          </b>
+        </span>
+        <span
+          className={fig.pay.overdue ? 'is-overdue' : undefined}
+          title={`${fig.pay.overdue ? 'Due now · benched until paid.' : `In ${daysLeft} day${daysLeft === 1 ? '' : 's'}.`} Paying covers the time since the last payday, so paying early saves nothing. Miss it and the fighter is benched, then deleted.`}
+        >
+          Next payday
+          <b>{fig.pay.overdue ? 'Due' : payDay(f)}</b>
+        </span>
+        <span>
+          Pay now
+          <b>
+            <Credits value={fig.pay.cost} />
+          </b>
+        </span>
+      </div>
+
+      {/* Each stat against its class, as on the card, with the range a blow can land in. */}
+      <div className="drost__bars drost__bars--detail">
         {fig.stats.map((x) => (
-          <span className="drost__cell" key={x.field}>
+          <span
+            className="drost__bar"
+            key={x.field}
+            title={`${STAT_NAMES[x.field]}${x.grade ? ` · ${GRADE_LABEL[x.grade]}` : ''}`}
+          >
             <small>
               <img className="drost__si" src={statIcon(x.field)} alt="" />
-              {/* The list's short names where the panel is too narrow for "Cooldown". */}
-              <span className="drost__lname">{STAT_NAMES[x.field]}</span>
-              <span className="drost__sname">{STAT_SHORT[x.field]}</span>
+              {STAT_NAMES[x.field]}
             </small>
+            <span className={`drost__track is-${x.grade ?? 'none'}`}>
+              <i style={{ width: `${GRADE_REACH[x.grade ?? 'middle'] * 100}%` }} />
+            </span>
             <b>
               {x.value}
               <Grade grade={x.grade} />
+              {x.spread > 0 && <em>±{x.spread}</em>}
             </b>
-            {x.spread > 0 && <em>±{x.spread}</em>}
           </span>
         ))}
-      </span>
+      </div>
 
-      <span className="drost__cap is-named">Resistances</span>
-      <span className="drost__cells drost__cells--6 drost__cells--big">
+      <div className="drost__resrow">
         {fig.res.map((x) => (
-          <span className="drost__cell" key={x.field} title={`${cap(x.el)} resistance`}>
-            <small>
-              <img className="drost__ei" src={elementIcon(x.el)} alt="" />
-              {x.el}
-            </small>
+          <span key={x.field} title={`${cap(x.el)} resistance`}>
+            <img src={elementIcon(x.el)} alt={x.el} />
             <b>
               {x.value}
               <Grade grade={x.grade} />
             </b>
           </span>
         ))}
-      </span>
+      </div>
 
-      <span className="drost__cap">Abilities · {abilities.length}</span>
-      <div className="drost__abilities">
+      <div className="drost__ablist">
         {abilities.map((a, i) => {
           const r = abilityRarity(a.displayname)
           return (
             <div
               key={`${a.ability}-${i}`}
-              className={`drost__ability${a.locked ? ' is-locked' : ''}`}
+              className={`drost__abitem${a.locked ? ' is-locked' : ''}`}
               style={{ '--ab': rarityColor(a.displayname) } as React.CSSProperties}
               title={resolveAbilityDescription(a)}
             >
-              <span className="drost__abname">
+              <b>
                 {abilityName(a.displayname)}
-                {!!a.locked && <em>🔒 {unlock}</em>}
-                <small>{r ?? 'unique'}</small>
-              </span>
+                {!!a.locked && <img src={asset('/assets/icons/lock.svg')} alt="" />}
+                <small>{a.locked ? unlock : (r ?? 'unique')}</small>
+              </b>
               <p>{resolveAbilityDescription(a)}</p>
             </div>
           )
         })}
       </div>
-
       {!phone && <Acts {...props} />}
     </div>
   )
@@ -1325,7 +1331,7 @@ function MarkerPick({
         onClick={() => setOpen(!open)}
       >
         {saving ? <span className="spinner" /> : <img className="drost__markicon" src={markerIcon(f.marker)} alt="" />}
-        Marker
+        <span className="drost__marktext">Marker</span>
       </button>
       {open && (
         <>
@@ -1390,17 +1396,20 @@ function Acts({
         {busy === 'pay-one' && <span className="spinner" />}
         Payday <Credits value={fig.pay.cost} />
       </button>
-      <button
-        type="button"
-        className="btn btn--ghost btn--sm"
-        disabled={!canAct || !level.ready || level.cost.credits > credits || level.cost.gems > gems || !!busy}
-        onClick={() => onLevelOne(f)}
-        title={level.atMax ? 'Already at the maximum level' : level.ready ? 'Spend the banked experience' : 'Not enough experience yet'}
-      >
-        {busy === 'level-one' && <span className="spinner" />}
-        {level.atMax ? 'Max level' : 'Level up'}
-        {!level.atMax && level.cost.credits > 0 && <Credits value={level.cost.credits} />}
-      </button>
+      {/* At the maximum the banner says so; a button that cannot do anything is left out. */}
+      {!level.atMax && (
+        <button
+          type="button"
+          className="btn btn--ghost btn--sm"
+          disabled={!canAct || !level.ready || level.cost.credits > credits || level.cost.gems > gems || !!busy}
+          onClick={() => onLevelOne(f)}
+          title={level.ready ? 'Spend the banked experience' : 'Not enough experience yet'}
+        >
+          {busy === 'level-one' && <span className="spinner" />}
+          Level up
+          {level.cost.credits > 0 && <Credits value={level.cost.credits} />}
+        </button>
+      )}
       {ascend.ok ? (
         <Link
           className="btn btn--ghost btn--sm"
@@ -1452,7 +1461,7 @@ function Acts({
       ) : (
         <button
           type="button"
-          className="btn btn--ghost btn--sm"
+          className="btn btn--ghost btn--sm drost__sellbtn"
           disabled={!sellable(f)}
           title={sellable(f) ? 'Sell this fighter back to the game' : `${useLabel(f)} — cannot be sold`}
           onClick={() => {
