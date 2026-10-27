@@ -2714,7 +2714,7 @@
 }
 
 /* the art */
-.drost__hero {
+.drost__cardart {
   position: absolute;
   top: 0;
   bottom: 0;
@@ -2725,7 +2725,7 @@
   background-size: cover;
   box-shadow: inset -1px 0 0 rgb(255 255 255 / 10%);
 }
-.drost__hero > img {
+.drost__cardart > img {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -2733,7 +2733,7 @@
   object-fit: cover;
   object-position: 50% 16%;
 }
-.drost__hero::before {
+.drost__cardart::before {
   content: '';
   position: absolute;
   inset: auto 0 0;
@@ -2741,34 +2741,34 @@
   background: linear-gradient(transparent, rgb(3 7 18 / 78%));
 }
 /* The days to payday as a bar along the art's foot, filling as the day comes. */
-.drost__hero::after {
+.drost__cardart::after {
   content: '';
   position: absolute;
   inset: auto 0 0;
   height: 3px;
   background: linear-gradient(90deg, var(--cyan) var(--p), rgb(255 255 255 / 14%) 0);
 }
-.drost__hero.is-overdue::after {
+.drost__cardart.is-overdue::after {
   background: #ff5a6a;
 }
-.drost__row.is-picked > .drost__hero {
+.drost__row.is-picked > .drost__cardart {
   box-shadow: inset 3px 0 0 var(--cyan);
 }
-.drost--phone .drost__row.is-picked > .drost__hero {
+.drost--phone .drost__row.is-picked > .drost__cardart {
   box-shadow: inset 3px 0 0 #7c5cff;
 }
-.drost__hero .drost__mk {
+.drost__cardart .drost__mk {
   top: 7px;
   right: 7px;
   z-index: 1;
   width: 22px;
   height: 22px;
 }
-.drost__hero .drost__mk img {
+.drost__cardart .drost__mk img {
   width: 14px;
   height: 14px;
 }
-.drost__herofoot {
+.drost__cardfoot {
   position: absolute;
   right: 8px;
   bottom: 9px;
@@ -2779,7 +2779,7 @@
   justify-content: space-between;
   gap: 4px;
 }
-.drost__hero .drost__lv {
+.drost__cardart .drost__lv {
   position: static;
   padding: 0 6px;
   border-radius: 6px;
@@ -2787,7 +2787,7 @@
   font-size: 11px;
   line-height: 19px;
 }
-.drost__hero .drost__days {
+.drost__cardart .drost__days {
   position: static;
   padding: 0 6px;
   border-radius: 6px;
@@ -2797,22 +2797,22 @@
   font-size: 11px;
   line-height: 19px;
 }
-.drost__hero.is-overdue .drost__days {
+.drost__cardart.is-overdue .drost__days {
   box-shadow: inset 0 0 0 1.5px #ff5a6a;
   color: #ffb3bd;
 }
-.drost--stack .drost__herofoot {
+.drost--stack .drost__cardfoot {
   right: 5px;
   bottom: 8px;
   left: 5px;
 }
-.drost--stack .drost__hero .drost__lv,
-.drost--stack .drost__hero .drost__days {
+.drost--stack .drost__cardart .drost__lv,
+.drost--stack .drost__cardart .drost__days {
   padding: 0 4px;
   font-size: 10px;
   line-height: 17px;
 }
-.drost--stack .drost__hero .drost__mk {
+.drost--stack .drost__cardart .drost__mk {
   top: 5px;
   right: 5px;
   width: 20px;

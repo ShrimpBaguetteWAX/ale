@@ -879,7 +879,7 @@ export function Row({
   */
   const hero = (
     <span
-      className={`drost__hero${fig.pay.overdue ? ' is-overdue' : ''}`}
+      className={`drost__cardart${fig.pay.overdue ? ' is-overdue' : ''}`}
       style={
         {
           backgroundImage: `url('${elementBackground(f.element)}')`,
@@ -898,7 +898,7 @@ export function Row({
           <img src={markerIcon(f.marker)} alt={f.marker} />
         </span>
       )}
-      <span className="drost__herofoot">
+      <span className="drost__cardfoot">
         <span className="drost__lv">
           L{s.level}
           {f.ascension_level > 0 && <em>✦{f.ascension_level}</em>}
