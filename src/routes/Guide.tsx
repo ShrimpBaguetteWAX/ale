@@ -100,15 +100,39 @@ export default function Guide() {
   const account = useGame((s) => s.account)
   const [on, setOn] = useState(0)
   const chips = useRef<HTMLElement>(null)
+  /* The chapter last clicked in the contents, while the page scrolls to it. */
+  const clicked = useRef<{ i: number; until: number } | null>(null)
 
   useEffect(() => {
     document.title = "Trainer's guide | Alien Legends"
     window.scrollTo(0, 0)
   }, [])
 
-  /* The chapter in view, for the contents list and the phone's strip. */
+  /*
+     The chapter in view, for the contents list and the phone's strip.
+
+     The last chapters are shorter than a screen, so the page ends before
+     they can reach the top: at the foot of the page the last one counts as
+     in view — or, if one was just clicked, that one, since the page has gone
+     as far towards it as it can.
+  */
   useEffect(() => {
     const pick = () => {
+      const c = clicked.current
+      const atFoot = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 4
+      if (c) {
+        /* Held while the page is still scrolling to it, and for good where the page ends short of it. */
+        if (atFoot || Date.now() < c.until) {
+          c.until = Math.max(c.until, Date.now() + 250)
+          setOn(c.i)
+          return
+        }
+        clicked.current = null
+      }
+      if (atFoot) {
+        setOn(CHAPTERS.length - 1)
+        return
+      }
       let i = 0
       CHAPTERS.forEach(([id], k) => {
         const el = document.getElementById(`guide-${id}`)
@@ -116,9 +140,21 @@ export default function Guide() {
       })
       setOn(i)
     }
+    /* The reader scrolling by hand lets go of the chapter they clicked. */
+    const release = () => {
+      clicked.current = null
+    }
     pick()
     window.addEventListener('scroll', pick, { passive: true })
-    return () => window.removeEventListener('scroll', pick)
+    window.addEventListener('wheel', release, { passive: true })
+    window.addEventListener('touchstart', release, { passive: true })
+    window.addEventListener('keydown', release)
+    return () => {
+      window.removeEventListener('scroll', pick)
+      window.removeEventListener('wheel', release)
+      window.removeEventListener('touchstart', release)
+      window.removeEventListener('keydown', release)
+    }
   }, [])
   useEffect(() => {
     chips.current?.querySelector('.is-on')?.scrollIntoView({ inline: 'center', block: 'nearest' })
@@ -126,7 +162,11 @@ export default function Guide() {
 
   const go = (id: string) => {
     const el = document.getElementById(`guide-${id}`)
-    if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 76, behavior: 'smooth' })
+    if (!el) return
+    const i = CHAPTERS.findIndex(([c]) => c === id)
+    clicked.current = { i, until: Date.now() + 600 }
+    setOn(i)
+    window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 76, behavior: 'smooth' })
   }
 
   const play = player ? '/map' : account ? '/signup' : '/connect'
