@@ -2189,26 +2189,17 @@ a.res {
 /* ---------- Ascension on a desktop: the list, the altar, the deal ---------- */
 
 /*
-   The board fits the screen and the page does not scroll: the list scrolls
-   inside its box, the odds inside theirs, and every column ends on the same
-   line, the bottom of the screen. The height is the screen less the main
-   area's padding, and below 1024px the game's own top bar and tab bar too.
-   Its columns size themselves to the page it is on, not to the window.
+   Only the page scrolls: the list runs its full length, and the altar and
+   the deal beside it stay in view as it goes by (sticky, see useStickyFit).
+   A box of its own for the list, the deal and the odds put three
+   scrollbars on one screen. The columns size themselves to the page it is
+   on, not to the window.
 */
 .ascension:has(.dasc) {
   container: dasc / inline-size;
   display: flex;
   flex-direction: column;
   gap: var(--sp-4);
-  height: calc(100dvh - 2 * var(--sp-6));
-  min-height: 560px;
-}
-@media (max-width: 1023px) {
-  .ascension:has(.dasc) {
-    height: calc(
-      100dvh - var(--topbar-h, 60px) - var(--nav-h) - 1px - env(safe-area-inset-bottom) - 2 * var(--sp-4)
-    );
-  }
 }
 .ascension:has(.dasc) > * {
   flex: none;
@@ -2221,80 +2212,82 @@ a.res {
   /* The phone's quiet palette: white hairlines, not the violet rims. */
   --line-bright: rgb(255 255 255 / 22%);
   --btn-line: rgb(255 255 255 / 22%);
+  /* Where a sticky column rides: under the game's top bar, where there is one. */
+  --stick: calc(var(--topbar-h, 0px) + var(--sp-4));
   display: grid;
   /* The list a phone's width: My Fighters' stacked card fits it. */
   grid-template-columns: minmax(340px, 400px) minmax(0, 1fr) minmax(270px, 310px);
   grid-template-areas: 'list middle side';
-  grid-template-rows: minmax(0, 1fr);
   gap: var(--sp-4);
-  align-items: stretch;
+  align-items: start;
 }
-/* The list's tools, then its box to the bottom, scrolling inside. */
+/* The list's tools, then the list at its full length. */
 .dasc__list {
   grid-area: list;
   display: flex;
   flex-direction: column;
   gap: 10px;
   min-width: 0;
-  min-height: 0;
 }
 .dasc__list > * {
   flex: none;
 }
-.dasc__list > .dasc__rows {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  scrollbar-width: thin;
+/*
+   The build step: the list's tools a row of their own above it, so the
+   altar and the deal start level with the first card rather than with the
+   filters.
+*/
+.dasc:has(> .dasc__main) {
+  grid-template-areas:
+    'head . .'
+    'list middle side';
+  row-gap: 10px;
+}
+.dasc__list:has(> .dasc__head) {
+  display: contents;
+}
+.dasc__head {
+  grid-area: head;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+.dasc__list > .dasc__rows,
+.dasc__list > .dasc__empty {
+  grid-area: list;
+  min-width: 0;
 }
 /* The altar and the deal: their own two columns on a wide board. */
 .dasc__main {
   display: contents;
 }
-/* The altar alone in the middle, centred in the board's height. */
+/*
+   The altar alone in the middle, and the deal beside it: each stays in view
+   while the list goes by. `--lift` lets a column taller than the window
+   scroll until its foot shows before it sticks.
+*/
+.dasc__middle,
+.dasc__right {
+  position: sticky;
+  top: calc(var(--stick) + var(--lift, 0px));
+}
 .dasc__middle {
   grid-area: middle;
   display: grid;
   place-items: center;
   min-width: 0;
-  min-height: 0;
 }
-/*
-   What it needs, what it does and costs, and what it can roll — the odds
-   open, filling what is left and scrolling inside. The column itself only
-   scrolls on a screen too short for the deal.
-*/
+/* What it needs, what it does and costs, and what it can roll, folded. */
 .dasc__right {
   grid-area: side;
   display: flex;
   flex-direction: column;
   gap: var(--sp-3);
   min-width: 0;
-  min-height: 0;
-  overflow-y: auto;
-  scrollbar-width: thin;
 }
 .dasc__right > * {
   flex: none;
-}
-/* A details box does not hand its height on to what it holds, so the box
-   itself scrolls, its title held at the top. */
-.dasc__right > .oddspanel[open] {
-  flex: 1 1 0;
-  /* Its title and a row at the least, so the deal above keeps its room. */
-  min-height: 96px;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  scrollbar-width: thin;
-}
-.dasc__right > .oddspanel[open] > .oddspanel__summary {
-  position: sticky;
-  top: -12px;
-  z-index: 1;
-  margin: -12px -14px 0;
-  padding: 12px 14px 8px;
-  background: rgb(10 16 30 / 96%);
 }
 .dasc__right .pasc__needs {
   margin: 0;
@@ -2518,10 +2511,6 @@ a.res {
 .dasc .pasc__needs span.is-none .dasc__fitn {
   color: #ff8fa0;
 }
-/* The rows sit in their hover wrappers; the line between them follows. */
-.dasc__rows > .dasc__peek + .dasc__peek > .drost__row {
-  border-top: 1px solid rgb(255 255 255 / 6%);
-}
 .dasc__go {
   min-height: 46px;
 }
@@ -2536,50 +2525,36 @@ a.res {
    Too narrow for three columns: the list, and beside it the altar over the
    deal. Three columns need the altar's own width and its labels (about
    450px) beside the list and the deal, so they take a board of 1200px.
-   The build step's altar and deal are one column that scrolls as a whole:
-   squeezed under the altar, the deal was a box of its own a third of the
-   board high, its button scrolled out of it.
+   The build step's altar and deal stay in view as one column.
 */
 @container dasc (max-width: 1200px) {
   .dasc {
     grid-template-columns: clamp(340px, 45%, 400px) minmax(0, 1fr);
-    grid-template-rows: auto minmax(0, 1fr);
     grid-template-areas:
       'list middle'
       'list side';
   }
   .dasc:has(> .dasc__main) {
-    grid-template-rows: minmax(0, 1fr);
-    grid-template-areas: 'list main';
+    grid-template-areas:
+      'head .'
+      'list main';
   }
   .dasc__main {
     grid-area: main;
+    position: sticky;
+    top: calc(var(--stick) + var(--lift, 0px));
     display: flex;
     flex-direction: column;
     gap: var(--sp-3);
     min-width: 0;
-    min-height: 0;
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    scrollbar-width: thin;
   }
   .dasc__main > * {
     flex: none;
   }
+  /* The column sticks as one. */
+  .dasc__main > .dasc__middle,
   .dasc__main > .dasc__right {
-    overflow: visible;
-  }
-  /* The odds open at their own height: the column scrolls, not the table. */
-  .dasc__main > .dasc__right > .oddspanel[open] {
-    flex: none;
-    min-height: 0;
-    overflow: visible;
-  }
-  .dasc__main > .dasc__right > .oddspanel[open] > .oddspanel__summary {
     position: static;
-    margin: 0;
-    padding: 0 0 8px;
-    background: none;
   }
   /* A size under the phone's altar, so the deal under it starts in view. */
   .dasc__stage {
@@ -2624,13 +2599,6 @@ a.res {
 /* ---------- Ascension on a desktop: the three upgrades ---------- */
 
 /* The fighter in full, scrolling inside the left column. */
-.dasc__scroll {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  scrollbar-width: thin;
-}
 .dasc__fighter {
   display: grid;
   gap: 10px;
@@ -2931,12 +2899,6 @@ a.res {
 /* The three rows want more width than the deal did. */
 .dasc.dasc--offers {
   grid-template-columns: minmax(300px, 340px) minmax(0, 1fr) minmax(320px, 380px);
-}
-/* The fighter's box runs to the foot of the board, level with the right
-   column, as the list did on the screen before. */
-.dasc__scroll > .dasc__fighter {
-  min-height: 100%;
-  align-content: start;
 }
 /* Narrow: the same two columns as the build step — the altar over the rows. */
 @container dasc (max-width: 1200px) {

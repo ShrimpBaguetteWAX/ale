@@ -2826,7 +2826,7 @@
  * them stands: My Fighters, the fight pickers, the market. The list's own
  * panel and the lines between rows give way to the gap.
  */
-.drost__rows:has(> .drost__row.is-card),
+.drost__rows:has(> .drost__row.is-card, > .dasc__peek > .drost__row.is-card),
 .mrows:has(> .drost__row.is-card, > .mcard) {
   display: grid;
   gap: 6px;

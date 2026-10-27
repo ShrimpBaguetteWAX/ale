@@ -18,6 +18,7 @@ import { rosterPanel } from '@/fight/setup'
 import { useConfig } from '@/state/useConfig'
 import { formatNumber } from '@/format'
 import { asset } from '@/assets'
+import { useStickyFit } from '@/ascension/stickyFit'
 
 type Busy = 'ascend' | 'reroll' | 'claim' | null
 type List = 'target' | Requirement
@@ -102,6 +103,10 @@ export function DeskAscension({
 }) {
   const { classes, fighters, levelMod, ageDecay } = useConfig()
   const unlockAt = Number(fighters?.asc_ability_unlock_lvl ?? 0)
+  /* The altar and the deal stay in view beside the list; only the page scrolls. */
+  const mainRef = useStickyFit<HTMLDivElement>()
+  const middleRef = useStickyFit<HTMLDivElement>()
+  const rightRef = useStickyFit<HTMLDivElement>()
 
   /*
      The list on show: the fighters at the cap until one is on the altar,
@@ -217,6 +222,8 @@ export function DeskAscension({
     <div className="dasc">
       {/* ---------- the list ---------- */}
       <div className="dasc__list">
+        {/* The list's tools, a row of their own: the altar and the deal start level with the first card. */}
+        <div className="dasc__head">
         {/* With a fighter on the altar: its three sockets, three chips on a line. */}
         {target && (
           <div className="dasc__chips">
@@ -290,6 +297,7 @@ export function DeskAscension({
           </span>
           {target && orderPick}
         </div>
+        </div>
 
         {rows.length === 0 ? (
           <p className="faint dasc__empty">
@@ -347,9 +355,9 @@ export function DeskAscension({
       </div>
 
       {/* The altar and the deal: two columns on a wide board, one scrolling column beside the list on a narrower one. */}
-      <div className="dasc__main">
+      <div className="dasc__main" ref={mainRef}>
       {/* ---------- the altar, alone in the middle ---------- */}
-      <div className="dasc__middle">
+      <div className="dasc__middle" ref={middleRef}>
         <div className="pasc__stage dasc__stage">
           <div className="pasc__altar">
             <svg className="pasc__lines" viewBox="0 0 330 330" aria-hidden="true">
@@ -408,7 +416,7 @@ export function DeskAscension({
       </div>
 
       {/* ---------- what it needs, does and costs, and what it can roll ---------- */}
-      <div className="dasc__right">
+      <div className="dasc__right" ref={rightRef}>
         {!target ? (
           <div className="pasc__needs">
             <b>Put a fighter at the level cap in the middle. It is the one that ascends.</b>

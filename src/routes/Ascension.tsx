@@ -310,7 +310,6 @@ export default function Ascension() {
   const oddsPanel = (
     <OddsPanel
       odds={odds}
-      open
       factor={
         pending ?? target
           ? battleFactor((pending ?? target)!, levelMod, ageDecay).total
