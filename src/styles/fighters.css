@@ -3109,27 +3109,31 @@ h2.lstep__title {
   margin: -14px -14px 0;
   border-radius: 14px 14px 0 0;
 }
+/* The fighter stands to the left of the score badge, its left edge fading under the name. */
 .drost__bannerart {
   position: absolute;
   top: -8px;
-  right: -12px;
+  right: 88px;
   height: 230px;
   pointer-events: none;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 38%);
+  mask-image: linear-gradient(90deg, transparent, #000 38%);
 }
 .drost__banner::after {
   content: '';
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(90deg, rgb(8 14 28 / 92%) 18%, rgb(8 14 28 / 40%) 58%, transparent 82%),
+    linear-gradient(90deg, rgb(8 14 28 / 92%) 20%, rgb(8 14 28 / 45%) 42%, transparent 62%),
     linear-gradient(transparent 50%, rgb(8 14 28 / 92%));
 }
+/* Above the centred score badge, clear of its top. */
 .drost__banner > .drost__mk {
-  top: 12px;
+  top: 8px;
   right: 14px;
   z-index: 1;
-  width: 26px;
-  height: 26px;
+  width: 24px;
+  height: 24px;
 }
 .drost__banner > .drost__mk img {
   width: 16px;
@@ -3208,6 +3212,7 @@ h2.drost__bname {
   position: relative;
   z-index: 1;
   flex: none;
+  align-self: center;
   width: 70px;
   height: 82px;
   padding-bottom: 5px;
