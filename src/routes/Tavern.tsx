@@ -1059,7 +1059,7 @@ export default function Tavern() {
                 <span>
                   {saved} of {maxSaving} taken off · {picked.length} of {MAX_HIRE_CARDS} cards
                 </span>
-                <span>every wish met: {HIRE_BASE_AP - maxSaving}</span>
+                <span>every objective met: {HIRE_BASE_AP - maxSaving}</span>
               </span>
             </div>
 
