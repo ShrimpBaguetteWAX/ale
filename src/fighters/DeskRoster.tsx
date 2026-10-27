@@ -400,12 +400,12 @@ export function DeskRoster(p: DeskRosterProps) {
   const gateOf = (f: RosterFighter) =>
     p.mode === 'market' ? listable(f, p.now) : p.mode === 'sell' ? { ok: sellable(f), reason: useLabel(f) } : { ok: true }
   /*
-     Selling on a desktop shows the fighter beside the list, so a click on a
-     row is for looking: it opens the fighter without putting it in the sale.
-     The tick on the row, or Add to sale under the fighter, does that. A
-     phone has no panel to look in, so a tap there still ticks.
+     Selling or listing on a desktop shows the fighter beside the list, so a
+     click on a row is for looking: it opens the fighter without putting it
+     in the sale or the listing. The tick on the row, or the button under the
+     fighter, does that. A phone has no panel to look in, so a tap still ticks.
   */
-  const looks = p.mode === 'sell' && wide
+  const looks = (p.mode === 'sell' || p.mode === 'market') && wide
   const onRow = (f: RosterFighter) => {
     p.onSelect(f.fighter_id)
     if (p.mode === 'inventory') {
@@ -428,7 +428,10 @@ export function DeskRoster(p: DeskRosterProps) {
         {detail}
       </div>
     ) : p.mode === 'market' ? (
-      <ListPanel {...p} />
+      <div className="drost__stack">
+        <ListPanel {...p} />
+        {detail}
+      </div>
     ) : (
       detail
     )
@@ -1382,7 +1385,23 @@ function Acts({
         </button>
       )}
       {!phone && <MarkerPick {...rest} f={f} canAct={canAct} busy={busy} />}
-      {rest.mode === 'sell' ? (
+      {rest.mode === 'market' ? (
+        /* Listing: this puts the fighter in the listing or takes it out, and leaves the rest alone. */
+        (() => {
+          const gate = listable(f, rest.now)
+          return (
+            <button
+              type="button"
+              className={`btn btn--sm ${inSale ? 'btn--ghost' : 'btn--primary'}`}
+              disabled={!gate.ok}
+              title={gate.ok ? undefined : gate.reason}
+              onClick={() => onCheck(f.fighter_id)}
+            >
+              {inSale ? 'Remove from listing' : 'Add to listing'}
+            </button>
+          )
+        })()
+      ) : rest.mode === 'sell' ? (
         /* Already selling: this puts the fighter in the sale or takes it out, and leaves the rest alone. */
         <button
           type="button"
