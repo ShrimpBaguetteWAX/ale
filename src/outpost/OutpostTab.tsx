@@ -2,7 +2,6 @@ import { useMemo, useState } from 'react'
 import { useGame } from '@/state/useGame'
 import { useChainQuery } from '@/chain/useChainQuery'
 import { useAction } from '@/wharf/useAction'
-import { useModal } from '@/components/useModal'
 import { redeemOutpostOffer } from '@/wharf/actions'
 import { ActionBanner } from '@/components/ActionBanner'
 import { asset } from '@/assets'
@@ -350,7 +349,6 @@ export function OutpostTab() {
 
       {confirming && (
         <ConfirmRedeem
-          phone={phone}
           entry={confirming}
           balance={balance}
           onCancel={() => setConfirming(null)}
@@ -415,10 +413,6 @@ function OfferCard({
  * game, and the NFT arrives in their wallet rather than on their roster. Both
  * facts are stated here because this is the last screen before a signature.
  */
-function ConfirmRedeem({ phone, ...props }: { phone: boolean } & RedeemProps) {
-  return phone ? <PhoneConfirmRedeem {...props} /> : <DeskConfirmRedeem {...props} />
-}
-
 type RedeemProps = {
   entry: OutpostOffer
   balance: number
@@ -426,8 +420,8 @@ type RedeemProps = {
   onConfirm: () => void
 }
 
-/* A desktop shows it as the shop's other purchases do, the card as the hero. */
-function DeskConfirmRedeem({ entry, balance, onCancel, onConfirm }: RedeemProps) {
+/* Shown as the shop's other purchases are, the card as the hero. */
+function ConfirmRedeem({ entry, balance, onCancel, onConfirm }: RedeemProps) {
   const { offer, template } = entry
   const art = offerArt(template)
   const after = balance - offer.required
@@ -449,100 +443,3 @@ function DeskConfirmRedeem({ entry, balance, onCancel, onConfirm }: RedeemProps)
   )
 }
 
-function PhoneConfirmRedeem({ entry, balance, onCancel, onConfirm }: RedeemProps) {
-  const panel = useModal(onCancel)
-  const { offer, template } = entry
-  const art = offerArt(template)
-  const after = balance - offer.required
-
-  return (
-    <div
-      className="confirm"
-      role="dialog"
-      aria-modal="true"
-      aria-label="Confirm Outpost redemption"
-      onClick={onCancel}
-    >
-      <div
-        className="confirm__panel panel"
-        ref={panel}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <h2 className="confirm__title">
-          You are about to spend Alien Worlds shards
-        </h2>
-
-        <div className="confirm__deal">
-          <div className="confirm__side">
-            <span className="confirm__label">You pay</span>
-            <span className="confirm__value confirm__value--cost">
-              <Shards raw={offer.required} />
-            </span>
-            <span className="faint confirm__sub">Alien Worlds shards</span>
-          </div>
-          <span className="confirm__arrow" aria-hidden="true">
-            →
-          </span>
-          <div className="confirm__side">
-            <span className="confirm__label">You receive</span>
-            <span className="confirm__value confirm__value--gain">
-              {template?.name || `Template ${offer.template_id}`}
-            </span>
-            <span className="faint confirm__sub">an Alien Worlds NFT</span>
-          </div>
-        </div>
-
-        {art && (
-          <div className="confirm__item">
-            <img src={art} alt="" width={56} height={56} />
-            <div>
-              <div className="confirm__name">{template?.name}</div>
-              <div className="faint" style={{ fontSize: 'var(--fs-sm)' }}>
-                {[template?.rarity, template?.shine, template?.kind]
-                  .filter(Boolean)
-                  .join(' · ')}
-              </div>
-            </div>
-          </div>
-        )}
-
-        <div className="confirm__balance">
-          <div className="statline">
-            <span className="statline__k">Your Alien Worlds shards</span>
-            <span className="statline__v">
-              <Shards raw={balance} />
-            </span>
-          </div>
-          <div className="statline">
-            <span className="statline__k">After this redemption</span>
-            <span className="statline__v">
-              <Shards raw={Math.max(0, after)} />
-            </span>
-          </div>
-          <p className="hint">
-            {/*
-              Alien Worlds shards are the same currency this game's reward
-              pools pay out, so naming them is enough — the balance lines
-              above already show which figure is moving. What is left worth
-              saying is that neither side of this passes through anything of
-              ours: the Outpost holds the shards and mints the NFT straight to
-              the wallet, so there is no step of it we could reverse.
-            */}
-            This spends Alien Worlds shards — the same ones your mining pays
-            out. The Outpost sends the NFT to your WAX wallet. It cannot be
-            undone.
-          </p>
-        </div>
-
-        <div className="confirm__actions">
-          <button type="button" className="btn btn--ghost" onClick={onCancel}>
-            Cancel
-          </button>
-          <button type="button" className="btn btn--primary" onClick={onConfirm}>
-            Spend Alien Worlds shards
-          </button>
-        </div>
-      </div>
-    </div>
-  )
-}

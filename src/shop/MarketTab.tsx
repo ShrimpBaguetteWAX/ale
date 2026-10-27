@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react'
 import { useGame } from '@/state/useGame'
 import { useChainQuery } from '@/chain/useChainQuery'
 import { useAction } from '@/wharf/useAction'
-import { BottomSheet } from '@/components/BottomSheet'
 import { usePhone } from '@/components/usePhone'
 import { buyMarketSale } from '@/wharf/actions'
 import { asset, ipfsImage } from '@/assets'
@@ -364,7 +363,6 @@ export function MarketTab({ wax }: { wax: number }) {
 
       {buying && (
         <ConfirmBuy
-          phone={phone}
           card={buying}
           wax={wax}
           game={game.data}
@@ -579,7 +577,6 @@ function Benefits({ card, game, bag }: { card: MarketCard; game: Game | undefine
  * offers the button while the sale is still exactly what the row showed.
  */
 function ConfirmBuy({
-  phone,
   card,
   wax,
   game,
@@ -589,7 +586,6 @@ function ConfirmBuy({
   onConfirm,
   onStale,
 }: {
-  phone: boolean
   card: MarketCard
   wax: number
   game: Game | undefined
@@ -603,81 +599,6 @@ function ConfirmBuy({
   const status = check.loading ? 'checking' : check.error ? 'error' : saleStatus(card, check.data)
   const title = `Buy ${card.name}`
 
-  const body = (
-    <>
-      <div className="confirm__deal">
-        <div className="confirm__side">
-          <span className="confirm__label">You pay</span>
-          <span className="confirm__value confirm__value--cost mono">{priceLabel(card.price)}</span>
-          <span className="faint confirm__sub">at most — no fee on top</span>
-        </div>
-        <span className="confirm__arrow" aria-hidden="true">
-          →
-        </span>
-        <div className="confirm__side">
-          <span className="confirm__label">You receive</span>
-          <img className="amk__confirmart" src={ipfsImage(card.img)} alt="" />
-          <span className="faint confirm__sub">into your WAX wallet</span>
-        </div>
-      </div>
-
-      <div className="confirm__balance">
-        <div className="statline">
-          <span className="statline__k">Your WAX balance</span>
-          <span className="statline__v mono">{balanceLabel(wax)}</span>
-        </div>
-        <div className="statline">
-          <span className="statline__k">After this purchase</span>
-          <span className="statline__v mono">{balanceLabel(Math.max(0, wax - card.wax))}</span>
-        </div>
-      </div>
-
-      {status === 'ok' && (
-        <p className="amk__safe">
-          Checked again when you sign: if this sale's price or card changes, or it sells first, the
-          purchase is cancelled and nothing is spent.
-        </p>
-      )}
-      {status === 'checking' && <p className="hint">Checking the sale is still open…</p>}
-      {(status === 'gone' || status === 'changed') && (
-        <p className="alert alert--error">
-          {status === 'gone'
-            ? 'This sale has just closed — someone bought it, or the seller took it down.'
-            : 'This sale has changed since the list was read.'}{' '}
-          Nothing was spent.
-        </p>
-      )}
-      {status === 'error' && (
-        <p className="alert alert--error">The sale could not be checked. Try again in a moment.</p>
-      )}
-    </>
-  )
-
-  const actions = (
-    <>
-      <button type="button" className="btn btn--ghost" onClick={onCancel}>
-        Cancel
-      </button>
-      {status === 'gone' || status === 'changed' ? (
-        <button type="button" className="btn btn--primary" onClick={onStale}>
-          Show the current price
-        </button>
-      ) : (
-        <button type="button" className="btn btn--primary" disabled={status !== 'ok'} onClick={onConfirm}>
-          Buy for {priceLabel(card.price)}
-        </button>
-      )}
-    </>
-  )
-
-  /* A phone confirms in the game's bottom sheet, as the fighter market does. */
-  if (phone) {
-    return (
-      <BottomSheet title={title} onClose={onCancel} foot={<div className="rsheet__actions">{actions}</div>}>
-        <div className="amk__sheet">{body}</div>
-      </BottomSheet>
-    )
-  }
   const stale = status === 'gone' || status === 'changed'
   const { tiles, line } = cardFigures(card, game, bag)
   return (

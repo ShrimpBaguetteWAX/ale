@@ -65,7 +65,7 @@ const SHIELD = (
 );
 
 /**
- * The shop's purchase dialog on a desktop: the thing bought is the hero —
+ * The shop's purchase dialog: the thing bought is the hero —
  * large, lit in its rarity — with what it does as tiles, then the price and
  * the button on one bar. Shared by the packs, the NFT Market and the Outpost,
  * so every purchase reads the same way.

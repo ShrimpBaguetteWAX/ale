@@ -288,80 +288,6 @@
   }
 }
 
-.confirm__title {
-  font-size: var(--fs-lg);
-  margin-bottom: var(--sp-4);
-}
-
-/* Pay on the left, receive on the right — the exchange read literally. */
-.confirm__deal {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-3);
-  padding: var(--sp-3);
-  background: rgb(0 0 0 / 35%);
-  border: 1px solid var(--line-soft);
-  border-radius: var(--radius-sm);
-}
-
-.confirm__side {
-  display: grid;
-  gap: 2px;
-  flex: 1;
-  min-width: 0;
-}
-
-.confirm__label {
-  font-size: var(--fs-xs);
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: var(--text-faint);
-}
-
-.confirm__value {
-  font-family: var(--font-display);
-  font-size: var(--fs-lg);
-  font-weight: var(--fw-bold);
-}
-.confirm__value--cost {
-  color: var(--red);
-}
-.confirm__value--gain {
-  color: var(--teal);
-}
-
-.confirm__arrow {
-  flex: none;
-  font-size: var(--fs-xl);
-  color: var(--text-faint);
-}
-
-.confirm__item {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-3);
-  margin-top: var(--sp-3);
-}
-.confirm__item img {
-  width: 56px;
-  height: 56px;
-  flex: none;
-  object-fit: cover;
-  border-radius: var(--radius-xs);
-  border: 1px solid var(--line);
-}
-
-.confirm__name {
-  font-family: var(--font-display);
-  font-size: var(--fs-md);
-  font-weight: var(--fw-bold);
-  color: var(--white);
-}
-
-.confirm__balance {
-  margin-top: var(--sp-4);
-}
-
 .confirm__actions {
   display: flex;
   gap: var(--sp-2);
@@ -490,11 +416,6 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
-}
-
-/* The line under each half of the confirmation's exchange. */
-.confirm__sub {
-  font-size: var(--fs-xs);
 }
 
 /* ---------- Value badges and the short benefits ---------- */
@@ -1334,25 +1255,7 @@
   text-transform: uppercase;
   color: var(--text-faint);
 }
-.amk__facts {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 8px;
-}
-.amk__facts span {
-  display: grid;
-  gap: 2px;
-  padding: 9px 12px;
-  border-radius: 10px;
-  font-size: 11px;
-  color: var(--text-faint);
-  background: rgb(255 255 255 / 4%);
-}
-.amk__facts b {
-  font-family: var(--font-display);
-  font-size: 16px;
-  color: var(--white);
-}
+
 .amk__note {
   margin: 8px 0 0;
   font-size: 12px;
@@ -1465,12 +1368,6 @@
   height: 40px;
 }
 
-/* The confirmation's card, and the promise about the price. */
-.amk__confirmart {
-  width: 64px;
-  height: 88px;
-  object-fit: contain;
-}
 .amk__safe {
   margin: 0;
   padding: 12px 14px;
@@ -1764,10 +1661,7 @@
   .amk__note {
     font-size: 11px;
   }
-  .amk__sheet {
-    display: grid;
-    gap: 10px;
-  }
+
 }
 
 /* Six tabs on a phone: two even rows of three, not five and a lone one. */
@@ -1913,12 +1807,7 @@
   .shop .amk__more .resgrid__label {
     font-size: 10.5px;
   }
-  .shop .amk__facts span {
-    font-size: 12.5px;
-  }
-  .shop .amk__facts b {
-    font-size: 17.5px;
-  }
+
   .shop .amk__baglist li {
     font-size: 13.5px;
   }
@@ -1931,9 +1820,9 @@
 }
 
 /*
- * The showcase: a desktop's purchase dialog for the packs, the NFT Market and
- * the Outpost. What is bought is the hero, lit in its rarity (--edge); the
- * price and the button share one bar under it.
+ * The showcase: the purchase dialog for the packs, the NFT Market and the
+ * Outpost, on every screen. What is bought is the hero, lit in its rarity
+ * (--edge); the price and the button share one bar under it.
  */
 .confirm__panel.bshow {
   --edge: #c8d2e0;
@@ -2178,4 +2067,46 @@
 }
 .bshow .alert {
   margin: 0;
+}
+
+/* A phone: the same dialog, the hero a size down so the button stays in reach. */
+@media (max-width: 719px) {
+  .confirm:has(.bshow) {
+    padding: var(--sp-3);
+  }
+  .bshow__hero {
+    gap: 8px;
+    padding: 20px 16px 12px;
+  }
+  .bshow__art {
+    width: 104px;
+  }
+  .bshow__art.is-pack {
+    width: 120px;
+  }
+  .shell .main__inner h2.bshow__name {
+    font-size: 18px;
+  }
+  .bshow__body {
+    gap: 10px;
+    padding: 4px 14px 14px;
+  }
+  .bshow__tile b {
+    font-size: 15px;
+  }
+  .bshow__pay {
+    gap: 10px;
+    padding: 12px;
+  }
+  .bshow__price {
+    font-size: 20px;
+  }
+  .bshow__price img {
+    width: 20px;
+    height: 20px;
+  }
+  .bshow__buy {
+    min-width: 92px;
+    padding: 0 16px;
+  }
 }

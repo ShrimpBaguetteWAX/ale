@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useModal } from '@/components/useModal'
 import { useSearchParams } from 'react-router-dom'
 import { useGame } from '@/state/useGame'
 import { fetchShopCooldowns, fetchWaxBalance } from '@/shop/queries'
@@ -330,7 +329,6 @@ export default function Shop() {
 
       {confirming && (
         <ConfirmPurchase
-          phone={phone}
           item={confirming}
           value={values.get(confirming.item)}
           player={player}
@@ -368,25 +366,12 @@ function ShopBoard({
   )
 }
 
-/** The purchase dialog: the showcase on a desktop, the exchange on a phone. */
-function ConfirmPurchase(props: {
-  phone: boolean
-  item: ShopItem
-  value: PackValue | undefined
-  player: Player
-  wax: number
-  onCancel: () => void
-  onConfirm: () => void
-}) {
-  return props.phone ? <PhoneConfirmPurchase {...props} /> : <DeskConfirmPurchase {...props} />
-}
-
 /**
- * A desktop's purchase, as the showcase: the pack large, what it gives as
+ * A purchase, as the showcase: the pack large, what it gives as
  * tiles, and its bonus spelled out against the pack it is measured from —
  * "+8%" alone left players guessing what it was more than.
  */
-function DeskConfirmPurchase({
+function ConfirmPurchase({
   item,
   value,
   player,
@@ -443,97 +428,3 @@ function rewardName(item: ShopItem): string {
   return 'Legend'
 }
 
-/**
- * A phone's purchase: purchases are irreversible and some of them cost real
- * money, so nothing is signed until the player has seen exactly what leaves
- * and what arrives.
- */
-function PhoneConfirmPurchase({
-  item,
-  wax,
-  onCancel,
-  onConfirm,
-}: {
-  item: ShopItem
-  wax: number
-  onCancel: () => void
-  onConfirm: () => void
-}) {
-  const panel = useModal(onCancel)
-
-  const price = priceOf(item)
-  const reward = rewardOf(item)
-  const withWax = isWaxPriced(item)
-  const remaining = wax - waxAmount(item.cost_wax)
-
-  return (
-    <div
-      className="confirm"
-      role="dialog"
-      aria-modal="true"
-      aria-label="Confirm purchase"
-      onClick={onCancel}
-    >
-      <div
-        className="confirm__panel panel"
-        ref={panel}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <h2 className="confirm__title">You are about to exchange the following</h2>
-
-        <div className="confirm__deal">
-          <div className="confirm__side">
-            <span className="confirm__label">You pay</span>
-            <span className="confirm__value confirm__value--cost">
-              <Amount label={price.label} icon={price.icon} />
-            </span>
-          </div>
-          <span className="confirm__arrow" aria-hidden="true">
-            →
-          </span>
-          <div className="confirm__side">
-            <span className="confirm__label">You receive</span>
-            <span className="confirm__value confirm__value--gain">
-              <Amount label={reward.label} icon={reward.icon} />
-            </span>
-          </div>
-        </div>
-
-        <div className="confirm__item">
-          <img src={itemArt(item)} alt="" width={56} height={56} />
-          <div>
-            <div className="confirm__name">{item.title}</div>
-            <div className="faint" style={{ fontSize: 'var(--fs-sm)' }}>
-              {item.offer_name}
-            </div>
-          </div>
-        </div>
-
-        {withWax && (
-          <div className="confirm__balance">
-            <div className="statline">
-              <span className="statline__k">Your current WAX balance</span>
-              <span className="statline__v mono">{formatWax(wax)} WAX</span>
-            </div>
-            <div className="statline">
-              <span className="statline__k">After this purchase</span>
-              <span className="statline__v mono">{formatWax(remaining)} WAX</span>
-            </div>
-            <p className="hint">
-              This sends WAX from your wallet to the shop. It cannot be undone.
-            </p>
-          </div>
-        )}
-
-        <div className="confirm__actions">
-          <button type="button" className="btn btn--ghost" onClick={onCancel}>
-            Cancel
-          </button>
-          <button type="button" className="btn btn--primary" onClick={onConfirm}>
-            Confirm exchange
-          </button>
-        </div>
-      </div>
-    </div>
-  )
-}
