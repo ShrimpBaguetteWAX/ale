@@ -331,6 +331,11 @@ export function DeskRoster(p: DeskRosterProps) {
   */
   const [sheet, setSheet] = useState(false)
   useEffect(() => setSheet(false), [wide])
+  /* What the sheet holds: one fighter, or the sale or listing being put together. */
+  const [sheetOf, setSheetOf] = useState<'fighter' | 'basket'>('fighter')
+  /* A desktop's sale or listing folds to one bar over the fighter; this opens its terms in full. */
+  const [termsOpen, setTermsOpen] = useState(false)
+  useEffect(() => setTermsOpen(false), [p.mode])
 
   /*
      Each selling mode opens on the roster it is about. Sell puts the oldest
@@ -400,20 +405,23 @@ export function DeskRoster(p: DeskRosterProps) {
   const gateOf = (f: RosterFighter) =>
     p.mode === 'market' ? listable(f, p.now) : p.mode === 'sell' ? { ok: sellable(f), reason: useLabel(f) } : { ok: true }
   /*
-     Selling or listing on a desktop shows the fighter beside the list, so a
-     click on a row is for looking: it opens the fighter without putting it
-     in the sale or the listing. The tick on the row, or the button under the
-     fighter, does that. A phone has no panel to look in, so a tap still ticks.
+     A click on a row is for looking, in every mode and on every screen: it
+     opens the fighter — beside the list on a desktop, in a sheet otherwise —
+     without putting it in a sale or a listing. The tick on the row, or the
+     button under the fighter, does that.
   */
-  const looks = (p.mode === 'sell' || p.mode === 'market') && wide
+  const looks = p.mode === 'sell' || p.mode === 'market'
   const onRow = (f: RosterFighter) => {
     p.onSelect(f.fighter_id)
-    if (p.mode === 'inventory') {
-      if (!wide) setSheet(true)
-      return
+    if (!wide) {
+      setSheetOf('fighter')
+      setSheet(true)
     }
-    if (looks) return
-    if (gateOf(f).ok) p.onCheck(f.fighter_id)
+  }
+  const openBasket = () => {
+    p.onSelect(p.checked[p.checked.length - 1])
+    setSheetOf('basket')
+    setSheet(true)
   }
 
   /* A fighter the search has hidden can still be the one picked. */
@@ -421,20 +429,28 @@ export function DeskRoster(p: DeskRosterProps) {
     figures.get(f.fighter_id) ??
     figuresOf(f, p.templates.get(f.classname), p.config, p.levelMod, p.ageDecay, p.now, p.atLevelOne)
   const detail = shownFighter && <Detail f={shownFighter} fig={figOf(shownFighter)} {...p} />
-  const side =
-    p.mode === 'sell' ? (
-      <div className="drost__stack">
-        <SellPanel {...p} />
-        {detail}
-      </div>
-    ) : p.mode === 'market' ? (
-      <div className="drost__stack">
-        <ListPanel {...p} />
-        {detail}
-      </div>
-    ) : (
-      detail
-    )
+  /*
+     A desktop's side fits the screen: the sale or the listing folds to one
+     bar over the fighter, its terms a click away, so nothing in it scrolls.
+  */
+  const basketPanel = p.mode === 'sell' ? <SellPanel {...p} /> : p.mode === 'market' ? <ListPanel {...p} /> : null
+  const side = basketPanel ? (
+    <div className="drost__stack">
+      {termsOpen ? (
+        <>
+          <button type="button" className="drost__fold" onClick={() => setTermsOpen(false)}>
+            Fold the {p.mode === 'sell' ? 'sale' : 'terms'} away
+          </button>
+          {basketPanel}
+        </>
+      ) : (
+        <BasketBar {...p} onOpen={() => setTermsOpen(true)} />
+      )}
+      {detail}
+    </div>
+  ) : (
+    detail
+  )
 
   const basket = phone && p.mode !== 'inventory' && ticked.length > 0
 
@@ -721,7 +737,7 @@ export function DeskRoster(p: DeskRosterProps) {
                     view={view}
                     mode={p.mode}
                     now={p.now}
-                    picked={(p.mode === 'inventory' || looks) && f.fighter_id === (wide ? shownFighter : selected)?.fighter_id}
+                    picked={f.fighter_id === (wide ? shownFighter : selected)?.fighter_id}
                     checked={p.checked.includes(f.fighter_id)}
                     gate={gateOf(f)}
                     onClick={() => onRow(f)}
@@ -775,10 +791,7 @@ export function DeskRoster(p: DeskRosterProps) {
             <button
               type="button"
               className="btn btn--primary"
-              onClick={() => {
-                p.onSelect(p.checked[p.checked.length - 1])
-                setSheet(true)
-              }}
+              onClick={openBasket}
             >
               Review
             </button>
@@ -796,10 +809,7 @@ export function DeskRoster(p: DeskRosterProps) {
           <button
             type="button"
             className="btn btn--primary"
-            onClick={() => {
-              p.onSelect(p.checked[p.checked.length - 1])
-              setSheet(true)
-            }}
+            onClick={openBasket}
           >
             Review
           </button>
@@ -808,15 +818,17 @@ export function DeskRoster(p: DeskRosterProps) {
       {!wide && sheet && selected && (
         <BottomSheet
           side={!phone}
-          title={p.mode === 'inventory' ? `${cap(selected.racename)} ${cap(selected.classname)}` : p.mode === 'sell' ? 'Sell' : 'List on the market'}
-          onClose={() => setSheet(false)}
-          foot={
-            phone && p.mode === 'inventory' ? (
-              <Acts {...p} f={selected} fig={figOf(selected)} />
-            ) : undefined
+          title={
+            sheetOf === 'fighter' || !basketPanel
+              ? `${cap(selected.racename)} ${cap(selected.classname)}`
+              : p.mode === 'sell'
+                ? 'Sell'
+                : 'List on the market'
           }
+          onClose={() => setSheet(false)}
+          foot={phone && (sheetOf === 'fighter' || !basketPanel) ? <Acts {...p} f={selected} fig={figOf(selected)} /> : undefined}
         >
-          {p.mode === 'inventory' ? detail : side}
+          {sheetOf === 'fighter' || !basketPanel ? detail : basketPanel}
         </BottomSheet>
       )}
     </div>
@@ -1176,45 +1188,36 @@ function Detail(props: DeskRosterProps & { f: RosterFighter; fig: Figures }) {
             {phone && <MarkerPick {...props} chip />}
           </span>
         </span>
-      </div>
-
-      {/* The two clocks a fighter runs on. The long explanations sit in the
-          hover text, so each box is its figure, its bar and one line. */}
-      <div className="drost__twin">
-        <div className="drost__box" title={`${ageNote(fig.age, days, fig.factor.age)} It only goes down.`}>
-          <span className="drost__boxhead">
+        {/*
+          The two clocks a fighter runs on, in the header: the figure each
+          and one line, the long explanations in the hover text. They were
+          two boxes of their own, and the panel's height went on them.
+        */}
+        <span className="drost__heromini">
+          <span title={`${ageNote(fig.age, days, fig.factor.age)} Health & damage ×${fig.factor.age.toFixed(2)} · ${days} day${days === 1 ? '' : 's'} old. It only goes down.`}>
             <small>Age bonus</small>
             <b className={`is-${ageBand(fig.age)}`}>
               {fig.age > 0 ? '+' : ''}
               {fig.age.toFixed(0)}%
             </b>
           </span>
-          <span className="drost__agebar">
-            <i style={{ left: `${Math.max(0, Math.min(100, (fig.age + 100) / 2))}%` }} />
-          </span>
-          <p>
-            Health &amp; damage <b>×{fig.factor.age.toFixed(2)}</b> · {days} day{days === 1 ? '' : 's'} old
-          </p>
-        </div>
-        <div
-          className={`drost__box${fig.pay.overdue ? ' is-overdue' : ''}`}
-          title="Paying covers the time since the last payday, so paying early saves nothing. Miss it and the fighter is benched, then deleted."
-        >
-          <span className="drost__boxhead">
+          <span
+            className={fig.pay.overdue ? 'is-overdue' : undefined}
+            title={`${fig.pay.overdue ? 'Due now · benched until paid.' : `In ${daysLeft} day${daysLeft === 1 ? '' : 's'}.`} Paying covers the time since the last payday, so paying early saves nothing. Miss it and the fighter is benched, then deleted.`}
+          >
             <small>Payday</small>
-            <b>{payDay(f)}</b>
+            <b>{fig.pay.overdue ? 'Due' : payDay(f)}</b>
           </span>
-          <span className="drost__bar">
-            <i style={{ width: `${Math.max(2, fig.pay.progress * 100)}%` }} />
+          <span>
+            <small>Pay now</small>
+            <b>
+              <Credits value={fig.pay.cost} />
+            </b>
           </span>
-          <p>
-            {fig.pay.overdue ? 'Due now · benched until paid' : `In ${daysLeft} day${daysLeft === 1 ? '' : 's'}`} · pay now{' '}
-            <Credits value={fig.pay.cost} />
-          </p>
-        </div>
+        </span>
       </div>
 
-      <span className="drost__cap">Stats</span>
+      <span className="drost__cap is-named">Stats</span>
       <span className="drost__cells drost__cells--5 drost__cells--big">
         {fig.stats.map((x) => (
           <span className="drost__cell" key={x.field}>
@@ -1233,7 +1236,7 @@ function Detail(props: DeskRosterProps & { f: RosterFighter; fig: Figures }) {
         ))}
       </span>
 
-      <span className="drost__cap">Resistances</span>
+      <span className="drost__cap is-named">Resistances</span>
       <span className="drost__cells drost__cells--6 drost__cells--big">
         {fig.res.map((x) => (
           <span className="drost__cell" key={x.field} title={`${cap(x.el)} resistance`}>
@@ -1258,6 +1261,7 @@ function Detail(props: DeskRosterProps & { f: RosterFighter; fig: Figures }) {
               key={`${a.ability}-${i}`}
               className={`drost__ability${a.locked ? ' is-locked' : ''}`}
               style={{ '--ab': rarityColor(a.displayname) } as React.CSSProperties}
+              title={resolveAbilityDescription(a)}
             >
               <span className="drost__abname">
                 {abilityName(a.displayname)}
@@ -1461,6 +1465,61 @@ function Ticked({ f, onDrop, right }: { f: RosterFighter; onDrop: () => void; ri
       <button type="button" className="drost__drop" aria-label={`Untick ${f.classname}`} onClick={onDrop}>
         ✕
       </button>
+    </div>
+  )
+}
+
+/*
+ * The sale or the listing in one bar, over the fighter on a desktop: what it
+ * comes to, its button, and the full terms a click away — so the side fits
+ * the screen and nothing in it scrolls.
+ */
+function BasketBar(p: DeskRosterProps & { onOpen: () => void }) {
+  const n = p.checked.length
+  const sell = p.mode === 'sell'
+  const net = sellerPayout(p.startPrice, p.marketConfig)
+  const s = n === 1 ? '' : 's'
+  return (
+    <div className={`drost__bbar${sell ? ' is-sell' : ''}`}>
+      <span className="drost__bbartext">
+        <b>{sell ? (n ? `Sell ${n} fighter${s}` : 'Sell to the game') : n ? `List ${n} on the market` : 'List on the market'}</b>
+        <small>
+          {sell ? (
+            n ? (
+              <>
+                Permanent · you get <Credits value={p.sellValue} />
+              </>
+            ) : (
+              'Tick fighters to sell them back for credits'
+            )
+          ) : (
+            <>
+              From {gemsOf(p.startPrice)} · {p.keepListed ? 'stays listed' : 'comes back'} if nobody bids · you get{' '}
+              {gemsOf(net)} each
+            </>
+          )}{' '}
+          <button type="button" className="linklike" onClick={p.onOpen}>
+            {sell ? (n ? 'Show' : 'More') : 'Change'}
+          </button>
+        </small>
+      </span>
+      {sell ? (
+        <button type="button" className="btn btn--danger" disabled={!p.canAct || n === 0 || !!p.busy} onClick={p.onSell}>
+          {p.busy === 'sell' && <span className="spinner" />}
+          Sell {n || ''}
+        </button>
+      ) : (
+        <button
+          type="button"
+          className="btn btn--primary"
+          disabled={!p.canAct || !p.listPlan.gate.ok || !!p.busy}
+          onClick={p.onList}
+          title={p.listPlan.gate.ok ? undefined : p.listPlan.gate.reason}
+        >
+          {p.busy === 'list' && <span className="spinner" />}
+          List {n || ''} {p.listPlan.gems > 0 && <Gems value={p.listPlan.gems} />}
+        </button>
+      )}
     </div>
   )
 }
