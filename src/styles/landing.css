@@ -244,14 +244,40 @@
   z-index: -1;
   background: radial-gradient(circle at 50% 42%, rgb(5 16 30 / 35%), #05101e 64%);
 }
-/* The ring waits rather than turns: nothing is loading until you press. */
+/*
+ * The ring waits rather than turns: nothing is loading until you press, so
+ * it is drawn whole and lit, breathing slowly. A part-drawn arc standing
+ * still read as a loader that had stalled. While the wallet window is open
+ * the boot screen's arc turns in it.
+ */
 .connect__ring {
   width: min(280px, 64vw);
   margin-bottom: 4px;
+  box-shadow:
+    inset 0 0 0 1.5px rgb(0 186 255 / 38%),
+    0 0 34px rgb(0 186 255 / 12%);
+  animation: connect-glow 3.6s ease-in-out infinite;
 }
 .connect__ring svg {
+  display: none;
+}
+.connect__ring.is-busy {
   animation: none;
-  transform: rotate(150deg);
+}
+.connect__ring.is-busy svg {
+  display: block;
+}
+@keyframes connect-glow {
+  50% {
+    box-shadow:
+      inset 0 0 0 1.5px rgb(0 186 255 / 62%),
+      0 0 50px rgb(0 186 255 / 24%);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .connect__ring {
+    animation: none;
+  }
 }
 .connect__back {
   position: absolute;

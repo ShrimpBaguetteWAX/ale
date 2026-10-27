@@ -10,7 +10,7 @@ import { readableError } from '@/wharf/errors'
  * There is no password and no account to create: the WAX account *is* the
  * identity, and WharfKit's own picker handles the wallet choice. So this
  * screen is the game's emblem, one button and one line that it costs
- * nothing — the boot screen's ring at rest, so loading, connecting and the
+ * nothing — the boot screen's ring, closed and at rest, so loading, connecting and the
  * game read as one scene — plus a failure, in plain language, when there is
  * one. The picker that opens next explains the rest.
  */
@@ -52,7 +52,8 @@ export function Connect() {
         ← Back
       </Link>
 
-      <EmblemRing className="connect__ring" />
+      {/* Whole and softly lit while it waits for the press; the arc turns only while the wallet is open. */}
+      <EmblemRing className={`connect__ring${busy ? ' is-busy' : ''}`} />
 
       {(error || phase === 'offline') && (
         <div className="connect__note" role="alert">
