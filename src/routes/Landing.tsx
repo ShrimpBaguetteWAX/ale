@@ -9,6 +9,11 @@ import { useGame } from '@/state/useGame'
 import { SwitchWallet } from '@/components/SwitchWallet'
 import { GameLogo } from '@/components/GameLogo'
 import { asset } from '@/assets'
+import { useChainQuery } from '@/chain/useChainQuery'
+import { fetchArenaRanks, fetchArenaSeasons } from '@/leaderboard/queries'
+import { defaultSeason, displayName } from '@/leaderboard/rules'
+import { PlayerAvatar } from '@/components/PlayerAvatar'
+import { formatNumber } from '@/format'
 
 /**
  * The landing page, as the key art leads it: the game's own illustration
@@ -103,6 +108,7 @@ export function Landing() {
                   ))}
                 </div>
               )}
+              {r.id === 'battle' && <BattleScene />}
             </div>
             <div className="kart__text">
               <div className="kart__kick">{r.kick}</div>
@@ -128,11 +134,10 @@ export function Landing() {
         <h2 className="kart__h2">
           Where will you <em>land?</em>
         </h2>
-        <div className="kart__orbs">
+        <div className="kart__worldgrid">
           {WORLDS.map((w) => (
-            <span className="kart__orb" key={w}>
-              <span className="kart__planet" style={{ backgroundImage: `url(${asset(`/assets/landing/world-${w}.webp`)})` }} />
-              {w}
+            <span className="kart__world" key={w} style={{ backgroundImage: `url(${asset(`/assets/landing/worldcard-${w}.webp`)})` }}>
+              <b>{w}</b>
             </span>
           ))}
         </div>
@@ -157,6 +162,69 @@ export function Landing() {
         <span>Alien Legends runs on the WAX blockchain.</span>
         <span>Play with Anchor or MyCloudWallet</span>
       </footer>
+    </div>
+  )
+}
+
+/* Who stands on each side of the arena floor: your three, their two. */
+const US = ['hunter_elgem', 'astralknight_lopati', 'mystic_altan']
+const THEM = ['juggernaut_khaured', 'voidcaller_altan']
+
+/**
+ * The Battle row's picture: a fight caught mid-swing on the arena floor, and
+ * over it the live arena leaderboard — real trainers, read from the chain,
+ * so the page shows people actually playing rather than a stock image. The
+ * board is left out until it has loaded, and if the read fails the fight
+ * still stands on its own.
+ */
+function BattleScene() {
+  const board = useChainQuery('landing:arena-board', async () => {
+    const season = defaultSeason(await fetchArenaSeasons())
+    if (!season) return null
+    const rows = await fetchArenaRanks(season.scope)
+    return { name: season.displayname, rows: rows.slice(0, 5) }
+  })
+  return (
+    <div className="kart__battle">
+      <div className="kart__team is-us">
+        {US.map((f, i) => (
+          <span key={f} style={{ ['--hp' as string]: [72, 45, 88][i] + '%' }}>
+            <i />
+            <img src={asset(`/assets/fighters/${f}.webp`)} alt="" loading="lazy" decoding="async" />
+          </span>
+        ))}
+      </div>
+      <div className="kart__team is-them">
+        {THEM.map((f, i) => (
+          <span key={f} style={{ ['--hp' as string]: [18, 61][i] + '%' }}>
+            <i />
+            <img src={asset(`/assets/fighters/${f}.webp`)} alt="" loading="lazy" decoding="async" />
+          </span>
+        ))}
+      </div>
+      <span className="kart__burst" aria-hidden="true" />
+      <span className="kart__dmg is-a" aria-hidden="true">
+        −172
+      </span>
+      <span className="kart__dmg is-b" aria-hidden="true">
+        −96
+      </span>
+      {board.data && board.data.rows.length > 0 && (
+        <div className="kart__lb">
+          <div className="kart__lbhead">
+            <b>Arena</b>
+            <span>{board.data.name}</span>
+          </div>
+          {board.data.rows.map((r, i) => (
+            <div className="kart__lbrow" key={r.wallet}>
+              <span className={`kart__lbrank${i < 3 ? ` is-${i + 1}` : ''}`}>{i + 1}</span>
+              <PlayerAvatar id={r.avatar} name={displayName(r)} className="kart__lbav" size={22} />
+              <span className="kart__lbname">{displayName(r)}</span>
+              <span className="kart__lbpts">{formatNumber(r.rating)}</span>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
