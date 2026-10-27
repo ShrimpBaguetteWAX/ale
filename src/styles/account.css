@@ -2923,7 +2923,7 @@ button.prew__row:hover:not(:disabled) {
 }
 
 /* Too narrow for the card beside the tabs (a small laptop): it becomes a strip on top. */
-@media (max-width: 1279px) {
+@media (max-width: 1439px) {
   .dacc {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -3469,4 +3469,106 @@ button.prew__row:hover:not(:disabled) {
   font-weight: 700;
   color: var(--cyan);
   text-decoration: none;
+}
+
+/*
+ * Account on a desktop, a size up — the same step as Rewards. Scoped to the
+ * desktop board (.dacc); the phone's Account keeps its own sizes.
+ */
+.dacc .tabs__tab,
+.dacc .btn--sm {
+  font-size: 13px;
+}
+.shell .main__inner .dacc .drew__cap {
+  font-size: 12px;
+}
+.dacc .drew__cap span {
+  font-size: 13.5px;
+}
+.dacc .rsheet__hint {
+  font-size: 13.5px;
+}
+/* The card */
+.dacc .dacc__wallet {
+  font-size: 12.5px;
+}
+.dacc .dacc__legend {
+  font-size: 11.5px;
+}
+.dacc .dacc__facts > div {
+  font-size: 13.5px;
+}
+.dacc .dacc__facts dd.mono {
+  font-size: 13px;
+}
+.dacc .dacc__claim b {
+  font-size: 15.5px;
+}
+.dacc .dacc__claim small {
+  font-size: 13px;
+}
+/* Avatar tracks: wider name and next columns, so the bigger type stays on one line */
+.dacc .dtrack {
+  grid-template-columns: 24px 190px minmax(0, 1fr) 160px;
+}
+@media (max-width: 1439px) {
+  .dacc .dacc__facts {
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  }
+}
+.dacc .dtrack__name b {
+  font-size: 15px;
+}
+.dacc .dtrack__name b em {
+  font-size: 12.5px;
+}
+.dacc .dtier small {
+  font-size: 11px;
+}
+.dacc .dtier em {
+  font-size: 8.5px;
+}
+.dacc .dtrack__next small {
+  font-size: 12.5px;
+}
+/* CPU */
+.shell .main__inner .dacc .dgauge__title {
+  font-size: 16px;
+}
+.dacc .dgauge .pring2__in small {
+  font-size: 12.5px;
+}
+.dacc .dgauge__facts small {
+  font-size: 11.5px;
+}
+.dacc .dgauge__facts b {
+  font-size: 15.5px;
+}
+.dacc .dgauge__act small {
+  font-size: 13px;
+}
+/* Auto-sign */
+.dacc .dauto__modes .pauto__text b {
+  font-size: 15px;
+}
+.dacc .dauto__modes .pauto__text small,
+.dacc .dauto__groups .autosign__text span,
+.dacc .dauto__groups .autosign__text small,
+.dacc .dauto__applytext small {
+  font-size: 13px;
+}
+.dacc .dauto__groups .autosign__text strong,
+.dacc .dauto__applytext b {
+  font-size: 14.5px;
+}
+.dacc .dauto .pauto__never {
+  font-size: 13.5px;
+}
+/* Stats */
+.dacc .dstat .pstat__name,
+.dacc .dstat .pstat__v {
+  font-size: 14px;
+}
+.dacc .dstat__rank {
+  font-size: 12px;
 }
