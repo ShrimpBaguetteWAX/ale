@@ -5890,12 +5890,16 @@
   background: none;
   font-size: 13px;
 }
+/* One icon per stat the roll moves, side by side: a fixed square stacked a second one out of the row. */
 .ptour__condrow .weather__stats {
   flex: none;
-  display: grid;
-  place-items: center;
-  width: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  min-width: 30px;
   height: 30px;
+  padding: 0 6px;
   border-radius: 9px;
   background: rgb(255 255 255 / 6%);
   box-shadow: inset 0 0 0 1px rgb(255 255 255 / 10%);
