@@ -150,7 +150,7 @@
 .rail__prizes .prizecard__head {
   grid-column: 1 / -1;
   justify-content: center;
-  margin-bottom: 7px;
+  margin-bottom: 12px;
 }
 .rail__prizes .prizecard__row {
   grid-template-columns: none;
