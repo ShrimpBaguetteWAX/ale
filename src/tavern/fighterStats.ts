@@ -367,9 +367,10 @@ export function elementBackground(element: string): string {
 }
 
 /**
- * An element's badge: the cut hexagon in the element's colour, with its
- * symbol. Vector, on one 24px grid, so all six match at any size. A name
- * that is not an element gets neutral's rather than a broken image.
+ * An element's icon: its own shape, cut into three tones of its colour
+ * (lit upper left, mid on the right, shade below). Vector, on one 24px
+ * grid, so all six match at any size. A name that is not an element gets
+ * neutral's rather than a broken image.
  */
 export function elementIcon(element: string): string {
   const known = ['air', 'fire', 'gem', 'metal', 'nature', 'neutral']
