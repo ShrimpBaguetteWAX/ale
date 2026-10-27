@@ -153,6 +153,7 @@ class ScreenBoundary extends Component<{ children: ReactNode }, { failed: boolea
 // Everything past the door is split out: a visitor who only reads the landing
 // page never downloads the game screens or the wallet SDK.
 const Signup = lazyScreen(() => import('./routes/Signup'))
+const Guide = lazyScreen(() => import('./routes/Guide'))
 const MapView = lazyScreen(() => import('./routes/MapView'))
 const Briefing = lazyScreen(() => import('./routes/Briefing'))
 const Profile = lazyScreen(() => import('./routes/Profile'))
@@ -298,6 +299,7 @@ export default function App() {
             <Route path="/" element={<Landing />} />
             <Route path="/connect" element={<Connect />} />
             <Route path="/signup" element={<Signup />} />
+            <Route path="/guide" element={<Guide />} />
 
             <Route element={<RequirePlayer />}>
               <Route

@@ -1,5 +1,3 @@
-import { useCallback, useRef } from 'react'
-
 /**
  * React 18 has no mapping for the fetchPriority DOM attribute, so passing it
  * camelCased logs a warning and drops it. Spreading the lowercase attribute
@@ -8,7 +6,6 @@ import { useCallback, useRef } from 'react'
 const HIGH_PRIORITY = { fetchpriority: 'high' } as Record<string, string>
 import { Link } from 'react-router-dom'
 import { useGame } from '@/state/useGame'
-import { NetworkStatus } from '@/components/NetworkStatus'
 import { SwitchWallet } from '@/components/SwitchWallet'
 import { GameLogo } from '@/components/GameLogo'
 import { asset } from '@/assets'
@@ -53,12 +50,6 @@ const WORLDS = ['eyeke', 'kavian', 'magor', 'naron', 'neri', 'veles']
 export function Landing() {
   const account = useGame((s) => s.account)
   const player = useGame((s) => s.player)
-  const rowsRef = useRef<HTMLDivElement>(null)
-
-  const toRows = useCallback(() => {
-    rowsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-  }, [])
-
   const primary = player
     ? { to: '/map', label: 'Play' }
     : account
@@ -76,9 +67,6 @@ export function Landing() {
           decoding="async"
         />
         <div className="kart__shade" />
-        <div className="kart__status">
-          <NetworkStatus />
-        </div>
         <div className="kart__copy">
           <GameLogo className="kart__logo" priority />
           <h1 className="kart__title">
@@ -93,18 +81,18 @@ export function Landing() {
             <Link className="btn btn--primary btn--charged btn--lg heroplay kart__play" to={primary.to}>
               {primary.label}
             </Link>
-            <button type="button" className="kart__how" onClick={toRows}>
+            <Link className="kart__how" to="/guide">
               <svg viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M8 5v14l11-7z" />
               </svg>
               How it works
-            </button>
+            </Link>
           </div>
           <p className="kart__note">{account ? <SwitchWallet /> : 'Play with Anchor or MyCloudWallet.'}</p>
         </div>
       </header>
 
-      <div className="kart__rows" ref={rowsRef}>
+      <div className="kart__rows">
         {ROWS.map((r, i) => (
           <section className={`kart__row${i % 2 ? ' is-flip' : ''}`} key={r.id}>
             <div className={`kart__media${r.id === 'build' ? ' is-map' : ''}`} style={{ backgroundImage: `url(${r.art})` }}>

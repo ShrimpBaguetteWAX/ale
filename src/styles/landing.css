@@ -723,12 +723,6 @@
     linear-gradient(90deg, transparent 30%, rgb(4 8 18 / 75%) 58%, #040812 80%),
     linear-gradient(0deg, #050913, transparent 30%);
 }
-.kart__status {
-  position: absolute;
-  top: 16px;
-  right: 16px;
-  z-index: 3;
-}
 .kart__copy {
   position: absolute;
   top: 50%;
