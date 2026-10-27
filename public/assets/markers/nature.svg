@@ -1,9 +1,1 @@
-<svg width="13" height="13" viewBox="0 0 13 13" fill="none" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
-<rect width="13" height="13" fill="url(#pattern0_3697_156)"/>
-<defs>
-<pattern id="pattern0_3697_156" patternContentUnits="objectBoundingBox" width="1" height="1">
-<use xlink:href="#image0_3697_156" transform="scale(0.0769231)"/>
-</pattern>
-<image id="image0_3697_156" width="13" height="13" preserveAspectRatio="none" xlink:href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA0AAAANCAYAAABy6+R8AAAACXBIWXMAAAsTAAALEwEAmpwYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAD3SURBVHgBlVLBTQMxEJxdXwGUYCoASjhF8KUDSCo4XAHpACQKgBDEm1SQ0MF1gEtwAXgXm+QSKzkpl/msNN7Z2R2ZUOBpObYcfx/AfEuqNlFBiTygYd1BVqJMqBO8LO8aFX3GEUTRmjeCxyGCDpRXMhJ/hgpijFecbphiOIK7+Ww57XdRsgr4CLg+hSq+c+WUzuWO1FZUnQGaXh+m11yq0kEUzqwf7KGLrprRfPGvLaZMmTDuFeSBpppsW1OAPpNN/T4jovs+B2FTu/rNd1xFKgFEbY5eJfqie5HW/XLXH6v9QVUKwkJk5kbzLDjHAOSbztJfCzgBfzm0bixOFO27AAAAAElFTkSuQmCC"/>
-</defs>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.5 3.5C10.5 3.6 3.6 8.7 3.6 15.6c0 1.9.6 3.6 1.6 4.9C14.6 20.5 20.4 14 20.5 3.5z" fill="#6bd169" fill-rule="evenodd" /><path d="M5.4 19.9C8.8 15 12.3 11.4 16.8 8" fill="none" stroke="#0b1426" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
