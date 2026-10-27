@@ -326,31 +326,6 @@
   min-height: 44px;
 }
 
-.qcard__confirm {
-  display: grid;
-  gap: var(--sp-2);
-  margin-top: var(--sp-2);
-  padding: var(--sp-3);
-  border: 1px solid rgb(255 52 52 / 40%);
-  border-radius: var(--radius-xs);
-  background: rgb(255 52 52 / 10%);
-}
-
-.qcard__warn {
-  margin: 0;
-  font-size: var(--fs-xs);
-  line-height: 1.45;
-  color: var(--text-dim);
-}
-
-.qcard__confirmRow {
-  display: flex;
-  gap: var(--sp-2);
-}
-.qcard__confirmRow .btn {
-  flex: 1;
-}
-
 /* ---------- expired ---------- */
 
 .expired {
@@ -618,15 +593,7 @@
     width: 13px;
     height: 13px;
   }
-  .qcard__confirm {
-    margin-top: 4px;
-    padding: 8px;
-    border-radius: 9px;
-    background: rgb(4 8 18 / 88%);
-  }
-  .qcard__warn {
-    font-size: 11.5px;
-  }
+
 }
 
 /* ===================================================================

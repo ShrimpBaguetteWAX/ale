@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { fireEvent, render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { DeskQuests } from '@/quests/DeskQuests'
+import { ScopePanel } from '@/routes/Quests'
 import type { ScopeBoard } from '@/quests/rules'
 import type { Quest } from '@/quests/types'
 import type { Player } from '@/chain/types'
@@ -72,5 +73,28 @@ describe('the quest journal', () => {
     const fresh = quest('d', 'week', 'Weekly three')
     rerender(view(boardOf([a], [b, fresh]), onReroll))
     expect(screen.getByRole('heading', { level: 2, name: 'Weekly three' })).toBeInTheDocument()
+  })
+})
+
+describe('the phone quest cards', () => {
+  it('reroll on the first press', () => {
+    const a = quest('a', 'day', 'Daily one')
+    const onReroll = vi.fn()
+    render(
+      <MemoryRouter>
+        <ScopePanel
+          board={boardOf([a], [])[0]}
+          player={player}
+          credits={1000}
+          now={NOW}
+          busy={new Map()}
+          canAct
+          onClaim={vi.fn()}
+          onReroll={onReroll}
+        />
+      </MemoryRouter>,
+    )
+    fireEvent.click(screen.getByRole('button', { name: /Reroll/ }))
+    expect(onReroll).toHaveBeenCalledWith(a)
   })
 })

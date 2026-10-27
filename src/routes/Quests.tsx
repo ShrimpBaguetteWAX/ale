@@ -37,7 +37,7 @@ import { DeskQuests } from '@/quests/DeskQuests'
  *     the pool the instant it is issued and moves the TLM into the contract's
  *     own account. The figure on a card is money set aside for this player,
  *     not an estimate — and rerolling returns it to the pool, so a reroll is
- *     a trade rather than a free redraw. The screen says so before the click.
+ *     a trade rather than a free redraw.
  *
  *   • **Progress is a lifetime counter minus a snapshot.** The task watches a
  *     `permstats` key that only ever grows; the quest stores where it stood
@@ -139,7 +139,6 @@ export default function Quests() {
     }
     return map
   }, [rawBusy])
-  const [confirmReroll, setConfirmReroll] = useState<string | null>(null)
 
   /*
    * Countdowns tick, and a daily quest in its final hour shows seconds. A
@@ -235,7 +234,6 @@ export default function Quests() {
   }
 
   const doReroll = (quest: Quest) => {
-    setConfirmReroll(null)
     const key = questKey(quest)
     return run(
       busyKey('reroll', key),
@@ -360,10 +358,8 @@ export default function Quests() {
               now={now}
               busy={busy}
               canAct={!!session}
-              confirmReroll={confirmReroll}
               onClaim={(q) => void doClaim(q)}
               onReroll={(q) => void doReroll(q)}
-              onAskReroll={setConfirmReroll}
             />
           )
         )}
@@ -383,10 +379,8 @@ export function ScopePanel({
   now,
   busy,
   canAct,
-  confirmReroll,
   onClaim,
   onReroll,
-  onAskReroll,
 }: {
   board: ScopeBoard
   player: Player
@@ -395,10 +389,8 @@ export function ScopePanel({
   now: number
   busy: Busy
   canAct: boolean
-  confirmReroll: string | null
   onClaim: (q: Quest) => void
   onReroll: (q: Quest) => void
-  onAskReroll: (key: string | null) => void
 }) {
   return (
     <>
@@ -413,11 +405,8 @@ export function ScopePanel({
             now={now}
             busy={busy}
             canAct={canAct}
-            confirming={confirmReroll === questKey(q)}
             onClaim={() => onClaim(q)}
             onReroll={() => onReroll(q)}
-            onAskReroll={() => onAskReroll(questKey(q))}
-            onCancelReroll={() => onAskReroll(null)}
           />
         ))}
 
@@ -473,11 +462,8 @@ function QuestCard({
   now,
   busy,
   canAct,
-  confirming,
   onClaim,
   onReroll,
-  onAskReroll,
-  onCancelReroll,
 }: {
   quest: Quest
   player: Player
@@ -486,11 +472,8 @@ function QuestCard({
   now: number
   busy: Busy
   canAct: boolean
-  confirming: boolean
   onClaim: () => void
   onReroll: () => void
-  onAskReroll: () => void
-  onCancelReroll: () => void
 }) {
   const p = progressOf(quest, player, now)
   const reward = rewardOf(quest)
@@ -558,48 +541,19 @@ function QuestCard({
             {doing === 'claim' && <span className="spinner" />}
             Claim {reward.label} {reward.symbol}
           </button>
-        ) : confirming ? (
-          <div className="qcard__confirm">
-            {/*
-              Rerolling hands this quest's escrowed reward back to the pool and
-              prices a fresh one independently, so the replacement can be worth
-              less. That is the part worth pausing on — not the 25 credits.
-            */}
-            <p className="qcard__warn">
-              Give up {reward.label} {reward.symbol} and any progress for a
-              different quest? The new one is priced separately.
-            </p>
-            <div className="qcard__confirmRow">
-              <button
-                type="button"
-                className="btn btn--ghost btn--sm"
-                onClick={onCancelReroll}
-              >
-                Keep it
-              </button>
-              <button
-                type="button"
-                className="btn btn--danger btn--sm"
-                disabled={!canAct || working}
-                onClick={onReroll}
-              >
-                {doing === 'reroll' && <span className="spinner" />}
-                Reroll
-              </button>
-            </div>
-          </div>
         ) : (
           <button
             type="button"
             className="btn btn--ghost qcard__action"
             disabled={!canAct || working || tooPoor}
-            onClick={onAskReroll}
+            onClick={onReroll}
             title={
               tooPoor
                 ? `Rerolling costs ${cost} credits`
                 : 'Trade this quest for another in the same cadence'
             }
           >
+            {doing === 'reroll' && <span className="spinner" />}
             Reroll
             <span className={`cost${tooPoor ? ' cost--short' : ''}`}>
               {cost.toLocaleString(NUM_LOCALE)}
