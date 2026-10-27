@@ -1022,3 +1022,104 @@
     box-shadow: none;
   }
 }
+
+/*
+ * Farming on a desktop, a size up — the step the other screens took. Scoped
+ * to the desktop board (.dfarm); the phone's Farming keeps its own sizes.
+ */
+.dfarm .dfarm__sub {
+  font-size: 14px;
+}
+.dfarm .tabs__tab,
+.dfarm .btn--sm {
+  font-size: 13px;
+}
+.dfarm .tabs__count {
+  font-size: 11.5px;
+}
+/* The pools strip */
+.dfarm .dfarm__ready small {
+  font-size: 10.5px;
+}
+.dfarm .dfarm__ready b {
+  font-size: 26px;
+}
+.dfarm .dfarm__pool .pfring {
+  width: 60px;
+}
+.dfarm .dfarm__pool .pfring > b {
+  font-size: 12.5px;
+}
+.dfarm .dfarm__pooltext b {
+  font-size: 15px;
+}
+.dfarm .dfarm__pooltext small {
+  font-size: 12.5px;
+}
+/* The pool's credits sit on its title line, so the bigger rate line keeps the full width. */
+.dfarm .dfarm__pool {
+  position: relative;
+  grid-template-columns: auto minmax(0, 1fr);
+}
+.dfarm .dfarm__est {
+  position: absolute;
+  top: 12px;
+  right: 16px;
+  font-size: 13.5px;
+}
+.dfarm .dfarm__warn {
+  font-size: 13.5px;
+}
+/* The shelf and its cards */
+.dfarm .dfarm__pick {
+  font-size: 13.5px;
+}
+.dfarm .dfarm__shelfhead {
+  font-size: 12px;
+}
+.dfarm .dfarm__shelfhead small {
+  font-size: 13px;
+}
+.dfarm .dfarm__grid {
+  grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
+  gap: 10px;
+}
+.dfarm .dfarm__card {
+  gap: 6px;
+  padding: 6px;
+}
+.dfarm .dfarm__owned {
+  font-size: 11px;
+}
+.dfarm .dfarm__shine {
+  font-size: 9px;
+}
+.dfarm .dfarm__chosen {
+  font-size: 22px;
+}
+.dfarm .dfarm__name {
+  font-size: 13.5px;
+}
+.dfarm .dfarm__meta {
+  font-size: 11.5px;
+}
+.dfarm .dfarm__meta b {
+  font-size: 12.5px;
+}
+.dfarm .dfarm__step {
+  grid-template-columns: 28px minmax(0, 1fr) 28px;
+  height: 28px;
+}
+.dfarm .dfarm__step button {
+  font-size: 16px;
+}
+.dfarm .dfarm__step input {
+  font-size: 13px;
+}
+/* The hand */
+.dfarm .dfarm__handtext b {
+  font-size: 15.5px;
+}
+.dfarm .dfarm__handtext small {
+  font-size: 13px;
+}
