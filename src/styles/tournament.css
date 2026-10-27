@@ -7272,7 +7272,7 @@
 .picker--inline > .sheetbar { grid-row: 2; }
 .picker--inline > .picker__countrow { grid-row: 2; }
 .picker--inline > .fightergrid,
-.picker--inline > .cardgrid { grid-row: 3; }
+.picker--inline > .cardgrid { grid-row: 3; grid-column: 1 / -1; }
 .picker--inline > .filters__drop {
   grid-row: 3;
   grid-column: 1 / -1;

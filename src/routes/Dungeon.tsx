@@ -68,6 +68,7 @@ import {
   WeatherPanel,
   POLL_ATTEMPTS,
   POLL_INTERVAL_MS,
+  MarkerLine,
   RosterFilters,
   battlePanel,
   mid,
@@ -1429,6 +1430,8 @@ export default function Dungeon() {
                 <span className="tabs__count">{counts[key]}</span>
               </button>
             ))}
+            {/* The markers at hand beside the tabs, as over My Fighters' rows. */}
+            {tab === 'fighters' && <MarkerLine roster={roster ?? []} filter={filter} onChange={setFilter} />}
           </div>
           )}
 

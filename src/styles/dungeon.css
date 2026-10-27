@@ -6191,9 +6191,11 @@ button.combatcard--empty:hover {
 .picker:has(> .pickbar) > .pickbar {
   grid-row: 2;
 }
+/* The full width, always: with the filters open in the same row, an unplaced grid was put in a new column beside them. */
 .picker:has(> .pickbar) > .fightergrid,
 .picker:has(> .pickbar) > p.faint {
   grid-row: 3;
+  grid-column: 1 / -1;
 }
 .picker > .filters__drop--bar {
   grid-row: 3;
@@ -6240,4 +6242,19 @@ button.combatcard--empty:hover {
 .weathertwin__stats.is-grid .weathertwin__stat {
   width: 12px;
   height: 12px;
+}
+
+/* The markers in a line at the end of the tabs, as over My Fighters' rows. */
+.tabs > .pickmarks {
+  flex: none;
+  margin-left: auto;
+}
+.pickmarks button {
+  min-height: 32px;
+  padding: 0 9px;
+}
+.pickmarks img {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
 }

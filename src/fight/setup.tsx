@@ -3310,3 +3310,41 @@ export function DetailSheet({
     </div>
   )
 }
+
+/**
+ * The markers in one line, each in or out of the filter, as My Fighters
+ * draws them over its rows. Only the markers this roster carries; the
+ * filter panel keeps them too.
+ */
+export function MarkerLine({
+  roster,
+  filter,
+  onChange,
+}: {
+  roster: RosterFighter[]
+  filter: RosterFilter
+  onChange: (filter: RosterFilter) => void
+}) {
+  const used = useMemo(() => new Set(roster.map((f) => f.marker).filter(Boolean)), [roster])
+  if (used.size === 0) return null
+  return (
+    <span className="drost__seg drost__seg--sm drost__markseg pickmarks" role="group" aria-label="Marker">
+      {MARKERS.filter((m) => m && used.has(m)).map((m) => {
+        const on = filter.markers.includes(m)
+        return (
+          <button
+            type="button"
+            key={m}
+            aria-pressed={on}
+            title={m}
+            onClick={() =>
+              onChange({ ...filter, markers: on ? filter.markers.filter((x) => x !== m) : [...filter.markers, m] })
+            }
+          >
+            <img src={markerIcon(m)} alt={m} />
+          </button>
+        )
+      })}
+    </span>
+  )
+}
