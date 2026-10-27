@@ -2214,7 +2214,8 @@ a.res {
   --line-bright: rgb(255 255 255 / 22%);
   --btn-line: rgb(255 255 255 / 22%);
   display: grid;
-  grid-template-columns: minmax(300px, 360px) minmax(0, 1fr) minmax(250px, 290px);
+  /* The list a phone's width: My Fighters' stacked card fits it. */
+  grid-template-columns: minmax(340px, 400px) minmax(0, 1fr) minmax(270px, 310px);
   grid-template-areas: 'list middle side';
   grid-template-rows: minmax(0, 1fr);
   gap: var(--sp-4);
@@ -2506,7 +2507,7 @@ a.res {
   color: #ff8fa0;
 }
 /* The rows sit in their hover wrappers; the line between them follows. */
-.dasc__rows > .dasc__peek + .dasc__peek > .mrow {
+.dasc__rows > .dasc__peek + .dasc__peek > .drost__row {
   border-top: 1px solid rgb(255 255 255 / 6%);
 }
 .dasc__go {
@@ -2522,7 +2523,7 @@ a.res {
 /* Too narrow for three columns: the altar over the deal, beside the list. */
 @container dasc (max-width: 980px) {
   .dasc {
-    grid-template-columns: clamp(300px, 45%, 360px) minmax(0, 1fr);
+    grid-template-columns: clamp(340px, 45%, 400px) minmax(0, 1fr);
     grid-template-rows: auto minmax(0, 1fr);
     grid-template-areas:
       'list middle'
@@ -2892,4 +2893,83 @@ a.res {
   flex: none;
   aspect-ratio: 1;
   max-width: 100%;
+}
+
+/*
+ * Ascension on a desktop, a size up: the same step My Fighters took, so the
+ * altar's labels, the deal and the odds no longer read as the small print.
+ */
+.dasc .pasc__core b,
+.dasc .pasc__sock b {
+  font-size: 14px;
+}
+.dasc .pasc__core small,
+.dasc .pasc__sock small {
+  font-size: 12px;
+}
+.dasc .pasc__needs b {
+  font-size: 14px;
+}
+.dasc .pasc__needs,
+.dasc .dasc__soft {
+  font-size: 13px;
+}
+.dasc .dasc__hint {
+  font-size: 13.5px;
+}
+.dasc .dasc__cap {
+  font-size: 11px;
+}
+.dasc .mfacts dt {
+  font-size: 13.5px;
+}
+.dasc .oddspanel__summary {
+  font-size: 12.5px;
+}
+.dasc .oddsrow__name strong {
+  font-size: 13.5px;
+}
+.dasc .oddsrow__name em {
+  font-size: 11.5px;
+}
+.dasc .oddsrow__chance,
+.dasc .oddsrow__range {
+  font-size: 12.5px;
+}
+.dasc .dasc__chips button {
+  font-size: 13.5px;
+}
+.dasc .dasc__markers button {
+  font-size: 13px;
+}
+.dasc .dasc__chips em,
+.dasc .dasc__markers em {
+  font-size: 11px;
+}
+.dasc .dasc__tools {
+  font-size: 13.5px;
+}
+.dasc .dasc__order {
+  font-size: 13.5px;
+}
+.dasc .dasc__filterrow .dasc__order {
+  height: 34px;
+  font-size: 14px;
+}
+.dasc .dasc__fit {
+  font-size: 13px;
+}
+.dasc .dasc__fitn {
+  font-size: 12.5px;
+}
+/* Room for the larger labels on one line; the side sockets move out by half
+   the extra so their circles stay on the ends of the altar's lines. */
+.dasc .pasc__sock {
+  width: 140px;
+}
+.dasc .pasc__sock--left {
+  left: -18px;
+}
+.dasc .pasc__sock--right {
+  right: -18px;
 }

@@ -10,7 +10,7 @@ import {
 } from '@/ascension/rules'
 import { markerIcon } from '@/dungeon/filters'
 import { fighterArt, fighterArtFallback } from '@/tavern/fighterStats'
-import { FighterRow } from '@/market/FighterRows'
+import { Row, figuresOf, type Figures } from '@/fighters/DeskRoster'
 import { GameImg } from '@/components/GameImg'
 import { HoverPopover, useHoverCard } from '@/components/HoverPopover'
 import { FighterHoverCard } from '@/components/FighterPanel'
@@ -100,7 +100,7 @@ export function DeskAscension({
   /** What goes under the deal: the table of what can be rolled. */
   extra?: React.ReactNode
 }) {
-  const { classes, fighters } = useConfig()
+  const { classes, fighters, levelMod, ageDecay } = useConfig()
   const unlockAt = Number(fighters?.asc_ability_unlock_lvl ?? 0)
 
   /*
@@ -162,6 +162,31 @@ export function DeskAscension({
       (a, b) => (order === 'first' ? 1 : -1) * (levelOf(a) - levelOf(b)) || a.fighter_id - b.fighter_id,
     )
   }, [inClass, marker, list, order, covered])
+
+  /*
+     My Fighters' own card, figures and all, so a fighter looks the same on
+     both screens. The list is a phone's width, so it takes the stacked card.
+  */
+  const [now] = useState(() => Date.now())
+  const figures = useMemo(() => {
+    const m = new Map<number, Figures>()
+    for (const f of rows) m.set(f.fighter_id, figuresOf(f, classes.get(f.classname), fighters, levelMod, ageDecay, now, false))
+    return m
+  }, [rows, classes, fighters, levelMod, ageDecay, now])
+  const card = (f: RosterFighter, extra: Partial<React.ComponentProps<typeof Row>>) => (
+    <Row
+      f={f}
+      fig={figures.get(f.fighter_id)!}
+      view="default"
+      mode="inventory"
+      now={now}
+      picked={false}
+      checked={false}
+      gate={{ ok: true }}
+      onClick={() => {}}
+      {...extra}
+    />
+  )
 
   const filled = chosenFighters.length === SACRIFICE_COUNT
   const complete = filled && !!check?.ok
@@ -275,28 +300,23 @@ export function DeskAscension({
               : 'Nothing matches.'}
           </p>
         ) : (
-          <div className="mrows dasc__rows">
+          <div className="drost--stack drost__rows dasc__rows">
             {rows.map((f) => {
               if (list === 'target') {
                 const n = covered.get(f.fighter_id) ?? 0
                 return (
                   <Peek key={f.fighter_id} fighter={f}>
-                    <FighterRow
-                      stats={f.stats}
-                      ascension={f.ascension_level}
-                      template={classes.get(f.classname)}
-                      marker={f.marker}
-                      open={false}
-                      onToggle={() => {
+                    {card(f, {
+                      onClick: () => {
                         onPlace(f.fighter_id)
                         show('race')
-                      }}
-                      right={
+                      },
+                      aside: (
                         <span className={`dasc__fit${n === 3 ? ' is-all' : ''}`} title="Sockets you have a fighter for">
                           {n}/3
                         </span>
-                      }
-                    />
+                      ),
+                    })}
                   </Peek>
                 )
               }
@@ -308,27 +328,17 @@ export function DeskAscension({
               const on = slots[key] === f.fighter_id
               return (
                 <Peek key={f.fighter_id} fighter={f}>
-                  <FighterRow
-                    stats={f.stats}
-                    ascension={f.ascension_level}
-                    template={classes.get(f.classname)}
-                    marker={f.marker}
-                    dim={!!elsewhere}
-                    open={on}
-                    onToggle={() => onAssign(key, f.fighter_id)}
-                    below={
-                      elsewhere ? (
-                        <span className="mrow__line">
-                          In the {elsewhere.label.toLowerCase()} socket — choosing it moves it here
-                        </span>
-                      ) : also.length > 0 ? (
-                        <span className="mrow__line">
-                          Also fits {also.map((r) => r.label.toLowerCase()).join(' and ')}
-                        </span>
-                      ) : undefined
-                    }
-                    right={<span className={`pasc__radio${on ? ' is-on' : ''}`} aria-hidden="true" />}
-                  />
+                  {card(f, {
+                    picked: on,
+                    dim: !!elsewhere,
+                    onClick: () => onAssign(key, f.fighter_id),
+                    note: elsewhere
+                      ? `In the ${elsewhere.label.toLowerCase()} socket — choosing it moves it here`
+                      : also.length > 0
+                        ? `Also fits ${also.map((r) => r.label.toLowerCase()).join(' and ')}`
+                        : undefined,
+                    aside: <span className={`pasc__radio${on ? ' is-on' : ''}`} aria-hidden="true" />,
+                  })}
                 </Peek>
               )
             })}

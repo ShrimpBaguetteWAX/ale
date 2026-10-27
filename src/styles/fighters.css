@@ -2117,62 +2117,62 @@
 }
 
 /* a row: portrait, then three lines; no payday column, the date joins the name */
-.drost--phone .drost__rows {
+.drost--stack .drost__rows {
   border-radius: 13px;
 }
-.drost--phone .drost__row {
+.drost--stack .drost__row {
   grid-template-columns: 48px minmax(0, 1fr) auto;
   gap: 9px;
   padding: 5px 9px 5px 6px;
 }
-.drost--phone .drost__row.is-ticking {
+.drost--stack .drost__row.is-ticking {
   grid-template-columns: 20px 48px minmax(0, 1fr) auto;
 }
 .drost--phone .drost__row:hover {
   background: none;
 }
-.drost--phone .drost__art {
+.drost--stack .drost__art {
   width: 48px;
   height: 48px;
 }
-.drost--phone .drost__lv {
+.drost--stack .drost__lv {
   padding: 1px 4px;
   font-size: max(8.5px, var(--fs-floor));
 }
-.drost--phone .drost__mk {
+.drost--stack .drost__mk {
   width: 18px;
   height: 18px;
 }
-.drost--phone .drost__mk img {
+.drost--stack .drost__mk img {
   width: 12px;
   height: 12px;
 }
-.drost--phone .drost__who {
+.drost--stack .drost__who {
   gap: 2px;
 }
-.drost--phone .drost__l1 {
+.drost--stack .drost__l1 {
   gap: 5px;
   line-height: 16px;
 }
-.drost--phone .drost__l1 b {
+.drost--stack .drost__l1 b {
   font-size: 13px;
   white-space: nowrap;
 }
-.drost--phone .drost__l1 img {
+.drost--stack .drost__l1 img {
   width: 12px;
   height: 12px;
 }
-.drost--phone .drost__l1 small {
+.drost--stack .drost__l1 small {
   overflow: hidden;
   font-size: 11px;
   white-space: nowrap;
   text-overflow: ellipsis;
 }
 
-.drost--phone .drost__si {
+.drost--stack .drost__si {
   height: 10px;
 }
-.drost--phone .drost__l3 {
+.drost--stack .drost__l3 {
   gap: 4px;
   overflow: hidden;
 }
@@ -2184,17 +2184,17 @@
   font-size: 10px;
   color: var(--text-faint);
 }
-.drost--phone .drost__age {
+.drost--stack .drost__age {
   height: 17px;
   padding: 0 5px;
   font-size: max(9px, var(--fs-floor));
 }
-.drost--phone .drost__ab {
+.drost--stack .drost__ab {
   min-width: 16px;
   height: 16px;
   font-size: max(8.5px, var(--fs-floor));
 }
-.drost--phone .drost__status {
+.drost--stack .drost__status {
   padding: 1px 7px;
   font-size: max(8.5px, var(--fs-floor));
 }
@@ -2202,7 +2202,7 @@
   background: rgb(124 92 255 / 16%);
   box-shadow: inset 3px 0 0 #7c5cff;
 }
-.drost--phone .drost__tick {
+.drost--stack .drost__tick {
   width: 20px;
   height: 20px;
   border-radius: 6px;
@@ -2702,112 +2702,112 @@
  * the list's one head, the abilities by name — and everything is a size up
  * from the old phone row.
  */
-.drost--phone .drost__row.is-ring,
-.drost--phone .drost__colhead {
+.drost--stack .drost__row.is-ring,
+.drost--stack .drost__colhead {
   /* The portrait column is wider than the ring: room between it and the lines beside it. */
   grid-template-columns: 74px repeat(5, minmax(0, 1fr));
   column-gap: 6px;
 }
-.drost--phone .drost__row.is-ring.is-ticking,
-.drost--phone .drost__colhead.is-ticking,
-.drost--phone .drost__row.is-ring.is-sellcol,
-.drost--phone .drost__colhead.is-sellcol {
+.drost--stack .drost__row.is-ring.is-ticking,
+.drost--stack .drost__colhead.is-ticking,
+.drost--stack .drost__row.is-ring.is-sellcol,
+.drost--stack .drost__colhead.is-sellcol {
   grid-template-columns: 20px 74px repeat(5, minmax(0, 1fr));
 }
-.drost--phone .drost__row.is-ring {
+.drost--stack .drost__row.is-ring {
   row-gap: 6px;
   padding: 10px 10px 10px 8px;
 }
-.drost--phone .drost__colhead {
+.drost--stack .drost__colhead {
   padding: 8px 10px 6px 8px;
   font-size: 10px;
   letter-spacing: 0.04em;
 }
-.drost--phone .drost__colhead .drost__colname,
-.drost--phone .drost__colhead.is-sellcol > span:last-child {
+.drost--stack .drost__colhead .drost__colname,
+.drost--stack .drost__colhead.is-sellcol > span:last-child {
   display: none;
 }
 /* Words only on a phone: with a tick column the five heads have about 40px each. */
-.drost--phone .drost__colhead .drost__si {
+.drost--stack .drost__colhead .drost__si {
   display: none;
 }
-.drost--phone .drost__row.is-ring > .drost__ring,
-.drost--phone .drost__row.is-ring > .drost__tick {
+.drost--stack .drost__row.is-ring > .drost__ring,
+.drost--stack .drost__row.is-ring > .drost__tick {
   grid-row: 1 / span 3;
   align-self: start;
 }
-.drost--phone .drost__row.is-ring > .drost__ring {
+.drost--stack .drost__row.is-ring > .drost__ring {
   justify-self: start;
 }
-.drost--phone .drost__row.is-ring > .drost__who {
+.drost--stack .drost__row.is-ring > .drost__who {
   grid-row: 1;
   grid-column: 2 / -1;
 }
-.drost--phone .drost__row.is-ring.is-ticking > .drost__who {
+.drost--stack .drost__row.is-ring.is-ticking > .drost__who {
   grid-column: 3 / -1;
 }
 /* Selling: the price at the end of the name line. */
-.drost--phone .drost__row.is-ring.is-sellcol > .drost__who {
+.drost--stack .drost__row.is-ring.is-sellcol > .drost__who {
   grid-column: 3 / -2;
 }
-.drost--phone .drost__row.is-ring.is-sellcol > .drost__pay {
+.drost--stack .drost__row.is-ring.is-sellcol > .drost__pay {
   grid-row: 1;
   grid-column: -2 / -1;
 }
-.drost--phone .drost__row.is-ring > .drost__abn {
+.drost--stack .drost__row.is-ring > .drost__abn {
   grid-row: 3;
   grid-column: 2 / -1;
 }
-.drost--phone .drost__row.is-ring.is-ticking > .drost__abn {
+.drost--stack .drost__row.is-ring.is-ticking > .drost__abn {
   grid-column: 3 / -1;
 }
-.drost--phone .drost__ring {
+.drost--stack .drost__ring {
   width: 62px;
   height: 62px;
   padding: 4px;
   border-radius: 14px;
 }
-.drost--phone .drost__ring .drost__art {
+.drost--stack .drost__ring .drost__art {
   width: 54px;
   height: 54px;
   border-radius: 10px;
 }
-.drost--phone .drost__ring .drost__days {
+.drost--stack .drost__ring .drost__days {
   font-size: 10.5px;
 }
-.drost--phone .is-ring .drost__lv {
+.drost--stack .is-ring .drost__lv {
   font-size: 10px;
 }
-.drost--phone .is-ring .drost__who {
+.drost--stack .is-ring .drost__who {
   display: flex;
   align-items: center;
   gap: 8px;
   min-width: 0;
 }
-.drost--phone .is-ring .drost__l1 {
+.drost--stack .is-ring .drost__l1 {
   min-width: 0;
 }
-.drost--phone .is-ring .drost__l1 b {
+.drost--stack .is-ring .drost__l1 b {
   font-size: 15.5px;
 }
-.drost--phone .is-ring .drost__l1 img {
+.drost--stack .is-ring .drost__l1 img {
   width: 14px;
   height: 14px;
 }
-.drost--phone .is-ring .drost__l1 small {
+.drost--stack .is-ring .drost__l1 small {
   font-size: 12.5px;
 }
-.drost--phone .is-ring .drost__l3 {
+.drost--stack .is-ring .drost__l3 {
   flex: none;
   margin-left: auto;
   overflow: visible;
 }
-.drost--phone .is-ring .drost__age {
+.drost--stack .is-ring .drost__age {
   height: 20px;
   padding: 0 6px;
   font-size: 10.5px;
 }
-.drost--phone .is-ring .drost__status {
+.drost--stack .is-ring .drost__status {
   padding: 2px 7px;
   font-size: 10px;
 }
@@ -2816,16 +2816,16 @@
  * left five bare numbers, so each stat is a small tile with its icon and
  * word over the number, as in the fighter's panel.
  */
-.drost--phone .drost__colhead {
+.drost--stack .drost__colhead {
   display: none;
 }
-.drost--phone .drost__row.is-ring {
+.drost--stack .drost__row.is-ring {
   column-gap: 4px;
 }
-.drost--phone .drost__row.is-ring > .drost__ring {
+.drost--stack .drost__row.is-ring > .drost__ring {
   margin-right: 2px;
 }
-.drost--phone .drost__num {
+.drost--stack .drost__num {
   display: grid;
   justify-content: center;
   justify-items: center;
@@ -2834,10 +2834,10 @@
   border-radius: 8px;
   background: rgb(255 255 255 / 4%);
 }
-.drost--phone .drost__num:not(:has(.drost__grade)) {
+.drost--stack .drost__num:not(:has(.drost__grade)) {
   padding-right: 0;
 }
-.drost--phone .drost__numhead {
+.drost--stack .drost__numhead {
   display: inline-flex;
   align-items: center;
   gap: 3px;
@@ -2848,20 +2848,20 @@
   text-transform: uppercase;
   color: var(--text-faint);
 }
-.drost--phone .drost__numhead .drost__si {
+.drost--stack .drost__numhead .drost__si {
   height: 9px;
   opacity: 0.65;
 }
 /* With a tick column the tiles are about 40px: the word alone fits, the icon beside it did not. */
-.drost--phone .drost__row.is-ticking .drost__numhead .drost__si {
+.drost--stack .drost__row.is-ticking .drost__numhead .drost__si {
   display: none;
 }
-.drost--phone .drost__num > b {
+.drost--stack .drost__num > b {
   position: relative;
   font-size: 14px;
 }
 /* The number sits on the tile's centre line, under its name; the grade hangs off its right. */
-.drost--phone .drost__num .drost__grade {
+.drost--stack .drost__num .drost__grade {
   position: absolute;
   left: calc(100% + 1px);
   top: 50%;
@@ -2869,7 +2869,7 @@
   height: 11px;
   transform: translateY(-50%);
 }
-.drost--phone .drost__abp {
+.drost--stack .drost__abp {
   height: 21px;
   padding: 0 7px 0 6px;
   font-size: 12px;
@@ -2886,7 +2886,29 @@
   opacity: 1;
 }
 /* Selling, the tiles are about 40px: no room to hang the grade outside a three-digit figure. */
-.drost--phone .drost__row.is-ticking .drost__num .drost__grade {
+.drost--stack .drost__row.is-ticking .drost__num .drost__grade {
   position: static;
   transform: none;
+}
+
+/* What another screen adds to the stacked card: Ascension's "2/3" or choice circle, a note, a dimmed card. */
+.drost--stack .drost__row.is-ring.is-aside > .drost__who {
+  grid-column: 2 / -2;
+}
+.drost--stack .drost__row.is-ring > .drost__aside {
+  grid-row: 1;
+  grid-column: -2 / -1;
+  justify-self: end;
+  display: inline-flex;
+  align-items: center;
+}
+.drost--stack .drost__row.is-ring > .drost__rownote {
+  grid-row: 4;
+  grid-column: 2 / -1;
+  font-size: 12.5px;
+  line-height: 1.35;
+  color: var(--text-faint);
+}
+.drost__row.is-dim {
+  opacity: 0.5;
 }

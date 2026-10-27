@@ -82,7 +82,7 @@ import { asset } from '@/assets'
  */
 
 export type Mode = 'inventory' | 'sell' | 'market'
-type View = 'default' | 'stats' | 'res' | 'combat' | 'abilities'
+export type View = 'default' | 'stats' | 'res' | 'combat' | 'abilities'
 
 const VIEWS: [View, string][] = [
   ['default', 'Default'],
@@ -136,7 +136,7 @@ const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
 
 /* ---------- what a row needs, worked out once per fighter ---------- */
 
-interface Figures {
+export interface Figures {
   factor: { level: number; age: number; total: number }
   stats: { field: string; value: number; spread: number; grade: StatGrade | null }[]
   res: { field: string; el: string; value: string; grade: StatGrade | null }[]
@@ -145,7 +145,7 @@ interface Figures {
   pay: ReturnType<typeof paydayOf>
 }
 
-function figuresOf(
+export function figuresOf(
   f: RosterFighter,
   template: ClassTemplate | undefined,
   config: FightersConfig | undefined,
@@ -443,7 +443,7 @@ export function DeskRoster(p: DeskRosterProps) {
   )
 
   return (
-    <div className={`drost${phone ? ` drost--phone is-${p.mode}` : ''}${basket ? ' has-basket' : ''}`}>
+    <div className={`drost${phone ? ` drost--phone drost--stack is-${p.mode}` : ''}${basket ? ' has-basket' : ''}`}>
       <header className="drost__head">
         <span>
           <h1 className="drost__title">My Fighters</h1>
@@ -829,7 +829,11 @@ export function DeskRoster(p: DeskRosterProps) {
 
 /* ---------- a row ---------- */
 
-function Row({
+/*
+ * One fighter's card. My Fighters draws its list with it, and Ascension its
+ * own, so a player meets the same card wherever they pick a fighter.
+ */
+export function Row({
   f,
   fig,
   view,
@@ -839,6 +843,9 @@ function Row({
   checked,
   gate,
   onClick,
+  aside,
+  note,
+  dim = false,
 }: {
   f: RosterFighter
   fig: Figures
@@ -849,6 +856,12 @@ function Row({
   checked: boolean
   gate: { ok: boolean; reason?: string }
   onClick: () => void
+  /** At the end of the name line: Ascension's "2/3", or its choice circle. */
+  aside?: React.ReactNode
+  /** One line under the abilities, for what the screen needs to add. */
+  note?: React.ReactNode
+  /** Shown but set back, as for a fighter already placed somewhere else. */
+  dim?: boolean
 }) {
   const s = f.stats
   const state = fighterState(f, now)
@@ -896,6 +909,9 @@ function Row({
     picked ? 'is-picked' : '',
     checked ? 'is-checked' : '',
     ticking && !gate.ok ? 'is-locked' : '',
+    aside ? 'is-aside' : '',
+    note ? 'has-note' : '',
+    dim ? 'is-dim' : '',
   ]
     .filter(Boolean)
     .join(' ')
@@ -956,6 +972,7 @@ function Row({
               {gate.ok ? <Credits value={s.credits ?? 0} /> : <small>Busy</small>}
             </span>
           )}
+          {aside && <span className="drost__aside">{aside}</span>}
           {/* Under the name and the figures, the full width of the row: whole names fit on one line. */}
           <span className="drost__abn">
             {abilities.map((a, i) => {
@@ -973,6 +990,7 @@ function Row({
               )
             })}
           </span>
+          {note && <span className="drost__rownote">{note}</span>}
         </>
       ) : (
         <>
