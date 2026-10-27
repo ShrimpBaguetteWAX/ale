@@ -2248,6 +2248,10 @@ a.res {
   overscroll-behavior: contain;
   scrollbar-width: thin;
 }
+/* The altar and the deal: their own two columns on a wide board. */
+.dasc__main {
+  display: contents;
+}
 /* The altar alone in the middle, centred in the board's height. */
 .dasc__middle {
   grid-area: middle;
@@ -2528,19 +2532,54 @@ a.res {
   color: var(--text-faint);
 }
 
-/* Too narrow for three columns: the altar over the deal, beside the list. */
+/*
+   Too narrow for three columns: the altar over the deal, beside the list,
+   as one column that scrolls as a whole. Squeezed under the altar, the deal
+   was a box of its own a third of the board high, its button scrolled out
+   of it.
+*/
 @container dasc (max-width: 980px) {
   .dasc {
     grid-template-columns: clamp(340px, 45%, 400px) minmax(0, 1fr);
-    grid-template-rows: auto minmax(0, 1fr);
-    grid-template-areas:
-      'list middle'
-      'list side';
+    grid-template-areas: 'list main';
   }
-  /* The phone's size of altar, so the column under it has room. */
+  .dasc__main {
+    grid-area: main;
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-3);
+    min-width: 0;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+  }
+  .dasc__main > * {
+    flex: none;
+  }
+  .dasc__right {
+    overflow: visible;
+  }
+  /* The odds open at their own height: the column scrolls, not the table. */
+  .dasc__right > .oddspanel[open] {
+    flex: none;
+    min-height: 0;
+    overflow: visible;
+  }
+  .dasc__right > .oddspanel[open] > .oddspanel__summary {
+    position: static;
+    margin: 0;
+    padding: 0 0 8px;
+    background: none;
+  }
+  /* A size under the phone's altar, so the deal under it starts in view. */
+  .dasc__stage {
+    min-height: 0;
+  }
   .dasc__stage .pasc__altar {
-    transform: none;
-    margin-bottom: 0;
+    transform: scale(0.85);
+    transform-origin: top center;
+    margin-bottom: -50px;
   }
 }
 .dasc__side .mfacts dd {

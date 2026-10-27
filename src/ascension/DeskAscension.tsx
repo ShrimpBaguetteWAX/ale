@@ -346,6 +346,8 @@ export function DeskAscension({
         )}
       </div>
 
+      {/* The altar and the deal: two columns on a wide board, one scrolling column beside the list on a narrower one. */}
+      <div className="dasc__main">
       {/* ---------- the altar, alone in the middle ---------- */}
       <div className="dasc__middle">
         <div className="pasc__stage dasc__stage">
@@ -543,6 +545,7 @@ export function DeskAscension({
           )}
         </aside>
         {extra}
+      </div>
       </div>
     </div>
   )

@@ -2367,9 +2367,14 @@
   left: 8px;
   z-index: 1;
   display: flex;
+  /* On a slim art an ascended level and the days do not share a line: the days step up over the level. */
+  flex-wrap: wrap-reverse;
   align-items: center;
   justify-content: space-between;
-  gap: 4px;
+  gap: 3px 4px;
+}
+.drost__cardfoot > .drost__days {
+  margin-left: auto;
 }
 .drost__cardart .drost__lv {
   position: static;
