@@ -719,6 +719,7 @@
   color: var(--text-faint);
 }
 .drost__side {
+  overflow-x: hidden;
   position: sticky;
   top: var(--sp-4);
   min-width: 0;
@@ -2693,4 +2694,32 @@
 .drost__pop--marker .markbtn img {
   width: 18px;
   height: 18px;
+}
+
+/*
+ * The fighter's panel at its narrowest (about 400px beside a wide list):
+ * "Cooldown" and six resistance names no longer fit a row. The stats take
+ * the list's short names, and the resistances fold into three by two, so
+ * every name is still there and nothing runs out of the panel.
+ */
+.drost__detail {
+  container: drostdetail / inline-size;
+}
+.drost__sname {
+  display: none;
+}
+.drost__cell small {
+  max-width: 100%;
+  overflow: hidden;
+}
+@container drostdetail (max-width: 470px) {
+  .drost:not(.drost--phone) .drost__cells--big .drost__lname {
+    display: none;
+  }
+  .drost:not(.drost--phone) .drost__cells--big .drost__sname {
+    display: inline;
+  }
+  .drost:not(.drost--phone) .drost__cells--6.drost__cells--big {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 }

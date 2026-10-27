@@ -1239,7 +1239,9 @@ function Detail(props: DeskRosterProps & { f: RosterFighter; fig: Figures }) {
           <span className="drost__cell" key={x.field}>
             <small>
               <img className="drost__si" src={statIcon(x.field)} alt="" />
-              {STAT_NAMES[x.field]}
+              {/* The list's short names where the panel is too narrow for "Cooldown". */}
+              <span className="drost__lname">{STAT_NAMES[x.field]}</span>
+              <span className="drost__sname">{STAT_SHORT[x.field]}</span>
             </small>
             <b>
               {x.value}
