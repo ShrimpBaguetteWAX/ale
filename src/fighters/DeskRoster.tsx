@@ -628,9 +628,10 @@ export function DeskRoster(p: DeskRosterProps) {
 
         {pop && !phone && <button type="button" className="drost__scrim" aria-label="Close" onClick={() => setPop(null)} />}
         {pop === 'filters' && !phone && (
-          <FilterPanel
-            {...p}
+          <FilterDrop
+            fields={{ ...p, classes: [...p.templates.keys()].sort() }}
             matching={list.length}
+            onClear={() => p.onFilter({ ...EMPTY_FILTER, status: p.filter.status, sort: p.filter.sort, sortAsc: p.filter.sortAsc })}
             onClose={() => setPop(null)}
           />
         )}
@@ -669,7 +670,7 @@ export function DeskRoster(p: DeskRosterProps) {
               <span className="drost__fhead">Show</span>
               <StatusSeg chips filter={p.filter} counts={counts} onStatus={(s) => set({ status: s })} />
             </div>
-            <FilterFields {...p} />
+            <FilterFields {...p} classes={[...p.templates.keys()].sort()} />
             <p className="drost__note">Health and damage rules grade after age, like the arrows.</p>
           </div>
         </BottomSheet>
@@ -1759,22 +1760,35 @@ function SortList({ filter, onPick }: { filter: RosterFilter; onPick: (sort: str
   )
 }
 
-function FilterPanel(p: DeskRosterProps & { matching: number; onClose: () => void }) {
+/**
+ * The filters in their panel: the fields, then Clear all, the note and the
+ * button that closes it on how many match. `className` places it — dropped
+ * from My Fighters' toolbar, or over a fight screen's cards.
+ */
+export function FilterDrop({
+  fields,
+  matching,
+  onClear,
+  onClose,
+  className = 'drost__pop drost__pop--filters',
+}: {
+  fields: FilterFieldsProps
+  matching: number
+  onClear: () => void
+  onClose: () => void
+  className?: string
+}) {
   return (
-    <div className="drost__pop drost__pop--filters" role="dialog" aria-label="Filters">
-      <FilterFields {...p} />
+    <div className={className} role="dialog" aria-label="Filters">
+      <FilterFields {...fields} />
       <div className="drost__pfoot">
-        <button
-          type="button"
-          className="linklike"
-          onClick={() => p.onFilter({ ...EMPTY_FILTER, status: p.filter.status, sort: p.filter.sort, sortAsc: p.filter.sortAsc })}
-        >
+        <button type="button" className="linklike" onClick={onClear}>
           Clear all
         </button>
         <span className="drost__note">Health and damage rules grade after age, like the arrows.</span>
         <span className="drost__sp" />
-        <button type="button" className="btn btn--primary" onClick={p.onClose}>
-          Show {p.matching} fighter{p.matching === 1 ? '' : 's'}
+        <button type="button" className="btn btn--primary" onClick={onClose}>
+          Show {matching} fighter{matching === 1 ? '' : 's'}
         </button>
       </div>
     </div>
@@ -1816,9 +1830,29 @@ function MarkerSeg({ roster, filter, onFilter }: Pick<DeskRosterProps, 'roster' 
   )
 }
 
-/* Element, class, race, ability, markers, the roster switches and the quality floors. */
-function FilterFields(p: DeskRosterProps) {
-  const { races } = useMemo(() => facetsOf(p.roster), [p.roster])
+export interface FilterFieldsProps {
+  roster: RosterFighter[]
+  filter: RosterFilter
+  onFilter: (filter: RosterFilter) => void
+  /** The classes to choose from; the roster's own when not given. */
+  classes?: string[]
+  atLevelOne: boolean
+  onAtLevelOne: (on: boolean) => void
+  /** How many could level now, for the "ready to level" switch; a screen that does not level leaves it out. */
+  readyToLevel?: number
+  /** What a fight adds: floors against the team on the other side, under "Against this team". */
+  versus?: React.ReactNode
+}
+
+/*
+ * Element, class, race, ability, markers, roles, the roster switches and the
+ * quality floors — My Fighters' filters, and the fight screens' too, so a
+ * filter reads the same wherever a fighter is chosen.
+ */
+export function FilterFields(p: FilterFieldsProps) {
+  const facets = useMemo(() => facetsOf(p.roster), [p.roster])
+  const races = facets.races
+  const classes = p.classes ?? facets.classes
   const set = (patch: Partial<RosterFilter>) => p.onFilter({ ...p.filter, ...patch })
   const toggle = <T,>(list: T[], value: T): T[] => (list.includes(value) ? list.filter((x) => x !== value) : [...list, value])
   const used = useMarkerCounts(p.roster)
@@ -1848,7 +1882,7 @@ function FilterFields(p: DeskRosterProps) {
             <span className="drost__fhead">Class</span>
             <select className="input" value={p.filter.classname} onChange={(e) => set({ classname: e.target.value })}>
               <option value="">Any</option>
-              {[...p.templates.keys()].sort().map((c) => (
+              {classes.map((c) => (
                 <option key={c} value={c}>
                   {c}
                 </option>
@@ -1917,20 +1951,28 @@ function FilterFields(p: DeskRosterProps) {
             ))}
           </div>
         </div>
+        {p.versus && (
+          <div>
+            <span className="drost__fhead">Against this team</span>
+            <div className="drost__vfloors">{p.versus}</div>
+          </div>
+        )}
         <div>
           <span className="drost__fhead">Roster</span>
-          <label className="drost__sw">
-            <span>
-              Ready to level
-              <small>Experience banked for a level · {p.readyToLevel} now</small>
-            </span>
-            <input
-              type="checkbox"
-              className="drost__switch"
-              checked={p.filter.levelReady}
-              onChange={(e) => set({ levelReady: e.target.checked })}
-            />
-          </label>
+          {p.readyToLevel !== undefined && (
+            <label className="drost__sw">
+              <span>
+                Ready to level
+                <small>Experience banked for a level · {p.readyToLevel} now</small>
+              </span>
+              <input
+                type="checkbox"
+                className="drost__switch"
+                checked={p.filter.levelReady}
+                onChange={(e) => set({ levelReady: e.target.checked })}
+              />
+            </label>
+          )}
           <label className="drost__sw">
             <span>
               Compare at level 1

@@ -1172,7 +1172,16 @@ export function RosterFilters({
    * the filters dropping over the cards. `lead` and `tail` are the
    * caller's switches; this draws the rest between them.
    */
-  bar?: { lead?: ReactNode; tail?: ReactNode }
+  bar?: {
+    lead?: ReactNode
+    tail?: ReactNode
+    /**
+     * The filter panel itself, dropped over the cards when Filters is open —
+     * My Fighters' panel, handed in by the screen, which knows the count and
+     * the matchup. Given `close` for its own "Show" button.
+     */
+    filters?: (close: () => void) => ReactNode
+  }
 }) {
   const drop = dropProp || !!bar
   const { classes, races } = useMemo(() => facetsOf(roster), [roster])
@@ -1391,8 +1400,9 @@ export function RosterFilters({
       </div>
     )}
     {drop && !folded && <div className="filters__dropshade" onClick={() => setOpen(false)} />}
-    {(!drop || !folded) && (
-    <div className={drop ? `filters__drop${bar ? ' filters__drop--bar' : ''}` : 'filters__inpage'}>
+    {bar?.filters && !folded && bar.filters(() => setOpen(false))}
+    {(!drop || !folded) && !bar?.filters && (
+    <div className={drop ? 'filters__drop' : 'filters__inpage'}>
     <div className={`filters${folded ? ' filters--folded' : ''}${sheet ? ' filters--sheet' : ''}`}>
 
       {/*
@@ -1618,64 +1628,7 @@ export function RosterFilters({
           </p>
 
           <div className="filters__row">
-            <label className="field">
-              <span className="field__label">Damage lands</span>
-              <select
-                className="input"
-                value={filter.versus?.offense ?? 0}
-                onChange={(e) =>
-                  set({
-                    versus: { ...(filter.versus ?? NO_VERSUS), offense: Number(e.target.value) },
-                  })
-                }
-                title="Share of this fighter's damage that survives the enemy's resistance to its element"
-              >
-                <option value={0}>Any</option>
-                <option value={50}>50% or more</option>
-                <option value={65}>65% or more</option>
-                <option value={80}>80% or more</option>
-                <option value={95}>95% or more</option>
-              </select>
-            </label>
-
-            <label className="field">
-              <span className="field__label">Damage blocked</span>
-              <select
-                className="input"
-                value={filter.versus?.defense ?? 0}
-                onChange={(e) =>
-                  set({
-                    versus: { ...(filter.versus ?? NO_VERSUS), defense: Number(e.target.value) },
-                  })
-                }
-                title="Share of the enemy's damage this fighter's resistances turn away, across their elements"
-              >
-                <option value={0}>Any</option>
-                <option value={20}>20% or more</option>
-                <option value={35}>35% or more</option>
-                <option value={50}>50% or more</option>
-                <option value={65}>65% or more</option>
-              </select>
-            </label>
-
-            <label className="field">
-              <span className="field__label">Ability bonuses</span>
-              <select
-                className="input"
-                value={filter.versus?.bonuses ?? 0}
-                onChange={(e) =>
-                  set({
-                    versus: { ...(filter.versus ?? NO_VERSUS), bonuses: Number(e.target.value) },
-                  })
-                }
-                title="Abilities that fire because of who is on the other side"
-              >
-                <option value={0}>Any</option>
-                <option value={1}>At least 1</option>
-                <option value={2}>At least 2</option>
-                <option value={3}>At least 3</option>
-              </select>
-            </label>
+            <VersusFloors filter={filter} onChange={onChange} />
           </div>
         </div>
       )}
@@ -3346,5 +3299,81 @@ export function MarkerLine({
         )
       })}
     </span>
+  )
+}
+
+/* The floors against the team on the other side, each a share or a count. */
+const OFFENSE_FLOORS = [50, 65, 80, 95]
+const DEFENSE_FLOORS = [20, 35, 50, 65]
+const BONUS_FLOORS = [1, 2, 3]
+
+/**
+ * Three floors on how a fighter fares against the team it is about to face:
+ * how much of its damage lands, how much of theirs it blocks, and how many of
+ * its abilities fire because of who is on the other side. `labelClass` is
+ * the caption's class, so each filter panel sets them in its own type.
+ */
+export function VersusFloors({
+  filter,
+  onChange,
+  labelClass = 'field__label',
+}: {
+  filter: RosterFilter
+  onChange: (filter: RosterFilter) => void
+  labelClass?: string
+}) {
+  const v = filter.versus ?? NO_VERSUS
+  const setV = (patch: Partial<typeof v>) => onChange({ ...filter, versus: { ...v, ...patch } })
+  return (
+    <>
+      <label className="field">
+        <span className={labelClass}>Damage lands</span>
+        <select
+          className="input"
+          value={v.offense}
+          onChange={(e) => setV({ offense: Number(e.target.value) })}
+          title="Share of this fighter's damage that survives the enemy's resistance to its element"
+        >
+          <option value={0}>Any</option>
+          {OFFENSE_FLOORS.map((n) => (
+            <option key={n} value={n}>
+              {n}% or more
+            </option>
+          ))}
+        </select>
+      </label>
+      <label className="field">
+        <span className={labelClass}>Damage blocked</span>
+        <select
+          className="input"
+          value={v.defense}
+          onChange={(e) => setV({ defense: Number(e.target.value) })}
+          title="Share of the enemy's damage this fighter's resistances turn away, across their elements"
+        >
+          <option value={0}>Any</option>
+          {DEFENSE_FLOORS.map((n) => (
+            <option key={n} value={n}>
+              {n}% or more
+            </option>
+          ))}
+        </select>
+      </label>
+      <label className="field">
+        <span className={labelClass}>Ability bonuses</span>
+        <select
+          className="input"
+          value={v.bonuses}
+          onChange={(e) => setV({ bonuses: Number(e.target.value) })}
+          title="Abilities that fire because of who is on the other side"
+        >
+          <option value={0}>Any</option>
+          {BONUS_FLOORS.map((n) => (
+            <option key={n} value={n}>
+              At least {n}
+            </option>
+          ))}
+        </select>
+      </label>
+    </>
   )
 }

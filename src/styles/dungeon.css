@@ -6197,31 +6197,6 @@ button.combatcard--empty:hover {
   grid-row: 3;
   grid-column: 1 / -1;
 }
-/* The picker's full width, over the cards. */
-.picker > .filters__drop--bar {
-  grid-row: 3;
-  grid-column: 1 / -1;
-  align-self: start;
-  justify-self: stretch;
-  z-index: 20;
-  display: grid;
-  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
-  gap: 14px 22px;
-  width: 100%;
-  padding: 16px 18px;
-  border-radius: 14px;
-  background: rgb(10 18 34 / 98%);
-  box-shadow:
-    inset 0 0 0 1px rgb(255 255 255 / 16%),
-    0 22px 50px rgb(0 0 0 / 65%);
-}
-/* Against a team, what they field closes the panel, under a hairline: it is why the matchup sorts exist. */
-.filters__drop--bar .matchupbar {
-  display: grid;
-  grid-column: 1 / -1;
-  order: 99;
-}
-
 /*
  * A roll on three stats or more: its icons in a small grid, three to a row,
  * rather than a line that leaves the name no room — six resistances read as
@@ -6258,4 +6233,48 @@ button.combatcard--empty:hover {
   width: 22px;
   height: 22px;
   object-fit: contain;
+}
+
+/*
+ * The fight screens' filters: My Fighters' panel, dropped over the cards in
+ * their row of the picker rather than pushing them down.
+ */
+.picker > .pickfilters {
+  grid-row: 3;
+  grid-column: 1 / -1;
+  align-self: start;
+  z-index: 20;
+  padding: 16px;
+  border-radius: 16px;
+  background: rgb(10 16 32 / 98%);
+  box-shadow:
+    inset 0 0 0 1px rgb(255 255 255 / 14%),
+    0 24px 60px rgb(0 0 0 / 70%);
+}
+/* What only a fight asks, three floors side by side. */
+.drost__vfloors {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+.drost__vfloors .field {
+  display: grid;
+  gap: 0;
+  min-width: 0;
+}
+.drost__vfloors .drost__fhead {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Narrower, the markers take a line of their own under the tabs rather than running off its end. */
+.tabs:has(> .pickmarks) {
+  flex-wrap: wrap;
+  row-gap: 8px;
+  overflow-x: visible;
+}
+.tabs > .pickmarks {
+  flex-wrap: wrap;
+  max-width: 100%;
 }

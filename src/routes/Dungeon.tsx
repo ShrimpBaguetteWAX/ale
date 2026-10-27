@@ -25,6 +25,7 @@ import {
   xpFor,
 } from '@/dungeon/rules'
 import { EMPTY_FILTER, type RosterFilter } from '@/dungeon/filters'
+import { FilterDrop } from '@/fighters/DeskRoster'
 import {
   NFT_FIGHTER_ART,
   combineNftFighter,
@@ -70,6 +71,7 @@ import {
   POLL_INTERVAL_MS,
   MarkerLine,
   RosterFilters,
+  VersusFloors,
   battlePanel,
   mid,
   rosterPanel,
@@ -1452,6 +1454,25 @@ export default function Dungeon() {
                     : {
                         lead: deskDensity === 'full' && <PickViewSwitch view={pickView} onChange={setPickView} />,
                         tail: <PickDensitySwitch density={deskDensity} onChange={chooseDeskDensity} />,
+                        /* My Fighters' filter panel, with what only a fight asks under "Against this team". */
+                        filters: (close) => (
+                          <FilterDrop
+                            className="drost__pop--filters pickfilters"
+                            fields={{
+                              roster: roster ?? [],
+                              filter,
+                              onFilter: setFilter,
+                              atLevelOne,
+                              onAtLevelOne: setAtLevelOne,
+                              versus: enemies.length > 0 && (
+                                <VersusFloors filter={filter} onChange={setFilter} labelClass="drost__fhead" />
+                              ),
+                            }}
+                            matching={shownCount?.shown ?? 0}
+                            onClear={() => setFilter({ ...EMPTY_FILTER, sort: filter.sort })}
+                            onClose={close}
+                          />
+                        ),
                       }
                 }
               />
