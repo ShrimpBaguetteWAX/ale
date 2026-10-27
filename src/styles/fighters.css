@@ -2486,7 +2486,7 @@
 
 /* The fighter's panel level with the first row of the list, under its view switch. */
 .drost:not(.drost--phone) .drost__main:not(.is-narrow):has(> .drost__list > .drost__listhead) > .drost__side {
-  margin-top: 0;
+  margin-top: 46px;
 }
 
 /*
@@ -3058,16 +3058,341 @@
  * Every fighter card one height, in every view: the height the Abilities view
  * needs, so switching views never moves the list and no view crams its
  * figures. What a view shows sits centred in it, with room round it. A
- * desktop's card is 168px; a stacked one (phones) 194px, which its default
+ * desktop's card is 182px; a stacked one (phones) 194px, which its default
  * view needs when the ability names run to a third line.
+ *
+ * Every view sets the portrait, in its payday ring, in the same place: the
+ * same column at the card's top left, with the same padding round the card,
+ * and the card's content starting at its top rather than centred — so
+ * switching views moves the figures, never the fighter.
  */
 .drost__row {
-  min-height: 168px;
-  align-content: center;
+  min-height: 182px;
+  align-content: start;
 }
 .drost__row.is-ring {
   row-gap: 12px;
 }
 .drost--stack .drost__row {
   min-height: 194px;
+}
+.drost__row.is-focused {
+  grid-template-columns: 72px 100px minmax(0, 1fr);
+  column-gap: 12px;
+  padding: 10px 14px 10px 10px;
+}
+.drost__row.is-focused.is-ticking {
+  grid-template-columns: 18px 72px 100px minmax(0, 1fr);
+}
+.drost__row > .drost__ring,
+.drost__row > .drost__tick {
+  align-self: start;
+}
+.drost__row.is-focused > .drost__ring {
+  grid-row: 1 / span 2;
+}
+.drost__row > .drost__tick {
+  margin-top: 27px;
+}
+.drost--stack .drost__row.is-focused {
+  grid-template-columns: 74px minmax(0, 1fr);
+  column-gap: 4px;
+  padding: 10px 10px 10px 8px;
+}
+.drost--stack .drost__row.is-focused.is-ticking {
+  grid-template-columns: 20px 74px minmax(0, 1fr);
+}
+.drost--stack .drost__row.is-focused > .drost__ring {
+  grid-row: 1 / span 2;
+  justify-self: start;
+}
+.drost--stack .drost__row > .drost__tick {
+  margin-top: 22px;
+}
+/* The abilities beside the portrait, under the name, so their card keeps the common height. */
+.drost--stack .drost__row.is-focused > .drost__names,
+.drost--stack .drost__row.is-focused.is-aside > .drost__names {
+  grid-row: 2;
+  grid-column: 2 / -1;
+  margin-top: 2px;
+}
+.drost--stack .drost__row.is-focused.is-ticking > .drost__names {
+  grid-column: 3 / -1;
+}
+/* The tick and the portrait in fixed columns: a portrait pinned to its rows would otherwise be placed before the tick. */
+.drost__row.is-focused > .drost__ring {
+  grid-column: 1;
+}
+.drost__row.is-focused.is-ticking > .drost__ring {
+  grid-column: 2;
+}
+.drost__row.is-focused.is-ticking > .drost__tick {
+  grid-row: 1 / span 2;
+  grid-column: 1;
+}
+
+/*
+ * The name line in one place in every view: class, element and race at the
+ * top beside the portrait, as the default view sets them, and the view's own
+ * figures under it — never squeezed into a column beside them.
+ */
+.drost__row.is-focused {
+  grid-template-columns: 72px minmax(0, 1fr);
+  row-gap: 7px;
+}
+.drost__row.is-focused.is-ticking {
+  grid-template-columns: 18px 72px minmax(0, 1fr);
+}
+.drost__row.is-focused.is-aside {
+  grid-template-columns: 72px minmax(0, 1fr) auto;
+}
+.drost__row.is-focused.is-ticking.is-aside {
+  grid-template-columns: 18px 72px minmax(0, 1fr) auto;
+}
+.drost__row.is-focused > .drost__name {
+  grid-row: 1;
+  grid-column: 2;
+}
+.drost__row.is-focused > .drost__cells,
+.drost__row.is-focused > .drost__names {
+  grid-row: 2;
+  grid-column: 2;
+}
+.drost__row.is-focused.is-ticking > .drost__name,
+.drost__row.is-focused.is-ticking > .drost__cells,
+.drost__row.is-focused.is-ticking > .drost__names {
+  grid-column: 3;
+}
+.drost__row.is-focused > .drost__aside {
+  grid-row: 1 / span 2;
+  grid-column: -2 / -1;
+}
+.drost__row > .drost__who,
+.drost__row > .drost__name {
+  align-self: start;
+}
+/* The same sizes as the default view's name line. */
+.is-focused .drost__l1 b {
+  font-size: 16px;
+}
+.is-focused .drost__l1 img {
+  width: 15px;
+  height: 15px;
+}
+.is-focused .drost__l1 small {
+  font-size: 13px;
+}
+.drost--stack .is-focused .drost__l1 b {
+  font-size: 15.5px;
+}
+.drost--stack .is-focused .drost__l1 img {
+  width: 14px;
+  height: 14px;
+}
+.drost--stack .is-focused .drost__l1 small {
+  font-size: 12.5px;
+}
+/* A phone's name line as tall as the default view's (which sets the age chip beside it), the name centred in it. */
+.drost--stack .drost__row.is-focused > .drost__name {
+  display: flex;
+  align-items: center;
+  min-height: 20px;
+}
+.drost--stack .drost__row.is-focused > .drost__name .drost__l1 b {
+  font-size: 15.5px;
+}
+.drost--stack .drost__row.is-focused > .drost__name .drost__l1 small {
+  font-size: 12.5px;
+}
+
+/*
+ * The default view's second line: what the figures come to in a fight —
+ * DPS, survival and the combat score — between the stats and the
+ * abilities, so the card is full rather than top-heavy.
+ */
+.drost__fight {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-width: 0;
+}
+.drost__fight > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 26px;
+  padding: 0 10px;
+  border-radius: 8px;
+  background: rgb(255 255 255 / 4%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 8%);
+  white-space: nowrap;
+}
+.drost__fight .drost__si {
+  width: 13px;
+  height: 13px;
+}
+.drost__fight small {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.drost__fight b {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-family: var(--font-display);
+  font-size: 13.5px;
+}
+.drost__row.is-ring > .drost__fight {
+  grid-row: 2;
+  grid-column: 2 / -1;
+}
+.drost__row.is-ring.is-ticking > .drost__fight {
+  grid-column: 3 / -1;
+}
+.drost__row.is-ring > .drost__abn {
+  grid-row: 3;
+}
+.drost__row.is-ring > .drost__ring {
+  grid-row: 1 / span 3;
+  align-self: start;
+}
+.drost__row.is-ring > .drost__tick {
+  grid-row: 1 / span 3;
+}
+/* A phone: the fight line under the stats, the abilities under that. */
+.drost--stack .drost__row.is-ring > .drost__fight {
+  grid-row: 3;
+  grid-column: 2 / -1;
+}
+.drost--stack .drost__row.is-ring.is-ticking > .drost__fight {
+  grid-column: 3 / -1;
+}
+.drost--stack .drost__row.is-ring > .drost__abn {
+  grid-row: 4;
+}
+.drost--stack .drost__row.is-ring > .drost__ring,
+.drost--stack .drost__row.is-ring > .drost__tick {
+  grid-row: 1 / span 4;
+}
+.drost--stack .drost__fight {
+  gap: 4px;
+}
+.drost--stack .drost__fight > span {
+  gap: 4px;
+  height: 22px;
+  padding: 0 7px;
+}
+.drost--stack .drost__fight small {
+  font-size: 10px;
+}
+.drost--stack .drost__fight b {
+  font-size: 12px;
+}
+
+/* Stats, resistances and the fight figures centred in the room under the name, not hung from it. */
+.drost__row.is-focused {
+  grid-template-rows: auto minmax(0, 1fr);
+}
+.drost__row.is-focused > .drost__cells {
+  align-self: center;
+}
+
+/* Abilities under the name: tiles a touch tighter, so the card keeps the common height. */
+.drost__row.is-focused > .drost__names {
+  gap: 5px;
+}
+.drost__row.is-focused > .drost__names > span {
+  padding: 5px 9px 6px;
+}
+.drost__row.is-focused > .drost__names > span > b {
+  font-size: 13px;
+}
+.drost__row.is-focused > .drost__names > span > small {
+  font-size: 12px;
+  line-height: 1.35;
+}
+/* The default view's three lines spread over the card: stats at the top, the fight line between, abilities at the foot. */
+.drost__row.is-ring {
+  align-content: space-between;
+}
+.drost__row.is-focused > .drost__names > span > b {
+  line-height: 1.25;
+}
+.drost__row.is-focused > .drost__names > span > small {
+  line-height: 1.3;
+}
+/* A phone: under the portrait the card has its full width, so the fight line and the abilities run across all of it. */
+.drost--stack .drost__row.is-ring > .drost__ring,
+.drost--stack .drost__row.is-ring > .drost__tick {
+  grid-row: 1 / span 2;
+}
+.drost--stack .drost__row.is-ring > .drost__fight,
+.drost--stack .drost__row.is-ring.is-ticking > .drost__fight,
+.drost--stack .drost__row.is-ring > .drost__abn {
+  grid-column: 1 / -1;
+}
+.drost--stack .drost__fight {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.drost--stack .drost__fight > span {
+  justify-content: center;
+}
+.drost--stack .drost__row.is-ring {
+  row-gap: 5px;
+}
+.drost--stack .drost__fight .drost__si {
+  display: none;
+}
+.drost--stack .drost__fight > span {
+  gap: 3px;
+  padding: 0 5px;
+}
+.drost--stack .drost__fight small {
+  letter-spacing: 0.02em;
+}
+/* The tick in one place in every view, level with the portrait, whichever view is open. */
+.drost--stack .drost__row.is-focused > .drost__tick,
+.drost__row.is-focused > .drost__tick {
+  align-self: start;
+}
+.drost--stack .drost__row.is-ring.is-ticking > .drost__abn {
+  grid-column: 1 / -1;
+}
+/* The default view's fight line and abilities flush with the card's right edge. */
+.drost__row.is-ring > .drost__fight,
+.drost__row.is-ring > .drost__abn {
+  justify-content: flex-end;
+}
+.drost--stack .drost__fight {
+  display: flex;
+}
+/* The market's price hangs under the portrait: the fight line and the abilities keep beside it. */
+.drost--stack .drost__row.is-ring.is-aside-wide > .drost__fight,
+.drost--stack .drost__row.is-ring.is-aside-wide > .drost__abn {
+  grid-column: 2 / -1;
+}
+/* Stats with the resistances under them: one block in the cells' place, centred under the name. */
+.drost__row.is-focused > .drost__cellset {
+  grid-row: 2;
+  grid-column: 2;
+  align-self: center;
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+.drost__row.is-focused.is-ticking > .drost__cellset {
+  grid-column: 3;
+}
+.drost--stack .drost__row.is-focused > .drost__cellset {
+  grid-column: 2 / -1;
+}
+.drost--stack .drost__row.is-focused.is-ticking > .drost__cellset {
+  grid-column: 3 / -1;
+}
+.drost--stack .drost__row.is-focused.is-aside > .drost__cellset {
+  grid-column: 2 / -1;
 }

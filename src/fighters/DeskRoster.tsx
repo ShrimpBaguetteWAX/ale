@@ -898,13 +898,14 @@ export function Row({
       )}
     </span>
   )
+  /* The same name line as the default view's, so class, element and race stand in one place in every view. */
   const name = (
     <span className="drost__name">
-      <b>{f.classname}</b>
-      <small>
+      <span className="drost__l1">
+        <b>{f.classname}</b>
         <img src={elementIcon(f.element)} alt={f.element} />
-        {f.racename}
-      </small>
+        <small>{f.racename}</small>
+      </span>
     </span>
   )
   const status =
@@ -954,22 +955,19 @@ export function Row({
           }
         />
       )}
-      {ring ? (
-        <span
-          className={`drost__ring${fig.pay.overdue ? ' is-overdue' : ''}`}
-          style={{ '--p': `${Math.max(2, fig.pay.progress * 100)}%` } as React.CSSProperties}
-          title={
-            fig.pay.overdue
-              ? `Payday due · ${fig.pay.cost.toLocaleString(NUM_LOCALE)} credits`
-              : `Payday ${payDay(f)} · in ${daysLeft}d · ${fig.pay.cost.toLocaleString(NUM_LOCALE)} credits`
-          }
-        >
-          {art}
-          <span className="drost__days">{fig.pay.overdue ? 'Due' : `${daysLeft}d`}</span>
-        </span>
-      ) : (
-        art
-      )}
+      {/* The portrait in its payday ring in every view, so it stands in the same place whichever is open. */}
+      <span
+        className={`drost__ring${fig.pay.overdue ? ' is-overdue' : ''}`}
+        style={{ '--p': `${Math.max(2, fig.pay.progress * 100)}%` } as React.CSSProperties}
+        title={
+          fig.pay.overdue
+            ? `Payday due · ${fig.pay.cost.toLocaleString(NUM_LOCALE)} credits`
+            : `Payday ${payDay(f)} · in ${daysLeft}d · ${fig.pay.cost.toLocaleString(NUM_LOCALE)} credits`
+        }
+      >
+        {art}
+        <span className="drost__days">{fig.pay.overdue ? 'Due' : `${daysLeft}d`}</span>
+      </span>
       {ring ? (
         <>
           <span className="drost__who">
@@ -996,6 +994,33 @@ export function Row({
               </b>
             </span>
           ))}
+          {/* What the figures come to in a fight: damage per second, survival and the combat score. */}
+          <span className="drost__fight">
+            <span title="Damage per second">
+              <img className="drost__si" src={statIcon('damage')} alt="" />
+              <small>DPS</small>
+              <b>
+                {formatDecimals(fig.combat.dps, 2)}
+                <Grade grade={fig.combat.dpsG} />
+              </b>
+            </span>
+            <span title="Survival: how much damage it takes to bring down">
+              <img className="drost__si" src={statIcon('survival')} alt="" />
+              <small>Survival</small>
+              <b>
+                {Math.round(fig.combat.survival).toLocaleString(NUM_LOCALE)}
+                <Grade grade={fig.combat.survG} />
+              </b>
+            </span>
+            <span title="Combat score: damage and survival together">
+              <img className="drost__si" src={statIcon('block')} alt="" />
+              <small>Score</small>
+              <b>
+                {Math.round(fig.combat.score).toLocaleString(NUM_LOCALE)}
+                <Grade grade={fig.combat.scoreG} />
+              </b>
+            </span>
+          </span>
           {mode === 'sell' && (
             <span className="drost__pay">
               {gate.ok ? <Credits value={s.credits ?? 0} /> : <small>Busy</small>}
@@ -1025,20 +1050,35 @@ export function Row({
         <>
           {name}
           {view === 'stats' && (
-            <span className="drost__cells drost__cells--5">
-              {fig.stats.map((x) => (
-                <span className="drost__cell" key={x.field}>
-                  <small>
-                    <img className="drost__si" src={statIcon(x.field)} alt="" />
-                    {STAT_NAMES[x.field]}
-                  </small>
-                  <b>
-                    {x.value}
-                    <Grade grade={x.grade} />
-                  </b>
-                  {x.spread > 0 && <em>±{x.spread}</em>}
-                </span>
-              ))}
+            <span className="drost__cellset">
+              <span className="drost__cells drost__cells--5">
+                {fig.stats.map((x) => (
+                  <span className="drost__cell" key={x.field}>
+                    <small>
+                      <img className="drost__si" src={statIcon(x.field)} alt="" />
+                      {STAT_NAMES[x.field]}
+                    </small>
+                    <b>
+                      {x.value}
+                      <Grade grade={x.grade} />
+                    </b>
+                    {x.spread > 0 && <em>±{x.spread}</em>}
+                  </span>
+                ))}
+              </span>
+              <span className="drost__cells drost__cells--6 drost__cells--res">
+                {fig.res.map((x) => (
+                  <span className="drost__cell" key={x.field} title={`${x.el} resistance`}>
+                    <small>
+                      <img className="drost__ei" src={elementIcon(x.el)} alt={x.el} />
+                    </small>
+                    <b>
+                      {x.value}
+                      <Grade grade={x.grade} />
+                    </b>
+                  </span>
+                ))}
+              </span>
             </span>
           )}
           {view === 'res' && (
