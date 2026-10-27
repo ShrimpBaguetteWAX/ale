@@ -702,23 +702,7 @@ export function DeskRoster(p: DeskRosterProps) {
               </p>
             ) : (
               <div className="drost__rows">
-                {view === 'default' && (
-                  <div
-                    className={`drost__colhead${p.mode === 'inventory' ? '' : ' is-ticking'}${p.mode === 'sell' ? ' is-sellcol' : ''}`}
-                    aria-hidden="true"
-                  >
-                    {p.mode !== 'inventory' && <span />}
-                    <span />
-                    <span className="drost__colname">Fighter</span>
-                    {STAT_FIELDS.map((k) => (
-                      <span key={k}>
-                        <img className="drost__si" src={statIcon(k)} alt="" />
-                        {STAT_SHORT[k]}
-                      </span>
-                    ))}
-                    {p.mode === 'sell' && <span>Sells for</span>}
-                  </div>
-                )}
+                {view === 'default' && <ColHead ticking={p.mode !== 'inventory'} end={p.mode === 'sell' ? 'Sells for' : undefined} />}
                 {list.map((f) => (
                   <Row
                     key={f.fighter_id}
@@ -828,6 +812,31 @@ export function DeskRoster(p: DeskRosterProps) {
   )
 }
 
+/**
+ * The column heads over a desktop's default rows: Dmg, HP, Taunt, Cool, Wind.
+ * `end` names a last column the screen adds — "Sells for" when selling, the
+ * market's "Price".
+ */
+export function ColHead({ ticking = false, end, wide = false }: { ticking?: boolean; end?: string; wide?: boolean }) {
+  return (
+    <div
+      className={`drost__colhead${ticking ? ' is-ticking' : ''}${end && ticking ? ' is-sellcol' : ''}${end && !ticking ? ' is-aside' : ''}${wide ? ' is-aside-wide' : ''}`}
+      aria-hidden="true"
+    >
+      {ticking && <span />}
+      <span />
+      <span className="drost__colname">Fighter</span>
+      {STAT_FIELDS.map((k) => (
+        <span key={k}>
+          <img className="drost__si" src={statIcon(k)} alt="" />
+          {STAT_SHORT[k]}
+        </span>
+      ))}
+      {end && <span>{end}</span>}
+    </div>
+  )
+}
+
 /* ---------- a row ---------- */
 
 /*
@@ -847,6 +856,7 @@ export function Row({
   aside,
   note,
   dim = false,
+  wideAside = false,
 }: {
   f: RosterFighter
   fig: Figures
@@ -863,6 +873,8 @@ export function Row({
   note?: React.ReactNode
   /** Shown but set back, as for a fighter already placed somewhere else. */
   dim?: boolean
+  /** The aside needs two columns' room: the market's price over its clock. */
+  wideAside?: boolean
 }) {
   const s = f.stats
   const state = fighterState(f, now)
@@ -911,6 +923,7 @@ export function Row({
     checked ? 'is-checked' : '',
     ticking && !gate.ok ? 'is-locked' : '',
     aside ? 'is-aside' : '',
+    aside && wideAside ? 'is-aside-wide' : '',
     note ? 'has-note' : '',
     dim ? 'is-dim' : '',
   ]

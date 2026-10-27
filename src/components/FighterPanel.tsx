@@ -17,6 +17,7 @@ import {
   gradeStat,
   midpoint,
   resolveAbilityDescription,
+  statDisplay,
   statIcon,
   STAT_LABEL,
   elementIcon,
@@ -169,6 +170,16 @@ function StatLine({
 }) {
   const ranged = stat.max !== undefined && stat.max !== stat.min
   const now = ranged ? formatStat(stat.min, stat.max!) : formatScaled(stat.min)
+  /* The figure, then its swing a shade softer: "54" is what is read, "(±13)" the footnote. */
+  const shown = ranged ? statDisplay(stat.min, stat.max!) : null
+  const figure =
+    shown && shown.spread > 0 ? (
+      <>
+        {shown.value} <span className="statline__spread">(±{shown.spread})</span>
+      </>
+    ) : (
+      now
+    )
   const lit = highlight?.field === field ? highlight : undefined
   return (
     <>
@@ -183,7 +194,7 @@ function StatLine({
               {lit.to} <s>{now}</s>
             </>
           ) : (
-            now
+            figure
           )}
           <Grade
             field={field}

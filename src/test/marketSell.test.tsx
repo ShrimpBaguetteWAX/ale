@@ -79,10 +79,11 @@ const draw = (sellable: RosterFighter[], onList: (...a: never[]) => void = () =>
 
 /* By name, never by position: the list draws `applyFilter`'s order, not the
    order the fixtures were written in. */
+/* The desktop board draws My Fighters' card: a button, its class name in the name line. */
 const row = (c: HTMLElement, classname: string) =>
-  [...c.querySelectorAll('.mdesk .mrow')].find((r) =>
-    r.querySelector('b')?.textContent === classname,
-  )?.querySelector('.mrow__hit') as HTMLElement
+  [...c.querySelectorAll('.mdesk .drost__row')].find(
+    (r) => r.querySelector('.drost__l1 b')?.textContent === classname,
+  ) as HTMLElement
 const shown = (c: HTMLElement) => c.querySelector('.mfighter__name')?.textContent
 const listBtn = (c: HTMLElement) => c.querySelector('.mdeal .btn--primary') as HTMLButtonElement
 const keepBox = (c: HTMLElement) => c.querySelector('.mdeal .msell__keep input') as HTMLInputElement
@@ -102,7 +103,7 @@ describe('the sell tab', () => {
     fireEvent.click(row(container, 'Juggernaut'))
 
     expect(shown(container)).toBe('Juggernaut')
-    expect(container.querySelector('.mdesk .mrow.is-open b')?.textContent).toBe('Juggernaut')
+    expect(container.querySelector('.mdesk .drost__row.is-picked .drost__l1 b')?.textContent).toBe('Juggernaut')
   })
 
   it('will not step the price under the minimum start', () => {

@@ -1753,7 +1753,8 @@ i.mrow__arrow {
     --line-bright: rgb(255 255 255 / 22%);
     --btn-line: rgb(255 255 255 / 22%);
     display: grid;
-    grid-template-columns: minmax(290px, 340px) minmax(0, 1fr) minmax(240px, 270px);
+    /* The list wide enough for My Fighters' stacked card and its price. */
+    grid-template-columns: minmax(360px, 420px) minmax(0, 1fr) minmax(250px, 280px);
     gap: var(--sp-4);
     align-items: start;
   }
@@ -1999,7 +2000,7 @@ i.mrow__arrow {
 @container mkboard (max-width: 980px) {
   .mdesk {
     /* The list gives up width first; the fighter and the deal need it more. */
-    grid-template-columns: clamp(300px, 45%, 340px) minmax(0, 1fr);
+    grid-template-columns: clamp(340px, 46%, 400px) minmax(0, 1fr);
   }
   .mdesk__side {
     position: sticky;
@@ -2110,5 +2111,122 @@ i.mrow__arrow {
   .mdesk:has(> .mdesk__list > .mrows__head:first-child) > .mdesk__side > .mfighter,
   .mdesk:has(> .mdesk__list > .mrows__head:first-child) > .mdesk__side > .mdeal {
     margin-top: 0;
+  }
+}
+
+/* The desktop board's card: the price over the time left, at the end of the name line. */
+.mcard__price {
+  display: grid;
+  justify-items: end;
+  gap: 1px;
+  white-space: nowrap;
+}
+.mcard__price b {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 800;
+}
+.mcard__price img {
+  width: 16px;
+  height: 16px;
+}
+.mcard__price small {
+  font-family: var(--font-display);
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--text-faint);
+}
+.mcard__price small.is-closing {
+  color: #ff6b7d;
+}
+
+/* ---------- the desktop board, wider and a size up ---------- */
+/* The market uses a big screen: the page grows past the default width. */
+.main__inner:has(> .market) {
+  max-width: min(1720px, 100%);
+}
+@media (min-width: 720px) {
+  .market__inner {
+    max-width: 1720px;
+  }
+}
+@media (min-width: 720px) {
+  /* A wide board: My Fighters' full row in the list, the price in a column of its own. */
+  .mdesk.mdesk--wide {
+    grid-template-columns: minmax(660px, 780px) minmax(0, 1fr) minmax(260px, 300px);
+  }
+  .mdesk__list:not(.drost--stack) .drost__row.is-ring.is-aside,
+  .mdesk__list:not(.drost--stack) .drost__colhead.is-aside {
+    grid-template-columns: 72px minmax(0, 1fr) repeat(5, var(--col)) 104px;
+  }
+  /* The price and the clock beside the whole card, not just its first line. */
+  .mdesk__list:not(.drost--stack) .drost__row.is-ring > .drost__aside {
+    grid-row: 1 / span 2;
+    grid-column: -2 / -1;
+    align-self: center;
+    justify-self: end;
+  }
+  .mdesk__list:not(.drost--stack) .drost__row.is-ring.is-aside > .drost__abn {
+    grid-column: 2 / -2;
+  }
+  .mdesk__list:not(.drost--stack) .mcard__price {
+    gap: 3px;
+  }
+  .mdesk__list:not(.drost--stack) .mcard__price b {
+    font-size: 19px;
+  }
+  .mdesk__list:not(.drost--stack) .mcard__price img {
+    width: 18px;
+    height: 18px;
+  }
+  .mdesk__list:not(.drost--stack) .mcard__price small {
+    font-size: 13px;
+  }
+
+  /* The fighter and the deal, a size up: captions, labels, figures and notes. */
+  .mfighter__kick,
+  .mfighter__cap,
+  .mdeal__cap {
+    font-size: 11px;
+  }
+  .mfighter__meta span {
+    font-size: 13px;
+  }
+  .mfighter .statline__k {
+    font-size: 10.5px;
+  }
+  /* Each stat in its own colour, as the icons are drawn: gold damage, red health, and so on. */
+  .mfighter .statline__icon {
+    width: 13px;
+    height: 13px;
+    filter: none;
+    opacity: 1;
+  }
+  .mfighter .statline__v {
+    font-size: 15px;
+  }
+  .mfighter .resgrid::before {
+    font-size: 11px;
+  }
+  .mfighter .resgrid__label {
+    font-size: 10.5px;
+  }
+  .mfighter .ability__rarity {
+    font-size: 11px;
+  }
+  .mdeal__price small {
+    font-size: 13px;
+  }
+  .mdeal .mfacts dt {
+    font-size: 13.5px;
+  }
+  .mdeal .msell__hint {
+    font-size: 12.5px;
+  }
+  .mdeal .msell__quick button {
+    font-size: 12.5px;
   }
 }

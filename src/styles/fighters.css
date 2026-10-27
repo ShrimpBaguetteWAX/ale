@@ -2912,3 +2912,10 @@
 .drost__row.is-dim {
   opacity: 0.5;
 }
+/* A two-column aside: the market's price over its clock. */
+.drost--stack .drost__row.is-ring.is-aside-wide > .drost__who {
+  grid-column: 2 / -3;
+}
+.drost--stack .drost__row.is-ring.is-aside-wide > .drost__aside {
+  grid-column: -3 / -1;
+}

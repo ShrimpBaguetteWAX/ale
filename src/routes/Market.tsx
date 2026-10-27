@@ -1,4 +1,4 @@
-import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Fragment, createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useGame } from '@/state/useGame'
 import { NUM_LOCALE } from '@/format'
@@ -57,6 +57,7 @@ import { addAuction, bidAuction, buyOffer, cancelAuction } from '@/wharf/actions
 import { SACRIFICE_ABILITY } from '@/ascension/rules'
 import { asset } from '@/assets'
 import { FighterRow, ListingBody } from '@/market/FighterRows'
+import { ColHead, Row, figuresOf } from '@/fighters/DeskRoster'
 
 /**
  * The fighter market.
@@ -84,6 +85,14 @@ type Dialog =
   | { kind: 'bid'; auction: Auction }
   | { kind: 'buy'; offer: InstantOffer }
   | null
+
+/*
+ * A board this wide gives its list My Fighters' full desktop row — the stats
+ * in columns under one head, the price and the clock in a column of their
+ * own at the right; narrower, the list takes the stacked card instead.
+ */
+const WIDE_BOARD = 1360
+const WideBoard = createContext(false)
 
 export default function Market() {
   const player = useGame((s) => s.player)!
@@ -124,6 +133,16 @@ export default function Market() {
   */
   const phone = usePhone()
   const [openRow, setOpenRow] = useState<string | null>(null)
+  /* The board's own width, as the side rail takes a different share at each window size. */
+  const [boardW, setBoardW] = useState(0)
+  const sizeObs = useRef<ResizeObserver | null>(null)
+  const panelRef = useCallback((el: HTMLElement | null) => {
+    sizeObs.current?.disconnect()
+    if (!el || typeof ResizeObserver === 'undefined') return
+    sizeObs.current = new ResizeObserver(([e]) => setBoardW(e.contentRect.width))
+    sizeObs.current.observe(el)
+  }, [])
+  const wide = !phone && boardW >= WIDE_BOARD
   const toggleRow = (key: string) => setOpenRow((k) => (k === key ? null : key))
   /* A desktop shows one listing in full beside the list: which one. */
   const [pick, setPick] = useState<string | null>(null)
@@ -310,20 +329,20 @@ export default function Market() {
   const picked = board.find((l) => listingKey(l) === pick) ?? board[0] ?? null
   /* A row of the desktop list: picking it shows it beside the list. */
   const deskRow = (l: Auction | InstantOffer) => (
-    <ListingRow
+    <MarketCard
       key={listingKey(l)}
       listing={l}
       price={'auction_id' in l ? l.current_bid : l.gems}
       closing={'auction_id' in l && extendsOnBid(l, config, now)}
-      open={l === picked}
-      onToggle={() => setPick(listingKey(l))}
-      template={classes.get(l.fighter.classname)}
+      picked={l === picked}
+      onPick={() => setPick(listingKey(l))}
       now={now}
-      onOpen={() => show(l)}
       marker={tab === 'mine' ? markerOf.get(l.fighter_id) : undefined}
-      inline={false}
+      wide={wide}
     />
   )
+  /* The column heads, over a wide board's rows. */
+  const colHead = wide ? <ColHead key="head" end="Price" /> : null
 
   const show = useCallback(
     (listing: Auction | InstantOffer) => {
@@ -374,6 +393,7 @@ export default function Market() {
   )
 
   return (
+    <WideBoard.Provider value={wide}>
     <div className={`market${pinned ? ' market--pinned' : ''}`}>
       <img className="market__art" src={asset("/assets/background/bg-shop.png")} alt="" />
       <div className="market__scrim" />
@@ -397,7 +417,7 @@ export default function Market() {
 
         {error && <div className="alert alert--error">{error}</div>}
 
-        <section className="panel market__panel">
+        <section className="panel market__panel" ref={panelRef}>
           {!phone && (
           <div className="tabs" role="tablist">
             {(
@@ -459,7 +479,10 @@ export default function Market() {
                               </span>
                               <small>{note}</small>
                             </p>
-                            <div className="mrows">{ls.map(deskRow)}</div>
+                            <div className="mrows">
+                              {colHead}
+                              {ls.map(deskRow)}
+                            </div>
                           </Fragment>
                         ),
                     )
@@ -475,7 +498,7 @@ export default function Market() {
                           : 'Nothing is on sale at a fixed price. These only appear when an auction ends unsold and the seller chose to keep it listed.'
                       }
                     >
-                      {board.map(deskRow)}
+                      {board.length > 0 && colHead ? [colHead, ...board.map(deskRow)] : board.map(deskRow)}
                     </PhoneRows>
                   </>
                 )
@@ -704,9 +727,100 @@ export default function Market() {
         />
       )}
     </div>
+    </WideBoard.Provider>
   )
 }
 
+
+/* ---------- the desktop: My Fighters' card, with the price ---------- */
+
+/**
+ * A listing on the desktop board, as My Fighters draws a fighter: the same
+ * card, so a fighter looks the same in your roster and on sale. The price
+ * and the time left take the end of the name line.
+ *
+ * Every listed fighter is "in use" by the market; saying "In Market" on each
+ * card of the market is noise, so the card is drawn as if free. A payday the
+ * fighter is overdue on still shows.
+ */
+function MarketCard({
+  listing,
+  price,
+  closing,
+  picked,
+  onPick,
+  now,
+  marker,
+  wide,
+}: {
+  listing: Auction | InstantOffer
+  price: number
+  closing: boolean
+  picked: boolean
+  onPick: () => void
+  now: number
+  /** The player's marker, for a listing of their own. */
+  marker?: string
+  /** A wide board: the price takes a column of its own rather than the name line. */
+  wide: boolean
+}) {
+  const { classes, fighters, levelMod, ageDecay } = useConfig()
+  const f = useMemo(
+    () => ({ ...listingAsFighter(listing), in_use: 0, marker: marker ?? '' }),
+    [listing, marker],
+  )
+  const fig = useMemo(
+    () => figuresOf(f, classes.get(f.classname), fighters, levelMod, ageDecay, now, false),
+    [f, classes, fighters, levelMod, ageDecay, now],
+  )
+  return (
+    <Row
+      f={f}
+      fig={fig}
+      view="default"
+      mode="inventory"
+      now={now}
+      picked={picked}
+      checked={false}
+      gate={{ ok: true }}
+      onClick={onPick}
+      wideAside={!wide}
+      aside={
+        <span className="mcard__price">
+          <b className="mono">
+            {price.toLocaleString(NUM_LOCALE)}
+            <img src={asset('/assets/icons/gems.png')} alt="gems" />
+          </b>
+          <small className={closing ? 'is-closing' : ''}>{timeLeftLabel(msLeft(listing, now))}</small>
+        </span>
+      }
+    />
+  )
+}
+
+/** One of your own fighters on the desktop Sell board: My Fighters' card, as it is there. */
+function OwnCard({ f, picked, onPick }: { f: RosterFighter; picked: boolean; onPick: () => void }) {
+  const { classes, fighters, levelMod, ageDecay } = useConfig()
+  const [now] = useState(() => Date.now())
+  const fig = useMemo(
+    () => figuresOf(f, classes.get(f.classname), fighters, levelMod, ageDecay, now, false),
+    [f, classes, fighters, levelMod, ageDecay, now],
+  )
+  return (
+    <Row
+      f={f}
+      fig={fig}
+      view="default"
+      mode="inventory"
+      now={now}
+      picked={picked}
+      checked={false}
+      gate={{ ok: true }}
+      onClick={onPick}
+      aside={<span className="mrow__cue">Sell ›</span>}
+    />
+  )
+}
 
 /* ---------- the phone: a row a listing, opened in place ---------- */
 
@@ -992,11 +1106,12 @@ function DeskBoard<T>({
   deal: React.ReactNode
 }) {
   const box = useRef<HTMLDivElement>(null)
+  const wide = useContext(WideBoard)
   const index = picked === null ? -1 : order.indexOf(picked)
 
   /* The picked row kept in sight as the keys walk past the fold. */
   useEffect(() => {
-    const row = box.current?.querySelector('.mrow.is-open')
+    const row = box.current?.querySelector('.mrow.is-open, .drost__row.is-picked')
     /* Absent where there is no layout to scroll, as in the tests' DOM. */
     if (typeof row?.scrollIntoView === 'function') row.scrollIntoView({ block: 'nearest' })
   }, [picked])
@@ -1011,8 +1126,9 @@ function DeskBoard<T>({
   }
 
   return (
-    <div className="mdesk">
-      <div className="mdesk__list" ref={box} onKeyDown={onKey}>
+    <div className={`mdesk${wide ? ' mdesk--wide' : ''}`}>
+      {/* Narrow, the list is a phone's width and takes My Fighters' stacked card. */}
+      <div className={`mdesk__list${wide ? '' : ' drost--stack'}`} ref={box} onKeyDown={onKey}>
         {list}
       </div>
       {/* One box for the two, so a narrower board can stack them in one
@@ -1698,6 +1814,7 @@ export function SellTab({
 }) {
   const minStart = Number(config?.gems_min_start_bid ?? 0)
   const [pickedId, setPickedId] = useState<number | null>(null)
+  const wide = useContext(WideBoard)
 
   /*
      Its own filter, not the board’s.
@@ -1931,18 +2048,9 @@ export function SellTab({
             <p className="faint">No fighter you can sell matches these filters.</p>
           ) : (
             <div className="mrows">
+              {wide && <ColHead end=" " />}
               {shown.map((f) => (
-                <FighterRow
-                  key={f.fighter_id}
-                  stats={f.stats}
-                  ageFactor={battleFactor(f, levelMod, ageDecay).age}
-                  ascension={f.ascension_level}
-                  marker={f.marker}
-                  template={classes.get(f.classname)}
-                  open={f === deskPicked}
-                  onToggle={() => setPickedId(f.fighter_id)}
-                  right={<span className="mrow__price mrow__cue">Sell ›</span>}
-                />
+                <OwnCard key={f.fighter_id} f={f} picked={f === deskPicked} onPick={() => setPickedId(f.fighter_id)} />
               ))}
             </div>
           )}

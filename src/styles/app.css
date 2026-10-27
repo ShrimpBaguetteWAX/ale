@@ -1059,6 +1059,11 @@
   font-variant-numeric: tabular-nums;
   text-align: right;
 }
+/* How far a roll can swing, a shade under the figure it qualifies. */
+.statline__spread {
+  font-weight: 600;
+  color: var(--text-faint);
+}
 
 /* ---------- Network indicator ---------- */
 
