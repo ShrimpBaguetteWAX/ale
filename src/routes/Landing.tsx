@@ -168,6 +168,19 @@ export function Landing() {
   )
 }
 
+/*
+ * A fight's worth of blows on one loop: where each lands, in what element's
+ * colour, when, and what it shows — a critical strike, plain hits, a hit
+ * taken on your side, a heal from Self Heal on Attack.
+ */
+const HITS: { x: number; y: number; c: string; rot: number; at: number; kind: 'crit' | 'hit' | 'hurt' | 'heal'; n: string }[] = [
+  { x: 74, y: 42, c: '#fe7a44', rot: 10, at: 0, kind: 'crit', n: '−172' },
+  { x: 24, y: 48, c: '#2be0f4', rot: 40, at: 1.3, kind: 'hurt', n: '−96' },
+  { x: 86, y: 50, c: '#fd84b7', rot: 75, at: 2.4, kind: 'hit', n: '−48' },
+  { x: 13, y: 56, c: '#4ee38a', rot: 0, at: 3.1, kind: 'heal', n: '+38' },
+  { x: 66, y: 54, c: '#f9cd4a', rot: 25, at: 3.8, kind: 'hit', n: '−61' },
+]
+
 /* Who stands on each side of the arena floor: your three, their two. */
 const US = ['hunter_elgem', 'astralknight_lopati', 'mystic_altan']
 const THEM = ['juggernaut_khaured', 'voidcaller_altan']
@@ -204,13 +217,34 @@ function BattleScene() {
           </span>
         ))}
       </div>
-      <span className="kart__burst" aria-hidden="true" />
-      <span className="kart__dmg is-a" aria-hidden="true">
-        −172
-      </span>
-      <span className="kart__dmg is-b" aria-hidden="true">
-        −96
-      </span>
+      {HITS.map((h, i) => (
+        <span
+          key={i}
+          className={`kart__hit is-${h.kind}`}
+          aria-hidden="true"
+          style={
+            {
+              left: `${h.x}%`,
+              bottom: `${h.y}%`,
+              '--c': h.c,
+              '--rot': `${h.rot}deg`,
+              animationDelay: `${h.at}s`,
+            } as React.CSSProperties
+          }
+        >
+          {h.kind !== 'heal' && (
+            <>
+              <i className="kart__flash" />
+              <i className="kart__ring" />
+              <i className="kart__sparks" />
+            </>
+          )}
+          <b className="kart__num">
+            {h.kind === 'crit' && <small>Crit</small>}
+            {h.n}
+          </b>
+        </span>
+      ))}
       {board.data && board.data.rows.length > 0 && (
         <div className="kart__lb">
           <div className="kart__lbhead">
