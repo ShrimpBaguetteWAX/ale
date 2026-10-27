@@ -85,7 +85,7 @@ export function DeskAutoSign({ state }: { state: ReturnType<typeof useAutoSign> 
       <p className="pauto__never">Sending WAX, Trilium or NFTs always needs your wallet, whatever is picked here.</p>
       {elsewhere && (
         <p className="pauto__hint pauto__hint--warn">
-          A key is on your account but not in this browser. Applying here replaces it.
+          Auto-signing is on in another browser. Applying here adds this one, and sets what every browser may sign; turning it off from here turns it off everywhere.
         </p>
       )}
 
@@ -116,7 +116,7 @@ export function DeskAutoSign({ state }: { state: ReturnType<typeof useAutoSign> 
           onClick={() => void save()}
         >
           {saving && <span className="spinner" />}
-          {chosen.length === 0 && live.length > 0 ? 'Turn auto-signing off' : 'Apply'}
+          {chosen.length === 0 && live.length > 0 ? (elsewhere ? 'Turn off on every device' : 'Turn auto-signing off') : 'Apply'}
         </button>
       </div>
     </div>
@@ -200,7 +200,7 @@ export function PhoneAutoSign() {
       <p className="pauto__never">Sending WAX, Trilium or NFTs always needs your wallet.</p>
       {elsewhere && (
         <p className="pauto__hint pauto__hint--warn">
-          A key is on your account but not in this browser. Applying here replaces it.
+          Auto-signing is on in another browser. Applying here adds this one, and sets what every browser may sign; turning it off from here turns it off everywhere.
         </p>
       )}
 
@@ -211,7 +211,7 @@ export function PhoneAutoSign() {
         onClick={() => void save()}
       >
         {saving && <span className="spinner" />}
-        {chosen.length === 0 && live.length > 0 ? 'Turn auto-signing off' : 'Apply'}
+        {chosen.length === 0 && live.length > 0 ? (elsewhere ? 'Turn off on every device' : 'Turn auto-signing off') : 'Apply'}
       </button>
       {changed && !saving && session && (
         <p className="pauto__hint">Your wallet asks once to confirm.</p>

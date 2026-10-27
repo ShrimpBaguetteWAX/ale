@@ -14,6 +14,7 @@ import { AUTO_SIGN_PERMISSION, savedGroups, whitelistFor } from './autoSign'
 import { CHAIN_ID } from '@/chain/config'
 import { endpointPool } from '@/chain/endpoints'
 import { isUserCancel, SESSION_STORAGE_PREFIX } from './errors'
+import { isAuthorityError, signsWithKey, syncAutoSign, walletOnly } from './autoSignSync'
 
 let kit: SessionKit | null = null
 
@@ -37,11 +38,24 @@ export async function getSessionKit(): Promise<SessionKit> {
      on every transaction the game makes; the one the game has is wanted on
      exactly one action, and `transact` below passes it there.
   */
+  /*
+     A second browser setting auto-signing up finds keys already on the
+     permission, and WharfKit asks whether to add this one or replace them.
+     Replacing would leave every other browser signing with a key the chain
+     has forgotten, so it is never offered: this browser's key goes beside
+     the others, and each is taken away only from its own browser.
+  */
+  const renderer = () => {
+    const ui = new WebRenderer()
+    ui.onSessionKeyConflict = async () => 'add'
+    return ui
+  }
+
   kit = new SessionKit(
     {
       appName: 'Alien Legends',
       chains: [chain],
-      ui: new WebRenderer(),
+      ui: renderer(),
       walletPlugins: [new WalletPluginAnchor(), new WalletPluginCloudWallet()],
     },
     {
@@ -121,20 +135,32 @@ export async function transact(
     cosign?: boolean
   } = {},
 ): Promise<TransactResult> {
-  return session.transact(
-    {
-      actions: actions.map((a) => ({
-        ...a,
-        authorization: [session.permissionLevel],
-      })),
-    },
-    {
-      broadcast: true,
-      expireSeconds: 120,
-      ...(options.cosign ? { transactPlugins: [new CosignPlugin()] } : {}),
-    },
-  )
+  const args = {
+    actions: actions.map((a) => ({
+      ...a,
+      authorization: [session.permissionLevel],
+    })),
+  }
+  const opts = {
+    broadcast: true,
+    expireSeconds: 120,
+    ...(options.cosign ? { transactPlugins: [new CosignPlugin()] } : {}),
+  }
+  const keyed = signsWithKey(session, args.actions as Parameters<typeof signsWithKey>[1])
+  try {
+    return await session.transact(args, opts)
+  } catch (err) {
+    /*
+       This browser's key turned down: taken away in another browser, or
+       the action unlinked there. Bring this browser in line with the chain,
+       and send the same transaction once more through the wallet.
+    */
+    if (!keyed || !isAuthorityError(err)) throw err
+    await syncAutoSign(session)
+    return walletOnly(session).transact(args, opts)
+  }
 }
 
 export { isUserCancel, readableError } from './errors'
+export { syncAutoSign } from './autoSignSync'
 export type { Session, TransactResult }

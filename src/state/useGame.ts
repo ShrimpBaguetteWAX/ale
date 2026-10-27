@@ -106,9 +106,11 @@ export const useGame = create<GameState>((set, get) => ({
     }
 
     try {
-      const { restore } = await wharf()
+      const { restore, syncAutoSign } = await wharf()
       const session = await restore()
       if (session) {
+        /* Auto-signing as the chain has it now, not as this browser left it. Never waited on. */
+        void syncAutoSign(session)
         /*
            The account lands in the same update as the flag, never after it.
            Split across two, there would be one frame holding "boot has
@@ -130,9 +132,10 @@ export const useGame = create<GameState>((set, get) => ({
   },
 
   async connect() {
-    const { login } = await wharf()
+    const { login, syncAutoSign } = await wharf()
     const session = await login()
     if (!session) return
+    void syncAutoSign(session)
     set({ session, account: String(session.actor), playerLoaded: false })
     await get().refreshPlayer({ force: true })
   },
