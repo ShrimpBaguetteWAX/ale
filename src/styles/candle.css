@@ -590,7 +590,7 @@
 }
 .dcan__sub {
   padding-bottom: 10px;
-  font-size: 13px;
+  font-size: 14px;
   color: var(--text-faint);
 }
 .dcan__sp {
@@ -607,7 +607,7 @@
   align-items: center;
   gap: 12px;
   font-family: var(--font-display);
-  font-size: max(9.5px, var(--fs-floor));
+  font-size: 11px;
   font-weight: 800;
   letter-spacing: 0.16em;
   text-transform: uppercase;
@@ -618,7 +618,7 @@
   align-items: center;
   gap: 4px;
   font-family: var(--font-body);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
   letter-spacing: 0;
   text-transform: none;
@@ -630,7 +630,7 @@
 }
 .dcan__note {
   margin: 0;
-  font-size: 11.5px;
+  font-size: 13px;
   line-height: 1.45;
   color: var(--text-dim);
 }
@@ -655,7 +655,7 @@
 }
 .dcan__claim small {
   font-family: var(--font-display);
-  font-size: max(9px, var(--fs-floor));
+  font-size: 10.5px;
   font-weight: 800;
   letter-spacing: 0.16em;
   text-transform: uppercase;
@@ -665,7 +665,7 @@
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  font-size: 12px;
+  font-size: 13px;
   color: var(--text-faint);
 }
 .dcan__claim > span img {
@@ -674,7 +674,7 @@
 }
 .dcan__claim b {
   font-family: var(--font-display);
-  font-size: 13px;
+  font-size: 14px;
   color: var(--white);
 }
 
@@ -755,19 +755,19 @@
 }
 .dcan__cardtext b {
   font-family: var(--font-display);
-  font-size: 15px;
+  font-size: 16.5px;
   font-weight: 900;
 }
 .dcan__cardtext b small {
   font-family: var(--font-body);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   color: var(--text-faint);
 }
 .dcan__cardtext > span:not(.dcan__gate) {
   max-width: 100%;
   overflow: hidden;
-  font-size: 12px;
+  font-size: 13.5px;
   color: #dfe6f2;
   white-space: nowrap;
   text-overflow: ellipsis;
@@ -807,7 +807,7 @@
   padding: 2px 9px;
   border-radius: 999px;
   font-family: var(--font-display);
-  font-size: max(9.5px, var(--fs-floor));
+  font-size: 11px;
   font-weight: 800;
   letter-spacing: 0.05em;
   white-space: nowrap;
@@ -864,7 +864,7 @@
 }
 .dcan__dtitle small {
   font-family: var(--font-display);
-  font-size: max(9.5px, var(--fs-floor));
+  font-size: 11px;
   font-weight: 800;
   letter-spacing: 0.18em;
   text-transform: uppercase;
@@ -873,14 +873,14 @@
 .shell .main__inner .dcan .dcan__dtitle h2 {
   margin: 0;
   font-family: var(--font-display);
-  font-size: 24px;
+  font-size: 26px;
   font-weight: 900;
 }
 .dcan__dline {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 12.5px;
+  font-size: 14px;
   color: var(--text-faint);
 }
 .dcan__clock {
@@ -891,7 +891,7 @@
 }
 .dcan__clock small {
   font-family: var(--font-display);
-  font-size: max(9px, var(--fs-floor));
+  font-size: 10.5px;
   font-weight: 800;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -899,7 +899,7 @@
 }
 .dcan__clock b {
   font-family: var(--font-display);
-  font-size: 20px;
+  font-size: 22px;
   font-weight: 900;
 }
 .dcan__burn {
@@ -934,7 +934,7 @@
 .dcan__burnlbl {
   display: flex;
   justify-content: space-between;
-  font-size: 11px;
+  font-size: 12.5px;
   color: var(--text-dim);
 }
 .dcan__stats {
@@ -953,7 +953,7 @@
 }
 .dcan__stat small {
   font-family: var(--font-display);
-  font-size: max(8.5px, var(--fs-floor));
+  font-size: 10.5px;
   font-weight: 800;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -964,7 +964,7 @@
   align-items: center;
   gap: 5px;
   font-family: var(--font-display);
-  font-size: 17px;
+  font-size: 19px;
   font-weight: 900;
   white-space: nowrap;
 }
@@ -974,7 +974,7 @@
 }
 .dcan__stat b em {
   font-family: var(--font-body);
-  font-size: 11px;
+  font-size: 12px;
   font-style: normal;
   font-weight: 700;
   color: var(--text-faint);
@@ -1009,7 +1009,7 @@
 }
 .dcan__none {
   margin: 0;
-  font-size: 12.5px;
+  font-size: 14px;
   color: var(--text-faint);
 }
 
@@ -1022,11 +1022,11 @@
 }
 .dcan__row {
   display: grid;
-  grid-template-columns: 22px 26px minmax(0, 1fr) 70px 60px 96px;
+  grid-template-columns: 24px 28px minmax(0, 1fr) 78px 68px 104px;
   gap: 10px;
   align-items: center;
   padding: 7px 6px;
-  font-size: 13px;
+  font-size: 14.5px;
 }
 .dcan__row + .dcan__row {
   box-shadow: inset 0 1px 0 rgb(255 255 255 / 6%);
@@ -1038,7 +1038,7 @@
   padding-top: 0;
   background: rgb(8 12 26 / 96%);
   font-family: var(--font-display);
-  font-size: max(8.5px, var(--fs-floor));
+  font-size: 10.5px;
   font-weight: 800;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -1054,7 +1054,7 @@
 }
 .dcan__rank {
   font-family: var(--font-display);
-  font-size: 11px;
+  font-size: 12.5px;
   font-weight: 900;
   text-align: center;
   color: var(--text-dim);
@@ -1080,12 +1080,12 @@
   text-overflow: ellipsis;
 }
 .dcan__name small {
-  font-size: 11.5px;
+  font-size: 12.5px;
   color: var(--text-faint);
 }
 .dcan__num {
   font-family: var(--font-display);
-  font-size: 12px;
+  font-size: 13.5px;
   font-weight: 800;
   text-align: right;
   white-space: nowrap;
@@ -1105,7 +1105,7 @@
 .shell .main__inner .dcan .dcan__sidetitle {
   margin: 0;
   font-family: var(--font-display);
-  font-size: 15px;
+  font-size: 16.5px;
   font-weight: 900;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -1145,7 +1145,7 @@
   margin: 0;
 }
 .dcan__amount small {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--text-faint);
 }
 .dcan__range {
@@ -1202,7 +1202,7 @@
   box-shadow: inset 0 0 0 1px rgb(255 255 255 / 12%);
   color: var(--text-faint);
   font-family: var(--font-display);
-  font-size: 11px;
+  font-size: 12.5px;
   font-weight: 800;
   white-space: nowrap;
   cursor: pointer;
@@ -1231,7 +1231,7 @@
   justify-content: space-between;
   align-items: center;
   gap: 10px;
-  font-size: 12.5px;
+  font-size: 14px;
   color: var(--text-faint);
 }
 .dcan__math b {
@@ -1239,7 +1239,7 @@
   align-items: center;
   gap: 5px;
   font-family: var(--font-display);
-  font-size: 13px;
+  font-size: 14.5px;
   font-weight: 800;
   color: var(--white);
   white-space: nowrap;
@@ -1260,7 +1260,7 @@
   color: var(--white);
 }
 .dcan__math .is-sum b {
-  font-size: 14px;
+  font-size: 15.5px;
   color: #ffd979;
 }
 .dcan__go {
@@ -1274,7 +1274,7 @@
   border-radius: 12px;
   background: rgb(255 90 106 / 8%);
   box-shadow: inset 0 0 0 1px rgb(255 90 106 / 30%);
-  font-size: 12.5px;
+  font-size: 14px;
   color: #ffd0d6;
 }
 .dcan__req > span:first-child {
@@ -1288,7 +1288,7 @@
 }
 .dcan__req b {
   font-family: var(--font-display);
-  font-size: 12px;
+  font-size: 13.5px;
   color: var(--white);
 }
 .dcan__reqbar {
