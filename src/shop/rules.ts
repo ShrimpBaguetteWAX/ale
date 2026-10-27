@@ -251,7 +251,18 @@ export function rateOf(item: ShopItem): string | undefined {
  * currency; free items and the bottom rung itself get nothing.
  */
 export function valueBadges(items: ShopItem[]): Map<string, string> {
-  const badges = new Map<string, string>()
+  return new Map([...valueAgainst(items)].map(([k, v]) => [k, v.badge]))
+}
+
+/** A rung's badge and the bottom rung it is measured against. */
+export interface PackValue {
+  badge: string
+  base: ShopItem
+}
+
+/** valueBadges, keeping the rung each badge is measured against. */
+export function valueAgainst(items: ShopItem[]): Map<string, PackValue> {
+  const values = new Map<string, PackValue>()
   const paid = items.filter((i) => costAmount(i) > 0 && gainAmount(i) > 0)
   const groups = new Map<string, ShopItem[]>()
   for (const i of paid) {
@@ -266,14 +277,39 @@ export function valueBadges(items: ShopItem[]): Map<string, string> {
       const ratio = gainAmount(i) / costAmount(i)
       if (i.gain_legend_acct_seconds > 0) {
         const save = Math.round((1 - baseRatio / ratio) * 100)
-        if (save >= 1) badges.set(i.item, `save ${save}%`)
+        if (save >= 1) values.set(i.item, { badge: `save ${save}%`, base })
       } else {
         const more = Math.round((ratio / baseRatio - 1) * 100)
-        if (more >= 1) badges.set(i.item, `+${more}%`)
+        if (more >= 1) values.set(i.item, { badge: `+${more}%`, base })
       }
     }
   }
-  return badges
+  return values
+}
+
+/**
+ * The badge as a sentence that names what it is measured against, for the
+ * purchase dialog: "+8% more gems per WAX than Gem Pack S (2.04 gems per
+ * WAX)", or for a pass, "17% less a month than Legend - 1 Month (999 gems a
+ * month)".
+ */
+export function valueLine(item: ShopItem, value: PackValue): string {
+  if (item.gain_legend_acct_seconds > 0) {
+    return `${value.badge.replace('save ', '')} less a month than ${value.base.title} (${rateOf(value.base)})`
+  }
+  const per = costUnit(item)
+  return `${value.badge} more ${gainUnit(item)} per ${per === 'gems' ? 'gem' : per === 'credits' ? 'credit' : per} than ${value.base.title} (${rateOf(value.base)})`
+}
+
+/** What a purchase leaves of the currency it is paid in, or nothing for a free one. */
+export function leftAfter(item: ShopItem, player: Player, waxBalance: number): string | undefined {
+  const left = (have: number, cost: number, unit: string) =>
+    `${Math.max(0, Math.floor(have - cost)).toLocaleString(NUM_LOCALE)} ${unit}`
+  if (isWaxPriced(item)) return left(waxBalance, waxAmount(item.cost_wax), 'WAX')
+  if (item.cost_gem > 0) return left(player.activestats.gems, item.cost_gem, 'gems')
+  if (item.cost_dust > 0) return left(player.activestats.credits, item.cost_dust, 'credits')
+  if (item.cost_action_points > 0) return left(player.activestats.action_points, item.cost_action_points, 'energy')
+  return undefined
 }
 
 /**

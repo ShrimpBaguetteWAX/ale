@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react'
 import { useGame } from '@/state/useGame'
 import { useChainQuery } from '@/chain/useChainQuery'
 import { useAction } from '@/wharf/useAction'
-import { useModal } from '@/components/useModal'
 import { BottomSheet } from '@/components/BottomSheet'
 import { usePhone } from '@/components/usePhone'
 import { buyMarketSale } from '@/wharf/actions'
@@ -36,6 +35,7 @@ import {
   type MarketSort,
 } from '@/shop/market'
 import { MINING_POWER } from '@/account/rules'
+import { CardTags, rarityEdge, Showcase, type ShowcaseTile } from '@/shop/Showcase'
 
 const SORTS: MarketSort[] = ['cheapest', 'dearest', 'power']
 
@@ -367,6 +367,9 @@ export function MarketTab({ wax }: { wax: number }) {
           phone={phone}
           card={buying}
           wax={wax}
+          game={game.data}
+          bag={bag}
+          owned={owned.data?.get(buying.templateId) ?? 0}
           onCancel={() => setBuying(null)}
           onConfirm={() => void buy(buying)}
           onStale={() => {
@@ -579,6 +582,9 @@ function ConfirmBuy({
   phone,
   card,
   wax,
+  game,
+  bag,
+  owned,
   onCancel,
   onConfirm,
   onStale,
@@ -586,6 +592,9 @@ function ConfirmBuy({
   phone: boolean
   card: MarketCard
   wax: number
+  game: Game | undefined
+  bag: BagTool[] | undefined
+  owned: number
   onCancel: () => void
   onConfirm: () => void
   onStale: () => void
@@ -669,33 +678,85 @@ function ConfirmBuy({
       </BottomSheet>
     )
   }
+  const stale = status === 'gone' || status === 'changed'
+  const { tiles, line } = cardFigures(card, game, bag)
   return (
-    <DeskConfirm title={title} onCancel={onCancel}>
-      {body}
-      <div className="confirm__actions">{actions}</div>
-    </DeskConfirm>
+    <Showcase
+      label={title}
+      art={ipfsImage(card.img)}
+      edge={rarityEdge(card.rarity)}
+      name={card.name}
+      tags={<CardTags rarity={card.rarity} shine={card.shine} owned={owned} />}
+      tiles={tiles}
+      line={line}
+      price={priceLabel(card.price)}
+      priceIcon={WAX_ICON}
+      leaves={balanceLabel(Math.max(0, wax - card.wax))}
+      fine={
+        status === 'checking'
+          ? 'Checking the sale is still open…'
+          : 'Checked again when you sign — if the price or card changes, or it sells first, nothing is spent. No fee on top.'
+      }
+      alert={
+        stale ? (
+          <p className="alert alert--error">
+            {status === 'gone'
+              ? 'This sale has just closed — someone bought it, or the seller took it down.'
+              : 'This sale has changed since the list was read.'}{' '}
+            Nothing was spent.
+          </p>
+        ) : status === 'error' ? (
+          <p className="alert alert--error">The sale could not be checked. Try again in a moment.</p>
+        ) : undefined
+      }
+      action={
+        stale
+          ? { label: 'Show the current price', onClick: onStale }
+          : { label: status === 'checking' ? 'Checking' : 'Buy', onClick: onConfirm, disabled: status !== 'ok' }
+      }
+      onCancel={onCancel}
+    />
   )
 }
 
-/** A desktop's confirmation frame, centred over the shop. */
-function DeskConfirm({
-  title,
-  onCancel,
-  children,
-}: {
-  title: string
-  onCancel: () => void
-  children: React.ReactNode
-}) {
-  const panel = useModal(onCancel)
-  return (
-    <div className="confirm" role="dialog" aria-modal="true" aria-label={title} onClick={onCancel}>
-      <div className="confirm__panel panel" ref={panel} onClick={(e) => e.stopPropagation()}>
-        <h2 className="confirm__title">{title}</h2>
-        {children}
-      </div>
-    </div>
-  )
+const WAX_ICON = asset('/assets/icons/wax-coin.png')
+
+/** What the card does here, as the showcase's tiles and the line under them. */
+function cardFigures(
+  card: MarketCard,
+  game: Game | undefined,
+  bag: BagTool[] | undefined,
+): { tiles: ShowcaseTile[]; line?: React.ReactNode } {
+  if (!game) return { tiles: [], line: <span className="faint">Reading what it does…</span> }
+  const farm = weightOf(card, game.weights)
+  const farmTile: ShowcaseTile[] = farm ? [{ label: 'Farming', value: `${formatNumber(farm)}/day` }] : []
+  if (card.schema === 'tool.worlds') {
+    const t = game.tools.get(card.templateId)
+    if (!t) return { tiles: farmTile, line: <span className="faint">No mining power in Alien Legends</span> }
+    const [tlm, sh] = MINING_POWER
+    return {
+      tiles: [
+        { label: tlm.label, icon: tlm.icon, value: formatNumber(t.tlm_mp) },
+        { label: sh.label, icon: sh.icon, value: formatNumber(t.shrd_mp) },
+        ...farmTile,
+      ],
+      line: bag && <Gain gain={toolGain({ tlm: t.tlm_mp, shrd: t.shrd_mp }, bag)} />,
+    }
+  }
+  const v = game.values.get(card.templateId)
+  if (!v) return { tiles: farmTile, line: <span className="faint">Not usable in a fight</span> }
+  return {
+    tiles: [
+      { label: STAT_LABEL.damage, value: formatScaled(v.stats.damage) },
+      { label: STAT_LABEL.health, value: formatScaled(v.stats.health) },
+      ...farmTile,
+    ],
+    line: v.ability[0] && (
+      <span className="amk__ability" title={v.ability[0].description}>
+        ✦ {v.ability[0].displayname}
+      </span>
+    ),
+  }
 }
 
 /**

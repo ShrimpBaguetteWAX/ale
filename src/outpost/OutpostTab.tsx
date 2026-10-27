@@ -18,6 +18,7 @@ import {
 import { fetchOutpostOffers, fetchPointOffers, fetchUserPoints } from './queries'
 import type { OutpostOffer } from './types'
 import { usePhone } from '@/components/usePhone'
+import { CardTags, rarityEdge, Showcase } from '@/shop/Showcase'
 
 /*
    A phone shows the offers as rows, a rarity at a time, in one list that
@@ -349,6 +350,7 @@ export function OutpostTab() {
 
       {confirming && (
         <ConfirmRedeem
+          phone={phone}
           entry={confirming}
           balance={balance}
           onCancel={() => setConfirming(null)}
@@ -413,17 +415,41 @@ function OfferCard({
  * game, and the NFT arrives in their wallet rather than on their roster. Both
  * facts are stated here because this is the last screen before a signature.
  */
-function ConfirmRedeem({
-  entry,
-  balance,
-  onCancel,
-  onConfirm,
-}: {
+function ConfirmRedeem({ phone, ...props }: { phone: boolean } & RedeemProps) {
+  return phone ? <PhoneConfirmRedeem {...props} /> : <DeskConfirmRedeem {...props} />
+}
+
+type RedeemProps = {
   entry: OutpostOffer
   balance: number
   onCancel: () => void
   onConfirm: () => void
-}) {
+}
+
+/* A desktop shows it as the shop's other purchases do, the card as the hero. */
+function DeskConfirmRedeem({ entry, balance, onCancel, onConfirm }: RedeemProps) {
+  const { offer, template } = entry
+  const art = offerArt(template)
+  const after = balance - offer.required
+  return (
+      <Showcase
+        label="Confirm Outpost redemption"
+        art={art || undefined}
+        edge={rarityEdge(template?.rarity)}
+        name={template?.name || `Template ${offer.template_id}`}
+        tags={<CardTags rarity={template?.rarity} shine={template?.shine} extra={template?.kind} />}
+        line={<span className="faint">An Alien Worlds NFT, sent by the Outpost to your WAX wallet</span>}
+        price={formatShards(offer.required)}
+        priceIcon={SHARD_ICON}
+        leaves={`${formatShards(Math.max(0, after))} Alien Worlds shards`}
+        fine="Spends Alien Worlds shards — the same ones your mining pays out. It cannot be undone."
+        action={{ label: 'Redeem', onClick: onConfirm }}
+        onCancel={onCancel}
+      />
+  )
+}
+
+function PhoneConfirmRedeem({ entry, balance, onCancel, onConfirm }: RedeemProps) {
   const panel = useModal(onCancel)
   const { offer, template } = entry
   const art = offerArt(template)

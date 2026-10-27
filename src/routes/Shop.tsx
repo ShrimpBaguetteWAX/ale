@@ -18,8 +18,11 @@ import {
   legendLeft,
   rewardOf,
   rateOf,
-  valueBadges,
+  leftAfter,
+  valueAgainst,
+  valueLine,
   waxAmount,
+  type PackValue,
 } from '@/shop/rules'
 import {
   LEGEND_VS_TRIAL,
@@ -37,6 +40,8 @@ import { OutpostTab } from '@/outpost/OutpostTab'
 import { CurrencyGuide } from '@/shop/CurrencyGuide'
 import { MarketGuide, MarketTab } from '@/shop/MarketTab'
 import { usePhone } from '@/components/usePhone'
+import { Showcase, type ShowcaseTile } from '@/shop/Showcase'
+import type { Player } from '@/chain/types'
 
 const EMPTY_COOLDOWNS: ShopCooldown[] = []
 
@@ -115,7 +120,7 @@ export default function Shop() {
     [items, category],
   )
   /* "+22%", "save 17%": what each rung gives over the bottom one. */
-  const badges = useMemo(() => valueBadges(shown), [shown])
+  const values = useMemo(() => valueAgainst(shown), [shown])
   /* The daily flask with and without Legend, in energy, for the benefits. */
   const flasks = useMemo(() => dailyFlasks(items ?? []), [items])
   const energy = (n: number) => n.toLocaleString(NUM_LOCALE)
@@ -244,11 +249,21 @@ export default function Shop() {
                     <h2 className="pack__title">{item.title}</h2>
                     <div className="pack__offer">
                       <Amount label={reward.label} icon={reward.icon} />
-                      {badges.has(item.item) && (
-                        <span className="pack__value">{badges.get(item.item)}</span>
+                      {values.has(item.item) && (
+                        <span className="pack__value">{values.get(item.item)!.badge}</span>
                       )}
                     </div>
-                    {!phone && rateOf(item) && <span className="pack__rate">{rateOf(item)}</span>}
+                    {!phone && rateOf(item) && (
+                      <span className="pack__rate">
+                        {rateOf(item)}
+                        {/* What the badge is measured against: the bottom rung's own rate. */}
+                        {values.has(item.item) && (
+                          <small className="pack__vs">
+                            vs {rateOf(values.get(item.item)!.base)?.split(' ')[0]} on {values.get(item.item)!.base.title}
+                          </small>
+                        )}
+                      </span>
+                    )}
 
                     {/*
                       The button carries the price when you can buy and the
@@ -315,7 +330,10 @@ export default function Shop() {
 
       {confirming && (
         <ConfirmPurchase
+          phone={phone}
           item={confirming}
+          value={values.get(confirming.item)}
+          player={player}
           wax={wax}
           onCancel={() => setConfirming(null)}
           onConfirm={() => void buy(confirming)}
@@ -350,11 +368,87 @@ function ShopBoard({
   )
 }
 
+/** The purchase dialog: the showcase on a desktop, the exchange on a phone. */
+function ConfirmPurchase(props: {
+  phone: boolean
+  item: ShopItem
+  value: PackValue | undefined
+  player: Player
+  wax: number
+  onCancel: () => void
+  onConfirm: () => void
+}) {
+  return props.phone ? <PhoneConfirmPurchase {...props} /> : <DeskConfirmPurchase {...props} />
+}
+
 /**
- * Purchases are irreversible and some of them cost real money, so nothing is
- * signed until the player has seen exactly what leaves and what arrives.
+ * A desktop's purchase, as the showcase: the pack large, what it gives as
+ * tiles, and its bonus spelled out against the pack it is measured from —
+ * "+8%" alone left players guessing what it was more than.
  */
-function ConfirmPurchase({
+function DeskConfirmPurchase({
+  item,
+  value,
+  player,
+  wax,
+  onCancel,
+  onConfirm,
+}: {
+  item: ShopItem
+  value: PackValue | undefined
+  player: Player
+  wax: number
+  onCancel: () => void
+  onConfirm: () => void
+}) {
+  const price = priceOf(item)
+  const reward = rewardOf(item)
+  const free = isFree(item)
+  const rate = rateOf(item)
+  const tiles: ShowcaseTile[] = [{ label: rewardName(item), icon: reward.icon, value: reward.label }]
+  if (rate && !item.gain_legend_acct_seconds) {
+    const [figure, ...rest] = rate.split(' ')
+    tiles.push({ label: rest.join(' '), value: figure })
+  }
+  if (value) tiles.push({ label: 'Bonus', value: value.badge, good: true })
+  return (
+    <Showcase
+      label={`Buy ${item.title}`}
+      art={itemArt(item)}
+      pack
+      name={item.title}
+      tiles={tiles}
+      line={value && <span className="bshow__bonus">{valueLine(item, value)}</span>}
+      price={price.label}
+      priceIcon={isWaxPriced(item) ? asset('/assets/icons/wax-coin.png') : price.icon}
+      leaves={leftAfter(item, player, wax)}
+      fine={
+        free
+          ? 'Free — added to your account at once.'
+          : isWaxPriced(item)
+            ? 'Paid from your WAX wallet. It cannot be undone.'
+            : 'Added to your account at once. It cannot be undone.'
+      }
+      action={{ label: free ? 'Claim' : 'Buy', onClick: onConfirm, gold: free }}
+      onCancel={onCancel}
+    />
+  )
+}
+
+/* What a pack's reward is called on its tile. */
+function rewardName(item: ShopItem): string {
+  if (item.gain_gem > 0) return 'Gems'
+  if (item.gain_dust > 0) return 'Credits'
+  if (item.gain_action_points > 0) return 'Energy'
+  return 'Legend'
+}
+
+/**
+ * A phone's purchase: purchases are irreversible and some of them cost real
+ * money, so nothing is signed until the player has seen exactly what leaves
+ * and what arrives.
+ */
+function PhoneConfirmPurchase({
   item,
   wax,
   onCancel,
