@@ -2817,6 +2817,62 @@
 }
 
 /*
+ * Each card its own panel, a little apart from the next, wherever a list of
+ * them stands: My Fighters, the fight pickers, the market. The list's own
+ * panel and the lines between rows give way to the gap.
+ */
+.drost__rows:has(> .drost__row.is-card),
+.mrows:has(> .drost__row.is-card, > .mcard) {
+  display: grid;
+  gap: 6px;
+  overflow: visible;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+}
+.drost__row.is-card,
+.mrows > .mcard.drost--stack {
+  border-radius: 14px;
+  background: rgb(8 14 28 / 72%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 10%);
+}
+.drost--stack .drost__row.is-card {
+  border-radius: 13px;
+}
+.drost__row.is-card:hover {
+  background: rgb(16 24 42 / 78%);
+}
+.drost__row.is-card.is-picked {
+  background: linear-gradient(rgb(0 186 255 / 10%), rgb(0 186 255 / 10%)), rgb(8 14 28 / 72%);
+  box-shadow: inset 0 0 0 1px rgb(0 186 255 / 45%);
+}
+.drost__row.is-card.is-checked {
+  background: linear-gradient(rgb(0 186 255 / 8%), rgb(0 186 255 / 8%)), rgb(8 14 28 / 72%);
+}
+.drost--phone .drost__row.is-card:hover {
+  background: rgb(8 14 28 / 72%);
+}
+.drost--phone .drost__row.is-card.is-picked {
+  background: linear-gradient(rgb(124 92 255 / 16%), rgb(124 92 255 / 16%)), rgb(8 14 28 / 72%);
+  box-shadow: inset 0 0 0 1px rgb(124 92 255 / 55%);
+}
+.drost--phone.is-sell .drost__row.is-card.is-checked {
+  background: linear-gradient(rgb(255 90 106 / 9%), rgb(255 90 106 / 9%)), rgb(8 14 28 / 72%);
+}
+/* The market's phone card holds what it opens under it: the card is the panel, the row inside goes bare. */
+.mrows > .mcard.drost--stack {
+  overflow: hidden;
+}
+.mrows > .mcard.drost--stack.is-open {
+  background: linear-gradient(rgb(0 186 255 / 7%), rgb(0 186 255 / 7%)), rgb(8 14 28 / 72%);
+}
+.mrows > .mcard > .drost__row.is-card {
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+}
+
+/*
  * Listing on the market, told as what happens next: the faces going up at
  * the head, three steps (now, the auction's hours, then), and the fee beside
  * the button at the foot. Centred on a desktop, a bottom sheet on a phone;
