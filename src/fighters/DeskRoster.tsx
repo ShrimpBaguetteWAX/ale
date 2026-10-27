@@ -1096,18 +1096,30 @@ export function Row({
             </span>
           )}
           {aside && <span className="drost__aside">{aside}</span>}
+          {/*
+            Each ability with what it does: on a desktop two by two, the words
+            held to two lines (all of them on hover and in the panel); a
+            stacked list keeps the names alone, as pills.
+          */}
           {view === 'abilities' && (
             <span className="drost__names">
-              {abilities.map((a, i) => (
-                <span
-                  key={`${a.ability}-${i}`}
-                  className={a.locked ? 'is-locked' : undefined}
-                  style={{ '--ab': rarityColor(a.displayname) } as React.CSSProperties}
-                >
-                  {a.locked ? '🔒 ' : ''}
-                  {abilityName(a.displayname)}
-                </span>
-              ))}
+              {abilities.map((a, i) => {
+                const text = resolveAbilityDescription(a)
+                return (
+                  <span
+                    key={`${a.ability}-${i}`}
+                    className={a.locked ? 'is-locked' : undefined}
+                    style={{ '--ab': rarityColor(a.displayname) } as React.CSSProperties}
+                    title={`${abilityName(a.displayname)}${a.locked ? ' · unlocks with ascension' : ''}: ${text}`}
+                  >
+                    <b>
+                      {a.locked ? '🔒 ' : ''}
+                      {abilityName(a.displayname)}
+                    </b>
+                    <small>{text}</small>
+                  </span>
+                )
+              })}
             </span>
           )}
         </>
