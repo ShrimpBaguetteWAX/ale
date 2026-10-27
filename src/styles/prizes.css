@@ -135,14 +135,35 @@
   font-weight: 900;
   color: var(--tone);
 }
-/* The desktop menu: pushed to the foot of the rail, never closer than 6px to the last item. */
+/* The desktop menu: pushed to the foot of the rail, never closer than 4px to the last item. */
 .rail__prizes {
   flex: none;
   margin-top: auto;
-  padding-top: 6px;
+  padding-top: 4px;
 }
 .rail__prizes:empty {
   display: none;
+}
+/* In the rail the three sit side by side, icon over figure, to keep the menu clear of the foot. */
+.rail__prizes .prizecard {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  column-gap: 4px;
+  row-gap: 4px;
+  padding: 6px 10px 7px;
+}
+.rail__prizes .prizecard__head {
+  grid-column: 1 / -1;
+}
+.rail__prizes .prizecard__row {
+  grid-template-columns: none;
+  justify-items: center;
+  gap: 3px;
+}
+.rail__prizes .prizecard__row > span {
+  display: none;
+}
+.rail__prizes .prizecard__row b {
+  font-size: 13px;
 }
 /* The phone's More page: above the list. */
 .prizecard--more {
