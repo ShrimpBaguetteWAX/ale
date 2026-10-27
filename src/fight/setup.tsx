@@ -2222,7 +2222,7 @@ export function PickCard({
 
   const ageChip = ageDecay > 0 && (
     <span
-      className="fightercard__age"
+      className={`fightercard__age ${bonus >= 0 ? 'is-up' : 'is-down'}`}
       title={ageNote(bonus, ageDays(f), age)}
     >
       {bonus > 0 ? '+' : ''}
@@ -2231,20 +2231,18 @@ export function PickCard({
   )
 
   /*
-     The compact tile: the portrait, edge to edge.
+     The compact tile: My Fighters' card art, cut square.
 
      Everything the full card asks is deliberately absent rather than
      shrunk — a smaller version of it would still be its questions asked in
-     a font nobody can read. This answers the ones a roster is scanned by
-     and sends the rest to the details button, which is kept for exactly
-     that reason. The marker earns its place here and appears on no other
-     card: it is the label the player chose themselves, so at this size it
-     is the fastest way to find a particular fighter.
+     a font nobody can read. This answers the ones a roster is scanned by;
+     on a desktop, resting on the tile reads out the rest. The marker earns
+     its place: it is the label the player chose themselves, so at this
+     size it is the fastest way to find a particular fighter.
 
-     All of it rides on the art. The card used to hold the level and the age
-     in a row underneath, which cost a third of the tile to a frame, a gap
-     and a line of type; they are corners of the portrait now, each on its
-     own dark floor so a pale fighter cannot swallow them.
+     All of it rides on the art, in My Fighters' chips: the level and the
+     age at the foot, the marker in the top corner, and in the team or why
+     not available as one chip above the foot.
   */
   if (density === 'compact') {
     return (
@@ -2298,43 +2296,35 @@ export function PickCard({
             )}
             {banner && <span className="fightercard__banner">{banner}</span>}
             {/* Picked and blocked both have to survive the shrink: they are
-                why a card can or cannot be tapped. */}
+                why a card can or cannot be tapped. One chip, above the foot
+                and clear of the face: in the team, or why not available. */}
+            {tick ? (
+              <span className="fightercard__state is-in">{tick}</span>
+            ) : (
+              blockedNote && (
+                <span className={`fightercard__state ${blockedNote === 'Wants a payday' ? 'is-pay' : 'is-busy'}`}>
+                  {blockedNote === 'Wants a payday' ? 'Payday' : blockedNote.split(':')[0]}
+                </span>
+              )
+            )}
             {/*
-              Level, age bonus and the state word, on the art.
-
+              The level and the age bonus in My Fighters' chips at the foot.
               The level stays on the compact tile because it multiplies
               health and damage before the first blow, so two identical
               portraits can be very different picks.
-
-              The three are one group rather than three corners because they
-              have to give way to each other: an 84px tile cannot hold
-              "-100%" and "Sacrifice" on one line, and posted to opposite
-              corners they simply overlapped. Laid out together, the word
-              steps up a line when there is no room beside the numbers.
             */}
             <span className="fightercard__foot">
               {f.stats.level > 0 && (
                 <span className="fightercard__lvl">
                   <span className="fightercard__lvlL">L</span>
                   {f.stats.level}
+                  {f.ascension_level > 0 && <em>✦{f.ascension_level}</em>}
                 </span>
               )}
               {ageChip}
-              {tick && <span className="fightercard__tick">{tick}</span>}
             </span>
           </span>
         </button>
-
-        {onInspect && (
-          <button
-            type="button"
-            className="fightercard__info"
-            onClick={onInspect}
-            aria-label={`Details for ${f.classname}`}
-          >
-            i
-          </button>
-        )}
       </div>
     )
   }
