@@ -1098,3 +1098,94 @@
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+/*
+ * Briefing on a desktop, a size up — the step the other screens took. Scoped
+ * to the desktop board (.dbrief); the phone's briefing keeps its own sizes.
+ */
+.dbrief .btn--sm {
+  font-size: 13px;
+}
+.dbrief .dbrief__hello {
+  font-size: 15px;
+}
+.dbrief .dbrief__chip {
+  font-size: 13px;
+}
+.shell .main__inner .dbrief .dbrief__cap {
+  font-size: 12px;
+}
+.dbrief .dbrief__cap span {
+  font-size: 12px;
+}
+/* The cards */
+.dbrief .dbrief__card > b {
+  font-size: 15.5px;
+}
+.dbrief .dbrief__cardfoot small {
+  font-size: 13px;
+  white-space: normal;
+}
+.dbrief .dbrief__empty {
+  font-size: 13px;
+}
+/* Waiting: what is ready to collect */
+.dbrief .dbrief__amount {
+  font-size: 21px;
+}
+.dbrief .dbrief__amount small {
+  font-size: 12.5px;
+}
+.dbrief .dbrief__tilelabel {
+  font-size: 13px;
+}
+.dbrief .dbrief__tilelabel.is-only {
+  font-size: 15px;
+}
+.dbrief .dbrief__pools {
+  font-size: 13px;
+}
+.dbrief .dbrief__phead {
+  font-size: 11px;
+}
+.dbrief .dbrief__pcell {
+  font-size: 12.5px;
+}
+.dbrief .dbrief__calm > b {
+  font-size: 14px;
+}
+.dbrief .dbrief__calm > small,
+.dbrief .dbrief__meter {
+  font-size: 13px;
+}
+.dbrief .dbrief__meter b {
+  font-size: 12px;
+}
+/* A new player's first steps */
+.dbrief .dbrief__kick {
+  font-size: 11px;
+}
+.shell .main__inner .dbrief .dbrief__starttitle {
+  font-size: 22px;
+}
+.dbrief .dbrief__startbody,
+.dbrief .dbrief__more,
+.dbrief .dbrief__steps li {
+  font-size: 15px;
+}
+.dbrief .dbrief__stepshead {
+  font-size: 11.5px;
+}
+.dbrief .dbrief__stepshead em {
+  font-size: 13px;
+}
+.dbrief .dbrief__stepnum {
+  font-size: 11.5px;
+}
+.dbrief .dbrief__warntext b {
+  font-size: 15px;
+}
+.dbrief .dbrief__warntext small,
+.dbrief .dbrief__warntext span {
+  font-size: 13px;
+}
