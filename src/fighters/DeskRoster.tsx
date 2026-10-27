@@ -59,6 +59,8 @@ import { QualityFilters } from '@/fight/setup'
 import { BottomSheet } from '@/components/BottomSheet'
 import { GameImg } from '@/components/GameImg'
 import { NUM_LOCALE, formatDecimals } from '@/format'
+import { canAscend, coverableSlots, SACRIFICE_COUNT } from '@/ascension/rules'
+import { useLazyConfig } from '@/state/useConfig'
 import { asset } from '@/assets'
 
 /**
@@ -252,7 +254,7 @@ export interface DeskRosterProps {
   onChecked: (ids: number[]) => void
   selectedId: number | null
   onSelect: (id: number | null) => void
-  onOpen: (id: number) => void
+  onMarker: (f: RosterFighter, marker: string) => void
 
   canAct: boolean
   busy: string | null
@@ -1148,7 +1150,7 @@ function Row({
 /* ---------- the fighter in full ---------- */
 
 function Detail(props: DeskRosterProps & { f: RosterFighter; fig: Figures }) {
-  const { f, fig, config, levels, onOpen, now, phone } = props
+  const { f, fig, config, levels, now, phone } = props
   const s = f.stats
   const level = levelUpOf(f, levels)
   const state = fighterState(f, now)
@@ -1190,12 +1192,7 @@ function Detail(props: DeskRosterProps & { f: RosterFighter; fig: Figures }) {
               {s.target ? formatTarget(s.target) : 'Highest Taunt'}
             </span>
             {/* A phone's foot has room for four buttons; the marker rides up here. */}
-            {phone && (
-              <button type="button" className="drost__chipbtn" onClick={() => onOpen(f.fighter_id)}>
-                <img src={markerIcon(f.marker)} alt="" />
-                Marker &amp; history
-              </button>
-            )}
+            {phone && <MarkerPick {...props} chip />}
           </span>
         </span>
       </div>
@@ -1295,6 +1292,60 @@ function Detail(props: DeskRosterProps & { f: RosterFighter; fig: Figures }) {
   )
 }
 
+/*
+ * A fighter's marker, picked where it is asked for: a private label kept on
+ * chain that the roster filters by. Every marker in one small grid; one
+ * press sets it and closes. Under the fighter on a desktop the grid opens
+ * upwards, over the panel it sits in; from a phone's chip at the top, down.
+ */
+function MarkerPick({
+  f,
+  canAct,
+  busy,
+  onMarker,
+  chip,
+}: Pick<DeskRosterProps, 'canAct' | 'busy' | 'onMarker'> & { f: RosterFighter; chip?: boolean }) {
+  const [open, setOpen] = useState(false)
+  const saving = busy === 'marker'
+  return (
+    <span className="drost__markpick">
+      <button
+        type="button"
+        className={chip ? 'drost__chipbtn' : 'btn btn--ghost btn--sm'}
+        aria-haspopup="true"
+        aria-expanded={open}
+        onClick={() => setOpen(!open)}
+      >
+        {saving ? <span className="spinner" /> : <img className="drost__markicon" src={markerIcon(f.marker)} alt="" />}
+        Marker
+      </button>
+      {open && (
+        <>
+          <button type="button" className="drost__scrim drost__scrim--clear" aria-label="Close" onClick={() => setOpen(false)} />
+          <div className={`drost__pop drost__pop--marker${chip ? ' is-down' : ''}`} role="group" aria-label="Marker">
+            {MARKERS.map((m) => (
+              <button
+                type="button"
+                key={m || 'none'}
+                className="markbtn"
+                aria-pressed={f.marker === m}
+                disabled={!canAct || saving || f.marker === m}
+                title={m || 'No marker'}
+                onClick={() => {
+                  onMarker(f, m)
+                  setOpen(false)
+                }}
+              >
+                <img src={markerIcon(m)} alt={m || 'none'} />
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+    </span>
+  )
+}
+
 /* What can be done to one fighter: under it on a desktop, at the sheet's foot on a phone. */
 function Acts({
   f,
@@ -1306,14 +1357,18 @@ function Acts({
   gems,
   onPayOne,
   onLevelOne,
-  onOpen,
   onMode,
   onChecked,
   onSelect,
   phone,
+  roster,
+  ...rest
 }: DeskRosterProps & { f: RosterFighter; fig: Figures }) {
   const s = f.stats
   const level = levelUpOf(f, levels)
+  /* Of the three sacrifice slots, how many the roster could fill today. */
+  const ascend = canAscend(f, useLazyConfig('ascension'))
+  const slots = coverableSlots(roster, f)
   return (
     <div className="drost__acts">
       <button
@@ -1336,14 +1391,27 @@ function Acts({
         {level.atMax ? 'Max level' : 'Level up'}
         {!level.atMax && level.cost.credits > 0 && <Credits value={level.cost.credits} />}
       </button>
-      <Link className="btn btn--ghost btn--sm" to="/ascension">
-        Ascend
-      </Link>
-      {!phone && (
-        <button type="button" className="btn btn--ghost btn--sm" onClick={() => onOpen(f.fighter_id)}>
-          Marker &amp; history
+      {ascend.ok ? (
+        <Link
+          className="btn btn--ghost btn--sm"
+          to={`/ascension?fighter=${f.fighter_id}`}
+          title={
+            slots === SACRIFICE_COUNT
+              ? 'All three sacrifice slots can be filled'
+              : `${slots} of the ${SACRIFICE_COUNT} sacrifice slots can be filled from your fighters`
+          }
+        >
+          Ascend
+          <span className={`drost__count${slots < SACRIFICE_COUNT ? ' is-short' : ''}`}>
+            {slots}/{SACRIFICE_COUNT}
+          </span>
+        </Link>
+      ) : (
+        <button type="button" className="btn btn--ghost btn--sm" disabled title={ascend.reason}>
+          Ascend
         </button>
       )}
+      {!phone && <MarkerPick {...rest} f={f} canAct={canAct} busy={busy} />}
       <button
         type="button"
         className="btn btn--ghost btn--sm"

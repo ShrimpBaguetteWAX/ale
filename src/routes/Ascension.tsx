@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useGame } from '@/state/useGame'
 import { fetchRoster } from '@/dungeon/queries'
 import { battleFactor } from '@/fighters/rules'
@@ -136,6 +137,23 @@ export default function Ascension() {
      _level)` is equality, so it is the one level the odds table ever
      describes. 10 while the config is still loading. */
   const ascendLevel = Number(config?.min_ascension_level) || 10
+
+  /*
+     Arriving from a fighter's Ascend button (`?fighter=<id>`), that fighter
+     is the one picked — once, when the roster first arrives, so a reload of
+     the roster after an action does not take back a different pick.
+  */
+  const [params] = useSearchParams()
+  const asked = Number(params.get('fighter')) || null
+  const applied = useRef(false)
+  useEffect(() => {
+    if (applied.current || !asked || loading) return
+    applied.current = true
+    if (ready.some((f) => f.fighter_id === asked)) {
+      setSlots({})
+      setTargetId(asked)
+    }
+  }, [asked, loading, ready])
 
   const target = useMemo(
     () => roster.find((f) => f.fighter_id === targetId) ?? null,

@@ -237,82 +237,6 @@
   gap: 2px;
   margin: 0;
 }
-.fstats__row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--sp-2);
-  font-size: var(--fs-xs);
-  color: var(--text-faint);
-  min-width: 0;
-}
-.fstats__row dt {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.fstats__row dt img {
-  flex: none;
-  object-fit: contain;
-  opacity: 0.75;
-}
-.fstats__row dd {
-  margin: 0;
-  color: var(--white);
-  white-space: nowrap;
-  text-transform: capitalize;
-}
-
-/* ---------- the detail dialog ---------- */
-
-.fdialog {
-  width: min(1020px, 100%);
-  max-height: 88vh;
-  overflow-y: auto;
-}
-
-.fdialog__cols {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: var(--sp-5);
-  align-items: start;
-}
-
-@media (max-width: 860px) {
-  .fdialog__cols {
-    grid-template-columns: 1fr;
-  }
-}
-
-.fdialog__side {
-  display: grid;
-  gap: var(--sp-5);
-  align-content: start;
-}
-
-.fdialog__factor {
-  margin: var(--sp-2) 0 0;
-  font-size: var(--fs-xs);
-  line-height: 1.5;
-  color: var(--text-faint);
-}
-
-.fdialog__class {
-  margin: 0;
-  font-size: var(--fs-sm);
-  line-height: 1.55;
-  color: var(--text-dim);
-}
-
-.fdialog__markers {
-  display: flex;
-  gap: 5px;
-  flex-wrap: wrap;
-}
 
 /*
  * The shared readout switch. Sits in the filter row because it is the same
@@ -365,13 +289,6 @@
 
   .fstats {
     gap: 1px;
-  }
-  .fstats__row {
-    font-size: 11px;
-    line-height: 1.3;
-  }
-  .fstats__row dd {
-    font-size: 11.5px;
   }
 
 }
@@ -2719,4 +2636,61 @@
   --btn-bg: linear-gradient(180deg, #ffd56b, #f0a000);
   color: #2a1a00;
   box-shadow: inset 0 0 0 1.5px rgb(42 26 0 / 45%);
+}
+
+/* How many fighters an Ascend could spend; fewer than the three it needs reads dim. */
+.drost__count {
+  display: inline-grid;
+  place-items: center;
+  min-width: 20px;
+  height: 18px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: rgb(0 186 255 / 16%);
+  box-shadow: inset 0 0 0 1px rgb(0 186 255 / 45%);
+  color: #bff0ff;
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 800;
+}
+.drost__count.is-short {
+  background: rgb(255 255 255 / 6%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 16%);
+  color: var(--text-dim);
+}
+
+/* A fighter's marker, picked in place: every marker in one small grid. */
+.drost__markpick {
+  position: relative;
+  display: inline-flex;
+}
+.drost__markicon {
+  width: 14px;
+  height: 14px;
+  object-fit: contain;
+}
+.drost__scrim--clear {
+  background: none;
+}
+.drost__pop--marker {
+  bottom: calc(100% + 8px);
+  left: 0;
+  top: auto;
+  display: grid;
+  grid-template-columns: repeat(8, 32px);
+  gap: 5px;
+  padding: 10px;
+  border-radius: 12px;
+}
+.drost__pop--marker.is-down {
+  top: calc(100% + 8px);
+  bottom: auto;
+}
+.drost__pop--marker .markbtn {
+  width: 32px;
+  height: 32px;
+}
+.drost__pop--marker .markbtn img {
+  width: 18px;
+  height: 18px;
 }

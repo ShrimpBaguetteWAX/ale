@@ -106,6 +106,31 @@ export function eligibleSacrifice(
   )
 }
 
+/**
+ * How many of the three sacrifice slots a roster could fill for this target.
+ *
+ * The same rule as `checkSacrifices`: each requirement needs its own
+ * fighter, so one fighter matching all three still fills only one slot. With
+ * three slots, trying every way to fill them is the whole search.
+ */
+export function coverableSlots(roster: RosterFighter[], target: RosterFighter): number {
+  const keys: Requirement[] = ['element', 'race', 'ability']
+  const pool = roster.filter((c) => eligibleSacrifice(c, target)).map((c) => requirementsMet(c, target))
+  const fill = (slot: number, used: Set<number>): number => {
+    if (slot === keys.length) return 0
+    /* Leaving this slot empty is always an option. */
+    let best = fill(slot + 1, used)
+    for (let i = 0; i < pool.length && best < keys.length - slot; i++) {
+      if (used.has(i) || !pool[i].has(keys[slot])) continue
+      used.add(i)
+      best = Math.max(best, 1 + fill(slot + 1, used))
+      used.delete(i)
+    }
+    return best
+  }
+  return fill(0, new Set())
+}
+
 export interface SacrificeCheck {
   ok: boolean
   /** Requirements no assignment could cover, for the message. */

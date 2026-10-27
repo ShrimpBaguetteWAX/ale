@@ -1,29 +1,20 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useGame } from '@/state/useGame'
-import { FighterPanel, type PanelFighter } from '@/components/FighterPanel'
 import { fetchRoster } from '@/dungeon/queries'
 import type { RosterFighter } from '@/dungeon/types'
 import {
   EMPTY_FILTER,
-  MARKERS,
   applyFilter,
-  markerIcon,
   type RosterFilter,
 } from '@/dungeon/filters'
 import { useConfig, useLazyConfig } from '@/state/useConfig'
 import type { FighterLevel, FightersConfig } from '@/fighters/types'
 import {
-  ageDays,
-  battleFactor,
-  formatDate,
-  formatDateTime,
   levelAllPlan,
   levelUpOf,
   paydayAllPlan,
   type PaydayScope,
-  paydayOf,
-  useLabel,
   wantsPayday,
 } from '@/fighters/rules'
 import {
@@ -177,7 +168,6 @@ export default function Fighters() {
   const [filter, setFilter] = useState<RosterFilter>({ ...EMPTY_FILTER })
   const [selectedId, setSelectedId] = useState<number | null>(null)
   const [checked, setChecked] = useState<number[]>([])
-  const [openedId, setOpenedId] = useState<number | null>(null)
 
   const { busy, error, run, setError } = useAction()
   const [confirmSell, setConfirmSell] = useState(false)
@@ -246,8 +236,6 @@ export default function Fighters() {
     if (!filter.levelReady) return matched
     return matched.filter((f) => levelUpOf(f, levels).ready)
   }, [roster, filter, ageDecay, now, templates, levels, levelMod, atLevelOne])
-
-  const opened = roster.find((f) => f.fighter_id === openedId) ?? null
 
   const lockedCount = useMemo(
     () => roster.filter((f) => f.in_use || wantsPayday(f, now)).length,
@@ -455,22 +443,6 @@ export default function Fighters() {
 
   const dialogs = (
     <>
-      {opened && (
-        <FighterDialog
-          fighter={opened}
-          levels={levels}
-          config={config}
-          template={templates.get(opened.classname)}
-          levelMod={levelMod}
-          ageDecay={ageDecay}
-          now={now}
-          busy={busy === 'marker'}
-          canEdit={!!session}
-          onMarker={(m) => void doMarker(opened, m)}
-          onClose={() => setOpenedId(null)}
-        />
-      )}
-
       {confirmSell && (
         <Confirm
           title={`Sell ${checked.length} fighter${checked.length === 1 ? '' : 's'}?`}
@@ -578,7 +550,7 @@ export default function Fighters() {
         onChecked={setChecked}
         selectedId={selectedId}
         onSelect={setSelectedId}
-        onOpen={setOpenedId}
+        onMarker={(f, m) => void doMarker(f, m)}
         canAct={!!session}
         busy={busy}
         credits={credits}
@@ -730,187 +702,3 @@ function Confirm({
 
 
 /* ---------- one fighter ---------- */
-
-
-/* ---------- the detail dialog ---------- */
-
-function rosterPanel(
-  f: RosterFighter,
-  factor: number,
-  /** `age_decay ^ (days²)`: health and damage are graded after it. */
-  age: number,
-): PanelFighter {
-  const s = f.stats
-  return {
-    classname: f.classname,
-    racename: f.racename,
-    element: f.element,
-    target: s.target,
-    level: s.level,
-    /* Displayed as fought with; graded against the roll — see PanelStat. */
-    health: {
-      min: s.health_min * factor,
-      max: s.health_max * factor,
-      grade: ((s.health_min + s.health_max) / 2) * age,
-    },
-    damage: {
-      min: s.damage_min * factor,
-      max: s.damage_max * factor,
-      grade: ((s.damage_min + s.damage_max) / 2) * age,
-    },
-    taunt: { min: s.taunt_min, max: s.taunt_max },
-    attackspeed: { min: s.attackspeed_min, max: s.attackspeed_max },
-    initiative: { min: s.initiative_min, max: s.initiative_max },
-    res_gem: s.res_gem,
-    res_metal: s.res_metal,
-    res_air: s.res_air,
-    res_fire: s.res_fire,
-    res_nature: s.res_nature,
-    res_neutral: s.res_neutral,
-    abilities: s.abilities ?? [],
-  }
-}
-
-export function FighterDialog({
-  fighter,
-  levels,
-  config,
-  template,
-  levelMod,
-  ageDecay,
-  now,
-  busy,
-  canEdit,
-  onMarker,
-  onClose,
-}: {
-  fighter: RosterFighter
-  levels: FighterLevel[]
-  config?: FightersConfig
-  template?: ClassTemplate
-  levelMod: number
-  ageDecay: number
-  now: number
-  busy: boolean
-  canEdit: boolean
-  onMarker: (marker: string) => void
-  onClose: () => void
-}) {
-  const box = useModal(onClose)
-
-  const s = fighter.stats
-  const factor = battleFactor(fighter, levelMod, ageDecay, now)
-  const pay = paydayOf(fighter, config, now)
-  const level = levelUpOf(fighter, levels)
-  const days = ageDays(fighter, now)
-  const panel = rosterPanel(fighter, factor.total, factor.age)
-
-  return (
-    <div className="sheet" role="dialog" aria-modal="true" onClick={onClose}>
-      <div
-        className="sheet__panel panel fdialog"
-        ref={box}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="fdialog__cols">
-          <FighterPanel
-            fighter={panel}
-            template={template}
-            abilityUnlockLevel={config?.asc_ability_unlock_lvl}
-          />
-
-          <div className="fdialog__side">
-            <section>
-              <h3 className="panel__title">Information</h3>
-              <dl className="fstats">
-                <Row k="Level" v={`${s.level}${level.atMax ? ' (max)' : ''}`} />
-                <Row
-                  k="Experience"
-                  v={
-                    level.atMax
-                      ? 'Maxed'
-                      : `${s.experience.toLocaleString(NUM_LOCALE)} / ${s.required_experience.toLocaleString(NUM_LOCALE)}`
-                  }
-                />
-                <Row k="Ascension" v={String(fighter.ascension_level)} />
-                <Row k="Damage type" v={fighter.element} />
-                <Row k="Sell value" v={`${s.credits.toLocaleString(NUM_LOCALE)} credits`} />
-                <Row k="Recruited" v={`${formatDate(fighter.creation_date)} (${days}d ago)`} />
-                <Row
-                  k="Next payday"
-                  v={`${formatDate(fighter.next_payday)} · ${pay.cost.toLocaleString(NUM_LOCALE)} credits`}
-                />
-                <Row k="Deleted on" v={formatDateTime(fighter.final_deletion_date)} />
-                {!!fighter.in_use && (
-                  <Row k="Status" v={useLabel(fighter) + (fighter.use_details ? ` · ${fighter.use_details}` : '')} />
-                )}
-              </dl>
-
-              {/*
-                The two multipliers behind the health and damage figures. A
-                player comparing a fresh level-1 roll against a levelled
-                veteran is otherwise comparing two different scales without
-                being told.
-              */}
-              <p className="fdialog__factor">
-                Health and damage above are shown as fought with: ×
-                {factor.level.toFixed(2)} for level {s.level}, ×
-                {factor.age.toFixed(4)} for {days} days of age.
-              </p>
-            </section>
-
-            {template?.description && (
-              <section>
-                <h3 className="panel__title">{fighter.classname}</h3>
-                <p className="fdialog__class">{template.description}</p>
-              </section>
-            )}
-
-            <section>
-              <h3 className="panel__title">Marker</h3>
-              <p className="hint">
-                A private label, stored on chain. Filter the roster by it.
-              </p>
-              <div className="fdialog__markers">
-                {MARKERS.map((m) => (
-                  <button
-                    type="button"
-                    key={m || 'none'}
-                    className="markbtn"
-                    aria-pressed={fighter.marker === m}
-                    disabled={busy || !canEdit || fighter.marker === m}
-                    onClick={() => onMarker(m)}
-                    title={m || 'Clear marker'}
-                  >
-                    <img src={markerIcon(m)} alt={m || 'none'} />
-                  </button>
-                ))}
-              </div>
-              {busy && (
-                <p className="hint">
-                  <span className="spinner" /> Saving the marker…
-                </p>
-              )}
-            </section>
-          </div>
-        </div>
-
-        <div className="confirm__actions">
-          <button type="button" className="btn btn--ghost" onClick={onClose}>
-            Close
-          </button>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function Row({ k, v }: { k: string; v: string }) {
-  return (
-    <div className="fstats__row">
-      <dt>{k}</dt>
-      <dd>{v}</dd>
-    </div>
-  )
-}
-
