@@ -492,6 +492,11 @@ export function WeatherPanel({
   const calm = weatherIsCalm(weather)
   const lean = weatherLean(weather)
   const icons = weatherStatIcons(weather)
+  /*
+     Three or more stats fold into a small grid, three to a row: a roll on
+     every resistance carried six icons in a line and left its name no room.
+  */
+  const grid = icons.length >= 3
 
   /* The detail the strip drops, kept for anyone who hovers it. */
   const detail = calm
@@ -512,9 +517,11 @@ export function WeatherPanel({
       <div className={`weathertwin weathertwin--${lean}`} title={`${detail}. ${falls}. Changes daily.`}>
         <span className="weathertwin__label">Weather</span>
         <span className="weathertwin__line">
-          {icons.map(({ src, label }) => (
-            <img className="weathertwin__stat" key={label} src={src} alt={label} width={18} height={18} />
-          ))}
+          <span className={`weathertwin__stats${grid ? ' is-grid' : ''}`}>
+            {icons.map(({ src, label }) => (
+              <img className="weathertwin__stat" key={label} src={src} alt={label} width={18} height={18} />
+            ))}
+          </span>
           <span className="weathertwin__name">
             {lead && <span className="weathertwin__lead">{lead}</span>}
             {name.slice(lead.length)}
@@ -536,7 +543,7 @@ export function WeatherPanel({
         what a player scans a row like this for.
       */}
       {!!icons.length && (
-        <span className="weather__stats">
+        <span className={`weather__stats${grid ? ' weather__stats--grid' : ''}`}>
           {icons.map(({ src, label }) => (
             <img
               className="weather__stat"

@@ -6226,3 +6226,26 @@ button.combatcard--empty:hover {
   grid-column: 1 / -1;
   order: 99;
 }
+
+/*
+ * A roll on three stats or more: its icons in a small grid, three to a row,
+ * rather than a line that leaves the name no room — six resistances read as
+ * two rows of three in a tile barely wider than one icon.
+ */
+.weathertwin__stats {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+}
+.weather__stats--grid,
+.weathertwin__stats.is-grid {
+  display: inline-grid;
+  grid-template-columns: repeat(3, 12px);
+  gap: 2px;
+}
+.weather__stats--grid .weather__stat,
+.weathertwin__stats.is-grid .weathertwin__stat {
+  width: 12px;
+  height: 12px;
+}

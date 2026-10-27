@@ -9659,3 +9659,14 @@ button.ptour__rfplay {
 .ptour__spotdock .ptour__condrow {
   min-width: 0;
 }
+/* The conditions tile, holding a grid of three or more. */
+.ptour__condrow .weather__stats.weather__stats--grid {
+  display: inline-grid;
+  grid-template-columns: repeat(3, 12px);
+  gap: 2px;
+  padding: 3px 5px;
+}
+.ptour__condrow .weather__stats--grid .weather__stat {
+  width: 12px;
+  height: 12px;
+}
