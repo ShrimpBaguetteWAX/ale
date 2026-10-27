@@ -2098,12 +2098,15 @@
   --glow: rgb(224 52 79 / 40%);
 }
 
-/* Stacked, it sits on the rule with the columns above and below it. */
+/*
+ * Stacked, it sits on the rule with the columns above and below it. The rule
+ * stops short of it rather than being painted over: a solid plate behind the
+ * figure showed as a dark box on the see-through panel.
+ */
 @media (max-width: 1079px) {
   .oddscentre {
     position: relative;
     padding: 0 var(--sp-3);
-    background: var(--bg);
   }
   .oddscentre__pct {
     font-size: 26px;
@@ -2130,6 +2133,10 @@
       rgb(255 255 255 / 18%) 80%,
       transparent
     );
+  }
+  .versus__divider:has(> .oddscentre)::before {
+    -webkit-mask-image: linear-gradient(90deg, #000 calc(50% - 96px), transparent calc(50% - 96px), transparent calc(50% + 96px), #000 calc(50% + 96px));
+    mask-image: linear-gradient(90deg, #000 calc(50% - 96px), transparent calc(50% - 96px), transparent calc(50% + 96px), #000 calc(50% + 96px));
   }
   .versus__vs {
     position: relative;
