@@ -98,10 +98,6 @@
   background: linear-gradient(180deg, rgb(246 168 0 / 11%), rgb(246 168 0 / 3%));
   box-shadow: inset 0 0 0 1px rgb(246 168 0 / 34%);
   color: var(--white);
-  text-decoration: none;
-}
-.prizecard:hover {
-  box-shadow: inset 0 0 0 1px rgb(246 168 0 / 60%);
 }
 .prizecard__head {
   display: flex;
@@ -116,10 +112,6 @@
   letter-spacing: 0.18em;
   text-transform: uppercase;
   color: #ffd979;
-}
-.prizecard__head span {
-  font-size: 11.5px;
-  color: var(--text-faint);
 }
 .prizecard__row {
   display: grid;

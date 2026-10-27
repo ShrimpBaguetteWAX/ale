@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
 import { asset } from '@/assets'
 import { formatCompact } from '@/format'
-import { fetchWeeklyPrizes, weekLabel, type WeeklyPrizes } from './weekly'
+import { fetchWeeklyPrizes, type WeeklyPrizes } from './weekly'
 
 /** Last week's prizes, once read; undefined until then or if the read fails. */
 export function useWeeklyPrizes(): WeeklyPrizes | undefined {
@@ -39,7 +38,7 @@ export function PrizeStrip() {
     <div className="prizestrip">
       <div className="prizestrip__head">
         <b>Weekly prizes</b>
-        <span>Paid into the reward pools · {weekLabel(p.start)} (UTC)</span>
+        <span>Paid into the reward pools last week</span>
       </div>
       <div className="prizestrip__row">
         {TOKENS.map((t) => (
@@ -58,20 +57,15 @@ export function PrizeStrip() {
 
 /**
  * The game's prize card: at the foot of the desktop menu, and at the head
- * of the phone's More page. Last week's three prizes and the way to them.
+ * of the phone's More page: last week's three prizes, for reading only.
  */
 export function PrizeCard({ className = '' }: { className?: string }) {
   const p = useWeeklyPrizes()
   if (!p) return null
   return (
-    <Link
-      to="/rewards"
-      className={`prizecard ${className}`.trim()}
-      title="Paid into the reward pools last week, Monday to Sunday UTC. Win fights to mine your share in Rewards."
-    >
+    <div className={`prizecard ${className}`.trim()} title="Paid into the reward pools last week, Monday to Sunday UTC">
       <span className="prizecard__head">
         <b>Weekly prizes</b>
-        <span>{weekLabel(p.start)}</span>
       </span>
       {TOKENS.map((t) => (
         <span className={`prizecard__row is-${t.key}`} key={t.key}>
@@ -80,6 +74,6 @@ export function PrizeCard({ className = '' }: { className?: string }) {
           <b>{formatCompact(Math.round(p[t.key]))}</b>
         </span>
       ))}
-    </Link>
+    </div>
   )
 }
