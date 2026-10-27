@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { Fragment, useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import type { CardTemplate } from '@/chain/atomic'
 import { FighterHoverCard, FighterPanel, type PanelFighter } from '@/components/FighterPanel'
 import { HoverPopover, useHoverCard } from '@/components/HoverPopover'
@@ -1895,6 +1895,7 @@ export function FighterGrid({
   density: heldDensity,
   onDensity,
   view: heldView,
+  rows,
 }: {
   roster: RosterFighter[] | null
   filter: RosterFilter
@@ -1947,6 +1948,16 @@ export function FighterGrid({
    * draws no switches of its own.
    */
   view?: PickView
+  /**
+   * My Fighters' card in place of the full card. The screen draws it — it
+   * holds the card's view and the figures — and the grid keeps the filter,
+   * the order and who is in the team. `switch` is that view's switch, for a
+   * grid that draws its own toolbar (a phone's sheet).
+   */
+  rows?: {
+    render: (f: RosterFighter, state: { inTeam: boolean; blocked: boolean; reason?: string }) => ReactNode
+    switch?: ReactNode
+  }
 }) {
   /* Which face every card shows, until one is turned over on its own. */
   const [ownView, setView] = useState<PickView>('combat')
@@ -2023,11 +2034,28 @@ export function FighterGrid({
           {/* The readout switch is what the compact card does not have, so it
               goes away with the thing it controls rather than sitting there
               changing nothing. */}
-          {density === 'full' && <PickViewSwitch view={view} onChange={setView} />}
+          {density === 'full' && (rows ? rows.switch : <PickViewSwitch view={view} onChange={setView} />)}
           <span className="spacer" />
           {!onDensity && <PickDensitySwitch density={density} onChange={chooseDensity} />}
         </div>
       )}
+      {rows && density === 'full' ? (
+        <div className={`pickrows drost--stack${phone ? ' drost--phone' : ''}`}>
+          {shown.map((f) => {
+            const state = fighterAvailable(f)
+            const inTeam = teamIds.includes(f.fighter_id)
+            return (
+              <Fragment key={f.fighter_id}>
+                {rows.render(f, {
+                  inTeam,
+                  blocked: !state.available || (full && !inTeam),
+                  reason: state.available ? (full && !inTeam ? 'Team full' : undefined) : state.reason,
+                })}
+              </Fragment>
+            )
+          })}
+        </div>
+      ) : (
       <div
         className={`fightergrid${density === 'compact' ? ' fightergrid--compact' : ''}`}
       >
@@ -2064,6 +2092,7 @@ export function FighterGrid({
           )
         })}
       </div>
+      )}
     </>
   )
 }
@@ -2587,7 +2616,7 @@ export function PickCard({
  * tickle. Collapsing that into one letter would hide the choice the player is
  * making.
  */
-function VersusBadges({ matchup }: { matchup?: Matchup }) {
+export function VersusBadges({ matchup }: { matchup?: Matchup }) {
   if (!matchup) return null
   const atk = Math.round(matchup.offense * 100)
   const def = Math.round(matchup.defense * 100)
@@ -3382,5 +3411,49 @@ export function VersusFloors({
         </select>
       </label>
     </>
+  )
+}
+
+/**
+ * What a fight's fighter card adds at its end: in the team, or why it cannot
+ * be picked, and the way to its details. Inside the card's own button, so the
+ * details are a span that stops the click from reaching it.
+ */
+export function PickRowAside({
+  inTeam,
+  reason,
+  onInspect,
+}: {
+  inTeam: boolean
+  reason?: string
+  onInspect: () => void
+}) {
+  return (
+    <span className="pickrow__aside">
+      {inTeam ? (
+        <span className="pickrow__state is-in">In team</span>
+      ) : (
+        reason && <span className="pickrow__state">{reason}</span>
+      )}
+      <span
+        className="pickrow__info"
+        role="button"
+        tabIndex={0}
+        aria-label="Details"
+        onClick={(e) => {
+          e.stopPropagation()
+          onInspect()
+        }}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault()
+            e.stopPropagation()
+            onInspect()
+          }
+        }}
+      >
+        i
+      </span>
+    </span>
   )
 }

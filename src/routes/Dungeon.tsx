@@ -25,7 +25,7 @@ import {
   xpFor,
 } from '@/dungeon/rules'
 import { EMPTY_FILTER, type RosterFilter } from '@/dungeon/filters'
-import { FilterDrop } from '@/fighters/DeskRoster'
+import { FilterDrop, Row, ViewSeg, figuresOf, type View } from '@/fighters/DeskRoster'
 import {
   NFT_FIGHTER_ART,
   combineNftFighter,
@@ -70,7 +70,9 @@ import {
   POLL_ATTEMPTS,
   POLL_INTERVAL_MS,
   MarkerLine,
+  PickRowAside,
   RosterFilters,
+  VersusBadges,
   VersusFloors,
   battlePanel,
   mid,
@@ -78,10 +80,8 @@ import {
   recallDensity,
   rememberDensity,
   PickDensitySwitch,
-  PickViewSwitch,
   type Detail,
   type PickDensity,
-  type PickView,
   type Tab,
 } from '@/fight/setup'
 import { DIRTIES, playDungeon } from '@/wharf/actions'
@@ -188,6 +188,7 @@ export default function Dungeon() {
     ageDecay,
     caps,
     battle,
+    fighters: fightersConfig,
     loaded: configLoaded,
   } = useConfig()
   const xpPerDifficulty = battle?.xp_per_dungeon_difficulty ?? 0
@@ -225,7 +226,9 @@ export default function Dungeon() {
     setDeskDensity(next)
     rememberDensity(next)
   }
-  const [pickView, setPickView] = useState<PickView>('combat')
+  /* What My Fighters' cards show in the picker: Default, Stats, Combat or Abilities. */
+  const [cardView, setCardView] = useState<View>('default')
+  const [cardNow] = useState(() => Date.now())
   const chooseSheetDensity = (next: PickDensity) => {
     setSheetDensity(next)
     rememberDensity(next, true)
@@ -343,6 +346,18 @@ export default function Dungeon() {
   const matchups = useMemo(
     () => matchupsFor(roster ?? [], enemies, levelMod, ageDecay),
     [roster, enemies, levelMod, ageDecay],
+  )
+
+  /* My Fighters' card in the picker: its figures, worked out once per roster rather than in every render. */
+  const cardFigures = useMemo(
+    () =>
+      new Map(
+        (roster ?? []).map((f) => [
+          f.fighter_id,
+          figuresOf(f, classes.get(f.classname), fightersConfig, levelMod, ageDecay, cardNow, atLevelOne),
+        ]),
+      ),
+    [roster, classes, fightersConfig, levelMod, ageDecay, cardNow, atLevelOne],
   )
 
   const profile = useMemo(() => enemyProfile(enemies), [enemies])
@@ -961,6 +976,25 @@ export default function Dungeon() {
     return <Loading label="Entering the dungeon" />
   }
 
+  const pickRow = (f: RosterFighter, state: { inTeam: boolean; blocked: boolean; reason?: string }) => (
+    <Row
+      f={f}
+      fig={cardFigures.get(f.fighter_id)!}
+      view={cardView}
+      mode="inventory"
+      now={cardNow}
+      picked={state.inTeam}
+      checked={false}
+      gate={{ ok: true }}
+      dim={state.blocked && !state.inTeam}
+      onClick={() => {
+        if (state.inTeam || !state.blocked) toggleFighter(f)
+      }}
+      aside={<PickRowAside inTeam={state.inTeam} reason={state.reason} onInspect={() => showFighter(f)} />}
+      note={enemies.length > 0 ? <VersusBadges matchup={matchups.get(f.fighter_id)} /> : undefined}
+    />
+  )
+
   /* My Fighters' filter panel, with what only a fight asks under "Against this team". */
   const filterPanel = (close: () => void, className: string) => (
     <FilterDrop
@@ -1478,7 +1512,7 @@ export default function Dungeon() {
                   phone
                     ? undefined
                     : {
-                        lead: deskDensity === 'full' && <PickViewSwitch view={pickView} onChange={setPickView} />,
+                        lead: deskDensity === 'full' && <ViewSeg view={cardView} onChange={setCardView} />,
                         tail: <PickDensitySwitch density={deskDensity} onChange={chooseDeskDensity} />,
                         filters: (close) => filterPanel(close, 'drost__pop--filters pickfilters'),
                       }
@@ -1498,7 +1532,9 @@ export default function Dungeon() {
                 onInspect={showFighter}
                 density={phone ? sheetDensity : deskDensity}
                 onDensity={phone ? chooseSheetDensity : chooseDeskDensity}
-                view={phone ? undefined : pickView}
+                /* Held on a desktop, so the grid leaves the toolbar to the filter bar above it. */
+                view={phone ? undefined : 'combat'}
+                rows={{ render: pickRow, switch: <ViewSeg view={cardView} onChange={setCardView} /> }}
               />
             </>
           ) : (

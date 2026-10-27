@@ -98,6 +98,19 @@ export const VIEWS: [View, string][] = [
   ['combat', 'Combat'],
   ['abilities', 'Abilities'],
 ]
+/** What the fighter cards show — Default, Stats, Combat, Abilities — wherever they are listed. */
+export function ViewSeg({ view, onChange }: { view: View; onChange: (view: View) => void }) {
+  return (
+    <span className="drost__seg drost__seg--sm drost__viewseg" role="tablist" aria-label="Cards show">
+      {VIEWS.map(([v, label]) => (
+        <button type="button" role="tab" key={v} aria-selected={view === v} onClick={() => onChange(v)}>
+          {label}
+        </button>
+      ))}
+    </span>
+  )
+}
+
 const STAT_FIELDS = ['damage', 'health', 'taunt', 'attackspeed', 'initiative'] as const
 const STAT_NAMES: Record<string, string> = {
   damage: 'Damage',
@@ -708,13 +721,7 @@ export function DeskRoster(p: DeskRosterProps) {
                     : `${list.length} of ${p.roster.length}`}
                 </span>
               )}
-              <span className="drost__seg drost__seg--sm" role="tablist" aria-label="Rows show">
-                {VIEWS.map(([v, label]) => (
-                  <button type="button" role="tab" key={v} aria-selected={view === v} onClick={() => setView(v)}>
-                    {label}
-                  </button>
-                ))}
-              </span>
+              <ViewSeg view={view} onChange={setView} />
               {/* The markers at hand beside the views on a desktop; the filter keeps them too, as a phone's does. */}
               {!phone && <MarkerSeg roster={p.roster} filter={p.filter} onFilter={p.onFilter} />}
             </div>
