@@ -5,6 +5,7 @@ import { useAction } from '@/wharf/useAction'
 import { usePhone } from '@/components/usePhone'
 import { buyMarketSale } from '@/wharf/actions'
 import { asset, ipfsImage } from '@/assets'
+import { GameImg } from '@/components/GameImg'
 import { formatNumber } from '@/format'
 import {
   fetchAssetTemplates,
@@ -306,9 +307,11 @@ export function MarketTab({ wax }: { wax: number }) {
                   aria-expanded={open === card.templateId}
                   onClick={() => setOpen(open === card.templateId ? null : card.templateId)}
                 >
-                <img
+                {/* The game's own small copy of the card by its template; the IPFS original only if it is missing. */}
+                <GameImg
                   className="amk__art"
-                  src={ipfsImage(card.img)}
+                  src={asset(`/assets/cards/${card.templateId}.webp`)}
+                  fallback={[ipfsImage(card.img), asset('/assets/default-card.png')].filter((u): u is string => !!u)}
                   alt=""
                   loading="lazy"
                   decoding="async"

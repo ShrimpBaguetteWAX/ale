@@ -5,6 +5,7 @@ import { useAction } from '@/wharf/useAction'
 import { redeemOutpostOffer } from '@/wharf/actions'
 import { ActionBanner } from '@/components/ActionBanner'
 import { asset } from '@/assets'
+import { GameImg } from '@/components/GameImg'
 import {
   canRedeem,
   closesIn,
@@ -383,13 +384,20 @@ function OfferCard({
       }
     >
       <div className="pack__art">
-        {art ? (
-          <img src={art} alt="" loading="lazy" decoding="async" />
-        ) : (
-          /* AtomicAssets is a separate service; losing it costs the picture,
-             not the offer. */
-          <div className="outpost__noart faint">#{offer.template_id}</div>
-        )}
+        {/*
+          The game's own small copy of the card, a few kilobytes, by its
+          template — the IPFS original runs to a megabyte and more, for a tile
+          this size. That original, then the blank card, if a copy is missing.
+          The template id is the offer's own, so the picture survives even
+          when AtomicAssets, a separate service, does not answer.
+        */}
+        <GameImg
+          src={asset(`/assets/cards/${offer.template_id}.webp`)}
+          fallback={[art, asset('/assets/default-card.png')].filter(Boolean)}
+          alt=""
+          loading="lazy"
+          decoding="async"
+        />
         {template?.rarity && <span className="pack__badge">{template.rarity}</span>}
       </div>
 
