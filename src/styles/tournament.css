@@ -9502,3 +9502,88 @@ button.ptour__rfplay {
   font-size: 12px;
   line-height: 1.25;
 }
+
+/*
+ * The desktop spotlight at any width.
+ *
+ * The cards on the right ran past the bottom of the window, and the left
+ * column stretched with them, so the champion's team stood below the fold —
+ * and on a narrower window the left column was a sliver with the team spilling
+ * out of it. Now the champion's side stays in view while the cards scroll by
+ * (clip, not hidden, so the panel is no scroll box of its own), the team is
+ * sized by its column, and a page too narrow for two columns stacks them: the
+ * champion across the top, the cards two by two under it.
+ */
+.ptour--desk {
+  container: tourdesk / inline-size;
+}
+.ptour--desk .ptour__spot {
+  overflow: clip;
+  align-items: start;
+}
+.ptour--desk .ptour__spotleft {
+  position: sticky;
+  top: 16px;
+  height: max(560px, calc(100dvh - 140px));
+  container: spotleft / inline-size;
+}
+.ptour--desk .ptour__spotteam img {
+  height: min(clamp(240px, 30vh, 340px), 44cqi);
+  margin: 0 max(-40px, -5cqi);
+}
+.ptour--desk .ptour__spotteam img:nth-child(2),
+.ptour--desk .ptour__spotteam img:nth-child(4) {
+  height: min(clamp(240px, 30vh, 340px), 44cqi);
+}
+.ptour--desk .ptour__spotteam img:nth-child(3) {
+  height: min(clamp(290px, 37vh, 420px), 54cqi);
+}
+@container tourdesk (max-width: 1000px) {
+  .ptour--desk .ptour__spot {
+    grid-template-columns: minmax(0, 1fr);
+    min-height: 0;
+  }
+  .ptour--desk .ptour__spotleft {
+    position: relative;
+    top: auto;
+    height: 460px;
+    min-height: 0;
+  }
+  .ptour--desk .ptour__spotright {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+  }
+  .ptour--desk .ptour__spotgap {
+    display: none;
+  }
+  .ptour--desk .ptour__spotright > .ptour__two {
+    grid-column: 1 / -1;
+  }
+  /* In pairs of a size: the clock beside the Hall of Fame, the schedule beside the prize. */
+  .ptour--desk .ptour__spotright > .ptour__spotcard:first-child {
+    grid-area: 1 / 1;
+  }
+  .ptour--desk .ptour__spotright > .ptour__spothof {
+    grid-area: 1 / 2;
+    align-self: stretch;
+  }
+  .ptour--desk .ptour__spotright > .ptour__spotcard:has(.ptour__sched) {
+    grid-area: 2 / 1;
+  }
+  .ptour--desk .ptour__spotright > .ptour__card--gold {
+    grid-area: 2 / 2;
+  }
+  /* The team to the right of the name, and no taller than the hero holds. */
+  .ptour--desk .ptour__spotteam {
+    left: 64%;
+  }
+  .ptour--desk .ptour__spotteam img,
+  .ptour--desk .ptour__spotteam img:nth-child(2),
+  .ptour--desk .ptour__spotteam img:nth-child(4) {
+    height: min(230px, 32cqi);
+  }
+  .ptour--desk .ptour__spotteam img:nth-child(3) {
+    height: min(280px, 39cqi);
+  }
+}
