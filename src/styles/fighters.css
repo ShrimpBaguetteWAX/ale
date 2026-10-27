@@ -3438,11 +3438,6 @@ h2.drost__bname {
   width: 18px;
   height: 18px;
 }
-.drost__acts .btn.drost__sellbtn:not(:disabled) {
-  border-color: transparent;
-  background: linear-gradient(180deg, #ff6b7a, #d93448);
-  color: var(--white);
-}
 /*
  * The fighter's sheet: the banner says who it is, so the sheet's head folds to
  * its grip and close button, laid over the banner's top.

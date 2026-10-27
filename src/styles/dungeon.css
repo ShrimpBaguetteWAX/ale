@@ -71,15 +71,6 @@
   }
 }
 
-/* A destructive action: removing, giving something up. Starting a fight is
-   not one; it is the screen's main action and takes the primary cyan. */
-.btn--danger {
-  --btn-bg: linear-gradient(180deg, #d8324f, #96162f);
-  --btn-line: #ff6d85;
-  --btn-fg: #fff5f6;
-  font-weight: var(--fw-bold);
-}
-
 .dungeon__cost {
   display: inline-flex;
   align-items: center;

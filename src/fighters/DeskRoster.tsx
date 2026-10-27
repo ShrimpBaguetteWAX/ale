@@ -1475,7 +1475,7 @@ function Acts({
       ) : (
         <button
           type="button"
-          className="btn btn--ghost btn--sm drost__sellbtn"
+          className="btn btn--danger btn--sm"
           disabled={!sellable(f)}
           title={sellable(f) ? 'Sell this fighter back to the game' : `${useLabel(f)} — cannot be sold`}
           onClick={() => {

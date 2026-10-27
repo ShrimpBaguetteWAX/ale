@@ -155,6 +155,7 @@
   --shadow: 0 4px 20px rgb(0 0 0 / 55%);
   --glow-cyan: 0 0 16px -2px rgb(0 186 255 / 65%);
   --glow-magenta: 0 0 16px -2px rgb(255 1 255 / 55%);
+  --glow-red: 0 0 16px -4px rgb(255 90 106 / 55%);
 
   /* ---- z-index (original ladder) ---- */
   --z-docked: 10;
@@ -173,7 +174,9 @@
  */
 :root[data-fx='low'] {
   --shadow: none;
-  --glow-cyan: none;
+  /* An empty shadow, not none: the token also goes in shadow lists, where none is invalid. */
+  --glow-cyan: 0 0 0 transparent;
+  --glow-red: 0 0 0 transparent;
   --glow-magenta: none;
   --surface-1: #0a1222;
   --surface-2: #141e36;

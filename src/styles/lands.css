@@ -715,12 +715,6 @@
   align-items: center;
   color: var(--white);
 }
-.rsheet .btn--danger {
-  --btn-bg: rgb(216 50 79 / 22%);
-  --btn-line: rgb(255 109 133 / 70%);
-  color: #ffd0d8;
-}
-
 /* ---------- My Lands on a desktop: the lands as the map draws them ---------- */
 
 .dlands {

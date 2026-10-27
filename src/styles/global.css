@@ -162,11 +162,33 @@ a:hover {
 }
 
 /* The "Play" button: the one the whole landing page points at. */
+/*
+ * Night glass: a dark button lit by a cyan line and glow. The bright cyan
+ * fill sat at the same brightness as every currency icon on it, so the
+ * icons sank in; on the dark they all read, and cyan stays the accent.
+ */
 .btn--primary {
-  --btn-bg: var(--grad-secondary);
+  --btn-bg: linear-gradient(180deg, #13284a 0%, #0b1730 100%);
   --btn-line: var(--cyan);
   --btn-fg: var(--white);
-  box-shadow: var(--glow-cyan);
+  box-shadow:
+    var(--glow-cyan),
+    inset 0 0 0 1px rgb(0 186 255 / 35%);
+}
+
+/*
+ * A destructive action, in red night glass: removing, selling, giving
+ * something up. Starting a fight is not one; it is the screen's main action
+ * and takes the primary.
+ */
+.btn--danger {
+  --btn-bg: linear-gradient(180deg, #3d1424 0%, #250c17 100%);
+  --btn-line: #ff5a6a;
+  --btn-fg: var(--white);
+  font-weight: var(--fw-bold);
+  box-shadow:
+    var(--glow-red),
+    inset 0 0 0 1px rgb(255 90 106 / 35%);
 }
 
 .btn--magenta {
