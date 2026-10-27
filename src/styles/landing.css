@@ -641,3 +641,84 @@
     border-color: var(--cyan);
   }
 }
+
+/*
+ * Connect: the boot screen's scene at rest — the logo in its ring over the
+ * map darkened almost to black, one button and one line under it. Boot,
+ * connect and the game read as one place.
+ */
+.connect {
+  position: relative;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 22px;
+  min-height: 100dvh;
+  padding: 72px 20px 40px;
+  overflow: hidden;
+  isolation: isolate;
+  background: #05101e;
+  text-align: center;
+}
+.connect::before {
+  content: '';
+  position: absolute;
+  inset: -40px;
+  z-index: -1;
+  background: url('/assets/maps/eyeke.jpg') center / cover;
+  filter: blur(16px) saturate(0.7) brightness(0.55);
+}
+.connect::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: radial-gradient(circle at 50% 42%, rgb(5 16 30 / 35%), #05101e 64%);
+}
+/* The ring waits rather than turns: nothing is loading until you press. */
+.connect__ring {
+  width: min(280px, 64vw);
+  margin-bottom: 4px;
+}
+.connect__ring svg {
+  animation: none;
+  transform: rotate(150deg);
+}
+.connect__back {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border-radius: 999px;
+  background: rgb(0 0 0 / 35%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 14%);
+  color: #dfe6f2;
+  font-size: 13px;
+  font-weight: var(--fw-bold);
+  text-decoration: none;
+}
+.connect__back:hover {
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 28%);
+}
+.connect__go {
+  width: min(320px, 100%);
+  white-space: nowrap;
+}
+.connect__fine {
+  font-size: 12.5px;
+  color: rgb(255 255 255 / 62%);
+}
+.connect__note {
+  max-width: 300px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: rgb(255 90 106 / 12%);
+  box-shadow: inset 0 0 0 1px rgb(255 90 106 / 45%);
+  color: #ffc1c9;
+  font-size: 13px;
+  line-height: 1.4;
+  text-align: left;
+}

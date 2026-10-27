@@ -24,29 +24,40 @@ export function BootScreen() {
   })
   return (
     <div className="bootscreen" role="status" aria-live="polite" aria-label="Loading">
-      <div className="bootscreen__ring">
-        <svg viewBox="0 0 100 100" aria-hidden="true" style={{ animationDelay: delay }}>
-          <defs>
-            <linearGradient id="bootarc" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0" stopColor="#00baff" stopOpacity="0" />
-              <stop offset="0.6" stopColor="#00baff" />
-              <stop offset="1" stopColor="#f6a800" />
-            </linearGradient>
-          </defs>
-          <circle
-            cx="50"
-            cy="50"
-            r="49.2"
-            fill="none"
-            stroke="url(#bootarc)"
-            strokeWidth="0.9"
-            strokeLinecap="round"
-            strokeDasharray="80 229"
-          />
-        </svg>
-        <img src={asset('/assets/logo.png')} alt="Alien Legends" />
-      </div>
+      <EmblemRing delay={delay} />
       <span className="bootscreen__word">Loading</span>
+    </div>
+  )
+}
+
+/**
+ * The logo inside its ring. The boot screen turns it; the connect screen
+ * draws the same ring at rest, so boot, connect and the game read as one
+ * scene.
+ */
+export function EmblemRing({ delay, className }: { delay?: string; className?: string }) {
+  return (
+    <div className={`bootscreen__ring${className ? ` ${className}` : ''}`}>
+      <svg viewBox="0 0 100 100" aria-hidden="true" style={{ animationDelay: delay }}>
+        <defs>
+          <linearGradient id="bootarc" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stopColor="#00baff" stopOpacity="0" />
+            <stop offset="0.6" stopColor="#00baff" />
+            <stop offset="1" stopColor="#f6a800" />
+          </linearGradient>
+        </defs>
+        <circle
+          cx="50"
+          cy="50"
+          r="49.2"
+          fill="none"
+          stroke="url(#bootarc)"
+          strokeWidth="0.9"
+          strokeLinecap="round"
+          strokeDasharray="80 229"
+        />
+      </svg>
+      <img src={asset('/assets/logo.png')} alt="Alien Legends" />
     </div>
   )
 }
