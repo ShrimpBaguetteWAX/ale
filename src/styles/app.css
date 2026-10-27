@@ -2533,14 +2533,23 @@ a.res {
 }
 
 /*
-   Too narrow for three columns: the altar over the deal, beside the list,
-   as one column that scrolls as a whole. Squeezed under the altar, the deal
-   was a box of its own a third of the board high, its button scrolled out
-   of it.
+   Too narrow for three columns: the list, and beside it the altar over the
+   deal. Three columns need the altar's own width and its labels (about
+   450px) beside the list and the deal, so they take a board of 1200px.
+   The build step's altar and deal are one column that scrolls as a whole:
+   squeezed under the altar, the deal was a box of its own a third of the
+   board high, its button scrolled out of it.
 */
-@container dasc (max-width: 980px) {
+@container dasc (max-width: 1200px) {
   .dasc {
     grid-template-columns: clamp(340px, 45%, 400px) minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
+    grid-template-areas:
+      'list middle'
+      'list side';
+  }
+  .dasc:has(> .dasc__main) {
+    grid-template-rows: minmax(0, 1fr);
     grid-template-areas: 'list main';
   }
   .dasc__main {
@@ -2557,16 +2566,16 @@ a.res {
   .dasc__main > * {
     flex: none;
   }
-  .dasc__right {
+  .dasc__main > .dasc__right {
     overflow: visible;
   }
   /* The odds open at their own height: the column scrolls, not the table. */
-  .dasc__right > .oddspanel[open] {
+  .dasc__main > .dasc__right > .oddspanel[open] {
     flex: none;
     min-height: 0;
     overflow: visible;
   }
-  .dasc__right > .oddspanel[open] > .oddspanel__summary {
+  .dasc__main > .dasc__right > .oddspanel[open] > .oddspanel__summary {
     position: static;
     margin: 0;
     padding: 0 0 8px;
@@ -2930,7 +2939,7 @@ a.res {
   align-content: start;
 }
 /* Narrow: the same two columns as the build step — the altar over the rows. */
-@container dasc (max-width: 980px) {
+@container dasc (max-width: 1200px) {
   .dasc.dasc--offers {
     grid-template-columns: clamp(300px, 45%, 360px) minmax(0, 1fr);
   }
