@@ -42,6 +42,9 @@ export function Laurel({ flip = false }: { flip?: boolean }) {
  * A fighter as a medallion: the face in a ring that is its experience
  * towards the next level, and a tab under it with the level — or DOWN for
  * the fallen and NFT for the NFT fighter, which has no level.
+ *
+ * A phone taps one to open its record (`onSelect`), and marks the ones with
+ * a level waiting (`ready`) with a green arrow in a ring.
  */
 export function Medal({
   src,
@@ -50,6 +53,10 @@ export function Medal({
   tab,
   mvp,
   down,
+  ready = false,
+  selected = false,
+  label,
+  onSelect,
 }: {
   src: string
   fallback: string
@@ -58,10 +65,17 @@ export function Medal({
   tab: string
   mvp: boolean
   down: boolean
+  ready?: boolean
+  selected?: boolean
+  /** The fighter's name, for the button a tappable medallion becomes. */
+  label?: string
+  onSelect?: () => void
 }) {
   const fill = Math.max(0, Math.min(100, xp))
-  return (
-    <div className={`honours__medal${down ? ' is-down' : ''}${mvp ? ' is-mvp' : ''}`}>
+  const className =
+    `honours__medal${down ? ' is-down' : ''}${mvp ? ' is-mvp' : ''}${ready ? ' is-ready' : ''}${selected ? ' is-selected' : ''}`
+  const body = (
+    <>
       <div className="honours__mvp">
         {mvp && (
           <>
@@ -89,8 +103,28 @@ export function Medal({
         </svg>
         <GameImg className="honours__face" src={src} alt="" fallback={fallback} />
         <span className="honours__tab">{tab}</span>
+        {ready && (
+          <span className="honours__up" title="Ready to level up">
+            <svg viewBox="0 0 12 12" aria-hidden="true">
+              <path d="M6 10.5 V2 M2.5 5.5 L6 2 L9.5 5.5" />
+            </svg>
+          </span>
+        )}
       </div>
-    </div>
+    </>
+  )
+  return onSelect ? (
+    <button
+      type="button"
+      className={className}
+      aria-pressed={selected}
+      aria-label={`${label ?? 'Fighter'}${down ? ', down' : ''}${ready ? ', ready to level up' : ''}`}
+      onClick={onSelect}
+    >
+      {body}
+    </button>
+  ) : (
+    <div className={className}>{body}</div>
   )
 }
 
@@ -110,6 +144,7 @@ export function Engram({
   percent,
   added,
   filled,
+  short = false,
 }: {
   type: string
   /** Banked power now, as a percentage; past 100 when more than one claim waits. */
@@ -118,6 +153,8 @@ export function Engram({
   added: number
   /** False for the first frame, so the run's share grows in rather than appearing. */
   filled: boolean
+  /** "TLM" rather than "TLM minepower", where the room is a phone's. */
+  short?: boolean
 }) {
   const now = Math.min(100, percent)
   const before = Math.max(0, Math.min(now, percent - added))
@@ -149,7 +186,7 @@ export function Engram({
         <img src={asset(tlm ? '/assets/icons/tlm.svg' : '/assets/icons/shards.svg')} alt="" />
       </div>
       <b>{percent.toLocaleString('en-US', { maximumFractionDigits: 2 })}%</b>
-      <span>{tlm ? 'TLM' : 'Shard'} minepower</span>
+      <span>{tlm ? 'TLM' : 'Shard'}{short ? '' : ' minepower'}</span>
       <em>+{added.toLocaleString('en-US', { maximumFractionDigits: 2 })}%</em>
     </div>
   )

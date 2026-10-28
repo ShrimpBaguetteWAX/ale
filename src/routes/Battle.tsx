@@ -1554,33 +1554,15 @@ function Result({
   const refreshPlayer = useGame((s) => s.refreshPlayer)
 
   const [showLog, setShowLog] = useState(false)
-  /* Phones show one of the two halves of each card at a time. */
-  const [phoneTab, setPhoneTab] = useState<'levels' | 'stats'>('levels')
   /* The note under the estimate, which a phone keeps behind an i. */
   const [showWhy, setShowWhy] = useState(false)
   /*
-     A phone keeps its own result: the tabbed cards and the pinned dock. Wider
-     screens get the honours look, which needs the room for six medallions.
+     A phone shows the whole result on one screen, one fighter's record at a
+     time; wider screens get the honours look with all six records.
   */
   const phone = usePhone()
-  /*
-     A phone pins the reward dock over the foot of the page, and how tall it
-     is depends on what it holds (a second bar, the claims line, the open
-     note). The page keeps exactly that much room under the cards, so the
-     last level and the last stat can always be scrolled clear of it.
-  */
-  const dockObserver = useRef<ResizeObserver | null>(null)
-  const dockRef = useCallback((dock: HTMLElement | null) => {
-    dockObserver.current?.disconnect()
-    dockObserver.current = null
-    const page = dock?.closest<HTMLElement>('.result')
-    if (!dock || !page || typeof ResizeObserver === 'undefined') return
-    const observer = new ResizeObserver(() =>
-      page.style.setProperty('--dock', `${dock.offsetHeight}px`),
-    )
-    observer.observe(dock)
-    dockObserver.current = observer
-  }, [])
+  /* Which fighter's record a phone has open; the MVP's until one is tapped. */
+  const [pickedAt, setPicked] = useState<number | null>(null)
   const [mining, setMining] = useState(false)
   const [mined, setMined] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -2156,12 +2138,14 @@ function Result({
     })
   }
   const standing = mine.filter(survivedOf).length
+  const pickedIndex = pickedAt ?? Math.max(0, mvpIndex)
+  const picked: SimFighter | undefined = mine[pickedIndex]
   const knockouts = mine.reduce((n, f) => n + statOf(f, 'knockouts'), 0)
 
   /* A pool as its engram; an empty slot keeps the other on its side. */
-  const engramOf = (p: (typeof pools)[number] | undefined) =>
+  const engramOf = (p: (typeof pools)[number] | undefined, short = false) =>
     p ? (
-      <Engram type={p.type} percent={p.percent} added={p.addedPercent} filled={poolsFilled} />
+      <Engram type={p.type} percent={p.percent} added={p.addedPercent} filled={poolsFilled} short={short} />
     ) : (
       <span />
     )
@@ -2286,7 +2270,7 @@ function Result({
   )
 
   return (
-    <div className={`result result--${phoneTab}`}>
+    <div className={`result${phone ? ' result--pick' : ''}`}>
       <header className="result__bar">
         {/*
           Reading the fight, not exporting it. The CSV is a compatibility
@@ -2338,173 +2322,111 @@ function Result({
       {phone ? (
       <>
       {/*
-        The verdict sits behind the team rather than above it, so the fighters
-        break the letters and the two read as one image instead of a banner
-        with a list underneath.
+        A phone: the whole result on one screen. The six medallions in a row,
+        the record of whichever one is tapped under them (the MVP's first),
+        and the pools as flasks either side of Mine at the foot. A green
+        arrow on a medallion says that fighter has a level waiting.
       */}
-      <div className={`result__stage result__stage--${won ? 'win' : 'loss'}`}>
-        <h2
-          className={`result__verdict${won ? ' result__verdict--win' : ''}`}
-          aria-label={won ? 'Victory' : 'Defeat'}
-        >
-          {won ? 'VICTORY' : 'DEFEAT'}
-        </h2>
-
-        {/*
-          Phones only. A card with its stats and its level under them is two
-          screens of scrolling for six fighters, and the level is the part a
-          player acts on - so that half shows first and the stats are a tap
-          away.
-        */}
-        <div className="result__tabs" role="tablist" aria-label="Show">
-          {(
-            [
-              ['levels', 'Levels'],
-              ['stats', 'Fight stats'],
-            ] as const
-          ).map(([key, label]) => (
-            <button
-              type="button"
-              role="tab"
-              key={key}
-              aria-selected={phoneTab === key}
-              className="result__tab"
-              onClick={() => setPhoneTab(key)}
-            >
-              {label}
-            </button>
-          ))}
+      <div className={`phonours phonours--${won ? 'win' : 'loss'}`}>
+        <div className="phonours__head">
+          <Laurel />
+          <div>
+            <h2 className="phonours__verdict" aria-label={won ? 'Victory' : 'Defeat'}>
+              {won ? 'VICTORY' : 'DEFEAT'}
+            </h2>
+            <p className="phonours__sub">
+              {standing} of {mine.length} standing · {knockouts}{' '}
+              {knockouts === 1 ? 'knockout' : 'knockouts'}
+            </p>
+          </div>
+          <Laurel flip />
         </div>
 
-        <div className="resultgrid">
-          {/*
-            The art floats free and only the plate is slanted.
-
-            Counter-skewing a card this tall displaced its bottom rows
-            sideways by roughly a twelfth of its width, which pushed the
-            right-aligned figures past the clip edge and lost them entirely.
-            The plate on its own is short enough for the same construction to
-            be safe, and art standing on nothing is also what lets the verdict
-            run between the fighters.
-          */}
-          {mine.map((f) => {
+        <div className="phonours__row" role="group" aria-label="Your team">
+          {mine.map((f, i) => {
             const survived = survivedOf(f)
-            const holds = defending !== null && Number(f.fighter_id) === defending
+            const nft = Number(f.fighter_id) === NFT_FIGHTER_ID
+            const live = byId.get(Number(f.fighter_id))
+            const plan = live ? levelUpOf(live, levels) : null
             return (
-              <article
-                className={`rescard${holds ? ' rescard--holds' : ''}`}
+              <Medal
                 key={f.uid}
-              >
-                <div className={`rescard__art${survived ? '' : ' rescard__art--down'}`}>
-                  {/*
-                    A phone's small card shows the face crop instead: greyed
-                    with a DOWN label for the fallen, where the full card shows
-                    a tombstone. The NFT fighter has no class or race, so it
-                    takes the unknown fighter's face, as its full art does.
-                  */}
-                  <GameImg
-                    className="rescard__avatar"
-                    src={
-                      f.classname && f.racename
-                        ? fighterAvatar({ classname: f.classname, racename: f.racename })
-                        : asset('/assets/fighters/unknown_unknown_avatar.webp')
-                    }
-                    alt=""
-                    fallback={asset('/assets/fighters/unknown_unknown_avatar.webp')}
-                  />
-                  <GameImg
-                    className="rescard__full"
-                    src={
-                      survived
-                        ? fighterArt({
-                            classname: f.classname,
-                            racename: f.racename,
-                          })
-                        : asset('/assets/fighter/dead.png')
-                    }
-                    alt=""
-                    fallback={fighterArtFallback()}
-                  />
-                </div>
-
-                {/*
-                  Winning an arena costs a fighter, and this is the only place
-                  that says which one.
-
-                  Under the artwork rather than over it: the top of these cards
-                  is where VICTORY runs, and a label placed there was printed
-                  through the one word the screen exists to say. Sitting on the
-                  plate instead attaches it to the fighter it is about.
-                */}
-                {holds && (
-                  <div
-                    className="rescard__holds"
-                    title="This fighter now holds the arena for you, and cannot be fielded again until somebody beats it."
-                  >
-                    Stays to defend
-                  </div>
-                )}
-                <div className="rescard__plate">
-                  <div className="rescard__plateInner">
-                    <div className="rescard__race">{f.racename || 'unknown'}</div>
-                    <div className="rescard__class">
-                      {f.classname || 'NFT Fighter'}
-                    </div>
-
-                    {statsOf(f, survived)}
-                {xpOf(f)}
-                  </div>
-                </div>
-
-              </article>
+                src={
+                  f.classname && f.racename
+                    ? fighterAvatar({ classname: f.classname, racename: f.racename })
+                    : asset('/assets/fighters/unknown_unknown_avatar.webp')
+                }
+                fallback={asset('/assets/fighters/unknown_unknown_avatar.webp')}
+                xp={plan ? (plan.atMax ? 100 : plan.xpPercent) : 0}
+                tab={!survived ? 'DOWN' : nft ? 'NFT' : `L${live?.stats.level ?? f.level}`}
+                mvp={i === mvpIndex}
+                down={!survived}
+                ready={!!plan && !plan.atMax && plan.ready}
+                selected={i === pickedIndex}
+                label={f.classname || 'NFT Fighter'}
+                onSelect={() => setPicked(i)}
+              />
             )
           })}
         </div>
 
-        <ActionBanner error={levelError} />
-      </div>
-
-      {/*
-        What the run actually paid. Nothing lands in the wallet here: each
-        pool fills toward 100% across many runs, and only a full one can be
-        mined — so both the standing total and this run's contribution have to
-        be on screen or the reward reads as nothing happening.
-      */}
-      {pools.length > 0 && (
-        <section className="minepower" ref={dockRef}>
-          {pools.map((p) => (
-            <div className="minebar" key={p.pool}>
-              <span className="minebar__track">
-                <span
-                  className={`minebar__fill minebar__fill--${p.type}`}
-                  style={{
-                    width: `${Math.min(100, poolsFilled ? p.percent : Math.max(0, p.percent - p.addedPercent))}%`,
-                  }}
-                />
-              </span>
-              <span className="minebar__label">
-                {p.percent.toLocaleString('en-US', { maximumFractionDigits: 2 })}%{' '}
-                {p.type === 'tlm' ? 'TLM' : 'Shard'} minepower
-              </span>
-              <span className="minebar__gain">
-                +{p.addedPercent.toLocaleString('en-US', { maximumFractionDigits: 2 })}%
-              </span>
+        {picked !== undefined && (() => {
+          const f = picked
+          const survived = survivedOf(f)
+          const holds = defending !== null && Number(f.fighter_id) === defending
+          return (
+            <div className={`honours__record phonours__record${survived ? '' : ' is-down'}`}>
+              <div className="honours__recordhead phonours__recordhead">
+                <b>{f.classname || 'NFT Fighter'}</b>
+                <small>{f.racename || 'unknown'}</small>
+                {pickedIndex === mvpIndex && <span className="phonours__mvp">MVP</span>}
+                {holds && (
+                  <span
+                    className="honours__holds"
+                    title="This fighter now holds the arena for you, and cannot be fielded again until somebody beats it."
+                  >
+                    Stays to defend
+                  </span>
+                )}
+                <span className="phonours__no">Service record #{String(pickedIndex + 1).padStart(2, '0')}</span>
+              </div>
+              {statsOf(f, survived)}
+              {xpOf(f)}
             </div>
-          ))}
+          )
+        })()}
 
-          {hintEl}
+        <ActionBanner error={levelError} />
 
-          {estimateEl}
+        {pools.length > 0 && (
+          <section className="phonours__dock">
+            {engramOf(pools.find((p) => p.type === 'tlm'), true)}
+            <div className="phonours__claim">
+              {estimateEl}
+              {mineEl}
+              {leftEl}
+              {doneEl}
+            </div>
+            {engramOf(pools.find((p) => p.type !== 'tlm'), true)}
+          </section>
+        )}
 
-          {mineEl}
-
-          {leftEl}
-
-          {doneEl}
-
-          {footEl}
-        </section>
-      )}
+        {/* One line until the i opens the whole note. */}
+        {pools.length > 0 && (
+          <div className="phonours__why">
+            {showWhy ? (
+              <>
+                {hintEl}
+                {footEl}
+              </>
+            ) : claimable.length < pools.length ? (
+              <p className="minepower__hint">Reach 100% minepower to mine. Tap i for more.</p>
+            ) : (
+              footEl
+            )}
+          </div>
+        )}
+      </div>
       </>
       ) : (
       <>

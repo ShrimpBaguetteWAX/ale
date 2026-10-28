@@ -1,8 +1,8 @@
 /*
- * The result of a Dungeon or Arena fight on anything wider than a phone: the
+ * The result of a Dungeon or Arena fight. Wider than a phone: the
  * verdict between laurels, the team as medallions over their service
- * records, and the pools as engrams either side of Mine. The phone keeps its
- * own result (battle.css); this markup is never drawn there.
+ * records, and the pools as engrams either side of Mine. A phone draws the
+ * same pieces smaller, one fighter's record at a time (`.phonours`, below).
  *
  * Everything hangs on one centre line. The team is six equal columns and
  * nothing else, so the verdict above it and the dock below it are centred on
@@ -142,7 +142,8 @@
   width: var(--medal);
   height: var(--medal);
 }
-.honours__ring svg {
+/* The ring's own drawing, not the level-up arrow that sits on it. */
+.honours__ring > svg {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -392,8 +393,8 @@
 .honours-eng__gem {
   position: relative;
   isolation: isolate;
-  width: 136px;
-  height: 136px;
+  width: var(--eng, 136px);
+  height: var(--eng, 136px);
   margin-bottom: 10px;
   filter: drop-shadow(0 0 8px color-mix(in srgb, var(--rim) 35%, transparent));
 }
@@ -517,8 +518,8 @@
   z-index: 3;
   left: 50%;
   top: 50%;
-  width: 46px;
-  height: 46px;
+  width: 34%;
+  height: 34%;
   translate: -50% -50%;
   filter: drop-shadow(0 0 6px rgb(0 0 0 / 80%));
 }
@@ -589,4 +590,311 @@
   .honours-eng__run {
     transition: none;
   }
+}
+
+/* ---------- on a phone: one screen, one record at a time ---------- */
+
+/*
+ * The six medallions in a row, the tapped fighter's record under them, and
+ * the flasks either side of Mine at the foot: all of it fits between the top
+ * bar and the bottom of the screen (fights have no tab bar), so nothing on
+ * the result needs scrolling to.
+ */
+.result.result--pick {
+  gap: 8px;
+  padding-bottom: calc(12px + env(safe-area-inset-bottom));
+}
+
+.phonours {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.phonours__head {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  text-align: center;
+}
+.phonours__head .honours__laurel {
+  width: 24px;
+  height: 44px;
+  filter: drop-shadow(0 0 6px rgb(255 200 90 / 45%));
+}
+.phonours--loss .honours__laurel {
+  color: #7d8597;
+  filter: none;
+  opacity: 0.7;
+}
+.phonours__verdict {
+  margin: 0;
+  padding-left: 0.14em;
+  font-family: var(--font-display);
+  font-size: 36px;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: 0.14em;
+  color: transparent;
+  background: linear-gradient(180deg, #fff 0%, #ffeab0 50%, #d9a640 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  filter: drop-shadow(0 0 14px rgb(255 200 90 / 35%));
+}
+.phonours--loss .phonours__verdict {
+  background-image: linear-gradient(180deg, #fff 0%, #ffc1c8 50%, #c23a4c 100%);
+  filter: drop-shadow(0 0 14px rgb(255 90 106 / 35%));
+}
+.phonours__sub {
+  margin: 5px 0 0;
+  padding-left: 0.2em;
+  font-family: var(--font-display);
+  font-size: 8.5px;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+/* ---- the row of medallions, each a button ---- */
+.phonours__row {
+  --medal: 46px;
+
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  justify-items: center;
+  padding: 12px 0 6px;
+}
+.phonours__row .honours__medal {
+  position: relative;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+/* The crown sits on the rim; the word is the record's to say. */
+.phonours__row .honours__mvp {
+  position: absolute;
+  z-index: 2;
+  top: -11px;
+  left: 50%;
+  height: auto;
+  translate: -50% 0;
+}
+.phonours__row .honours__mvp svg {
+  width: 18px;
+  height: 12px;
+}
+.phonours__row .honours__mvp span {
+  display: none;
+}
+.phonours__row .honours__track,
+.phonours__row .honours__xp {
+  stroke-width: 9;
+}
+.phonours__row .honours__face {
+  box-shadow:
+    0 0 0 2px #0b1426,
+    0 0 0 3px rgb(0 186 255 / 55%);
+}
+.phonours__row .honours__medal.is-mvp .honours__face {
+  box-shadow:
+    0 0 0 2px #0b1426,
+    0 0 0 3px #ffd979,
+    0 0 16px rgb(255 200 90 / 50%);
+}
+.phonours__row .honours__medal.is-down .honours__face {
+  box-shadow:
+    0 0 0 2px #0b1426,
+    0 0 0 3px rgb(255 90 106 / 65%);
+}
+.phonours__row .honours__medal.is-down .honours__ring::after {
+  width: 2px;
+  top: 16%;
+  bottom: 16%;
+}
+.phonours__row .honours__tab {
+  bottom: -7px;
+  padding: 1px 6px;
+  font-size: 8px;
+  letter-spacing: 0.06em;
+}
+/* The open record's fighter, ringed in white. */
+.phonours__row .honours__medal.is-selected .honours__ring::before {
+  content: '';
+  position: absolute;
+  inset: -5px;
+  border-radius: 50%;
+  box-shadow:
+    0 0 0 2px #fff,
+    0 0 14px rgb(255 255 255 / 60%);
+}
+
+/* A level waiting: a green arrow in a ring on the rim, top right. */
+.honours__up {
+  position: absolute;
+  z-index: 3;
+  top: -3px;
+  right: -3px;
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  color: #5ff2b0;
+  background: #0b1426;
+  box-shadow:
+    0 0 0 2px #5ff2b0,
+    0 0 10px rgb(95 242 176 / 70%);
+  animation: level-ready 2s ease-in-out infinite;
+}
+.honours__up svg {
+  width: 11px;
+  height: 11px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+@keyframes level-ready {
+  50% {
+    transform: scale(1.14);
+  }
+}
+
+/* ---- the open record ---- */
+.phonours__record {
+  margin-top: 0;
+}
+.phonours__recordhead {
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  font-size: 8px;
+}
+.phonours__recordhead b {
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--white);
+}
+.phonours__recordhead small {
+  font-family: var(--font-display);
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.phonours__recordhead .honours__holds {
+  margin: 0;
+  padding: 2px 7px;
+  font-size: 7.5px;
+}
+.phonours__mvp {
+  padding: 2px 7px;
+  border-radius: 999px;
+  font-family: var(--font-display);
+  font-size: 7.5px;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  color: #1a1205;
+  background: linear-gradient(180deg, #ffe9a0, #e0a530);
+}
+.phonours__no {
+  margin-left: auto;
+}
+.phonours__record .rescard__row {
+  padding: 3.5px 10px;
+  font-size: 10px;
+}
+.phonours__record .rescard__xp {
+  padding: 8px 10px 10px;
+}
+/* The NFT fighter has no level; desktop keeps the room to line six up, one record does not. */
+.phonours__record .rescard__xp:empty {
+  display: none;
+}
+
+/* ---- the flasks and Mine ---- */
+.phonours__dock {
+  --eng: 74px;
+
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+}
+.phonours__dock .honours-eng {
+  gap: 1px;
+}
+.phonours__dock .honours-eng__gem {
+  margin-bottom: 6px;
+}
+.phonours__dock .honours-eng > b {
+  font-size: 15px;
+}
+.phonours__dock .honours-eng > span {
+  font-size: 7.5px;
+  letter-spacing: 0.14em;
+}
+.phonours__dock .honours-eng > em {
+  font-size: 9.5px;
+}
+.phonours__claim {
+  display: grid;
+  gap: 6px;
+}
+/* The estimate as two lines in the middle, not the old dock's single row. */
+.phonours .minepower__estimate {
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px 10px;
+  padding: 0;
+  background: none;
+  font-size: 13px;
+}
+.phonours .minepower__estlabel {
+  flex-basis: 100%;
+  justify-content: center;
+  text-align: center;
+  font-size: 8px;
+  letter-spacing: 0.16em;
+}
+.phonours .minepower__mine {
+  min-height: 42px;
+}
+.phonours .minepower__left,
+.phonours .minepower__done {
+  font-size: 9.5px;
+}
+
+/* One line until the i opens the whole note. */
+.phonours__why {
+  display: grid;
+  gap: 4px;
+  min-height: 28px;
+  align-content: center;
+}
+.phonours .minepower__hint,
+.phonours .minepower__foot {
+  display: block;
+  max-width: none;
+  font-size: 10.5px;
+  line-height: 1.4;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .honours__up {
+    animation: none;
+  }
+}
+:root[data-fx='low'] .honours__up {
+  animation: none;
 }
