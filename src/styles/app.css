@@ -869,10 +869,6 @@
 .more__inner:focus {
   outline: none;
 }
-.more__title {
-  margin-bottom: var(--sp-3);
-}
-
 .more__list {
   border-radius: 12px;
   background: rgb(8 14 28 / 66%);
@@ -1008,8 +1004,7 @@
   --text-heading: var(--white);
 }
 .shell .main__inner h1:not(.tour__title),
-.shell__leaving h1:not(.tour__title),
-.more__title {
+.shell__leaving h1:not(.tour__title) {
   position: relative;
   margin-top: 0;
   padding-bottom: 10px;
@@ -1023,8 +1018,7 @@
   text-shadow: 0 0 18px rgb(0 186 255 / 35%);
 }
 .shell .main__inner h1:not(.tour__title)::after,
-.shell__leaving h1:not(.tour__title)::after,
-.more__title::after {
+.shell__leaving h1:not(.tour__title)::after {
   content: '';
   position: absolute;
   left: 0;
@@ -1036,8 +1030,7 @@
 }
 @media (max-width: 719px) {
   .shell .main__inner h1:not(.tour__title),
-  .shell__leaving h1:not(.tour__title),
-  .more__title {
+  .shell__leaving h1:not(.tour__title) {
     font-size: var(--fs-2xl);
   }
 }

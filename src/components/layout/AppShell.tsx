@@ -117,7 +117,6 @@ function MorePage({
   return (
     <div className="more" role="dialog" aria-modal="true" aria-label="More" ref={layer}>
       <div className="more__inner" ref={panel}>
-        <h1 className="more__title">More</h1>
         <PrizeCard className="prizecard--more" />
         <div className="more__list">
           {items.map((item) => {
