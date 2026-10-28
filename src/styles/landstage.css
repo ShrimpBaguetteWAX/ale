@@ -319,11 +319,11 @@
  * of it shrinks together.
  */
 .bfield.bfield--land.bfield--wide {
-  --unit: calc(9.5cqw * 0.85);
+  --unit: calc(9.5cqw * 0.78);
 }
 @media (max-width: 719px) {
   .bfield.bfield--land {
-    --unit: calc(12.5cqw * 0.85);
+    --unit: calc(12.5cqw * 0.78);
   }
 }
 /* A phone's field is square on its ground: the fighters stand taller in it. */
@@ -1251,7 +1251,7 @@
 /*
  * On a desktop the cards lie over the foot of the picture, the grass fading
  * into a shade under them rather than a strip of their own; the front row
- * stands clear of them (FORMATION_LAND). On a phone they sit under the
+ * stands clear of them (GROUND_LINES). On a phone they sit under the
  * picture, on the page.
  */
 .bfield--land > .gcards {

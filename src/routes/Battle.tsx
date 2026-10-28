@@ -60,6 +60,7 @@ import { fightLook, type FightLook } from '@/fight/fightLook'
 import { fightStageFor, stageFor, type Stage } from '@/fight/stages'
 import { GroundMark, LandStage } from '@/fight/LandStage'
 import { ArenaStage } from '@/fight/ArenaStage'
+import { roleLines, type Spot } from '@/fight/formation'
 import { GildedCards } from '@/fight/GildedCards'
 import { asset } from '@/assets'
 import {
@@ -543,6 +544,25 @@ export function FightStage({
   const { step, total, speed, playing } = pb
   const land = look === 'land'
   const stage = useMemo(() => (land ? ground ?? stageFor() : undefined), [land, ground])
+  /* Where each fighter stands on the ground, from the taunt they open with (see formation.ts). */
+  const lineup = useMemo(() => {
+    if (!land) return undefined
+    const opening = standingAt(replay, 0)
+    const out = new Map<string, Spot>()
+    for (const team of [1, 2]) {
+      const fighters = replay.fighters.filter((f) => f.team === team)
+      const spots = roleLines(
+        fighters.map((f) => ({
+          uid: f.uid,
+          classname: f.classname,
+          taunt: opening.get(f.uid)?.taunt ?? f.taunt,
+          health: f.start_health,
+        })),
+      )
+      for (const [uid, spot] of spots) out.set(uid, spot)
+    }
+    return out
+  }, [land, replay])
   const charge = useMemo(
     () => (land ? chargeOf(replay.fighters, pb.state) : undefined),
     [land, replay, pb.state],
@@ -621,6 +641,7 @@ export function FightStage({
           broadcast={broadcast ? live : undefined}
           aimUid={pb.aimUid}
           stage={stage}
+          lineup={lineup}
           charge={charge}
           deck={land && charge && !phone ? cards : undefined}
         />
@@ -982,18 +1003,22 @@ const FORMATION_WIDE: [number, number, number][] = [
 ]
 
 /**
- * The same two rows on the ground, standing further up the floor: the gilded
- * cards lie over the foot of the picture, and the front row stands clear of
- * them. The back row is nearer the horizon.
+ * The ground's two lines on screen, [far, near] as % of the field's height:
+ * the far line just inside the walkable floor (clear of the sand and the surf,
+ * clear of the arena's wall), the near one clear of the cards — which lie over
+ * a desktop's picture and sit under a phone's.
  */
-const FORMATION_LAND: [number, number, number][] = [
-  [15, 70, 1],
-  [8, 49, 0.84],
-  [29, 70, 1],
-  [22, 49, 0.84],
-  [43, 70, 1],
-  [36, 49, 0.84],
-]
+const GROUND_LINES = { wide: [53, 70], tall: [68, 95] } as const
+
+/**
+ * A spot on the ground as [x %, y %, depth]: further back is higher up the
+ * field, smaller, and drawn in toward the middle, as perspective has it.
+ */
+function onGround([x, r]: Spot, wide: boolean): [number, number, number] {
+  const [far, near] = GROUND_LINES[wide ? 'wide' : 'tall']
+  const pull = 0.82 + 0.18 * r
+  return [50 - (50 - x) * pull, far + r * (near - far), 0.84 + 0.16 * r]
+}
 
 /** How far an attacker dashes toward its target, as a share of the gap. */
 const LUNGE_SHARE = 0.55
@@ -1107,6 +1132,7 @@ function Battlefield({
   broadcast,
   aimUid,
   stage,
+  lineup,
   charge,
   deck,
 }: {
@@ -1132,6 +1158,8 @@ function Battlefield({
   aimUid?: string | null
   /** The ground to fight on, in the land look; the fight artwork otherwise. */
   stage?: Stage
+  /** Where each fighter stands on the ground, in the land look. */
+  lineup?: Map<string, Spot>
   /** Each fighter's charge, for the ring at its feet in the land look. */
   charge?: Map<string, number>
   /** Drawn over the foot of the field: the gilded cards, in the land look on a desktop. */
@@ -1141,9 +1169,10 @@ function Battlefield({
   const depth = new Map<string, number>()
   for (const team of [team1, team2]) {
     team.forEach((f, i) => {
+      const spot = lineup?.get(f.uid)
       /* The player is wide on a phone too: two rows of three, as on desktop. */
-      const [x, y, d] = stage && wide
-        ? FORMATION_LAND[i % FORMATION_LAND.length]
+      const [x, y, d] = spot
+        ? onGround(spot, wide)
         : wide || broadcast
           ? FORMATION_WIDE[i % FORMATION_WIDE.length]
           : [...FORMATION[i % FORMATION.length], 1]
