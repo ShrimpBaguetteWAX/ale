@@ -789,7 +789,12 @@ export function CombatCard({
    * that keeps beating you.
    */
   owner?: string
-  onOpen: () => void
+  /**
+   * Open this combatant's details. Left out where the screen offers none —
+   * a desktop Dungeon or Arena, whose hover card already says it all — and
+   * the face is then a picture rather than a button that does nothing.
+   */
+  onOpen?: () => void
   /**
    * Take this combatant back out of the line-up, when it can be taken out.
    *
@@ -897,6 +902,39 @@ export function CombatCard({
   */
   const hud = useMedallions()
   if (hud) {
+    const medalFace = (
+      <>
+        <span className="medal__pic" style={{ backgroundImage: `url('${elementBackground(element)}')` }}>
+          <GameImg
+            className="medal__art"
+            src={art ?? fighterArt({ classname, racename })}
+            alt={`${classname} ${racename}`}
+            loading="lazy"
+            fallback={fighterArtFallback()}
+          />
+        </span>
+        {element && <img className="medal__el" src={elementIcon(element)} alt={element} title={element} />}
+        {!!marker && <img className="medal__mk" src={markerIcon(marker)} alt={`Marked ${marker}`} title={`Marked ${marker}`} />}
+        {badge ? (
+          <span className="medal__tab medal__tab--badge">{badge}</span>
+        ) : (
+          level !== undefined && level > 0 && <span className="medal__tab">{level}</span>
+        )}
+        <span className="medal__name">{classname || racename || 'Fighter'}</span>
+        {owner && <span className="medal__owner">{owner}</span>}
+        <span className="medal__figs mono">
+          <span>
+            <img src={asset('/assets/icons/stats/damage.svg')} alt="" />
+            {formatScaled(damage)}
+          </span>
+          <span>
+            <img src={asset('/assets/icons/stats/health.svg')} alt="" />
+            {formatScaled(health)}
+          </span>
+        </span>
+        {counts}
+      </>
+    )
     return (
       <div
         className={`medal medal--${side}${dormant ? ' medal--dormant' : ''}${selected ? ' medal--selected' : ''}`}
@@ -908,46 +946,22 @@ export function CombatCard({
             <FighterHoverCard fighter={hover.value.panel} template={hover.value.template} cards={hover.value.cards} />
           </HoverPopover>
         )}
-        <button
-          type="button"
-          className="medal__hit"
-          onClick={() => {
-            closeHover()
-            onOpen()
-          }}
-          title={hoverable ? undefined : `${classname} — details`}
-          aria-label={`${classname} — details`}
-        >
-          <span className="medal__pic" style={{ backgroundImage: `url('${elementBackground(element)}')` }}>
-            <GameImg
-              className="medal__art"
-              src={art ?? fighterArt({ classname, racename })}
-              alt={`${classname} ${racename}`}
-              loading="lazy"
-              fallback={fighterArtFallback()}
-            />
-          </span>
-          {element && <img className="medal__el" src={elementIcon(element)} alt={element} title={element} />}
-          {!!marker && <img className="medal__mk" src={markerIcon(marker)} alt={`Marked ${marker}`} title={`Marked ${marker}`} />}
-          {badge ? (
-            <span className="medal__tab medal__tab--badge">{badge}</span>
-          ) : (
-            level !== undefined && level > 0 && <span className="medal__tab">{level}</span>
-          )}
-          <span className="medal__name">{classname || racename || 'Fighter'}</span>
-          {owner && <span className="medal__owner">{owner}</span>}
-          <span className="medal__figs mono">
-            <span>
-              <img src={asset('/assets/icons/stats/damage.svg')} alt="" />
-              {formatScaled(damage)}
-            </span>
-            <span>
-              <img src={asset('/assets/icons/stats/health.svg')} alt="" />
-              {formatScaled(health)}
-            </span>
-          </span>
-          {counts}
-        </button>
+        {onOpen ? (
+          <button
+            type="button"
+            className="medal__hit"
+            onClick={() => {
+              closeHover()
+              onOpen()
+            }}
+            title={hoverable ? undefined : `${classname} — details`}
+            aria-label={`${classname} — details`}
+          >
+            {medalFace}
+          </button>
+        ) : (
+          <span className="medal__hit">{medalFace}</span>
+        )}
         {dormant && <span className="medal__dormant">{dormant}</span>}
         {onRemove && (
           <button
@@ -963,6 +977,90 @@ export function CombatCard({
       </div>
     )
   }
+
+  const cardFace = (
+    <>
+      <span className="combatcard__art">
+        <GameImg
+          className="combatcard__fighter"
+          src={art ?? fighterArt({ classname, racename })}
+          alt={`${classname} ${racename}`}
+          loading="lazy"
+          fallback={fighterArtFallback()}
+        />
+        {element && (
+          <img
+            className="combatcard__element"
+            src={elementIcon(element)}
+            alt={element}
+            title={element}
+            width={20}
+            height={20}
+          />
+        )}
+        {!!marker && !phone && (
+          <img
+            className="combatcard__marker"
+            src={markerIcon(marker)}
+            alt={`Marked ${marker}`}
+            title={`Marked ${marker}`}
+            width={18}
+            height={18}
+          />
+        )}
+        {badge && <span className="combatcard__badge">{badge}</span>}
+        {level !== undefined && level > 0 && (
+          <span className="combatcard__level">
+            {/*
+              The L is dropped on a phone. It is a sixth of the chip's width
+              spent on a letter that the chip's own corner already says, and
+              at six cards to a row that sixth is what put "L10" over the
+              element mark opposite it.
+            */}
+            <span className="combatcard__levelL">L</span>
+            {level}
+          </span>
+        )}
+      </span>
+
+      <span className="combatcard__plate">
+        {/*
+          Never empty.
+
+          The plate is a grid, and a span with no text contributes no line
+          box at all — so a nameless fighter loses a whole row and every
+          other card in the line-up sits higher than it should. The
+          dungeon's own NFT fighter is exactly that case:
+          `getFighterFromNFT` leaves it with no class or race, because no
+          crew row on chain carries either.
+        */}
+        <span className="combatcard__name">{classname || racename || 'Fighter'}</span>
+        {owner && <span className="combatcard__owner">{owner}</span>}
+        {/*
+          Damage first, health second, here and everywhere else a pair of
+          them is printed. Damage is what a player is choosing on - it is
+          the number the elements move, the number the matchup badges
+          qualify, and the one that decides whether a fighter belongs in
+          this fight; health is how long it keeps doing it.
+        */}
+        <span className="combatcard__stats mono">
+          <span className="combatcard__dmg">{formatScaled(damage)}</span>
+          <span className="combatcard__hp">{formatScaled(health)}</span>
+        </span>
+        {/*
+          Rendered whenever there is an opposing line to read, even when
+          both counts are zero.
+
+          The plate is what paints the dark band over the bottom of the
+          art, so a card that dropped this row painted a shorter band than
+          the ones beside it and the whole line-up looked ragged along the
+          bottom. An empty row costs nothing to look at; an uneven band is
+          immediately visible.
+        */}
+        {counts}
+      </span>
+    </>
+  )
 
   return (
     <div className={`combatslot${selected ? ' combatslot--selected' : ''}`} ref={slot} {...handlers}>
@@ -986,97 +1084,23 @@ export function CombatCard({
         className={`combatcard combatcard--${side}${dormant ? ' combatcard--dormant' : ''}`}
         style={{ backgroundImage: `url('${elementBackground(element)}')` }}
       >
-      <button
-        type="button"
-        className="combatcard__hit"
-        onClick={() => {
-          closeHover()
-          onOpen()
-        }}
-        /* The native tooltip would sit on top of the hover read. */
-        title={hoverable ? undefined : `${classname} — details`}
-        aria-label={`${classname} — details`}
-      >
-        <span className="combatcard__art">
-          <GameImg
-            className="combatcard__fighter"
-            src={art ?? fighterArt({ classname, racename })}
-            alt={`${classname} ${racename}`}
-            loading="lazy"
-            fallback={fighterArtFallback()}
-          />
-          {element && (
-            <img
-              className="combatcard__element"
-              src={elementIcon(element)}
-              alt={element}
-              title={element}
-              width={20}
-              height={20}
-            />
-          )}
-          {!!marker && !phone && (
-            <img
-              className="combatcard__marker"
-              src={markerIcon(marker)}
-              alt={`Marked ${marker}`}
-              title={`Marked ${marker}`}
-              width={18}
-              height={18}
-            />
-          )}
-          {badge && <span className="combatcard__badge">{badge}</span>}
-          {level !== undefined && level > 0 && (
-            <span className="combatcard__level">
-              {/*
-                The L is dropped on a phone. It is a sixth of the chip's width
-                spent on a letter that the chip's own corner already says, and
-                at six cards to a row that sixth is what put "L10" over the
-                element mark opposite it.
-              */}
-              <span className="combatcard__levelL">L</span>
-              {level}
-            </span>
-          )}
-        </span>
-
-        <span className="combatcard__plate">
-          {/*
-            Never empty.
-
-            The plate is a grid, and a span with no text contributes no line
-            box at all — so a nameless fighter loses a whole row and every
-            other card in the line-up sits higher than it should. The
-            dungeon's own NFT fighter is exactly that case:
-            `getFighterFromNFT` leaves it with no class or race, because no
-            crew row on chain carries either.
-          */}
-          <span className="combatcard__name">{classname || racename || 'Fighter'}</span>
-          {owner && <span className="combatcard__owner">{owner}</span>}
-          {/*
-            Damage first, health second, here and everywhere else a pair of
-            them is printed. Damage is what a player is choosing on - it is
-            the number the elements move, the number the matchup badges
-            qualify, and the one that decides whether a fighter belongs in
-            this fight; health is how long it keeps doing it.
-          */}
-          <span className="combatcard__stats mono">
-            <span className="combatcard__dmg">{formatScaled(damage)}</span>
-            <span className="combatcard__hp">{formatScaled(health)}</span>
-          </span>
-          {/*
-            Rendered whenever there is an opposing line to read, even when
-            both counts are zero.
-
-            The plate is what paints the dark band over the bottom of the
-            art, so a card that dropped this row painted a shorter band than
-            the ones beside it and the whole line-up looked ragged along the
-            bottom. An empty row costs nothing to look at; an uneven band is
-            immediately visible.
-          */}
-          {counts}
-        </span>
-      </button>
+      {onOpen ? (
+        <button
+          type="button"
+          className="combatcard__hit"
+          onClick={() => {
+            closeHover()
+            onOpen()
+          }}
+          /* The native tooltip would sit on top of the hover read. */
+          title={hoverable ? undefined : `${classname} — details`}
+          aria-label={`${classname} — details`}
+        >
+          {cardFace}
+        </button>
+      ) : (
+        <span className="combatcard__hit">{cardFace}</span>
+      )}
 
       {/*
          A child of the card, not of the artwork.
@@ -2007,7 +2031,8 @@ export function FighterGrid({
    */
   onCount?: (shown: number, total: number) => void
   onToggle: (f: RosterFighter) => void
-  onInspect: (f: RosterFighter) => void
+  /** Open a fighter's details; left out where the screen offers none. */
+  onInspect?: (f: RosterFighter) => void
   /**
    * The card size, when the caller keeps it.
    *
@@ -2165,7 +2190,7 @@ export function FighterGrid({
               }
               hoverStats={!phone}
               onClick={() => onToggle(f)}
-              onInspect={() => onInspect(f)}
+              onInspect={onInspect ? () => onInspect(f) : undefined}
             />
           )
         })}

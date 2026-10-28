@@ -1170,10 +1170,10 @@ export default function Dungeon() {
                     damage={fielded.get(f.fighter_id)?.damage ?? 0}
                     side="mine"
                     abilities={enemies.length ? mySlots[i] : undefined}
-                    onOpen={() =>
+                    onOpen={
                       phone
-                        ? setFocus((v) => (v === f.fighter_id ? null : f.fighter_id))
-                        : showFighter(f)
+                        ? () => setFocus((v) => (v === f.fighter_id ? null : f.fighter_id))
+                        : undefined
                     }
                     selected={phone && focus === f.fighter_id}
                     marker={f.marker}
@@ -1226,11 +1226,7 @@ export default function Dungeon() {
                   }
                   art={NFT_FIGHTER_ART}
                   badge="NFT"
-                  onOpen={() =>
-                    phone
-                      ? setFocus((v) => (v === 'nft' ? null : 'nft'))
-                      : setDetail({ kind: 'panel', panel: nftFighter })
-                  }
+                  onOpen={phone ? () => setFocus((v) => (v === 'nft' ? null : 'nft')) : undefined}
                   selected={phone && focus === 'nft'}
                   preview={() => ({
                     panel: nftFighter,
@@ -1378,7 +1374,7 @@ export default function Dungeon() {
                       ? `Joins at difficulty ${nftMinDifficulty}`
                       : undefined
                   }
-                  onOpen={() => showEnemy(f)}
+                  onOpen={phone ? () => showEnemy(f) : undefined}
                   preview={() =>
                     f.fighter_id === NFT_FIGHTER_ID
                       ? {
@@ -1543,7 +1539,8 @@ export default function Dungeon() {
                 matchups={enemies.length ? matchups : undefined}
                 onToggle={toggleFighter}
                 onCount={countFighters}
-                onInspect={showFighter}
+                /* A desktop reads a fighter from its hover card; the sheet is the phone's. */
+                onInspect={phone ? showFighter : undefined}
                 density={phone ? sheetDensity : deskDensity}
                 onDensity={phone ? chooseSheetDensity : chooseDeskDensity}
                 /* Held on a desktop, so the grid leaves the toolbar to the filter bar above it. */
