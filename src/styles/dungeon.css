@@ -7087,27 +7087,18 @@ button.combatcard--empty:hover {
   display: block;
 }
 
-/* ---- the top bar: the page header, joined to the board under it ---- */
+/* ---- the header above the board ---- */
+/* On the page, as every other page's header is: no panel of its own. */
 .dungeon__inner:has(> .versus--hud) > .dungeon__head {
   container: matchuphead / inline-size;
   flex-wrap: wrap;
-  margin-bottom: calc(-1 * var(--sp-4));
-  padding: 14px 22px;
-  border: 1px solid var(--line);
-  border-bottom: 0;
-  border-radius: 18px 18px 0 0;
-  background: var(--surface-3);
-  box-shadow: inset 0 -1px 0 rgb(255 255 255 / 8%);
 }
 /* The bar and the board first, together; an alert waits under them, above the picker. */
 .dungeon__inner:has(> .versus--hud) > .dungeon__head,
 .dungeon__inner > .versus--hud {
   order: -1;
 }
-.dungeon__inner > .versus--hud {
-  border-top: 0;
-  border-radius: 0 0 18px 18px;
-}
+
 .dungeon__inner:has(> .versus--hud) > .dungeon__head .dungeon__conditions {
   order: 0;
   /* The weather and the difficulty one height: the chip stretches to the box. */
