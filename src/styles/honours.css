@@ -1,0 +1,463 @@
+/*
+ * The result of a Dungeon or Arena fight on anything wider than a phone: the
+ * verdict between laurels, the team as medallions over their service
+ * records, and the pools as engrams either side of Mine. The phone keeps its
+ * own result (battle.css); this markup is never drawn there.
+ *
+ * Everything hangs on one centre line. The team is six equal columns and
+ * nothing else, so the verdict above it and the dock below it are centred on
+ * the same six — not on a grid with a label column pushing it off to one side.
+ */
+
+.honours {
+  display: grid;
+  gap: var(--sp-4);
+}
+
+/* ---------- the verdict ---------- */
+
+.honours__head {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 26px;
+  text-align: center;
+}
+
+.honours__laurel {
+  flex: none;
+  width: 64px;
+  height: 118px;
+  color: #ffd979;
+  filter: drop-shadow(0 0 10px rgb(255 200 90 / 45%));
+}
+.honours__laurel--flip {
+  transform: scaleX(-1);
+}
+.honours--loss .honours__laurel {
+  color: #7d8597;
+  filter: none;
+  opacity: 0.7;
+}
+
+.honours__verdict {
+  margin: 0;
+  /* Letter-spacing trails the last letter too; the same on the left keeps
+     the word on the centre line. */
+  padding-left: 0.14em;
+  font-family: var(--font-display);
+  font-size: clamp(56px, 6vw, 84px);
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: 0.14em;
+  color: transparent;
+  background: linear-gradient(180deg, #fff 0%, #ffeab0 50%, #d9a640 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  filter: drop-shadow(0 0 24px rgb(255 200 90 / 35%));
+  animation: verdict-in 700ms cubic-bezier(0.2, 0.9, 0.3, 1) both;
+}
+.honours--loss .honours__verdict {
+  background-image: linear-gradient(180deg, #fff 0%, #ffc1c8 50%, #c23a4c 100%);
+  filter: drop-shadow(0 0 24px rgb(255 90 106 / 35%));
+}
+
+.honours__sub {
+  margin: 10px 0 0;
+  padding-left: 0.26em;
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+/* ---------- the team ---------- */
+
+.honours__team {
+  --medal: 140px;
+
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  column-gap: 12px;
+  width: 100%;
+  max-width: 1320px;
+  margin: 0 auto;
+}
+
+/* Medallion and record share rows across the team, so a fighter with a
+   "Stays to defend" tag under its name does not push its record down. */
+.honours__fighter {
+  display: grid;
+  grid-row: span 2;
+  grid-template-rows: subgrid;
+}
+
+/* Too narrow for six: two rows of three, still centred. */
+@media (max-width: 1179px) {
+  .honours__team {
+    --medal: 124px;
+
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    max-width: 780px;
+  }
+  .honours__fighter {
+    margin-bottom: var(--sp-5);
+  }
+}
+
+.honours__top {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.honours__medal {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.honours__mvp {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 30px;
+  font-family: var(--font-display);
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.2em;
+  color: #ffd979;
+}
+.honours__mvp svg {
+  width: 26px;
+  height: 17px;
+  filter: drop-shadow(0 0 8px rgb(255 200 90 / 70%));
+}
+
+.honours__ring {
+  position: relative;
+  width: var(--medal);
+  height: var(--medal);
+}
+.honours__ring svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  transform: rotate(-90deg);
+}
+.honours__track {
+  fill: none;
+  stroke: rgb(255 255 255 / 12%);
+  stroke-width: 5;
+}
+.honours__xp {
+  fill: none;
+  stroke: var(--cyan);
+  stroke-width: 5;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 5px var(--cyan));
+}
+
+.honours__face {
+  position: absolute;
+  inset: 11.5%;
+  width: 77%;
+  height: 77%;
+  border-radius: 50%;
+  object-fit: cover;
+  box-shadow:
+    0 0 0 3px #0b1426,
+    0 0 0 5px rgb(0 186 255 / 55%),
+    0 12px 26px rgb(0 0 0 / 55%);
+}
+.honours__medal.is-mvp .honours__face {
+  box-shadow:
+    0 0 0 3px #0b1426,
+    0 0 0 5px #ffd979,
+    0 0 30px rgb(255 200 90 / 50%);
+}
+
+/* The fallen: greyed, ringed in red, and struck through. */
+.honours__medal.is-down .honours__face {
+  filter: grayscale(1) brightness(0.5);
+  box-shadow:
+    0 0 0 3px #0b1426,
+    0 0 0 5px rgb(255 90 106 / 65%);
+}
+.honours__medal.is-down .honours__xp {
+  stroke: rgb(255 255 255 / 30%);
+  filter: none;
+}
+.honours__medal.is-down .honours__ring::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 14%;
+  bottom: 14%;
+  width: 3px;
+  border-radius: 2px;
+  transform: rotate(28deg);
+  background: linear-gradient(#ff5a6a, transparent);
+  box-shadow: 0 0 10px #ff5a6a;
+}
+
+.honours__tab {
+  position: absolute;
+  left: 50%;
+  bottom: 3%;
+  translate: -50% 0;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  color: #fff;
+  background: #0b1730;
+  box-shadow: inset 0 0 0 1px rgb(0 186 255 / 75%);
+}
+.honours__medal.is-down .honours__tab {
+  color: #ff5a6a;
+  box-shadow: inset 0 0 0 1px rgb(255 90 106 / 75%);
+}
+
+.honours__class {
+  margin-top: 10px;
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--white);
+}
+.honours__race {
+  font-family: var(--font-display);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.honours__holds {
+  margin-top: 6px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+  font-family: var(--font-display);
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #1a1205;
+  background: linear-gradient(180deg, #ffe08a, #f6a800);
+  box-shadow: 0 0 14px rgb(246 168 0 / 60%);
+}
+
+/* ---------- the service record ---------- */
+
+.honours__record {
+  display: flex;
+  flex-direction: column;
+  margin-top: 14px;
+  overflow: hidden;
+  border-radius: 4px 4px 12px 12px;
+  background: rgb(8 14 28 / 74%);
+  box-shadow:
+    inset 0 0 0 1px rgb(255 255 255 / 10%),
+    inset 0 2px 0 rgb(0 186 255 / 70%),
+    0 14px 30px rgb(0 0 0 / 35%);
+}
+.honours__record.is-down {
+  box-shadow:
+    inset 0 0 0 1px rgb(255 255 255 / 10%),
+    inset 0 2px 0 rgb(255 90 106 / 70%),
+    0 14px 30px rgb(0 0 0 / 35%);
+}
+
+.honours__recordhead {
+  display: flex;
+  justify-content: space-between;
+  padding: 7px 10px;
+  border-bottom: 1px solid rgb(255 255 255 / 8%);
+  font-family: var(--font-display);
+  font-size: 8.5px;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  background: rgb(255 255 255 / 4%);
+}
+
+.honours__record .rescard__stats {
+  gap: 0;
+}
+.honours__record .rescard__row {
+  padding: 4px 10px;
+  font-size: 10.5px;
+  color: var(--text-dim);
+}
+.honours__record .rescard__row:nth-child(odd) {
+  background: rgb(255 255 255 / 3.5%);
+}
+.honours__record .rescard__row--best,
+.honours__record .rescard__row--best dd {
+  color: var(--cyan);
+}
+.honours__record .rescard__row--best dd {
+  text-shadow: 0 0 10px rgb(0 186 255 / 70%);
+}
+/* A small rise beside a team best; survival is lit, not ranked. */
+.honours__record .rescard__row--best:not(:last-child) dd::before {
+  content: '';
+  display: inline-block;
+  margin-right: 5px;
+  vertical-align: 1px;
+  border: 4px solid transparent;
+  border-top: 0;
+  border-bottom: 6px solid currentColor;
+}
+.honours__record .rescard__row--down,
+.honours__record .rescard__row--down dd {
+  color: #ff6d85;
+}
+.honours__record .rescard__xp {
+  flex: 1;
+  align-content: end;
+  margin: 0;
+  padding: 10px;
+}
+
+/* ---------- the engrams and Mine ---------- */
+
+.honours-dock {
+  display: grid;
+  grid-template-columns: 1fr minmax(0, 340px) 1fr;
+  align-items: center;
+  gap: var(--sp-4) 56px;
+  width: 100%;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+.honours-dock > :nth-child(1) {
+  justify-self: end;
+}
+.honours-dock > :nth-child(3) {
+  justify-self: start;
+}
+.honours-dock__claim {
+  display: grid;
+  justify-items: center;
+  gap: var(--sp-3);
+}
+.honours-dock .minepower__mine {
+  max-width: none;
+}
+.honours-dock .minepower__foot {
+  grid-column: 1 / -1;
+  justify-self: center;
+}
+
+.honours-eng {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  text-align: center;
+  color: #ffd979;
+}
+.honours-eng--shards {
+  color: #c8b4ff;
+}
+
+.honours-eng__gem {
+  position: relative;
+  width: 136px;
+  height: 136px;
+  margin-bottom: 10px;
+  filter: drop-shadow(0 0 10px color-mix(in srgb, currentColor 45%, transparent));
+}
+.honours-eng.is-full .honours-eng__gem {
+  filter: drop-shadow(0 0 22px currentColor);
+}
+/* The rim, a diamond a little larger than the one it holds. */
+.honours-eng__gem::before {
+  content: '';
+  position: absolute;
+  inset: -5px;
+  background: currentColor;
+  clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+}
+.honours-eng__fill {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: #0b1426;
+  clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+}
+.honours-eng__fill i {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+.honours-eng__before {
+  background: linear-gradient(0deg, #c8901c, #ffe14a);
+}
+.honours-eng--shards .honours-eng__before {
+  background: linear-gradient(0deg, #9a4cb0, #ed92ff);
+}
+/* What this run added, striped, growing in on top of what was there. */
+.honours-eng__run {
+  background-color: #fff27a;
+  background-image: repeating-linear-gradient(-45deg, rgb(255 255 255 / 45%) 0 5px, transparent 5px 10px);
+  transition: height 1100ms cubic-bezier(0.16, 0.9, 0.3, 1);
+}
+.honours-eng--shards .honours-eng__run {
+  background-color: #f4b6ff;
+}
+.honours-eng__gem img {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 46px;
+  height: 46px;
+  translate: -50% -50%;
+  filter: drop-shadow(0 0 8px #000);
+}
+
+.honours-eng > b {
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 900;
+  line-height: 1;
+}
+.honours-eng > span {
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+.honours-eng > em {
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 700;
+  font-style: normal;
+  color: var(--green, #6ee7a8);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .honours__verdict {
+    animation: none;
+  }
+  .honours-eng__run {
+    transition: none;
+  }
+}

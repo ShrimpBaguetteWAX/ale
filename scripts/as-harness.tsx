@@ -29,6 +29,7 @@ import '../src/styles/candle.css'
 import '../src/styles/account.css'
 import '../src/styles/dungeon.css'
 import '../src/styles/battle.css'
+import '../src/styles/honours.css'
 import '../src/styles/maintenance.css'
 import '../src/styles/briefing.css'
 

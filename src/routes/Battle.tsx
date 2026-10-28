@@ -55,6 +55,7 @@ import { MineToast, type MineToastState } from '@/pools/MineToast'
 import { NUM_LOCALE } from '@/format'
 import { rememberWinPower } from '@/briefing/winPower'
 import { GameImg } from '@/components/GameImg'
+import { Engram, Laurel, Medal } from '@/fight/ResultHonours'
 import { asset, artSet } from '@/assets'
 import {
   fetchShardPools,
@@ -1556,6 +1557,11 @@ function Result({
   /* The note under the estimate, which a phone keeps behind an i. */
   const [showWhy, setShowWhy] = useState(false)
   /*
+     A phone keeps its own result: the tabbed cards and the pinned dock. Wider
+     screens get the honours look, which needs the room for six medallions.
+  */
+  const phone = usePhone()
+  /*
      A phone pins the reward dock over the foot of the page, and how tall it
      is depends on what it holds (a second bar, the claims line, the open
      note). The page keeps exactly that much room under the cards, so the
@@ -2001,6 +2007,282 @@ function Result({
     }
   }
 
+  /* A fighter's five stats, with the team's best in each column marked. */
+  const statsOf = (f: SimFighter, survived: boolean) => (
+    <dl className="rescard__stats">
+      {RESULT_STATS.map((s) => {
+        const isSurvival = s.key === 'survived'
+        const raw = isSurvival ? 0 : statOf(f, s.key)
+        const value = isSurvival
+          ? survived
+            ? 'Survived'
+            : 'Defeated'
+          : raw.toLocaleString(NUM_LOCALE)
+        const highlight = isSurvival
+          ? survived
+          : raw > 0 && raw === best[s.key]
+        return (
+          <div
+            className={
+              'rescard__row' +
+              (highlight ? ' rescard__row--best' : '') +
+              (isSurvival && !survived ? ' rescard__row--down' : '')
+            }
+            key={s.key}
+          >
+            <dt>
+              <img
+                src={asset(`/assets/icons/stats/${s.icon}.svg`)}
+                alt=""
+              />
+              {s.title}
+            </dt>
+            <dd>{value}</dd>
+          </div>
+        )
+      })}
+    </dl>
+  )
+
+  /*
+     What the fight was worth to this fighter, and what to do about it.
+
+     A dungeon run's whole progression is experience, and it was the one
+     thing the result screen did not mention — the player had to go to My
+     Fighters to find out whether the run had taken anyone to a level. The
+     bar is the live row, the gain is measured against the line-up that went
+     in, and the button is only here when there is a level to take.
+  */
+  const xpOf = (f: SimFighter) => {
+    const live = byId.get(Number(f.fighter_id))
+    /* An empty slot rather than nothing: the sixth fighter is
+       not on the roster, and a card that skipped these rows
+       would stand lower than the five beside it. */
+    if (!live) return <div className="rescard__xp" />
+    const plan = levelUpOf(live, levels)
+    const gain = gained.get(Number(f.fighter_id)) ?? 0
+    const need = live.stats.required_experience
+    return (
+      <div className="rescard__xp">
+        {/* Full and unlabelled at the cap: a bar measuring
+            progress towards a level that does not exist, and a
+            gain of experience nothing can spend, would both be
+            saying something untrue. */}
+        <span className="xpbar" aria-hidden="true">
+          <span
+            className="xpbar__fill"
+            style={{ width: `${plan.atMax ? 100 : plan.xpPercent}%` }}
+          />
+        </span>
+        <span className="xpbar__line">
+          {/* The level the bar is filling towards the end of,
+              which the numbers beside it never said. */}
+          <span className="xpbar__lv">L{live.stats.level}</span>
+          <span className="xpbar__count mono">
+            {plan.atMax
+              ? 'Max level'
+              : `${live.stats.experience.toLocaleString(NUM_LOCALE)} / ${need.toLocaleString(NUM_LOCALE)} XP`}
+          </span>
+          {!plan.atMax && gain > 0 && (
+            <span className="xpbar__gain mono">
+              +{gain.toLocaleString(NUM_LOCALE)}
+            </span>
+          )}
+        </span>
+
+        {plan.atMax ? (
+          <button
+            type="button"
+            className="btn btn--sm btn--block"
+            disabled
+            title="This fighter is at the highest level there is."
+          >
+            Already at max
+          </button>
+        ) : (
+          plan.ready && (
+            <button
+              type="button"
+              className="btn btn--primary btn--sm btn--block"
+              disabled={!session || levelBusy !== null}
+              onClick={() => void doLevelUp(live)}
+              title={`Costs ${plan.cost.credits.toLocaleString(NUM_LOCALE)} credits`}
+            >
+              {levelBusy === `level-${f.fighter_id}` && (
+                <span className="spinner" />
+              )}
+              Level up
+              {/* The price, on the button that charges it, in
+                  the same component the roster and the ascension
+                  screens price their buttons with — so it turns
+                  red here too when the balance will not cover
+                  it. Both are drawn; `Cost` renders nothing for
+                  a charge of zero. */}
+              <Cost
+                value={plan.cost.credits}
+                icon="credits"
+                short={player.activestats.credits}
+              />
+              <Cost
+                value={plan.cost.gems}
+                icon="gems"
+                short={player.activestats.gems}
+              />
+            </button>
+          )
+        )}
+      </div>
+    )
+  }
+
+  /*
+     Who carried the run, for the crown: most knockouts, then most damage
+     dealt. Nobody when nobody landed anything.
+  */
+  let mvpIndex = -1
+  {
+    let ko = 0
+    let dealt = 0
+    mine.forEach((f, i) => {
+      const k = statOf(f, 'knockouts')
+      const d = statOf(f, 'damage_dealt')
+      if (k > ko || (k === ko && d > dealt)) {
+        mvpIndex = i
+        ko = k
+        dealt = d
+      }
+    })
+  }
+  const standing = mine.filter(survivedOf).length
+  const knockouts = mine.reduce((n, f) => n + statOf(f, 'knockouts'), 0)
+
+  /* A pool as its engram; an empty slot keeps the other on its side. */
+  const engramOf = (p: (typeof pools)[number] | undefined) =>
+    p ? (
+      <Engram type={p.type} percent={p.percent} added={p.addedPercent} filled={poolsFilled} />
+    ) : (
+      <span />
+    )
+
+  /*
+     The parts of the reward dock, which the phone stacks in its pinned dock
+     and a wider screen sets between the two engrams.
+  */
+  const hintEl = (
+        claimable.length < pools.length && (
+          <p className="minepower__hint">
+            Reach at least 100% minepower to mine your reward. Keep fighting to
+            increase it — nothing is lost in the meantime.
+          </p>
+        )
+  )
+  const estimateEl = (
+    <>
+          <div className="minepower__estimate">
+            {/* What Mine would bring, not something already won. */}
+            <span className="minepower__estlabel">You'd mine about</span>
+            {pools.map((p) => (
+              /* Only what Mine will claim, once anything can be claimed. */
+              p.estimate === null || (claims.length > 0 && claimsIn(p.pool) === 0) ? null : (
+              <span key={p.pool}>
+                <img
+                  src={
+                    p.type === 'tlm'
+                      ? asset('/assets/icons/tlm.svg')
+                      : asset('/assets/icons/shards.svg')
+                  }
+                  alt=""
+                  width={17}
+                  height={17}
+                />
+                <span className="sr-only">{p.type === 'tlm' ? 'TLM' : 'Shard'}</span>
+                <strong>
+                  {(
+                    p.estimate * (claimsIn(p.pool) > 1 ? claimsFactor(claimsIn(p.pool)) : 1)
+                  ).toLocaleString('en-US', { maximumFractionDigits: 2 })}
+                </strong>
+                {/* How many of the claims are this currency's. */}
+                {claimsIn(p.pool) > 1 && (
+                  <span className="minepower__claims">×{claimsIn(p.pool)}</span>
+                )}
+              </span>
+              )
+            ))}
+            <button
+              type="button"
+              className="minepower__why"
+              aria-expanded={showWhy}
+              aria-label="How the estimate is decided"
+              onClick={() => setShowWhy((v) => !v)}
+            >
+              i
+            </button>
+          </div>
+    </>
+  )
+  const mineEl = (
+    <>
+          <button
+            type="button"
+            className="btn btn--primary minepower__mine"
+            onClick={() => void doMine()}
+            disabled={mining || !session || claims.length === 0}
+            title={
+              claims.length === 0
+                ? 'No pool has reached 100% yet'
+                : claims.length > 1
+                  ? `${claims.length} claims in one transaction, one for every full 100%`
+                  : 'Claim the full pool'
+            }
+          >
+            {mining && <span className="spinner" />}
+            {mining
+              ? 'Mining'
+              : claims.length === 0 && mined
+                ? 'Mined'
+                : 'Mine'}
+            {/* More than one claim: say how many the button sends. */}
+            {!mining && claims.length > 1 && (
+              <span className="minepower__times">×{claims.length}</span>
+            )}
+          </button>
+    </>
+  )
+  const leftEl = (
+        claimsLeft > 0 && (
+          <p className="minepower__left">
+            Up to {MAX_CLAIMS} claims per Mine · {claimsLeft} more after this one
+          </p>
+        )
+  )
+  const doneEl = (
+    <>
+          {/* Quietly, in the dock: the receipt says what it paid. */}
+          {mined && !mining && <p className="minepower__done">Mined successfully</p>}
+    </>
+  )
+  const footEl = (
+    <>
+          <p className={`minepower__foot${showWhy ? ' minepower__foot--open' : ''}`}>
+            {/*
+               It is the mining tools equipped on the account that decide
+               this, not the cards in the line-up. The old line credited
+               crew and weapon cards, which is not what the contract reads.
+    
+               Both halves link to where they are changed. This is the screen
+               where a player finds out their run banked less than they hoped,
+               and it named two things they could do about it without saying
+               where either was done. Rewards opens on Mining, which is the
+               tab the tools are equipped on; the shop link is the same one
+               the account screen uses for Legend access.
+            */}
+            Your equipped <Link to="/rewards">mining tools</Link> and{' '}
+            <Link to="/shop?c=account">account status</Link> decide how much
+            Reward Power a run banks.
+          </p>
+    </>
+  )
+
   return (
     <div className={`result result--${phoneTab}`}>
       <header className="result__bar">
@@ -2051,6 +2333,8 @@ function Result({
         </button>
       </header>
 
+      {phone ? (
+      <>
       {/*
         The verdict sits behind the team rather than above it, so the fighters
         break the letters and the two read as one image instead of a banner
@@ -2165,131 +2449,8 @@ function Result({
                       {f.classname || 'NFT Fighter'}
                     </div>
 
-                    <dl className="rescard__stats">
-                      {RESULT_STATS.map((s) => {
-                        const isSurvival = s.key === 'survived'
-                        const raw = isSurvival ? 0 : statOf(f, s.key)
-                        const value = isSurvival
-                          ? survived
-                            ? 'Survived'
-                            : 'Defeated'
-                          : raw.toLocaleString(NUM_LOCALE)
-                        const highlight = isSurvival
-                          ? survived
-                          : raw > 0 && raw === best[s.key]
-                        return (
-                          <div
-                            className={
-                              'rescard__row' +
-                              (highlight ? ' rescard__row--best' : '') +
-                              (isSurvival && !survived ? ' rescard__row--down' : '')
-                            }
-                            key={s.key}
-                          >
-                            <dt>
-                              <img
-                                src={asset(`/assets/icons/stats/${s.icon}.svg`)}
-                                alt=""
-                              />
-                              {s.title}
-                            </dt>
-                            <dd>{value}</dd>
-                          </div>
-                        )
-                      })}
-                    </dl>
-                {/*
-                  What the fight was worth to this fighter, and what to do
-                  about it.
-
-                  A dungeon run's whole progression is experience, and it was
-                  the one thing the result screen did not mention — the player
-                  had to go to My Fighters to find out whether the run had
-                  taken anyone to a level. The bar is the live row, the gain
-                  is measured against the line-up that went in, and the button
-                  is only here when there is a level to take.
-                */}
-                {(() => {
-                  const live = byId.get(Number(f.fighter_id))
-                  /* An empty slot rather than nothing: the sixth fighter is
-                     not on the roster, and a card that skipped these rows
-                     would stand lower than the five beside it. */
-                  if (!live) return <div className="rescard__xp" />
-                  const plan = levelUpOf(live, levels)
-                  const gain = gained.get(Number(f.fighter_id)) ?? 0
-                  const need = live.stats.required_experience
-                  return (
-                    <div className="rescard__xp">
-                      {/* Full and unlabelled at the cap: a bar measuring
-                          progress towards a level that does not exist, and a
-                          gain of experience nothing can spend, would both be
-                          saying something untrue. */}
-                      <span className="xpbar" aria-hidden="true">
-                        <span
-                          className="xpbar__fill"
-                          style={{ width: `${plan.atMax ? 100 : plan.xpPercent}%` }}
-                        />
-                      </span>
-                      <span className="xpbar__line">
-                        {/* The level the bar is filling towards the end of,
-                            which the numbers beside it never said. */}
-                        <span className="xpbar__lv">L{live.stats.level}</span>
-                        <span className="xpbar__count mono">
-                          {plan.atMax
-                            ? 'Max level'
-                            : `${live.stats.experience.toLocaleString(NUM_LOCALE)} / ${need.toLocaleString(NUM_LOCALE)} XP`}
-                        </span>
-                        {!plan.atMax && gain > 0 && (
-                          <span className="xpbar__gain mono">
-                            +{gain.toLocaleString(NUM_LOCALE)}
-                          </span>
-                        )}
-                      </span>
-
-                      {plan.atMax ? (
-                        <button
-                          type="button"
-                          className="btn btn--sm btn--block"
-                          disabled
-                          title="This fighter is at the highest level there is."
-                        >
-                          Already at max
-                        </button>
-                      ) : (
-                        plan.ready && (
-                          <button
-                            type="button"
-                            className="btn btn--primary btn--sm btn--block"
-                            disabled={!session || levelBusy !== null}
-                            onClick={() => void doLevelUp(live)}
-                            title={`Costs ${plan.cost.credits.toLocaleString(NUM_LOCALE)} credits`}
-                          >
-                            {levelBusy === `level-${f.fighter_id}` && (
-                              <span className="spinner" />
-                            )}
-                            Level up
-                            {/* The price, on the button that charges it, in
-                                the same component the roster and the ascension
-                                screens price their buttons with — so it turns
-                                red here too when the balance will not cover
-                                it. Both are drawn; `Cost` renders nothing for
-                                a charge of zero. */}
-                            <Cost
-                              value={plan.cost.credits}
-                              icon="credits"
-                              short={player.activestats.credits}
-                            />
-                            <Cost
-                              value={plan.cost.gems}
-                              icon="gems"
-                              short={player.activestats.gems}
-                            />
-                          </button>
-                        )
-                      )}
-                    </div>
-                  )
-                })()}
+                    {statsOf(f, survived)}
+                {xpOf(f)}
                   </div>
                 </div>
 
@@ -2329,106 +2490,108 @@ function Result({
             </div>
           ))}
 
-          {claimable.length < pools.length && (
-            <p className="minepower__hint">
-              Reach at least 100% minepower to mine your reward. Keep fighting to
-              increase it — nothing is lost in the meantime.
-            </p>
-          )}
+          {hintEl}
 
-          <div className="minepower__estimate">
-            {/* What Mine would bring, not something already won. */}
-            <span className="minepower__estlabel">You'd mine about</span>
-            {pools.map((p) => (
-              /* Only what Mine will claim, once anything can be claimed. */
-              p.estimate === null || (claims.length > 0 && claimsIn(p.pool) === 0) ? null : (
-              <span key={p.pool}>
-                <img
-                  src={
-                    p.type === 'tlm'
-                      ? asset('/assets/icons/tlm.svg')
-                      : asset('/assets/icons/shards.svg')
-                  }
-                  alt=""
-                  width={17}
-                  height={17}
-                />
-                <span className="sr-only">{p.type === 'tlm' ? 'TLM' : 'Shard'}</span>
-                <strong>
-                  {(
-                    p.estimate * (claimsIn(p.pool) > 1 ? claimsFactor(claimsIn(p.pool)) : 1)
-                  ).toLocaleString('en-US', { maximumFractionDigits: 2 })}
-                </strong>
-                {/* How many of the claims are this currency's. */}
-                {claimsIn(p.pool) > 1 && (
-                  <span className="minepower__claims">×{claimsIn(p.pool)}</span>
-                )}
-              </span>
-              )
-            ))}
-            <button
-              type="button"
-              className="minepower__why"
-              aria-expanded={showWhy}
-              aria-label="How the estimate is decided"
-              onClick={() => setShowWhy((v) => !v)}
-            >
-              i
-            </button>
-          </div>
+          {estimateEl}
 
-          <button
-            type="button"
-            className="btn btn--primary minepower__mine"
-            onClick={() => void doMine()}
-            disabled={mining || !session || claims.length === 0}
-            title={
-              claims.length === 0
-                ? 'No pool has reached 100% yet'
-                : claims.length > 1
-                  ? `${claims.length} claims in one transaction, one for every full 100%`
-                  : 'Claim the full pool'
-            }
-          >
-            {mining && <span className="spinner" />}
-            {mining
-              ? 'Mining'
-              : claims.length === 0 && mined
-                ? 'Mined'
-                : 'Mine'}
-            {/* More than one claim: say how many the button sends. */}
-            {!mining && claims.length > 1 && (
-              <span className="minepower__times">×{claims.length}</span>
-            )}
-          </button>
+          {mineEl}
 
-          {claimsLeft > 0 && (
-            <p className="minepower__left">
-              Up to {MAX_CLAIMS} claims per Mine · {claimsLeft} more after this one
-            </p>
-          )}
+          {leftEl}
 
-          {/* Quietly, in the dock: the receipt says what it paid. */}
-          {mined && !mining && <p className="minepower__done">Mined successfully</p>}
+          {doneEl}
 
-          <p className={`minepower__foot${showWhy ? ' minepower__foot--open' : ''}`}>
-            {/*
-               It is the mining tools equipped on the account that decide
-               this, not the cards in the line-up. The old line credited
-               crew and weapon cards, which is not what the contract reads.
-
-               Both halves link to where they are changed. This is the screen
-               where a player finds out their run banked less than they hoped,
-               and it named two things they could do about it without saying
-               where either was done. Rewards opens on Mining, which is the
-               tab the tools are equipped on; the shop link is the same one
-               the account screen uses for Legend access.
-            */}
-            Your equipped <Link to="/rewards">mining tools</Link> and{' '}
-            <Link to="/shop?c=account">account status</Link> decide how much
-            Reward Power a run banks.
-          </p>
+          {footEl}
         </section>
+      )}
+      </>
+      ) : (
+      <>
+      {/*
+        Wider screens: the verdict between laurels, the team as medallions over
+        their service records, and the pools as engrams either side of Mine.
+        All three hang on the one centre line.
+      */}
+      <div className={`honours honours--${won ? 'win' : 'loss'}`}>
+        <div className="honours__head">
+          <Laurel />
+          <div>
+            <h2 className="honours__verdict" aria-label={won ? 'Victory' : 'Defeat'}>
+              {won ? 'VICTORY' : 'DEFEAT'}
+            </h2>
+            <p className="honours__sub">
+              {standing} of {mine.length} standing · {knockouts}{' '}
+              {knockouts === 1 ? 'knockout' : 'knockouts'}
+            </p>
+          </div>
+          <Laurel flip />
+        </div>
+
+        <div className="honours__team">
+          {mine.map((f, i) => {
+            const survived = survivedOf(f)
+            const holds = defending !== null && Number(f.fighter_id) === defending
+            const nft = Number(f.fighter_id) === NFT_FIGHTER_ID
+            const live = byId.get(Number(f.fighter_id))
+            const plan = live ? levelUpOf(live, levels) : null
+            return (
+              <article className="honours__fighter" key={f.uid}>
+                <div className="honours__top">
+                  <Medal
+                    src={
+                      f.classname && f.racename
+                        ? fighterAvatar({ classname: f.classname, racename: f.racename })
+                        : asset('/assets/fighters/unknown_unknown_avatar.webp')
+                    }
+                    fallback={asset('/assets/fighters/unknown_unknown_avatar.webp')}
+                    xp={plan ? (plan.atMax ? 100 : plan.xpPercent) : 0}
+                    tab={!survived ? 'DOWN' : nft ? 'NFT' : `L${live?.stats.level ?? f.level}`}
+                    mvp={i === mvpIndex}
+                    down={!survived}
+                  />
+                  <div className="honours__class">{f.classname || 'NFT Fighter'}</div>
+                  <div className="honours__race">{f.racename || 'unknown'}</div>
+                  {/* Winning an arena costs a fighter; this says which one. */}
+                  {holds && (
+                    <div
+                      className="honours__holds"
+                      title="This fighter now holds the arena for you, and cannot be fielded again until somebody beats it."
+                    >
+                      Stays to defend
+                    </div>
+                  )}
+                </div>
+                <div className={`honours__record${survived ? '' : ' is-down'}`}>
+                  <div className="honours__recordhead">
+                    <span>Service record</span>
+                    <span>#{String(i + 1).padStart(2, '0')}</span>
+                  </div>
+                  {statsOf(f, survived)}
+                  {xpOf(f)}
+                </div>
+              </article>
+            )
+          })}
+        </div>
+
+        <ActionBanner error={levelError} />
+      </div>
+
+      {pools.length > 0 && (
+        <section className="honours-dock">
+          {/* TLM on the left and shards on the right, whichever the row lists first. */}
+          {engramOf(pools.find((p) => p.type === 'tlm'))}
+          <div className="honours-dock__claim">
+            {estimateEl}
+            {mineEl}
+            {leftEl}
+            {doneEl}
+            {hintEl}
+          </div>
+          {engramOf(pools.find((p) => p.type !== 'tlm'))}
+          {footEl}
+        </section>
+      )}
+      </>
       )}
 
       {error && <div className="alert alert--error">{error}</div>}
