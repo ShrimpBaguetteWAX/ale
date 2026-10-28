@@ -7025,13 +7025,13 @@ button.combatcard--empty:hover {
   .versus--hud .versus__cards::before {
     display: none;
   }
-  /* One band: the gauge centred on the board with its word under it, the head-to-head beside it. */
+  /* One band: the gauge centred on the board with its word under it, your figures mirrored against theirs either side. */
   .versus--hud .hudcentre {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
     grid-template-areas:
-      '. gauge tape'
-      '. cap tape';
+      'mine gauge theirs'
+      'mine cap theirs';
     align-items: center;
     gap: 2px 24px;
     width: 100%;
@@ -7056,10 +7056,19 @@ button.combatcard--empty:hover {
     justify-self: center;
   }
   .versus--hud .hudcentre__tape {
-    grid-area: tape;
+    display: none;
+  }
+  .versus--hud .hudcentre__side {
+    display: grid;
+    gap: 4px;
+  }
+  .versus--hud .hudcentre__side--mine {
+    grid-area: mine;
+    justify-self: end;
+  }
+  .versus--hud .hudcentre__side--theirs {
+    grid-area: theirs;
     justify-self: start;
-    width: min(260px, 100%);
-    margin-top: 0;
   }
 }
 
@@ -7194,4 +7203,35 @@ button.combatcard--empty:hover {
 .versus--hud .medal .combatcard__vsbit--exposed {
   background: rgb(246 168 0 / 18%);
   color: var(--gold);
+}
+
+/* The mirrored columns: only the stacked band shows them (see above). */
+.hudcentre__side {
+  display: none;
+}
+.hudcentre__line {
+  display: grid;
+  align-items: baseline;
+  gap: 12px;
+  font-size: 12px;
+  color: var(--text-faint);
+}
+.hudcentre__side--mine .hudcentre__line {
+  grid-template-columns: auto 44px;
+  text-align: right;
+}
+.hudcentre__side--theirs .hudcentre__line {
+  grid-template-columns: 44px auto;
+  text-align: left;
+}
+.hudcentre__line b {
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 800;
+}
+.hudcentre__side--mine b {
+  color: var(--cyan);
+}
+.hudcentre__side--theirs b {
+  color: #ff5a6a;
 }

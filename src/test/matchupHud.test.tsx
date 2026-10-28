@@ -26,6 +26,14 @@ describe('the HUD centre', () => {
     const rows = [...container.querySelectorAll('.hudcentre__row')].map((r) => r.textContent)
     expect(rows).toEqual(['67%Lands56%', '48%Blocks34%', '+0Bonus+3'])
   })
+
+  it('also sets the figures as mirrored columns, each figure nearest the gauge', () => {
+    const { container } = render(<HudCentre odds={{ winRate: 0.72, runs: 200 }} mine={mine} theirs={theirs} />)
+    const col = (who: string) =>
+      [...container.querySelectorAll(`.hudcentre__side--${who} .hudcentre__line`)].map((l) => [...l.children].map((c) => c.textContent).join(' '))
+    expect(col('mine')).toEqual(['Lands 67%', 'Blocks 48%', 'Bonus +0'])
+    expect(col('theirs')).toEqual(['56% Lands', '34% Blocks', '+3 Bonus'])
+  })
 })
 
 describe('a fighter in the HUD', () => {

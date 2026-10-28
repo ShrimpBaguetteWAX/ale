@@ -93,7 +93,41 @@ export function HudCentre({ odds, mine, theirs }: { odds: Odds | null; mine: Sid
         {row('Blocks', `${Math.round(mine.blockShare * 100)}%`, `${Math.round(theirs.blockShare * 100)}%`, 'How much of the damage coming the other way each side turns away')}
         {row('Bonus', `+${mine.bonuses}`, `+${theirs.bonuses}`, 'Ability firings that only this matchup allows, across each line-up')}
       </span>
+      {/*
+         The same figures as two mirrored columns, either side of the gauge,
+         for the stacked board's band: yours on the left, theirs on the
+         right, each figure nearest the gauge. The CSS shows one or the other.
+      */}
+      <MirrorSide side={mine} who="mine" />
+      <MirrorSide side={theirs} who="theirs" />
     </div>
+  )
+}
+
+function MirrorSide({ side, who }: { side: Side; who: 'mine' | 'theirs' }) {
+  const lines: [string, string][] = [
+    ['Lands', `${Math.round(side.landShare * 100)}%`],
+    ['Blocks', `${Math.round(side.blockShare * 100)}%`],
+    ['Bonus', `+${side.bonuses}`],
+  ]
+  return (
+    <span className={`hudcentre__side hudcentre__side--${who}`} aria-hidden="true">
+      {lines.map(([label, value]) => (
+        <span className="hudcentre__line" key={label}>
+          {who === 'mine' ? (
+            <>
+              <span>{label}</span>
+              <b>{value}</b>
+            </>
+          ) : (
+            <>
+              <b>{value}</b>
+              <span>{label}</span>
+            </>
+          )}
+        </span>
+      ))}
+    </span>
   )
 }
 
