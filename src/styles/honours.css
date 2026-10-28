@@ -484,7 +484,7 @@
   max-width: none;
   height: 12px;
   fill: var(--c1);
-  animation: flask-wave 1.6s linear infinite;
+  animation: flask-wave 4.5s linear infinite;
 }
 .honours-eng__liquid.has-run .honours-eng__surface svg {
   fill: var(--c2);
