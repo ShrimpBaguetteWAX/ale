@@ -612,6 +612,9 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
+  /* Clear room under the buttons before the verdict; as much as the
+     smallest phone allows with the note under the i open. */
+  margin-top: 24px;
 }
 
 .phonours__head {
