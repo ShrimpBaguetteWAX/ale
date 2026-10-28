@@ -1478,30 +1478,231 @@ function FieldUnit({
   const nft = Number(fighter.fighter_id) === NFT_FIGHTER_ID
   const name = nft ? 'NFT Fighter' : fighter.classname || fighter.racename || 'Fighter'
 
+  const unitClass =
+    `bunit bunit--${side}` +
+    (role ? ` bunit--${role}` : '') +
+    (dead ? ' bunit--dead' : '') +
+    (next && !dead ? ' bunit--next' : '') +
+    (signature ? ` bunit--atk-${signature}` : '') +
+    (struck ? ` bunit--took-${struck}` : '')
+  const place = {
+    left: `${pos[0]}%`,
+    top: `${pos[1]}%`,
+    '--depth': depth,
+    ...(lunge ? { '--dx': lunge.dx, '--dy': lunge.dy } : {}),
+  }
+  const title = `${name} (${owner}) — ${formatScaled(health)}/${formatScaled(maxHealth)}`
+
+  /*
+     On the ground a fighter is two layers. The figure stands in the depth:
+     nearer the camera is drawn over further back, always, through every
+     blow, step and fall, so a fighter behind another stays behind it. What
+     has to be read (the plate and health over the head, the brackets on a
+     target, the numbers a blow throws up) rides a second layer over every
+     figure, in the same place, so it is never hidden behind a neighbour.
+  */
+  if (rig) {
+    return (
+      <>
+        <div
+          className={unitClass}
+          style={
+            {
+              ...place,
+              zIndex: Math.round(pos[1]),
+              '--idl': `${-(((Number(fighter.uid.split('-')[1]) || 0) * 0.47) % 2.4).toFixed(2)}s`,
+            } as React.CSSProperties
+          }
+          title={title}
+        >
+          <div className="bunit__figure">
+            <span className="bunit__platform" aria-hidden="true" />
+            {charge !== undefined && !dead && (
+              <svg className="bunit__charge" viewBox="0 0 100 30" aria-hidden="true">
+                <ellipse className="bunit__chargetrack" cx="50" cy="15" rx="46" ry="12" pathLength={100} />
+                <ellipse
+                  className="bunit__chargefill"
+                  cx="50"
+                  cy="15"
+                  rx="46"
+                  ry="12"
+                  pathLength={100}
+                  strokeDasharray={`${Math.round(charge * 100)} 100`}
+                />
+              </svg>
+            )}
+            {/* The Mindblade's afterimages: the same figure, a beat behind it. */}
+            {signature === 'cuts' &&
+              !dead &&
+              [1, 2, 3].map((n) => (
+                <span className="bunit__body bunit__ghost" key={`ghost-${turn}-${n}`} aria-hidden="true">
+                  <img
+                    className="bunit__art"
+                    src={fighterArt({ classname: fighter.classname, racename: fighter.racename })}
+                    alt=""
+                  />
+                </span>
+              ))}
+            {/* Keyed by the blow, so a fighter that swings twice in a row swings
+                twice on screen. */}
+            <span className="bunit__body" key={rig && dead ? 'down' : role ? `${role}-${turn}` : 'idle'}>
+              {rig && dead ? (
+                /* The whole figure goes down, in one piece (see .bunit__fallen). */
+                <>
+                  <span className="bunit__fallen">
+                    <GameImg
+                      className="bunit__art"
+                      src={
+                        nft
+                          ? fighterArtFallback()
+                          : fighterArt({ classname: fighter.classname, racename: fighter.racename })
+                      }
+                      alt={`${name}, down`}
+                      fallback={fighterArtFallback()}
+                    />
+                  </span>
+                  <span className="bunit__dust" aria-hidden="true" />
+                </>
+              ) : rig ? (
+                <span className="bunit__rig">
+                  <GameImg
+                    className="bunit__art bunit__legs"
+                    src={
+                      nft
+                        ? fighterArtFallback()
+                        : fighterArt({ classname: fighter.classname, racename: fighter.racename })
+                    }
+                    alt={name}
+                    fallback={fighterArtFallback()}
+                  />
+                  <span className="bunit__torso">
+                    <GameImg
+                      className="bunit__art"
+                      src={
+                        nft
+                          ? fighterArtFallback()
+                          : fighterArt({ classname: fighter.classname, racename: fighter.racename })
+                      }
+                      alt=""
+                      fallback={fighterArtFallback()}
+                    />
+                  </span>
+                </span>
+              ) : dead ? (
+                <img
+                  className="bunit__art bunit__art--dead"
+                  src={asset('/assets/fighter/dead.png')}
+                  alt="Defeated"
+                />
+              ) : (
+                <GameImg
+                  className="bunit__art"
+                  /* The NFT fighter's full body is the game's unknown fighter —
+                     the same hooded figure as its portrait, and the art the
+                     classic stage has always shown for it mid-fight. */
+                  src={
+                    nft
+                      ? fighterArtFallback()
+                      : fighterArt({ classname: fighter.classname, racename: fighter.racename })
+                  }
+                  alt={name}
+                  fallback={fighterArtFallback()}
+                />
+              )}
+              {role === 'defender' && <span className="bunit__flash" />}
+            </span>
+
+          </div>
+        </div>
+        <div
+          className={`${unitClass} bunit--over`}
+          style={{ ...place, zIndex: 340 + Math.round(pos[1]) } as React.CSSProperties}
+          aria-hidden="true"
+        >
+          <div className="bunit__figure">
+            {role === 'defender' && (
+              <span className="bunit__ret" key={`ret-${turn}`} aria-hidden="true">
+                <i />
+                <i />
+                <i />
+                <i />
+              </span>
+            )}
+            {/*
+               The blow as the tournament's broadcast throws it: up from the head,
+               swelling with how hard it was (`--heft`, the share of half the
+               fighter's health it took), held to be read, then dropped. A
+               cleave's numbers drift apart by slot rather than stacking. What
+               was blocked is in the caption and the log.
+            */}
+            {hits.map((hit) => {
+                /* A blow its element favours, or one that takes a third of the fighter, lands big. */
+                const big = hit.effectiveness >= 110 || (maxHealth > 0 && hit.amount >= maxHealth * 0.3)
+                const resisted = hit.blocked > 0 && hit.blocked >= hit.amount * 0.3
+                return (
+                  <span
+                    className={
+                      'bunit__pop' +
+                      (hit.killed ? ' bunit__pop--kill' : big ? ' bunit__pop--big' : resisted ? ' bunit__pop--res' : '')
+                    }
+                    key={`dmg-${hit.turn}`}
+                    style={{ ['--drift' as string]: `${(Number(fighter.uid.split('-')[1]) % 3) - 1 || 0}` }}
+                    onAnimationEnd={() => setHits((h) => h.filter((x) => x.turn !== hit.turn))}
+                  >
+                    {formatScaled(hit.amount)}
+                    {hit.killed ? (
+                      <small>Knocked out</small>
+                    ) : (
+                      hit.blocked > 0 && <small>{formatScaled(hit.blocked)} resisted</small>
+                    )}
+                  </span>
+                )
+              })}
+            {abilityDelta !== 0 && (
+              <span
+                className={`effectpill effectpill--${abilityDelta > 0 ? 'heal' : 'damage'}`}
+                key={`fx-${turn}`}
+              >
+                {abilityDelta > 0 ? '+' : ''}
+                {formatScaled(abilityDelta)}
+              </span>
+            )}
+          </div>
+
+          <span className="hpbar bunit__hp" data-band={band}>
+            <span className="hpbar__trail" style={{ width: `${pct}%` }} />
+            <span className="hpbar__fill" style={{ width: `${pct}%` }} />
+          </span>
+
+          <div className="bunit__plate">
+            {fighter.element && (
+              <img
+                className="bunit__element"
+                src={elementIcon(fighter.element)}
+                alt={fighter.element}
+              />
+            )}
+            <span className="bunit__lv">{nft ? 'NFT' : `Lv.${fighter.level}`}</span>
+            {!dead && <ThreatMark standing={standing} />}
+          </div>
+        </div>
+      </>
+    )
+  }
+
   return (
     <div
-      className={
-        `bunit bunit--${side}` +
-        (role ? ` bunit--${role}` : '') +
-        (dead ? ' bunit--dead' : '') +
-        (next && !dead ? ' bunit--next' : '') +
-        (signature ? ` bunit--atk-${signature}` : '') +
-        (struck ? ` bunit--took-${struck}` : '')
-      }
+      className={unitClass}
       style={
         {
-          left: `${pos[0]}%`,
-          top: `${pos[1]}%`,
+          ...place,
           /* Nearer the bottom is nearer the viewer; the two fighters in the
              blow go over everyone so the dash and the numbers are never
              hidden behind a neighbour. */
           zIndex: role === 'attacker' ? 300 : role === 'defender' ? 250 : Math.round(pos[1]),
-          '--depth': depth,
-          ...(rig ? { '--idl': `${-(((Number(fighter.uid.split('-')[1]) || 0) * 0.47) % 2.4).toFixed(2)}s` } : {}),
-          ...(lunge ? { '--dx': lunge.dx, '--dy': lunge.dy } : {}),
         } as React.CSSProperties
       }
-      title={`${name} (${owner}) — ${formatScaled(health)}/${formatScaled(maxHealth)}`}
+      title={title}
     >
       <div className="bunit__figure">
         <span className="bunit__platform" aria-hidden="true" />
@@ -1518,14 +1719,6 @@ function FieldUnit({
               strokeDasharray={`${Math.round(charge * 100)} 100`}
             />
           </svg>
-        )}
-        {rig && role === 'defender' && (
-          <span className="bunit__ret" key={`ret-${turn}`} aria-hidden="true">
-            <i />
-            <i />
-            <i />
-            <i />
-          </span>
         )}
         {/* On the ground the cards and the rings at the feet say who swings next. */}
         {aiming && !dead && !rig && (
@@ -1549,121 +1742,6 @@ function FieldUnit({
           ))}
         {/* Keyed by the blow, so a fighter that swings twice in a row swings
             twice on screen. */}
-        <span className="bunit__body" key={rig && dead ? 'down' : role ? `${role}-${turn}` : 'idle'}>
-          {rig && dead ? (
-            /* The whole figure goes down, in one piece (see .bunit__fallen). */
-            <>
-              <span className="bunit__fallen">
-                <GameImg
-                  className="bunit__art"
-                  src={
-                    nft
-                      ? fighterArtFallback()
-                      : fighterArt({ classname: fighter.classname, racename: fighter.racename })
-                  }
-                  alt={`${name}, down`}
-                  fallback={fighterArtFallback()}
-                />
-              </span>
-              <span className="bunit__dust" aria-hidden="true" />
-            </>
-          ) : rig ? (
-            <span className="bunit__rig">
-              <GameImg
-                className="bunit__art bunit__legs"
-                src={
-                  nft
-                    ? fighterArtFallback()
-                    : fighterArt({ classname: fighter.classname, racename: fighter.racename })
-                }
-                alt={name}
-                fallback={fighterArtFallback()}
-              />
-              <span className="bunit__torso">
-                <GameImg
-                  className="bunit__art"
-                  src={
-                    nft
-                      ? fighterArtFallback()
-                      : fighterArt({ classname: fighter.classname, racename: fighter.racename })
-                  }
-                  alt=""
-                  fallback={fighterArtFallback()}
-                />
-              </span>
-            </span>
-          ) : dead ? (
-            <img
-              className="bunit__art bunit__art--dead"
-              src={asset('/assets/fighter/dead.png')}
-              alt="Defeated"
-            />
-          ) : (
-            <GameImg
-              className="bunit__art"
-              /* The NFT fighter's full body is the game's unknown fighter —
-                 the same hooded figure as its portrait, and the art the
-                 classic stage has always shown for it mid-fight. */
-              src={
-                nft
-                  ? fighterArtFallback()
-                  : fighterArt({ classname: fighter.classname, racename: fighter.racename })
-              }
-              alt={name}
-              fallback={fighterArtFallback()}
-            />
-          )}
-          {role === 'defender' && <span className="bunit__flash" />}
-        </span>
-
-        {/*
-           The blow as the tournament's broadcast throws it: up from the head,
-           swelling with how hard it was (`--heft`, the share of half the
-           fighter's health it took), held to be read, then dropped. A
-           cleave's numbers drift apart by slot rather than stacking. What
-           was blocked is in the caption and the log.
-        */}
-        {rig &&
-          hits.map((hit) => {
-            /* A blow its element favours, or one that takes a third of the fighter, lands big. */
-            const big = hit.effectiveness >= 110 || (maxHealth > 0 && hit.amount >= maxHealth * 0.3)
-            const resisted = hit.blocked > 0 && hit.blocked >= hit.amount * 0.3
-            return (
-              <span
-                className={
-                  'bunit__pop' +
-                  (hit.killed ? ' bunit__pop--kill' : big ? ' bunit__pop--big' : resisted ? ' bunit__pop--res' : '')
-                }
-                key={`dmg-${hit.turn}`}
-                style={{ ['--drift' as string]: `${(Number(fighter.uid.split('-')[1]) % 3) - 1 || 0}` }}
-                onAnimationEnd={() => setHits((h) => h.filter((x) => x.turn !== hit.turn))}
-              >
-                {formatScaled(hit.amount)}
-                {hit.killed ? (
-                  <small>Knocked out</small>
-                ) : (
-                  hit.blocked > 0 && <small>{formatScaled(hit.blocked)} resisted</small>
-                )}
-              </span>
-            )
-          })}
-        {!rig &&
-          hits.map((hit) => (
-          <span
-            className="bcast__hit bunit__hit"
-            key={`dmg-${hit.turn}`}
-            style={{
-              ['--drift' as string]: `${(Number(fighter.uid.split('-')[1]) % 3) - 1 || 0}`,
-              ['--heft' as string]: (maxHealth > 0
-                ? Math.min(1, hit.amount / (maxHealth * 0.5))
-                : 0
-              ).toFixed(2),
-            }}
-            onAnimationEnd={() => setHits((h) => h.filter((x) => x.turn !== hit.turn))}
-          >
-            −{formatScaled(hit.amount)}
-          </span>
-        ))}
         {abilityDelta !== 0 && (
           <span
             className={`effectpill effectpill--${abilityDelta > 0 ? 'heal' : 'damage'}`}

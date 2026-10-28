@@ -1576,6 +1576,45 @@
   color: #ff8a96;
 }
 
+/* ---------- who is swinging: Step-Up ---------- */
+
+/*
+ * The attacker steps out of its line toward the other side for the blow, its
+ * shadow spreading under it, and steps back as the next blow begins. Along its
+ * own line only, never toward the camera; and a fighter's figure is stacked by
+ * its depth alone (FieldUnit), so one standing behind another stays behind it
+ * throughout. It moves the unit's own anchor (its translate), so the field's
+ * shake and the class moves on the body inside play on top of it as before.
+ * The readable layer over it (plate, numbers) steps with it.
+ *
+ * One fighter moves at a time. A blow is 1700 ms at 1x and connects at 580:
+ * as it begins the last attacker steps home (0-220), and only then does the
+ * new one step out (240-540), standing in place before the swing connects.
+ * Every time is in beats, so at 2x and 4x the steps shrink with the blow
+ * and never overlap. A fighter that swings twice running stays out.
+ */
+.bfield--land .bunit {
+  transition: translate calc(220ms * var(--beat)) cubic-bezier(0.4, 0, 0.6, 1);
+}
+.bfield--land .bunit--mine {
+  --toward: 1;
+}
+.bfield--land .bunit--enemy {
+  --toward: -1;
+}
+.bfield--land .bunit--attacker {
+  translate: calc(-50% + var(--toward) * 40%) -100%;
+  transition: translate calc(300ms * var(--beat)) cubic-bezier(0.3, 0.7, 0.3, 1) calc(240ms * var(--beat));
+}
+.bfield--land .bunit--attacker .bunit__platform {
+  scale: 1.3 1;
+  background: radial-gradient(closest-side, rgb(4 14 6 / 80%), rgb(4 14 6 / 35%) 55%, rgb(0 0 0 / 0%));
+}
+/* The readable layer lies over every figure but lets the pointer through to them. */
+.bunit--over {
+  pointer-events: none;
+}
+
 /* ---------- the arena: one bowl on every planet, under that planet's sky ---------- */
 
 /*
@@ -2019,6 +2058,10 @@
 /* ---------- calmer settings ---------- */
 
 @media (prefers-reduced-motion: reduce) {
+  /* Nobody steps: the card's ACTING says who is swinging. */
+  .bfield--land .bunit.bunit--attacker {
+    translate: -50% -100%;
+  }
   .bunit__torso,
   .bunit__fallen,
   .bfield--land .bunit--attacker .bunit__rig,
@@ -2077,6 +2120,9 @@
   animation: none;
 }
 
+:root[data-fx='low'] .bfield--land .bunit.bunit--attacker {
+  translate: -50% -100%;
+}
 :root[data-fx='low'] .bunit__torso,
 :root[data-fx='low'] .bunit__fallen,
 :root[data-fx='low'] .bunit__ret {
