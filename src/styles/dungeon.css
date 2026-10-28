@@ -6586,6 +6586,10 @@ button.combatcard--empty:hover {
 .versus--hud .versus__tug {
   display: none;
 }
+/* The cards look draws a rule across a narrow board through its divider; the HUD's band has its own lines. */
+.versus--hud .versus__divider::before {
+  content: none;
+}
 .versus--hud .versus__row {
   gap: 10px;
   align-items: start;
