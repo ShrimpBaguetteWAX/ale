@@ -479,6 +479,9 @@
   left: 0;
   bottom: -4px;
   width: 200%;
+  /* The global reset caps every svg at its box; this one has to be twice it,
+     or each loop slides an empty block in behind the wave. */
+  max-width: none;
   height: 12px;
   fill: var(--c1);
   animation: flask-wave 1.6s linear infinite;
