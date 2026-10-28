@@ -7032,3 +7032,44 @@ button.combatcard--empty:hover {
     font-size: 18px;
   }
 }
+
+/*
+ * The ability counts on a medallion: in the flow under its figures, small
+ * tinted pills, rather than the cards look's tabs pinned to the top edge,
+ * which on a round portrait left them floating above it.
+ */
+.versus--hud .medal .combatcard__vs {
+  position: static;
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  min-height: 16px;
+  margin: 1px 0 0;
+  transform: none;
+}
+.versus--hud .medal .combatcard__vsbit {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  height: 16px;
+  padding: 0 6px;
+  border-radius: 8px;
+  box-shadow: none;
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 16px;
+  transform: none;
+}
+.versus--hud .medal .combatcard__vsbit img {
+  width: 9px;
+  height: 9px;
+}
+.versus--hud .medal .combatcard__vsbit--bonus {
+  background: rgb(145 166 255 / 20%);
+  color: #c4d0ff;
+}
+.versus--hud .medal .combatcard__vsbit--exposed {
+  background: rgb(246 168 0 / 18%);
+  color: var(--gold);
+}
