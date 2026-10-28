@@ -375,9 +375,22 @@
 /* The health and level ride over the head; the feet are the bottom of the unit. */
 .bfield--land .bunit__plate {
   order: -2;
+  position: relative;
+  /* Its own width, not the fighter's column: a small fighter's column is
+     narrower than "Lv.10" and its element, and the words ran off the plate. */
+  width: max-content;
   padding: 1px 6px 1px 1px;
   background: rgb(8 12 24 / 82%);
   border-color: rgb(255 217 121 / 45%);
+}
+/* Who draws fire hangs off the plate's end rather than inside it, so the
+   plate keeps one size as the mark passes from fighter to fighter. */
+.bfield--land .bunit__plate .threat {
+  position: absolute;
+  top: 50%;
+  left: 100%;
+  margin-left: 3px;
+  translate: 0 -50%;
 }
 .bfield--land .bunit__hp.hpbar {
   order: -1;
