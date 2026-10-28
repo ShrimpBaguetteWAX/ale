@@ -7114,17 +7114,13 @@ button.combatcard--empty:hover {
 .dungeon__inner:has(> .versus--hud) > .dungeon__head .dungeon__rule {
   display: none;
 }
-/* The weather as a chip. */
+/* The weather on the bar itself, no panel of its own, centred on the difficulty beside it. */
 .dungeon__inner:has(> .versus--hud) > .dungeon__head .weathertwin {
   display: flex;
   align-items: center;
   min-width: 0;
   height: auto;
   min-height: 44px;
-  padding: 0 14px;
-  border-radius: 12px;
-  background: rgb(255 255 255 / 5%);
-  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 10%);
 }
 .dungeon__inner:has(> .versus--hud) > .dungeon__head .weathertwin__label {
   display: none;
