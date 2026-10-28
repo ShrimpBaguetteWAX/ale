@@ -1567,18 +1567,36 @@
     opacity: 0;
   }
 }
-/* An ability's heal or harm, in the same hand: green up, red down. */
+/*
+ * An ability's heal or harm (a cleave's splash, a group heal), in the same
+ * hand and with the same motion as a blow's number: it pops at the impact and
+ * rises away, rather than the old pill's slide up. Green up, red down.
+ */
 .bfield--land .bunit .effectpill {
+  top: 22%;
+  z-index: 26;
+  translate: calc(var(--drift, 0) * 30%) 0;
   padding: 0;
   border: 0;
   background: none;
   box-shadow: none;
   font-size: 2.4cqw;
   font-weight: 900;
+  line-height: 1;
   text-shadow:
     0 0 2px #000,
     0 2px 0 #000,
     0 0 12px rgb(0 0 0 / 80%);
+  opacity: 0;
+  animation: lunit-pop calc(1000ms * var(--beat)) ease-out var(--impact) forwards;
+}
+@media (prefers-reduced-motion: reduce) {
+  .bfield--land .bunit .effectpill {
+    animation: lunit-pop-still calc(1000ms * var(--beat)) steps(1) var(--impact) forwards;
+  }
+}
+:root[data-fx='low'] .bfield--land .bunit .effectpill {
+  animation: lunit-pop-still calc(1000ms * var(--beat)) steps(1) var(--impact) forwards;
 }
 .bfield--land:not(.bfield--wide) .bunit .effectpill {
   font-size: 5cqw;
