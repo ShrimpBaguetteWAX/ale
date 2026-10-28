@@ -45,7 +45,7 @@ import {
 import { ageFactor, levelFactor } from '@/fight/scaling'
 import { oddsTitle, teamOdds } from '@/fight/odds'
 import { HudCentre, OddsCentre, WinChance } from '@/fight/OddsCentre'
-import { useMatchupHud } from '@/fight/matchupStyle'
+import { MatchupHud, useMatchupHud } from '@/fight/matchupStyle'
 import { recallTeam, rememberTeam, restoreTeam } from '@/fight/lastTeam'
 import { applyWeather, fetchWeather } from '@/fight/weather'
 import { autoPickCards, autoPickCardsByOdds, autoPickFighters } from '@/fight/autopick'
@@ -1120,7 +1120,7 @@ export default function Dungeon() {
         )}
 
         {/* A phone opens the matchup with the odds, above your team. */}
-        {phone && <WinChance odds={odds} />}
+        {phone && !hud && <WinChance odds={odds} />}
 
         {/*
           The matchup, as a versus screen.
@@ -1131,6 +1131,7 @@ export default function Dungeon() {
           flipped horizontally so both teams face the centre, which is the
           convention every fighting game uses and costs nothing to honour.
         */}
+        <MatchupHud.Provider value={hud}>
         <section className={`versus${hud ? ' versus--hud' : ''}`}>
           <div className="versus__side versus__side--mine">
             <header
@@ -1282,7 +1283,7 @@ export default function Dungeon() {
                Under the line-up it fills, as a toolbar.
             */}
             <div className="versus__pick">{focusBar ?? autoPickButton}</div>
-            {!phone && (
+            {(!phone || hud) && (
               <div className="versus__cards">
                 <CardsToolbar
                   crew={crew}
@@ -1297,7 +1298,7 @@ export default function Dungeon() {
 
           </div>
 
-        {!phone && (
+        {(!phone || hud) && (
         <div className="versus__divider" ref={setOddsEl}>
             {hud ? (
               <HudCentre odds={odds} mine={outlook.mine} theirs={outlook.theirs} />
@@ -1402,6 +1403,7 @@ export default function Dungeon() {
           </div>
 
           </section>
+        </MatchupHud.Provider>
 
         {/*
           Crew and weapon sit outside the versus panel. They are equipment
@@ -1409,7 +1411,7 @@ export default function Dungeon() {
           line-up crowded the cards the screen is actually about.
         */}
 
-        {phone && (
+        {phone && !hud && (
           <div className="versus__cards versus__cards--phone">
             <CardsToolbar
               crew={crew}

@@ -80,7 +80,7 @@ import {
 import { fieldedStats, levelFactor, ageFactor } from '@/fight/scaling'
 import { oddsTitle, teamOdds } from '@/fight/odds'
 import { HudCentre, OddsCentre, WinChance } from '@/fight/OddsCentre'
-import { useMatchupHud } from '@/fight/matchupStyle'
+import { MatchupHud, useMatchupHud } from '@/fight/matchupStyle'
 import { DIRTIES, playArena } from '@/wharf/actions'
 import { settle } from '@/wharf/settle'
 import { readableError } from '@/wharf/errors'
@@ -1089,8 +1089,9 @@ export default function Arena() {
         )}
 
         {/* A phone opens the matchup with the odds, above your team. */}
-        {phone && <WinChance odds={odds} />}
+        {phone && !hud && <WinChance odds={odds} />}
 
+        <MatchupHud.Provider value={hud}>
         <section className={`versus${hud ? ' versus--hud' : ''}`}>
           <div className="versus__side versus__side--mine">
             <header
@@ -1228,7 +1229,7 @@ export default function Arena() {
                Under the line-up it fills, as a toolbar.
             */}
             <div className="versus__pick">{focusBar ?? autoPickButton}</div>
-            {!phone && (
+            {(!phone || hud) && (
               <div className="versus__cards">
                 <CardsToolbar
                   crew={crew}
@@ -1241,7 +1242,7 @@ export default function Arena() {
               </div>
             )}
           </div>
-        {!phone && (
+        {(!phone || hud) && (
         <div className="versus__divider" ref={setOddsEl}>
             {hud ? (
               <HudCentre odds={odds} mine={outlook.mine} theirs={outlook.theirs} />
@@ -1320,9 +1321,10 @@ export default function Arena() {
           </div>
 
           </section>
+        </MatchupHud.Provider>
 
         {/* Crew and weapon, under the matchup on a phone, as in the dungeon. */}
-        {phone && (
+        {phone && !hud && (
           <div className="versus__cards versus__cards--phone">
             <CardsToolbar
               crew={crew}

@@ -58,7 +58,7 @@ import {
 import { asset, ipfsImage } from '@/assets'
 import { rarityColor } from '@/map/terrain'
 import { usePhone } from '@/components/usePhone'
-import { useMatchupHud } from '@/fight/matchupStyle'
+import { useMedallions } from '@/fight/matchupStyle'
 import { useModal } from '@/components/useModal'
 import { useSwipeToClose } from '@/components/useSwipeToClose'
 import {
@@ -895,7 +895,7 @@ export function CombatCard({
      in its side's colour, the level on a tab under it, the name and the two
      figures below, like a party frame. Same clicks, hover read and remove.
   */
-  const hud = useMatchupHud()
+  const hud = useMedallions()
   if (hud) {
     return (
       <div

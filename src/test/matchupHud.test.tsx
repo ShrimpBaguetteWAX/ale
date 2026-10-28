@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { HudCentre } from '@/fight/OddsCentre'
 import { CombatCard } from '@/fight/setup'
+import { MatchupHud } from '@/fight/matchupStyle'
 
 /**
  * The matchup's HUD look: the fighters as medallions and the chance on a
@@ -37,8 +38,10 @@ describe('the HUD centre', () => {
 })
 
 describe('a fighter in the HUD', () => {
-  const card = (extra: Partial<Parameters<typeof CombatCard>[0]> = {}) => (
+  const card = (extra: Partial<Parameters<typeof CombatCard>[0]> = {}, hud = true) => (
+    <MatchupHud.Provider value={hud}>
     <CombatCard element="air" classname="Mystic" racename="Altan" level={6} health={79} damage={114} side="enemy" onOpen={() => {}} {...extra} />
+    </MatchupHud.Provider>
   )
 
   it('is a medallion on its side, with the level on its tab', () => {
@@ -55,9 +58,8 @@ describe('a fighter in the HUD', () => {
     expect(container.querySelector('.medal__remove')).toBeTruthy()
   })
 
-  it('goes back to the leaning cards when the switch says so', () => {
-    localStorage.setItem('matchup-style', 'cards')
-    const { container } = render(card())
+  it('stays a leaning card where the board does not ask for medallions (the Tournament, or the switch on cards)', () => {
+    const { container } = render(card({}, false))
     expect(container.querySelector('.combatcard.combatcard--enemy')).toBeTruthy()
     expect(container.querySelector('.medal')).toBeNull()
   })

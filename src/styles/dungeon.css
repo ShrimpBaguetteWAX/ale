@@ -7093,10 +7093,12 @@ button.combatcard--empty:hover {
   container: matchuphead / inline-size;
   flex-wrap: wrap;
 }
-/* The bar and the board first, together; an alert waits under them, above the picker. */
-.dungeon__inner:has(> .versus--hud) > .dungeon__head,
-.dungeon__inner > .versus--hud {
-  order: -1;
+/* The header and the board first, together; an alert waits under them, above the picker. A phone keeps its own order (the difficulty sits between them). */
+@media (min-width: 720px) {
+  .dungeon__inner:has(> .versus--hud) > .dungeon__head,
+  .dungeon__inner > .versus--hud {
+    order: -1;
+  }
 }
 
 /* The weather under its heading, the divider, then the difficulty, as the header has them on every board. */
@@ -7483,4 +7485,137 @@ button.combatcard--empty:hover {
   grid-area: auto;
   grid-column: 3;
   justify-self: end;
+}
+
+/*
+ * The HUD on a phone: the board condensed into one column. Each medallion
+ * carries only its level, so a team is one clean line; the gauge band in
+ * the middle with the figures mirrored; the tools as two rows along the
+ * foot, without their labels. A fighter tapped to change lifts, the rest dim,
+ * and its bar takes the tools' place as before.
+ */
+@media (max-width: 719px) {
+  .versus.versus--hud {
+    padding-top: 12px;
+    gap: 0;
+    row-gap: 10px;
+    border-radius: 16px;
+  }
+  .versus--hud .versus__side--mine .versus__head,
+  .versus--hud .versus__side--enemy .versus__head,
+  .versus--hud .versus__side--mine .versus__row,
+  .versus--hud .versus__side--enemy .versus__row,
+  .versus--hud .versus__divider {
+    padding: 0 14px;
+  }
+  .versus--hud .versus__row {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 8px;
+  }
+  .versus--hud .medal__name,
+  .versus--hud .medal__owner,
+  .versus--hud .medal__figs,
+  .versus--hud .medal .combatcard__vs,
+  .versus--hud .medal__el,
+  .versus--hud .medal__mk {
+    display: none;
+  }
+  .versus--hud .medal__hit {
+    gap: 0;
+  }
+  .versus--hud .medal__pic {
+    box-shadow:
+      0 0 0 2px #0b1426,
+      0 0 0 4px rgb(0 186 255 / 75%);
+  }
+  .versus--hud .medal--enemy .medal__pic {
+    box-shadow:
+      0 0 0 2px #0b1426,
+      0 0 0 4px rgb(255 90 106 / 75%);
+  }
+  .versus--hud .medal__tab {
+    min-width: 22px;
+    margin-top: -10px;
+    padding: 0 5px;
+    font-size: 9.5px;
+    line-height: 16px;
+  }
+  /* The one being changed lifts with a brighter ring; the rest step back. */
+  .versus--hud .medal--selected .medal__pic {
+    transform: translateY(-3px);
+    box-shadow:
+      0 0 0 2px #0b1426,
+      0 0 0 4px var(--cyan),
+      var(--glow-cyan);
+  }
+  .versus--hud .versus__row:has(.medal--selected) .medal:not(.medal--selected) .medal__pic {
+    filter: brightness(0.55) saturate(0.7);
+  }
+  .versus--hud .versus__row > .combatcard--empty {
+    margin-top: 0;
+  }
+  .versus--hud .versus__row > .combatcard--empty .combatcard__hint {
+    display: none;
+  }
+  /* The band: a smaller gauge, the figures mirrored either side of it. */
+  .versus--hud .hudcentre {
+    gap: 2px 14px;
+    padding: 10px 0;
+  }
+  .versus--hud .hudcentre__gauge {
+    width: 96px;
+    height: 54px;
+  }
+  .versus--hud .hudcentre__gauge b {
+    font-size: 19px;
+  }
+  .versus--hud .hudcentre__cap {
+    font-size: 8.5px;
+  }
+  .versus--hud .hudcentre__line {
+    gap: 8px;
+    font-size: 11px;
+  }
+  .versus--hud .hudcentre__side--mine .hudcentre__line {
+    grid-template-columns: auto 36px;
+  }
+  .versus--hud .hudcentre__side--theirs .hudcentre__line {
+    grid-template-columns: 36px auto;
+  }
+  .versus--hud .hudcentre__line b {
+    font-size: 12px;
+  }
+  /* The tools: two rows along the foot, no labels, one line each. */
+  .versus--hud .versus__pick,
+  .versus--hud .versus__cards {
+    padding: 10px 14px;
+  }
+  .versus--hud .versus__pick::before,
+  .versus--hud .cardsbar__label {
+    display: none;
+  }
+}
+@media (max-width: 719px) {
+  /* Auto-pick at its own width, the two empty slots sharing the rest of the row. */
+  .versus--hud .cardsbar {
+    flex: 1;
+    flex-wrap: nowrap;
+    min-width: 0;
+  }
+  .versus--hud .cardsbar .cardsauto {
+    flex: none;
+    width: auto;
+  }
+  .versus--hud .cardsbar .cardchip {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+}
+@media (max-width: 719px) {
+  .versus--hud .cardsbar .cardchip--empty {
+    justify-content: center;
+    padding: 0 2px;
+    font-size: 12px;
+    white-space: nowrap;
+  }
 }
