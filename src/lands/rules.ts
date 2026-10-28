@@ -39,12 +39,10 @@ export function isPrimary(name: string): boolean {
 /**
  * What a land is holding for its owner.
  *
- * Note `shards` is reported separately from the rest and never as claimable:
- * `claimlndrwrd` sums gems, credits and TLM, but zeroes `shards` while
- * passing 0 into the `unclaimed_shards` argument of `gaincur` — so claiming
- * *destroys* accrued shards rather than paying them. `delbuilding` does the
- * same. Showing them beside the TLM as though they were coming would be a lie
- * worth real money: one land on chain is sitting on 829 of them.
+ * Note `shards` is a tally, never claimable: the pools send each mined shard
+ * straight to the owner (`shards.mc` `sendpoints`) and only note it on the
+ * building, and `claimlndrwrd` zeroes that note without paying it. So it reads
+ * as the shards mined since the last claim, never as shards still to come.
  */
 export function incomeOf(buildings: Building[]): LandIncome {
   const out: LandIncome = { tlm: 0, credits: 0, gems: 0, shards: 0 }

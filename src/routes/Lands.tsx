@@ -46,6 +46,7 @@ import { useChainQuery } from '@/chain/useChainQuery'
 import { useConfig, useLazyConfig } from '@/state/useConfig'
 import { DIRTIES } from '@/wharf/actions'
 import { formatNumber, formatDecimals } from '@/format'
+import { formatShards } from '@/outpost/rules'
 import { ActionBanner } from '@/components/ActionBanner'
 import { asset } from '@/assets'
 import { usePhone } from '@/components/usePhone'
@@ -449,6 +450,16 @@ function TlmIcon() {
   return <img className="plands__tlm" src={asset('/assets/icons/tlm.svg')} alt="TLM" />
 }
 
+/* The shards the land has mined since its last claim, beside its TLM. They reached the owner as they were mined; the claim only starts the count again. */
+function Shards({ value }: { value: number }) {
+  return (
+    <span className="plands__shards" title={`${formatShards(value)} shards since the last claim`}>
+      {formatShards(value)}
+      <img className="plands__tlm" src={asset('/assets/icons/shards.svg')} alt="Shards" />
+    </span>
+  )
+}
+
 function CreditIcon() {
   return <img className="plands__coin" src={asset('/assets/icons/credits.svg')} alt="Credits" />
 }
@@ -574,6 +585,7 @@ function DeskLands({
           <span className="dlands__tlm mono">
             {tlm(income.tlm)}
             <TlmIcon />
+            <Shards value={income.shards} />
           </span>
         ) : (
           <span className="btn btn--primary btn--sm dlands__build">Build</span>
@@ -877,6 +889,7 @@ export function PhoneLands({
                   <span className="plands__amount mono">
                     {tlm(income.tlm)}
                     <TlmIcon />
+                    <Shards value={income.shards} />
                   </span>
                 </>
               ) : (

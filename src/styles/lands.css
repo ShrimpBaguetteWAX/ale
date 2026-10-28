@@ -1054,3 +1054,12 @@
 .dlands .lsheet__lines div {
   font-size: 13px;
 }
+
+/* The shards since the last claim, beside the TLM, in the shards' lilac. */
+.plands__shards {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 12px;
+  color: #c8b4ff;
+}
+.plands__amount .plands__shards { margin-left: 8px; }
