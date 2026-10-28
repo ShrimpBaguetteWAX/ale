@@ -89,7 +89,7 @@ export function GroundMark({
   at: [number, number]
   depth: number
   fire: boolean
-  /** The heavy blows, and the knockouts: a ring of dust and one more clod. */
+  /** The heavy blows, and the knockouts: one more clod. No ring: nothing is drawn round a fighter for being hit. */
   big: boolean
   blades: string
 }) {
@@ -120,10 +120,7 @@ export function GroundMark({
           <i className="lmark__clod" style={{ '--cx': '380%', '--cy': '-760%' } as React.CSSProperties} />
           <i className="lmark__clod" style={{ '--cx': '120%', '--cy': '-1100%' } as React.CSSProperties} />
           {big && (
-            <>
-              <i className="lmark__clod" style={{ '--cx': '-160%', '--cy': '-1250%' } as React.CSSProperties} />
-              <i className="lmark__ring" />
-            </>
+            <i className="lmark__clod" style={{ '--cx': '-160%', '--cy': '-1250%' } as React.CSSProperties} />
           )}
         </>
       )}
