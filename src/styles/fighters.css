@@ -2102,6 +2102,13 @@
   bottom: auto;
   grid-template-columns: repeat(6, 32px);
 }
+/* A phone's grid, drawn over the whole page (the sheet sits at 1400): pinned in place by the picker. */
+.drost__scrim--top {
+  z-index: 1500;
+}
+.drost__pop--marker.is-top {
+  z-index: 1501;
+}
 .drost__pop--marker .markbtn {
   width: 32px;
   height: 32px;

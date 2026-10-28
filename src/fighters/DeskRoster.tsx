@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { Link } from 'react-router-dom'
 import type { RosterFighter } from '@/dungeon/types'
 import {
@@ -1343,41 +1344,84 @@ function MarkerPick({
 }: Pick<DeskRosterProps, 'canAct' | 'busy' | 'onMarker'> & { f: RosterFighter; chip?: boolean }) {
   const [open, setOpen] = useState(false)
   const saving = busy === 'marker'
+  /*
+     On a phone the chip sits in the sheet's banner, which clips what hangs
+     out of it and stacks under the panels after it; so the grid is drawn
+     over the whole page instead, pinned under the chip (or over it, near
+     the foot of the screen). Scrolling the sheet away closes it.
+  */
+  const toggle = useRef<HTMLButtonElement>(null)
+  const [at, setAt] = useState<React.CSSProperties | null>(null)
+  useEffect(() => {
+    if (!open || !chip) return
+    const close = () => setOpen(false)
+    window.addEventListener('scroll', close, true)
+    window.addEventListener('resize', close)
+    return () => {
+      window.removeEventListener('scroll', close, true)
+      window.removeEventListener('resize', close)
+    }
+  }, [open, chip])
+  const onToggle = () => {
+    if (!open && chip && toggle.current) {
+      const r = toggle.current.getBoundingClientRect()
+      const width = 6 * 32 + 5 * 5 + 20
+      const left = Math.max(8, Math.min(r.left, window.innerWidth - width - 8))
+      setAt(
+        r.bottom + 230 > window.innerHeight
+          ? { position: 'fixed', left, bottom: window.innerHeight - r.top + 8, top: 'auto' }
+          : { position: 'fixed', left, top: r.bottom + 8 },
+      )
+    }
+    setOpen(!open)
+  }
+  const grid = (
+    <>
+      <button
+        type="button"
+        className={`drost__scrim drost__scrim--clear${chip ? ' drost__scrim--top' : ''}`}
+        aria-label="Close"
+        onClick={() => setOpen(false)}
+      />
+      <div
+        className={`drost__pop drost__pop--marker${chip ? ' is-down is-top' : ''}`}
+        style={chip && at ? at : undefined}
+        role="group"
+        aria-label="Marker"
+      >
+        {MARKERS.map((m) => (
+          <button
+            type="button"
+            key={m || 'none'}
+            className="markbtn"
+            aria-pressed={f.marker === m}
+            disabled={!canAct || saving || f.marker === m}
+            title={m || 'No marker'}
+            onClick={() => {
+              onMarker(f, m)
+              setOpen(false)
+            }}
+          >
+            <img src={markerIcon(m)} alt={m || 'none'} />
+          </button>
+        ))}
+      </div>
+    </>
+  )
   return (
     <span className="drost__markpick">
       <button
+        ref={toggle}
         type="button"
         className={chip ? 'drost__chipbtn' : 'btn btn--ghost btn--sm'}
         aria-haspopup="true"
         aria-expanded={open}
-        onClick={() => setOpen(!open)}
+        onClick={onToggle}
       >
         {saving ? <span className="spinner" /> : <img className="drost__markicon" src={markerIcon(f.marker)} alt="" />}
         <span className="drost__marktext">Marker</span>
       </button>
-      {open && (
-        <>
-          <button type="button" className="drost__scrim drost__scrim--clear" aria-label="Close" onClick={() => setOpen(false)} />
-          <div className={`drost__pop drost__pop--marker${chip ? ' is-down' : ''}`} role="group" aria-label="Marker">
-            {MARKERS.map((m) => (
-              <button
-                type="button"
-                key={m || 'none'}
-                className="markbtn"
-                aria-pressed={f.marker === m}
-                disabled={!canAct || saving || f.marker === m}
-                title={m || 'No marker'}
-                onClick={() => {
-                  onMarker(f, m)
-                  setOpen(false)
-                }}
-              >
-                <img src={markerIcon(m)} alt={m || 'none'} />
-              </button>
-            ))}
-          </div>
-        </>
-      )}
+      {open && (chip ? createPortal(grid, document.body) : grid)}
     </span>
   )
 }
