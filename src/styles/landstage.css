@@ -1606,8 +1606,11 @@
     animation: lunit-pop-still calc(1000ms * var(--beat)) steps(1) var(--impact) forwards;
   }
 }
+/* The cheap path keeps the rise, as it does for a blow's number: it is only a
+   move and a fade. (The old pill's calm fade would otherwise take over, and on
+   a phone the cheap path is the usual one.) */
 :root[data-fx='low'] .bfield--land .bunit .effectpill {
-  animation: lunit-pop-still calc(1000ms * var(--beat)) steps(1) var(--impact) forwards;
+  animation: lunit-pop calc(1000ms * var(--beat)) ease-out var(--impact) forwards;
 }
 .bfield--land:not(.bfield--wide) .bunit .effectpill {
   font-size: 5cqw;
