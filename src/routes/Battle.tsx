@@ -56,6 +56,10 @@ import { NUM_LOCALE } from '@/format'
 import { rememberWinPower } from '@/briefing/winPower'
 import { GameImg } from '@/components/GameImg'
 import { Engram, Laurel, Medal } from '@/fight/ResultHonours'
+import { fightLook, type FightLook } from '@/fight/fightLook'
+import { stageFor, type Stage } from '@/fight/stages'
+import { GroundMark, LandStage } from '@/fight/LandStage'
+import { GildedCards } from '@/fight/GildedCards'
 import { asset } from '@/assets'
 import {
   fetchShardPools,
@@ -502,6 +506,7 @@ export function FightStage({
   broadcast,
   logHidden = false,
   overlay,
+  look = 'classic',
 }: {
   replay: Replay
   pb: FightPlayback
@@ -525,8 +530,19 @@ export function FightStage({
   logHidden?: boolean
   /** Drawn over the picture and its control bar — a result, say — at their size. */
   overlay?: React.ReactNode
+  /**
+   * The fight on its ground, with the gilded cards under it (see fightLook).
+   * Only the fight page passes one; the tournament keeps the classic field.
+   */
+  look?: FightLook
 }) {
   const { step, total, speed, playing } = pb
+  const land = look === 'land'
+  const stage = useMemo(() => (land ? stageFor() : undefined), [land])
+  const charge = useMemo(
+    () => (land ? chargeOf(replay.fighters, pb.state) : undefined),
+    [land, replay, pb.state],
+  )
   const logRef = useRef<HTMLDivElement>(null)
   /* Open unless this player has closed it; their choice is remembered. */
   const [showLog, setShowLogState] = useState(() => (logHidden ? false : readShowLog()))
@@ -552,7 +568,7 @@ export function FightStage({
   }, [step, phone])
 
   return (
-    <div className={`bfwrap${broadcast ? ' bfwrap--bcast' : ''}${broadcast && showLog && !phone ? ' bfwrap--log' : ''}`}>
+    <div className={`bfwrap${broadcast ? ' bfwrap--bcast' : ''}${broadcast && showLog && !phone ? ' bfwrap--log' : ''}${land ? ' bfwrap--land' : ''}`}>
       <div className="bfmain">
         {/* The turn order is part of the picture, under the scorebar. */}
         <Battlefield
@@ -571,7 +587,20 @@ export function FightStage({
           enemyLabel={enemyLabel}
           broadcast={broadcast ? live : undefined}
           aimUid={pb.aimUid}
+          stage={stage}
+          charge={charge}
         />
+        {land && charge && (
+          <GildedCards
+            team1={pb.team1}
+            team2={pb.team2}
+            state={pb.state}
+            current={pb.current}
+            nextUp={pb.nextUp}
+            charge={charge}
+            tall={phone}
+          />
+        )}
         {broadcast && (
           <div className="bcdeck">
             <button
@@ -851,6 +880,7 @@ function Arena({
           live={venue === 'arena' ? 'Arena' : 'Dungeon'}
           phone={phone}
           broadcast={broadcast}
+          look={fightLook()}
         />
       </div>
       )}
@@ -970,6 +1000,32 @@ const SHAKE: Record<string, [number, boolean]> = {
   tendrils: [1, false],
 }
 
+/**
+ * How close each fighter is to its next blow, 0 to 1, for the charge ring at
+ * its feet and the strip on its card.
+ *
+ * The fighter with the lowest wind-up swings next (the contract's rule), so
+ * it is full; everyone else is as far behind it as their wind-up is, in their
+ * own attack speed — a fighter one whole swing behind reads empty. Read from
+ * the shown snapshots, so it moves when a blow lands, with the bars.
+ */
+function chargeOf(fighters: SimFighter[], state: Map<string, FighterSnapshot>): Map<string, number> {
+  let lowest = Infinity
+  for (const f of fighters) {
+    const snap = state.get(f.uid)
+    if ((snap?.health ?? f.start_health) <= 0) continue
+    lowest = Math.min(lowest, snap?.initiative ?? f.initiative)
+  }
+  const out = new Map<string, number>()
+  for (const f of fighters) {
+    const snap = state.get(f.uid)
+    const wind = snap?.initiative ?? f.initiative
+    const speed = snap?.attackspeed ?? f.attackspeed
+    out.set(f.uid, speed > 0 ? Math.max(0, Math.min(1, 1 - (wind - lowest) / speed)) : 0)
+  }
+  return out
+}
+
 function signatureOf(f: SimFighter | undefined): string | undefined {
   if (!f || Number(f.fighter_id) === NFT_FIGHTER_ID) return undefined
   return SIGNATURE[(f.classname || '').toLowerCase().replace(/[^a-z]/g, '')]
@@ -991,6 +1047,8 @@ function Battlefield({
   queue,
   broadcast,
   aimUid,
+  stage,
+  charge,
 }: {
   team1: SimFighter[]
   team2: SimFighter[]
@@ -1012,6 +1070,10 @@ function Battlefield({
   broadcast?: string
   /** The fighter about to swing, for the pointer over their head. */
   aimUid?: string | null
+  /** The ground to fight on, in the land look; the fight artwork otherwise. */
+  stage?: Stage
+  /** Each fighter's charge, for the ring at its feet in the land look. */
+  charge?: Map<string, number>
 }) {
   const where = new Map<string, [number, number]>()
   const depth = new Map<string, number>()
@@ -1054,7 +1116,7 @@ function Battlefield({
   return (
     <div
       className={
-        `bfield${wide ? ' bfield--wide' : ''}${broadcast ? ' bfield--bcast' : ''}` +
+        `bfield${wide ? ' bfield--wide' : ''}${broadcast ? ' bfield--bcast' : ''}${stage ? ' bfield--land' : ''}` +
         /* Alternating names, so a blow that follows another of its kind still shakes. */
         (shake ? ` bfield--shake${shake[1] ? ' bfield--flurry' : ''} bfield--t${turn % 2}` : '')
       }
@@ -1065,6 +1127,8 @@ function Battlefield({
         } as React.CSSProperties
       }
     >
+      {stage && <LandStage stage={stage} form={wide ? 'wide' : 'tall'} />}
+
       <div className="bfield__labels">
         <span className="bfield__label bfield__label--mine">
           {mineLabel}{' '}
@@ -1073,6 +1137,7 @@ function Battlefield({
           </span>
           {broadcast && (
             <span className="bfield__teamhp" aria-hidden="true">
+              {stage && <b style={{ width: `${health(team1)}%` }} />}
               <i style={{ width: `${health(team1)}%` }} />
             </span>
           )}
@@ -1101,6 +1166,7 @@ function Battlefield({
           </span>
           {broadcast && (
             <span className="bfield__teamhp" aria-hidden="true">
+              {stage && <b style={{ width: `${health(team2)}%` }} />}
               <i style={{ width: `${health(team2)}%` }} />
             </span>
           )}
@@ -1137,6 +1203,18 @@ function Battlefield({
         </span>
       )}
 
+      {/* What the blow does to the ground the target stands on. */}
+      {stage && current && to && (
+        <GroundMark
+          key={`mark-${turn}`}
+          at={to}
+          depth={depth.get(current.defenderUid) ?? 1}
+          fire={current.element === 'fire'}
+          big={current.killed || (shake?.[0] ?? 0) >= 1.6}
+          blades={stage.blades}
+        />
+      )}
+
       {[...team1, ...team2].map((f) => {
         const role: 'attacker' | 'defender' | null = !current
           ? null
@@ -1166,6 +1244,7 @@ function Battlefield({
             owner={
               f.team === 1 ? f.gamertag || playertag || 'You' : f.gamertag || f.owner || 'AI'
             }
+            charge={charge?.get(f.uid)}
           />
         )
       })}
@@ -1227,6 +1306,7 @@ function FieldUnit({
   signature,
   struck,
   owner,
+  charge,
 }: {
   fighter: SimFighter
   snap: FighterSnapshot | undefined
@@ -1248,6 +1328,8 @@ function FieldUnit({
   /** The class move this fighter is being hit with, when it has one. */
   struck?: string
   owner: string
+  /** How close to its next blow, 0–1: a ring on the floor at its feet (the land look). */
+  charge?: number
 }) {
   const health = snap?.health ?? fighter.start_health
   const maxHealth = snap?.max_health ?? fighter.max_health
@@ -1297,6 +1379,20 @@ function FieldUnit({
     >
       <div className="bunit__figure">
         <span className="bunit__platform" aria-hidden="true" />
+        {charge !== undefined && !dead && (
+          <svg className="bunit__charge" viewBox="0 0 100 30" aria-hidden="true">
+            <ellipse className="bunit__chargetrack" cx="50" cy="15" rx="46" ry="12" pathLength={100} />
+            <ellipse
+              className="bunit__chargefill"
+              cx="50"
+              cy="15"
+              rx="46"
+              ry="12"
+              pathLength={100}
+              strokeDasharray={`${Math.round(charge * 100)} 100`}
+            />
+          </svg>
+        )}
         {aiming && !dead && (
           <span className="bcast__aim bunit__aim" aria-hidden="true">
             <svg viewBox="0 0 24 16">

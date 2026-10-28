@@ -1,0 +1,1099 @@
+/*
+ * The fight on its ground (fightLook 'land'): the planet behind the horizon,
+ * the land underfoot in perspective, and the gilded cards under the picture.
+ *
+ * Everything here hangs off .bfield--land, .bfwrap--land and the stage's own
+ * classes, which only the Dungeon and Arena fight page asks for; the
+ * tournament's player never gets them. The fighters, their class attacks and
+ * the blow's timing (--impact, --beat) are battle.css's and are untouched:
+ * this file restyles what stands around them.
+ *
+ * Only cheap things move: the clouds, the glints, the surf, the clumps, a
+ * slow drift of the whole scene, and the marks a blow leaves. All of it is
+ * transform, opacity or filter, and all of it stops where motion is turned
+ * down. The rest is images painted once by scripts/build-stages.cjs.
+ */
+
+/* ---------- the stage ---------- */
+
+.lstage {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  background: #05101e;
+  pointer-events: none;
+}
+.lstage--wide {
+  --hz: 37%;
+  --persp: 80cqw;
+  --tilt: 74deg;
+  --fdepth: 150%;
+  --tile: 2.2%;
+  --far: 15.6%;
+}
+.lstage--tall {
+  --hz: 34%;
+  --persp: 110cqw;
+  --tilt: 70deg;
+  --fdepth: 110%;
+  --tile: 4.6%;
+  --far: 15%;
+}
+
+/* A slow drift, so the picture breathes without anything in it moving. */
+.lstage__scene {
+  position: absolute;
+  inset: 0;
+  animation: lstage-drift 26s ease-in-out infinite alternate;
+}
+@keyframes lstage-drift {
+  from {
+    transform: scale(1.035) translate(-0.6%, 0.2%);
+  }
+  to {
+    transform: scale(1.035) translate(0.6%, -0.2%);
+  }
+}
+.lstage__scene > * {
+  position: absolute;
+}
+
+.lstage__sky {
+  left: 0;
+  right: 0;
+  top: 0;
+  height: calc(var(--hz) + 3%);
+}
+/* Veles: a tropical sky, the sun low on the left, a pale sister world on the right. */
+.lstage--veles .lstage__sky {
+  background:
+    radial-gradient(30% 46% at 15% 92%, rgb(255 244 210 / 85%), transparent 70%),
+    linear-gradient(180deg, #2b7aa6 0%, #4fa4c6 30%, #8fd2da 62%, #d4f1e6 86%, #f7edcf 100%);
+}
+.lstage__sun {
+  position: absolute;
+  left: 15%;
+  top: 46%;
+  width: 5.5cqw;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle, #fffef4 0 38%, #fff3c4 52%, rgb(255 236 170 / 0%) 72%);
+  box-shadow: 0 0 6cqw 2cqw rgb(255 236 180 / 45%);
+}
+.lstage__moon {
+  position: absolute;
+  right: 13%;
+  top: 22%;
+  width: 7.5cqw;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  opacity: 0.5;
+  background: radial-gradient(circle at 34% 32%, #fbf2e4, #d9c7b4 46%, #9a8e9c 74%, #6c6a86);
+  box-shadow: 0 0 2cqw rgb(255 255 255 / 25%);
+}
+.lstage__moon::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: linear-gradient(118deg, transparent 52%, rgb(70 120 160 / 55%));
+}
+.lstage--tall .lstage__sun {
+  top: 40%;
+  width: 9cqw;
+}
+.lstage--tall .lstage__moon {
+  width: 11cqw;
+  top: 18%;
+}
+
+.lstage__clouds {
+  left: 0;
+  right: 0;
+  top: 0;
+  height: calc(var(--hz) - 2%);
+  overflow: hidden;
+}
+.lstage__clouds > i {
+  position: absolute;
+  height: 22%;
+  border-radius: 50%;
+  filter: blur(2px);
+  opacity: 0.85;
+  animation: lstage-cloud 90s linear infinite alternate;
+  background:
+    radial-gradient(40% 60% at 30% 60%, #fff, transparent 70%),
+    radial-gradient(35% 70% at 55% 45%, #fff, transparent 72%),
+    radial-gradient(40% 55% at 78% 65%, #f4fbff, transparent 70%);
+}
+.lstage__clouds > i:nth-child(1) {
+  left: 4%;
+  top: 30%;
+  width: 24%;
+}
+.lstage__clouds > i:nth-child(2) {
+  left: 40%;
+  top: 14%;
+  width: 18%;
+  height: 16%;
+  opacity: 0.6;
+  animation-duration: 120s;
+  animation-delay: -40s;
+}
+.lstage__clouds > i:nth-child(3) {
+  left: 62%;
+  top: 46%;
+  width: 28%;
+  height: 20%;
+  animation-duration: 100s;
+  animation-delay: -70s;
+}
+.lstage__clouds > i:nth-child(4) {
+  left: 86%;
+  top: 22%;
+  width: 14%;
+  height: 12%;
+  opacity: 0.55;
+  animation-duration: 140s;
+  animation-delay: -20s;
+}
+.lstage--tall .lstage__clouds > i {
+  height: 30%;
+}
+@keyframes lstage-cloud {
+  from {
+    transform: translateX(-12%);
+  }
+  to {
+    transform: translateX(12%);
+  }
+}
+
+/* The turf: a seamless tile on a floor tilted from the horizon toward the camera. */
+.lstage__floorwrap {
+  left: 0;
+  right: 0;
+  top: var(--hz);
+  bottom: 0;
+  overflow: hidden;
+  perspective: var(--persp);
+  perspective-origin: 50% 0;
+}
+.lstage__floor {
+  position: absolute;
+  left: -150%;
+  width: 400%;
+  top: 0;
+  height: var(--fdepth);
+  transform-origin: 50% 0;
+  transform: rotateX(var(--tilt));
+  background-repeat: repeat;
+  background-size: var(--tile) auto;
+  filter: saturate(0.95);
+}
+.lstage__floor::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgb(214 240 220 / 45%),
+    rgb(214 240 220 / 0%) 18%,
+    transparent 60%,
+    rgb(10 30 12 / 22%)
+  );
+}
+
+/* The painted layers fill the field: sea and coast, glints, surf. */
+.lstage__layer {
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.lstage__glints {
+  -webkit-mask: linear-gradient(180deg, transparent var(--hz), #000 calc(var(--hz) + 0.5%));
+  mask: linear-gradient(180deg, transparent var(--hz), #000 calc(var(--hz) + 0.5%));
+  animation: lstage-glint 7s ease-in-out infinite alternate;
+}
+@keyframes lstage-glint {
+  0% {
+    transform: translateX(-0.6%);
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(0.6%);
+    opacity: 0.7;
+  }
+}
+.lstage__far {
+  left: 0;
+  right: 0;
+  width: 100%;
+  height: var(--far);
+  bottom: calc(100% - var(--hz) - 0.25%);
+}
+.lstage__foam {
+  animation: lstage-lap 4.6s ease-in-out infinite;
+}
+.lstage__foam--b {
+  animation-delay: -2.3s;
+}
+@keyframes lstage-lap {
+  0%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.45;
+  }
+  45% {
+    transform: translateY(-0.35%);
+    opacity: 1;
+  }
+}
+
+.lstage__haze {
+  left: 0;
+  right: 0;
+  top: calc(var(--hz) - 7%);
+  height: 13%;
+  background: linear-gradient(
+    180deg,
+    transparent,
+    rgb(226 246 240 / 50%) 48%,
+    rgb(226 246 240 / 15%) 70%,
+    transparent
+  );
+}
+.lstage__light {
+  inset: 0;
+  mix-blend-mode: screen;
+  background:
+    radial-gradient(70% 60% at 12% 30%, rgb(255 236 190 / 22%), transparent 70%),
+    linear-gradient(90deg, rgb(255 230 180 / 8%), transparent 60%);
+}
+.lstage__vig {
+  inset: 0;
+  background: radial-gradient(130% 95% at 45% 40%, transparent 60%, rgb(6 22 30 / 45%));
+}
+
+/* Tall grass at the edges, each clump on its own layer so the sway costs nothing. */
+.lstage__clump {
+  width: calc(9cqw * var(--cs, 1));
+  aspect-ratio: 300 / 240;
+  transform: translate(-50%, -100%);
+  transform-origin: 50% 100%;
+  animation: lstage-sway 5.2s ease-in-out infinite;
+  animation-delay: var(--cd, 0s);
+}
+.lstage--tall .lstage__clump {
+  width: calc(16cqw * var(--cs, 1));
+}
+@keyframes lstage-sway {
+  0%,
+  100% {
+    transform: translate(-50%, -100%) skewX(0deg);
+  }
+  50% {
+    transform: translate(-50%, -100%) skewX(-5deg);
+  }
+}
+
+/* ---------- the field on its ground ---------- */
+
+/* The stage is the field's background; the old one and its centre line go. */
+.bfield.bfield--land,
+.battle .bfield.bfield--land:not(.bfield--wide) {
+  background: #05101e;
+}
+.bfield.bfield--land::before {
+  display: none;
+}
+/* A phone's field is square on its ground: the fighters stand taller in it. */
+.bfield.bfield--land:not(.bfield--wide) {
+  --ratio: 1;
+  aspect-ratio: 1;
+}
+
+/* The scorebar over the sky: a lighter scrim, the sky shows through it. */
+.bfield--land.bfield--bcast .bfield__labels {
+  background: linear-gradient(180deg, rgb(4 8 16 / 78%), transparent);
+}
+.bfield--land .bfield__label--mine {
+  text-shadow: 0 1px 3px rgb(0 0 0 / 70%);
+}
+.bfield--land .bfield__label--enemy {
+  text-shadow: 0 1px 3px rgb(0 0 0 / 70%);
+}
+
+/* Team health in a gilded rim, with a trail that follows the fill down. */
+.bfield--land .bfield__teamhp {
+  position: relative;
+  height: 8px;
+  border-radius: 2px;
+  background: rgb(0 0 0 / 65%);
+  box-shadow:
+    0 0 0 1px rgb(255 217 121 / 60%),
+    0 0 0 3px rgb(4 8 20 / 70%);
+}
+.bfield--land .bfield__teamhp b {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  background: #ffb36b;
+  transition: width calc(700ms * var(--beat)) ease-in calc(380ms * var(--beat));
+}
+.bfield--land .bfield__label--enemy .bfield__teamhp b {
+  left: auto;
+  right: 0;
+}
+.bfield--land .bfield__teamhp i {
+  position: relative;
+}
+
+/* ---- the fighters, standing on the floor ---- */
+
+/* The health and level ride over the head; the feet are the bottom of the unit. */
+.bfield--land .bunit__plate {
+  order: -2;
+  padding: 1px 6px 1px 1px;
+  background: rgb(8 12 24 / 82%);
+  border-color: rgb(255 217 121 / 45%);
+}
+.bfield--land .bunit__hp.hpbar {
+  order: -1;
+  width: 84%;
+  height: clamp(5px, 0.75cqw, 9px);
+  margin: 0 0 2px;
+  border: 0;
+  box-shadow:
+    0 0 0 1px rgb(255 217 121 / 55%),
+    0 0 0 2px rgb(0 0 0 / 45%);
+}
+.bfield--land .bunit__hp .hpbar__trail {
+  background: #ffb36b;
+}
+
+/* No floating drop shadow: a contact shadow on the floor, thrown away from the sun. */
+:where(.bfield--land) .bunit__art {
+  filter: drop-shadow(0 0.15cqw 0.25cqw rgb(0 0 0 / 40%));
+}
+.bfield--land .bunit .bunit__platform {
+  left: 58%;
+  bottom: -3%;
+  width: 96%;
+  height: 11%;
+  border: 0;
+  box-shadow: none;
+  background: radial-gradient(closest-side, rgb(4 14 6 / 62%), rgb(4 14 6 / 30%) 55%, rgb(0 0 0 / 0%));
+  transform: skewX(-26deg);
+  animation: none;
+}
+.bfield--land .bunit--dead .bunit__platform {
+  opacity: 0.6;
+  filter: none;
+}
+
+/* Further back is hazier: the air between the camera and the back row. */
+.bfield--land .bunit__body {
+  filter: brightness(calc(1 - (1 - var(--depth, 1)) * 0.7)) saturate(calc(1 - (1 - var(--depth, 1)) * 0.9));
+}
+
+/*
+ * The charge ring on the floor at the feet: how close the fighter is to its
+ * next blow. Full, gold and breathing on whoever swings next.
+ */
+.bunit__charge {
+  position: absolute;
+  left: 50%;
+  bottom: -7%;
+  width: 116%;
+  translate: -50% 0;
+  overflow: visible;
+  pointer-events: none;
+}
+.bunit__charge ellipse {
+  fill: none;
+  stroke-width: 3;
+}
+.bunit__chargetrack {
+  stroke: rgb(255 255 255 / 16%);
+}
+.bunit__chargefill {
+  stroke: #6fd6ff;
+  stroke-linecap: round;
+  transition: stroke-dasharray calc(400ms * var(--beat)) ease;
+  filter: drop-shadow(0 0 2px rgb(0 186 255 / 70%));
+}
+.bunit--enemy .bunit__chargefill {
+  stroke: #ff8a96;
+  filter: drop-shadow(0 0 2px rgb(255 90 106 / 70%));
+}
+.bunit--next .bunit__chargefill {
+  stroke: #ffd979;
+  filter: drop-shadow(0 0 4px #ffd979);
+  animation: lstage-ready 1.1s ease-in-out infinite;
+}
+@keyframes lstage-ready {
+  50% {
+    opacity: 0.55;
+  }
+}
+
+/* ---- what a blow leaves on the turf ---- */
+
+.lmark {
+  position: absolute;
+  z-index: 2;
+  width: calc(9.5cqw * var(--depth, 1));
+  aspect-ratio: 2;
+  translate: -50% -50%;
+  pointer-events: none;
+}
+.lmark > * {
+  position: absolute;
+  animation-delay: var(--impact);
+  animation-fill-mode: both;
+}
+.lmark__tear {
+  inset: 24% 28%;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgb(62 40 20 / 72%), rgb(90 62 34 / 40%) 60%, transparent);
+  animation: lmark-fade calc(2400ms * var(--beat)) ease-in;
+}
+.lmark__blades {
+  inset: -10% 0;
+  width: 100%;
+  height: 120%;
+  animation: lmark-blades calc(900ms * var(--beat)) ease-out;
+}
+.lmark__clod {
+  left: 50%;
+  top: 50%;
+  width: 4.5%;
+  aspect-ratio: 1;
+  border-radius: 40%;
+  background: #5b3d20;
+  box-shadow: inset -1px -1px 0 #2e1e0e;
+  animation: lmark-clod calc(820ms * var(--beat)) cubic-bezier(0.25, 0.6, 0.45, 1);
+}
+.lmark__ring {
+  inset: 10%;
+  border-radius: 50%;
+  border: 0.3cqw solid rgb(200 236 170 / 70%);
+  animation: lmark-ring calc(650ms * var(--beat)) ease-out;
+}
+.lmark__burn {
+  inset: 14% 18%;
+  border-radius: 50%;
+  background: radial-gradient(
+    closest-side,
+    rgb(16 10 6 / 88%),
+    rgb(70 40 16 / 60%) 55%,
+    rgb(255 140 60 / 25%) 70%,
+    transparent
+  );
+  animation: lmark-fade calc(2600ms * var(--beat)) ease-in;
+}
+.lmark__ember {
+  inset: -30% 14%;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgb(255 190 110 / 80%), transparent 70%);
+  mix-blend-mode: screen;
+  animation: lmark-puff calc(620ms * var(--beat)) ease-out;
+}
+.lmark__ember--b {
+  translate: 18% -12%;
+  scale: 0.8;
+}
+.lmark__smoke {
+  inset: -60% 24% 20%;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgb(80 80 80 / 45%), transparent);
+  animation: lmark-puff calc(1600ms * var(--beat)) ease-out;
+}
+.lstage--tall ~ .lmark .lmark__ring {
+  border-width: 0.6cqw;
+}
+@keyframes lmark-fade {
+  0% {
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  70% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes lmark-blades {
+  0% {
+    opacity: 0;
+    transform: translateY(10%) scale(0.6);
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-55%) scale(1.25);
+  }
+}
+@keyframes lmark-clod {
+  0% {
+    transform: translate(-50%, -50%) scale(0.6);
+    opacity: 1;
+  }
+  55% {
+    transform: translate(calc(-50% + var(--cx) * 0.7), calc(-50% + var(--cy))) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(calc(-50% + var(--cx)), calc(-50% + var(--cy) * 0.25)) scale(0.9);
+    opacity: 0;
+  }
+}
+@keyframes lmark-ring {
+  from {
+    transform: scale(0.2);
+    opacity: 1;
+  }
+  to {
+    transform: scale(1.3);
+    opacity: 0;
+  }
+}
+@keyframes lmark-puff {
+  0% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  25% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.5) translateY(-40%);
+  }
+}
+
+/* ---------- the gilded cards ---------- */
+
+/*
+ * Under the picture, above the transport bar: yours on the left, theirs on
+ * the right, one row on a desktop and two of six on a phone. Sized in the
+ * strip's own width (--u), so a card is the same share of the window at any
+ * size.
+ */
+.gcards {
+  --u: 0.92cqw;
+
+  position: relative;
+  z-index: 455;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  gap: calc(var(--u) * 2.2);
+  padding: calc(var(--u) * 2.8) calc(var(--u) * 1.6) calc(var(--u) * 1.3);
+  container-type: inline-size;
+  background: linear-gradient(180deg, rgb(6 12 24 / 96%), rgb(4 8 16 / 96%));
+  border-top: 1px solid rgb(255 217 121 / 30%);
+}
+/* The strip is its own container, so --u is measured against it. */
+.gcards > * {
+  --u: 0.92cqw;
+}
+.gcards__team {
+  display: flex;
+  align-items: flex-end;
+  gap: calc(var(--u) * 0.85);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.gcards--tall {
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  padding: 22px 8px 12px;
+}
+.gcards--tall > * {
+  --u: 1.95cqw;
+}
+
+.gcard {
+  --tc: var(--cyan);
+
+  position: relative;
+  flex: none;
+  width: calc(var(--u) * 7.3);
+  transition:
+    transform calc(320ms * var(--beat)) cubic-bezier(0.2, 0.9, 0.3, 1.25),
+    filter calc(300ms * var(--beat));
+}
+.gcard--enemy {
+  --tc: #ff5a6a;
+}
+
+/* The frame: bevelled steel, a diamond of the side's colour at its crown. */
+.gcard__frame {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 3 / 4.25;
+  padding: calc(var(--u) * 0.3);
+  border-radius: calc(var(--u) * 0.7);
+  background: linear-gradient(160deg, #6d7ea3 0%, #232f4d 30%, #0c1222 55%, #2b3757 78%, #8295bb 100%);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 40%),
+    inset 0 -1px 0 rgb(0 0 0 / 60%),
+    0 calc(var(--u) * 0.5) calc(var(--u) * 1.2) rgb(0 0 0 / 55%);
+}
+.gcard__frame::before {
+  content: '';
+  position: absolute;
+  z-index: 4;
+  left: 50%;
+  top: calc(var(--u) * -0.35);
+  width: calc(var(--u) * 0.9);
+  height: calc(var(--u) * 0.9);
+  transform: translateX(-50%) rotate(45deg);
+  background: linear-gradient(135deg, #fff, var(--tc) 55%, #0b1426);
+  box-shadow: 0 0 calc(var(--u) * 0.6) var(--tc);
+}
+.gcard__pic {
+  position: relative;
+  height: 100%;
+  overflow: hidden;
+  border-radius: calc(var(--u) * 0.45);
+  background: #0b1426;
+}
+.gcard__pic img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 18%;
+  transition:
+    transform calc(700ms * var(--beat)) cubic-bezier(0.2, 0.8, 0.3, 1),
+    filter calc(300ms * var(--beat));
+}
+/* The element's rim inside the frame, and the dark foot the name sits on. */
+.gcard__pic::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  box-shadow:
+    inset 0 0 0 calc(var(--u) * 0.14) color-mix(in srgb, var(--ec) 75%, transparent),
+    inset 0 0 calc(var(--u) * 1.4) color-mix(in srgb, var(--ec) 25%, transparent);
+  background: linear-gradient(180deg, transparent 52%, rgb(4 8 20 / 92%) 88%);
+}
+.gcard__lv {
+  position: absolute;
+  z-index: 5;
+  left: calc(var(--u) * 0.1);
+  top: calc(var(--u) * 0.1);
+  display: grid;
+  place-items: center;
+  width: calc(var(--u) * 1.9);
+  height: calc(var(--u) * 1.9);
+  font-family: var(--font-display);
+  font-size: calc(var(--u) * 0.8);
+  font-weight: 900;
+  color: var(--white);
+}
+.gcard__lv::before {
+  content: '';
+  position: absolute;
+  inset: 12%;
+  z-index: -1;
+  transform: rotate(45deg);
+  background: linear-gradient(135deg, #2b3757, #0b1426);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 35%);
+}
+.gcard__lv b {
+  font-weight: inherit;
+}
+.gcard__el {
+  position: absolute;
+  z-index: 5;
+  right: calc(var(--u) * 0.45);
+  top: calc(var(--u) * 0.45);
+  width: calc(var(--u) * 1.35);
+  height: calc(var(--u) * 1.35);
+  padding: calc(var(--u) * 0.18);
+  border-radius: 50%;
+  background: rgb(4 8 20 / 80%);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--ec) 70%, transparent);
+}
+.gcard__name {
+  position: absolute;
+  z-index: 5;
+  left: 0;
+  right: 0;
+  bottom: calc(var(--u) * 1.55);
+  overflow: hidden;
+  padding: 0 calc(var(--u) * 0.3);
+  text-align: center;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-family: var(--font-display);
+  font-size: calc(var(--u) * 0.72);
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--white);
+  text-shadow: 0 1px 2px #000;
+}
+
+/* Health with a trail: the fill drops at once, the trail flashes and follows. */
+.gcard__hp {
+  position: absolute;
+  z-index: 5;
+  left: calc(var(--u) * 0.7);
+  right: calc(var(--u) * 0.7);
+  bottom: calc(var(--u) * 0.95);
+  height: calc(var(--u) * 0.46);
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgb(0 0 0 / 70%);
+  box-shadow: 0 0 0 1px rgb(255 217 121 / 45%);
+}
+.gcard__hp i,
+.gcard__hp b {
+  position: absolute;
+  inset: 0;
+  transform-origin: 0 50%;
+  transform: scaleX(var(--h, 1));
+}
+.gcard__trail {
+  background: #ffb36b;
+  transition: transform calc(700ms * var(--beat)) ease-in calc(380ms * var(--beat));
+}
+.gcard__fill {
+  background: linear-gradient(90deg, #2bd28a, #5ff2b0);
+  transition: transform calc(220ms * var(--beat)) ease-out;
+}
+.gcard--enemy .gcard__fill {
+  background: linear-gradient(90deg, #ff5a6a, #ff8a7a);
+}
+.gcard--low .gcard__fill {
+  background: linear-gradient(90deg, #ff9a3c, #ffc46b);
+}
+.gcard__flash {
+  background: #fff;
+  transform: scaleX(1);
+  animation: gcard-flash calc(520ms * var(--beat)) ease-out forwards;
+}
+@keyframes gcard-flash {
+  from {
+    opacity: 0.9;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+/* The charge strip: five segments filling toward the next blow. */
+.gcard__chg {
+  position: absolute;
+  z-index: 5;
+  left: calc(var(--u) * 1.1);
+  right: calc(var(--u) * 1.1);
+  bottom: calc(var(--u) * 0.55);
+  height: calc(var(--u) * 0.2);
+  background: rgb(255 255 255 / 10%);
+  -webkit-mask: repeating-linear-gradient(90deg, #000 0 calc(20% - 1px), transparent calc(20% - 1px) 20%);
+  mask: repeating-linear-gradient(90deg, #000 0 calc(20% - 1px), transparent calc(20% - 1px) 20%);
+}
+.gcard__chg i {
+  display: block;
+  height: 100%;
+  background: #ffd979;
+  transform-origin: 0 50%;
+  transform: scaleX(var(--c, 0));
+  transition: transform calc(400ms * var(--beat)) ease;
+}
+
+.gcard__fx,
+.gcard__crack,
+.gcard__ret,
+.gcard__tag {
+  position: absolute;
+  pointer-events: none;
+}
+.gcard__fx {
+  z-index: 4;
+  inset: 0;
+  overflow: hidden;
+  border-radius: inherit;
+  opacity: 0;
+}
+.gcard__fx::before {
+  content: '';
+  position: absolute;
+  top: -30%;
+  bottom: -30%;
+  left: 0;
+  width: 34%;
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 55%), transparent);
+  transform: translateX(-160%) rotate(20deg);
+}
+.gcard__crack {
+  z-index: 4;
+  inset: 0;
+  opacity: 0;
+}
+.gcard__crack svg {
+  width: 100%;
+  height: 100%;
+  fill: none;
+  stroke: rgb(255 255 255 / 70%);
+  stroke-width: 1.4;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 0 1px #000);
+}
+/* The brackets of a target, snapping in round the card. */
+.gcard__ret {
+  z-index: 6;
+  inset: calc(var(--u) * -0.5);
+  opacity: 0;
+  transform: scale(1.25);
+  transition:
+    opacity calc(160ms * var(--beat)),
+    transform calc(320ms * var(--beat)) cubic-bezier(0.2, 0.9, 0.3, 1.35);
+}
+.gcard__ret i {
+  position: absolute;
+  width: 24%;
+  height: 18%;
+  border: calc(var(--u) * 0.26) solid #ff5a6a;
+  filter: drop-shadow(0 0 3px #ff5a6a);
+}
+.gcard__ret i:nth-child(1) {
+  top: 0;
+  left: 0;
+  border-right: 0;
+  border-bottom: 0;
+}
+.gcard__ret i:nth-child(2) {
+  top: 0;
+  right: 0;
+  border-left: 0;
+  border-bottom: 0;
+}
+.gcard__ret i:nth-child(3) {
+  bottom: 0;
+  left: 0;
+  border-right: 0;
+  border-top: 0;
+}
+.gcard__ret i:nth-child(4) {
+  bottom: 0;
+  right: 0;
+  border-left: 0;
+  border-top: 0;
+}
+.gcard__tag {
+  z-index: 6;
+  left: 50%;
+  top: calc(var(--u) * -1.45);
+  transform: translateX(-50%);
+  padding: calc(var(--u) * 0.12) calc(var(--u) * 0.7);
+  clip-path: polygon(8% 0, 92% 0, 100% 50%, 92% 100%, 8% 100%, 0 50%);
+  white-space: nowrap;
+  font-family: var(--font-display);
+  font-size: calc(var(--u) * 0.6);
+  font-weight: 900;
+  letter-spacing: 0.16em;
+}
+.gcard__tag:empty::before {
+  content: none;
+}
+
+/* Acting: polished gold, lifted, a light running across it. */
+.gcard--act {
+  z-index: 2;
+  transform: translateY(calc(var(--u) * -1.5)) scale(1.1);
+}
+.gcard--act .gcard__frame {
+  background: linear-gradient(160deg, #fff6d6 0%, #f2c35a 25%, #8a5d14 55%, #d9a640 78%, #fff3c4 100%);
+  box-shadow:
+    inset 0 1px 0 #fff,
+    0 calc(var(--u) * 1) calc(var(--u) * 2.2) rgb(0 0 0 / 60%),
+    0 0 calc(var(--u) * 2) rgb(255 200 90 / 55%);
+}
+.gcard--act .gcard__fx {
+  opacity: 1;
+}
+.gcard--act .gcard__fx::before {
+  animation: gcard-sweep calc(1500ms * var(--beat)) ease-in-out infinite;
+}
+.gcard--act .gcard__pic img {
+  transform: scale(1.1) translateY(-3%);
+}
+.gcard--act .gcard__tag::before {
+  content: 'ACTING';
+}
+.gcard--act .gcard__tag {
+  color: #1a1205;
+  background: linear-gradient(180deg, #fff3c4, #d9a640);
+}
+@keyframes gcard-sweep {
+  0% {
+    transform: translateX(-160%) rotate(20deg);
+  }
+  60%,
+  100% {
+    transform: translateX(420%) rotate(20deg);
+  }
+}
+
+/* Targeted: a red ribbon, brackets, and the portrait flushed red. */
+.gcard--tgt .gcard__tag::before {
+  content: 'TARGET';
+}
+.gcard--tgt .gcard__tag {
+  color: #fff;
+  background: linear-gradient(180deg, #ff7a88, #c3203a);
+}
+.gcard--tgt .gcard__ret {
+  opacity: 1;
+  transform: none;
+}
+.gcard--tgt .gcard__pic::before {
+  content: '';
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  background: rgb(255 60 80 / 22%);
+  mix-blend-mode: screen;
+  animation: gcard-pulse calc(700ms * var(--beat)) ease-in-out infinite;
+}
+
+/* Up next: a cyan halo, a READY ribbon, the charge strip lit white. */
+.gcard--next .gcard__tag::before {
+  content: 'READY';
+}
+.gcard--next .gcard__tag {
+  color: #062033;
+  background: linear-gradient(180deg, #a8ecff, #00baff);
+}
+.gcard--next .gcard__frame::after {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: calc(var(--u) * -0.35);
+  border-radius: calc(var(--u) * 0.9);
+  box-shadow: 0 0 calc(var(--u) * 1.2) var(--cyan);
+  animation: gcard-pulse 1s ease-in-out infinite;
+}
+.gcard--next .gcard__chg i {
+  background: #fff;
+  box-shadow: 0 0 6px #ffd979;
+}
+
+/* Low: a red rim pulsing inside the frame. */
+.gcard--low .gcard__pic::after {
+  box-shadow:
+    inset 0 0 0 calc(var(--u) * 0.14) #ff5a6a,
+    inset 0 0 calc(var(--u) * 1.8) rgb(255 60 80 / 55%);
+  animation: gcard-pulse 1.1s ease-in-out infinite;
+}
+
+/* Knocked out: dull iron, the portrait greyed and cracked, a stamp across it. */
+.gcard--ko .gcard__frame {
+  background: linear-gradient(160deg, #4a4f5c, #1b1e26 40%, #0c0e14 60%, #3a3f4b);
+}
+.gcard--ko .gcard__frame::before {
+  background: #444a57;
+  box-shadow: none;
+}
+.gcard--ko .gcard__pic img {
+  filter: grayscale(1) brightness(0.42) contrast(1.1);
+}
+.gcard--ko .gcard__crack {
+  opacity: 1;
+}
+.gcard--ko .gcard__tag::before {
+  content: 'KNOCKED OUT';
+}
+.gcard--ko .gcard__tag {
+  top: 42%;
+  transform: translateX(-50%) rotate(-12deg);
+  padding: calc(var(--u) * 0.12) calc(var(--u) * 0.4);
+  clip-path: none;
+  color: #fff;
+  background: rgb(195 32 58 / 92%);
+  font-size: calc(var(--u) * 0.5);
+  box-shadow: 0 0 calc(var(--u) * 0.8) rgb(255 60 80 / 50%);
+}
+.gcard--ko .gcard__name {
+  opacity: 0.5;
+}
+
+@keyframes gcard-pulse {
+  50% {
+    opacity: 0.55;
+  }
+}
+
+/* ---------- the window, sized to hold the cards ---------- */
+
+/*
+ * The picture and the cards together fit the screen: the field is 9/16 of
+ * the window's width and the strip about 0.13 of it, so the width is the
+ * height left over divided by 0.69.
+ */
+@media (min-width: 720px) {
+  .bfwrap--land.bfwrap--bcast .bfmain {
+    width: min(100%, calc((100dvh - 210px) * 1.44));
+  }
+}
+
+/* ---------- calmer settings ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .lstage__scene,
+  .lstage__clouds > i,
+  .lstage__glints,
+  .lstage__foam,
+  .lstage__clump,
+  .bunit--next .bunit__chargefill,
+  .gcard--act .gcard__fx::before,
+  .gcard--tgt .gcard__pic::before,
+  .gcard--next .gcard__frame::after,
+  .gcard--low .gcard__pic::after {
+    animation: none;
+  }
+  .lmark > * {
+    animation-duration: 1ms;
+    animation-delay: 0ms;
+  }
+  .lmark__clod,
+  .lmark__blades,
+  .lmark__ring,
+  .lmark__ember,
+  .lmark__smoke {
+    display: none;
+  }
+  .gcard {
+    transition: none;
+  }
+}
+:root[data-fx='low'] .lstage__scene,
+:root[data-fx='low'] .lstage__clouds > i,
+:root[data-fx='low'] .lstage__glints,
+:root[data-fx='low'] .lstage__foam,
+:root[data-fx='low'] .lstage__clump,
+:root[data-fx='low'] .gcard--act .gcard__fx::before {
+  animation: none;
+}

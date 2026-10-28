@@ -21,6 +21,7 @@ import './styles/account.css'
 import './styles/dungeon.css'
 import './styles/battle.css'
 import './styles/honours.css'
+import './styles/landstage.css'
 import './styles/maintenance.css'
 import './styles/briefing.css'
 
