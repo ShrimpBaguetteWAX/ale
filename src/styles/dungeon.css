@@ -7149,6 +7149,8 @@ button.combatcard--empty:hover {
   .dungeon__inner:has(> .versus--hud) > .dungeon__head .dungeon__conditions {
     order: 3;
     flex-wrap: wrap;
+    /* The weather at the left, the difficulty at the right, under Leave and Start Fight. */
+    justify-content: space-between;
     width: 100%;
   }
 }
