@@ -262,6 +262,19 @@ a:hover {
 .input[aria-invalid='true'] {
   border-color: var(--red);
 }
+/*
+ * A dropdown's list is drawn by the browser, not on the glass the select
+ * sits on: without a scheme and a colour of its own, a light system list
+ * showed the white option text on white.
+ */
+select.input {
+  color-scheme: dark;
+}
+select.input option,
+select.input optgroup {
+  color: var(--white);
+  background: #0b1324;
+}
 
 .hint {
   margin-top: var(--sp-2);
