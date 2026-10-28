@@ -2935,6 +2935,28 @@
   background: linear-gradient(180deg, rgb(6 10 24 / 55%), rgb(3 6 16 / 82%));
 }
 
+/*
+ * A phone's field carries the fight artwork too, now the page under it is
+ * the map: it used to be see-through, showing the artwork the whole window
+ * was painted with. Only the Dungeon and Arena fight; the tournament's
+ * phone player keeps its own look.
+ */
+.battle .bfield:not(.bfield--wide) {
+  background:
+    linear-gradient(
+      180deg,
+      rgb(4 8 20 / 72%) 0%,
+      rgb(4 8 20 / 30%) 24%,
+      rgb(4 8 20 / 0%) 50%,
+      rgb(4 8 20 / 0%) 80%,
+      rgb(4 8 20 / 35%) 100%
+    ),
+    var(--bf-bg) center 60% / cover no-repeat;
+}
+:root[data-fx='low'] .battle .bfield:not(.bfield--wide) {
+  background: linear-gradient(180deg, rgb(6 10 24 / 55%), rgb(3 6 16 / 82%));
+}
+
 .bfield__queue {
   position: absolute;
   top: 38px;
