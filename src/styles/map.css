@@ -1577,18 +1577,18 @@
 .pstat {
   display: inline-flex;
   align-items: center;
-  gap: 3px;
+  gap: 5px;
   color: var(--text-faint);
 }
 /* Something is available here — worth the player's attention. */
 .pstat--open {
   color: var(--teal);
 }
+/* The painted building markers leave room round the building in their frame, so they are drawn larger than a flat icon would be. */
 .pstat img {
-  width: 14px;
-  height: 14px;
+  width: 24px;
+  height: 24px;
   object-fit: contain;
-  opacity: 0.85;
 }
 .pstat__skeleton {
   display: inline-block;
@@ -1619,10 +1619,9 @@
   color: var(--text-faint);
 }
 .planetlist__head img {
-  width: 14px;
-  height: 14px;
+  width: 22px;
+  height: 22px;
   justify-self: end;
-  opacity: 0.85;
 }
 .planetrow {
   width: 100%;
@@ -1744,8 +1743,8 @@
     padding: 3px 8px 4px;
   }
   .planetlist__head img {
-    width: 13px;
-    height: 13px;
+    width: 20px;
+    height: 20px;
     justify-self: center;
   }
   .planetrow {
