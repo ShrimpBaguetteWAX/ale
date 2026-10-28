@@ -47,6 +47,8 @@ export function ArenaStage({ stage, form }: { stage: Arena; form: StageForm }) {
       style={
         {
           '--sky': sky.gradient,
+          /* The top of that sky, which a phone's taller field continues upward. */
+          '--zenith': sky.gradient.match(/#[0-9a-f]{6}/i)?.[0],
           '--tint': sky.tint,
           '--ta': sky.tintStrength,
           '--shade': sky.shade,

@@ -8,7 +8,7 @@ import { isMelee, onGround, roleLines, type Lineup } from '@/fight/formation'
  */
 const f = (uid: string, classname: string, taunt: number, health = 100): Lineup => ({ uid, classname, taunt, health })
 
-/* The near line is r 0.9 (or its stagger, 0.74); the far line r 0.04 (or 0.18). */
+/* The near line is r 0.9 (or its stagger, 0.72); the far line r 0.04 (or 0.18). */
 const near = (spots: Map<string, [number, number]>, uid: string) => spots.get(uid)![1] > 0.5
 /* Closer to the enemy is a larger x, from the team's own edge. */
 const x = (spots: Map<string, [number, number]>, uid: string) => spots.get(uid)![0]
@@ -131,6 +131,23 @@ describe('role lines', () => {
         const line = at.filter((p) => p.near === near).sort((p, q) => q.taunt - p.taunt)
         for (let k = 1; k < line.length; k++) expect(line[k - 1].d).toBeLessThan(line[k].d)
       }
+    })
+
+    it('stands the two front lines further apart on a phone, everyone still on its field', () => {
+      for (const team of teams) {
+        const spots = [...roleLines(team).values()]
+        const front = (wide: boolean) => Math.max(...spots.map((s) => onGround(s, wide)[0]))
+        expect(50 - front(false)).toBeGreaterThan(50 - front(true) + 3.5)
+        for (const s of spots) expect(onGround(s, false)[0]).toBeGreaterThan(8)
+      }
+    })
+
+    it('measures a phone’s ground up from the foot of a field taller than it', () => {
+      const spot: [number, number] = [30, 0.5]
+      const [, square] = onGround(spot, false)
+      const [, tall] = onGround(spot, false, 1.5)
+      expect(100 - tall).toBeCloseTo((100 - square) / 1.5)
+      expect(onGround(spot, true, 1.5)).toEqual(onGround(spot, true))
     })
 
     it.each(cases)('stands the melee line nearer the middle than the ranged line (%#)', ({ team, wide, side }) => {

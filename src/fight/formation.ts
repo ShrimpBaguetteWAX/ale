@@ -76,7 +76,7 @@ export function roleLines(team: Lineup[]): Map<string, Spot> {
       out.set(f.uid, [xs[line.length - 1 - k] + off[0], depth + off[1]])
     })
   }
-  place(near, 14, 44, 0.9, [-2, -0.16])
+  place(near, 14, 44, 0.9, [-2, -0.18])
   place(far, 8, 30, 0.04, [-2, 0.14])
   return out
 }
@@ -90,12 +90,28 @@ export function roleLines(team: Lineup[]): Map<string, Spot> {
 export const GROUND_LINES = { wide: [53, 70], tall: [68, 95] } as const
 
 /**
+ * How much further toward its own edge each team stands on a phone, in x: the
+ * fighters are larger against the narrow field, and the two front lines want
+ * more room between them than on a desktop.
+ */
+export const TALL_GAP = 4
+
+/**
  * A spot on the ground as [x %, y %, depth], for the team on the left (the
  * right-hand team is mirrored, 100 − x): further back is higher up the field,
  * smaller, and drawn in toward the middle, as perspective has it.
+ *
+ * `stretch` is a phone's field height over its width: its ground is the
+ * square at the foot of the field, with sky over it, so y is measured up
+ * from the bottom on that square.
  */
-export function onGround([x, r]: Spot, wide: boolean): [number, number, number] {
+export function onGround([x, r]: Spot, wide: boolean, stretch = 1): [number, number, number] {
   const [far, near] = GROUND_LINES[wide ? 'wide' : 'tall']
   const pull = 0.82 + 0.18 * r
-  return [50 - (50 - x) * pull, far + r * (near - far), 0.84 + 0.16 * r]
+  const y = far + r * (near - far)
+  return [
+    50 - (50 - (wide ? x : x - TALL_GAP)) * pull,
+    wide ? y : 100 - (100 - y) / stretch,
+    0.84 + 0.16 * r,
+  ]
 }

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useGame } from '@/state/useGame'
 import { landId } from '@/chain/landId'
@@ -581,12 +581,19 @@ export function FightStage({
     />
   )
   const logRef = useRef<HTMLDivElement>(null)
+  /*
+     On a phone the fight on the ground has the page to itself: the log waits
+     behind the Log button and opens as a sheet over the player, shut at the
+     start of every fight as the tournament's is.
+  */
+  const sheetLog = land && phone
+  const shut = logHidden || sheetLog
   /* Open unless this player has closed it; their choice is remembered. */
-  const [showLog, setShowLogState] = useState(() => (logHidden ? false : readShowLog(phone)))
+  const [showLog, setShowLogState] = useState(() => (shut ? false : readShowLog(phone)))
   const setShowLog = useCallback((next: boolean | ((v: boolean) => boolean)) => {
     setShowLogState((v) => {
       const value = typeof next === 'function' ? next(v) : next
-      if (logHidden) return value
+      if (shut) return value
       try {
         localStorage.setItem(LOG_KEY, value ? '1' : '0')
       } catch {
@@ -594,7 +601,7 @@ export function FightStage({
       }
       return value
     })
-  }, [logHidden])
+  }, [shut])
 
   /*
      The log follows the fight, as the original's does. It also opens on the
@@ -614,8 +621,52 @@ export function FightStage({
     el.scrollTo({ top: phone ? 0 : el.scrollHeight, behavior: opening ? 'auto' : 'smooth' })
   }, [step, phone, showLog])
 
+  /*
+     The live log, in the combat log sheet's own layout, and there from the
+     first frame so the field does not shift when the first blow lands.
+  */
+  const logPanel = (
+    <section
+      className={`panel clog clog--live${land ? ' clog--chron' : ''}${sheetLog ? ' clog--sheet' : ''}`}
+      aria-label="Combat log"
+    >
+      <header className="clog__head">
+        <div className="clog__heading">
+          <span className="panel__title">Combat log</span>
+          <p className="clog__sub">
+            {step} of {total} blow{total === 1 ? '' : 's'}
+          </p>
+        </div>
+        {sheetLog && (
+          <button type="button" className="clog__close" onClick={() => setShowLog(false)} aria-label="Close the combat log">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" aria-hidden="true">
+              <path d="M6 6l12 12M18 6L6 18" />
+            </svg>
+          </button>
+        )}
+      </header>
+      <div className="clog__body" ref={logRef}>
+        {step === 0 ? (
+          <p className="muted clog__waiting">The fight is about to begin.</p>
+        ) : (
+          <CombatLogEntries
+            replay={replay}
+            playertag={playertag}
+            chronicle={land}
+            newest={step - 1}
+            turns={
+              phone
+                ? Array.from({ length: step }, (_, i) => step - 1 - i)
+                : Array.from({ length: step }, (_, i) => i)
+            }
+          />
+        )}
+      </div>
+    </section>
+  )
+
   return (
-    <div className={`bfwrap${broadcast ? ' bfwrap--bcast' : ''}${broadcast && showLog && !phone ? ' bfwrap--log' : ''}${land ? ' bfwrap--land' : ''}`}>
+    <div className={`bfwrap${broadcast ? ' bfwrap--bcast' : ''}${broadcast && showLog && !phone ? ' bfwrap--log' : ''}${land ? ' bfwrap--land' : ''}${sheetLog ? ' bfwrap--full' : ''}`}>
       <div className="bfmain">
         {/* The turn order is part of the picture, under the scorebar. */}
         <Battlefield
@@ -710,7 +761,7 @@ export function FightStage({
             >
               {speed}×
             </button>
-            {phone && logHidden && (
+            {phone && shut && (
               <button
                 type="button"
                 className="bcdeck__skip"
@@ -749,43 +800,11 @@ export function FightStage({
             )}
           </div>
         )}
+        {sheetLog && showLog && logPanel}
         {overlay}
       </div>
 
-      {/*
-        The live log, in the combat log sheet's own layout, and there
-        from the first frame so the field does not shift when the first
-        blow lands.
-      */}
-      {(!broadcast || showLog || (phone && !logHidden)) && (
-        <section className={`panel clog clog--live${land ? ' clog--chron' : ''}`} aria-label="Combat log">
-          <header className="clog__head">
-            <div className="clog__heading">
-              <span className="panel__title">Combat log</span>
-              <p className="clog__sub">
-                {step} of {total} blow{total === 1 ? '' : 's'}
-              </p>
-            </div>
-          </header>
-          <div className="clog__body" ref={logRef}>
-            {step === 0 ? (
-              <p className="muted clog__waiting">The fight is about to begin.</p>
-            ) : (
-              <CombatLogEntries
-                replay={replay}
-                playertag={playertag}
-                chronicle={land}
-                newest={step - 1}
-                turns={
-                  phone
-                    ? Array.from({ length: step }, (_, i) => step - 1 - i)
-                    : Array.from({ length: step }, (_, i) => i)
-                }
-              />
-            )}
-          </div>
-        </section>
-      )}
+      {(!broadcast || (showLog && !sheetLog) || (phone && !shut)) && logPanel}
     </div>
   )
 }
@@ -1147,6 +1166,26 @@ function Battlefield({
   /** Drawn over the foot of the field: the gilded cards, in the land look on a desktop. */
   deck?: React.ReactNode
 }) {
+  /*
+     A phone's ground is the square at the foot of the field, and the field
+     may stand taller than that, with more sky over it (landstage.css). Its
+     height over its width, so the spots on the ground land where it is drawn.
+  */
+  const fieldRef = useRef<HTMLDivElement>(null)
+  const square = !!stage && !wide
+  const [stretch, setStretch] = useState(1)
+  useLayoutEffect(() => {
+    const el = fieldRef.current
+    if (!square || !el || typeof ResizeObserver === 'undefined') {
+      setStretch(1)
+      return
+    }
+    const measure = () => setStretch(Math.max(1, el.offsetHeight / Math.max(1, el.offsetWidth)))
+    measure()
+    const watch = new ResizeObserver(measure)
+    watch.observe(el)
+    return () => watch.disconnect()
+  }, [square])
   const where = new Map<string, [number, number]>()
   const depth = new Map<string, number>()
   for (const team of [team1, team2]) {
@@ -1154,7 +1193,7 @@ function Battlefield({
       const spot = lineup?.get(f.uid)
       /* The player is wide on a phone too: two rows of three, as on desktop. */
       const [x, y, d] = spot
-        ? onGround(spot, wide)
+        ? onGround(spot, wide, stretch)
         : wide || broadcast
           ? FORMATION_WIDE[i % FORMATION_WIDE.length]
           : [...FORMATION[i % FORMATION.length], 1]
@@ -1197,10 +1236,12 @@ function Battlefield({
         /* Alternating names, so a blow that follows another of its kind still shakes. */
         (shake ? ` bfield--shake${shake[1] ? ' bfield--flurry' : ''} bfield--t${turn % 2}` : '')
       }
+      ref={fieldRef}
       style={
         {
           '--bf-bg': `url('${asset('/assets/background/bg-fight.webp')}')`,
           ...(shake ? { '--shake': shake[0] } : {}),
+          ...(square ? { '--ratio': stretch } : {}),
         } as React.CSSProperties
       }
     >
