@@ -7678,3 +7678,21 @@ button.combatcard--empty:hover {
   position: static;
   margin-left: 1px;
 }
+@media (max-width: 719px) {
+  /* The difficulty in the board's colours, as on a desktop: the red number and the orange ladder, not the phone's quiet gold. */
+  .dungeon__inner:has(> .versus--hud) .dungeon__phonestep .dstep__value {
+    color: #2a0910;
+    background: linear-gradient(180deg, #ff8a5c, #e0344f);
+    box-shadow: 0 0 14px rgb(255 80 80 / 35%);
+  }
+  .dungeon__inner:has(> .versus--hud) .dungeon__phonestep .dstep__tick--lit::before {
+    background: #ff7a5c;
+  }
+  .dungeon__inner:has(> .versus--hud) .dungeon__phonestep .dstep__tick--lit:hover::before {
+    background: #ffa185;
+  }
+  .dungeon__inner:has(> .versus--hud) .dungeon__phonestep .dstep__tick[aria-checked='true']::before {
+    background: #ff9d78;
+    box-shadow: 0 0 6px rgb(255 120 90 / 70%);
+  }
+}
