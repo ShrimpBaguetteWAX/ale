@@ -47,6 +47,56 @@ export function OddsCentre({ odds }: { odds: Odds | null }) {
   )
 }
 
+type Side = { landShare: number; blockShare: number; bonuses: number }
+
+/**
+ * The HUD look's centre (see matchupStyle): the chance to win on a
+ * half-circle gauge, and under it the head-to-head, yours on the left and
+ * theirs on the right, so the two lines' readouts stand in one place.
+ * `VS` while there is nothing to say yet, as in the cards look.
+ */
+export function HudCentre({ odds, mine, theirs }: { odds: Odds | null; mine: Side; theirs: Side }) {
+  if (!odds) {
+    return (
+      <span className="versus__vs" aria-hidden="true">
+        VS
+      </span>
+    )
+  }
+  const pct = Math.round(odds.winRate * 100)
+  const band = pct >= 55 ? 'good' : pct >= 35 ? 'even' : 'poor'
+  const arc = Math.PI * 70
+  const row = (label: string, a: string, b: string, title: string) => (
+    <span className="hudcentre__row" title={title}>
+      <b className="hudcentre__a">{a}</b>
+      <span>{label}</span>
+      <b className="hudcentre__z">{b}</b>
+    </span>
+  )
+  return (
+    <div className={`hudcentre hudcentre--${band}`} title={oddsTitle(odds, 'mine')}>
+      <span className="hudcentre__gauge" role="img" aria-label={oddsTitle(odds, 'mine')}>
+        <svg viewBox="0 0 170 96" aria-hidden="true">
+          <path className="hudcentre__track" d="M15 88 A70 70 0 0 1 155 88" />
+          <path className="hudcentre__fill" d="M15 88 A70 70 0 0 1 155 88" strokeDasharray={`${(arc * pct) / 100} ${arc}`} />
+        </svg>
+        <b>
+          {pct}
+          <i>%</i>
+        </b>
+      </span>
+      <span className="hudcentre__cap">
+        Chance to win · {verdictOf(pct)}
+      </span>
+      <span className="hudcentre__tape">
+        {row('Lands', `${Math.round(mine.landShare * 100)}%`, `${Math.round(theirs.landShare * 100)}%`, 'How much of each side’s damage lands once the other side’s resistances are applied')}
+        {row('Blocks', `${Math.round(mine.blockShare * 100)}%`, `${Math.round(theirs.blockShare * 100)}%`, 'How much of the damage coming the other way each side turns away')}
+        {row('Bonus', `+${mine.bonuses}`, `+${theirs.bonuses}`, 'Ability firings that only this matchup allows, across each line-up')}
+      </span>
+    </div>
+  )
+}
+
 /** The odds in one word, on the same thresholds as the colour. */
 export function verdictOf(pct: number): string {
   if (pct >= 85) return 'Easy'

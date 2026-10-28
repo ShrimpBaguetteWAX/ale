@@ -44,7 +44,8 @@ import {
 } from '@/fight/matchup'
 import { ageFactor, levelFactor } from '@/fight/scaling'
 import { oddsTitle, teamOdds } from '@/fight/odds'
-import { OddsCentre, WinChance } from '@/fight/OddsCentre'
+import { HudCentre, OddsCentre, WinChance } from '@/fight/OddsCentre'
+import { useMatchupHud } from '@/fight/matchupStyle'
 import { recallTeam, rememberTeam, restoreTeam } from '@/fight/lastTeam'
 import { applyWeather, fetchWeather } from '@/fight/weather'
 import { autoPickCards, autoPickCardsByOdds, autoPickFighters } from '@/fight/autopick'
@@ -525,6 +526,8 @@ export default function Dungeon() {
      spare width — the totals already wrap — so there it goes under the row.
   */
   const phone = usePhone()
+  /* The desktop matchup's look, medallions or cards: see matchupStyle. */
+  const hud = useMatchupHud()
 
   /*
      Where a fighter or a card gets chosen. A phone has the fight on one
@@ -1128,7 +1131,7 @@ export default function Dungeon() {
           flipped horizontally so both teams face the centre, which is the
           convention every fighting game uses and costs nothing to honour.
         */}
-        <section className="versus">
+        <section className={`versus${hud ? ' versus--hud' : ''}`}>
           <div className="versus__side versus__side--mine">
             <header
               className="versus__head"
@@ -1296,7 +1299,11 @@ export default function Dungeon() {
 
         {!phone && (
         <div className="versus__divider" ref={setOddsEl}>
-            <OddsCentre odds={odds} />
+            {hud ? (
+              <HudCentre odds={odds} mine={outlook.mine} theirs={outlook.theirs} />
+            ) : (
+              <OddsCentre odds={odds} />
+            )}
             {/*
                Each side's share of the matchup as one bar under the odds,
                where wider screens used to draw an underline under each name.

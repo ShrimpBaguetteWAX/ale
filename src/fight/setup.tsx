@@ -58,6 +58,7 @@ import {
 import { asset, ipfsImage } from '@/assets'
 import { rarityColor } from '@/map/terrain'
 import { usePhone } from '@/components/usePhone'
+import { useMatchupHud } from '@/fight/matchupStyle'
 import { useModal } from '@/components/useModal'
 import { useSwipeToClose } from '@/components/useSwipeToClose'
 import {
@@ -888,6 +889,80 @@ export function CombatCard({
     preview,
     hoverable,
   )
+
+  /*
+     The HUD look (see matchupStyle): the fighter as a round medallion ringed
+     in its side's colour, the level on a tab under it, the name and the two
+     figures below, like a party frame. Same clicks, hover read and remove.
+  */
+  const hud = useMatchupHud()
+  if (hud) {
+    return (
+      <div
+        className={`medal medal--${side}${dormant ? ' medal--dormant' : ''}${selected ? ' medal--selected' : ''}`}
+        ref={slot}
+        {...handlers}
+      >
+        {hover && (
+          <HoverPopover anchor={hover.rect}>
+            <FighterHoverCard fighter={hover.value.panel} template={hover.value.template} cards={hover.value.cards} />
+          </HoverPopover>
+        )}
+        <button
+          type="button"
+          className="medal__hit"
+          onClick={() => {
+            closeHover()
+            onOpen()
+          }}
+          title={hoverable ? undefined : `${classname} — details`}
+          aria-label={`${classname} — details`}
+        >
+          <span className="medal__pic" style={{ backgroundImage: `url('${elementBackground(element)}')` }}>
+            <GameImg
+              className="medal__art"
+              src={art ?? fighterArt({ classname, racename })}
+              alt={`${classname} ${racename}`}
+              loading="lazy"
+              fallback={fighterArtFallback()}
+            />
+          </span>
+          {element && <img className="medal__el" src={elementIcon(element)} alt={element} title={element} />}
+          {!!marker && <img className="medal__mk" src={markerIcon(marker)} alt={`Marked ${marker}`} title={`Marked ${marker}`} />}
+          {badge ? (
+            <span className="medal__tab medal__tab--badge">{badge}</span>
+          ) : (
+            level !== undefined && level > 0 && <span className="medal__tab">{level}</span>
+          )}
+          <span className="medal__name">{classname || racename || 'Fighter'}</span>
+          {owner && <span className="medal__owner">{owner}</span>}
+          <span className="medal__figs mono">
+            <span>
+              <img src={asset('/assets/icons/stats/damage.svg')} alt="" />
+              {formatScaled(damage)}
+            </span>
+            <span>
+              <img src={asset('/assets/icons/stats/health.svg')} alt="" />
+              {formatScaled(health)}
+            </span>
+          </span>
+          {counts}
+        </button>
+        {dormant && <span className="medal__dormant">{dormant}</span>}
+        {onRemove && (
+          <button
+            type="button"
+            className="medal__remove"
+            onClick={onRemove}
+            aria-label={`Remove ${classname || 'this fighter'} from your team`}
+            title={`Remove ${classname || 'this fighter'} from your team`}
+          >
+            ×
+          </button>
+        )}
+      </div>
+    )
+  }
 
   return (
     <div className={`combatslot${selected ? ' combatslot--selected' : ''}`} ref={slot} {...handlers}>

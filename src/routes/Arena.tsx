@@ -79,7 +79,8 @@ import {
 } from '@/fight/setup'
 import { fieldedStats, levelFactor, ageFactor } from '@/fight/scaling'
 import { oddsTitle, teamOdds } from '@/fight/odds'
-import { OddsCentre, WinChance } from '@/fight/OddsCentre'
+import { HudCentre, OddsCentre, WinChance } from '@/fight/OddsCentre'
+import { useMatchupHud } from '@/fight/matchupStyle'
 import { DIRTIES, playArena } from '@/wharf/actions'
 import { settle } from '@/wharf/settle'
 import { readableError } from '@/wharf/errors'
@@ -513,6 +514,8 @@ export default function Arena() {
      fill the slots left over.
   */
   const phone = usePhone()
+  /* The desktop matchup's look, medallions or cards: see matchupStyle. */
+  const hud = useMatchupHud()
 
   /*
      Where a fighter or a card gets chosen. A phone has the fight on one
@@ -1088,7 +1091,7 @@ export default function Arena() {
         {/* A phone opens the matchup with the odds, above your team. */}
         {phone && <WinChance odds={odds} />}
 
-        <section className="versus">
+        <section className={`versus${hud ? ' versus--hud' : ''}`}>
           <div className="versus__side versus__side--mine">
             <header
               className="versus__head"
@@ -1240,7 +1243,11 @@ export default function Arena() {
           </div>
         {!phone && (
         <div className="versus__divider" ref={setOddsEl}>
-            <OddsCentre odds={odds} />
+            {hud ? (
+              <HudCentre odds={odds} mine={outlook.mine} theirs={outlook.theirs} />
+            ) : (
+              <OddsCentre odds={odds} />
+            )}
             {/*
                Each side's share of the matchup as one bar under the odds,
                where wider screens used to draw an underline under each name.
