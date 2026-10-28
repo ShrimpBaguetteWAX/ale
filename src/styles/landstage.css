@@ -1330,10 +1330,12 @@
 /* ---------- down ---------- */
 
 /*
- * The knock-out, in one place so another fall can replace it: the whole
- * figure tips back away from the other side around its feet and lies on the
- * floor, dimmed. Its end state is the element's own, so with motion turned
- * down a fighter is simply lying there.
+ * The knock-out, in one place so another fall can replace it: crumple and
+ * fall. A white flash as the blow lands, the knees give a little, then the
+ * whole figure tips back away from the other side around its feet, overshoots
+ * the floor, bounces once and lies there greyed, with a puff of dust where it
+ * lands. Its end state is the element's own, so with motion turned down a
+ * fighter is simply lying there.
  */
 .bfield--land .bunit.bunit--dead .bunit__body {
   animation: none;
@@ -1341,11 +1343,10 @@
 .bunit__fallen {
   position: absolute;
   inset: 0;
-  transform-origin: 50% 100%;
-  transform: translateY(6%) rotate(calc(var(--lean) * 82deg)) scale(0.9);
-  opacity: 0.55;
-  filter: grayscale(1) brightness(0.75);
-  animation: land-ko calc(800ms * var(--beat)) ease-in both;
+  transform-origin: 50% 96%;
+  transform: rotate(calc(var(--lean) * 90deg));
+  filter: grayscale(0.8) brightness(0.55);
+  animation: land-ko calc(1400ms * var(--beat)) cubic-bezier(0.5, 0, 0.7, 1) both;
 }
 /* Its health and level go with it, rather than hanging where its head was. */
 .bfield--land .bunit--dead :is(.bunit__hp, .bunit__plate) {
@@ -1355,42 +1356,63 @@
 @keyframes land-ko {
   0% {
     transform: none;
-    opacity: 1;
-    filter: none;
+    filter: brightness(1);
   }
-  35% {
-    transform: rotate(calc(var(--lean) * 18deg));
+  7% {
+    transform: none;
+    filter: brightness(2.4);
+  }
+  16% {
+    transform: translateY(2%) scaleY(0.93) rotate(calc(var(--lean) * -5deg));
+    filter: brightness(1.1);
+    animation-timing-function: cubic-bezier(0.55, 0, 0.85, 0.4);
+  }
+  58% {
+    transform: rotate(calc(var(--lean) * 93deg));
+    filter: brightness(1);
+    animation-timing-function: ease-out;
+  }
+  67% {
+    transform: translateY(-3%) rotate(calc(var(--lean) * 84deg));
+  }
+  76% {
+    transform: rotate(calc(var(--lean) * 90deg));
+    filter: brightness(1);
   }
 }
-/* Its shadow lies flat with it. */
+/* Its shadow lies out along the body, toward where the head came down. */
 .bfield--land .bunit--dead .bunit__platform {
-  width: 130%;
+  width: 150%;
+  translate: calc(var(--lean) * 26%) 0;
   opacity: 0.45;
 }
-
-/* The spirit leaving the fallen, rising off the field. */
-.bunit__soul {
+/* The dust it throws up as it hits the grass. */
+.bunit__dust {
   position: absolute;
   left: 50%;
-  top: 46%;
-  z-index: 4;
-  width: 32%;
-  aspect-ratio: 1;
-  translate: -50% -50%;
+  bottom: -6%;
+  width: 150%;
+  height: 26%;
+  translate: calc(-50% + var(--lean) * 30%) 0;
   border-radius: 50%;
-  background: radial-gradient(circle, #fff, rgb(160 200 255 / 50%) 40%, rgb(160 200 255 / 0%) 70%);
+  background: radial-gradient(closest-side, rgb(196 178 132 / 80%), rgb(150 132 92 / 35%) 55%, rgb(150 132 92 / 0%));
   opacity: 0;
   pointer-events: none;
-  animation: lunit-soul calc(1200ms * var(--beat)) ease-out var(--impact) forwards;
+  animation: land-ko-dust calc(1400ms * var(--beat)) ease-out both;
 }
-@keyframes lunit-soul {
-  0% {
-    opacity: 1;
-    transform: none;
+@keyframes land-ko-dust {
+  0%,
+  56% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  64% {
+    opacity: 0.9;
+    transform: scale(1);
   }
   100% {
     opacity: 0;
-    transform: translateY(-260%) scale(0.6);
+    transform: scale(1.5) translateY(-20%);
   }
 }
 
@@ -1568,7 +1590,7 @@
   .bunit__ret {
     animation: none !important;
   }
-  .bunit__soul {
+  .bunit__dust {
     display: none;
   }
   .bunit__pop {
@@ -1615,7 +1637,7 @@
 :root[data-fx='low'] .bunit__ret {
   animation: none;
 }
-:root[data-fx='low'] .bunit__soul {
+:root[data-fx='low'] .bunit__dust {
   display: none;
 }
 @keyframes lunit-pop-still {

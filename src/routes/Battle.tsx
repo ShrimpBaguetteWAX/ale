@@ -1495,18 +1495,21 @@ function FieldUnit({
         <span className="bunit__body" key={rig && dead ? 'down' : role ? `${role}-${turn}` : 'idle'}>
           {rig && dead ? (
             /* The whole figure goes down, in one piece (see .bunit__fallen). */
-            <span className="bunit__fallen">
-              <GameImg
-                className="bunit__art"
-                src={
-                  nft
-                    ? fighterArtFallback()
-                    : fighterArt({ classname: fighter.classname, racename: fighter.racename })
-                }
-                alt={`${name}, down`}
-                fallback={fighterArtFallback()}
-              />
-            </span>
+            <>
+              <span className="bunit__fallen">
+                <GameImg
+                  className="bunit__art"
+                  src={
+                    nft
+                      ? fighterArtFallback()
+                      : fighterArt({ classname: fighter.classname, racename: fighter.racename })
+                  }
+                  alt={`${name}, down`}
+                  fallback={fighterArtFallback()}
+                />
+              </span>
+              <span className="bunit__dust" aria-hidden="true" />
+            </>
           ) : rig ? (
             <span className="bunit__rig">
               <GameImg
@@ -1613,14 +1616,11 @@ function FieldUnit({
             {formatScaled(abilityDelta)}
           </span>
         )}
-        {/* On the ground the number says it, and a spirit leaves the fallen. */}
+        {/* On the ground the number says it. */}
         {killed && role === 'defender' && !rig && (
           <span className="duelist__ko" key={`ko-${turn}`}>
             K.O.
           </span>
-        )}
-        {killed && role === 'defender' && rig && (
-          <span className="bunit__soul" key={`soul-${turn}`} aria-hidden="true" />
         )}
       </div>
 
