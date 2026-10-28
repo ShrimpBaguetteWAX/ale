@@ -1037,7 +1037,7 @@ export default function Dungeon() {
               should bring. A desktop has it in the title line, beside the
               difficulty.
             */}
-            {phone && <WeatherPanel weather={weather} />}
+            {phone && <WeatherPanel weather={weather} twin={hud} />}
           </div>
 
           {!phone && (

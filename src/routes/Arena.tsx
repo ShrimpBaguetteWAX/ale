@@ -998,7 +998,7 @@ export default function Arena() {
               the title, as the dungeon does, and the defenders' strength on
               the line under it, where the dungeon has its difficulty.
             */}
-            {phone && <WeatherPanel weather={weather} />}
+            {phone && <WeatherPanel weather={weather} twin={hud} />}
           </div>
 
           {!phone && (

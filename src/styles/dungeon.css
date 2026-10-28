@@ -7619,3 +7619,62 @@ button.combatcard--empty:hover {
     white-space: nowrap;
   }
 }
+
+/*
+ * The HUD on a phone: the weather and the difficulty as the board's header
+ * draws them. The weather on the page beside the title, no chip: the icon,
+ * its figure in the colour of what it does to you, the roll in bold. The
+ * difficulty a compact stepper, the multipliers on one line over the ladder.
+ */
+@media (max-width: 719px) {
+  .dungeon__inner:has(> .versus--hud) > .dungeon__head > div:first-child {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 4px 10px;
+  }
+  .dungeon__inner:has(> .versus--hud) .weathertwin {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+  }
+  .dungeon__inner:has(> .versus--hud) .weathertwin__label {
+    display: none;
+  }
+  .dungeon__inner:has(> .versus--hud) .weathertwin__line {
+    max-width: 100%;
+    font-size: 13px;
+    font-weight: 700;
+  }
+  .dungeon__inner:has(> .versus--hud) .weathertwin__stat {
+    width: 15px;
+    height: 15px;
+  }
+  .dungeon__inner:has(> .versus--hud) .dungeon__phonestep .dstep {
+    gap: 8px;
+  }
+  .dungeon__inner:has(> .versus--hud) .dungeon__phonestep .dstep__arrow {
+    height: 30px;
+    border-radius: 8px;
+  }
+  .dungeon__inner:has(> .versus--hud) .dungeon__phonestep .dstep__value {
+    min-width: 36px;
+    height: 30px;
+    padding: 0 6px;
+    font-size: 16px;
+  }
+  .dungeon__inner:has(> .versus--hud) .dungeon__phonestep .dstep__label {
+    display: none;
+  }
+  .dungeon__inner:has(> .versus--hud) .dungeon__phonestep .dstep__tally {
+    font-size: 11.5px;
+  }
+}
+
+/* The whole figure centred in the gauge, the % with it: "43%" reads as one, in the middle. */
+.versus--hud .hudcentre__gauge b i,
+.teamdock--hud .teamdock__pct i {
+  position: static;
+  margin-left: 1px;
+}
