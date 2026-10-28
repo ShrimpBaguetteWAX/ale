@@ -94,10 +94,16 @@ export function Medal({
   )
 }
 
+/* One wave, twice as wide as the flask so sliding it half its width loops. */
+const WAVE = 'M0 8 Q25 0 50 8 T100 8 T150 8 T200 8 V20 H0Z'
+
 /**
- * A reward pool as an engram: a diamond that fills from the bottom to the
- * power banked, with what this run added drawn striped on top of what was
- * there before. It blazes once the pool can be mined.
+ * A reward pool as an engram, drawn as a measured flask: a diamond of glass
+ * with tick marks at every quarter, filled from the bottom to the power
+ * banked. The surface ripples under a bright meniscus, and what this run
+ * added is the striped band just under it, growing in on the first frames.
+ * A full pool can be mined, and says so: the glass glows and a flash sweeps
+ * across it, like a flask being drunk.
  */
 export function Engram({
   type,
@@ -115,16 +121,30 @@ export function Engram({
 }) {
   const now = Math.min(100, percent)
   const before = Math.max(0, Math.min(now, percent - added))
+  const level = filled ? now : before
+  /* The run's share as a part of the liquid, so it rides under the surface. */
+  const run = filled && now > 0 ? ((now - before) / now) * 100 : 0
+  const full = percent >= 100
   const tlm = type === 'tlm'
   return (
-    <div className={`honours-eng honours-eng--${tlm ? 'tlm' : 'shards'}${percent >= 100 ? ' is-full' : ''}`}>
+    <div className={`honours-eng honours-eng--${tlm ? 'tlm' : 'shards'}${full ? ' is-full' : ''}`}>
       <div className="honours-eng__gem">
         <div className="honours-eng__fill">
-          <i className="honours-eng__before" style={{ height: `${before}%` }} />
-          <i
-            className="honours-eng__run"
-            style={{ bottom: `${before}%`, height: `${filled ? now - before : 0}%` }}
-          />
+          <div
+            className={`honours-eng__liquid${run > 0 ? ' has-run' : ''}`}
+            style={{ height: `${level}%` }}
+          >
+            <i className="honours-eng__run" style={{ height: `${run}%` }} />
+            {level > 0 && !full && (
+              <div className="honours-eng__surface" aria-hidden="true">
+                <svg viewBox="0 0 200 20" preserveAspectRatio="none">
+                  <path d={WAVE} />
+                </svg>
+              </div>
+            )}
+          </div>
+          <span className="honours-eng__ticks" />
+          {full && <span className="honours-eng__flash" />}
         </div>
         <img src={asset(tlm ? '/assets/icons/tlm.svg' : '/assets/icons/shards.svg')} alt="" />
       </div>

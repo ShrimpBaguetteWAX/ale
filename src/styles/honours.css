@@ -363,72 +363,161 @@
   justify-self: center;
 }
 
+/*
+ * The engram as a measured flask (after Path of Exile's): glass with a tick
+ * at every quarter, liquid that ripples under a bright meniscus, this run's
+ * share striped just under the surface, and a flash across the glass once
+ * the pool is full and can be mined.
+ */
 .honours-eng {
+  --c0: #a8711c;
+  --c1: #f0c53c;
+  --c2: #fff27a;
+  --rim: #ffd979;
+
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 4px;
   text-align: center;
-  color: #ffd979;
+  color: var(--rim);
 }
 .honours-eng--shards {
-  color: #c8b4ff;
+  --c0: #7a3a9a;
+  --c1: #d683e8;
+  --c2: #f4b6ff;
+  --rim: #c8b4ff;
 }
 
 .honours-eng__gem {
   position: relative;
+  isolation: isolate;
   width: 136px;
   height: 136px;
   margin-bottom: 10px;
-  filter: drop-shadow(0 0 10px color-mix(in srgb, currentColor 45%, transparent));
+  filter: drop-shadow(0 0 8px color-mix(in srgb, var(--rim) 35%, transparent));
 }
 .honours-eng.is-full .honours-eng__gem {
-  filter: drop-shadow(0 0 22px currentColor);
+  animation: flask-glow 2.4s ease-in-out infinite;
 }
-/* The rim, a diamond a little larger than the one it holds. */
+/* The rim, a diamond a little larger than the glass it holds. */
 .honours-eng__gem::before {
   content: '';
   position: absolute;
-  inset: -5px;
-  background: currentColor;
+  inset: -4px;
+  background: var(--rim);
   clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
 }
+
+/* The glass, dark inside, with a streak of light down one face. */
 .honours-eng__fill {
   position: absolute;
   inset: 0;
   overflow: hidden;
-  background: #0b1426;
   clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+  background: radial-gradient(circle at 50% 40%, #16233f, #070d1c);
 }
-.honours-eng__fill i {
+.honours-eng__fill::after {
+  content: '';
+  position: absolute;
+  z-index: 2;
+  left: 28%;
+  top: 14%;
+  width: 7%;
+  height: 46%;
+  border-radius: 4px;
+  background: linear-gradient(rgb(255 255 255 / 40%), transparent);
+  transform: rotate(-45deg);
+}
+
+.honours-eng__liquid {
   position: absolute;
   left: 0;
   right: 0;
   bottom: 0;
-}
-.honours-eng__before {
-  background: linear-gradient(0deg, #c8901c, #ffe14a);
-}
-.honours-eng--shards .honours-eng__before {
-  background: linear-gradient(0deg, #9a4cb0, #ed92ff);
-}
-/* What this run added, striped, growing in on top of what was there. */
-.honours-eng__run {
-  background-color: #fff27a;
-  background-image: repeating-linear-gradient(-45deg, rgb(255 255 255 / 45%) 0 5px, transparent 5px 10px);
+  background: linear-gradient(0deg, var(--c0), var(--c1));
   transition: height 1100ms cubic-bezier(0.16, 0.9, 0.3, 1);
 }
-.honours-eng--shards .honours-eng__run {
-  background-color: #f4b6ff;
+/* The meniscus: a bright line where the liquid meets the air. */
+.honours-eng__liquid::before {
+  content: '';
+  position: absolute;
+  z-index: 2;
+  left: 0;
+  right: 0;
+  top: -1px;
+  height: 2px;
+  background: #fff;
+  opacity: 0.85;
+  box-shadow: 0 0 8px #fff;
 }
+.honours-eng.is-full .honours-eng__liquid::before {
+  display: none;
+}
+
+/* What this run added, striped, riding just under the surface. */
+.honours-eng__run {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  background-color: var(--c2);
+  background-image: repeating-linear-gradient(-45deg, rgb(255 255 255 / 40%) 0 5px, transparent 5px 10px);
+  transition: height 1100ms cubic-bezier(0.16, 0.9, 0.3, 1);
+}
+
+/* The surface ripples: one wave twice the flask's width, sliding half of it. */
+.honours-eng__surface {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 100%;
+  height: 14px;
+}
+.honours-eng__surface svg {
+  position: absolute;
+  left: 0;
+  bottom: -4px;
+  width: 200%;
+  height: 12px;
+  fill: var(--c1);
+  animation: flask-wave 1.6s linear infinite;
+}
+.honours-eng__liquid.has-run .honours-eng__surface svg {
+  fill: var(--c2);
+}
+
+/* The measure: a tick at every quarter, on the two middle bands of glass. */
+.honours-eng__ticks {
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  background: repeating-linear-gradient(0deg, transparent 0 calc(25% - 1px), rgb(255 255 255 / 22%) calc(25% - 1px) 25%);
+  -webkit-mask: linear-gradient(90deg, transparent 30%, #000 30% 40%, transparent 40% 60%, #000 60% 70%, transparent 70%);
+  mask: linear-gradient(90deg, transparent 30%, #000 30% 40%, transparent 40% 60%, #000 60% 70%, transparent 70%);
+}
+
+/* Full: a flash sweeps the glass, like a flask being drunk. */
+.honours-eng__flash {
+  position: absolute;
+  z-index: 2;
+  top: -30%;
+  bottom: -30%;
+  left: 0;
+  width: 30%;
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 75%), transparent);
+  animation: flask-flash 1.5s ease-in infinite;
+}
+
 .honours-eng__gem img {
   position: absolute;
+  z-index: 3;
   left: 50%;
   top: 50%;
   width: 46px;
   height: 46px;
   translate: -50% -50%;
-  filter: drop-shadow(0 0 8px #000);
+  filter: drop-shadow(0 0 6px rgb(0 0 0 / 80%));
 }
 
 .honours-eng > b {
@@ -453,10 +542,47 @@
   color: var(--green, #6ee7a8);
 }
 
+@keyframes flask-wave {
+  to {
+    transform: translateX(-50%);
+  }
+}
+@keyframes flask-flash {
+  from {
+    transform: translateX(-160%) rotate(25deg);
+  }
+  to {
+    transform: translateX(520%) rotate(25deg);
+  }
+}
+@keyframes flask-glow {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 10px var(--rim)) brightness(1);
+  }
+  50% {
+    filter: drop-shadow(0 0 24px var(--rim)) brightness(1.12);
+  }
+}
+
+/* The low-effects path keeps the flask, still. */
+:root[data-fx='low'] .honours-eng__surface svg,
+:root[data-fx='low'] .honours-eng__flash,
+:root[data-fx='low'] .honours-eng.is-full .honours-eng__gem {
+  animation: none;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .honours__verdict {
+  .honours__verdict,
+  .honours-eng__surface svg,
+  .honours-eng__flash,
+  .honours-eng.is-full .honours-eng__gem {
     animation: none;
   }
+  .honours-eng__flash {
+    display: none;
+  }
+  .honours-eng__liquid,
   .honours-eng__run {
     transition: none;
   }
