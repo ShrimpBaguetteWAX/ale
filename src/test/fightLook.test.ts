@@ -1,11 +1,12 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import { fightLook } from '@/fight/fightLook'
-import { stageFor } from '@/fight/stages'
+import { arenaFor, fightStageFor, skyFor, stageFor } from '@/fight/stages'
 
 /**
  * The fight's look and the ground it is fought on: the land look by
- * default, the switch back to the classic one, and every fight on Veles'
- * Grass Coastline until other stages are drawn.
+ * default, the switch back to the classic one, every dungeon fight on Veles'
+ * Grass Coastline until other lands are drawn, and every arena fight in the
+ * arena under the sky of the planet the player is on.
  */
 afterEach(() => localStorage.removeItem('fight-look'))
 
@@ -43,5 +44,33 @@ describe('the stage', () => {
       expect(stage.far[form]).toMatch(/stages\/veles\/far-/)
       expect(stage.foam[form]).toHaveLength(2)
     }
+  })
+})
+
+describe('the arena', () => {
+  it('is where an arena fight is fought, and a dungeon fight stays on its land', () => {
+    expect(fightStageFor('arena', 'neri').kind).toBe('arena')
+    const dungeon = fightStageFor('dungeon', 'neri')
+    expect(dungeon.kind).toBe('land')
+    expect(dungeon.kind === 'land' && dungeon.land).toBe('Grass Coastline')
+  })
+
+  it('hangs the sky of the planet the player is on over the same bowl', () => {
+    const naron = arenaFor('naron')
+    const magor = arenaFor('Magor')
+    expect(naron.sky.planet).toBe('naron')
+    expect(naron.sky.motes).toBe('snow')
+    expect(magor.sky.planet).toBe('magor')
+    expect(magor.sky.side).toBe('r')
+    expect(naron.bowl).toEqual(magor.bowl)
+    expect(naron.sky.far.wide).toMatch(/stages\/skies\/naron\/far-wide/)
+  })
+
+  it("falls back to Veles' sky for a planet it does not know", () => {
+    for (const planet of [undefined, '', 'pluto']) expect(skyFor(planet).planet).toBe('veles')
+  })
+
+  it('shows no giant planet over Eyeke', () => {
+    expect(skyFor('eyeke').moons).toHaveLength(0)
   })
 })

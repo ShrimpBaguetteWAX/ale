@@ -1,4 +1,4 @@
-import type { Stage, StageForm } from './stages'
+import type { GroundStage, StageForm } from './stages'
 
 /*
  * The clumps of tall grass at the stage's edges, as [x%, y%, scale] of the
@@ -28,7 +28,7 @@ const CLUMPS: Record<StageForm, [number, number, number][]> = {
  * the low sun and the clumps at the edges. The fighters stand on the floor
  * above all of it. Nothing here can be hit or read; it is all aria-hidden.
  */
-export function LandStage({ stage, form }: { stage: Stage; form: StageForm }) {
+export function LandStage({ stage, form }: { stage: GroundStage; form: StageForm }) {
   return (
     <div className={`lstage lstage--${form} lstage--${stage.planet}`} aria-hidden="true">
       <div className="lstage__scene">
@@ -74,16 +74,26 @@ export function LandStage({ stage, form }: { stage: Stage; form: StageForm }) {
   )
 }
 
+/* The stone cracking under a heavy blow on the sand. */
+const CRACKS = (
+  <svg viewBox="0 0 320 100" preserveAspectRatio="none">
+    <path d="M160 50 L122 40 L92 52 L48 44 L20 52 M160 50 L200 36 L240 46 L288 38 M160 50 L150 70 L128 88 M160 50 L180 74 L214 84 M122 40 L112 22" />
+  </svg>
+)
+
 /**
  * What a blow leaves on the ground where its target stands: torn turf and
- * clods thrown up, or scorched grass, embers and smoke from a fire attack.
- * It waits for --impact like everything else the blow does, and fades.
+ * clods thrown up, or sand kicked up in puffs with grit flying and the stone
+ * under it cracking at the heavy ones; scorch, embers and smoke from a fire
+ * attack on either. It waits for --impact like everything else the blow
+ * does, and fades.
  */
 export function GroundMark({
   at,
   depth,
   fire,
   big,
+  ground,
   blades,
 }: {
   at: [number, number]
@@ -91,11 +101,13 @@ export function GroundMark({
   fire: boolean
   /** The heavy blows, and the knockouts: one more clod. No ring: nothing is drawn round a fighter for being hit. */
   big: boolean
-  blades: string
+  ground: 'turf' | 'sand'
+  /** What a blow tears out of the turf. */
+  blades?: string
 }) {
   return (
     <span
-      className={`lmark${fire ? ' lmark--fire' : ''}`}
+      className={`lmark lmark--${ground}${fire ? ' lmark--fire' : ''}`}
       aria-hidden="true"
       style={
         {
@@ -112,10 +124,21 @@ export function GroundMark({
           {big && <i className="lmark__ember lmark__ember--b" />}
           <i className="lmark__smoke" />
         </>
+      ) : ground === 'sand' ? (
+        <>
+          <i className="lmark__tear" />
+          <i className="lmark__puff" />
+          <i className="lmark__puff lmark__puff--b" />
+          {big && <i className="lmark__puff lmark__puff--c" />}
+          {big && <span className="lmark__crack">{CRACKS}</span>}
+          <i className="lmark__grit" style={{ '--cx': '-420%', '--cy': '-760%' } as React.CSSProperties} />
+          <i className="lmark__grit" style={{ '--cx': '360%', '--cy': '-640%' } as React.CSSProperties} />
+          <i className="lmark__grit" style={{ '--cx': '90%', '--cy': '-980%' } as React.CSSProperties} />
+        </>
       ) : (
         <>
           <i className="lmark__tear" />
-          <img className="lmark__blades" src={blades} alt="" />
+          {blades && <img className="lmark__blades" src={blades} alt="" />}
           <i className="lmark__clod" style={{ '--cx': '-420%', '--cy': '-900%' } as React.CSSProperties} />
           <i className="lmark__clod" style={{ '--cx': '380%', '--cy': '-760%' } as React.CSSProperties} />
           <i className="lmark__clod" style={{ '--cx': '120%', '--cy': '-1100%' } as React.CSSProperties} />

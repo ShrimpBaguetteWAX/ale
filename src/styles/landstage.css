@@ -1576,6 +1576,446 @@
   color: #ff8a96;
 }
 
+/* ---------- the arena: one bowl on every planet, under that planet's sky ---------- */
+
+/*
+ * The sky and its weather, the strip of the planet's country over the rim,
+ * the sun and moons, then the sand, the bowl and its live pieces, and the
+ * planet's light over everything. Colours come from the sky (--sky, --tint,
+ * --ta, --shade, --cc, --lx); where things stand comes from arenaLayout.ts.
+ */
+.astage.lstage--wide {
+  --tile: 2.4%;
+}
+.astage.lstage--tall {
+  --tile: 5%;
+}
+.astage__sky {
+  left: 0;
+  right: 0;
+  top: 0;
+  background: var(--sky);
+}
+
+/* The weather: five kinds of cloud, all slow transforms. */
+.astage__clouds {
+  left: 0;
+  right: 0;
+  top: 0;
+  overflow: hidden;
+}
+.astage__clouds > i {
+  position: absolute;
+  border-radius: 50%;
+  animation: astage-cloud 110s linear infinite alternate;
+}
+.astage__clouds > i:nth-child(1) {
+  left: 2%;
+  top: 40%;
+  width: 26%;
+  height: 24%;
+}
+.astage__clouds > i:nth-child(2) {
+  left: 34%;
+  top: 24%;
+  width: 20%;
+  height: 18%;
+  opacity: 0.7;
+  animation-duration: 140s;
+  animation-delay: -50s;
+}
+.astage__clouds > i:nth-child(3) {
+  left: 58%;
+  top: 52%;
+  width: 30%;
+  height: 22%;
+  animation-duration: 120s;
+  animation-delay: -80s;
+}
+.astage__clouds > i:nth-child(4) {
+  left: 82%;
+  top: 30%;
+  width: 16%;
+  height: 14%;
+  opacity: 0.6;
+  animation-duration: 160s;
+  animation-delay: -20s;
+}
+.astage__clouds > i:nth-child(5) {
+  left: 18%;
+  top: 66%;
+  width: 22%;
+  height: 14%;
+  opacity: 0.55;
+  animation-duration: 130s;
+  animation-delay: -100s;
+}
+@keyframes astage-cloud {
+  from {
+    transform: translateX(-10%);
+  }
+  to {
+    transform: translateX(10%);
+  }
+}
+.astage__clouds--puff > i {
+  filter: blur(2px);
+  background:
+    radial-gradient(40% 60% at 30% 60%, rgb(var(--cc)), transparent 70%),
+    radial-gradient(35% 70% at 55% 45%, rgb(var(--cc)), transparent 72%),
+    radial-gradient(40% 55% at 78% 65%, rgb(var(--cc) / 90%), transparent 70%);
+}
+.astage__clouds--streak > i {
+  height: 5%;
+  border-radius: 999px;
+  filter: blur(3px);
+  background: linear-gradient(90deg, transparent, rgb(var(--cc) / 75%) 25%, rgb(var(--cc) / 60%) 70%, transparent);
+}
+.astage__clouds--streak > i:nth-child(odd) {
+  width: 46%;
+}
+.astage__clouds--dust > i {
+  filter: blur(6px);
+  animation-duration: 26s;
+  background: radial-gradient(closest-side, rgb(var(--cc) / 60%), transparent);
+}
+.astage__clouds--dust > i:nth-child(3) {
+  top: 45%;
+  width: 60%;
+  height: 40%;
+}
+.astage__clouds--mist > i {
+  height: 12%;
+  border-radius: 999px;
+  filter: blur(4px);
+  background: linear-gradient(90deg, transparent, rgb(var(--cc) / 60%) 30%, rgb(var(--cc) / 55%) 70%, transparent);
+}
+.astage__clouds--mist > i:nth-child(1) {
+  top: 70%;
+  width: 60%;
+}
+.astage__clouds--mist > i:nth-child(3) {
+  left: 45%;
+  top: 58%;
+  width: 55%;
+}
+.astage__clouds--overcast > i {
+  filter: blur(5px);
+  background: radial-gradient(60% 60% at 50% 50%, rgb(var(--cc) / 92%), transparent 76%);
+}
+.astage__clouds--overcast > i:nth-child(1) {
+  top: 4%;
+  width: 60%;
+  height: 46%;
+}
+.astage__clouds--overcast > i:nth-child(2) {
+  left: 46%;
+  top: 0;
+  width: 52%;
+  height: 40%;
+  opacity: 0.9;
+}
+.astage__clouds--overcast > i:nth-child(4) {
+  left: 72%;
+  top: 22%;
+  width: 34%;
+  height: 30%;
+  opacity: 0.8;
+}
+
+/* The planet's country over the rim, then its sun and moons, in front of it so the stands never hide them. */
+.astage__far {
+  left: 0;
+  width: 100%;
+}
+.astage__orbs {
+  left: 0;
+  right: 0;
+  top: 0;
+}
+.astage__sun,
+.astage__moon {
+  position: absolute;
+  width: var(--sz);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+}
+.astage__sun {
+  background: radial-gradient(circle, #fffef6 0 34%, var(--sc) 52%, transparent 72%);
+  box-shadow: 0 0 calc(var(--sz) * 1.1) calc(var(--sz) * 0.35) color-mix(in srgb, var(--sc) 45%, transparent);
+}
+.astage__moon {
+  opacity: 0.82;
+  background: radial-gradient(
+    circle at 34% 32%,
+    var(--m1),
+    color-mix(in srgb, var(--m1) 55%, var(--m2)) 52%,
+    var(--m2) 86%
+  );
+  box-shadow: 0 0 calc(var(--sz) * 0.25) rgb(255 255 255 / 18%);
+}
+.astage__moon::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: linear-gradient(118deg, transparent 50%, rgb(10 16 30 / 45%));
+}
+.lstage--tall .astage__sun,
+.lstage--tall .astage__moon {
+  width: calc(var(--sz) * 1.55);
+}
+
+/* The sand: warm, and darker toward the camera. */
+.astage__sand {
+  filter: saturate(0.96);
+}
+.astage__sand::after {
+  background: linear-gradient(180deg, rgb(40 26 20 / 40%), rgb(40 26 20 / 0%) 18%, transparent 60%, rgb(30 18 10 / 22%));
+}
+
+/* The air between the fighters and the far side: the stands fade a little into the planet's light. */
+.astage__farhaze {
+  left: 0;
+  right: 0;
+  mix-blend-mode: screen;
+  background: linear-gradient(180deg, rgb(var(--cc) / 24%), rgb(var(--cc) / 16%) 55%, rgb(var(--cc) / 6%) 85%, transparent);
+}
+.astage__flags,
+.astage__fires,
+.astage__side,
+.astage__light,
+.astage__tint,
+.astage__shade,
+.astage__motes,
+.astage__vig {
+  inset: 0;
+}
+
+/* Gold flags round the rim and a team pennant over each gate, waving. */
+.astage__flag {
+  position: absolute;
+  width: var(--fs);
+  aspect-ratio: 40 / 60;
+  transform: translate(-12%, -100%);
+}
+.astage__flag svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.astage__cloth {
+  fill: #e0b44e;
+  transform-box: fill-box;
+  transform-origin: 0 50%;
+  animation: astage-flag 2.6s ease-in-out infinite;
+  animation-delay: var(--fd, 0s);
+}
+.astage__flag--mine .astage__cloth {
+  fill: #00baff;
+}
+.astage__flag--enemy .astage__cloth {
+  fill: #ff5a6a;
+}
+@keyframes astage-flag {
+  0%,
+  100% {
+    transform: skewY(0deg) scaleX(1);
+  }
+  30% {
+    transform: skewY(-7deg) scaleX(0.92);
+  }
+  65% {
+    transform: skewY(5deg) scaleX(0.97);
+  }
+}
+
+/* Flames in the braziers. */
+.astage__fires {
+  mix-blend-mode: screen;
+}
+.astage__fire {
+  position: absolute;
+  width: var(--fz);
+  aspect-ratio: 0.7;
+  transform: translate(-50%, -88%);
+}
+.astage__fire::before,
+.astage__fire::after {
+  content: '';
+  position: absolute;
+  border-radius: 50% 50% 46% 46% / 62% 62% 38% 38%;
+  transform-origin: 50% 100%;
+  animation: astage-flame 0.7s ease-in-out infinite alternate;
+  animation-delay: var(--ff, 0s);
+}
+.astage__fire::before {
+  inset: 0;
+  background: radial-gradient(60% 70% at 50% 80%, #ffe7a0, #ff9a3a 55%, rgb(255 90 30 / 0%) 78%);
+}
+.astage__fire::after {
+  left: 26%;
+  right: 26%;
+  top: 34%;
+  bottom: 4%;
+  background: radial-gradient(closest-side, #fffbe6, #ffd36a 70%, transparent);
+  animation-duration: 0.5s;
+}
+@keyframes astage-flame {
+  from {
+    transform: scale(1, 1) skewX(-3deg);
+    opacity: 0.92;
+  }
+  to {
+    transform: scale(0.88, 1.16) skewX(4deg);
+    opacity: 1;
+  }
+}
+
+/* Light and shade from the sun's side; the planet's light colour on everything. */
+.astage__side {
+  top: 16%;
+  mix-blend-mode: multiply;
+}
+.astage--sun-l .astage__side {
+  background: linear-gradient(90deg, rgb(255 255 255 / 0%) 30%, rgb(10 8 22 / 26%));
+}
+.astage--sun-r .astage__side {
+  background: linear-gradient(270deg, rgb(255 255 255 / 0%) 30%, rgb(10 8 22 / 26%));
+}
+.astage__haze {
+  left: 0;
+  right: 0;
+  top: 26%;
+  height: 30%;
+  background: linear-gradient(180deg, transparent, rgb(var(--tint) / 14%) 45%, transparent);
+}
+.astage__light {
+  mix-blend-mode: screen;
+  background: radial-gradient(55% 50% at var(--lx) 22%, rgb(var(--tint) / 18%), transparent 70%);
+}
+.astage__tint {
+  opacity: var(--ta);
+  mix-blend-mode: soft-light;
+  background: rgb(var(--tint));
+}
+.astage__shade {
+  mix-blend-mode: multiply;
+  background: rgb(14 18 12 / var(--shade));
+}
+.astage__vig {
+  background: radial-gradient(125% 95% at 50% 46%, transparent 58%, rgb(8 6 16 / 50%));
+}
+
+/* Snow on Naron, dust on Magor. */
+.astage__motes > i {
+  position: absolute;
+  width: var(--msz);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  opacity: 0;
+}
+.lstage--tall .astage__motes > i {
+  width: calc(var(--msz) * 1.8);
+}
+.astage__motes--snow > i {
+  background: #fff;
+  box-shadow: 0 0 0.3cqw rgb(255 255 255 / 70%);
+  animation: astage-snow 9s linear infinite;
+  animation-delay: var(--md, 0s);
+}
+.astage__motes--dust > i {
+  width: calc(var(--msz) * 3);
+  aspect-ratio: 3;
+  background: radial-gradient(closest-side, rgb(214 140 80 / 70%), transparent);
+  animation: astage-dust 7s linear infinite;
+  animation-delay: var(--md, 0s);
+}
+@keyframes astage-snow {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0);
+  }
+  12% {
+    opacity: 0.9;
+  }
+  85% {
+    opacity: 0.7;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--mx), 30cqw);
+  }
+}
+@keyframes astage-dust {
+  0% {
+    opacity: 0;
+    transform: translate(-6cqw, 0);
+  }
+  20% {
+    opacity: 0.8;
+  }
+  80% {
+    opacity: 0.5;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(22cqw, 2cqw);
+  }
+}
+
+/* A sun on the right throws the shadows to the left. */
+.bfield--arena.bfield--sun-r .bunit .bunit__platform {
+  left: 42%;
+  transform: skewX(26deg);
+}
+
+/* ---- what a blow leaves on the sand ---- */
+
+.lmark--sand .lmark__tear {
+  background: radial-gradient(closest-side, rgb(90 60 34 / 55%), transparent);
+}
+.lmark__puff {
+  inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgb(222 196 150 / 80%), transparent);
+  animation: lmark-puff calc(1300ms * var(--beat)) ease-out;
+}
+.lmark__puff--b {
+  translate: -28% -10%;
+  scale: 0.7;
+  animation-delay: calc(var(--impact) + 60ms * var(--beat));
+}
+.lmark__puff--c {
+  translate: 30% -6%;
+  scale: 0.8;
+  animation-delay: calc(var(--impact) + 120ms * var(--beat));
+}
+.lmark__crack {
+  inset: 0;
+  animation: lmark-fade calc(2500ms * var(--beat)) ease-in;
+}
+.lmark__crack svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  fill: none;
+  stroke: rgb(50 32 18 / 80%);
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+.lmark__grit {
+  left: 50%;
+  top: 50%;
+  width: 3.6%;
+  aspect-ratio: 1;
+  border-radius: 40%;
+  background: #9a7a52;
+  animation: lmark-clod calc(820ms * var(--beat)) cubic-bezier(0.25, 0.6, 0.45, 1);
+}
+
 /* ---------- calmer settings ---------- */
 
 @media (prefers-reduced-motion: reduce) {
@@ -1593,6 +2033,10 @@
   }
   .lstage__scene,
   .lstage__clouds > i,
+  .astage__clouds > i,
+  .astage__cloth,
+  .astage__fire::before,
+  .astage__fire::after,
   .lstage__glints,
   .lstage__foam,
   .lstage__clump,
@@ -1607,7 +2051,10 @@
     animation-duration: 1ms;
     animation-delay: 0ms;
   }
+  .astage__motes,
   .lmark__clod,
+  .lmark__grit,
+  .lmark__puff,
   .lmark__blades,
   .lmark__ember,
   .lmark__smoke {
@@ -1619,6 +2066,10 @@
 }
 :root[data-fx='low'] .lstage__scene,
 :root[data-fx='low'] .lstage__clouds > i,
+:root[data-fx='low'] .astage__clouds > i,
+:root[data-fx='low'] .astage__cloth,
+:root[data-fx='low'] .astage__fire::before,
+:root[data-fx='low'] .astage__fire::after,
 :root[data-fx='low'] .lstage__glints,
 :root[data-fx='low'] .lstage__foam,
 :root[data-fx='low'] .lstage__clump,
@@ -1631,7 +2082,8 @@
 :root[data-fx='low'] .bunit__ret {
   animation: none;
 }
-:root[data-fx='low'] .bunit__dust {
+:root[data-fx='low'] .bunit__dust,
+:root[data-fx='low'] .astage__motes {
   display: none;
 }
 @keyframes lunit-pop-still {

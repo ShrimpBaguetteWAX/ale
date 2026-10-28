@@ -57,8 +57,9 @@ import { rememberWinPower } from '@/briefing/winPower'
 import { GameImg } from '@/components/GameImg'
 import { Engram, Laurel, Medal } from '@/fight/ResultHonours'
 import { fightLook, type FightLook } from '@/fight/fightLook'
-import { stageFor, type Stage } from '@/fight/stages'
+import { fightStageFor, stageFor, type Stage } from '@/fight/stages'
 import { GroundMark, LandStage } from '@/fight/LandStage'
+import { ArenaStage } from '@/fight/ArenaStage'
 import { GildedCards } from '@/fight/GildedCards'
 import { asset } from '@/assets'
 import {
@@ -507,6 +508,7 @@ export function FightStage({
   logHidden = false,
   overlay,
   look = 'classic',
+  ground,
 }: {
   replay: Replay
   pb: FightPlayback
@@ -535,10 +537,12 @@ export function FightStage({
    * Only the fight page passes one; the tournament keeps the classic field.
    */
   look?: FightLook
+  /** Which ground, in the land look: the arena, or a dungeon's land. Veles' coast if none is given. */
+  ground?: Stage
 }) {
   const { step, total, speed, playing } = pb
   const land = look === 'land'
-  const stage = useMemo(() => (land ? stageFor() : undefined), [land])
+  const stage = useMemo(() => (land ? ground ?? stageFor() : undefined), [land, ground])
   const charge = useMemo(
     () => (land ? chargeOf(replay.fighters, pb.state) : undefined),
     [land, replay, pb.state],
@@ -783,6 +787,13 @@ function Arena({
 }) {
   const phone = usePhone()
   /*
+     The ground it is fought on: an arena fight in the arena, under the sky of
+     the planet the player is on (the arena stands on their land); a dungeon
+     on its land, for now always Veles' Grass Coastline.
+  */
+  const planet = useGame((s) => s.player?.planet)
+  const ground = useMemo(() => fightStageFor(venue, planet), [venue, planet])
+  /*
      On a desktop the battlefield plays as a broadcast on the glass, with the
      map behind it: a window with a scorebar and a transport bar under the
      picture. The log opens in a column beside it on request.
@@ -914,6 +925,7 @@ function Arena({
           phone={phone}
           broadcast={broadcast}
           look={fightLook()}
+          ground={ground}
         />
       </div>
       )}
@@ -1169,6 +1181,8 @@ function Battlefield({
     <div
       className={
         `bfield${wide ? ' bfield--wide' : ''}${broadcast ? ' bfield--bcast' : ''}${stage ? ' bfield--land' : ''}` +
+        /* The arena's shadows fall away from its planet's sun; Veles' coast has it on the left. */
+        (stage?.kind === 'arena' ? ` bfield--arena bfield--sun-${stage.sky.side}` : '') +
         /* Alternating names, so a blow that follows another of its kind still shakes. */
         (shake ? ` bfield--shake${shake[1] ? ' bfield--flurry' : ''} bfield--t${turn % 2}` : '')
       }
@@ -1179,7 +1193,8 @@ function Battlefield({
         } as React.CSSProperties
       }
     >
-      {stage && <LandStage stage={stage} form={wide ? 'wide' : 'tall'} />}
+      {stage?.kind === 'land' && <LandStage stage={stage} form={wide ? 'wide' : 'tall'} />}
+      {stage?.kind === 'arena' && <ArenaStage stage={stage} form={wide ? 'wide' : 'tall'} />}
 
       <div className="bfield__labels">
         <span className="bfield__label bfield__label--mine">
@@ -1263,7 +1278,8 @@ function Battlefield({
           depth={depth.get(current.defenderUid) ?? 1}
           fire={current.element === 'fire'}
           big={current.killed || (shake?.[0] ?? 0) >= 1.6}
-          blades={stage.blades}
+          ground={stage.kind === 'arena' ? 'sand' : 'turf'}
+          blades={stage.kind === 'land' ? stage.blades : undefined}
         />
       )}
 

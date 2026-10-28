@@ -11,14 +11,20 @@
  * at 37%; a phone's field is square, with the horizon lower so the islands
  * clear the scorebar.
  *
- * Run from the web root:  node scripts/build-stages.cjs
+ * The arena is one stage on every planet: its bowl, its sand and the marks on
+ * it go to stages/arena/, and the strip of each planet's country seen over
+ * its rim to stages/skies/<planet>/ (scripts/stage-arena.cjs draws them). The
+ * few pieces the page animates there (flags, braziers) are placed from the
+ * same geometry, written to src/fight/arenaLayout.ts.
+ *
+ * Run from the web root:  node scripts/build-stages.cjs [veles|arena]
  */
 const path = require('path')
 const fs = require('fs')
 const sharp = require(path.resolve('node_modules/sharp'))
 
 const OUT = path.resolve('public/assets/stages/veles')
-fs.mkdirSync(OUT, { recursive: true })
+const ARENA = require('./stage-arena.cjs')
 
 const GEO = {
   wide: { W: 1600, H: 900, hz: 333, fs: 0.14, farH: 140 },
@@ -340,14 +346,92 @@ function grassTile() {
 }
 
 async function paint(name, svg, opts = {}) {
-  const file = path.join(OUT, `${name}.webp`)
+  const dir = opts.dir ?? OUT
+  fs.mkdirSync(dir, { recursive: true })
+  const file = path.join(dir, `${name}.webp`)
   let img = sharp(Buffer.from(svg))
   if (opts.width) img = img.resize({ width: opts.width })
-  await img.webp({ quality: opts.quality ?? 80, alphaQuality: 90, effort: 6 }).toFile(file)
-  console.log(name.padEnd(16), Math.round(fs.statSync(file).size / 1024), 'KB')
+  await img.webp({ quality: opts.quality ?? 80, alphaQuality: opts.alphaQuality ?? 90, effort: 6 }).toFile(file)
+  console.log(path.relative(path.resolve('public/assets/stages'), file).padEnd(28), Math.round(fs.statSync(file).size / 1024), 'KB')
 }
 
-;(async () => {
+/* ---- the arena: the same bowl on every planet, under each planet's sky ---- */
+const FORMS = { wide: 'wide', tall: 'tall' }
+const pc = (n, of) => +((n / of) * 100).toFixed(2)
+
+/* Where the live pieces stand, as % of the field: flags round the rim, a team pennant over each gate, flames in the braziers. */
+function arenaLayout(g) {
+  const { at, onScreen, wallH, brazierLevel, DEG } = ARENA
+  const flags = []
+  g.d.flags.forEach((d, i) => {
+    const phi = d * DEG
+    if (!onScreen(g, phi)) return
+    const [x, y] = at(g, phi, g.rim)
+    flags.push([pc(x, g.W), pc(y, g.H), pc(wallH(g, phi) * 0.62, g.W), +(i * 0.37).toFixed(2), 0])
+  })
+  g.d.gates.forEach((d, i) => {
+    const phi = d * DEG
+    const [x, y] = at(g, phi, g.tiers[0])
+    flags.push([pc(x, g.W), pc(y, g.H), pc(wallH(g, phi) * 0.5, g.W), +(i * 0.9).toFixed(2), i ? 2 : 1])
+  })
+  const fires = []
+  g.d.braziers.forEach((d, i) => {
+    const phi = d * DEG
+    if (!onScreen(g, phi)) return
+    const h = wallH(g, phi)
+    const [x, y] = at(g, phi, brazierLevel(g))
+    fires.push([pc(x, g.W), pc(y - h * 0.16, g.H), pc(h * 0.3, g.W), +(i * 0.23).toFixed(2)])
+  })
+  const [, rim] = at(g, 90 * DEG, g.rim)
+  const [, foot] = at(g, 90 * DEG, g.base)
+  return {
+    sky: g.skyH,
+    far: [pc(rim + g.farH * 0.16 - g.farH, g.H), pc(g.farH, g.H)],
+    haze: [+(pc(rim, g.H) - 1).toFixed(2), +(pc(foot - rim, g.H) + 3).toFixed(2)],
+    flags,
+    fires,
+  }
+}
+
+/* JSON with every list of numbers on one line, so the layout reads at a glance. */
+const compact = (v) =>
+  JSON.stringify(v, null, 2).replace(/\[\s+([^[\]]+?)\s+\]/g, (_, inner) => `[${inner.split(/,\s*/).join(', ')}]`)
+
+async function paintArena() {
+  const dir = path.resolve('public/assets/stages/arena')
+  const layout = {}
+  for (const form of Object.keys(FORMS)) {
+    const g = ARENA.geo(form)
+    await paint(`bowl-${form}`, ARENA.arenaLayer(g).replace('<svg ', '<svg xmlns="http://www.w3.org/2000/svg" '), { dir, quality: 80 })
+    /* Soft paint on air: the alpha is most of its weight, and a little less of it does not show. */
+    await paint(`marks-${form}`, ARENA.floorLayer(g).replace('<svg ', '<svg xmlns="http://www.w3.org/2000/svg" '), { dir, quality: 70, alphaQuality: 80 })
+    for (const [planet, far] of Object.entries(ARENA.FAR)) {
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${g.W} ${g.farH}" width="${g.W}" height="${g.farH}" preserveAspectRatio="none">${far(g)}</svg>`
+      await paint(`far-${form}`, svg, { dir: path.resolve(`public/assets/stages/skies/${planet}`), quality: 80 })
+    }
+    layout[form] = arenaLayout(g)
+  }
+  await paint('sand', ARENA.sandTile(), { dir, quality: 82 })
+  fs.writeFileSync(
+    path.resolve('src/fight/arenaLayout.ts'),
+    `/*
+ * Where the arena's live pieces stand, as % of the field: written by
+ * scripts/build-stages.cjs from the same geometry that painted the bowl, so
+ * the flags and the flames sit on it exactly. Do not edit by hand.
+ *
+ *   sky   — the height of the sky band
+ *   far   — [top, height] of the strip of the planet's country over the rim
+ *   haze  — [top, height] of the air over the far wall and stands
+ *   flags — [x, y, size, delay, team]: team 0 gold round the rim, 1 and 2 the gates' pennants
+ *   fires — [x, y, size, delay] in the braziers
+ */
+export const ARENA_LAYOUT = ${compact(layout)} as const
+`,
+  )
+  console.log('src/fight/arenaLayout.ts')
+}
+
+async function paintVeles() {
   for (const [form, g] of Object.entries(GEO)) {
     await paint(`far-${form}`, islands(g), { quality: 82 })
     await paint(`shore-${form}`, shore(g), { quality: 78 })
@@ -358,4 +442,10 @@ async function paint(name, svg, opts = {}) {
   await paint('clump', CLUMP, { quality: 82 })
   await paint('blades', BLADES, { quality: 82 })
   await paint('grass', grassTile(), { quality: 80 })
+}
+
+;(async () => {
+  const only = process.argv[2]
+  if (!only || only === 'veles') await paintVeles()
+  if (!only || only === 'arena') await paintArena()
 })()
