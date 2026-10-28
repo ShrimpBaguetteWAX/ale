@@ -7022,7 +7022,8 @@ button.combatcard--empty:hover {
   }
   .versus--hud .versus__cards {
     grid-area: 7 / 1 / 8 / 4;
-    margin-top: 0;
+    /* Flush under the team's strip: one panel, a hairline between (the board's row gap is 12px). */
+    margin-top: -12px;
     padding: 12px 22px;
     border-radius: 0 0 18px 18px;
   }
