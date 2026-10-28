@@ -56,7 +56,7 @@ import { NUM_LOCALE } from '@/format'
 import { rememberWinPower } from '@/briefing/winPower'
 import { GameImg } from '@/components/GameImg'
 import { Engram, Laurel, Medal } from '@/fight/ResultHonours'
-import { asset, artSet } from '@/assets'
+import { asset } from '@/assets'
 import {
   fetchShardPools,
   fetchTlmPools,
@@ -775,9 +775,7 @@ function Arena({
   )
 
   return (
-    <div className={`battle${finished ? ' battle--result' : ''}`}>
-      <img className="battle__art" {...artSet('bg-fight')} alt="" />
-      <div className="battle__scrim" />
+    <div className="battle">
 
       {!finished && (
       <div
@@ -1158,9 +1156,13 @@ function clock(ms: number): string {
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
 }
 
-/** Whether the window is a desktop's, where the page sits on the glass. */
+/**
+ * Whether the window is wider than a phone's, where the page sits on the
+ * glass and the fight plays in the broadcast window. The same line as the
+ * phone's, so a window between the two is not left with the old stage.
+ */
 function useWide(): boolean {
-  const query = '(min-width: 1024px)'
+  const query = '(min-width: 720px)'
   const [wide, setWide] = useState(
     () => typeof window !== 'undefined' && typeof window.matchMedia === 'function' && window.matchMedia(query).matches,
   )

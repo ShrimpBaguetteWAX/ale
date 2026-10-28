@@ -191,8 +191,7 @@
   /*
    * The pages that painted their own art over the whole window, and a scrim
    * to read on, would hide the map again: on the glass they need neither.
-   * The battle keeps its arena, and the tournament its gates: those are the
-   * scene, not a backdrop.
+   * The tournament keeps its gates: those are the scene, not a backdrop.
    */
   .market__art,
   .market__scrim,

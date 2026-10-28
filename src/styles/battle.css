@@ -24,30 +24,6 @@
   text-align: center;
 }
 
-.battle__art {
-  position: fixed;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  z-index: -1;
-}
-
-.battle__scrim {
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  background: radial-gradient(
-    120% 80% at 50% 50%,
-    rgb(4 8 20 / 25%),
-    rgb(4 8 20 / 88%)
-  );
-}
-
-:root[data-fx='low'] .battle__art {
-  display: none;
-}
-
 .battle__inner {
   position: relative;
   display: grid;
@@ -2983,12 +2959,7 @@
  * across the top, the blows as captions at its foot, and a transport bar
  * under the picture. The combat log opens over the window on request.
  */
-@media (min-width: 1024px) {
-  .battle__art,
-  .battle__scrim {
-    display: none;
-  }
-
+@media (min-width: 720px) {
   /* The classic stage keeps its bar, in the frame's glass. */
   .battle__bar {
     background: linear-gradient(180deg, rgb(10 18 34 / 72%), rgb(4 9 20 / 82%));
@@ -3221,6 +3192,7 @@
 
 }
 
+/* Beside the window only where that leaves the fight room to be watched. */
 @media (min-width: 1024px) {
   /*
    * ---- the log, beside the window ----
@@ -3598,7 +3570,7 @@
  * on the dungeon screen: the shared ghost button all but vanished over the
  * map. The way out keeps its own solid colour.
  */
-@media (min-width: 1024px) {
+@media (min-width: 720px) {
   .result__bar .btn--ghost {
     --btn-bg: rgb(255 255 255 / 9%);
     --btn-line: rgb(255 255 255 / 24%);
@@ -3645,7 +3617,7 @@
  * Desktop only: below that the cards wrap into rows, and a pool of light
  * sized for one row would sit in the middle of them.
  */
-@media (min-width: 1024px) {
+@media (min-width: 720px) {
   .result__stage::before,
   .result__stage::after {
     content: '';

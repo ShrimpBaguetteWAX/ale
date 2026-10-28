@@ -14,19 +14,6 @@
   gap: var(--sp-4);
 }
 
-/*
- * On the map, like every other page, at every width the honours result is
- * drawn at. Below 1024px the fight keeps its own full-window artwork while it
- * plays; the result lets it go, rather than switching backdrop as the window
- * crosses that line.
- */
-@media (min-width: 720px) {
-  .battle--result .battle__art,
-  .battle--result .battle__scrim {
-    display: none;
-  }
-}
-
 /* ---------- the verdict ---------- */
 
 .honours__head {
