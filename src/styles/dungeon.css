@@ -7474,3 +7474,31 @@ button.combatcard--empty:hover {
   margin-left: 4px;
   font-size: 10px;
 }
+
+/*
+ * The phone's dock to the very foot of the sheet (the sheet keeps 12px of
+ * padding under its content, which the dock covers), and the chance on its
+ * centre line: three columns, the faces left, the gauge in the middle, Done
+ * right, whatever their widths.
+ */
+.teamdock--sheet.teamdock--hud {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  grid-template-areas: none;
+  bottom: -12px;
+}
+.teamdock--sheet.teamdock--hud > .teamdock__faces {
+  grid-area: auto;
+  grid-column: 1;
+  justify-self: start;
+}
+.teamdock--sheet.teamdock--hud > .teamdock__chance {
+  grid-area: auto;
+  grid-column: 2;
+  margin: 0;
+}
+.teamdock--sheet.teamdock--hud > .teamdock__act {
+  grid-area: auto;
+  grid-column: 3;
+  justify-self: end;
+}
