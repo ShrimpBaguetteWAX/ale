@@ -6883,153 +6883,273 @@ button.combatcard--empty:hover {
  * The HUD as one board, as the stylesheet draws it: the page's header (the
  * title, the weather, the difficulty, Leave and Start Fight) is its top
  * bar, the two teams and the gauge its middle, and every tool one strip
- * along its foot - Team on the left, Cards after it.
+ * along its foot.
+ *
+ * Laid out by the board's own width, not the window's: the board is its own
+ * container. Wide, the teams face each other across the gauge; narrower
+ * than six medallions a side can stand, they stack, your team over the
+ * gauge over theirs, each spanning the full width.
  */
-@media (min-width: 1080px) {
-  .versus.versus--hud {
-    grid-template-columns: minmax(0, 1fr) 210px minmax(0, 1fr);
-    grid-template-rows: auto auto auto;
-    row-gap: 12px;
-    column-gap: 0;
-    padding: 16px 0 0;
-    border-radius: 18px;
-  }
+.versus.versus--hud {
+  container: matchup / inline-size;
+}
+
+.versus.versus--hud {
+  grid-template-columns: minmax(0, 1fr) 210px minmax(0, 1fr);
+  grid-template-rows: auto auto auto;
+  row-gap: 12px;
+  column-gap: 0;
+  padding: 16px 0 0;
+  border-radius: 18px;
+}
+.versus--hud .versus__side {
+  display: contents;
+}
+.versus--hud .versus__side--mine .versus__head {
+  grid-area: 1 / 1 / 2 / 2;
+  padding: 0 12px 0 22px;
+}
+.versus--hud .versus__side--enemy .versus__head {
+  grid-area: 1 / 3 / 2 / 4;
+  padding: 0 22px 0 12px;
+}
+.versus--hud .versus__side--mine .versus__row {
+  grid-area: 2 / 1 / 3 / 2;
+  padding: 0 12px 0 22px;
+}
+.versus--hud .versus__side--enemy .versus__row {
+  grid-area: 2 / 3 / 3 / 4;
+  padding: 0 22px 0 12px;
+}
+.versus--hud .versus__divider {
+  grid-area: 1 / 2 / 3 / 3;
+  align-self: center;
+  padding: 0;
+}
+.versus--hud .versus__pick,
+.versus--hud .versus__cards {
+  align-self: stretch;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 10px;
+  margin: 4px 0 0;
+  padding: 12px 12px 12px 22px;
+  background: rgb(255 255 255 / 3%);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 8%);
+}
+.versus--hud .versus__cards > .cardsbar {
+  flex-wrap: wrap;
+  row-gap: 8px;
+}
+.versus--hud .versus__pick {
+  grid-area: 3 / 1 / 4 / 2;
+  border-radius: 0 0 0 18px;
+}
+.versus--hud .versus__cards {
+  grid-area: 3 / 2 / 4 / 4;
+  padding: 12px 22px 12px 12px;
+  border-radius: 0 0 18px 0;
+}
+.versus--hud .versus__pick::before {
+  content: 'Team';
+  flex: none;
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.versus--hud .cardsbar__label {
+  width: auto;
+  padding-left: 0;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+}
+/* A rule between the team's tools and the cards', as one strip. */
+.versus--hud .versus__cards::before {
+  content: '';
+  flex: none;
+  width: 1px;
+  height: 28px;
+  margin-right: 6px;
+  background: rgb(255 255 255 / 12%);
+}
+/* Never wider than the medallion it sits in. */
+.versus--hud .medal__figs {
+  max-width: 100%;
+  overflow: hidden;
+}
+
+/* ---- narrower: the teams stack, the gauge a band between them ---- */
+@container matchup (max-width: 1279px) {
   .versus--hud .versus__side--mine .versus__head {
-    grid-area: 1 / 1 / 2 / 2;
-    padding: 0 12px 0 22px;
-  }
-  .versus--hud .versus__side--enemy .versus__head {
-    grid-area: 1 / 3 / 2 / 4;
-    padding: 0 22px 0 12px;
+    grid-area: 1 / 1 / 2 / 4;
+    padding: 0 22px;
   }
   .versus--hud .versus__side--mine .versus__row {
-    grid-area: 2 / 1 / 3 / 2;
-    padding: 0 12px 0 22px;
-  }
-  .versus--hud .versus__side--enemy .versus__row {
-    grid-area: 2 / 3 / 3 / 4;
-    padding: 0 22px 0 12px;
+    grid-area: 2 / 1 / 3 / 4;
+    padding: 0 22px;
   }
   .versus--hud .versus__divider {
-    grid-area: 1 / 2 / 3 / 3;
-    align-self: center;
-    padding: 0;
+    grid-area: 3 / 1 / 4 / 4;
+    justify-self: stretch;
+    padding: 0 22px;
   }
-  .versus--hud .versus__pick,
-  .versus--hud .versus__cards {
-    align-self: stretch;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin: 4px 0 0;
-    padding: 12px 12px 12px 22px;
-    background: rgb(255 255 255 / 3%);
-    box-shadow: inset 0 1px 0 rgb(255 255 255 / 8%);
+  .versus--hud .versus__side--enemy .versus__head {
+    grid-area: 4 / 1 / 5 / 4;
+    padding: 0 22px;
   }
-  /* On a narrower desktop the strip wraps rather than running off the board. */
-  .versus--hud .versus__pick,
-  .versus--hud .versus__cards,
-  .versus--hud .versus__cards > .cardsbar {
-    flex-wrap: wrap;
-    row-gap: 8px;
+  .versus--hud .versus__side--enemy .versus__row {
+    grid-area: 5 / 1 / 6 / 4;
+    padding: 0 22px;
+  }
+  /* Full width, but never giant: six medallions of at most 120px, centred. */
+  .versus--hud .versus__row {
+    grid-template-columns: repeat(6, minmax(0, 120px));
+    justify-content: center;
+    gap: 14px;
   }
   .versus--hud .versus__pick {
-    grid-area: 3 / 1 / 4 / 2;
-    border-radius: 0 0 0 18px;
+    grid-area: 6 / 1 / 7 / 4;
+    padding: 12px 22px;
+    border-radius: 0;
   }
   .versus--hud .versus__cards {
-    grid-area: 3 / 2 / 4 / 4;
-    padding: 12px 22px 12px 12px;
-    border-radius: 0 0 18px 0;
+    grid-area: 7 / 1 / 8 / 4;
+    margin-top: 0;
+    padding: 12px 22px;
+    border-radius: 0 0 18px 18px;
   }
-  .versus--hud .versus__pick::before {
-    content: 'Team';
-    flex: none;
-    font-family: var(--font-display);
-    font-size: 11px;
-    font-weight: 800;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    color: var(--text-faint);
-  }
-  .versus--hud .cardsbar__label {
-    width: auto;
-    padding-left: 0;
-    font-size: 11px;
-    letter-spacing: 0.14em;
-  }
-  /* A rule between the team's tools and the cards', as one strip. */
   .versus--hud .versus__cards::before {
-    content: '';
-    flex: none;
-    width: 1px;
-    height: 28px;
-    margin-right: 6px;
-    background: rgb(255 255 255 / 12%);
+    display: none;
+  }
+  /* One band: the gauge centred on the board with its word under it, the head-to-head beside it. */
+  .versus--hud .hudcentre {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    grid-template-areas:
+      '. gauge tape'
+      '. cap tape';
+    align-items: center;
+    gap: 2px 24px;
+    width: 100%;
+    padding: 10px 0;
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 8%),
+      inset 0 -1px 0 rgb(255 255 255 / 8%);
+  }
+  .versus--hud .hudcentre__gauge {
+    width: 130px;
+    height: 74px;
+  }
+  .versus--hud .hudcentre__gauge b {
+    font-size: 26px;
+  }
+  .versus--hud .hudcentre__gauge {
+    grid-area: gauge;
+    justify-self: center;
+  }
+  .versus--hud .hudcentre__cap {
+    grid-area: cap;
+    justify-self: center;
+  }
+  .versus--hud .hudcentre__tape {
+    grid-area: tape;
+    justify-self: start;
+    width: min(260px, 100%);
+    margin-top: 0;
   }
 }
 
+/* The figure centred on the gauge; the % hangs off it rather than pushing it left. */
+.versus--hud .hudcentre__gauge b i {
+  position: absolute;
+  margin-left: 2px;
+  bottom: 3px;
+}
+.versus--hud .hudcentre__gauge b {
+  display: block;
+}
+
 /* ---- the top bar: the page header, joined to the board under it ---- */
-@media (min-width: 1080px) {
-  .dungeon__inner:has(> .versus--hud) > .dungeon__head {
-    flex-wrap: nowrap;
-    margin-bottom: calc(-1 * var(--sp-4));
-    padding: 14px 22px;
-    border: 1px solid var(--line);
-    border-bottom: 0;
-    border-radius: 18px 18px 0 0;
-    background: var(--surface-3);
-    box-shadow: inset 0 -1px 0 rgb(255 255 255 / 8%);
-  }
-  /* The bar and the board first, together; an alert waits under them, above the picker. */
-  .dungeon__inner:has(> .versus--hud) > .dungeon__head,
-  .dungeon__inner > .versus--hud {
-    order: -1;
-  }
-  .dungeon__inner > .versus--hud {
-    border-top: 0;
-    border-radius: 0 0 18px 18px;
-  }
+.dungeon__inner:has(> .versus--hud) > .dungeon__head {
+  container: matchuphead / inline-size;
+  flex-wrap: wrap;
+  margin-bottom: calc(-1 * var(--sp-4));
+  padding: 14px 22px;
+  border: 1px solid var(--line);
+  border-bottom: 0;
+  border-radius: 18px 18px 0 0;
+  background: var(--surface-3);
+  box-shadow: inset 0 -1px 0 rgb(255 255 255 / 8%);
+}
+/* The bar and the board first, together; an alert waits under them, above the picker. */
+.dungeon__inner:has(> .versus--hud) > .dungeon__head,
+.dungeon__inner > .versus--hud {
+  order: -1;
+}
+.dungeon__inner > .versus--hud {
+  border-top: 0;
+  border-radius: 0 0 18px 18px;
+}
+.dungeon__inner:has(> .versus--hud) > .dungeon__head .dungeon__conditions {
+  order: 0;
+  /* The weather and the difficulty one height: the chip stretches to the box. */
+  align-items: stretch;
+  width: auto;
+  gap: 10px;
+  min-width: 0;
+}
+.dungeon__inner:has(> .versus--hud) > .dungeon__head .dungeon__rule {
+  display: none;
+}
+/* The weather as a chip. */
+.dungeon__inner:has(> .versus--hud) > .dungeon__head .weathertwin {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  height: auto;
+  min-height: 44px;
+  padding: 0 14px;
+  border-radius: 12px;
+  background: rgb(255 255 255 / 5%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 10%);
+}
+.dungeon__inner:has(> .versus--hud) > .dungeon__head .weathertwin__label {
+  display: none;
+}
+.dungeon__inner:has(> .versus--hud) > .dungeon__head .weathertwin__line {
+  font-size: 14px;
+}
+/* The difficulty in one box: the arrows round the number, the figures and the ladder beside it. */
+.dungeon__inner:has(> .versus--hud) > .dungeon__head .dstep {
+  gap: 8px;
+  padding: 4px 12px 4px 4px;
+  border-radius: 12px;
+  background: rgb(255 255 255 / 4%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 10%);
+}
+.dungeon__inner:has(> .versus--hud) > .dungeon__head .dstep__arrow {
+  height: 32px;
+  border-radius: 8px;
+}
+.dungeon__inner:has(> .versus--hud) > .dungeon__head .dstep__value {
+  min-width: 40px;
+  height: 32px;
+  font-size: 18px;
+}
+/*
+ * Narrower: the title with Leave and Start Fight on the first line, the
+ * weather and the difficulty on their own line under it, wrapping again
+ * rather than overlapping.
+ */
+@container matchuphead (max-width: 1379px) {
   .dungeon__inner:has(> .versus--hud) > .dungeon__head .dungeon__conditions {
-    order: 0;
-    width: auto;
-    gap: 10px;
-  }
-  .dungeon__inner:has(> .versus--hud) > .dungeon__head .dungeon__rule {
-    display: none;
-  }
-  /* The weather as a chip. */
-  .dungeon__inner:has(> .versus--hud) > .dungeon__head .weathertwin {
-    display: flex;
-    align-items: center;
-    height: 40px;
-    padding: 0 12px;
-    border-radius: 11px;
-    background: rgb(255 255 255 / 5%);
-    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 10%);
-  }
-  .dungeon__inner:has(> .versus--hud) > .dungeon__head .weathertwin__label {
-    display: none;
-  }
-  .dungeon__inner:has(> .versus--hud) > .dungeon__head .weathertwin__line {
-    font-size: 14px;
-  }
-  /* The difficulty in one box: the arrows round the number, the figures and the ladder beside it. */
-  .dungeon__inner:has(> .versus--hud) > .dungeon__head .dstep {
-    gap: 8px;
-    padding: 4px 12px 4px 4px;
-    border-radius: 12px;
-    background: rgb(255 255 255 / 4%);
-    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 10%);
-  }
-  .dungeon__inner:has(> .versus--hud) > .dungeon__head .dstep__arrow {
-    height: 32px;
-    border-radius: 8px;
-  }
-  .dungeon__inner:has(> .versus--hud) > .dungeon__head .dstep__value {
-    min-width: 40px;
-    height: 32px;
-    font-size: 18px;
+    order: 3;
+    flex-wrap: wrap;
+    width: 100%;
   }
 }
 
