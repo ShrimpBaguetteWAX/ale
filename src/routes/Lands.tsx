@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useGame } from '@/state/useGame'
 import { fetchOwnedLands, type LandAsset } from '@/chain/atomic'
 import { fetchPlanetLands } from '@/chain/queries'
@@ -758,6 +758,18 @@ export function PhoneLands({
   onBoost: (land: OwnedLand, building: Building, target: number, cost: number) => void
   onDestroy: (land: OwnedLand, building: Building) => void
 }) {
+  /*
+     Every row's shards as wide as the widest, so the TLM icons all stand in
+     one column, where the row with the most shards puts its own.
+  */
+  const listRef = useRef<HTMLDivElement>(null)
+  useLayoutEffect(() => {
+    const list = listRef.current
+    if (!list) return
+    list.style.removeProperty('--shards-w')
+    const widths = [...list.querySelectorAll<HTMLElement>('.plands__shards')].map((el) => el.offsetWidth)
+    list.style.setProperty('--shards-w', Math.max(0, ...widths) + 'px')
+  })
   const [tab, setTab] = useState<PhoneTab>('all')
   const [openKey, setOpenKey] = useState<string | null>(null)
   const open = lands.find((l) => landKey(l) === openKey) ?? null
@@ -818,7 +830,7 @@ export function PhoneLands({
         ))}
       </div>
 
-      <div className="plands__list">
+      <div className="plands__list" ref={listRef}>
         {shown.map((land) => {
           const building = land.buildings[0]
           const name = landBuilding(land)
