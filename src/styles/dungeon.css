@@ -7118,6 +7118,12 @@ button.combatcard--empty:hover {
   height: 32px;
   font-size: 18px;
 }
+/* The arrows and the number sit on the line the weather and the ladder end on, not centred above it. */
+.dungeon__inner:has(> .versus--hud) > .dungeon__head .dstep__arrow,
+.dungeon__inner:has(> .versus--hud) > .dungeon__head .dstep__value {
+  align-self: flex-end;
+  margin-bottom: 1px;
+}
 /*
  * Narrower: the title with Leave and Start Fight on the first line, the
  * weather and the difficulty on their own line under it, wrapping again
