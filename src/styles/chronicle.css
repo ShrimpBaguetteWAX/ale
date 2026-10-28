@@ -1,0 +1,243 @@
+/*
+ * The combat log in the fight-on-its-ground look: a chronicle of cards.
+ *
+ * Each blow is the attacker's mini card, a burst in the element's colour with
+ * the damage and how much of it landed, and the target's mini card with the
+ * health it was left on; a knockout leaves the target's card fallen, as in
+ * the row under the fight. The facts under the pair are the log's own lines
+ * (who, whose, the health, what was blocked, the element, overkill, the
+ * attacker's health), abilities are gold ribbons, a knockout a chip in the
+ * colour of the side that lost the fighter.
+ *
+ * Everything hangs off .clog--chron, which only the land look and its result
+ * sheet set; the classic log and the tournament's keep battle.css alone.
+ */
+
+.clog.clog--chron {
+  border-color: rgb(255 217 121 / 30%);
+  background: linear-gradient(180deg, rgb(10 18 34 / 72%), rgb(4 9 20 / 84%));
+  box-shadow: inset 0 0 0 1px rgb(255 217 121 / 22%);
+}
+.clog--chron .panel__title {
+  color: transparent;
+  background: linear-gradient(180deg, #fff6d6, #d9a640);
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+.clog--chron .clog__body {
+  gap: 6px;
+}
+
+/* ---- one blow: number, card, burst, card; the facts under the pair ---- */
+
+.clog--chron .chron {
+  grid-template-columns: 22px 44px minmax(0, 1fr) 44px;
+  grid-template-rows: auto auto;
+  align-items: center;
+  gap: 4px 8px;
+  padding: 8px;
+  border-radius: 10px;
+  background: rgb(255 255 255 / 4%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 6%);
+  /*
+     Not content-visibility: an entry's height depends on its abilities and
+     knockout, so an estimate for the ones out of view put the log's end
+     somewhere else than where it scrolled to. A hundred still lines with
+     lazy portraits are light enough; only the newest one moves.
+  */
+}
+.clog--chron .chron:nth-child(even) {
+  background: rgb(255 255 255 / 4%);
+}
+.clog--chron .chron.clog__turn--ko {
+  background: rgb(var(--ko-rgb) / 8%);
+  box-shadow:
+    inset 0 0 0 1px rgb(var(--ko-rgb) / 25%),
+    inset 2px 0 0 rgb(var(--ko-rgb) / 55%);
+}
+.clog--chron .chron > .clog__n {
+  grid-row: 1;
+  align-self: center;
+  padding: 0;
+  text-align: center;
+}
+
+/* The two cards, the card row's own at a line's size; nothing on them moves. */
+.clog--chron .gcard--mini {
+  --u: 5.8px;
+  --beat: 1;
+
+  grid-row: 1;
+  justify-self: center;
+}
+.clog--chron .gcard--mini,
+.clog--chron .gcard--mini * {
+  transition: none;
+}
+/* Fallen where it is, without the drop below a row it does not have. */
+.clog--chron .gcard--mini.gcard--ko {
+  transform: rotate(-11deg) scale(0.88);
+}
+.clog--chron .gcard--mini.gcard--enemy.gcard--ko {
+  transform: rotate(11deg) scale(0.88);
+}
+
+/* The blow between them: a streak from one side's colour to the other's
+   through the element's, and the damage on it. */
+.chron__burst {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  grid-row: 1;
+  min-width: 0;
+}
+.chron__burst::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 2px;
+  margin-top: -1px;
+  background: linear-gradient(90deg, var(--ac), var(--ec), var(--dc));
+  opacity: 0.6;
+}
+.clog--chron .chron__burst .clog__dmg {
+  position: relative;
+  padding: 2px 10px;
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 900;
+  color: #fff;
+  text-shadow: 0 0 10px var(--ec);
+  background: radial-gradient(closest-side, rgb(4 9 20 / 95%), rgb(4 9 20 / 70%));
+  clip-path: polygon(0 50%, 10% 0, 90% 0, 100% 50%, 90% 100%, 10% 100%);
+}
+.chron__burst small {
+  position: relative;
+  font-family: var(--font-display);
+  font-size: 9.5px;
+  color: var(--text-dim);
+}
+
+/* The facts, under the pair. */
+.clog--chron .chron__info {
+  grid-column: 2 / -1;
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.clog--chron .chron__info .clog__line {
+  font-size: 12px;
+}
+.clog--chron .chron__info .clog__meta {
+  margin: 0;
+  gap: 3px 9px;
+  font-size: 10.5px;
+}
+
+/* An ability: a gold ribbon. */
+.clog--chron .clog__effect {
+  justify-self: start;
+  display: inline-flex;
+  margin: 3px 0 0;
+  /* Room on the right for the ribbon's notch, clear of the last word. */
+  padding: 2px 18px 2px 8px;
+  font-size: 10.5px;
+  color: #1a1205;
+  background: linear-gradient(180deg, #fff3c4, #d9a640);
+  clip-path: polygon(0 0, 100% 0, 96% 50%, 100% 100%, 0 100%);
+}
+.clog--chron .clog__effect .clog__arrow {
+  color: #6b5414;
+}
+.clog--chron .clog__effect .clog__arrow::before {
+  content: '◆';
+}
+.clog--chron .clog__effect .clog__arrow {
+  font-size: 0;
+}
+.clog--chron .clog__effect .clog__arrow::before {
+  font-size: 9px;
+}
+.clog--chron .clog__effect--up strong:first-of-type {
+  color: #0d4a1c;
+}
+.clog--chron .clog__effect--down strong:first-of-type {
+  color: #7a0d1c;
+}
+.clog--chron .clog__effect .clog__trigger,
+.clog--chron .clog__effect .clog__name {
+  color: #4f3d0e;
+}
+
+/* A knockout: a chip in the colour of the side that lost the fighter. */
+.clog--chron .clog__ko {
+  justify-self: start;
+  margin: 3px 0 0;
+  padding: 2px 8px;
+  border-radius: 3px;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  color: #fff;
+  background: #c3203a;
+}
+.clog--chron .clog__ko--mine {
+  color: #fff;
+  background: #0a6fd8;
+}
+
+/* What fired before the first blow: gold, as abilities are. */
+.clog--chron .clog__turn--opening {
+  padding: 8px;
+  border-radius: 10px;
+  background: rgb(255 217 121 / 7%);
+  box-shadow: inset 2px 0 0 #d9a640;
+}
+
+/* ---- the blow that has just landed arrives ---- */
+
+.chron--new {
+  animation: chron-in calc(400ms * var(--beat, 1)) ease-out;
+}
+.chron--new .chron__burst .clog__dmg {
+  animation: chron-burst calc(500ms * var(--beat, 1)) cubic-bezier(0.2, 1.6, 0.4, 1);
+}
+@keyframes chron-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+@keyframes chron-burst {
+  from {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+}
+
+@media (max-width: 719px) {
+  .clog--chron .chron {
+    grid-template-columns: 18px 40px minmax(0, 1fr) 40px;
+    gap: 4px 6px;
+    padding: 7px;
+  }
+  .clog--chron .gcard--mini {
+    --u: 5.3px;
+  }
+  .clog--chron .chron__info {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chron--new,
+  .chron--new .chron__burst .clog__dmg {
+    animation: none;
+  }
+}
+:root[data-fx='low'] .chron--new,
+:root[data-fx='low'] .chron--new .chron__burst .clog__dmg {
+  animation: none;
+}

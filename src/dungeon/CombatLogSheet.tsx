@@ -3,6 +3,7 @@ import { useModal } from '@/components/useModal'
 import type { EffectEvent, Replay } from './sim'
 import { NFT_FIGHTER_ID } from './rules'
 import { formatScaled, STAT_LABEL } from '@/tavern/fighterStats'
+import { MiniCard, elementRim } from '@/fight/GildedCards'
 
 /**
  * The whole fight, laid out to be read.
@@ -68,10 +69,21 @@ export function CombatLogEntries({
   replay,
   playertag,
   turns,
+  chronicle = false,
+  newest,
 }: {
   replay: Replay
   playertag?: string
   turns: number[]
+  /**
+   * The fight-on-its-ground look: each blow as the attacker's mini card, a
+   * burst in the element's colour with the damage, and the target's mini
+   * card, the details under the pair. Same facts, same order, same classes
+   * for what each line means.
+   */
+  chronicle?: boolean
+  /** The blow that has just landed, which arrives with a little motion. */
+  newest?: number
 }) {
   const byUid = useMemo(
     () => new Map(replay.fighters.map((f) => [f.uid, f])),
@@ -119,7 +131,90 @@ export function CombatLogEntries({
             </article>
           )}
 
-          {turns.map((i) => ({ t: replay.turns[i], i })).map(({ t, i }) => (
+          {turns.map((i) => ({ t: replay.turns[i], i })).map(({ t, i }) => chronicle ? (
+            <article
+              className={
+                'clog__turn chron' +
+                (t.killed ? ` clog__turn--ko clog__turn--ko-${sideOf(t.defenderUid)}` : '') +
+                (i === newest ? ' chron--new' : '')
+              }
+              key={i}
+              style={
+                {
+                  '--ec': elementRim(t.element),
+                  '--ac': sideOf(t.attackerUid) === 'mine' ? 'var(--cyan)' : '#ff5a6a',
+                  '--dc': sideOf(t.defenderUid) === 'mine' ? 'var(--cyan)' : '#ff5a6a',
+                } as React.CSSProperties
+              }
+            >
+              <span className="clog__n">{i + 1}</span>
+              {byUid.get(t.attackerUid) ? (
+                <MiniCard fighter={byUid.get(t.attackerUid)!} health={t.attackerHealth} down={false} />
+              ) : (
+                <span />
+              )}
+              <div className="chron__burst">
+                <strong className="clog__dmg mono">{formatScaled(t.damage)}</strong>
+                <small title="Share of the attacker's damage that got through">
+                  {Math.round(t.effectiveness)}% landed
+                </small>
+              </div>
+              {byUid.get(t.defenderUid) ? (
+                <MiniCard
+                  fighter={byUid.get(t.defenderUid)!}
+                  health={t.defenderHealthAfter}
+                  down={t.killed}
+                />
+              ) : (
+                <span />
+              )}
+
+              <div className="clog__what chron__info">
+                <p className="clog__line">
+                  <span className={`clog__who clog__who--${sideOf(t.attackerUid)}`}>
+                    {nameOf(t.attackerUid)}
+                  </span>
+                  <span className="clog__owner clog__wide">{ownerOf(t.attackerUid)}</span>
+                  <span className="clog__verb">hit</span>
+                  <span className={`clog__who clog__who--${sideOf(t.defenderUid)}`}>
+                    {nameOf(t.defenderUid)}
+                  </span>
+                  <span className="clog__owner clog__wide">{ownerOf(t.defenderUid)}</span>
+                </p>
+                <p className="clog__meta mono">
+                  <span title="The defender's health before and after the blow">
+                    {formatScaled(t.defenderHealthBefore)} →{' '}
+                    {formatScaled(t.defenderHealthAfter)} HP
+                  </span>
+                  {t.blocked > 0 && (
+                    <span className="clog__wide" title="Absorbed by resistance to the attacker's element">
+                      {formatScaled(t.blocked)} blocked
+                    </span>
+                  )}
+                  {t.element && <span className="clog__wide clog__element">{t.element}</span>}
+                  {t.raw > t.damage && (
+                    <span
+                      className="clog__wide"
+                      title="Damage past the defender's remaining health, which the contract discards"
+                    >
+                      {formatScaled(t.raw - t.damage)} overkill
+                    </span>
+                  )}
+                  <span className="clog__wide" title="The attacker's own health as it swung">
+                    attacker on {formatScaled(t.attackerHealth)} HP
+                  </span>
+                </p>
+                {t.effects.map((e, j) => (
+                  <Effect key={j} effect={e} nameOf={nameOf} />
+                ))}
+                {t.killed && (
+                  <p className={`clog__ko clog__ko--${sideOf(t.defenderUid)}`}>
+                    {nameOf(t.defenderUid)} is knocked out
+                  </p>
+                )}
+              </div>
+            </article>
+          ) : (
             <article
               className={
                 'clog__turn' +
@@ -229,11 +324,14 @@ export function CombatLogSheet({
   playertag,
   onClose,
   onDownload,
+  chronicle = false,
 }: {
   replay: Replay
   playertag?: string
   onClose: () => void
   onDownload: () => void
+  /** The fight's own look, card to card: see CombatLogEntries. */
+  chronicle?: boolean
 }) {
   /* Escape closes it, like every other overlay in the game. */
   const panel = useModal(onClose)
@@ -262,7 +360,7 @@ export function CombatLogSheet({
       onClick={onClose}
     >
       <div
-        className="sheet__panel panel clog"
+        className={`sheet__panel panel clog${chronicle ? ' clog--chron' : ''}`}
         ref={panel}
         onClick={(e) => e.stopPropagation()}
       >
@@ -308,6 +406,7 @@ export function CombatLogSheet({
             replay={replay}
             playertag={playertag}
             turns={shown.map(({ i }) => i)}
+            chronicle={chronicle}
           />
 
           {shown.length === 0 && (

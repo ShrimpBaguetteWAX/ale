@@ -572,13 +572,23 @@ export function FightStage({
     })
   }, [logHidden])
 
-  /** The log follows the fight, as the original's does. */
+  /*
+     The log follows the fight, as the original's does. It also opens on the
+     newest blow: a desktop starts with it shut, and opening it mid-fight left
+     it at the first blow, since nothing had moved it since.
+  */
+  const logOpen = useRef(false)
   useEffect(() => {
     const el = logRef.current
-    if (!el) return
+    if (!el) {
+      logOpen.current = false
+      return
+    }
+    const opening = !logOpen.current
+    logOpen.current = true
     /* A phone lists the newest blow first, so that is where it stays. */
-    el.scrollTo({ top: phone ? 0 : el.scrollHeight, behavior: 'smooth' })
-  }, [step, phone])
+    el.scrollTo({ top: phone ? 0 : el.scrollHeight, behavior: opening ? 'auto' : 'smooth' })
+  }, [step, phone, showLog])
 
   return (
     <div className={`bfwrap${broadcast ? ' bfwrap--bcast' : ''}${broadcast && showLog && !phone ? ' bfwrap--log' : ''}${land ? ' bfwrap--land' : ''}`}>
@@ -723,7 +733,7 @@ export function FightStage({
         blow lands.
       */}
       {(!broadcast || showLog || (phone && !logHidden)) && (
-        <section className="panel clog clog--live" aria-label="Combat log">
+        <section className={`panel clog clog--live${land ? ' clog--chron' : ''}`} aria-label="Combat log">
           <header className="clog__head">
             <div className="clog__heading">
               <span className="panel__title">Combat log</span>
@@ -739,6 +749,8 @@ export function FightStage({
               <CombatLogEntries
                 replay={replay}
                 playertag={playertag}
+                chronicle={land}
+                newest={step - 1}
                 turns={
                   phone
                     ? Array.from({ length: step }, (_, i) => step - 1 - i)
@@ -2853,6 +2865,7 @@ function Result({
         <CombatLogSheet
           replay={replay}
           playertag={player.playertag}
+          chronicle={fightLook() === 'land'}
           onClose={() => setShowLog(false)}
           onDownload={onDownload}
         />

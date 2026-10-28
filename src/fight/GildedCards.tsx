@@ -208,3 +208,51 @@ function GildedCard({
     </li>
   )
 }
+
+/** An element's own colour: the rim inside a card's frame, and a blow's burst in the log. */
+export function elementRim(element: string): string {
+  return ELEMENT_RIM[element] ?? ELEMENT_RIM.neutral
+}
+
+/**
+ * A fighter's gilded card at the size of a line of the combat log: the same
+ * frame, rim, level and health bar as the row under the fight, and the same
+ * fall when the blow it sits in knocked it out. Nothing on it moves; it says
+ * what the fighter looked like at that blow.
+ */
+export function MiniCard({
+  fighter,
+  health,
+  down,
+}: {
+  fighter: SimFighter
+  /** Its health at the blow: the attacker's as it swung, the target's after. */
+  health: number
+  down: boolean
+}) {
+  const share = fighter.max_health > 0 ? Math.max(0, Math.min(1, health / fighter.max_health)) : 0
+  const nft = Number(fighter.fighter_id) === NFT_FIGHTER_ID
+  return (
+    <div
+      className={
+        `gcard gcard--mini gcard--${fighter.team === 1 ? 'mine' : 'enemy'}` +
+        (down ? ' gcard--ko gcard--settled' : share <= LOW_SHARE ? ' gcard--low' : '')
+      }
+      style={{ '--ec': elementRim(fighter.element), '--h': share } as React.CSSProperties}
+      aria-hidden="true"
+    >
+      <div className="gcard__frame">
+        <div className="gcard__pic">
+          <GameImg src={fighterFace(fighter)} alt="" loading="lazy" fallback={fighterArtFallback()} />
+        </div>
+        <span className="gcard__lv">
+          <b>{nft ? 'NFT' : fighter.level}</b>
+        </span>
+      </div>
+      <span className="gcard__hp">
+        <i className="gcard__fill" />
+      </span>
+      <span className="gcard__down">DOWN</span>
+    </div>
+  )
+}
