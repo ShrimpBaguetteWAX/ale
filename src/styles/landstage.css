@@ -1548,33 +1548,33 @@
   font-size: 2.8cqw;
 }
 /*
- * How far a number rises, measured on the field rather than on the number:
- * a percentage of its own height sent a tall number (a second line, a bigger
- * hit) much further than a small splash or heal, so they never rose alike.
+ * A number rises by its own height, so a big hit flies further than a small
+ * one; but never less than --pop-min on the field, or a small splash or heal
+ * hardly left the head.
  */
 .bfield--land {
-  --pop-rise: -5.1cqw;
+  --pop-min: -4.5cqw;
 }
 .bfield--land:not(.bfield--wide) {
-  --pop-rise: -10.5cqw;
+  --pop-min: -9cqw;
 }
 @keyframes lunit-pop {
   0% {
-    transform: translate(-50%, calc(var(--pop-rise) * 0.13)) scale(0.4);
+    transform: translate(-50%, min(-20%, calc(var(--pop-min) * 0.13))) scale(0.4);
     opacity: 0;
   }
   18% {
-    transform: translate(-50%, calc(var(--pop-rise) * 0.4)) scale(1.25);
+    transform: translate(-50%, min(-60%, calc(var(--pop-min) * 0.4))) scale(1.25);
     opacity: 1;
   }
   32% {
-    transform: translate(-50%, calc(var(--pop-rise) * 0.47)) scale(1);
+    transform: translate(-50%, min(-70%, calc(var(--pop-min) * 0.47))) scale(1);
   }
   80% {
     opacity: 1;
   }
   100% {
-    transform: translate(-50%, var(--pop-rise)) scale(1);
+    transform: translate(-50%, min(-150%, var(--pop-min))) scale(1);
     opacity: 0;
   }
 }
@@ -2299,11 +2299,11 @@
 }
 @keyframes lunit-pop-still {
   0% {
-    transform: translate(-50%, calc(var(--pop-rise) * 0.47));
+    transform: translate(-50%, min(-70%, calc(var(--pop-min) * 0.47)));
     opacity: 1;
   }
   100% {
-    transform: translate(-50%, calc(var(--pop-rise) * 0.47));
+    transform: translate(-50%, min(-70%, calc(var(--pop-min) * 0.47)));
     opacity: 0;
   }
 }
