@@ -161,6 +161,8 @@ const MAX_SCALE = 72
  */
 const PHONE = '(max-width: 719px)'
 const onPhone = () => window.matchMedia(PHONE).matches
+/** Rows of the mirrored art a phone can pan up past the map's last row. */
+const PHONE_ROWS_BEYOND = 2
 
 /** Movement beyond this during a press counts as a pan, not a tap. */
 const DRAG_SLOP = 6
@@ -206,6 +208,8 @@ function floorScale(w: number, h: number, fill = onPhone()): number {
  * the buildings and everything that can be selected stay on the real map.
  * Only the copies that reach the window are drawn.
  */
+const SEAM = 2
+
 function drawBeyond(
   ctx: CanvasRenderingContext2D,
   img: HTMLImageElement,
@@ -223,10 +227,23 @@ function drawBeyond(
       const rx = x + dx * gw
       const ry = y + dy * gh
       if (rx > w || ry > h || rx + gw < 0 || ry + gh < 0) continue
+      /*
+         Each copy reaches SEAM px into the map. Both edges are soft where they
+         meet on a fractional pixel, and the background showed through them
+         as a fine line; this way the copy's soft edge lies on solid art.
+      */
+      const ox = dx ? SEAM : 0
+      const oy = dy ? SEAM : 0
       ctx.save()
       ctx.translate(dx ? rx + gw / 2 : 0, dy ? ry + gh / 2 : 0)
       ctx.scale(dx ? -1 : 1, dy ? -1 : 1)
-      ctx.drawImage(img, dx ? -gw / 2 : rx, dy ? -gh / 2 : ry, gw, gh)
+      ctx.drawImage(
+        img,
+        dx ? -gw / 2 - (dx < 0 ? ox : 0) : rx,
+        dy ? -gh / 2 - (dy < 0 ? oy : 0) : ry,
+        gw + ox,
+        gh + oy,
+      )
       ctx.restore()
     }
   }
@@ -1468,8 +1485,14 @@ export function MapCanvas({
        out from under the frame.
     */
     v.tx = Math.min(left, Math.max(w - gridW - right, v.tx))
-    /* The bottom-left corner's taller band too, or a tile in it could never clear it. */
-    v.ty = Math.min(top, Math.max(h - gridH - Math.max(bottom, cornerRef.current), v.ty))
+    /*
+       The bottom-left corner's taller band too, or a tile in it could never
+       clear it. A phone gets a little more past the last row on top of that:
+       its sheets and the browser's own bars still sat over the bottom row.
+       The mirrored art fills that room, without buildings.
+    */
+    const beyond = onPhone() ? PHONE_ROWS_BEYOND * v.scale : 0
+    v.ty = Math.min(top, Math.max(h - gridH - Math.max(bottom, cornerRef.current) - beyond, v.ty))
     /* Smaller than the open area: sit in the middle of it, not of the window. */
     if (gridW + left + right < w) v.tx = left + (w - left - right - gridW) / 2
     if (gridH + top + bottom < h) v.ty = top + (h - top - bottom - gridH) / 2
