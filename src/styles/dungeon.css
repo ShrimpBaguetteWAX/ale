@@ -7259,3 +7259,218 @@ button.combatcard--empty:hover {
 .versus--hud .autosplit__undo {
   order: 4;
 }
+
+/*
+ * The team dock in the HUD's look (see matchupStyle): the board's round
+ * faces ringed in cyan, the team's count, and the chance as the board's
+ * gauge, small, with its verdict beside it - its own piece next to the
+ * button, not part of it. In a phone's sheet the chance sits over the faces
+ * and Done.
+ */
+.teamdock.teamdock--hud {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+.teamdock--hud .teamdock__faces {
+  gap: 10px;
+  padding: 4px;
+}
+.teamdock--hud .teamdock__face {
+  border-radius: 50%;
+  box-shadow:
+    0 0 0 2px #0b1426,
+    0 0 0 4px rgb(0 186 255 / 75%);
+}
+.teamdock--hud .teamdock__face.is-empty {
+  border: 0;
+  background: rgb(255 255 255 / 4%);
+  box-shadow:
+    0 0 0 2px #0b1426,
+    0 0 0 4px rgb(255 255 255 / 14%);
+}
+.teamdock__count {
+  font-size: 13px;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+.teamdock__chance {
+  --tone: var(--text-faint);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-left: auto;
+}
+.teamdock__chance.is-good {
+  --tone: var(--cyan);
+}
+.teamdock__chance.is-even {
+  --tone: var(--gold);
+}
+.teamdock__chance.is-poor {
+  --tone: #ff5a6a;
+}
+.teamdock__gauge {
+  position: relative;
+  flex: none;
+  width: 80px;
+  height: 46px;
+}
+.teamdock__gauge svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.teamdock__track,
+.teamdock__fill {
+  fill: none;
+  stroke-width: 8;
+  stroke-linecap: round;
+}
+.teamdock__track {
+  stroke: rgb(255 255 255 / 10%);
+}
+.teamdock__fill {
+  stroke: var(--tone);
+  transition: stroke-dasharray 450ms cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+.teamdock--hud .teamdock__pct {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  font-size: 18px;
+  line-height: 1;
+  text-align: center;
+  color: var(--white);
+}
+.teamdock--hud .teamdock__pct i {
+  position: absolute;
+  bottom: 1px;
+  margin-left: 1px;
+  font-size: 10px;
+}
+.teamdock__word {
+  display: grid;
+  gap: 2px;
+}
+.teamdock__word .teamdock__cap {
+  font-size: 9.5px;
+}
+.teamdock__word b {
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--tone);
+  white-space: nowrap;
+}
+.teamdock__word .teamdock__delta {
+  margin-left: 8px;
+}
+
+/* A phone's sheet: the chance across the top, centred; the faces and Done under it. */
+.teamdock--sheet.teamdock--hud {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    'chance chance'
+    'faces act';
+  gap: 8px 10px;
+}
+.teamdock--sheet.teamdock--hud > .teamdock__chance {
+  grid-area: chance;
+  justify-self: center;
+  margin-left: 0;
+}
+.teamdock--sheet.teamdock--hud .teamdock__faces {
+  gap: 8px;
+}
+.teamdock--sheet.teamdock--hud .teamdock__face {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+}
+.teamdock--sheet.teamdock--hud .teamdock__gauge {
+  width: 66px;
+  height: 38px;
+}
+.teamdock--sheet.teamdock--hud .teamdock__pct {
+  font-size: 15px;
+}
+
+/*
+ * A fighter tile is a layer of its own. Its ring, its chips and its marker
+ * are stacked inside it (z-index 2 and 3), and without a layer of its own
+ * those numbers competed with the sticky header and the team dock in the
+ * phone's picker sheet: tiles scrolled up over the tabs, and their rings
+ * showed over the chance to win.
+ */
+.fightercard--compact,
+.drost__row.is-card {
+  isolation: isolate;
+}
+
+/* The phone's picker sheet: the filter and sort bar stays in view, docked under the tabs. */
+@media (max-width: 719px) {
+  .picker--sheet > .sheetbar {
+    position: sticky;
+    top: 48px;
+    z-index: 2;
+    margin: -8px -12px 0;
+    padding: 8px 12px;
+    background: rgb(16 24 44 / 98%);
+    box-shadow: 0 1px 0 rgb(255 255 255 / 8%);
+  }
+}
+
+/*
+ * The phone's sheet, in one row: the faces overlapping a little like a
+ * party's portraits, the gauge with its verdict under it in the middle, Done
+ * at the right. The caption goes; the gauge and its word say it.
+ */
+.teamdock--sheet.teamdock--hud {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.teamdock--sheet.teamdock--hud .teamdock__faces {
+  gap: 0;
+  padding: 3px;
+}
+.teamdock--sheet.teamdock--hud .teamdock__face {
+  width: 30px;
+  height: 30px;
+}
+.teamdock--sheet.teamdock--hud .teamdock__face + .teamdock__face {
+  margin-left: -5px;
+}
+.teamdock--sheet.teamdock--hud > .teamdock__chance {
+  flex-direction: column;
+  gap: 1px;
+  margin: 0 auto;
+}
+.teamdock--sheet.teamdock--hud .teamdock__gauge {
+  width: 60px;
+  height: 34px;
+}
+.teamdock--sheet.teamdock--hud .teamdock__pct {
+  font-size: 14px;
+}
+.teamdock--sheet.teamdock--hud .teamdock__pct i {
+  font-size: 8px;
+}
+.teamdock--sheet.teamdock--hud .teamdock__word {
+  justify-items: center;
+}
+.teamdock--sheet.teamdock--hud .teamdock__word .teamdock__cap {
+  display: none;
+}
+.teamdock--sheet.teamdock--hud .teamdock__word b {
+  font-size: 10px;
+}
+.teamdock--sheet.teamdock--hud .teamdock__word .teamdock__delta {
+  margin-left: 4px;
+  font-size: 10px;
+}
