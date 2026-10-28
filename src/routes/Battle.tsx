@@ -60,7 +60,7 @@ import { fightLook, type FightLook } from '@/fight/fightLook'
 import { fightStageFor, stageFor, type Stage } from '@/fight/stages'
 import { GroundMark, LandStage } from '@/fight/LandStage'
 import { ArenaStage } from '@/fight/ArenaStage'
-import { roleLines, type Spot } from '@/fight/formation'
+import { onGround, roleLines, type Spot } from '@/fight/formation'
 import { GildedCards } from '@/fight/GildedCards'
 import { asset } from '@/assets'
 import {
@@ -1001,24 +1001,6 @@ const FORMATION_WIDE: [number, number, number][] = [
   [43, 95, 1],
   [36, 72, 0.86],
 ]
-
-/**
- * The ground's two lines on screen, [far, near] as % of the field's height:
- * the far line just inside the walkable floor (clear of the sand and the surf,
- * clear of the arena's wall), the near one clear of the cards — which lie over
- * a desktop's picture and sit under a phone's.
- */
-const GROUND_LINES = { wide: [53, 70], tall: [68, 95] } as const
-
-/**
- * A spot on the ground as [x %, y %, depth]: further back is higher up the
- * field, smaller, and drawn in toward the middle, as perspective has it.
- */
-function onGround([x, r]: Spot, wide: boolean): [number, number, number] {
-  const [far, near] = GROUND_LINES[wide ? 'wide' : 'tall']
-  const pull = 0.82 + 0.18 * r
-  return [50 - (50 - x) * pull, far + r * (near - far), 0.84 + 0.16 * r]
-}
 
 /** How far an attacker dashes toward its target, as a share of the gap. */
 const LUNGE_SHARE = 0.55

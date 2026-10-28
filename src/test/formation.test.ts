@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { isMelee, roleLines, type Lineup } from '@/fight/formation'
+import { isMelee, onGround, roleLines, type Lineup } from '@/fight/formation'
 
 /**
  * Where a team stands when a fight on the ground opens: the melee classes in
@@ -78,6 +78,11 @@ describe('role lines', () => {
     expect(depths.size).toBe(2)
   })
 
+  it('never steps the innermost fighter out of its line', () => {
+    const spots = roleLines(['a', 'b', 'c', 'd'].map((u, i) => f(u, 'Juggernaut', 40 - i)))
+    expect(spots.get('a')![1]).toBe(0.9)
+  })
+
   it('places from the team’s own edge, so both sides read the same way and mirror on screen', () => {
     const team = [f('a', 'Juggernaut', 50), f('b', 'Hunter', 10)]
     const spots = roleLines(team)
@@ -85,5 +90,56 @@ describe('role lines', () => {
       expect(sx).toBeGreaterThanOrEqual(0)
       expect(sx).toBeLessThanOrEqual(50)
     }
+  })
+
+  /*
+   * On screen, both teams, both shapes of the field: "closest to the enemy"
+   * is the smallest distance across to the contact line, the field's middle.
+   */
+  describe('on screen, toward the contact line', () => {
+    const teams: Lineup[][] = [
+      [f('a', 'Juggernaut', 30), f('b', 'Voidwarden', 60), f('c', 'Tactician', 45), f('d', 'Mystic', 12), f('e', 'Hunter', 25), f('g', 'Desperado', 18)],
+      [f('a', 'Mystic', 90), f('b', 'Juggernaut', 40), f('c', 'Hunter', 35), f('d', 'Arcanist', 20), f('e', 'Lunatic', 10), f('g', '', 5)],
+      [f('a', 'Juggernaut', 50), f('b', 'Voidwarden', 49), f('c', 'Lunatic', 48), f('d', 'Mindblade', 47), f('e', 'Tactician', 46), f('g', 'Hunter', 45)],
+      [f('a', 'Hunter', 70), f('b', 'Mystic', 60), f('c', 'Arcanist', 50), f('d', 'Desperado', 40), f('e', '', 30), f('g', 'Juggernaut', 20)],
+      [f('a', 'Juggernaut', 30), f('b', 'Hunter', 10)],
+    ]
+    const cases = teams.flatMap((team) =>
+      [true, false].flatMap((wide) => [1, 2].map((side) => ({ team, wide, side }))),
+    )
+    /* Each fighter's distance across to the middle, with the right-hand team mirrored as the field draws it. */
+    const across = (team: Lineup[], wide: boolean, side: number) => {
+      const spots = roleLines(team)
+      return new Map(
+        team.map((t) => {
+          const [gx] = onGround(spots.get(t.uid)!, wide)
+          const sx = side === 1 ? gx : 100 - gx
+          return [t.uid, { d: Math.abs(sx - 50), near: spots.get(t.uid)![1] > 0.5, taunt: t.taunt }]
+        }),
+      )
+    }
+
+    it.each(cases)('stands the team’s top taunt nearest the middle (%#)', ({ team, wide, side }) => {
+      const at = across(team, wide, side)
+      const top = [...team].sort((p, q) => q.taunt - p.taunt)[0].uid
+      for (const [uid, { d }] of at) if (uid !== top) expect(at.get(top)!.d).toBeLessThan(d)
+    })
+
+    it.each(cases)('orders each line by taunt toward the middle (%#)', ({ team, wide, side }) => {
+      const at = [...across(team, wide, side).values()]
+      for (const near of [true, false]) {
+        const line = at.filter((p) => p.near === near).sort((p, q) => q.taunt - p.taunt)
+        for (let k = 1; k < line.length; k++) expect(line[k - 1].d).toBeLessThan(line[k].d)
+      }
+    })
+
+    it.each(cases)('stands the melee line nearer the middle than the ranged line (%#)', ({ team, wide, side }) => {
+      const at = [...across(team, wide, side).values()]
+      const mean = (near: boolean) => {
+        const line = at.filter((p) => p.near === near)
+        return line.reduce((sum, p) => sum + p.d, 0) / line.length
+      }
+      if (at.some((p) => p.near) && at.some((p) => !p.near)) expect(mean(true)).toBeLessThan(mean(false))
+    })
   })
 })
