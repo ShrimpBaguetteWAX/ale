@@ -7232,3 +7232,30 @@ button.combatcard--empty:hover {
 .hudcentre__side--theirs b {
   color: #ff5a6a;
 }
+
+/*
+ * The HUD's tool strips, aligned: the buttons that pick start at one left
+ * edge in both strips. Team and Cards are labels of one width, and the team's
+ * Fill / Replace switch moves to the end, just before undo, so Replace all
+ * stands where Auto-pick cards stands below it.
+ */
+.versus--hud .versus__pick::before,
+.versus--hud .cardsbar__label {
+  flex: none;
+  width: 62px;
+}
+.versus--hud .cardsbar {
+  gap: 10px;
+}
+.versus--hud .autosplit__go {
+  order: 1;
+}
+.versus--hud .autosplit__mode {
+  order: 2;
+}
+.versus--hud .autosplit__switch {
+  order: 3;
+}
+.versus--hud .autosplit__undo {
+  order: 4;
+}
