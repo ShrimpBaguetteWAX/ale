@@ -913,24 +913,61 @@ const LUNGE_SHARE = 0.55
  * Every class swings its own way on the battlefield.
  *
  * The name is a CSS hook: `bunit--atk-<move>` drives how the attacker moves,
- * and `bfx--<move>` the one effect drawn for the blow. All of them connect
- * at --impact, when the damage lands, so the numbers and the health bars
- * stay in step whatever the class. Anything not listed, the NFT fighter
- * included, keeps the plain lunge.
+ * `bunit--took-<move>` how the target takes it, and `bfx--<move>` the
+ * effect drawn for the blow. All of them connect at --impact, when the
+ * damage lands, so the numbers and the health bars stay in step whatever the
+ * class. Anything not listed, the NFT fighter included, keeps the plain
+ * lunge.
  */
 const SIGNATURE: Record<string, string> = {
-  juggernaut: 'charge',
-  astralknight: 'leap',
-  mindblade: 'dash',
-  voidwarden: 'bash',
-  lunatic: 'frenzy',
-  tactician: 'cleave',
-  hunter: 'arrow',
-  desperado: 'shots',
-  explosioneer: 'bomb',
-  arcanist: 'orb',
-  mystic: 'beam',
-  voidcaller: 'rift',
+  juggernaut: 'earth', // Earthsplitter
+  astralknight: 'halo', // Halo Smite
+  mindblade: 'cuts', // Thousand Cuts
+  voidwarden: 'well', // Gravity Well
+  lunatic: 'laugh', // Mad Laughter
+  tactician: 'wall', // Shield Wall Break
+  hunter: 'pierce', // Piercing Shot
+  desperado: 'noon', // High Noon
+  explosioneer: 'blast', // Mega Blast
+  arcanist: 'missiles', // Arcane Missiles
+  mystic: 'pillars', // Sacred Pillars
+  voidcaller: 'tendrils', // Void Tendrils
+}
+
+/** How many pieces each move's effect is drawn with: one `<i>` each. */
+const FX_PARTS: Record<string, number> = {
+  earth: 6,
+  halo: 3,
+  cuts: 6,
+  well: 6,
+  laugh: 5,
+  wall: 3,
+  pierce: 4,
+  noon: 4,
+  blast: 4,
+  missiles: 8,
+  pillars: 4,
+  tendrils: 5,
+}
+
+/**
+ * How hard each move shakes the field when it lands, and whether it lands
+ * as a flurry (three small shakes) rather than one. Small on purpose: the
+ * names and the turn order have to stay readable through it.
+ */
+const SHAKE: Record<string, [number, boolean]> = {
+  earth: [1.6, false],
+  halo: [1.2, false],
+  cuts: [0.8, true],
+  well: [1, false],
+  laugh: [1, false],
+  wall: [1.2, false],
+  pierce: [1.8, false],
+  noon: [1.2, false],
+  blast: [2.4, false],
+  missiles: [0.8, true],
+  pillars: [1, true],
+  tendrils: [1, false],
 }
 
 function signatureOf(f: SimFighter | undefined): string | undefined {
@@ -998,6 +1035,7 @@ function Battlefield({
 
   const attacker = current ? [...team1, ...team2].find((f) => f.uid === current.attackerUid) : undefined
   const signature = signatureOf(attacker)
+  const shake = current && signature ? SHAKE[signature] : undefined
 
   const alive = (team: SimFighter[]) =>
     team.filter((f) => (state.get(f.uid)?.health ?? f.start_health) > 0).length
@@ -1015,10 +1053,15 @@ function Battlefield({
 
   return (
     <div
-      className={`bfield${wide ? ' bfield--wide' : ''}${broadcast ? ' bfield--bcast' : ''}`}
+      className={
+        `bfield${wide ? ' bfield--wide' : ''}${broadcast ? ' bfield--bcast' : ''}` +
+        /* Alternating names, so a blow that follows another of its kind still shakes. */
+        (shake ? ` bfield--shake${shake[1] ? ' bfield--flurry' : ''} bfield--t${turn % 2}` : '')
+      }
       style={
         {
           '--bf-bg': `url('${asset('/assets/background/bg-fight.webp')}')`,
+          ...(shake ? { '--shake': shake[0] } : {}),
         } as React.CSSProperties
       }
     >
@@ -1067,8 +1110,9 @@ function Battlefield({
       {queue && <div className="bfield__queue">{queue}</div>}
 
       {/*
-        The blow's one effect - an arrow, a shockwave, a column of light -
-        drawn on the field between the two fighters, and gone with the turn.
+        The blow's effect - a crack racing to the target, a halo, a volley of
+        bolts - drawn on the field between the two fighters, and gone with
+        the turn. Each piece is placed and timed in battle.css.
       */}
       {current && signature && from && to && (
         <span
@@ -1087,20 +1131,9 @@ function Battlefield({
             } as React.CSSProperties
           }
         >
-          {signature === 'shots' && (
-            <>
-              <i />
-              <i />
-            </>
-          )}
-          {signature === 'frenzy' && (
-            <>
-              <i />
-              <i />
-              <i />
-            </>
-          )}
-          {signature === 'bomb' && <i />}
+          {Array.from({ length: FX_PARTS[signature] ?? 0 }, (_, i) => (
+            <i key={i} />
+          ))}
         </span>
       )}
 
@@ -1129,6 +1162,7 @@ function Battlefield({
             aiming={aimUid === f.uid}
             lunge={role === 'attacker' ? lunge : null}
             signature={role === 'attacker' ? signature : undefined}
+            struck={role === 'defender' ? signature : undefined}
             owner={
               f.team === 1 ? f.gamertag || playertag || 'You' : f.gamertag || f.owner || 'AI'
             }
@@ -1191,6 +1225,7 @@ function FieldUnit({
   aiming,
   lunge,
   signature,
+  struck,
   owner,
 }: {
   fighter: SimFighter
@@ -1210,6 +1245,8 @@ function FieldUnit({
   lunge: { dx: number; dy: number } | null
   /** The attacker's class move, when it has one. See SIGNATURE. */
   signature?: string
+  /** The class move this fighter is being hit with, when it has one. */
+  struck?: string
   owner: string
 }) {
   const health = snap?.health ?? fighter.start_health
@@ -1241,7 +1278,8 @@ function FieldUnit({
         (role ? ` bunit--${role}` : '') +
         (dead ? ' bunit--dead' : '') +
         (next && !dead ? ' bunit--next' : '') +
-        (signature ? ` bunit--atk-${signature}` : '')
+        (signature ? ` bunit--atk-${signature}` : '') +
+        (struck ? ` bunit--took-${struck}` : '')
       }
       style={
         {
@@ -1266,6 +1304,18 @@ function FieldUnit({
             </svg>
           </span>
         )}
+        {/* The Mindblade's afterimages: the same figure, a beat behind it. */}
+        {signature === 'cuts' &&
+          !dead &&
+          [1, 2, 3].map((n) => (
+            <span className="bunit__body bunit__ghost" key={`ghost-${turn}-${n}`} aria-hidden="true">
+              <img
+                className="bunit__art"
+                src={fighterArt({ classname: fighter.classname, racename: fighter.racename })}
+                alt=""
+              />
+            </span>
+          ))}
         {/* Keyed by the blow, so a fighter that swings twice in a row swings
             twice on screen. */}
         <span className="bunit__body" key={role ? `${role}-${turn}` : 'idle'}>
