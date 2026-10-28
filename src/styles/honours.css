@@ -12,6 +12,9 @@
 .honours {
   display: grid;
   gap: var(--sp-4);
+  /* Room under the buttons, so the verdict opens the screen rather than
+     hanging off the bar. */
+  margin-top: var(--sp-6);
 }
 
 /* ---------- the verdict ---------- */
