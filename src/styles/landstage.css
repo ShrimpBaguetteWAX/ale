@@ -1630,11 +1630,17 @@
   --zenith: #2b7aa6;
 }
 @media (max-width: 719px) {
+  /* Edge to edge: the page's own margin and the window's rounded frame go,
+     so the fight is the whole screen under the top bar. */
+  .shell .main:has(.bfwrap--full) {
+    padding: 0 0 env(safe-area-inset-bottom);
+  }
   .bfwrap--full .bfmain {
     position: relative;
     display: flex;
     flex-direction: column;
-    min-height: calc(100dvh - var(--topbar-h, 56px) - 2 * var(--sp-4) - env(safe-area-inset-bottom));
+    min-height: calc(100dvh - var(--topbar-h, 56px) - env(safe-area-inset-bottom));
+    border-radius: 0;
   }
   .bfwrap--full .bfmain > * {
     flex: none;
