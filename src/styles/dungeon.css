@@ -7099,30 +7099,11 @@ button.combatcard--empty:hover {
   order: -1;
 }
 
+/* The weather under its heading, the divider, then the difficulty, as the header has them on every board. */
 .dungeon__inner:has(> .versus--hud) > .dungeon__head .dungeon__conditions {
   order: 0;
-  /* The weather and the difficulty one height: the chip stretches to the box. */
-  align-items: stretch;
   width: auto;
-  gap: 10px;
   min-width: 0;
-}
-.dungeon__inner:has(> .versus--hud) > .dungeon__head .dungeon__rule {
-  display: none;
-}
-/* The weather on the bar itself, no panel of its own, centred on the difficulty beside it. */
-.dungeon__inner:has(> .versus--hud) > .dungeon__head .weathertwin {
-  display: flex;
-  align-items: center;
-  min-width: 0;
-  height: auto;
-  min-height: 44px;
-}
-.dungeon__inner:has(> .versus--hud) > .dungeon__head .weathertwin__label {
-  display: none;
-}
-.dungeon__inner:has(> .versus--hud) > .dungeon__head .weathertwin__line {
-  font-size: 14px;
 }
 /* The difficulty on the bar itself, like the weather: the arrows round the number, the figures and the ladder beside it. */
 .dungeon__inner:has(> .versus--hud) > .dungeon__head .dstep {
@@ -7149,6 +7130,10 @@ button.combatcard--empty:hover {
     /* The weather at the left, the difficulty at the right, under Leave and Start Fight. */
     justify-content: space-between;
     width: 100%;
+  }
+  /* Apart at the two ends, the divider between them would stand alone. */
+  .dungeon__inner:has(> .versus--hud) > .dungeon__head .dungeon__rule {
+    display: none;
   }
 }
 
