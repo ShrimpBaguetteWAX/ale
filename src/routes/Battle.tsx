@@ -775,7 +775,7 @@ function Arena({
   )
 
   return (
-    <div className="battle">
+    <div className={`battle${finished ? ' battle--result' : ''}`}>
       <img className="battle__art" {...artSet('bg-fight')} alt="" />
       <div className="battle__scrim" />
 
