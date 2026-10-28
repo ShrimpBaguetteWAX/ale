@@ -312,6 +312,20 @@
 .bfield.bfield--land::before {
   display: none;
 }
+/*
+ * The fighters stand a size smaller on the ground than in the old field, so the
+ * stage reads as a place they are in rather than a backdrop they fill. --unit
+ * is what every fighter, its plates and its blows are measured from, so all
+ * of it shrinks together.
+ */
+.bfield.bfield--land.bfield--wide {
+  --unit: calc(9.5cqw * 0.85);
+}
+@media (max-width: 719px) {
+  .bfield.bfield--land {
+    --unit: calc(12.5cqw * 0.85);
+  }
+}
 /* A phone's field is square on its ground: the fighters stand taller in it. */
 .bfield.bfield--land:not(.bfield--wide) {
   --ratio: 1;
@@ -455,7 +469,7 @@
 .lmark {
   position: absolute;
   z-index: 2;
-  width: calc(9.5cqw * var(--depth, 1));
+  width: calc(var(--unit) * var(--depth, 1));
   aspect-ratio: 2;
   translate: -50% -50%;
   pointer-events: none;
