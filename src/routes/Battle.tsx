@@ -543,9 +543,22 @@ export function FightStage({
     () => (land ? chargeOf(replay.fighters, pb.state) : undefined),
     [land, replay, pb.state],
   )
+  /* The gilded cards: over the foot of the stage on a desktop, as the sheet laid them out. */
+  const cards = charge && (
+    <GildedCards
+      team1={pb.team1}
+      team2={pb.team2}
+      state={pb.state}
+      current={pb.current}
+      nextUp={pb.nextUp}
+      charge={charge}
+      tall={false}
+      beat={1 / speed}
+    />
+  )
   const logRef = useRef<HTMLDivElement>(null)
   /* Open unless this player has closed it; their choice is remembered. */
-  const [showLog, setShowLogState] = useState(() => (logHidden ? false : readShowLog()))
+  const [showLog, setShowLogState] = useState(() => (logHidden ? false : readShowLog(phone)))
   const setShowLog = useCallback((next: boolean | ((v: boolean) => boolean)) => {
     setShowLogState((v) => {
       const value = typeof next === 'function' ? next(v) : next
@@ -573,7 +586,13 @@ export function FightStage({
         {/* The turn order is part of the picture, under the scorebar. */}
         <Battlefield
           wide={!phone}
-          queue={<TurnQueue replay={replay} step={step} speed={speed} playertag={playertag} enemyOwner={enemyOwner} />}
+          /* On the ground the cards' "next" and the rings at the feet say who
+             swings next; the rail is the classic field's. */
+          queue={
+            land ? undefined : (
+              <TurnQueue replay={replay} step={step} speed={speed} playertag={playertag} enemyOwner={enemyOwner} />
+            )
+          }
           team1={pb.team1}
           team2={pb.team2}
           state={pb.state}
@@ -589,8 +608,9 @@ export function FightStage({
           aimUid={pb.aimUid}
           stage={stage}
           charge={charge}
+          deck={land && charge && !phone ? cards : undefined}
         />
-        {land && charge && (
+        {land && charge && phone && (
           <GildedCards
             team1={pb.team1}
             team2={pb.team2}
@@ -599,6 +619,7 @@ export function FightStage({
             nextUp={pb.nextUp}
             charge={charge}
             tall={phone}
+            beat={1 / speed}
           />
         )}
         {broadcast && (
@@ -936,6 +957,20 @@ const FORMATION_WIDE: [number, number, number][] = [
   [36, 72, 0.86],
 ]
 
+/**
+ * The same two rows on the ground, standing further up the floor: the gilded
+ * cards lie over the foot of the picture, and the front row stands clear of
+ * them. The back row is nearer the horizon.
+ */
+const FORMATION_LAND: [number, number, number][] = [
+  [15, 70, 1],
+  [8, 49, 0.84],
+  [29, 70, 1],
+  [22, 49, 0.84],
+  [43, 70, 1],
+  [36, 49, 0.84],
+]
+
 /** How far an attacker dashes toward its target, as a share of the gap. */
 const LUNGE_SHARE = 0.55
 
@@ -1049,6 +1084,7 @@ function Battlefield({
   aimUid,
   stage,
   charge,
+  deck,
 }: {
   team1: SimFighter[]
   team2: SimFighter[]
@@ -1074,15 +1110,19 @@ function Battlefield({
   stage?: Stage
   /** Each fighter's charge, for the ring at its feet in the land look. */
   charge?: Map<string, number>
+  /** Drawn over the foot of the field: the gilded cards, in the land look on a desktop. */
+  deck?: React.ReactNode
 }) {
   const where = new Map<string, [number, number]>()
   const depth = new Map<string, number>()
   for (const team of [team1, team2]) {
     team.forEach((f, i) => {
       /* The player is wide on a phone too: two rows of three, as on desktop. */
-      const [x, y, d] = wide || broadcast
-        ? FORMATION_WIDE[i % FORMATION_WIDE.length]
-        : [...FORMATION[i % FORMATION.length], 1]
+      const [x, y, d] = stage && wide
+        ? FORMATION_LAND[i % FORMATION_LAND.length]
+        : wide || broadcast
+          ? FORMATION_WIDE[i % FORMATION_WIDE.length]
+          : [...FORMATION[i % FORMATION.length], 1]
       where.set(f.uid, [f.team === 1 ? x : 100 - x, y])
       depth.set(f.uid, d)
     })
@@ -1233,6 +1273,8 @@ function Battlefield({
             role={role}
             turn={turn}
             attack={current?.damage ?? 0}
+            blocked={current?.blocked ?? 0}
+            effectiveness={current?.effectiveness ?? 100}
             killed={!!current?.killed}
             abilityDelta={abilityDelta.get(f.uid) ?? 0}
             standing={standing.get(f.uid)}
@@ -1245,21 +1287,31 @@ function Battlefield({
               f.team === 1 ? f.gamertag || playertag || 'You' : f.gamertag || f.owner || 'AI'
             }
             charge={charge?.get(f.uid)}
+            rig={!!stage}
           />
         )
       })}
+
+      {deck}
     </div>
   )
 }
 
-/** One fighter standing on the battlefield. */
-/** Whether the fight's combat log starts open: yes, until a player closes it. */
+/**
+ * Whether the fight's combat log starts open: the player's own choice once
+ * they have made one. Until then shut on a desktop, where the fight has the
+ * window to itself, and open on a phone, where it sits under the picture.
+ * Only the Combat log button writes the choice, so a stored "open" is one the
+ * player asked for.
+ */
 const LOG_KEY = 'al.battle.log'
-function readShowLog(): boolean {
+
+function readShowLog(phone: boolean): boolean {
   try {
-    return localStorage.getItem(LOG_KEY) !== '0'
+    const own = localStorage.getItem(LOG_KEY)
+    return own === null ? phone : own !== '0'
   } catch {
-    return true
+    return phone
   }
 }
 
@@ -1297,6 +1349,8 @@ function FieldUnit({
   role,
   turn,
   attack,
+  blocked,
+  effectiveness,
   killed,
   abilityDelta,
   standing,
@@ -1307,6 +1361,7 @@ function FieldUnit({
   struck,
   owner,
   charge,
+  rig = false,
 }: {
   fighter: SimFighter
   snap: FighterSnapshot | undefined
@@ -1316,6 +1371,10 @@ function FieldUnit({
   role: 'attacker' | 'defender' | null
   turn: number
   attack: number
+  /** What the defender's resistance took off this blow. */
+  blocked: number
+  /** Share of the attacker's damage that landed, 0–100; past 100 is a blow its element favours. */
+  effectiveness: number
   killed: boolean
   abilityDelta: number
   standing: Standing | undefined
@@ -1330,6 +1389,11 @@ function FieldUnit({
   owner: string
   /** How close to its next blow, 0–1: a ring on the floor at its feet (the land look). */
   charge?: number
+  /**
+   * The land look: a puppet cut at the waist so the upper body breathes, and
+   * the whole figure falling and lying there when the fighter is down.
+   */
+  rig?: boolean
 }) {
   const health = snap?.health ?? fighter.start_health
   const maxHealth = snap?.max_health ?? fighter.max_health
@@ -1342,11 +1406,15 @@ function FieldUnit({
      which moves on the moment the turn does and cut it off mid-fall.
   */
   /* A list, not one: a fighter struck twice running has two numbers in the air. */
-  const [hits, setHits] = useState<{ turn: number; amount: number }[]>([])
+  const [hits, setHits] = useState<
+    { turn: number; amount: number; blocked: number; effectiveness: number; killed: boolean }[]
+  >([])
   useEffect(() => {
     if (role === 'defender' && attack > 0)
-      setHits((h) => (h.some((x) => x.turn === turn) ? h : [...h, { turn, amount: attack }]))
-  }, [role, attack, turn])
+      setHits((h) =>
+        h.some((x) => x.turn === turn) ? h : [...h, { turn, amount: attack, blocked, effectiveness, killed }],
+      )
+  }, [role, attack, blocked, effectiveness, killed, turn])
   const pct = maxHealth > 0 ? Math.max(0, (health / maxHealth) * 100) : 0
   const band = pct > 50 ? 'high' : pct > 25 ? 'mid' : 'low'
   const side = fighter.team === 1 ? 'mine' : 'enemy'
@@ -1372,6 +1440,7 @@ function FieldUnit({
              hidden behind a neighbour. */
           zIndex: role === 'attacker' ? 300 : role === 'defender' ? 250 : Math.round(pos[1]),
           '--depth': depth,
+          ...(rig ? { '--idl': `${-(((Number(fighter.uid.split('-')[1]) || 0) * 0.47) % 2.4).toFixed(2)}s` } : {}),
           ...(lunge ? { '--dx': lunge.dx, '--dy': lunge.dy } : {}),
         } as React.CSSProperties
       }
@@ -1393,7 +1462,16 @@ function FieldUnit({
             />
           </svg>
         )}
-        {aiming && !dead && (
+        {rig && role === 'defender' && (
+          <span className="bunit__ret" key={`ret-${turn}`} aria-hidden="true">
+            <i />
+            <i />
+            <i />
+            <i />
+          </span>
+        )}
+        {/* On the ground the cards and the rings at the feet say who swings next. */}
+        {aiming && !dead && !rig && (
           <span className="bcast__aim bunit__aim" aria-hidden="true">
             <svg viewBox="0 0 24 16">
               <path d="M12 16 1.5 1.5h21z" />
@@ -1414,8 +1492,47 @@ function FieldUnit({
           ))}
         {/* Keyed by the blow, so a fighter that swings twice in a row swings
             twice on screen. */}
-        <span className="bunit__body" key={role ? `${role}-${turn}` : 'idle'}>
-          {dead ? (
+        <span className="bunit__body" key={rig && dead ? 'down' : role ? `${role}-${turn}` : 'idle'}>
+          {rig && dead ? (
+            /* The whole figure goes down, in one piece (see .bunit__fallen). */
+            <span className="bunit__fallen">
+              <GameImg
+                className="bunit__art"
+                src={
+                  nft
+                    ? fighterArtFallback()
+                    : fighterArt({ classname: fighter.classname, racename: fighter.racename })
+                }
+                alt={`${name}, down`}
+                fallback={fighterArtFallback()}
+              />
+            </span>
+          ) : rig ? (
+            <span className="bunit__rig">
+              <GameImg
+                className="bunit__art bunit__legs"
+                src={
+                  nft
+                    ? fighterArtFallback()
+                    : fighterArt({ classname: fighter.classname, racename: fighter.racename })
+                }
+                alt={name}
+                fallback={fighterArtFallback()}
+              />
+              <span className="bunit__torso">
+                <GameImg
+                  className="bunit__art"
+                  src={
+                    nft
+                      ? fighterArtFallback()
+                      : fighterArt({ classname: fighter.classname, racename: fighter.racename })
+                  }
+                  alt=""
+                  fallback={fighterArtFallback()}
+                />
+              </span>
+            </span>
+          ) : dead ? (
             <img
               className="bunit__art bunit__art--dead"
               src={asset('/assets/fighter/dead.png')}
@@ -1446,7 +1563,32 @@ function FieldUnit({
            cleave's numbers drift apart by slot rather than stacking. What
            was blocked is in the caption and the log.
         */}
-        {hits.map((hit) => (
+        {rig &&
+          hits.map((hit) => {
+            /* A blow its element favours, or one that takes a third of the fighter, lands big. */
+            const big = hit.effectiveness >= 110 || (maxHealth > 0 && hit.amount >= maxHealth * 0.3)
+            const resisted = hit.blocked > 0 && hit.blocked >= hit.amount * 0.3
+            return (
+              <span
+                className={
+                  'bunit__pop' +
+                  (hit.killed ? ' bunit__pop--kill' : big ? ' bunit__pop--big' : resisted ? ' bunit__pop--res' : '')
+                }
+                key={`dmg-${hit.turn}`}
+                style={{ ['--drift' as string]: `${(Number(fighter.uid.split('-')[1]) % 3) - 1 || 0}` }}
+                onAnimationEnd={() => setHits((h) => h.filter((x) => x.turn !== hit.turn))}
+              >
+                {formatScaled(hit.amount)}
+                {hit.killed ? (
+                  <small>Knocked out</small>
+                ) : (
+                  hit.blocked > 0 && <small>{formatScaled(hit.blocked)} resisted</small>
+                )}
+              </span>
+            )
+          })}
+        {!rig &&
+          hits.map((hit) => (
           <span
             className="bcast__hit bunit__hit"
             key={`dmg-${hit.turn}`}
@@ -1471,10 +1613,14 @@ function FieldUnit({
             {formatScaled(abilityDelta)}
           </span>
         )}
-        {killed && role === 'defender' && (
+        {/* On the ground the number says it, and a spirit leaves the fallen. */}
+        {killed && role === 'defender' && !rig && (
           <span className="duelist__ko" key={`ko-${turn}`}>
             K.O.
           </span>
+        )}
+        {killed && role === 'defender' && rig && (
+          <span className="bunit__soul" key={`soul-${turn}`} aria-hidden="true" />
         )}
       </div>
 

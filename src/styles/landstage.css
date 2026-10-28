@@ -382,6 +382,10 @@
 :where(.bfield--land) .bunit__art {
   filter: drop-shadow(0 0.15cqw 0.25cqw rgb(0 0 0 / 40%));
 }
+/* No glow on whoever is swinging: their card says so. A class's own gathering glow still plays. */
+.bfield--land .bunit--attacker .bunit__art {
+  filter: drop-shadow(0 0.15cqw 0.25cqw rgb(0 0 0 / 40%));
+}
 .bfield--land .bunit .bunit__platform {
   left: 58%;
   bottom: -3%;
@@ -392,6 +396,8 @@
   background: radial-gradient(closest-side, rgb(4 14 6 / 62%), rgb(4 14 6 / 30%) 55%, rgb(0 0 0 / 0%));
   transform: skewX(-26deg);
   animation: none;
+  /* Under everyone, always: the broadcast's floor discs only showed for the two in the blow. */
+  opacity: 1;
 }
 .bfield--land .bunit--dead .bunit__platform {
   opacity: 0.6;
@@ -1010,34 +1016,72 @@
 }
 
 /* Knocked out: dull iron, the portrait greyed and cracked, a stamp across it. */
+/*
+ * Down: the card itself falls. It tips away from the middle, drops below the
+ * row and shrinks a little, so the gap in the line-up shows before anything
+ * is read; only its frame greys, and a DOWN plate in the side's red takes the
+ * health bar's place, coloured and readable. It falls once the bar has
+ * drained (KO_AFTER_MS in GildedCards); a card already down when it appears
+ * is simply lying there (gcard--settled).
+ */
+.gcard {
+  --kc: #ff3b4f;
+}
+.gcard--ko {
+  z-index: 0;
+  transform: translateY(calc(var(--u) * 2.4)) rotate(-11deg) scale(0.88);
+  transition: transform calc(520ms * var(--beat)) cubic-bezier(0.35, 1.6, 0.5, 1);
+}
+.gcard--enemy.gcard--ko {
+  transform: translateY(calc(var(--u) * 2.4)) rotate(11deg) scale(0.88);
+}
+.gcard__frame,
+.gcard__name {
+  transition:
+    filter calc(400ms * var(--beat)),
+    opacity calc(400ms * var(--beat));
+}
 .gcard--ko .gcard__frame {
-  background: linear-gradient(160deg, #4a4f5c, #1b1e26 40%, #0c0e14 60%, #3a3f4b);
-}
-.gcard--ko .gcard__frame::before {
-  background: #444a57;
-  box-shadow: none;
-}
-.gcard--ko .gcard__pic img {
-  filter: grayscale(1) brightness(0.42) contrast(1.1);
+  filter: grayscale(0.95) brightness(0.6);
 }
 .gcard--ko .gcard__crack {
+  opacity: 0.6;
+}
+.gcard--ko .gcard__hp {
+  opacity: 0;
+}
+.gcard__down {
+  position: absolute;
+  z-index: 7;
+  left: calc(var(--u) * 0.5);
+  right: calc(var(--u) * 0.5);
+  bottom: calc(var(--u) * 0.6);
+  display: grid;
+  place-items: center;
+  height: calc(var(--u) * 0.95);
+  border-radius: 999px;
+  font-family: var(--font-display);
+  font-size: calc(var(--u) * 0.7);
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  color: var(--kc);
+  background: rgb(8 10 16 / 92%);
+  box-shadow:
+    inset 0 0 0 1px var(--kc),
+    0 0 calc(var(--u) * 0.7) color-mix(in srgb, var(--kc) 55%, transparent);
+  opacity: 0;
+  pointer-events: none;
+}
+.gcard--ko .gcard__down {
   opacity: 1;
 }
-.gcard--ko .gcard__tag::before {
-  content: 'KNOCKED OUT';
+/* Room under the row for a fallen card, so it never spills out of it. */
+.gcards {
+  padding-bottom: calc(var(--u) * 3.6);
 }
-.gcard--ko .gcard__tag {
-  top: 42%;
-  transform: translateX(-50%) rotate(-12deg);
-  padding: calc(var(--u) * 0.12) calc(var(--u) * 0.4);
-  clip-path: none;
-  color: #fff;
-  background: rgb(195 32 58 / 92%);
-  font-size: calc(var(--u) * 0.5);
-  box-shadow: 0 0 calc(var(--u) * 0.8) rgb(255 60 80 / 50%);
-}
-.gcard--ko .gcard__name {
-  opacity: 0.5;
+.gcard--settled,
+.gcard--settled * {
+  transition: none !important;
 }
 
 @keyframes gcard-pulse {
@@ -1046,22 +1090,490 @@
   }
 }
 
-/* ---------- the window, sized to hold the cards ---------- */
+/* ---------- the moves, at the fighter's own size ---------- */
 
 /*
- * The picture and the cards together fit the screen: the field is 9/16 of
- * the window's width and the strip about 0.13 of it, so the width is the
- * height left over divided by 0.69.
+ * On the flat field a dash swelled the body and a hit squashed it, which read
+ * as punch. Stood on a floor in perspective, a fighter growing by a tenth
+ * reads as it changing size, so on the ground the moves keep their timing and
+ * their movement but none of their scaling: the same keyframes with scale()
+ * taken out, generated from battle.css (regenerate if a move there changes).
+ * Every body move gets a rule here, so the land's plain lunge never outranks
+ * a class move that had nothing to take out.
  */
-@media (min-width: 720px) {
-  .bfwrap--land.bfwrap--bcast .bfmain {
-    width: min(100%, calc((100dvh - 210px) * 1.44));
+@keyframes land-bunit-lunge {
+  0% {
+    transform: translate(0, 0);
   }
+  22% {
+    transform: translate(
+        calc(var(--dx, 0) * -0.12cqw),
+        calc(var(--dy, 0) * var(--ratio) * -0.12cqw)
+      );
+  }
+  46% {
+    transform: translate(
+        calc(var(--dx, 0) * 1cqw),
+        calc(var(--dy, 0) * var(--ratio) * 1cqw)
+      );
+  }
+  100% {
+    transform: translate(0, 0);
+  }
+}
+@keyframes land-bunit-recoil {
+  0% {
+    transform: translateX(0) rotate(0deg);
+  }
+  16% {
+    transform: translateX(var(--kick)) rotate(3deg);
+  }
+  40% {
+    transform: translateX(calc(var(--kick) * -0.3)) rotate(-2deg);
+  }
+  100% {
+    transform: translateX(0) rotate(0deg);
+  }
+}
+@keyframes land-atk-slam {
+  0%, 14% { transform: none; }
+  26% { transform: translateY(calc(-7 * var(--su))); }
+  31% { transform: translateY(calc(0.4 * var(--su))); }
+  38%, 100% { transform: none; }
+}
+@keyframes land-atk-lift {
+  0%, 10% { transform: none; }
+  24%, 40% { transform: translateY(calc(-3 * var(--su))); }
+  52%, 100% { transform: none; }
+}
+@keyframes land-atk-dart {
+  0%, 30% { transform: none; }
+  34% { transform: translateX(calc(var(--away) * 2 * var(--su))); }
+  38%, 48% { transform: translate(calc(var(--dx, 0) * 1.53cqw), calc(var(--dy, 0) * var(--ratio) * 1.53cqw)); }
+  58%, 100% { transform: none; }
+}
+@keyframes land-atk-cackle {
+  0%, 6% { transform: none; }
+  8%, 12%, 16%, 20%, 24%, 28% { transform: rotate(-4deg) translateY(calc(-0.5 * var(--su))); }
+  10%, 14%, 18%, 22%, 26% { transform: rotate(4deg); }
+  31% { transform: translateX(calc(var(--away) * 2 * var(--su))); }
+  38% { transform: translate(calc(var(--dx, 0) * 1.45cqw), calc(var(--dy, 0) * var(--ratio) * 1.45cqw)); }
+  46% { transform: translate(calc(var(--dx, 0) * 1.45cqw), calc(var(--dy, 0) * var(--ratio) * 1.45cqw)); }
+  60%, 100% { transform: none; }
+}
+@keyframes land-atk-step {
+  0%, 18% { transform: none; }
+  28% { transform: translate(calc(var(--dx, 0) * -0.1cqw), calc(var(--dy, 0) * var(--ratio) * -0.1cqw)); }
+  38% { transform: translate(calc(var(--dx, 0) * 0.87cqw), calc(var(--dy, 0) * var(--ratio) * 0.87cqw)); }
+  46% { transform: translate(calc(var(--dx, 0) * 0.87cqw), calc(var(--dy, 0) * var(--ratio) * 0.87cqw)); }
+  60%, 100% { transform: none; }
+}
+@keyframes land-atk-draw {
+  0%, 10% { transform: none; }
+  32% { transform: translateX(calc(var(--away) * 2 * var(--su))); }
+  35% { transform: translateX(calc(var(--away) * 3.5 * var(--su))); }
+  38%, 100% { transform: none; }
+}
+@keyframes land-took-up {
+  0% { transform: none; }
+  2% { transform: translateY(calc(-6 * var(--su))) rotate(calc(var(--away) * -6deg)); }
+  8% { transform: translateY(calc(-9 * var(--su))) rotate(calc(var(--away) * -10deg)); }
+  14% { transform: translateY(0); }
+  18%, 100% { transform: none; }
+}
+@keyframes land-took-crush {
+  0% { transform: none; }
+  2% { transform: none; }
+  6% { transform: none; }
+  12%, 100% { transform: none; }
+}
+@keyframes land-took-flurry {
+  0% { transform: none; }
+  2% { transform: translateX(calc(var(--away) * 3 * var(--su))) rotate(calc(var(--away) * 4deg)); }
+  5% { transform: translateX(calc(var(--away) * 1 * var(--su))); }
+  8% { transform: translateX(calc(var(--away) * 3.5 * var(--su))) rotate(calc(var(--away) * -3deg)); }
+  11% { transform: translateX(calc(var(--away) * 1.5 * var(--su))); }
+  14% { transform: translateX(calc(var(--away) * 4.5 * var(--su))) rotate(calc(var(--away) * 5deg)); }
+  26%, 100% { transform: none; }
+}
+@keyframes land-took-hit {
+  0% { transform: none; }
+  2% { transform: translateX(calc(var(--away) * 3 * var(--su))) rotate(calc(var(--away) * 4deg)); }
+  7% { transform: translateX(calc(var(--away) * -0.9 * var(--su))) rotate(calc(var(--away) * -2deg)); }
+  18%, 100% { transform: none; }
+}
+@keyframes land-took-big {
+  0% { transform: none; }
+  2% { transform: translateX(calc(var(--away) * 7 * var(--su))) rotate(calc(var(--away) * 9deg)); }
+  9% { transform: translateX(calc(var(--away) * 5 * var(--su))) rotate(calc(var(--away) * 6deg)); }
+  24%, 100% { transform: none; }
+}
+.bfield--land .bunit--attacker .bunit__body {
+  animation-name: land-bunit-lunge;
+}
+.bfield--land .bunit--defender .bunit__body {
+  animation-name: land-bunit-recoil;
+}
+.bfield--land .bunit--attacker.bunit--atk-earth .bunit__body {
+  animation-name: land-atk-slam;
+}
+.bfield--land .bunit--attacker:is(.bunit--atk-halo, .bunit--atk-well, .bunit--atk-missiles, .bunit--atk-pillars, .bunit--atk-tendrils) .bunit__body {
+  animation-name: land-atk-lift;
+}
+.bfield--land .bunit--attacker.bunit--atk-cuts .bunit__body {
+  animation-name: land-atk-dart;
+}
+.bfield--land .bunit--attacker.bunit--atk-laugh .bunit__body {
+  animation-name: land-atk-cackle;
+}
+.bfield--land .bunit--attacker.bunit--atk-wall .bunit__body {
+  animation-name: land-atk-step;
+}
+.bfield--land .bunit--attacker:is(.bunit--atk-pierce, .bunit--atk-blast) .bunit__body {
+  animation-name: land-atk-draw;
+}
+.bfield--land .bunit--attacker.bunit--atk-noon .bunit__body {
+  animation-name: atk-still;
+}
+.bfield--land .bunit--defender:is(.bunit--took-earth) .bunit__body {
+  animation-name: land-took-up;
+}
+.bfield--land .bunit--defender:is(.bunit--took-halo, .bunit--took-well, .bunit--took-tendrils) .bunit__body {
+  animation-name: land-took-crush;
+}
+.bfield--land .bunit--defender:is(.bunit--took-cuts, .bunit--took-missiles, .bunit--took-pillars) .bunit__body {
+  animation-name: land-took-flurry;
+}
+.bfield--land .bunit--defender:is(.bunit--took-laugh) .bunit__body {
+  animation-name: land-took-hit;
+}
+.bfield--land .bunit--defender:is(.bunit--took-wall, .bunit--took-pierce, .bunit--took-noon, .bunit--took-blast) .bunit__body {
+  animation-name: land-took-big;
+}
+
+/* ---------- the cards over the stage ---------- */
+
+/*
+ * On a desktop the cards lie over the foot of the picture, the grass fading
+ * into a shade under them rather than a strip of their own; the front row
+ * stands clear of them (FORMATION_LAND). On a phone they sit under the
+ * picture, on the page.
+ */
+.bfield--land > .gcards {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(0deg, rgb(4 8 20 / 92%), rgb(4 8 20 / 60%) 60%, rgb(4 8 20 / 0%));
+  border-top: 0;
+}
+.gcards.gcards--tall {
+  background: none;
+  border-top: 0;
+}
+
+/* ---------- the puppet ---------- */
+
+/*
+ * Each fighter is its picture twice, cut at the waist (56% down; the figure
+ * box has the art's own shape, so that is 56% of the picture): the legs stay
+ * where they stand and the upper half breathes, leaning a touch toward the
+ * other side, each fighter on its own beat (--idl). The class moves animate
+ * the body around it, so the two compose, and a blow knocks the upper half
+ * back. The cut is for breathing only: a fighter goes down whole.
+ */
+.bunit {
+  --lean: -1;
+}
+.bunit--enemy {
+  --lean: 1;
+}
+.bunit__rig,
+.bunit__torso {
+  position: absolute;
+  inset: 0;
+}
+.bunit__legs {
+  clip-path: inset(56% 0 0 0);
+}
+/* A little over the cut, so the join never opens. */
+.bunit__torso > .bunit__art {
+  clip-path: inset(0 0 41% 0);
+}
+.bunit__torso {
+  transform-origin: 50% 56%;
+  animation: lunit-idle 2.4s ease-in-out var(--idl, 0s) infinite;
+}
+@keyframes lunit-idle {
+  50% {
+    transform: translateY(-1.2%) rotate(calc(var(--lean) * -1.4deg));
+  }
+}
+/* The casters' gathering glow, on the whole puppet rather than either half. */
+.bfield--land .bunit--attacker:is(.bunit--atk-halo, .bunit--atk-well, .bunit--atk-pierce, .bunit--atk-blast, .bunit--atk-missiles, .bunit--atk-pillars, .bunit--atk-tendrils) .bunit__rig {
+  animation: atk-glow var(--cyc) ease-in-out calc(var(--cyc) * var(--gt, 0.1)) both;
+}
+
+/* Hit: the upper half snaps back from the blow as it lands, then settles. */
+.bunit--defender .bunit__torso {
+  animation: lunit-hit calc(380ms * var(--beat)) ease-out var(--impact);
+}
+@keyframes lunit-hit {
+  0% {
+    transform: rotate(calc(var(--lean) * 14deg)) translateX(calc(var(--lean) * 3%));
+  }
+  60% {
+    transform: rotate(calc(var(--lean) * -4deg));
+  }
+}
+
+/* ---------- down ---------- */
+
+/*
+ * The knock-out, in one place so another fall can replace it: the whole
+ * figure tips back away from the other side around its feet and lies on the
+ * floor, dimmed. Its end state is the element's own, so with motion turned
+ * down a fighter is simply lying there.
+ */
+.bfield--land .bunit.bunit--dead .bunit__body {
+  animation: none;
+}
+.bunit__fallen {
+  position: absolute;
+  inset: 0;
+  transform-origin: 50% 100%;
+  transform: translateY(6%) rotate(calc(var(--lean) * 82deg)) scale(0.9);
+  opacity: 0.55;
+  filter: grayscale(1) brightness(0.75);
+  animation: land-ko calc(800ms * var(--beat)) ease-in both;
+}
+/* Its health and level go with it, rather than hanging where its head was. */
+.bfield--land .bunit--dead :is(.bunit__hp, .bunit__plate) {
+  opacity: 0;
+  transition: opacity calc(400ms * var(--beat));
+}
+@keyframes land-ko {
+  0% {
+    transform: none;
+    opacity: 1;
+    filter: none;
+  }
+  35% {
+    transform: rotate(calc(var(--lean) * 18deg));
+  }
+}
+/* Its shadow lies flat with it. */
+.bfield--land .bunit--dead .bunit__platform {
+  width: 130%;
+  opacity: 0.45;
+}
+
+/* The spirit leaving the fallen, rising off the field. */
+.bunit__soul {
+  position: absolute;
+  left: 50%;
+  top: 46%;
+  z-index: 4;
+  width: 32%;
+  aspect-ratio: 1;
+  translate: -50% -50%;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fff, rgb(160 200 255 / 50%) 40%, rgb(160 200 255 / 0%) 70%);
+  opacity: 0;
+  pointer-events: none;
+  animation: lunit-soul calc(1200ms * var(--beat)) ease-out var(--impact) forwards;
+}
+@keyframes lunit-soul {
+  0% {
+    opacity: 1;
+    transform: none;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-260%) scale(0.6);
+  }
+}
+
+/* ---------- the target ---------- */
+
+/*
+ * Brackets snap in round whoever is about to be hit as the attacker winds
+ * up, and breathe until the blow lands. Nothing is drawn on the floor under it.
+ */
+.bunit__ret {
+  --rw: 0.22cqw;
+
+  position: absolute;
+  inset: -6% -14% 0;
+  z-index: 3;
+  pointer-events: none;
+  animation:
+    lunit-ret-in calc(320ms * var(--beat)) cubic-bezier(0.2, 0.9, 0.3, 1.35) both,
+    lunit-ret-breathe calc(900ms * var(--beat)) ease-in-out calc(320ms * var(--beat)) infinite;
+}
+.bfield--land:not(.bfield--wide) .bunit__ret {
+  --rw: 0.5cqw;
+}
+.bunit__ret i {
+  position: absolute;
+  width: 24%;
+  height: 24%;
+  border: var(--rw) solid #ff5a6a;
+  filter: drop-shadow(0 0 3px #ff5a6a);
+}
+.bunit__ret i:nth-child(1) {
+  top: 0;
+  left: 0;
+  border-right: 0;
+  border-bottom: 0;
+}
+.bunit__ret i:nth-child(2) {
+  top: 0;
+  right: 0;
+  border-left: 0;
+  border-bottom: 0;
+}
+.bunit__ret i:nth-child(3) {
+  bottom: 0;
+  left: 0;
+  border-right: 0;
+  border-top: 0;
+}
+.bunit__ret i:nth-child(4) {
+  bottom: 0;
+  right: 0;
+  border-left: 0;
+  border-top: 0;
+}
+@keyframes lunit-ret-in {
+  from {
+    opacity: 0;
+    transform: scale(1.4) rotate(45deg);
+  }
+}
+@keyframes lunit-ret-breathe {
+  50% {
+    transform: scale(1.06);
+  }
+}
+
+/* ---------- the numbers ---------- */
+
+/*
+ * The blow pops off the target as it lands: thrown up and swollen, settled
+ * to be read, then lifted away. Gold for a blow its element favours or one
+ * that takes a third of the fighter, pale where the resistance took a good
+ * share, red for the knock-out; what was resisted, or that it was a
+ * knock-out, in small letters under it.
+ */
+.bunit__pop {
+  position: absolute;
+  left: 50%;
+  top: 22%;
+  z-index: 26;
+  translate: calc(var(--drift, 0) * 30%) 0;
+  font-family: var(--font-display);
+  font-size: 3.4cqw;
+  font-weight: 900;
+  line-height: 1;
+  text-align: center;
+  white-space: nowrap;
+  color: #fff;
+  text-shadow:
+    0 0 2px #000,
+    0 2px 0 #000,
+    0 0 14px rgb(0 0 0 / 80%);
+  opacity: 0;
+  pointer-events: none;
+  animation: lunit-pop calc(1000ms * var(--beat)) ease-out var(--impact) forwards;
+}
+.bunit__pop small {
+  display: block;
+  margin-top: 2px;
+  font-size: 1.4cqw;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #c4cde0;
+}
+.bunit__pop--big {
+  font-size: 4.6cqw;
+  color: #ffd979;
+}
+.bunit__pop--res {
+  color: #b8c6e0;
+}
+.bunit__pop--kill {
+  font-size: 5cqw;
+  color: #ff5a6a;
+}
+.bfield--land:not(.bfield--wide) .bunit__pop {
+  font-size: 7cqw;
+}
+.bfield--land:not(.bfield--wide) :is(.bunit__pop--big, .bunit__pop--kill) {
+  font-size: 9cqw;
+}
+.bfield--land:not(.bfield--wide) .bunit__pop small {
+  font-size: 2.8cqw;
+}
+@keyframes lunit-pop {
+  0% {
+    transform: translate(-50%, -20%) scale(0.4);
+    opacity: 0;
+  }
+  18% {
+    transform: translate(-50%, -60%) scale(1.25);
+    opacity: 1;
+  }
+  32% {
+    transform: translate(-50%, -70%) scale(1);
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -150%) scale(1);
+    opacity: 0;
+  }
+}
+/* An ability's heal or harm, in the same hand: green up, red down. */
+.bfield--land .bunit .effectpill {
+  padding: 0;
+  border: 0;
+  background: none;
+  box-shadow: none;
+  font-size: 2.4cqw;
+  font-weight: 900;
+  text-shadow:
+    0 0 2px #000,
+    0 2px 0 #000,
+    0 0 12px rgb(0 0 0 / 80%);
+}
+.bfield--land:not(.bfield--wide) .bunit .effectpill {
+  font-size: 5cqw;
+}
+.bfield--land .bunit .effectpill--heal {
+  color: #5ff2b0;
+}
+.bfield--land .bunit .effectpill--damage {
+  color: #ff8a96;
 }
 
 /* ---------- calmer settings ---------- */
 
 @media (prefers-reduced-motion: reduce) {
+  .bunit__torso,
+  .bunit__fallen,
+  .bfield--land .bunit--attacker .bunit__rig,
+  .bunit__ret {
+    animation: none !important;
+  }
+  .bunit__soul {
+    display: none;
+  }
+  .bunit__pop {
+    animation: lunit-pop-still calc(1000ms * var(--beat)) steps(1) var(--impact) forwards;
+  }
   .lstage__scene,
   .lstage__clouds > i,
   .lstage__glints,
@@ -1096,4 +1608,23 @@
 :root[data-fx='low'] .lstage__clump,
 :root[data-fx='low'] .gcard--act .gcard__fx::before {
   animation: none;
+}
+
+:root[data-fx='low'] .bunit__torso,
+:root[data-fx='low'] .bunit__fallen,
+:root[data-fx='low'] .bunit__ret {
+  animation: none;
+}
+:root[data-fx='low'] .bunit__soul {
+  display: none;
+}
+@keyframes lunit-pop-still {
+  0% {
+    transform: translate(-50%, -70%);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -70%);
+    opacity: 0;
+  }
 }

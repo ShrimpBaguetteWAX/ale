@@ -18,13 +18,21 @@ const ELEMENT_RIM: Record<string, string> = {
 const LOW_SHARE = 0.25
 
 /**
+ * How long, at 1×, the health bar takes to finish falling after a blow: the
+ * trail's delay and its run (`.gcard__trail` in landstage.css, 380 + 700 ms).
+ * A card is only stamped knocked out once its bar has reached nothing.
+ */
+const KO_AFTER_MS = 1080
+
+/**
  * Every fighter in the fight as a gilded card, under the picture: yours on
  * the left, theirs on the right.
  *
  * A card says what the field shows, so the eye does not have to find it in
  * the crowd: who is swinging (gold, lifted, a light running over it), who is
- * being hit (a TARGET ribbon and brackets), who is low, who is down (dull
- * iron, cracked, stamped), and who swings next. Health drops at the blow's
+ * being hit (a TARGET ribbon and brackets), who is low, who is down (the card
+ * itself falls: tipped over, dropped below the row, its frame greyed, a DOWN
+ * plate where the health was), and who swings next. Health drops at the blow's
  * impact like the bars over the heads, its trail flashing white and then
  * following. The charge strip is how close the fighter is to its next blow.
  */
@@ -36,6 +44,7 @@ export function GildedCards({
   nextUp,
   charge,
   tall,
+  beat,
 }: {
   team1: SimFighter[]
   team2: SimFighter[]
@@ -46,6 +55,8 @@ export function GildedCards({
   charge: Map<string, number>
   /** A phone: two rows of six rather than one of twelve. */
   tall: boolean
+  /** One over the playback speed, the field's --beat: the bar's timings scale with it. */
+  beat: number
 }) {
   const card = (f: SimFighter) => (
     <GildedCard
@@ -56,6 +67,8 @@ export function GildedCards({
       targeted={current?.defenderUid === f.uid}
       next={nextUp === f.uid}
       charge={charge.get(f.uid) ?? 0}
+      felled={current?.defenderUid === f.uid && !!current?.killed}
+      beat={beat}
     />
   )
   return (
@@ -77,6 +90,8 @@ function GildedCard({
   targeted,
   next,
   charge,
+  felled,
+  beat,
 }: {
   fighter: SimFighter
   snap: FighterSnapshot | undefined
@@ -84,12 +99,43 @@ function GildedCard({
   targeted: boolean
   next: boolean
   charge: number
+  /** This blow is the one that knocks the fighter out. */
+  felled: boolean
+  beat: number
 }) {
   const health = snap?.health ?? fighter.start_health
   const maxHealth = snap?.max_health ?? fighter.max_health
   const share = maxHealth > 0 ? Math.max(0, Math.min(1, health / maxHealth)) : 0
   const down = health <= 0
   const nft = Number(fighter.fighter_id) === NFT_FIGHTER_ID
+
+  /*
+     Knocked out only once the bar has emptied: the killing blow drains it
+     first, and the card turns to iron after. A fighter already down when
+     the card appears (a seek, a skip), or a screen that has motion turned
+     down, is stamped at once.
+  */
+  const [stamped, setStamped] = useState(down)
+  /* Stamped without the fall: a skip, a seek, or motion turned down. */
+  const [settled, setSettled] = useState(down)
+  useEffect(() => {
+    if (!down) {
+      setStamped(false)
+      setSettled(false)
+      return
+    }
+    const still =
+      document.documentElement.dataset.fx === 'low' ||
+      (typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches)
+    if (!felled || still) {
+      setStamped(true)
+      setSettled(true)
+      return
+    }
+    const id = setTimeout(() => setStamped(true), KO_AFTER_MS * beat)
+    return () => clearTimeout(id)
+  }, [down, felled, beat])
+  const ko = down && stamped
 
   /* A flash on the trail each time the health falls, keyed so it replays. */
   const [hurt, setHurt] = useState(0)
@@ -99,7 +145,7 @@ function GildedCard({
     was.current = share
   }, [share])
 
-  const state = down
+  const state = ko
     ? ' gcard--ko'
     : acting
       ? ' gcard--act'
@@ -113,7 +159,8 @@ function GildedCard({
     <li
       className={
         `gcard gcard--${fighter.team === 1 ? 'mine' : 'enemy'}${state}` +
-        (!down && share <= LOW_SHARE ? ' gcard--low' : '')
+        (!down && share <= LOW_SHARE ? ' gcard--low' : '') +
+        (ko && settled ? ' gcard--settled' : '')
       }
       style={
         {
@@ -154,6 +201,9 @@ function GildedCard({
       </span>
       <span className="gcard__chg">
         <i />
+      </span>
+      <span className="gcard__down" aria-hidden={!ko}>
+        DOWN
       </span>
     </li>
   )
