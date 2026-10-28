@@ -1252,50 +1252,10 @@
   }
 }
 
-/* ---------- verdict and team ---------- */
-
-.result__stage {
-  /* One size drives both the word and the space kept clear above the cards. */
-  --verdict-size: clamp(56px, 10vw, 132px);
-
-  position: relative;
-  display: grid;
-  padding-top: calc(var(--verdict-size) * 0.78);
-}
-
 /*
  * The verdict sits behind the team. The fighters break the letters, so the
  * two read as one image rather than as a banner with a list under it.
  */
-.result__verdict {
-  position: absolute;
-  top: 0;
-  left: 50%;
-  translate: -50% 0;
-  z-index: 0;
-  margin: 0;
-  font-family: var(--font-display);
-  font-size: var(--verdict-size);
-  font-weight: var(--fw-bold);
-  letter-spacing: 0.14em;
-  line-height: 0.9;
-  white-space: nowrap;
-  pointer-events: none;
-  color: rgb(226 234 255 / 30%);
-  -webkit-text-stroke: 2px rgb(255 255 255 / 55%);
-  text-shadow:
-    0 0 28px rgb(120 160 255 / 35%),
-    0 6px 26px rgb(0 0 0 / 70%);
-  animation: verdict-in 700ms cubic-bezier(0.2, 0.9, 0.3, 1) both;
-}
-
-.result__verdict--win {
-  color: rgb(255 219 128 / 34%);
-  -webkit-text-stroke: 2px rgb(255 206 92 / 75%);
-  text-shadow:
-    0 0 30px rgb(255 184 0 / 45%),
-    0 6px 26px rgb(0 0 0 / 70%);
-}
 
 @keyframes verdict-in {
   from {
@@ -1304,123 +1264,7 @@
   }
 }
 
-.resultgrid {
-  position: relative;
-  z-index: 1;
-  display: grid;
-  gap: var(--sp-2);
-  grid-template-columns: repeat(6, minmax(0, 1fr));
-}
-
-@media (max-width: 1000px) {
-  .resultgrid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: var(--sp-3);
-  }
-}
-
-@media (max-width: 560px) {
-  .resultgrid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
 /* ---------- one fighter's card ---------- */
-
-/*
- * The lean. Only the plate uses it now, and a short element tolerates a
- * steeper angle than a full-height card did, so it is a touch stronger than
- * the selection screen's.
- */
-.resultgrid {
-  --lean: -6deg;
-  --lean-back: 6deg;
-}
-
-/*
- * Art standing on nothing, over a slanted plate.
- *
- * The selection screen skews the whole card, which works because its cards
- * are short and their text is one centred line. A scorecard is twice as tall
- * and its figures are right-aligned, and counter-skewing a box that tall
- * displaces its lowest rows sideways by about a twelfth of its width — enough
- * to push every number past the clip edge and lose it. Skewing only the plate
- * keeps the slant, keeps the numbers, and lets the verdict show between the
- * fighters.
- */
-.rescard {
-  position: relative;
-  display: grid;
-  align-content: end;
-  /* Keeps the backdrop (z-index: -1) behind the card rather than the page. */
-  isolation: isolate;
-}
-
-/*
- * The slanted backdrop the fighters stand against.
- *
- * It runs the full height of the card so the parallelogram reads as one
- * shape, but it is nearly clear at the top and only gathers weight toward the
- * plate. That is the balance the earlier version got wrong in both
- * directions: opaque from the top edge down, it guillotined the verdict;
- * absent entirely, the fighters had nothing to stand against.
- */
-.rescard::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  transform: skewX(var(--lean));
-  border-radius: var(--radius-xs);
-  border: 1px solid rgb(255 255 255 / 7%);
-  background: linear-gradient(
-    180deg,
-    rgb(20 26 48 / 0%) 0%,
-    rgb(20 26 48 / 14%) 34%,
-    rgb(17 22 42 / 38%) 62%,
-    rgb(12 16 32 / 58%) 88%,
-    rgb(10 14 28 / 66%) 100%
-  );
-  /*
-     The outline fades in only below the verdict. The team stands in front
-     of the word, so the backdrop's top edge and its slanted sides were
-     drawn straight across the letters.
-  */
-  -webkit-mask-image: linear-gradient(180deg, transparent 0%, transparent 34%, #000 60%);
-  mask-image: linear-gradient(180deg, transparent 0%, transparent 34%, #000 60%);
-}
-
-/*
- * The box decides the figure's size, not the other way round.
- *
- * `max-height: 100%` was measured against a grid row that sized itself to its
- * own content, which is circular — so it resolved to no limit at all and only
- * `max-width: 88%` was doing anything. Every fighter's art is about 1.43 tall
- * for its width, which happened to land near the 4:5 box, so nothing showed
- * it. `voidwarden_khaured` is 326x512 — 1.571, the tallest of the ninety-five
- * — and at 88% of the column it stood 313px against its neighbours' 256,
- * dropping that one card's name plate 30px below the rest of the row.
- *
- * A definite height on the box and a stretched image inside it means the
- * ratio decides the box and `contain` decides the figure. The inset the old
- * `max-width: 88%` gave is padding now, so it applies to the content box that
- * `object-fit` measures against.
- */
-.rescard__art {
-  display: grid;
-  aspect-ratio: 4 / 5;
-  min-height: 0;
-}
-
-.rescard__art img {
-  width: 100%;
-  height: 100%;
-  min-height: 0;
-  padding: 0 6%;
-  object-fit: contain;
-  object-position: bottom center;
-  filter: drop-shadow(0 10px 16px rgb(0 0 0 / 65%));
-}
 
 /*
  * What the fight was worth, inside the panel it belongs to.
@@ -1511,49 +1355,11 @@
   }
 }
 
-.rescard__plate {
-  position: relative;
-  overflow: hidden;
-  transform: skewX(var(--lean));
-  background: linear-gradient(180deg, rgb(20 20 35 / 94%), rgb(9 12 26 / 96%));
-  border-top: 2px solid rgb(255 255 255 / 34%);
-  border-radius: 0 0 var(--radius-xs) var(--radius-xs);
-}
-
 /*
  * Counter-skewed and a little wider than the plate, to fill the wedges the
  * counter-skew leaves at two corners. The plate is short, so the overhang
  * needed is small — 4% each side against a displacement of roughly 3%.
  */
-.rescard__plateInner {
-  width: 110%;
-  margin-left: -5%;
-  padding: var(--sp-2) 11% var(--sp-3);
-  transform: skewX(var(--lean-back));
-  text-align: center;
-}
-
-.rescard__race {
-  font-family: var(--font-display);
-  font-size: 10px;
-  font-weight: var(--fw-bold);
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: #868686;
-}
-
-.rescard__class {
-  font-family: var(--font-display);
-  font-size: var(--fs-sm);
-  font-weight: var(--fw-bold);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--white);
-  margin-bottom: var(--sp-2);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
 
 .rescard__stats {
   display: grid;
@@ -1609,84 +1415,7 @@
   color: #ff6d85;
 }
 
-/* ---------- mine power ---------- */
-
-.minepower {
-  display: grid;
-  justify-items: center;
-  gap: var(--sp-3);
-  width: 100%;
-  max-width: 620px;
-  margin: 0 auto;
-}
-
-.minebar {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  height: 32px;
-  padding: 0 var(--sp-3);
-  background: #1d1b20;
-  border: 1px solid #c3c3c3;
-}
-
-.minebar__track {
-  position: absolute;
-  inset: 0;
-  overflow: hidden;
-}
-
-.minebar__fill {
-  display: block;
-  height: 100%;
-  opacity: 0.6;
-  /* Slow enough to watch: this is the reward for the whole run. */
-  transition: width 1100ms cubic-bezier(0.16, 0.9, 0.3, 1);
-}
-.minebar__fill--tlm {
-  background: linear-gradient(90deg, #e1ae2c 0%, #fffe32 100%);
-}
-.minebar__fill--shards {
-  background: linear-gradient(90deg, #ce73e0 0%, #ed92ff 100%);
-}
-
-.minebar__label {
-  position: relative;
-  z-index: 2;
-  font-family: var(--font-display);
-  font-size: 12px;
-  font-weight: var(--fw-bold);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: #fff;
-  text-shadow: 0 1px 3px rgb(0 0 0 / 70%);
-  white-space: nowrap;
-}
-
 /* What this run added, outside the bar so it is not lost against the fill. */
-.minebar__gain {
-  position: absolute;
-  left: calc(100% + var(--sp-3));
-  font-family: var(--font-display);
-  font-size: 12px;
-  font-weight: var(--fw-bold);
-  color: var(--teal);
-  white-space: nowrap;
-}
-
-@media (max-width: 720px) {
-  .minebar {
-    /* No room beside the bar on a phone; the gain goes inside it. */
-    justify-content: space-between;
-  }
-  .minebar__gain {
-    position: relative;
-    left: auto;
-    z-index: 2;
-  }
-}
 
 .minepower__hint,
 .minepower__foot {
@@ -1740,8 +1469,7 @@
   .rolltag,
   .duelist__art--dead,
   .duel__element,
-  .hpbar[data-band="low"] .hpbar__fill,
-  .result__verdict {
+  .hpbar[data-band="low"] .hpbar__fill {
     animation: none;
   }
   .duelist__flash {
@@ -1771,14 +1499,6 @@
   .battle__fill,
   .duelist__art {
     transition: none;
-  }
-  /* The fill still moves, just instantly — the number matters, the growth
-     is the flourish. */
-  .minebar__fill {
-    transition: none;
-  }
-  .result__verdict {
-    opacity: 1;
   }
 }
 
@@ -1879,7 +1599,6 @@
     transform: translate(-50%, -14px);
   }
 }
-
 
 /* ---------- threat mark ---------- */
 
@@ -2151,10 +1870,6 @@
  * fall too shallow to catch the eye that is reading the numbers underneath.
  * A single drop-shadow, composited, on one image.
  */
-.rescard--holds .rescard__art img {
-  filter: drop-shadow(0 0 8px rgb(247 166 0 / 34%));
-  animation: holdglow 4.5s var(--ease) infinite;
-}
 
 @keyframes holdglow {
   0%,
@@ -2163,40 +1878,6 @@
   }
   50% {
     filter: drop-shadow(0 0 10px rgb(247 166 0 / 42%));
-  }
-}
-
-/*
- * The label, across the top of the card.
- *
- * Above the artwork rather than on the plate: the plate is a stat block and a
- * sentence in it reads as another row, and this is the one thing on the card
- * that is not a number.
- *
- * A hairline and amber type rather than a filled banner. Filled, it was the
- * brightest object on a screen whose subject is the word VICTORY, and it
- * pulled the eye away from the result to a footnote about it.
- */
-.rescard__holds {
-  position: relative;
-  z-index: 2;
-  margin-bottom: var(--sp-2);
-  padding: 3px var(--sp-2);
-  border-radius: var(--radius-xs);
-  border: 1px solid rgb(247 166 0 / 26%);
-  background: rgb(247 166 0 / 8%);
-  font-family: var(--font-display);
-  font-size: max(9px, var(--fs-floor));
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  text-align: center;
-  color: rgb(247 200 130 / 90%);
-}
-
-/* The glow is decoration; the label and the tooltip carry the meaning. */
-@media (prefers-reduced-motion: reduce) {
-  .rescard--holds .rescard__art img {
-    animation: none;
   }
 }
 
@@ -3991,86 +3672,6 @@
 
 /* ---------- the verdict in solid metal, on a lit floor ---------- */
 
-/*
- * The word is filled rather than outlined: polished gold for a win, brushed
- * steel for a loss, so it reads as a trophy rather than a watermark. Under
- * the team, a pool of light around the fighters' feet with faint rays from
- * above, warm for a win and cold for a loss, and each fighter catches a
- * little of it. It sits above the stat plates on purpose: lower down they
- * would cover it. One gradient layer each, nothing animated.
- */
-.result__verdict {
-  color: transparent;
-  -webkit-text-stroke: 0;
-  background: linear-gradient(180deg, #f2f6ff 0%, #9aa8c0 55%, #5a6680 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  text-shadow: none;
-  opacity: 0.9;
-  filter: drop-shadow(0 4px 18px rgb(0 0 0 / 70%)) drop-shadow(0 0 24px rgb(150 180 255 / 30%));
-}
-.result__verdict--win {
-  background: linear-gradient(180deg, #fff3c4 0%, #ffd060 45%, #b97a10 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-stroke: 0;
-  text-shadow: none;
-  filter: drop-shadow(0 4px 18px rgb(0 0 0 / 70%)) drop-shadow(0 0 30px rgb(255 190 40 / 45%));
-}
-
-/*
- * Desktop only: below that the cards wrap into rows, and a pool of light
- * sized for one row would sit in the middle of them.
- */
-@media (min-width: 720px) {
-  .result__stage::before,
-  .result__stage::after {
-    content: '';
-    position: absolute;
-    z-index: 0;
-    pointer-events: none;
-  }
-  .result__stage::before {
-    left: -2%;
-    right: -2%;
-    top: 6%;
-    height: 64%;
-    /* Brightens what is behind it rather than painting over it, so it shows
-       whatever colour the map happens to be under the fight. */
-    mix-blend-mode: screen;
-    background:
-      radial-gradient(ellipse 52% 48% at 50% 80%, rgb(130 175 255 / 85%), rgb(70 115 220 / 40%) 45%, transparent 72%),
-      radial-gradient(ellipse 64% 11% at 50% 92%, rgb(200 228 255 / 95%), transparent 70%);
-  }
-  .result__stage--win::before {
-    background:
-      radial-gradient(ellipse 52% 48% at 50% 80%, rgb(255 190 70 / 95%), rgb(255 130 20 / 45%) 45%, transparent 72%),
-      radial-gradient(ellipse 64% 11% at 50% 92%, rgb(255 236 170), transparent 70%);
-  }
-  /* The rays, from above the word down onto the team. */
-  .result__stage::after {
-    left: 20%;
-    right: 20%;
-    top: -10%;
-    height: 95%;
-    filter: blur(6px);
-    mix-blend-mode: screen;
-    background: conic-gradient(from 180deg at 50% 0%, transparent 160deg, rgb(150 190 255 / 16%) 172deg, transparent 178deg, rgb(150 190 255 / 12%) 184deg, transparent 194deg, rgb(150 190 255 / 14%) 200deg, transparent 210deg);
-  }
-  .result__stage--win::after {
-    background: conic-gradient(from 180deg at 50% 0%, transparent 160deg, rgb(255 210 120 / 22%) 172deg, transparent 178deg, rgb(255 210 120 / 16%) 184deg, transparent 194deg, rgb(255 210 120 / 20%) 200deg, transparent 210deg);
-  }
-  .result__stage--win .rescard__art img {
-    filter: drop-shadow(0 10px 16px rgb(0 0 0 / 65%)) drop-shadow(0 0 10px rgb(255 200 90 / 55%));
-  }
-  .result__stage--loss .rescard__art img {
-    filter: drop-shadow(0 10px 16px rgb(0 0 0 / 65%)) drop-shadow(0 0 10px rgb(140 180 255 / 45%)) grayscale(0.35);
-  }
-}
-:root[data-fx='low'] .result__stage::after {
-  display: none;
-}
-
 /* ---------- the result on a phone: levels first, a reward dock ---------- */
 
 /* What the TLM and Shard figures are: the estimate for mining, everywhere. */
@@ -4088,11 +3689,9 @@
   color: var(--text-faint);
 }
 
-/* The icons, the tabs, the face crops and the i are the phone's. */
+/* The button icons and the i are the phone's. */
 .minepower__why,
-.rescard__avatar,
-.result__icobtn svg,
-.result__tabs {
+.result__icobtn svg {
   display: none;
 }
 
@@ -4118,148 +3717,6 @@
     display: none;
   }
 
-  /* Levels or Fight stats. */
-  .result__tabs {
-    position: relative;
-    z-index: 1;
-    display: flex;
-    gap: 2px;
-    margin-bottom: var(--sp-3);
-    padding: 3px;
-    border-radius: 10px;
-    background: rgb(0 0 0 / 30%);
-    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 12%);
-  }
-  .result__tab {
-    flex: 1;
-    height: 32px;
-    border: 0;
-    border-radius: 7px;
-    background: none;
-    color: var(--text-faint);
-    font-family: var(--font-body);
-    font-size: 13px;
-    font-weight: var(--fw-bold);
-    cursor: pointer;
-  }
-  .result__tab[aria-selected='true'] {
-    background: rgb(255 255 255 / 12%);
-    color: var(--white);
-  }
-  .result__stage {
-    --verdict-size: 46px;
-    /* The word is placed above the flow; the tabs start under it. */
-    padding-top: calc(var(--verdict-size) * 1.12);
-  }
-
-  /* Each fighter as a small card: portrait, then name and one half. */
-  .resultgrid {
-    gap: var(--sp-2);
-  }
-  .rescard {
-    grid-template-columns: 44px minmax(0, 1fr);
-    /* From the top: a card with no level line (the NFT fighter) would
-       otherwise sit lower than the rest. */
-    align-content: start;
-    align-items: start;
-    gap: 8px;
-    padding: 8px;
-    border-radius: 12px;
-    background: linear-gradient(180deg, rgb(10 18 34 / 80%), rgb(4 9 20 / 90%));
-    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 10%);
-  }
-  .rescard::before {
-    display: none;
-  }
-  .rescard__art {
-    grid-row: 1 / span 3;
-    width: 44px;
-    height: 52px;
-    aspect-ratio: auto;
-    border-radius: 8px;
-    overflow: hidden;
-    background: rgb(255 255 255 / 6%);
-  }
-  /* The face crop, not the full-length figure. */
-  .rescard__art .rescard__full {
-    display: none;
-  }
-  .rescard__art .rescard__avatar {
-    display: block;
-  }
-  .rescard__art--down {
-    position: relative;
-  }
-  .rescard__art--down .rescard__avatar {
-    filter: grayscale(1) brightness(0.55);
-  }
-  .rescard__art--down::after {
-    content: 'DOWN';
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    padding: 1px 0;
-    font-family: var(--font-display);
-    font-size: max(8px, var(--fs-floor));
-    font-weight: var(--fw-bold);
-    letter-spacing: 0.1em;
-    text-align: center;
-    color: var(--white);
-    background: rgb(150 20 40 / 88%);
-  }
-  .rescard__art img {
-    padding: 0;
-    object-fit: cover;
-    object-position: 50% 20%;
-    filter: none;
-  }
-  .rescard__holds {
-    grid-column: 1 / -1;
-    order: 9;
-  }
-  .rescard__plate {
-    transform: none;
-    background: none;
-    border: 0;
-    overflow: visible;
-  }
-  .rescard__plateInner {
-    width: auto;
-    margin: 0;
-    padding: 0;
-    transform: none;
-    text-align: left;
-  }
-  .rescard__class {
-    margin-bottom: 4px;
-    font-size: 12px;
-  }
-
-  /* Levels: the bar, the level, the gain, and a priced Level up. */
-  .result--levels .rescard__stats,
-  .result--levels .rescard__race {
-    display: none;
-  }
-  .result--levels .rescard__xp {
-    grid-template-rows: auto;
-    margin-top: 0;
-  }
-  /* At the cap the line already says so; a dead button says it twice. */
-  .result--levels .rescard__xp > .btn:not(.btn--primary) {
-    display: none;
-  }
-  .result--levels .rescard__xp > .btn--primary {
-    margin-left: -52px;
-    width: calc(100% + 52px);
-    margin-top: 4px;
-  }
-
-  /* Fight stats: the numbers, no levels. */
-  .result--stats .rescard__xp {
-    display: none;
-  }
-
   /*
    * The reward dock: the minepower, the estimate and Mine pinned above the
    * tab bar, so the reason to stay on this screen never scrolls away.
@@ -4269,42 +3726,13 @@
      the screen, and a short result left the dock floating mid-screen. The
      page keeps room under the cards for it.
   */
-  /* --dock is the dock's measured height, set from Result. */
-  .result {
-    padding-bottom: calc(var(--dock, 170px) + 24px + env(safe-area-inset-bottom));
-  }
   /* The bars already show how far each pool has to go. */
   .minepower__hint {
     display: none;
   }
-  .minepower {
-    position: fixed;
-    left: 12px;
-    right: 12px;
-    width: auto;
-    /* At the foot of the screen: the fight screens have no tab bar. */
-    bottom: calc(8px + env(safe-area-inset-bottom));
-    z-index: 5;
-    grid-template-columns: minmax(0, 1fr);
-    align-items: center;
-    gap: 7px 10px;
-    max-width: none;
-    padding: 9px;
-    border-radius: 14px;
-    background: linear-gradient(180deg, rgb(10 18 34 / 92%), rgb(4 9 20 / 96%));
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    box-shadow:
-      inset 0 0 0 1px rgb(255 255 255 / 12%),
-      0 -10px 30px rgb(0 0 0 / 45%);
-  }
-  .minepower > .minebar,
   .minepower__hint,
   .minepower__foot {
     grid-column: 1 / -1;
-  }
-  .minebar {
-    height: 28px;
   }
   /* "You'd mine about 32.69 312.1 (i)" in one row. */
   .minepower__estimate {
@@ -4358,14 +3786,6 @@
   }
   .minepower__foot--open {
     display: block;
-  }
-
-  /* Fight stats on a narrow card: the label on one line, no icon. */
-  .result--stats .rescard__row dt img {
-    display: none;
-  }
-  .result--stats .rescard__row dt {
-    white-space: nowrap;
   }
 }
 
