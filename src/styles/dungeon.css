@@ -6615,94 +6615,64 @@ button.combatcard--empty:hover {
   font: inherit;
   cursor: pointer;
 }
-.medal__pic {
+/*
+ * The fighter is the battle's gilded card (.gcard, landstage.css), as wide as
+ * the column it stands in: the medal is its own container, so the card's unit
+ * is a share of that width. The marker sits on the picture under the element.
+ */
+.medal {
+  container-type: inline-size;
+}
+.scard {
+  --u: calc(100cqw / 7.9);
+  --tc: var(--cyan);
+
   position: relative;
-  width: 100%;
-  aspect-ratio: 1;
-  overflow: hidden;
-  border-radius: 50%;
-  background-position: center;
-  background-size: cover;
-  box-shadow:
-    0 0 0 3px #0b1426,
-    0 0 0 5px rgb(0 186 255 / 75%);
-  transition: box-shadow var(--dur-fast) var(--ease);
+  display: block;
+  width: calc(var(--u) * 7.3);
+  margin-inline: auto;
+  list-style: none;
+  transform: none;
+  transition:
+    transform var(--dur-fast) var(--ease),
+    filter var(--dur-fast) var(--ease);
 }
-.medal--enemy .medal__pic {
-  box-shadow:
-    0 0 0 3px #0b1426,
-    0 0 0 5px rgb(255 90 106 / 75%);
+.scard.gcard--enemy {
+  --tc: #ff5a6a;
 }
-.medal__hit:hover .medal__pic,
-.medal--selected .medal__pic {
-  box-shadow:
-    0 0 0 3px #0b1426,
-    0 0 0 5px var(--cyan),
-    var(--glow-cyan);
+.scard .gcard__frame,
+.scard .gcard__pic {
+  display: block;
 }
-.medal--enemy .medal__hit:hover .medal__pic {
-  box-shadow:
-    0 0 0 3px #0b1426,
-    0 0 0 5px #ff5a6a,
-    0 0 16px -2px rgb(255 90 106 / 65%);
+.scard .gcard__name {
+  bottom: calc(var(--u) * 0.7);
 }
-.medal__art {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: 50% 14%;
-  transform: scale(1.35);
-  transform-origin: 50% 20%;
-}
-.medal__el,
-.medal__mk {
+.gcard__mk {
   position: absolute;
-  top: 4px;
-  width: 22px;
-  height: 22px;
-  padding: 3px;
+  z-index: 5;
+  right: calc(var(--u) * 0.45);
+  top: calc(var(--u) * 2.1);
+  width: calc(var(--u) * 1.35);
+  height: calc(var(--u) * 1.35);
+  padding: calc(var(--u) * 0.2);
   border-radius: 50%;
-  background: #0b1426;
-  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 18%);
+  background: rgb(4 8 20 / 80%);
+  box-shadow: 0 0 0 1px rgb(255 255 255 / 25%);
 }
-.medal__el {
-  left: 4%;
-}
-.medal__mk {
-  right: 4%;
-}
-.medal__tab {
-  position: relative;
-  z-index: 1;
-  min-width: 28px;
-  margin-top: -16px;
-  padding: 0 7px;
-  border-radius: 8px;
-  background: #0b1426;
-  box-shadow: inset 0 0 0 1.5px var(--cyan);
-  font-family: var(--font-display);
-  font-size: 11px;
-  font-weight: 900;
-  line-height: 20px;
-  text-align: center;
-}
-.medal--enemy .medal__tab {
-  box-shadow: inset 0 0 0 1.5px #ff5a6a;
-}
-.medal__tab--badge {
-  background: var(--gold);
-  box-shadow: none !important;
+/* A badge (NFT) in place of a level is gold. */
+.gcard__lv--badge b {
   color: #2a1a00;
-  font-size: 10px;
 }
-.medal__name {
-  max-width: 100%;
-  overflow: hidden;
-  font-size: 13.5px;
-  font-weight: 700;
-  line-height: 1.15;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.gcard__lv--badge::before {
+  background: linear-gradient(135deg, #ffd979, #d99a1c);
+}
+.medal__hit:hover .scard,
+.medal--selected .scard {
+  transform: translateY(-3px);
+  filter: drop-shadow(0 0 10px rgb(0 186 255 / 55%));
+}
+.medal--enemy .medal__hit:hover .scard {
+  filter: drop-shadow(0 0 10px rgb(255 90 106 / 55%));
 }
 .medal__owner {
   max-width: 100%;
@@ -6734,7 +6704,7 @@ button.combatcard--empty:hover {
   min-height: 14px;
 }
 /* Out of this fight: drained, with the reason over the face. */
-.medal--dormant .medal__pic {
+.medal--dormant .scard {
   filter: grayscale(0.85) brightness(0.55);
 }
 .medal__dormant {
@@ -6774,20 +6744,20 @@ button.combatcard--empty:hover {
 .medal__remove:focus-visible {
   opacity: 1;
 }
-.medal:hover .medal__mk {
+.medal:hover .gcard__mk {
   opacity: 0;
 }
 
-/* Empty slots and the loading line: round holes the size of a medallion. */
+/* Empty slots and the loading line: the frame of the card that will stand there. */
 .versus--hud .versus__row > .combatcard--empty,
 .versus--hud .versus__row > .combatcard--loading {
   align-self: start;
   width: 100%;
   min-height: 0;
   height: auto;
-  aspect-ratio: 1;
-  margin-top: 4px;
-  border-radius: 50%;
+  aspect-ratio: 3 / 4.25;
+  margin-top: 6px;
+  border-radius: 12px;
   transform: none;
 }
 .versus--hud .versus__row > .combatcard--empty > * {
@@ -7524,43 +7494,22 @@ button.combatcard--empty:hover {
     grid-template-columns: repeat(6, minmax(0, 1fr));
     gap: 8px;
   }
-  .versus--hud .medal__name,
+  .versus--hud .gcard__name,
   .versus--hud .medal__owner,
   .versus--hud .medal__figs,
   .versus--hud .medal .combatcard__vs,
-  .versus--hud .medal__el,
-  .versus--hud .medal__mk {
+  .versus--hud .gcard__mk {
     display: none;
   }
   .versus--hud .medal__hit {
     gap: 0;
   }
-  .versus--hud .medal__pic {
-    box-shadow:
-      0 0 0 2px #0b1426,
-      0 0 0 4px rgb(0 186 255 / 75%);
-  }
-  .versus--hud .medal--enemy .medal__pic {
-    box-shadow:
-      0 0 0 2px #0b1426,
-      0 0 0 4px rgb(255 90 106 / 75%);
-  }
-  .versus--hud .medal__tab {
-    min-width: 22px;
-    margin-top: -10px;
-    padding: 0 5px;
-    font-size: 9.5px;
-    line-height: 16px;
-  }
-  /* The one being changed lifts with a brighter ring; the rest step back. */
-  .versus--hud .medal--selected .medal__pic {
+  /* The one being changed lifts with a brighter edge; the rest step back. */
+  .versus--hud .medal--selected .scard {
     transform: translateY(-3px);
-    box-shadow:
-      0 0 0 2px #0b1426,
-      0 0 0 4px var(--cyan),
-      var(--glow-cyan);
+    filter: drop-shadow(0 0 8px var(--cyan));
   }
-  .versus--hud .versus__row:has(.medal--selected) .medal:not(.medal--selected) .medal__pic {
+  .versus--hud .versus__row:has(.medal--selected) .medal:not(.medal--selected) .scard {
     filter: brightness(0.55) saturate(0.7);
   }
   .versus--hud .versus__row > .combatcard--empty {

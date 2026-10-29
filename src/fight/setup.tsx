@@ -44,6 +44,7 @@ import {
   statIcon,
   fighterArt,
   fighterArtFallback,
+  fighterAvatar,
   formatScaled,
   statDisplay,
   abilityColor,
@@ -59,6 +60,7 @@ import { asset, ipfsImage } from '@/assets'
 import { rarityColor } from '@/map/terrain'
 import { usePhone } from '@/components/usePhone'
 import { useMedallions } from '@/fight/matchupStyle'
+import { ELEMENT_RIM } from '@/fight/GildedCards'
 import { useModal } from '@/components/useModal'
 import { useSwipeToClose } from '@/components/useSwipeToClose'
 import {
@@ -896,31 +898,44 @@ export function CombatCard({
   )
 
   /*
-     The HUD look (see matchupStyle): the fighter as a round medallion ringed
-     in its side's colour, the level on a tab under it, the name and the two
-     figures below, like a party frame. Same clicks, hover read and remove.
+     The HUD look (see matchupStyle): the fighter as the card it is in the
+     fight (the gilded frame, the level in its diamond, the element, the
+     name), the two figures below it, like a party frame. Same clicks, hover
+     read and remove.
   */
   const hud = useMedallions()
   if (hud) {
     const medalFace = (
       <>
-        <span className="medal__pic" style={{ backgroundImage: `url('${elementBackground(element)}')` }}>
-          <GameImg
-            className="medal__art"
-            src={art ?? fighterArt({ classname, racename })}
-            alt={`${classname} ${racename}`}
-            loading="lazy"
-            fallback={fighterArtFallback()}
-          />
+        <span
+          className={`scard gcard gcard--${side}`}
+          style={{ '--ec': ELEMENT_RIM[element] ?? '#dfe3ee' } as React.CSSProperties}
+        >
+          <span className="gcard__frame">
+            <span className="gcard__pic">
+              <GameImg
+                src={art ?? fighterAvatar({ classname, racename })}
+                alt={`${classname} ${racename}`}
+                loading="lazy"
+                fallback={fighterArtFallback()}
+              />
+            </span>
+            {badge ? (
+              <span className="gcard__lv gcard__lv--badge">
+                <b>{badge}</b>
+              </span>
+            ) : (
+              level !== undefined && level > 0 && (
+                <span className="gcard__lv">
+                  <b>{level}</b>
+                </span>
+              )
+            )}
+            {element && <img className="gcard__el" src={elementIcon(element)} alt={element} title={element} />}
+            {!!marker && <img className="gcard__mk" src={markerIcon(marker)} alt={`Marked ${marker}`} title={`Marked ${marker}`} />}
+          </span>
+          <span className="gcard__name">{classname || racename || 'Fighter'}</span>
         </span>
-        {element && <img className="medal__el" src={elementIcon(element)} alt={element} title={element} />}
-        {!!marker && <img className="medal__mk" src={markerIcon(marker)} alt={`Marked ${marker}`} title={`Marked ${marker}`} />}
-        {badge ? (
-          <span className="medal__tab medal__tab--badge">{badge}</span>
-        ) : (
-          level !== undefined && level > 0 && <span className="medal__tab">{level}</span>
-        )}
-        <span className="medal__name">{classname || racename || 'Fighter'}</span>
         {owner && <span className="medal__owner">{owner}</span>}
         <span className="medal__figs mono">
           <span>

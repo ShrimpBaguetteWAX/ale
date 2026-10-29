@@ -44,21 +44,21 @@ describe('a fighter in the HUD', () => {
     </MatchupHud.Provider>
   )
 
-  it('is a medallion on its side, with the level on its tab', () => {
+  it('is a card on its side, with the level in its diamond', () => {
     const { container } = render(card())
     expect(container.querySelector('.medal.medal--enemy')).toBeTruthy()
-    expect(container.querySelector('.medal__tab')!.textContent).toBe('6')
-    expect(container.querySelector('.medal__name')!.textContent).toBe('Mystic')
+    expect(container.querySelector('.gcard__lv')!.textContent).toBe('6')
+    expect(container.querySelector('.gcard__name')!.textContent).toBe('Mystic')
     expect(container.querySelector('.combatcard')).toBeNull()
   })
 
   it('wears its badge in place of a level, and can be taken out on my side', () => {
     const { container } = render(card({ side: 'mine', badge: 'NFT', level: undefined, onRemove: () => {} }))
-    expect(container.querySelector('.medal__tab--badge')!.textContent).toBe('NFT')
+    expect(container.querySelector('.gcard__lv--badge')!.textContent).toBe('NFT')
     expect(container.querySelector('.medal__remove')).toBeTruthy()
   })
 
-  it('stays a leaning card where the board does not ask for medallions (the Tournament, or the switch on cards)', () => {
+  it('stays a leaning card where the board does not ask for the HUD (the Tournament, or the switch on cards)', () => {
     const { container } = render(card({}, false))
     expect(container.querySelector('.combatcard.combatcard--enemy')).toBeTruthy()
     expect(container.querySelector('.medal')).toBeNull()
