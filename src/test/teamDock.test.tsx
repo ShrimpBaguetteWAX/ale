@@ -44,12 +44,14 @@ describe('the team dock', () => {
     expect(dock.classList.contains('is-shown')).toBe(false)
   })
 
-  it('shows the chance, and each change to it as + or −', () => {
+  it('shows the chance, and each change to it as + or −', async () => {
     vi.stubGlobal('IntersectionObserver', FakeObserver)
     const { rerender } = render(<Screen winRate={0.6} />)
     expect(screen.getByText('60')).toBeTruthy()
     rerender(<Screen winRate={0.72} />)
-    expect(screen.getByText('72')).toBeTruthy()
+    /* The figure counts to the new chance rather than jumping to it. */
+    expect(screen.queryByText('72')).toBeNull()
+    expect(await screen.findByText('72', undefined, { timeout: 2000 })).toBeTruthy()
     expect(document.querySelector('.teamdock__delta')!.textContent).toBe('+12%')
     rerender(<Screen winRate={0.65} />)
     expect(document.querySelector('.teamdock__delta')!.textContent).toBe('−7%')

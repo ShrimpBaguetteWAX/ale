@@ -34,9 +34,13 @@ export function useCountUp(target: number | null, ms = GAUGE_MS): number | null 
       return
     }
     let frame = 0
-    const start = performance.now()
+    /* Timed from the first frame's own clock: a frame's timestamp need not
+       share performance.now()'s origin, and a count measured against the
+       other ran backwards. */
+    let start: number | null = null
     const tick = (now: number) => {
-      const k = Math.min(1, (now - start) / ms)
+      start ??= now
+      const k = Math.min(1, Math.max(0, (now - start) / ms))
       /* The ease the arc uses: quick away, settling into the value. */
       const value = from + (target - from) * (1 - Math.pow(1 - k, 3))
       at.current = value
