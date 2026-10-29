@@ -2985,8 +2985,8 @@
 
 /* ---- the attackers ---- */
 
-/* Juggernaut, Earthsplitter: up, and the axe into the ground. */
-.bunit--attacker.bunit--atk-earth .bunit__body {
+/* Juggernaut, Thunder Clap: up, and the axe into the ground. */
+.bunit--attacker.bunit--atk-thunderclap .bunit__body {
   transform-origin: 50% 100%;
   animation: atk-slam var(--cyc) cubic-bezier(0.35, 0.1, 0.3, 1) both;
 }
@@ -2998,7 +2998,7 @@
 }
 
 /* The casters (Astral Knight, Voidwarden, Arcanist, Mystic, Voidcaller): a lift while the spell works. */
-.bunit--attacker:is(.bunit--atk-halo, .bunit--atk-well, .bunit--atk-missiles, .bunit--atk-pillars, .bunit--atk-tendrils) .bunit__body {
+.bunit--attacker:is(.bunit--atk-consecration, .bunit--atk-shadowfury, .bunit--atk-blizzard, .bunit--atk-moonbeam, .bunit--atk-nether) .bunit__body {
   transform-origin: 50% 100%;
   animation: atk-lift var(--cyc) cubic-bezier(0.35, 0.1, 0.3, 1) both;
 }
@@ -3008,8 +3008,8 @@
   52%, 100% { transform: none; }
 }
 
-/* Mindblade, Thousand Cuts: a dart in, trailing afterimages. */
-.bunit--attacker.bunit--atk-cuts .bunit__body {
+/* Mindblade, Death Lotus: a dart in, trailing afterimages. */
+.bunit--attacker.bunit--atk-lotus .bunit__body {
   animation: atk-dart var(--cyc) cubic-bezier(0.35, 0.1, 0.3, 1) both;
 }
 @keyframes atk-dart {
@@ -3029,21 +3029,6 @@
 .bunit--attacker .bunit__ghost:nth-child(2 of .bunit__ghost) { opacity: 0.2; animation-delay: calc(var(--cyc) * 0.024); }
 .bunit--attacker .bunit__ghost:nth-child(3 of .bunit__ghost) { opacity: 0.12; animation-delay: calc(var(--cyc) * 0.036); }
 
-/* Lunatic, Mad Laughter: a fit of cackling, then the lunge. */
-.bunit--attacker.bunit--atk-laugh .bunit__body {
-  transform-origin: 50% 100%;
-  animation: atk-cackle var(--cyc) cubic-bezier(0.35, 0.1, 0.3, 1) both;
-}
-@keyframes atk-cackle {
-  0%, 6% { transform: none; }
-  8%, 12%, 16%, 20%, 24%, 28% { transform: rotate(-4deg) translateY(calc(-0.5 * var(--su))); }
-  10%, 14%, 18%, 22%, 26% { transform: rotate(4deg); }
-  31% { transform: translateX(calc(var(--away) * 2 * var(--su))); }
-  38% { transform: translate(calc(var(--dx, 0) * 1.45cqw), calc(var(--dy, 0) * var(--ratio) * 1.45cqw)) scale(1.08); }
-  46% { transform: translate(calc(var(--dx, 0) * 1.45cqw), calc(var(--dy, 0) * var(--ratio) * 1.45cqw)); }
-  60%, 100% { transform: none; }
-}
-
 /* Tactician, Shield Wall Break: a short lunge behind the wave it sweeps out. */
 .bunit--attacker.bunit--atk-wall .bunit__body {
   animation: atk-step var(--cyc) cubic-bezier(0.35, 0.1, 0.3, 1) both;
@@ -3056,8 +3041,8 @@
   60%, 100% { transform: none; }
 }
 
-/* Hunter and Explosioneer: a long draw back, and the kick of the release. */
-.bunit--attacker:is(.bunit--atk-pierce, .bunit--atk-blast) .bunit__body {
+/* Hunter, Explosioneer and Lunatic: a long draw back, and the kick of the throw. */
+.bunit--attacker:is(.bunit--atk-pierce, .bunit--atk-cluster, .bunit--atk-bombs) .bunit__body {
   animation: atk-draw var(--cyc) cubic-bezier(0.35, 0.1, 0.3, 1) both;
 }
 @keyframes atk-draw {
@@ -3067,8 +3052,8 @@
   38%, 100% { transform: none; }
 }
 
-/* Desperado, High Noon: dead still, then the one shot. */
-.bunit--attacker.bunit--atk-noon .bunit__body {
+/* Desperado, Bullet Time: dead still, then both guns. */
+.bunit--attacker.bunit--atk-bullettime .bunit__body {
   animation: atk-still var(--cyc) cubic-bezier(0.35, 0.1, 0.3, 1) both;
 }
 @keyframes atk-still {
@@ -3078,19 +3063,20 @@
 }
 
 /* A glow building on the casters and the archers while they gather the blow. */
-.bunit--attacker:is(.bunit--atk-halo, .bunit--atk-well, .bunit--atk-pierce, .bunit--atk-blast, .bunit--atk-missiles, .bunit--atk-pillars, .bunit--atk-tendrils) .bunit__body > .bunit__art {
+.bunit--attacker:is(.bunit--atk-consecration, .bunit--atk-shadowfury, .bunit--atk-pierce, .bunit--atk-cluster, .bunit--atk-bombs, .bunit--atk-blizzard, .bunit--atk-moonbeam, .bunit--atk-nether) .bunit__body > .bunit__art {
   animation: atk-glow var(--cyc) ease-in-out calc(var(--cyc) * var(--gt, 0.1)) both;
 }
-.bunit--atk-halo,
-.bunit--atk-pillars,
+.bunit--atk-consecration,
 .bunit--atk-pierce { --gc: #ffd979; }
-.bunit--atk-halo,
+.bunit--atk-consecration,
 .bunit--atk-pierce,
-.bunit--atk-missiles { --gt: 0.12; }
-.bunit--atk-well,
-.bunit--atk-tendrils { --gc: #a070ff; }
-.bunit--atk-missiles { --gc: #7fe0ff; }
-.bunit--atk-blast { --gc: #ff8a2a; --gt: 0.08; }
+.bunit--atk-blizzard { --gt: 0.12; }
+.bunit--atk-shadowfury,
+.bunit--atk-nether { --gc: #a070ff; }
+.bunit--atk-blizzard { --gc: #7fe0ff; }
+.bunit--atk-moonbeam { --gc: #4ee6c2; }
+.bunit--atk-cluster { --gc: #ff8a2a; --gt: 0.08; }
+.bunit--atk-bombs { --gc: #8ff03a; --gt: 0.08; }
 @keyframes atk-glow {
   0%, 24%, 100% { filter: drop-shadow(0 6px 8px rgb(0 0 0 / 60%)) drop-shadow(0 0 6px rgb(255 190 90 / 70%)) brightness(1); }
   2% { filter: drop-shadow(0 6px 8px rgb(0 0 0 / 60%)) drop-shadow(0 0 8px var(--gc)) brightness(1.1); }
@@ -3099,23 +3085,23 @@
 
 /* ---- the targets: how each blow is taken ---- */
 
-.bunit--defender:is(.bunit--took-earth) .bunit__body {
+.bunit--defender:is(.bunit--took-thunderclap, .bunit--took-cluster, .bunit--took-nether) .bunit__body {
   transform-origin: 50% 100%;
   animation: took-up var(--cyc) cubic-bezier(0.2, 0.9, 0.3, 1) var(--impact) both;
 }
-.bunit--defender:is(.bunit--took-halo, .bunit--took-well, .bunit--took-tendrils) .bunit__body {
+.bunit--defender:is(.bunit--took-consecration, .bunit--took-shadowfury, .bunit--took-moonbeam) .bunit__body {
   transform-origin: 50% 100%;
   animation: took-crush var(--cyc) cubic-bezier(0.2, 0.9, 0.3, 1) var(--impact) both;
 }
-.bunit--defender:is(.bunit--took-cuts, .bunit--took-missiles, .bunit--took-pillars) .bunit__body {
+.bunit--defender:is(.bunit--took-lotus, .bunit--took-blizzard) .bunit__body {
   transform-origin: 50% 100%;
   animation: took-flurry var(--cyc) cubic-bezier(0.2, 0.9, 0.3, 1) var(--impact) both;
 }
-.bunit--defender:is(.bunit--took-laugh) .bunit__body {
+.bunit--defender:is(.bunit--took-bombs) .bunit__body {
   transform-origin: 50% 100%;
   animation: took-hit var(--cyc) cubic-bezier(0.2, 0.9, 0.3, 1) var(--impact) both;
 }
-.bunit--defender:is(.bunit--took-wall, .bunit--took-pierce, .bunit--took-noon, .bunit--took-blast) .bunit__body {
+.bunit--defender:is(.bunit--took-wall, .bunit--took-pierce, .bunit--took-bullettime) .bunit__body {
   transform-origin: 50% 100%;
   animation: took-big var(--cyc) cubic-bezier(0.2, 0.9, 0.3, 1) var(--impact) both;
 }
@@ -3248,12 +3234,12 @@
   opacity: 0;
   animation: sig-pop var(--cyc) ease-out calc(var(--cyc) * var(--t)) both;
 }
-/* Only the pieces drawn in layers have them. */
-.bfx--laugh > i:nth-child(-n + 3)::before,
-.bfx--noon > i:nth-child(2)::before,
-.bfx--noon > i:nth-child(2)::after,
-.bfx--blast > i:nth-child(2)::before,
-.bfx--missiles > i:nth-child(-n + 4)::before {
+/* Pieces drawn in layers: an inner shape with a motion of its own. */
+.bfx--consecration > i:nth-child(1)::before,
+.bfx--nether > i:nth-child(3)::before,
+.bfx--bombs > i:nth-child(-n + 3)::before,
+.bfx--bombs > i:nth-child(6)::before,
+.bfx--cluster > i:nth-child(1)::before {
   content: '';
   position: absolute;
   inset: 0;
@@ -3271,46 +3257,40 @@
   100% { transform: translateY(0); }
 }
 
-/* One-shot shapes, placed in the cycle by their delay; each starts unseen. */
+/* One-shot shapes, placed in the cycle by their delay; each starts unseen.
+   Percentages are of the whole cycle, so 1% is about 15 ms at full speed.
+   Only transform, opacity and the transform properties move. */
 @keyframes sig-pop { 0% { opacity: 0; transform: scale(0.2); } 0.3% { opacity: 1; transform: scale(0.25); } 16%, 100% { opacity: 0; transform: scale(1.6); } }
-@keyframes sig-popq { 0% { opacity: 0; transform: scale(0.3); } 0.3% { opacity: 1; } 9%, 100% { opacity: 0; transform: scale(1.4); } }
-@keyframes sig-grow { 0% { opacity: 0; transform: scale(0.2); } 0.3% { opacity: 1; transform: scale(0.2); } 20%, 100% { opacity: 0; transform: scale(2.2); } }
-@keyframes sig-nova { 0% { opacity: 0; transform: scale(0.2); } 0.3% { opacity: 1; } 14%, 100% { opacity: 0; transform: scale(7); } }
-@keyframes sig-flash { 0% { opacity: 0; } 0.3% { opacity: 0.85; } 9%, 100% { opacity: 0; } }
 @keyframes sig-slash { 0% { opacity: 0; transform: scaleX(0); } 0.3% { opacity: 1; transform: scaleX(0); } 4% { opacity: 1; transform: scaleX(1); } 12%, 100% { opacity: 0; transform: scaleX(1.08); } }
-@keyframes sig-slashhold { 0% { opacity: 0; transform: scaleX(0); } 0.3% { opacity: 1; transform: scaleX(0); } 5% { transform: scaleX(1); } 14% { opacity: 1; transform: scaleX(1); } 18%, 100% { opacity: 0; transform: scaleX(1); } }
-@keyframes sig-beam { 0% { opacity: 0; transform: scaleY(0); } 0.3% { opacity: 1; transform: scaleY(0); } 7% { opacity: 1; transform: scaleY(1); } 16%, 100% { opacity: 0; transform: scaleY(1) scaleX(0.2); } }
 @keyframes sig-inhold { 0% { opacity: 0; transform: scale(0); } 0.3% { opacity: 1; transform: scale(0); } 8% { transform: scale(1); } 18% { opacity: 1; transform: scale(1); } 24%, 100% { opacity: 0; transform: scale(0.6); } }
-@keyframes sig-in { 0% { opacity: 0; transform: translate(var(--rx), var(--ry)); } 0.3% { opacity: 1; } 12% { opacity: 1; transform: translate(0, 0); } 14%, 100% { opacity: 0; transform: translate(0, 0); } }
 @keyframes sig-out { 0% { opacity: 0; transform: translate(0, 0) rotate(0) scale(1); } 0.3% { opacity: 1; } 14%, 100% { opacity: 0; transform: translate(var(--rx), var(--ry)) rotate(220deg) scale(0.5); } }
-@keyframes sig-text { 0% { opacity: 0; transform: translateY(0) scale(0.6); } 0.3% { opacity: 1; transform: scale(1.2); } 4% { transform: scale(1); } 16%, 100% { opacity: 0; transform: translateY(calc(-8 * var(--sa))) scale(1); } }
-@keyframes sig-flicker { 0% { opacity: 0; } 0.3% { opacity: 0.8; } 1.5% { opacity: 0.1; } 3% { opacity: 0.7; } 4.5% { opacity: 0.15; } 6% { opacity: 0.6; } 10%, 100% { opacity: 0; } }
-@keyframes sig-halo { 0% { opacity: 0; transform: translateY(0) scale(1.3); } 0.3% { opacity: 1; } 10% { opacity: 1; transform: translateY(calc(16 * var(--st))) scale(0.7); } 13%, 100% { opacity: 0; transform: translateY(calc(16 * var(--st))) scale(0.3); } }
-@keyframes sig-lock { 0% { opacity: 0; transform: scale(2.4) rotate(90deg); } 0.3% { opacity: 1; } 10% { transform: scale(1) rotate(0); } 22% { opacity: 1; transform: scale(1); } 26%, 100% { opacity: 0; transform: scale(0.8); } }
-@keyframes sig-tendril { 0% { opacity: 0; transform: scaleY(0) rotate(0); } 0.3% { opacity: 1; } 6% { transform: scaleY(1) rotate(var(--ra)); } 12% { opacity: 1; transform: scaleY(1.05) rotate(calc(var(--ra) * -1)); } 18%, 100% { opacity: 0; transform: scaleY(0.3) rotate(0); } }
+@keyframes fx-pop { 0% { opacity: 0; transform: scale(var(--s0, 0.2)); } 0.5% { opacity: 1; } 12% { opacity: 0.85; } 26%, 100% { opacity: 0; transform: scale(var(--s1, 1.4)); } }
+@keyframes fx-ripple { 0% { opacity: 0; transform: scale(0.15); } 0.5% { opacity: 1; } 16% { opacity: 0.8; } 28%, 100% { opacity: 0; transform: scale(var(--s1, 3)); } }
+@keyframes fx-dome { 0% { opacity: 0; transform: scale(0.15, 0.1); } 1% { opacity: 1; } 13% { opacity: 0.85; transform: scale(1, 1); } 27%, 100% { opacity: 0; transform: scale(1.18, 1.1); } }
+@keyframes fx-dim { 0% { opacity: 0; } 0.5% { opacity: var(--o, 0.6); } 13%, 100% { opacity: 0; } }
+@keyframes fx-mark { 0% { opacity: 0; transform: scale(0.5); } 6% { opacity: 1; transform: scale(1.04); } 10% { transform: scale(1); } 26% { opacity: 1; transform: scale(1); } 32%, 100% { opacity: 0; transform: scale(1.08); } }
+@keyframes fx-rise { 0% { opacity: 0; transform: scale(1, 0); } 0.5% { opacity: 1; } 6% { transform: scale(1, 1); } 20% { opacity: 0.9; } 32%, 100% { opacity: 0; transform: scale(var(--sx1, 0.2), 1.05); } }
+@keyframes fx-hover { 0% { opacity: 0; transform: scale(0.6); } 6% { opacity: 1; transform: scale(1); } 25% { opacity: 1; } 35%, 100% { opacity: 0; transform: scale(1.15); } }
+@keyframes fx-fall { 0% { opacity: 0; translate: var(--fx) var(--fy); } 2% { opacity: 1; } 12% { opacity: 1; translate: 0 0; } 14%, 100% { opacity: 0; translate: 0 0; } }
+@keyframes fx-float { 0% { opacity: 0; transform: translate(0, 0) scale(0.4); } 4% { opacity: 1; transform: translate(0, calc(-4 * var(--st))) scale(1.15); } 22% { opacity: 1; } 34%, 100% { opacity: 0; transform: translate(0, calc(-14 * var(--st))) scale(1); } }
+@keyframes fx-scatter { 0% { opacity: 0; transform: scale(0.15); } 2% { opacity: 1; } 18% { opacity: 1; } 30%, 100% { opacity: 0; transform: scale(var(--s1, 1.6)); } }
+@keyframes fx-implode { 0% { opacity: 0; transform: scale(2) rotate(0deg); } 4% { opacity: 1; } 22% { opacity: 1; transform: scale(0.25) rotate(260deg); } 25%, 100% { opacity: 0; transform: scale(0.1) rotate(280deg); } }
+@keyframes fx-vortex { 0% { opacity: 0; transform: scale(0.15) rotate(0deg); } 7% { opacity: 1; transform: scale(1) rotate(200deg); } 26% { opacity: 1; transform: scale(1) rotate(560deg); } 34%, 100% { opacity: 0; transform: scale(0.1) rotate(760deg); } }
+@keyframes fx-sigil { 0% { opacity: 0; transform: scale(0) rotate(0deg); } 8% { opacity: 1; transform: scale(1) rotate(80deg); } 34% { opacity: 1; transform: scale(1) rotate(260deg); } 44%, 100% { opacity: 0; transform: scale(1.25) rotate(320deg); } }
+@keyframes fx-muzzle { 0% { opacity: 0; transform: scale(0.4); } 0.5% { opacity: 1; transform: scale(1); } 2% { opacity: 0; } 3.5% { opacity: 1; transform: scale(0.85) rotate(25deg); } 5% { opacity: 0; } 6.5% { opacity: 1; transform: scale(1.05) rotate(-15deg); } 8%, 100% { opacity: 0; transform: scale(1) rotate(-15deg); } }
+@keyframes fx-bolt { 0% { opacity: 0; transform: scaleX(0); } 0.5% { opacity: 1; transform: scaleX(1); } 2% { opacity: 0.15; } 3.5% { opacity: 1; } 4.5% { opacity: 0.3; } 6% { opacity: 1; } 14% { opacity: 0.8; transform: scaleX(1); } 20%, 100% { opacity: 0; transform: scale(1, 0.3); } }
+@keyframes fx-grow { from { scale: var(--g0, 0.3); } to { scale: var(--g1, 1.6); } }
+@keyframes fx-spin { to { rotate: var(--spin, 540deg); } }
 
 /* ---- the shapes the pieces are drawn with ---- */
-.bfx--earth > i:nth-child(6),
-.bfx--halo > i:nth-child(1),
-.bfx--blast > i:nth-child(4),
-.bfx--pillars > i:nth-child(4) {
-  /* A ring. */
-  border: max(2px, calc(0.45 * var(--st))) solid var(--c);
-  border-radius: 50%;
-  box-shadow: 0 0 calc(1.6 * var(--st)) var(--c), inset 0 0 calc(1.2 * var(--st)) var(--c);
-}
-.bfx--halo > i:nth-child(3),
-.bfx--well > i:nth-child(6),
-.bfx--pierce > i:nth-child(4),
-.bfx--noon > i:nth-child(4),
-.bfx--missiles > i:nth-child(n + 5) {
+.bfx--pierce > i:nth-child(4) {
   /* A burst of light. */
   border-radius: 50%;
   background: radial-gradient(circle, #fff 0 12%, var(--c) 34%, color-mix(in srgb, var(--c) 40%, transparent) 55%, transparent 72%);
 }
-.bfx--cuts > i,
-.bfx--laugh > i:nth-child(5),
-.bfx--pierce > i:nth-child(2) {
+.bfx--pierce > i:nth-child(2),
+.bfx--lotus > i:nth-child(4),
+.bfx--lotus > i:nth-child(5) {
   /* A slash, or a streak of light. */
   height: max(2px, calc(var(--h) * var(--st)));
   border-radius: 999px;
@@ -3318,151 +3298,389 @@
   box-shadow: 0 0 calc(1.2 * var(--st)) var(--c);
   rotate: calc(var(--dir) * var(--r, 0) * 1deg);
 }
-.bfx--earth > i:nth-child(n + 3):nth-child(-n + 5),
 .bfx--wall > i:nth-child(n + 2) {
   /* A shard. */
   background: linear-gradient(135deg, #fff, var(--c));
   clip-path: polygon(50% 0, 100% 100%, 0 70%);
   animation-name: sig-out;
 }
-.bfx--halo > i:nth-child(2),
-.bfx--pillars > i:nth-child(-n + 3) {
-  /* A column of light from above, ending at the target's feet. */
+.bfx--thunderclap > i:nth-child(6),
+.bfx--bombs > i:nth-child(4),
+.bfx--bullettime > i:nth-child(6),
+.bfx--cluster > i:nth-child(n + 2):nth-child(-n + 4) {
+  /* A blast: white core, the move's colours round it. */
+  border-radius: 50%;
+  background: radial-gradient(circle, #fff 0 10%, var(--c2, #fff) 20%, var(--c) 36%, color-mix(in srgb, var(--c) 30%, transparent) 56%, transparent 70%);
+  animation-name: fx-pop;
+}
+.bfx--thunderclap > i:nth-child(3),
+.bfx--cluster > i:nth-child(5),
+.bfx--moonbeam > i:nth-child(3) {
+  /* A ring rolling out over the ground. */
+  border: max(1px, calc(0.3 * var(--st))) solid var(--c);
+  border-radius: 50%;
+  box-shadow: 0 0 calc(1.4 * var(--st)) var(--c), inset 0 0 calc(1.2 * var(--st)) var(--c);
+  animation-name: fx-ripple;
+}
+.bfx--shadowfury > i:nth-child(1),
+.bfx--blizzard > i:nth-child(1),
+.bfx--nether > i:nth-child(2) {
+  /* A warning circle on the ground where the blow will land, up before it does. */
+  --t: 0.14;
+  border: max(2px, calc(0.45 * var(--st))) solid var(--c);
+  border-radius: 50%;
+  background: radial-gradient(ellipse, color-mix(in srgb, var(--c) 8%, transparent) 0 52%, color-mix(in srgb, var(--c) 42%, transparent) 70%, color-mix(in srgb, var(--c) 12%, transparent));
+  box-shadow: 0 0 calc(1.2 * var(--st)) var(--c);
+  animation-name: fx-mark;
+}
+.bfx--thunderclap > i:nth-child(2),
+.bfx--shadowfury > i:nth-child(3) {
+  /* A dome rising over the target. */
+  --t: 0.39;
   top: calc(var(--tft) - var(--h) * var(--st));
   margin: 0 0 0 calc(var(--w) * var(--st) / -2);
-  transform-origin: 50% 0;
-  border-radius: 999px;
-  background: linear-gradient(180deg, transparent, color-mix(in srgb, var(--c) 85%, transparent) 40%, #fff);
-  box-shadow: 0 0 calc(3 * var(--st)) var(--c);
-  animation-name: sig-beam;
+  transform-origin: 50% 100%;
+  border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+  background: radial-gradient(ellipse 50% 100% at 50% 100%, color-mix(in srgb, var(--c) 18%, transparent) 0 60%, color-mix(in srgb, var(--c) 55%, transparent) 84%, #fff 93%, transparent 100%);
+  animation-name: fx-dome;
 }
-.bfx--blast > i:nth-child(1),
-.bfx--blast > i:nth-child(2)::before,
-.bfx--missiles > i:nth-child(-n + 4)::before {
-  /* An orb. */
-  border-radius: 50%;
-  background: radial-gradient(circle, #fff, var(--c) 45%, transparent 72%);
-  box-shadow: 0 0 calc(2 * var(--st)) var(--c);
+.bfx--consecration > i:nth-child(n + 2):nth-child(-n + 4),
+.bfx--moonbeam > i:nth-child(2),
+.bfx--nether > i:nth-child(4) {
+  /* A column of light standing up out of the ground. */
+  top: calc(var(--tft) - var(--h) * var(--st));
+  margin: 0 0 0 calc(var(--w) * var(--st) / -2);
+  transform-origin: 50% 100%;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--c) 55%, transparent) 22%, #fff 50%, color-mix(in srgb, var(--c) 55%, transparent) 78%, transparent);
+  animation-name: fx-rise;
 }
-
-/* Pieces that fly: placed on the attacker's chest, carried by sig-go. */
-.bfx--wall > i:nth-child(1),
-.bfx--pierce > i:nth-child(3),
-.bfx--noon > i:nth-child(3),
-.bfx--blast > i:nth-child(2),
-.bfx--missiles > i:nth-child(-n + 4) {
-  left: var(--axp);
-  top: var(--ach);
-  animation: sig-go calc(var(--cyc) * var(--span)) linear calc(var(--cyc) * var(--t)) both;
-}
-
-/* Juggernaut, Earthsplitter: a glowing crack races from the axe to the
-   target, the floor bursts under them in rocks and dust, a shockwave. */
-.bfx--earth > i:nth-child(1) {
-  --t: 0.31;
-  --c: #ffb24a;
-  left: var(--axp);
-  top: var(--aft);
-  width: hypot(var(--fx), var(--fy));
-  height: calc(2.6 * var(--st));
-  margin: calc(-1.3 * var(--st)) 0 0;
-  transform-origin: 0 50%;
-  rotate: atan2(var(--fy), var(--fx));
-  background: linear-gradient(90deg, #fff, var(--c) 50%, #fff);
-  clip-path: polygon(0 50%, 8% 15%, 16% 70%, 26% 25%, 36% 80%, 46% 20%, 56% 75%, 66% 30%, 76% 70%, 86% 25%, 100% 50%, 86% 60%, 76% 95%, 66% 60%, 56% 100%, 46% 50%, 36% 100%, 26% 55%, 16% 95%, 8% 55%);
-  filter: drop-shadow(0 0 calc(0.8 * var(--st)) var(--c));
-  animation-name: sig-slashhold;
-}
-.bfx--earth > i:nth-child(2) {
-  --y: -1.1;
-  --w: 26;
-  --h: 12;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgb(200 160 112 / 75%), transparent 70%);
-}
-.bfx--earth > i:nth-child(n + 3):nth-child(-n + 5) { --y: -1.1; --c: #ffb24a; }
-.bfx--earth > i:nth-child(3) { --x: -5; --w: 2.4; --h: 3; --rx: calc(var(--dir) * -6 * var(--st)); --ry: calc(-16 * var(--st)); }
-.bfx--earth > i:nth-child(4) { --w: 2.8; --h: 3.4; --rx: calc(var(--dir) * 1 * var(--st)); --ry: calc(-20 * var(--st)); }
-.bfx--earth > i:nth-child(5) { --x: 5; --w: 2.2; --h: 2.8; --rx: calc(var(--dir) * 7 * var(--st)); --ry: calc(-14 * var(--st)); }
-.bfx--earth > i:nth-child(6) { --w: 26; --h: 7; --c: #ffdc96; animation-name: sig-grow; }
-
-/* Astral Knight, Halo Smite: a golden halo over the target tightens round
-   them, a shaft of light, and it erupts. */
-.bfx--halo > i:nth-child(1) { --y: -37.1; --w: 26; --h: 6; --t: 0.29; --c: #ffd979; animation-name: sig-halo; }
-.bfx--halo > i:nth-child(2) { --w: 3; --h: 50; --t: 0.34; --c: #ffd979; }
-.bfx--halo > i:nth-child(3) { --y: -19.7; --w: 20; --h: 20; --c: #ffd979; }
-
-/* Mindblade, Thousand Cuts: six thin cuts, almost at once. */
-.bfx--cuts > i { --c: #e9d6ff; --w: 13; --h: 0.5; animation-name: sig-slash; }
-.bfx--cuts > i:nth-child(1) { --y: -21.4; --r: 10; --t: 0.38; }
-.bfx--cuts > i:nth-child(2) { --x: -2; --y: -18; --r: -50; --t: 0.4; }
-.bfx--cuts > i:nth-child(3) { --x: 2; --y: -20.3; --r: 70; --t: 0.42; }
-.bfx--cuts > i:nth-child(4) { --y: -22.5; --r: -20; --t: 0.44; }
-.bfx--cuts > i:nth-child(5) { --x: -1; --y: -16.9; --r: 40; --t: 0.46; }
-.bfx--cuts > i:nth-child(6) { --x: 1; --y: -19.7; --w: 14; --h: 0.6; --r: -75; --t: 0.48; }
-
-/* Voidwarden, Gravity Well: a sphere of void on the target drags the light
-   in, and implodes. */
-.bfx--well > i:nth-child(1) {
-  --y: -19.7;
-  --w: 16;
-  --h: 16;
-  --t: 0.24;
-  border-radius: 50%;
-  background: radial-gradient(circle, #000 38%, #2a0050 52%, #a070ff 62%, transparent 72%);
-  box-shadow: 0 0 calc(3 * var(--st)) #a070ff;
-  animation-name: sig-inhold;
-}
-.bfx--well > i:nth-child(n + 2):nth-child(-n + 5) {
-  --y: -19.7;
-  --w: 1.4;
-  --h: 1.4;
-  border-radius: 50%;
-  background: #d6c2ff;
-  box-shadow: 0 0 calc(0.9 * var(--st)) #d6c2ff;
-  animation-name: sig-in;
-}
-.bfx--well > i:nth-child(2) { --t: 0.27; --rx: calc(var(--dir) * -12 * var(--st)); --ry: calc(-8 * var(--st)); }
-.bfx--well > i:nth-child(3) { --t: 0.28; --rx: calc(var(--dir) * 12 * var(--st)); --ry: calc(-6 * var(--st)); }
-.bfx--well > i:nth-child(4) { --t: 0.29; --rx: calc(var(--dir) * -10 * var(--st)); --ry: calc(9 * var(--st)); }
-.bfx--well > i:nth-child(5) { --t: 0.3; --rx: calc(var(--dir) * 11 * var(--st)); --ry: calc(10 * var(--st)); }
-.bfx--well > i:nth-child(6) { --y: -19.7; --w: 22; --h: 22; --c: #a070ff; }
-
-/* Lunatic, Mad Laughter: HA! HA! floats up over the Lunatic, the field
-   flickers red, and the lunge rakes the target. */
-.bfx--laugh > i:nth-child(-n + 3) {
-  left: calc(var(--axp) + var(--dir) * var(--x) * var(--sa));
-  top: calc(var(--aft) + var(--y) * var(--sa));
-  width: calc(var(--w) * var(--sa));
-  height: calc(var(--h) * var(--sa));
-  margin: calc(var(--h) * var(--sa) / -2) 0 0 calc(var(--w) * var(--sa) / -2);
-  display: grid;
-  place-items: center;
-  animation-name: sig-text;
-}
-.bfx--laugh > i:nth-child(-n + 3)::before {
-  position: static;
-  font: 900 calc(var(--h) * var(--sa) * 0.8) / 1 var(--font-display);
-  color: #ff8fb0;
-  text-shadow: 0 0 calc(1 * var(--sa)) #ff8fb0, 0 calc(0.3 * var(--sa)) 0 #000;
-}
-.bfx--laugh > i:nth-child(1) { --x: 2; --y: -33.75; --w: 9; --h: 6; --t: 0.08; }
-.bfx--laugh > i:nth-child(1)::before,
-.bfx--laugh > i:nth-child(3)::before { content: 'HA!'; }
-.bfx--laugh > i:nth-child(2) { --x: -3; --y: -36; --w: 8; --h: 5; --t: 0.14; }
-.bfx--laugh > i:nth-child(2)::before { content: 'HA'; }
-.bfx--laugh > i:nth-child(3) { --x: 5; --y: -37.1; --w: 9; --h: 6; --t: 0.2; }
-.bfx--laugh > i:nth-child(4) {
-  --t: 0.26;
+.bfx--thunderclap > i:nth-child(1),
+.bfx--shadowfury > i:nth-child(2),
+.bfx--nether > i:nth-child(1),
+.bfx--consecration > i:nth-child(6) {
+  /* The whole field: the light drops away round the blow, or a flash of it. */
+  --t: 0.39;
   left: 0;
   top: 0;
   width: 100%;
   height: 100%;
   margin: 0;
-  background: radial-gradient(ellipse at center, transparent 40%, rgb(150 0 60 / 60%));
-  animation-name: sig-flicker;
+  background: radial-gradient(ellipse at var(--txp) var(--tch), transparent 16%, rgb(8 4 22 / 62%) 78%);
+  animation-name: fx-dim;
 }
-.bfx--laugh > i:nth-child(5) { --y: -19.7; --w: 16; --h: 0.8; --r: -30; --c: #ff3d6a; animation-name: sig-slash; }
+.bfx--lotus > i:nth-child(6),
+.bfx--shadowfury > i:nth-child(5),
+.bfx--bombs > i:nth-child(5),
+.bfx--bullettime > i:nth-child(5),
+.bfx--cluster > i:nth-child(6),
+.bfx--blizzard > i:nth-child(8),
+.bfx--consecration > i:nth-child(5),
+.bfx--moonbeam > i:nth-child(4),
+.bfx--nether > i:nth-child(5) {
+  /* A spray of sparks: one dot, a dozen more as its shadows. */
+  --y: -20;
+  --w: 2;
+  --h: 2;
+  border-radius: 50%;
+  background: var(--c2, #fff);
+  box-shadow:
+    calc(8 * var(--st)) calc(-3 * var(--st)) 0 0 var(--c), calc(-6.5 * var(--st)) calc(-4.3 * var(--st)) 0 0 var(--c2, #fff),
+    calc(10.4 * var(--st)) calc(1.4 * var(--st)) 0 calc(-0.3 * var(--st)) var(--c), calc(-10.4 * var(--st)) calc(0.7 * var(--st)) 0 0 var(--c),
+    calc(2.6 * var(--st)) calc(-6.5 * var(--st)) 0 0 var(--c2, #fff), calc(-2.6 * var(--st)) calc(4.3 * var(--st)) 0 0 var(--c),
+    calc(5.2 * var(--st)) calc(5 * var(--st)) 0 0 var(--c2, #fff), calc(-9 * var(--st)) calc(-1.4 * var(--st)) 0 0 var(--c2, #fff),
+    calc(11.7 * var(--st)) calc(-5 * var(--st)) 0 0 var(--c), calc(-3.9 * var(--st)) calc(-8 * var(--st)) 0 0 var(--c),
+    calc(7.8 * var(--st)) calc(-8 * var(--st)) 0 0 var(--c2, #fff), calc(-11.7 * var(--st)) calc(-5.8 * var(--st)) 0 0 var(--c);
+  animation-name: fx-scatter;
+}
+.bfx--consecration > i:nth-child(1),
+.bfx--nether > i:nth-child(3) {
+  /* A rune circle lying on the ground, turning: the circle squashed flat, the rune spinning inside it. */
+  --t: 0.08;
+  opacity: 1;
+  transform: scaleY(0.32);
+  animation: none;
+}
+.bfx--consecration > i:nth-child(1)::before,
+.bfx--nether > i:nth-child(3)::before {
+  border-radius: 50%;
+  background:
+    radial-gradient(circle, transparent 0 28%, var(--c) 29% 31%, transparent 32% 42%, #fff 43% 45%, transparent 46% 58%, var(--c) 59% 62%, transparent 63%),
+    repeating-conic-gradient(var(--c2) 0 5deg, transparent 5deg 30deg);
+  -webkit-mask: radial-gradient(circle, #000 0 66%, transparent 67%);
+  mask: radial-gradient(circle, #000 0 66%, transparent 67%);
+  opacity: 0;
+  animation: fx-sigil var(--cyc) linear calc(var(--cyc) * var(--t)) both;
+}
+
+/* Pieces that fly: placed on the attacker's chest, carried by sig-go. */
+.bfx--wall > i:nth-child(1),
+.bfx--pierce > i:nth-child(3),
+.bfx--bombs > i:nth-child(-n + 3),
+.bfx--bullettime > i:nth-child(n + 2):nth-child(-n + 4),
+.bfx--cluster > i:nth-child(1) {
+  left: var(--axp);
+  top: var(--ach);
+  animation: sig-go calc(var(--cyc) * var(--span)) linear calc(var(--cyc) * var(--t)) both;
+}
+
+/* Juggernaut, Thunder Clap: the light drops away, a dome of thunder goes up
+   over the target with lightning cracking off it, and a ring rolls out. */
+.bfx--thunderclap > i { --c: #9fd8ff; --c2: #fff; }
+.bfx--thunderclap > i:nth-child(1) { --o: 0.9; }
+.bfx--thunderclap > i:nth-child(2) { --w: 64; --h: 24.5; }
+.bfx--thunderclap > i:nth-child(3) { --w: 21; --h: 3.6; --t: 0.39; --s1: 5; --c: #eaf7ff; }
+.bfx--thunderclap > i:nth-child(4),
+.bfx--thunderclap > i:nth-child(5) {
+  --y: -20;
+  --w: 28;
+  --h: 4;
+  --t: 0.39;
+  left: var(--txp);
+  margin: calc(var(--h) * var(--st) / -2) 0 0;
+  transform-origin: 0 50%;
+  rotate: -115deg;
+  background: linear-gradient(180deg, transparent, var(--c) 28%, #fff 50%, var(--c) 72%, transparent);
+  clip-path: polygon(0 48%, 10% 20%, 22% 62%, 35% 12%, 47% 58%, 60% 8%, 72% 60%, 85% 22%, 100% 50%, 86% 36%, 73% 82%, 60% 32%, 48% 84%, 35% 36%, 23% 88%, 10% 44%, 0 56%);
+  animation-name: fx-bolt;
+}
+.bfx--thunderclap > i:nth-child(5) { --t: 0.41; rotate: -60deg; }
+.bfx--thunderclap > i:nth-child(6) { --y: -20; --w: 39; --h: 39; --t: 0.4; --s1: 1.3; --c: #bfe8ff; }
+
+/* Astral Knight, Consecration: a golden rune circle burns into the ground
+   under the target, and three shafts of light stand up out of it. */
+.bfx--consecration > i { --c: #ffc93c; --c2: #fff6c8; }
+.bfx--consecration > i:nth-child(1) { --w: 57; --h: 57; }
+.bfx--consecration > i:nth-child(2) { --x: -11.7; --w: 6.5; --h: 42; --t: 0.376; }
+.bfx--consecration > i:nth-child(3) { --w: 11.7; --h: 61; --t: 0.4; }
+.bfx--consecration > i:nth-child(4) { --x: 11.7; --w: 6.5; --h: 37; --t: 0.424; }
+.bfx--consecration > i:nth-child(5) { --w: 1.6; --h: 1.6; --t: 0.41; --c: #ffe08a; --c2: #fff; animation-name: fx-float; }
+.bfx--consecration > i:nth-child(6) {
+  --t: 0.4;
+  --o: 0.35;
+  background: radial-gradient(circle at var(--txp) var(--tch), #fff, color-mix(in srgb, var(--c) 55%, #fff) 22%, transparent 70%);
+}
+
+/* Mindblade, Death Lotus: darts in beside the target inside a whirling
+   flower of blades, and cuts twice on the way out. */
+.bfx--lotus > i { --c: #ff4fd8; --c2: #fff; }
+.bfx--lotus > i:nth-child(1) {
+  --y: -20;
+  --w: 47;
+  --h: 47;
+  --t: 0.4;
+  --s0: 0.7;
+  --s1: 1.1;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgb(10 6 24 / 60%), rgb(10 6 24 / 28%) 45%, transparent 70%);
+  animation-name: fx-pop;
+}
+.bfx--lotus > i:nth-child(2),
+.bfx--lotus > i:nth-child(3) {
+  --y: -20;
+  --w: 52;
+  --h: 52;
+  --t: 0.3;
+  border-radius: 50%;
+  background: repeating-conic-gradient(transparent 0 8deg, color-mix(in srgb, var(--c) 75%, #fff) 8deg 13deg, #fff 13deg 15deg, transparent 15deg 45deg);
+  -webkit-mask: radial-gradient(circle, transparent 0 18%, #000 24% 64%, transparent 70%);
+  mask: radial-gradient(circle, transparent 0 18%, #000 24% 64%, transparent 70%);
+  animation-name: fx-vortex;
+}
+.bfx--lotus > i:nth-child(3) { --w: 31; --h: 31; --t: 0.33; }
+.bfx--lotus > i:nth-child(4) { --y: -20; --w: 57; --h: 2; --r: 20; --t: 0.4; animation-name: sig-slash; }
+.bfx--lotus > i:nth-child(5) { --y: -20; --w: 57; --h: 2; --r: -50; --t: 0.45; animation-name: sig-slash; }
+.bfx--lotus > i:nth-child(6) { --t: 0.4; --s1: 2; }
+
+/* Voidwarden, Shadowfury: the ground is marked, the light drops away, and a
+   dome of void bursts over the target. */
+.bfx--shadowfury > i { --c: #8a5cff; --c2: #e2d4ff; }
+.bfx--shadowfury > i:nth-child(1) { --w: 47; --h: 7; }
+.bfx--shadowfury > i:nth-child(2) { --o: 0.8; }
+.bfx--shadowfury > i:nth-child(3) { --w: 62; --h: 24.5; --c: #b48cff; }
+.bfx--shadowfury > i:nth-child(4) {
+  --y: -20;
+  --w: 26;
+  --h: 26;
+  --t: 0.4;
+  --s1: 1.8;
+  border-radius: 50%;
+  background: radial-gradient(circle, #000 0 44%, #3a1580 52%, var(--c) 62%, transparent 72%);
+  animation-name: fx-pop;
+}
+.bfx--shadowfury > i:nth-child(5) { --w: 2.3; --h: 2.3; --t: 0.4; --s1: 2.2; }
+
+/* Lunatic, Cackle Bombs: three grinning bombs lobbed on crazy arcs; they go
+   off in a burst of confetti and a HA! */
+.bfx--bombs > i { --c: #8ff03a; --c2: #ff4fa0; }
+.bfx--bombs > i:nth-child(-n + 3) { --w: 6; --h: 6; --span: 0.14; }
+.bfx--bombs > i:nth-child(-n + 3)::before {
+  border-radius: 50%;
+  background: radial-gradient(ellipse 34% 16% at 50% 64%, #1b2a10 70%, transparent 74%), radial-gradient(circle at 34% 30%, #fff 0 9%, var(--c) 32%, #3b7d12 78%, transparent 80%);
+  animation:
+    sig-arc calc(var(--cyc) * var(--span)) linear calc(var(--cyc) * var(--t)) both,
+    fx-spin calc(var(--cyc) * var(--span)) linear calc(var(--cyc) * var(--t)) both;
+}
+.bfx--bombs > i:nth-child(1) { --t: 0.19; --ah: 22; --spin: 540deg; }
+.bfx--bombs > i:nth-child(2) { --t: 0.23; --ah: 13; --spin: -420deg; }
+.bfx--bombs > i:nth-child(3) { --t: 0.28; --ah: 29; --spin: 620deg; }
+.bfx--bombs > i:nth-child(4) { --y: -20; --w: 26; --h: 26; --t: 0.4; }
+.bfx--bombs > i:nth-child(5) {
+  --t: 0.4;
+  --s1: 2.2;
+  border-radius: 2px;
+  background: #ffd84f;
+  box-shadow:
+    calc(8 * var(--st)) calc(-3 * var(--st)) 0 0 #ff4fa0, calc(-6.5 * var(--st)) calc(-4.3 * var(--st)) 0 0 #9dff4a,
+    calc(10.4 * var(--st)) calc(1.4 * var(--st)) 0 0 #ffd84f, calc(-10.4 * var(--st)) calc(0.7 * var(--st)) 0 0 #4fd8ff,
+    calc(2.6 * var(--st)) calc(-6.5 * var(--st)) 0 0 #ff4fa0, calc(-2.6 * var(--st)) calc(4.3 * var(--st)) 0 0 #b98cff,
+    calc(5.2 * var(--st)) calc(5 * var(--st)) 0 0 #9dff4a, calc(-9 * var(--st)) calc(-1.4 * var(--st)) 0 0 #ffd84f,
+    calc(11.7 * var(--st)) calc(-5 * var(--st)) 0 0 #4fd8ff, calc(-3.9 * var(--st)) calc(-8 * var(--st)) 0 0 #ff4fa0,
+    calc(7.8 * var(--st)) calc(-8 * var(--st)) 0 0 #9dff4a, calc(-11.7 * var(--st)) calc(-5.8 * var(--st)) 0 0 #b98cff;
+}
+.bfx--bombs > i:nth-child(6) {
+  --y: -38;
+  --w: 13;
+  --h: 6.5;
+  --t: 0.42;
+  display: grid;
+  place-items: center;
+  animation-name: fx-float;
+}
+.bfx--bombs > i:nth-child(6)::before {
+  content: 'HA!';
+  position: static;
+  font: 900 calc(var(--h) * var(--st) * 0.8) / 1 var(--font-display);
+  color: #fff;
+  -webkit-text-stroke: calc(0.4 * var(--st)) var(--c2);
+  paint-order: stroke;
+  text-shadow: 0 0 calc(1 * var(--st)) var(--c);
+}
+
+/* Desperado, Bullet Time: both guns emptied in three waves of bullets
+   that spread into a cone on the way over. */
+.bfx--bullettime > i { --c: #ffa53c; --c2: #fff6d0; }
+.bfx--bullettime > i:nth-child(1) {
+  --x: 7.8;
+  --y: -20;
+  --w: 18;
+  --h: 18;
+  --t: 0.27;
+  left: calc(var(--axp) + var(--dir) * var(--x) * var(--sa));
+  top: calc(var(--aft) + var(--y) * var(--sa));
+  width: calc(var(--w) * var(--sa));
+  height: calc(var(--h) * var(--sa));
+  margin: calc(var(--h) * var(--sa) / -2) 0 0 calc(var(--w) * var(--sa) / -2);
+  background: radial-gradient(circle, #fff 0 14%, var(--c) 32%, color-mix(in srgb, var(--c) 40%, transparent) 50%, transparent 62%);
+  clip-path: polygon(50% 0, 57% 43%, 100% 50%, 57% 57%, 50% 100%, 43% 57%, 0 50%, 43% 43%);
+  animation-name: fx-muzzle;
+}
+.bfx--bullettime > i:nth-child(n + 2):nth-child(-n + 4) {
+  --w: 2.6;
+  --h: 1.2;
+  --span: 0.1;
+  rotate: atan2(var(--my), var(--mx));
+  border-radius: 99px;
+  background: var(--c2);
+  box-shadow:
+    calc(3.9 * var(--st)) calc(-2.2 * var(--st)) 0 0 var(--c), calc(7.8 * var(--st)) calc(1.4 * var(--st)) 0 0 var(--c2),
+    calc(-2.6 * var(--st)) calc(2.9 * var(--st)) 0 0 var(--c), calc(10.4 * var(--st)) calc(-3.6 * var(--st)) 0 0 var(--c2),
+    calc(5.2 * var(--st)) calc(4.3 * var(--st)) 0 0 var(--c), calc(-5.2 * var(--st)) calc(-4.3 * var(--st)) 0 0 var(--c2),
+    calc(13 * var(--st)) 0 0 0 var(--c), calc(1.3 * var(--st)) calc(-5.8 * var(--st)) 0 0 var(--c),
+    calc(9.1 * var(--st)) calc(5.8 * var(--st)) 0 0 var(--c2), calc(-7.8 * var(--st)) calc(0.7 * var(--st)) 0 0 var(--c),
+    calc(15.6 * var(--st)) calc(-2.2 * var(--st)) 0 0 var(--c2), calc(14.3 * var(--st)) calc(3.6 * var(--st)) 0 0 var(--c);
+  animation:
+    sig-go calc(var(--cyc) * var(--span)) linear calc(var(--cyc) * var(--t)) both,
+    fx-grow calc(var(--cyc) * var(--span)) linear calc(var(--cyc) * var(--t)) both;
+}
+.bfx--bullettime > i:nth-child(2) { --t: 0.27; }
+.bfx--bullettime > i:nth-child(3) { --t: 0.31; }
+.bfx--bullettime > i:nth-child(4) { --t: 0.35; }
+.bfx--bullettime > i:nth-child(5) { --t: 0.42; --s1: 2.2; }
+.bfx--bullettime > i:nth-child(6) { --y: -20; --w: 26; --h: 26; --t: 0.42; }
+
+/* Explosioneer, Cluster Bomb: one bomb lobbed high, that goes off as three
+   blasts walking across the target. */
+.bfx--cluster > i { --c: #ff5a2a; --c2: #ffd13a; }
+.bfx--cluster > i:nth-child(1) { --w: 7.8; --h: 7.8; --t: 0.26; --span: 0.14; --ah: 24; }
+.bfx--cluster > i:nth-child(1)::before {
+  border-radius: 50%;
+  background: radial-gradient(circle, #fff 0 14%, #ff7a3a 38%, color-mix(in srgb, #ff7a3a 35%, transparent) 58%, transparent 70%);
+  animation: sig-arc calc(var(--cyc) * var(--span)) linear calc(var(--cyc) * var(--t)) both;
+}
+.bfx--cluster > i:nth-child(2) { --x: -7.8; --y: -15.7; --w: 21; --h: 21; --t: 0.4; }
+.bfx--cluster > i:nth-child(3) { --y: -20; --w: 26; --h: 26; --t: 0.447; }
+.bfx--cluster > i:nth-child(4) { --x: 7.8; --y: -17.1; --w: 21; --h: 21; --t: 0.494; }
+.bfx--cluster > i:nth-child(5) { --w: 16; --h: 3; --t: 0.565; }
+.bfx--cluster > i:nth-child(6) { --t: 0.447; }
+
+/* Arcanist, Blizzard: a ring of frost on the ground, a freezing mist, and a
+   storm of icicles driving down into it from the caster's side. */
+.bfx--blizzard > i { --c: #8fe6ff; --c2: #e9fdff; }
+.bfx--blizzard > i:nth-child(1) { --w: 52; --h: 8; }
+.bfx--blizzard > i:nth-child(2) {
+  --y: -5.8;
+  --w: 62;
+  --h: 16;
+  --t: 0.27;
+  border-radius: 50%;
+  background: radial-gradient(ellipse closest-side, rgb(236 252 255 / 85%), rgb(200 238 255 / 45%) 55%, transparent);
+  animation-name: fx-hover;
+}
+.bfx--blizzard > i:nth-child(n + 3):nth-child(-n + 7) {
+  --w: 5.4;
+  --h: 13;
+  --fx: calc(var(--dir) * -13 * var(--st));
+  --fy: calc(-62 * var(--st));
+  rotate: calc(var(--dir) * -12deg);
+  background: linear-gradient(180deg, #f2feff, #8fe6ff 60%, #3fb8e8);
+  clip-path: polygon(28% 0, 72% 0, 50% 100%);
+  animation-name: fx-fall;
+  animation-timing-function: cubic-bezier(0.6, 0, 1, 0.6);
+}
+.bfx--blizzard > i:nth-child(3) { --x: -15.6; --y: -4.3; --t: 0.186; }
+.bfx--blizzard > i:nth-child(4) { --x: -5.2; --y: -1.4; --t: 0.221; }
+.bfx--blizzard > i:nth-child(5) { --x: 6.5; --y: -5.8; --t: 0.256; }
+.bfx--blizzard > i:nth-child(6) { --x: 15.6; --y: -2.2; --t: 0.292; }
+.bfx--blizzard > i:nth-child(7) { --y: -8.6; --t: 0.327; }
+.bfx--blizzard > i:nth-child(8) { --y: -5.8; --w: 1.8; --h: 1.8; --t: 0.4; }
+
+/* Mystic, Moonbeam: a crescent moon rises over the target and pours a soft
+   column of light down on it. */
+.bfx--moonbeam > i { --c: #4ee6c2; --c2: #ffe08a; }
+.bfx--moonbeam > i:nth-child(1) {
+  --y: -41.6;
+  --w: 15.6;
+  --h: 15.6;
+  --t: 0.27;
+  rotate: calc(var(--dir) * -20deg);
+  border-radius: 50%;
+  background: radial-gradient(circle, #fffbe8 0 52%, var(--c2) 60%, transparent 70%);
+  -webkit-mask: radial-gradient(circle at 72% 36%, transparent 0 44%, #000 47%);
+  mask: radial-gradient(circle at 72% 36%, transparent 0 44%, #000 47%);
+  animation-name: fx-hover;
+}
+.bfx--moonbeam > i:nth-child(2) { --w: 15.6; --h: 50; --t: 0.38; --sx1: 0.3; --c: #9df6e0; }
+.bfx--moonbeam > i:nth-child(3) { --w: 15.6; --h: 2.9; --t: 0.39; --s1: 2.2; }
+.bfx--moonbeam > i:nth-child(4) { --w: 1.6; --h: 1.6; --t: 0.41; --c: #fff8d0; --c2: #fff; animation-name: fx-float; }
+
+/* Voidcaller, Nether Grasp: the light drops away, a rune turns under the
+   target, and a column of void lifts it off the ground and holds it. */
+.bfx--nether > i { --c: #b04bff; --c2: #e2c4ff; }
+.bfx--nether > i:nth-child(1) { --o: 0.7; }
+.bfx--nether > i:nth-child(2) { --w: 42; --h: 6.5; }
+.bfx--nether > i:nth-child(3) { --w: 49; --h: 49; }
+.bfx--nether > i:nth-child(4) { --w: 21; --h: 58; --t: 0.38; --sx1: 0.3; }
+.bfx--nether > i:nth-child(5) { --w: 1.8; --h: 1.8; --t: 0.3; animation-name: fx-implode; }
+.bfx--nether > i:nth-child(6) {
+  --y: -20;
+  --w: 21;
+  --h: 21;
+  --t: 0.576;
+  --s1: 1.6;
+  border-radius: 50%;
+  background: radial-gradient(circle, #000 0 44%, #3a0a5e 52%, var(--c) 62%, transparent 72%);
+  animation-name: fx-pop;
+}
 
 /* Tactician, Shield Wall Break: a wide crescent wave swept out from the
    blade crashes through the target and throws off sparks. */
@@ -3519,132 +3737,6 @@
   clip-path: polygon(0 38%, 80% 38%, 80% 0, 100% 50%, 80% 100%, 80% 62%, 0 62%);
 }
 .bfx--pierce > i:nth-child(4) { --y: -21.4; --w: 16; --h: 16; --c: #ffd979; }
-
-/* Desperado, High Noon: the sun flares overhead, the crosshair settles on
-   the target, and one shot rings out. */
-.bfx--noon > i:nth-child(1) {
-  --y: -42.75;
-  --w: 22;
-  --h: 22;
-  --t: 0.06;
-  left: calc((var(--axp) + var(--txp)) / 2);
-  border-radius: 50%;
-  background:
-    radial-gradient(circle, #fff 0 18%, #ffd979 34%, transparent 52%),
-    repeating-conic-gradient(rgb(255 217 121 / 75%) 0 7deg, transparent 7deg 20deg);
-  -webkit-mask: radial-gradient(circle, #000 40%, transparent 70%);
-  mask: radial-gradient(circle, #000 40%, transparent 70%);
-  animation-name: sig-inhold;
-}
-.bfx--noon > i:nth-child(2) {
-  --y: -21.4;
-  --w: 14;
-  --h: 14;
-  --t: 0.16;
-  --c: #ff5a6a;
-  animation-name: sig-lock;
-}
-.bfx--noon > i:nth-child(2)::before {
-  background:
-    linear-gradient(var(--c), var(--c)) 50% 0 / max(2px, calc(0.35 * var(--st))) 28% no-repeat,
-    linear-gradient(var(--c), var(--c)) 50% 100% / max(2px, calc(0.35 * var(--st))) 28% no-repeat,
-    linear-gradient(var(--c), var(--c)) 0 50% / 28% max(2px, calc(0.35 * var(--st))) no-repeat,
-    linear-gradient(var(--c), var(--c)) 100% 50% / 28% max(2px, calc(0.35 * var(--st))) no-repeat;
-}
-.bfx--noon > i:nth-child(2)::after {
-  border-radius: 50%;
-  background: conic-gradient(var(--c) 0 25deg, transparent 25deg 65deg, var(--c) 65deg 115deg, transparent 115deg 155deg, var(--c) 155deg 205deg, transparent 205deg 245deg, var(--c) 245deg 295deg, transparent 295deg 335deg, var(--c) 335deg);
-  -webkit-mask: radial-gradient(closest-side, transparent 80%, #000 82% 98%, transparent 100%);
-  mask: radial-gradient(closest-side, transparent 80%, #000 82% 98%, transparent 100%);
-}
-.bfx--noon > i:nth-child(3) {
-  --w: 6;
-  --h: 0.8;
-  --t: 0.36;
-  --span: 0.04;
-  height: max(2px, calc(var(--h) * var(--st)));
-  rotate: atan2(var(--my), var(--mx));
-  border-radius: 999px;
-  background: linear-gradient(90deg, transparent, #fff6c8 55%, #fff);
-  box-shadow: 0 0 calc(1 * var(--st)) #fff6c8;
-}
-.bfx--noon > i:nth-child(4) { --y: -21.4; --w: 18; --h: 18; --c: #ffb24a; }
-
-/* Explosioneer, Mega Blast: a ball of fire charged in the hands, hurled,
-   the field washed white, and a nova rolling out from the target. */
-.bfx--blast > i:nth-child(1) {
-  --x: 6;
-  --y: -22.5;
-  --w: 8;
-  --h: 8;
-  --t: 0.1;
-  --c: #ff8a2a;
-  left: calc(var(--axp) + var(--dir) * var(--x) * var(--sa));
-  top: calc(var(--aft) + var(--y) * var(--sa));
-  animation-name: sig-inhold;
-}
-.bfx--blast > i:nth-child(2) { --w: 9; --h: 9; --t: 0.3; --span: 0.1; --c: #ff9a3a; }
-.bfx--blast > i:nth-child(3) {
-  left: 0;
-  top: 0;
-  width: 100%;
-  height: 100%;
-  margin: 0;
-  background: radial-gradient(circle at var(--txp) var(--tch), #fff, #ffd7a0 50%, rgb(255 174 58 / 30%));
-  animation-name: sig-flash;
-}
-.bfx--blast > i:nth-child(4) { --y: -18.6; --w: 20; --h: 20; --c: #ff9a3a; animation-name: sig-nova; }
-
-/* Arcanist, Arcane Missiles: four bolts weave across and land one after
-   another. Each flies in a straight line; its orb rides an arc on top. */
-.bfx--missiles > i:nth-child(-n + 4) { --w: 2.6; --h: 2.6; --span: 0.12; --c: #7fe0ff; }
-.bfx--missiles > i:nth-child(-n + 4)::before {
-  animation: sig-arc calc(var(--cyc) * var(--span)) linear calc(var(--cyc) * var(--t)) both;
-}
-.bfx--missiles > i:nth-child(1) { --t: 0.26; --ah: 8; }
-.bfx--missiles > i:nth-child(2) { --t: 0.29; --ah: -8; }
-.bfx--missiles > i:nth-child(3) { --t: 0.32; --ah: 12; }
-.bfx--missiles > i:nth-child(4) { --t: 0.35; --ah: -6; }
-.bfx--missiles > i:nth-child(n + 5) { --w: 9; --h: 9; --c: #7fe0ff; animation-name: sig-popq; }
-.bfx--missiles > i:nth-child(5) { --y: -20.3; --t: 0.38; }
-.bfx--missiles > i:nth-child(6) { --y: -19.1; --t: 0.41; }
-.bfx--missiles > i:nth-child(7) { --y: -21.9; --t: 0.44; }
-.bfx--missiles > i:nth-child(8) { --y: -18.6; --w: 10; --h: 10; --t: 0.47; }
-
-/* Mystic, Sacred Pillars: three pillars of light strike in turn, and a ring
-   of light where they stood. */
-.bfx--pillars > i:nth-child(-n + 3) { --h: 50; --c: #fff5c8; }
-.bfx--pillars > i:nth-child(1) { --x: -7; --w: 3; --t: 0.27; }
-.bfx--pillars > i:nth-child(2) { --x: 7; --w: 3; --t: 0.33; }
-.bfx--pillars > i:nth-child(3) { --w: 4.5; --t: 0.39; }
-.bfx--pillars > i:nth-child(4) { --w: 26; --h: 7; --t: 0.46; --c: #ffd979; animation-name: sig-grow; }
-
-/* Voidcaller, Void Tendrils: a rift opens under the target and four
-   tendrils lash up out of it. */
-.bfx--tendrils > i:nth-child(1) {
-  --y: 0.56;
-  --w: 24;
-  --h: 6;
-  --t: 0.24;
-  border-radius: 50%;
-  background: radial-gradient(ellipse, #0b0016 30%, #6b2cff 60%, transparent 72%);
-  box-shadow: 0 0 calc(2.4 * var(--st)) #6b2cff;
-  animation-name: sig-inhold;
-}
-.bfx--tendrils > i:nth-child(n + 2) {
-  --y: 0.56;
-  top: calc(var(--tft) + (var(--y) - var(--h)) * var(--st));
-  margin: 0 0 0 calc(var(--w) * var(--st) / -2);
-  transform-origin: 50% 100%;
-  background: linear-gradient(0deg, #12001f, #a070ff 60%, #fff);
-  clip-path: polygon(30% 100%, 70% 100%, 58% 40%, 50% 0, 42% 40%);
-  filter: drop-shadow(0 0 calc(1 * var(--st)) #a070ff);
-  animation-name: sig-tendril;
-}
-.bfx--tendrils > i:nth-child(2) { --x: -6; --w: 2.6; --h: 22; --t: 0.3; --ra: calc(var(--dir) * -10deg); }
-.bfx--tendrils > i:nth-child(3) { --x: -2; --w: 3; --h: 26; --t: 0.32; --ra: calc(var(--dir) * 8deg); }
-.bfx--tendrils > i:nth-child(4) { --x: 2; --w: 3; --h: 25; --t: 0.34; --ra: calc(var(--dir) * -6deg); }
-.bfx--tendrils > i:nth-child(5) { --x: 6; --w: 2.6; --h: 21; --t: 0.36; --ra: calc(var(--dir) * 12deg); }
 
 /*
  * The calm settings keep the blow and lose the show: the white flash and the

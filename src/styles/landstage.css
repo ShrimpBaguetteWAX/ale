@@ -1081,15 +1081,6 @@
   38%, 48% { transform: translate(calc(var(--dx, 0) * 1.53cqw), calc(var(--dy, 0) * var(--ratio) * 1.53cqw)); }
   58%, 100% { transform: none; }
 }
-@keyframes land-atk-cackle {
-  0%, 6% { transform: none; }
-  8%, 12%, 16%, 20%, 24%, 28% { transform: rotate(-4deg) translateY(calc(-0.5 * var(--su))); }
-  10%, 14%, 18%, 22%, 26% { transform: rotate(4deg); }
-  31% { transform: translateX(calc(var(--away) * 2 * var(--su))); }
-  38% { transform: translate(calc(var(--dx, 0) * 1.45cqw), calc(var(--dy, 0) * var(--ratio) * 1.45cqw)); }
-  46% { transform: translate(calc(var(--dx, 0) * 1.45cqw), calc(var(--dy, 0) * var(--ratio) * 1.45cqw)); }
-  60%, 100% { transform: none; }
-}
 @keyframes land-atk-step {
   0%, 18% { transform: none; }
   28% { transform: translate(calc(var(--dx, 0) * -0.1cqw), calc(var(--dy, 0) * var(--ratio) * -0.1cqw)); }
@@ -1143,40 +1134,37 @@
 .bfield--land .bunit--defender .bunit__body {
   animation-name: land-bunit-recoil;
 }
-.bfield--land .bunit--attacker.bunit--atk-earth .bunit__body {
+.bfield--land .bunit--attacker.bunit--atk-thunderclap .bunit__body {
   animation-name: land-atk-slam;
 }
-.bfield--land .bunit--attacker:is(.bunit--atk-halo, .bunit--atk-well, .bunit--atk-missiles, .bunit--atk-pillars, .bunit--atk-tendrils) .bunit__body {
+.bfield--land .bunit--attacker:is(.bunit--atk-consecration, .bunit--atk-shadowfury, .bunit--atk-blizzard, .bunit--atk-moonbeam, .bunit--atk-nether) .bunit__body {
   animation-name: land-atk-lift;
 }
-.bfield--land .bunit--attacker.bunit--atk-cuts .bunit__body {
+.bfield--land .bunit--attacker.bunit--atk-lotus .bunit__body {
   animation-name: land-atk-dart;
-}
-.bfield--land .bunit--attacker.bunit--atk-laugh .bunit__body {
-  animation-name: land-atk-cackle;
 }
 .bfield--land .bunit--attacker.bunit--atk-wall .bunit__body {
   animation-name: land-atk-step;
 }
-.bfield--land .bunit--attacker:is(.bunit--atk-pierce, .bunit--atk-blast) .bunit__body {
+.bfield--land .bunit--attacker:is(.bunit--atk-pierce, .bunit--atk-cluster, .bunit--atk-bombs) .bunit__body {
   animation-name: land-atk-draw;
 }
-.bfield--land .bunit--attacker.bunit--atk-noon .bunit__body {
+.bfield--land .bunit--attacker.bunit--atk-bullettime .bunit__body {
   animation-name: atk-still;
 }
-.bfield--land .bunit--defender:is(.bunit--took-earth) .bunit__body {
+.bfield--land .bunit--defender:is(.bunit--took-thunderclap, .bunit--took-cluster, .bunit--took-nether) .bunit__body {
   animation-name: land-took-up;
 }
-.bfield--land .bunit--defender:is(.bunit--took-halo, .bunit--took-well, .bunit--took-tendrils) .bunit__body {
+.bfield--land .bunit--defender:is(.bunit--took-consecration, .bunit--took-shadowfury, .bunit--took-moonbeam) .bunit__body {
   animation-name: land-took-crush;
 }
-.bfield--land .bunit--defender:is(.bunit--took-cuts, .bunit--took-missiles, .bunit--took-pillars) .bunit__body {
+.bfield--land .bunit--defender:is(.bunit--took-lotus, .bunit--took-blizzard) .bunit__body {
   animation-name: land-took-flurry;
 }
-.bfield--land .bunit--defender:is(.bunit--took-laugh) .bunit__body {
+.bfield--land .bunit--defender:is(.bunit--took-bombs) .bunit__body {
   animation-name: land-took-hit;
 }
-.bfield--land .bunit--defender:is(.bunit--took-wall, .bunit--took-pierce, .bunit--took-noon, .bunit--took-blast) .bunit__body {
+.bfield--land .bunit--defender:is(.bunit--took-wall, .bunit--took-pierce, .bunit--took-bullettime) .bunit__body {
   animation-name: land-took-big;
 }
 
@@ -1239,7 +1227,7 @@
   }
 }
 /* The casters' gathering glow, on the whole puppet rather than either half. */
-.bfield--land .bunit--attacker:is(.bunit--atk-halo, .bunit--atk-well, .bunit--atk-pierce, .bunit--atk-blast, .bunit--atk-missiles, .bunit--atk-pillars, .bunit--atk-tendrils) .bunit__rig {
+.bfield--land .bunit--attacker:is(.bunit--atk-consecration, .bunit--atk-shadowfury, .bunit--atk-pierce, .bunit--atk-cluster, .bunit--atk-bombs, .bunit--atk-blizzard, .bunit--atk-moonbeam, .bunit--atk-nether) .bunit__rig {
   animation: atk-glow var(--cyc) ease-in-out calc(var(--cyc) * var(--gt, 0.1)) both;
 }
 

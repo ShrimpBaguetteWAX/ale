@@ -1041,34 +1041,34 @@ const LUNGE_SHARE = 0.55
  * lunge.
  */
 const SIGNATURE: Record<string, string> = {
-  juggernaut: 'earth', // Earthsplitter
-  astralknight: 'halo', // Halo Smite
-  mindblade: 'cuts', // Thousand Cuts
-  voidwarden: 'well', // Gravity Well
-  lunatic: 'laugh', // Mad Laughter
+  juggernaut: 'thunderclap', // Thunder Clap
+  astralknight: 'consecration', // Consecration
+  mindblade: 'lotus', // Death Lotus
+  voidwarden: 'shadowfury', // Shadowfury
+  lunatic: 'bombs', // Cackle Bombs
   tactician: 'wall', // Shield Wall Break
   hunter: 'pierce', // Piercing Shot
-  desperado: 'noon', // High Noon
-  explosioneer: 'blast', // Mega Blast
-  arcanist: 'missiles', // Arcane Missiles
-  mystic: 'pillars', // Sacred Pillars
-  voidcaller: 'tendrils', // Void Tendrils
+  desperado: 'bullettime', // Bullet Time
+  explosioneer: 'cluster', // Cluster Bomb
+  arcanist: 'blizzard', // Blizzard
+  mystic: 'moonbeam', // Moonbeam
+  voidcaller: 'nether', // Nether Grasp
 }
 
 /** How many pieces each move's effect is drawn with: one `<i>` each. */
 const FX_PARTS: Record<string, number> = {
-  earth: 6,
-  halo: 3,
-  cuts: 6,
-  well: 6,
-  laugh: 5,
+  thunderclap: 6,
+  consecration: 6,
+  lotus: 6,
+  shadowfury: 5,
+  bombs: 6,
   wall: 3,
   pierce: 4,
-  noon: 4,
-  blast: 4,
-  missiles: 8,
-  pillars: 4,
-  tendrils: 5,
+  bullettime: 6,
+  cluster: 6,
+  blizzard: 8,
+  moonbeam: 4,
+  nether: 6,
 }
 
 /**
@@ -1077,18 +1077,18 @@ const FX_PARTS: Record<string, number> = {
  * names and the turn order have to stay readable through it.
  */
 const SHAKE: Record<string, [number, boolean]> = {
-  earth: [1.6, false],
-  halo: [1.2, false],
-  cuts: [0.8, true],
-  well: [1, false],
-  laugh: [1, false],
+  thunderclap: [1.8, false],
+  consecration: [1, false],
+  lotus: [0.8, true],
+  shadowfury: [1.4, false],
+  bombs: [1.2, false],
   wall: [1.2, false],
   pierce: [1.8, false],
-  noon: [1.2, false],
-  blast: [2.4, false],
-  missiles: [0.8, true],
-  pillars: [1, true],
-  tendrils: [1, false],
+  bullettime: [0.8, true],
+  cluster: [1.4, true],
+  blizzard: [0.8, true],
+  moonbeam: [1, false],
+  nether: [1, false],
 }
 
 /**
@@ -1563,7 +1563,7 @@ function FieldUnit({
               </svg>
             )}
             {/* The Mindblade's afterimages: the same figure, a beat behind it. */}
-            {signature === 'cuts' &&
+            {signature === 'lotus' &&
               !dead &&
               [1, 2, 3].map((n) => (
                 <span className="bunit__body bunit__ghost" key={`ghost-${turn}-${n}`} aria-hidden="true">
@@ -1760,7 +1760,7 @@ function FieldUnit({
           </span>
         )}
         {/* The Mindblade's afterimages: the same figure, a beat behind it. */}
-        {signature === 'cuts' &&
+        {signature === 'lotus' &&
           !dead &&
           [1, 2, 3].map((n) => (
             <span className="bunit__body bunit__ghost" key={`ghost-${turn}-${n}`} aria-hidden="true">
