@@ -4,6 +4,7 @@
  * sets it for real.
  */
 const HIGH_PRIORITY = { fetchpriority: 'high' } as Record<string, string>
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode, type RefObject } from 'react'
 import { Link } from 'react-router-dom'
 import { useGame } from '@/state/useGame'
 import { SwitchWallet } from '@/components/SwitchWallet'
@@ -26,7 +27,7 @@ import { PrizeStrip } from '@/prizes/WeeklyPrizes'
 /* A squad of five, as a tavern would line them up: one of each kind of fighter. */
 const SQUAD = ['hunter_elgem', 'astralknight_lopati', 'mystic_altan', 'juggernaut_khaured', 'voidcaller_altan']
 
-const ROWS: { id: string; kick: string; title: [string, string]; body: string; chips?: string[]; art: string }[] = [
+const ROWS: { id: string; kick: string; title: [string, string]; body: string; chips?: string[]; art: string; phoneArt?: string }[] = [
   {
     id: 'recruit',
     kick: 'Recruit',
@@ -34,6 +35,7 @@ const ROWS: { id: string; kick: string; title: [string, string]; body: string; c
     body: 'Hire fighters at taverns across six planets and field five of them. Class, race and element decide who holds the line and who hits hardest, and every fighter brings its own abilities into the fight.',
     chips: ['Class', 'Race', 'Element', 'Abilities'],
     art: asset('/assets/background/bg-tavern.webp'),
+    phoneArt: asset('/assets/background/bg-tavern-800.webp'),
   },
   {
     id: 'battle',
@@ -53,6 +55,40 @@ const ROWS: { id: string; kick: string; title: [string, string]; body: string; c
 
 const WORLDS = ['eyeke', 'kavian', 'magor', 'naron', 'neri', 'veles']
 
+/**
+ * The pictures below the first screen, fetched once their part of the page
+ * is within a screen of being seen. They were all fetched as the page
+ * opened: a megabyte on a phone, of which the first screen shows a tenth,
+ * competing with the game's own code for a slow connection.
+ */
+function useNearScreen<T extends Element>(): [RefObject<T>, boolean] {
+  const ref = useRef<T>(null)
+  const [near, setNear] = useState(false)
+  useEffect(() => {
+    const el = ref.current
+    if (near || !el) return
+    if (typeof IntersectionObserver === 'undefined') return setNear(true)
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (!entries.some((e) => e.isIntersecting)) return
+        setNear(true)
+        io.disconnect()
+      },
+      { rootMargin: '100% 0px' },
+    )
+    io.observe(el)
+    return () => io.disconnect()
+  }, [near])
+  return [ref, near]
+}
+
+/**
+ * A picture as the stylesheet takes it: `--art`, and `--art-s` where a phone
+ * has a smaller one (landing.css picks). Nothing until it is near.
+ */
+const artVars = (near: boolean, art: string, phoneArt?: string) =>
+  (near ? { '--art': `url(${art})`, ...(phoneArt ? { '--art-s': `url(${phoneArt})` } : {}) } : {}) as CSSProperties
+
 export function Landing() {
   const account = useGame((s) => s.account)
   const player = useGame((s) => s.player)
@@ -61,6 +97,8 @@ export function Landing() {
     : account
       ? { to: '/signup', label: 'Become a trainer' }
       : { to: '/connect', label: 'Play' }
+  const [worldsRef, worldsNear] = useNearScreen<HTMLDivElement>()
+  const [bandRef, bandNear] = useNearScreen<HTMLElement>()
 
   return (
     <div className="kart">
@@ -102,7 +140,7 @@ export function Landing() {
       <div className="kart__rows">
         {ROWS.map((r, i) => (
           <section className={`kart__row${i % 2 ? ' is-flip' : ''}`} key={r.id}>
-            <div className="kart__media" style={{ backgroundImage: `url(${r.art})` }}>
+            <Media art={r.art} phoneArt={r.phoneArt}>
               {r.id === 'recruit' && (
                 <div className="kart__squad">
                   {SQUAD.map((f) => (
@@ -111,7 +149,7 @@ export function Landing() {
                 </div>
               )}
               {r.id === 'battle' && <BattleScene />}
-            </div>
+            </Media>
             <div className="kart__text">
               <div className="kart__kick">{r.kick}</div>
               <h2 className="kart__h2">
@@ -136,9 +174,13 @@ export function Landing() {
         <h2 className="kart__h2">
           Where will you <em>land?</em>
         </h2>
-        <div className="kart__worldgrid">
+        <div className="kart__worldgrid" ref={worldsRef}>
           {WORLDS.map((w) => (
-            <span className="kart__world" key={w} style={{ backgroundImage: `url(${asset(`/assets/landing/worldcard-${w}.webp`)})` }}>
+            <span
+              className="kart__world"
+              key={w}
+              style={artVars(worldsNear, asset(`/assets/landing/worldcard-${w}.webp`), asset(`/assets/landing/worldcard-${w}-360.webp`))}
+            >
               <b>{w}</b>
             </span>
           ))}
@@ -147,9 +189,8 @@ export function Landing() {
 
       <section
         className="kart__band"
-        style={{
-          backgroundImage: `linear-gradient(100deg, rgb(0 120 220 / 55%), rgb(80 30 160 / 70%)), url(${asset('/assets/background/bg-dungeon.webp')})`,
-        }}
+        ref={bandRef}
+        style={artVars(bandNear, asset('/assets/background/bg-dungeon.webp'), asset('/assets/background/bg-dungeon-800.webp'))}
       >
         <div>
           <h2 className="kart__h2">Your legend starts here</h2>
@@ -164,6 +205,16 @@ export function Landing() {
         <span>Alien Legends runs on the WAX blockchain.</span>
         <span>Play with Anchor or MyCloudWallet</span>
       </footer>
+    </div>
+  )
+}
+
+/** A row's picture, fetched as it comes near. */
+function Media({ art, phoneArt, children }: { art: string; phoneArt?: string; children: ReactNode }) {
+  const [ref, near] = useNearScreen<HTMLDivElement>()
+  return (
+    <div className="kart__media" ref={ref} style={artVars(near, art, phoneArt)}>
+      {children}
     </div>
   )
 }

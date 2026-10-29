@@ -850,6 +850,8 @@
   aspect-ratio: 16 / 10;
   border-radius: 22px;
   background: #0b1222 center / cover;
+  /* Landing.tsx sets --art (and --art-s, a phone's) once the row is near. */
+  background-image: var(--art, none);
   box-shadow:
     0 30px 70px rgb(0 0 0 / 55%),
     inset 0 0 0 1px rgb(255 255 255 / 10%);
@@ -945,6 +947,7 @@
   padding: 56px;
   border-radius: 26px;
   background: #101a3a center / cover;
+  background-image: linear-gradient(100deg, rgb(0 120 220 / 55%), rgb(80 30 160 / 70%)), var(--art, none);
   box-shadow: inset 0 0 0 1px rgb(255 255 255 / 14%);
 }
 .kart__band .kart__body {
@@ -1381,6 +1384,7 @@
   overflow: hidden;
   padding: 14px;
   border-radius: 16px;
+  background-image: var(--art, none);
   background-position: center;
   background-size: cover;
   box-shadow:
@@ -1411,6 +1415,14 @@
   .kart__world {
     padding: 10px;
     border-radius: 12px;
+  }
+  /* A phone's pictures, where there is a smaller one: as sharp at its size. */
+  .kart__media,
+  .kart__world {
+    background-image: var(--art-s, var(--art, none));
+  }
+  .kart__band {
+    background-image: linear-gradient(100deg, rgb(0 120 220 / 55%), rgb(80 30 160 / 70%)), var(--art-s, var(--art, none));
   }
   .kart__world b {
     font-size: 12px;
