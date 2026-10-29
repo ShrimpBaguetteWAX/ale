@@ -1264,8 +1264,8 @@ function Battlefield({
           </span>
           {broadcast && (
             <span className="bfield__teamhp" aria-hidden="true">
-              {stage && <b style={{ width: `${health(team1)}%` }} />}
-              <i style={{ width: `${health(team1)}%` }} />
+              {stage && <b style={{ scale: `${health(team1) / 100} 1` }} />}
+              <i style={{ scale: `${health(team1) / 100} 1` }} />
             </span>
           )}
         </span>
@@ -1293,8 +1293,8 @@ function Battlefield({
           </span>
           {broadcast && (
             <span className="bfield__teamhp" aria-hidden="true">
-              {stage && <b style={{ width: `${health(team2)}%` }} />}
-              <i style={{ width: `${health(team2)}%` }} />
+              {stage && <b style={{ scale: `${health(team2) / 100} 1` }} />}
+              <i style={{ scale: `${health(team2) / 100} 1` }} />
             </span>
           )}
         </span>
@@ -1701,8 +1701,8 @@ function FieldUnit({
           </div>
 
           <span className="hpbar bunit__hp" data-band={band}>
-            <span className="hpbar__trail" style={{ width: `${pct}%` }} />
-            <span className="hpbar__fill" style={{ width: `${pct}%` }} />
+            <span className="hpbar__trail" style={{ scale: `${pct / 100} 1` }} />
+            <span className="hpbar__fill" style={{ scale: `${pct / 100} 1` }} />
           </span>
 
           <div className="bunit__plate">
@@ -1791,8 +1791,8 @@ function FieldUnit({
       </div>
 
       <span className="hpbar bunit__hp" data-band={band}>
-        <span className="hpbar__trail" style={{ width: `${pct}%` }} />
-        <span className="hpbar__fill" style={{ width: `${pct}%` }} />
+        <span className="hpbar__trail" style={{ scale: `${pct / 100} 1` }} />
+        <span className="hpbar__fill" style={{ scale: `${pct / 100} 1` }} />
       </span>
 
       <div className="bunit__plate">

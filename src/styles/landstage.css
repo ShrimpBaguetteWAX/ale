@@ -278,12 +278,13 @@
   top: 0;
   bottom: 0;
   left: 0;
+  width: 100%;
   background: #ffb36b;
-  transition: width calc(700ms * var(--beat)) ease-in calc(380ms * var(--beat));
+  transform-origin: left;
+  transition: scale calc(700ms * var(--beat)) ease-in calc(380ms * var(--beat));
 }
 .bfield--land .bfield__label--enemy .bfield__teamhp b {
-  left: auto;
-  right: 0;
+  transform-origin: right;
 }
 .bfield--land .bfield__teamhp i {
   position: relative;

@@ -1078,18 +1078,22 @@
   position: absolute;
   left: 0;
   top: 0;
+  width: 100%;
   height: 100%;
   display: block;
+  /* Full width, scaled to what is left (Battle.tsx): drawn by the graphics
+     card as it drains, where a changing width laid the page out every frame. */
+  transform-origin: left;
 }
 
 .hpbar__trail {
   background: rgb(255 255 255 / 70%);
-  transition: width calc(520ms * var(--beat)) cubic-bezier(0.4, 0, 0.2, 1)
+  transition: scale calc(520ms * var(--beat)) cubic-bezier(0.4, 0, 0.2, 1)
     calc(260ms * var(--beat));
 }
 
 .hpbar__fill {
-  transition: width calc(170ms * var(--beat)) cubic-bezier(0.4, 0, 1, 1);
+  transition: scale calc(170ms * var(--beat)) cubic-bezier(0.4, 0, 1, 1);
   background: linear-gradient(180deg, #7ce85a, #35a814);
 }
 
@@ -2768,10 +2772,12 @@
     display: block;
     height: 100%;
     background: linear-gradient(90deg, #0ed4a8, #00baff);
-    transition: width calc(400ms * var(--beat)) var(--ease);
+    /* Scaled from its own end rather than resized, like the fighters' bars. */
+    transform-origin: left;
+    transition: scale calc(400ms * var(--beat)) var(--ease);
   }
   .bfield__label--enemy .bfield__teamhp i {
-    margin-left: auto;
+    transform-origin: right;
     background: linear-gradient(270deg, #e0344f, #ff6077);
   }
   .bfield--bcast .bfield__mid {
