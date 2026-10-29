@@ -2367,6 +2367,53 @@
   width: 14px;
   height: 14px;
 }
+/* A level waiting: the Medallion screen's green arrow in a ring, in the art's top corner. */
+.drost__up {
+  position: absolute;
+  top: 7px;
+  left: 7px;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  color: #5ff2b0;
+  background: #0b1426;
+  box-shadow:
+    0 0 0 2px #5ff2b0,
+    0 0 10px rgb(95 242 176 / 55%);
+  animation: drost-ready 2s ease-in-out infinite;
+}
+.drost__up svg {
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.drost--stack .drost__up {
+  top: 5px;
+  left: 5px;
+  width: 22px;
+  height: 22px;
+}
+@keyframes drost-ready {
+  50% {
+    transform: scale(1.14);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .drost__up {
+    animation: none;
+  }
+}
+:root[data-fx='low'] .drost__up {
+  animation: none;
+}
+
 .drost__cardfoot {
   position: absolute;
   right: 8px;

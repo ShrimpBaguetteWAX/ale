@@ -753,6 +753,7 @@ export function DeskRoster(p: DeskRosterProps) {
                     gate={gateOf(f)}
                     onClick={() => onRow(f)}
                     onTick={looks && gateOf(f).ok ? () => p.onCheck(f.fighter_id) : undefined}
+                    levelReady={levelUpOf(f, p.levels).ready}
                   />
                 ))}
               </div>
@@ -867,6 +868,7 @@ export function Row({
   note,
   dim = false,
   wideAside = false,
+  levelReady = false,
 }: {
   f: RosterFighter
   fig: Figures
@@ -887,6 +889,8 @@ export function Row({
   dim?: boolean
   /** The aside needs two columns' room: the market's price over its clock. */
   wideAside?: boolean
+  /** Enough experience banked for the next level: a green arrow in a ring on the art. */
+  levelReady?: boolean
 }) {
   const s = f.stats
   const state = fighterState(f, now)
@@ -920,6 +924,14 @@ export function Row({
       {f.marker && (
         <span className="drost__mk">
           <img src={markerIcon(f.marker)} alt={f.marker} />
+        </span>
+      )}
+      {/* A level waiting. In a sale or a listing the tick takes this corner, and the level is not what is being asked. */}
+      {levelReady && !ticking && (
+        <span className="drost__up" title="Ready to level up">
+          <svg viewBox="0 0 12 12" aria-hidden="true">
+            <path d="M6 10.5 V2 M2.5 5.5 L6 2 L9.5 5.5" />
+          </svg>
         </span>
       )}
       <span className="drost__cardfoot">
