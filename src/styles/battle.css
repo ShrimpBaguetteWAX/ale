@@ -1923,6 +1923,18 @@
   margin-left: auto;
   flex-wrap: wrap;
 }
+/* In the same frosted glass as the result screen's buttons it opened from. */
+.clog__tools .btn--ghost {
+  --btn-bg: rgb(255 255 255 / 9%);
+  --btn-line: rgb(255 255 255 / 24%);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+.clog__tools .btn--ghost:hover:not(:disabled) {
+  --btn-bg: rgb(255 255 255 / 15%);
+  --btn-line: rgb(255 255 255 / 40%);
+  filter: none;
+}
 
 .clog__body {
   overflow-y: auto;

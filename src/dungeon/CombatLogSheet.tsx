@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useModal } from '@/components/useModal'
+import { usePhone } from '@/components/usePhone'
 import type { EffectEvent, Replay } from './sim'
 import { NFT_FIGHTER_ID } from './rules'
 import { formatScaled, STAT_LABEL } from '@/tavern/fighterStats'
@@ -341,15 +342,17 @@ export function CombatLogSheet({
 
      A long fight is a hundred lines of "hit for 41", and the turns worth
      re-reading are almost always the ones where an ability fired or somebody
-     went down. This is the one control the sheet needs.
+     went down. This is the one control the sheet needs, on a desktop; a
+     phone reads the whole fight, with one less button over it.
   */
+  const phone = usePhone()
   const [notableOnly, setNotableOnly] = useState(false)
   const notable = (i: number) =>
     replay.turns[i].effects.length > 0 || replay.turns[i].killed
 
   const shown = replay.turns
     .map((t, i) => ({ t, i }))
-    .filter(({ i }) => !notableOnly || notable(i))
+    .filter(({ i }) => phone || !notableOnly || notable(i))
 
   return (
     <div
@@ -378,15 +381,17 @@ export function CombatLogSheet({
           </div>
 
           <div className="clog__tools">
-            <button
-              type="button"
-              className={`btn btn--sm ${notableOnly ? 'btn--primary' : 'btn--ghost'}`}
-              aria-pressed={notableOnly}
-              onClick={() => setNotableOnly((v) => !v)}
-              title="Only the blows where an ability fired or a fighter went down"
-            >
-              Key moments
-            </button>
+            {!phone && (
+              <button
+                type="button"
+                className={`btn btn--sm ${notableOnly ? 'btn--primary' : 'btn--ghost'}`}
+                aria-pressed={notableOnly}
+                onClick={() => setNotableOnly((v) => !v)}
+                title="Only the blows where an ability fired or a fighter went down"
+              >
+                Key moments
+              </button>
+            )}
             <button
               type="button"
               className="btn btn--ghost btn--sm"
