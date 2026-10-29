@@ -3,10 +3,15 @@ import {
   ChainDefinition,
   Session,
   SessionKit,
+  cancelable,
+  type Cancelable,
+  type LocaleDefinitions,
+  type PromptResponse,
   type SerializedSession,
   type TransactResult,
+  type UserInterface,
 } from '@wharfkit/session'
-import WebRenderer from '@wharfkit/web-renderer'
+import type WebRenderer from '@wharfkit/web-renderer'
 import { WalletPluginAnchor } from '@wharfkit/wallet-plugin-anchor'
 import { WalletPluginCloudWallet } from '@wharfkit/wallet-plugin-cloudwallet'
 import { CosignPlugin } from './cosign'
@@ -19,6 +24,105 @@ import { isAuthorityError, signsWithKey, syncAutoSign, walletOnly } from './auto
 let kit: SessionKit | null = null
 /* WharfKit's window, kept so a screen can tell when the player shut it. */
 let ui: WebRenderer | null = null
+
+/*
+   WharfKit's window (the wallet picker, the signing prompts) is a third of
+   the wallet code, and a returning player's reload restored their session
+   through all of it before the game could show, with no window ever opened.
+   It is fetched on its own instead: when Connect is pressed, when a
+   transaction starts, or quietly a few seconds after a session is restored,
+   so the first transaction does not wait on it either.
+*/
+let uiLoading: Promise<WebRenderer> | null = null
+/* What the kit tells the window before it exists, handed over when it does. */
+const pendingTranslations: LocaleDefinitions[] = []
+let pendingMinimal: boolean | undefined
+
+export function loadWalletWindow(): Promise<WebRenderer> {
+  return (uiLoading ??= import('@wharfkit/web-renderer')
+    .then(({ default: Renderer }) => {
+      const r = new Renderer()
+      /*
+         A second browser setting auto-signing up finds keys already on the
+         permission, and WharfKit asks whether to add this one or replace them.
+         Replacing would leave every other browser signing with a key the chain
+         has forgotten, so it is never offered: this browser's key goes beside
+         the others, and each is taken away only from its own browser.
+      */
+      r.onSessionKeyConflict = async () => 'add'
+      for (const t of pendingTranslations.splice(0)) r.addTranslations(t)
+      if (pendingMinimal !== undefined) r.setMinimal?.(pendingMinimal)
+      ui = r
+      return r
+    })
+    .catch((err: unknown) => {
+      /* A failed fetch may be retried by the next thing that needs the window. */
+      uiLoading = null
+      throw err
+    }))
+}
+
+/**
+ * The window as the kit sees it: every call waits for the real one, and the
+ * few the kit makes before anything is shown (translations, minimal mode)
+ * are kept until it arrives.
+ */
+const lazyUi: UserInterface = {
+  login: async (context) => (await loadWalletWindow()).login(context),
+  onError: async (error) => (await loadWalletWindow()).onError(error),
+  onAccountCreate: async (context) => (await loadWalletWindow()).onAccountCreate(context),
+  onAccountCreateComplete: async () => (await loadWalletWindow()).onAccountCreateComplete(),
+  onLogin: async () => (await loadWalletWindow()).onLogin(),
+  onLoginComplete: async () => (await loadWalletWindow()).onLoginComplete(),
+  onTransact: async () => (await loadWalletWindow()).onTransact(),
+  onTransactComplete: async () => (await loadWalletWindow()).onTransactComplete(),
+  onSign: async () => (await loadWalletWindow()).onSign(),
+  onSignComplete: async () => (await loadWalletWindow()).onSignComplete(),
+  onBroadcast: async () => (await loadWalletWindow()).onBroadcast(),
+  onBroadcastComplete: async () => (await loadWalletWindow()).onBroadcastComplete(),
+  onSessionKeyConsent: async (args) => (await loadWalletWindow()).onSessionKeyConsent(args),
+  onSessionKeyConflict: async (args) => (await loadWalletWindow()).onSessionKeyConflict(args),
+  onSessionKeyMismatch: async (args) => (await loadWalletWindow()).onSessionKeyMismatch(args),
+  onSessionKeyRemove: async (args) => (await loadWalletWindow()).onSessionKeyRemove(args),
+  prompt(args) {
+    if (ui) return ui.prompt(args)
+    /* Cancelled while the window was still on its way: it never opens. */
+    let inner: Cancelable<PromptResponse> | null = null
+    let cancelled = false
+    return cancelable(
+      loadWalletWindow().then((r) => {
+        if (cancelled) throw new Error('Prompt cancelled')
+        inner = r.prompt(args)
+        return inner
+      }),
+      (canceled) => {
+        cancelled = true
+        inner?.cancel(canceled.message, true)
+      },
+    )
+  },
+  status(message) {
+    if (ui) ui.status(message)
+    else void loadWalletWindow().then((r) => r.status(message))
+  },
+  translate(key, options, namespace) {
+    return ui ? ui.translate(key, options, namespace) : (options?.default ?? key)
+  },
+  getTranslate(namespace) {
+    return (key, options) => lazyUi.translate(key, options, namespace)
+  },
+  addTranslations(translations) {
+    if (ui) ui.addTranslations(translations)
+    else pendingTranslations.push(translations)
+  },
+  getMinimal() {
+    return ui?.getMinimal?.() ?? pendingMinimal ?? false
+  },
+  setMinimal(minimal) {
+    if (ui?.setMinimal) ui.setMinimal(minimal)
+    else pendingMinimal = minimal
+  },
+}
 
 /**
  * SessionKit is built lazily, after the endpoint pool has been probed, so the
@@ -40,25 +144,11 @@ export async function getSessionKit(): Promise<SessionKit> {
      on every transaction the game makes; the one the game has is wanted on
      exactly one action, and `transact` below passes it there.
   */
-  /*
-     A second browser setting auto-signing up finds keys already on the
-     permission, and WharfKit asks whether to add this one or replace them.
-     Replacing would leave every other browser signing with a key the chain
-     has forgotten, so it is never offered: this browser's key goes beside
-     the others, and each is taken away only from its own browser.
-  */
-  const renderer = () => {
-    const r = new WebRenderer()
-    r.onSessionKeyConflict = async () => 'add'
-    ui = r
-    return r
-  }
-
   kit = new SessionKit(
     {
       appName: 'Alien Legends',
       chains: [chain],
-      ui: renderer(),
+      ui: lazyUi,
       walletPlugins: [new WalletPluginAnchor(), new WalletPluginCloudWallet()],
     },
     {
@@ -78,6 +168,8 @@ export async function getSessionKit(): Promise<SessionKit> {
 
 /** Open the wallet picker. Resolves to null if the user cancels. */
 export async function login(): Promise<Session | null> {
+  /* The picker's code comes down alongside the kit, not after it. */
+  void loadWalletWindow().catch(() => {})
   const k = await getSessionKit()
   try {
     const { session } = await k.login()
@@ -120,6 +212,8 @@ export async function restore(): Promise<Session | null> {
   const k = await getSessionKit()
   try {
     const session = await k.restore()
+    /* Ready before the first transaction asks for it, once the game is up. */
+    if (session) setTimeout(() => void loadWalletWindow().catch(() => {}), 4000)
     return session ?? null
   } catch {
     return null

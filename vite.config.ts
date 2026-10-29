@@ -56,6 +56,9 @@ export default defineConfig({
       output: {
         manualChunks(id) {
           if (!id.includes('node_modules')) return
+          // WharfKit's window has its own chunk: it is loaded only when a
+          // wallet window is about to open (wharf/session.ts).
+          if (id.includes('@wharfkit/web-renderer')) return 'wharf-ui'
           if (id.includes('@wharfkit') || id.includes('@greymass')) return 'wharf'
           if (id.includes('react-router')) return 'router'
           if (id.includes('react')) return 'react'
