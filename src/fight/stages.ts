@@ -1,5 +1,6 @@
 import { asset } from '@/assets'
 import type { Venue } from '@/dungeon/fightStore'
+import { LAND_STAGES, PLANET_STAGES, type LandStageSpec, type PlanetStage } from './landStages.generated'
 
 /**
  * Where a fight is fought, as two halves: the planet behind the horizon and
@@ -7,14 +8,13 @@ import type { Venue } from '@/dungeon/fightStore'
  *
  * A planet's half is its sky and the country seen under it; the ground is
  * everything in front, from the far edge to the camera. Each half is a set
- * of still images painted by scripts/build-stages.cjs, plus the few pieces
+ * of still images painted by scripts/build-lands.cjs, plus the few pieces
  * the page animates.
  *
- * Two kinds of ground so far. A dungeon is fought on a land, keyed by planet
- * and the land's `land_type` (`lands.ale` gives every land one), but only one
- * is drawn: every dungeon fight is on a Grass Coastline on Veles, whatever
- * land it is really on. An arena is fought in the arena, the same bowl on
- * every planet, under the sky of the planet the player is on.
+ * Two kinds of ground. A dungeon is fought on a land, keyed by planet and the
+ * land's `land_type` (`lands.ale` gives every land one): the planet's baked
+ * backdrop behind that land's ground. An arena is fought in the arena, the
+ * same bowl on every planet, under the sky of the planet the player is on.
  */
 export type StageForm = 'wide' | 'tall'
 
@@ -42,22 +42,33 @@ export interface Sky {
   far: Record<StageForm, string>
 }
 
-/** A land's ground, with the planet it lies on drawn behind it. */
+/**
+ * A land's ground, with the planet it lies on behind it.
+ *
+ * Any land type under any planet: the planet is one baked picture of its sky,
+ * sun and horizon (`sky`), the land is a floor, one picture of what lies on
+ * it and the few pieces that move (`spec`). Where each is, and how much of the
+ * field it covers, comes from scripts/build-lands.cjs.
+ */
 export interface GroundStage {
   kind: 'land'
   /** For the label and for picking the CSS that colours the sky. */
   planet: string
   land: string
-  /** The painted layers, per field shape. */
-  far: Record<StageForm, string>
-  shore: Record<StageForm, string>
-  glints: Record<StageForm, string>
-  foam: Record<StageForm, [string, string]>
+  sky: PlanetStage
+  spec: LandStageSpec
   /** The turf laid on the floor plane, and the clumps that sway at its edges. */
   floor: string
-  clump: string
+  clump?: string
   /** What a blow tears out of this ground. */
   blades: string
+  /** The picture for each shape of field. */
+  backdrop: Record<StageForm, { src: string; h: number }>
+  ground: Record<StageForm, { src: string; top: number; h: number }>
+  /** The land type is not known yet: draw nothing, rather than the wrong ground. */
+  waiting?: boolean
+  glints: Record<StageForm, { src: string; top: number; h: number }> | null
+  foam: Record<StageForm, { a: string; b: string; top: number; h: number }> | null
 }
 
 /** The arena: the same bowl on every planet, under that planet's sky. */
@@ -73,39 +84,42 @@ export interface ArenaStage {
 
 export type Stage = GroundStage | ArenaStage
 
-const veles = (file: string) => asset(`/assets/stages/veles/${file}.webp`)
-
-const VELES_GRASS_COASTLINE: GroundStage = {
-  kind: 'land',
-  planet: 'veles',
-  land: 'Grass Coastline',
-  far: { wide: veles('far-wide'), tall: veles('far-tall') },
-  shore: { wide: veles('shore-wide'), tall: veles('shore-tall') },
-  glints: { wide: veles('glints-wide'), tall: veles('glints-tall') },
-  foam: {
-    wide: [veles('foam-wide-a'), veles('foam-wide-b')],
-    tall: [veles('foam-tall-a'), veles('foam-tall-b')],
-  },
-  floor: veles('grass'),
-  clump: veles('clump'),
-  blades: veles('blades'),
-}
-
-/** Every land stage there is, by planet and then by the land's type. */
-const STAGES: Record<string, Record<string, GroundStage>> = {
-  veles: { 'Grass Coastline': VELES_GRASS_COASTLINE },
-}
+const GRASS_COAST = 'grass-coastline'
+const slugOf = (name: string) => name.toLowerCase().replace(/[^a-z]+/g, '-').replace(/^-|-$/g, '')
 
 /**
  * The stage for a fight on `landType` on `planet`.
  *
- * For now every land fight is fought on Veles' Grass Coastline: the one
- * stage that is drawn. Once others are, this looks the pair up and falls
- * back to the planet's first land, then to Veles.
+ * A planet or a land type there is no picture of (or none given, as for a
+ * fight watched from a link) falls back to Veles and its Grass Coastline.
  */
 export function stageFor(planet?: string, landType?: string): GroundStage {
-  const lands = (planet && STAGES[planet.toLowerCase()]) || undefined
-  return (lands && landType && lands[landType]) || VELES_GRASS_COASTLINE
+  const p = planet && PLANET_STAGES[planet.toLowerCase()] ? planet.toLowerCase() : 'veles'
+  const key = landType && LAND_STAGES[slugOf(landType)] ? slugOf(landType) : GRASS_COAST
+  const spec = LAND_STAGES[key]
+  const dir = `/assets/stages/lands/${key}`
+  const both = <T,>(make: (form: StageForm) => T): Record<StageForm, T> => ({ wide: make('wide'), tall: make('tall') })
+  return {
+    kind: 'land',
+    planet: p,
+    land: spec.name,
+    sky: PLANET_STAGES[p],
+    spec,
+    floor: asset(`${dir}/floor.webp`),
+    clump: spec.clump ? asset(`${dir}/${spec.clump}`) : undefined,
+    blades: asset('/assets/stages/veles/blades.webp'),
+    backdrop: both((form) => ({ src: asset(PLANET_STAGES[p].backdrop[form].src), h: PLANET_STAGES[p].backdrop[form].h })),
+    ground: both((form) => ({
+      src: asset(`${dir}/ground-${form}${spec.sea ? '-' + p : ''}.webp`),
+      ...spec.ground[form],
+    })),
+    glints: spec.glints
+      ? both((form) => ({ src: asset(`${dir}/glints-${form}.webp`), ...spec.glints![form] }))
+      : null,
+    foam: spec.foam
+      ? both((form) => ({ a: asset(`${dir}/foam-${form}-a.webp`), b: asset(`${dir}/foam-${form}-b.webp`), ...spec.foam![form] }))
+      : null,
+  }
 }
 
 const far = (planet: string) => ({

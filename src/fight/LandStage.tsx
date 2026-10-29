@@ -1,4 +1,5 @@
 import type { GroundStage, StageForm } from './stages'
+import { MOTES } from './ArenaStage'
 
 /*
  * The clumps of tall grass at the stage's edges, as [x%, y%, scale] of the
@@ -19,24 +20,65 @@ const CLUMPS: Record<StageForm, [number, number, number][]> = {
   ],
 }
 
+/* How far the camera is pulled back from the backdrop, and where the horizon is, % of the field. */
+const ZOOM = 0.78
+const HORIZON: Record<StageForm, number> = { wide: 37, tall: 34 }
+/* The turf's tile, as % of the field's width, before the camera pulls back. */
+const TILE: Record<StageForm, number> = { wide: 2.2, tall: 2.9 }
+
 /**
  * The ground a fight is fought on, behind both teams.
  *
- * Back to front: the planet's sky and clouds, the turf as a floor running
- * from the horizon to the camera, the sea and the coast, the far islands on
- * the horizon, the surf, a haze where the sea meets the sky, the light from
- * the low sun and the clumps at the edges. The fighters stand on the floor
- * above all of it. Nothing here can be hit or read; it is all aria-hidden.
+ * Back to front: the planet's backdrop (sky, sun and horizon in one baked
+ * picture) with its clouds drifting over it, the floor running from the
+ * horizon to the camera, then everything lying on the ground and standing on
+ * it in one picture, what moves on water (glints and surf), the clumps at
+ * the edges, a mist, and the planet's light as one soft overlay. Nothing
+ * here blends: it is plain images and one gradient. The fighters stand on
+ * the floor above all of it. Nothing here can be hit or read; it is all
+ * aria-hidden.
  */
 export function LandStage({ stage, form }: { stage: GroundStage; form: StageForm }) {
+  if (stage.waiting) return null
+  const { sky, spec } = stage
+  const hz = HORIZON[form]
+  const edge = ((1 - 1 / ZOOM) / 2) * 100
+  const back = stage.backdrop[form]
+  const ground = stage.ground[form]
+  const glints = stage.glints?.[form]
+  const foam = stage.foam?.[form]
   return (
-    <div className={`lstage lstage--${form} lstage--${stage.planet}`} aria-hidden="true">
+    <div
+      className={`lstage lstage--${form} lstage--lg lstage--${stage.planet}`}
+      aria-hidden="true"
+      style={
+        {
+          '--tile': `${(TILE[form] * ZOOM * spec.tile).toFixed(2)}%`,
+          '--tint': sky.tint,
+          '--ta': sky.ta,
+          '--shade': sky.shade,
+          '--cc': sky.cloud,
+          '--lx': `${sky.lx}%`,
+          '--sd': sky.side === 'l' ? '90deg' : '270deg',
+          '--zenith': sky.zenith,
+        } as React.CSSProperties
+      }
+    >
       <div className="lstage__scene">
-        <div className="lstage__sky">
-          <i className="lstage__sun" />
-          <i className="lstage__moon" />
-        </div>
-        <div className="lstage__clouds">
+        <img className="lstage__back" src={back.src} alt="" style={{ height: `${back.h}%` }} />
+        <div
+          className={`astage__clouds astage__clouds--${sky.clouds}`}
+          style={{
+            top: 'auto',
+            bottom: `${100 - (hz - 2)}%`,
+            height: `${((hz - 2) / ZOOM).toFixed(1)}%`,
+            left: `${edge.toFixed(1)}%`,
+            right: `${edge.toFixed(1)}%`,
+            transform: `scale(${ZOOM})`,
+            transformOrigin: '50% 100%',
+          }}
+        >
+          <i />
           <i />
           <i />
           <i />
@@ -45,30 +87,53 @@ export function LandStage({ stage, form }: { stage: GroundStage; form: StageForm
         <div className="lstage__floorwrap">
           <div className="lstage__floor" style={{ backgroundImage: `url('${stage.floor}')` }} />
         </div>
-        <img className="lstage__layer" src={stage.shore[form]} alt="" />
-        <img className="lstage__layer lstage__glints" src={stage.glints[form]} alt="" />
-        <img className="lstage__far" src={stage.far[form]} alt="" />
-        <img className="lstage__layer lstage__foam" src={stage.foam[form][0]} alt="" />
-        <img className="lstage__layer lstage__foam lstage__foam--b" src={stage.foam[form][1]} alt="" />
-        <div className="lstage__haze" />
-        <div className="lstage__light" />
-        {CLUMPS[form].map(([x, y, s], i) => (
-          <img
-            key={i}
-            className="lstage__clump"
-            src={stage.clump}
-            alt=""
-            style={
-              {
-                left: `${x}%`,
-                top: `${y}%`,
-                '--cs': s,
-                '--cd': `-${(i * 1.3).toFixed(1)}s`,
-              } as React.CSSProperties
-            }
-          />
-        ))}
-        <div className="lstage__vig" />
+        <img className="lstage__ground" src={ground.src} alt="" style={{ top: `${ground.top}%`, height: `${ground.h}%` }} />
+        {glints && <img className="lstage__strip lstage__glints" src={glints.src} alt="" style={{ top: `${glints.top}%`, height: `${glints.h}%` }} />}
+        {foam && stage.foam && (
+          <>
+            <img className="lstage__strip lstage__foam" src={stage.foam[form].a} alt="" style={{ top: `${foam.top}%`, height: `${foam.h}%` }} />
+            <img className="lstage__strip lstage__foam lstage__foam--b" src={stage.foam[form].b} alt="" style={{ top: `${foam.top}%`, height: `${foam.h}%` }} />
+          </>
+        )}
+        {stage.clump &&
+          CLUMPS[form].map(([x, y, s], i) => (
+            <img
+              key={i}
+              className="lstage__clump"
+              src={stage.clump}
+              alt=""
+              style={
+                {
+                  left: `${x}%`,
+                  top: `${y}%`,
+                  '--cs': s,
+                  '--cd': `-${(i * 1.3).toFixed(1)}s`,
+                } as React.CSSProperties
+              }
+            />
+          ))}
+        {spec.mist && (
+          <div className="lstage__mist" style={{ top: `${hz - 9}%`, background: `linear-gradient(180deg, transparent, ${spec.mist} 55%, transparent)` }} />
+        )}
+        {sky.motes && (
+          <div className={`astage__motes astage__motes--${sky.motes}`}>
+            {MOTES[form][sky.motes].map(([x, y, delay, drift, size], i) => (
+              <i
+                key={i}
+                style={
+                  {
+                    left: `${x}%`,
+                    top: `${y}%`,
+                    '--md': `-${delay}s`,
+                    '--mx': `${drift}cqw`,
+                    '--msz': `${size}cqw`,
+                  } as React.CSSProperties
+                }
+              />
+            ))}
+          </div>
+        )}
+        <div className="lstage__grade" />
       </div>
     </div>
   )

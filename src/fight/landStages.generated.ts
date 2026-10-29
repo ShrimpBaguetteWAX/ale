@@ -1,0 +1,730 @@
+/*
+ * Where each planet's backdrop and each land's pictures are, and how much of
+ * the field they cover. Written by scripts/build-lands.cjs: do not edit by hand.
+ */
+export type Shape = 'wide' | 'tall'
+/** A picture's place in the field: where it starts and how tall it is, as % of the field's height. */
+export interface Place {
+  top: number
+  h: number
+}
+export interface PlanetStage {
+  side: 'l' | 'r'
+  clouds: 'puff' | 'streak' | 'dust' | 'mist' | 'overcast'
+  motes: 'snow' | 'dust' | null
+  /** The colour of its light ("r g b"), how strongly it tints the ground, and how much it darkens it. */
+  tint: string
+  ta: number
+  shade: number
+  /** The colour of its clouds ("r g b"). */
+  cloud: string
+  /** Where the sun is, % of the width. */
+  lx: number
+  /** The top of its sky: a phone's taller field continues it upward. */
+  zenith: string
+  backdrop: Record<Shape, { src: string; h: number }>
+}
+export interface LandStageSpec {
+  slug: string
+  name: string
+  family: string
+  /** Water that takes the planet's light: its ground has one picture per planet. */
+  sea: boolean
+  tile: number
+  mist: string | null
+  /** What a blow tears or kicks up. */
+  mark: 'turf' | 'sand'
+  ground: Record<Shape, { top: number; h: number }>
+  glints: Record<Shape, Place> | null
+  foam: Record<Shape, Place> | null
+  clump: string | null
+}
+
+export const PLANET_STAGES: Record<string, PlanetStage> = {
+  "veles": {
+    "side": "l",
+    "clouds": "puff",
+    "motes": null,
+    "tint": "255 240 210",
+    "ta": 0.16,
+    "shade": 0,
+    "cloud": "255 255 255",
+    "lx": 16,
+    "zenith": "#2b7aa6",
+    "backdrop": {
+      "wide": {
+        "src": "/assets/stages/planets/veles/backdrop-wide.webp",
+        "h": 37.889
+      },
+      "tall": {
+        "src": "/assets/stages/planets/veles/backdrop-tall.webp",
+        "h": 34.8
+      }
+    }
+  },
+  "neri": {
+    "side": "r",
+    "clouds": "streak",
+    "motes": null,
+    "tint": "255 214 150",
+    "ta": 0.24,
+    "shade": 0,
+    "cloud": "255 226 170",
+    "lx": 80,
+    "zenith": "#34507a",
+    "backdrop": {
+      "wide": {
+        "src": "/assets/stages/planets/neri/backdrop-wide.webp",
+        "h": 37.889
+      },
+      "tall": {
+        "src": "/assets/stages/planets/neri/backdrop-tall.webp",
+        "h": 34.8
+      }
+    }
+  },
+  "magor": {
+    "side": "r",
+    "clouds": "dust",
+    "motes": "dust",
+    "tint": "255 168 110",
+    "ta": 0.3,
+    "shade": 0.05,
+    "cloud": "196 112 62",
+    "lx": 66,
+    "zenith": "#3e1a14",
+    "backdrop": {
+      "wide": {
+        "src": "/assets/stages/planets/magor/backdrop-wide.webp",
+        "h": 37.889
+      },
+      "tall": {
+        "src": "/assets/stages/planets/magor/backdrop-tall.webp",
+        "h": 34.8
+      }
+    }
+  },
+  "naron": {
+    "side": "l",
+    "clouds": "mist",
+    "motes": "snow",
+    "tint": "220 236 255",
+    "ta": 0.2,
+    "shade": 0,
+    "cloud": "245 250 255",
+    "lx": 28,
+    "zenith": "#4f6f98",
+    "backdrop": {
+      "wide": {
+        "src": "/assets/stages/planets/naron/backdrop-wide.webp",
+        "h": 37.889
+      },
+      "tall": {
+        "src": "/assets/stages/planets/naron/backdrop-tall.webp",
+        "h": 34.8
+      }
+    }
+  },
+  "kavian": {
+    "side": "l",
+    "clouds": "overcast",
+    "motes": null,
+    "tint": "200 210 170",
+    "ta": 0.22,
+    "shade": 0.12,
+    "cloud": "118 126 108",
+    "lx": 34,
+    "zenith": "#262b27",
+    "backdrop": {
+      "wide": {
+        "src": "/assets/stages/planets/kavian/backdrop-wide.webp",
+        "h": 37.889
+      },
+      "tall": {
+        "src": "/assets/stages/planets/kavian/backdrop-tall.webp",
+        "h": 34.8
+      }
+    }
+  },
+  "eyeke": {
+    "side": "l",
+    "clouds": "puff",
+    "motes": null,
+    "tint": "214 255 204",
+    "ta": 0.18,
+    "shade": 0,
+    "cloud": "236 255 236",
+    "lx": 20,
+    "zenith": "#0f3842",
+    "backdrop": {
+      "wide": {
+        "src": "/assets/stages/planets/eyeke/backdrop-wide.webp",
+        "h": 37.889
+      },
+      "tall": {
+        "src": "/assets/stages/planets/eyeke/backdrop-tall.webp",
+        "h": 34.8
+      }
+    }
+  }
+}
+
+export const LAND_STAGES: Record<string, LandStageSpec> = {
+  "dormant-volcano": {
+    "slug": "dormant-volcano",
+    "name": "Dormant Volcano",
+    "family": "Heat",
+    "sea": false,
+    "tile": 1,
+    "mist": "rgb(214 204 194 / 20%)",
+    "mark": "sand",
+    "ground": {
+      "wide": {
+        "top": 3.222,
+        "h": 96.778
+      },
+      "tall": {
+        "top": 6.2,
+        "h": 93.8
+      }
+    },
+    "glints": null,
+    "foam": null,
+    "clump": null
+  },
+  "grass-coastline": {
+    "slug": "grass-coastline",
+    "name": "Grass Coastline",
+    "family": "Coast",
+    "sea": true,
+    "tile": 1,
+    "mist": null,
+    "mark": "turf",
+    "ground": {
+      "wide": {
+        "top": 36.556,
+        "h": 63.444
+      },
+      "tall": {
+        "top": 33.6,
+        "h": 66.4
+      }
+    },
+    "glints": {
+      "wide": {
+        "top": 37,
+        "h": 9.333
+      },
+      "tall": {
+        "top": 34,
+        "h": 5.8
+      }
+    },
+    "foam": {
+      "wide": {
+        "top": 42.778,
+        "h": 5.445
+      },
+      "tall": {
+        "top": 36.6,
+        "h": 5.399999999999999
+      }
+    },
+    "clump": "clump.webp"
+  },
+  "sandy-coastline": {
+    "slug": "sandy-coastline",
+    "name": "Sandy Coastline",
+    "family": "Coast",
+    "sea": true,
+    "tile": 1,
+    "mist": null,
+    "mark": "sand",
+    "ground": {
+      "wide": {
+        "top": 36.222,
+        "h": 63.778
+      },
+      "tall": {
+        "top": 33.6,
+        "h": 66.4
+      }
+    },
+    "glints": {
+      "wide": {
+        "top": 37,
+        "h": 5.111
+      },
+      "tall": {
+        "top": 34,
+        "h": 5.4
+      }
+    },
+    "foam": {
+      "wide": {
+        "top": 38.667,
+        "h": 5.444000000000003
+      },
+      "tall": {
+        "top": 36,
+        "h": 5.399999999999999
+      }
+    },
+    "clump": null
+  },
+  "tree-forest": {
+    "slug": "tree-forest",
+    "name": "Tree Forest",
+    "family": "Meadow",
+    "sea": false,
+    "tile": 1,
+    "mist": null,
+    "mark": "turf",
+    "ground": {
+      "wide": {
+        "top": 28.222,
+        "h": 71.778
+      },
+      "tall": {
+        "top": 29,
+        "h": 71
+      }
+    },
+    "glints": null,
+    "foam": null,
+    "clump": null
+  },
+  "dunes": {
+    "slug": "dunes",
+    "name": "Dunes",
+    "family": "Dunes",
+    "sea": false,
+    "tile": 1,
+    "mist": "rgb(255 226 160 / 14%)",
+    "mark": "sand",
+    "ground": {
+      "wide": {
+        "top": 36.222,
+        "h": 63.778
+      },
+      "tall": {
+        "top": 33.3,
+        "h": 66.7
+      }
+    },
+    "glints": null,
+    "foam": null,
+    "clump": null
+  },
+  "rocky-coastline": {
+    "slug": "rocky-coastline",
+    "name": "Rocky Coastline",
+    "family": "Coast",
+    "sea": true,
+    "tile": 1,
+    "mist": null,
+    "mark": "sand",
+    "ground": {
+      "wide": {
+        "top": 33,
+        "h": 67
+      },
+      "tall": {
+        "top": 32.3,
+        "h": 67.7
+      }
+    },
+    "glints": {
+      "wide": {
+        "top": 37,
+        "h": 4.778
+      },
+      "tall": {
+        "top": 34,
+        "h": 5
+      }
+    },
+    "foam": {
+      "wide": {
+        "top": 38.444,
+        "h": 5.333999999999996
+      },
+      "tall": {
+        "top": 35.6,
+        "h": 5.499999999999993
+      }
+    },
+    "clump": null
+  },
+  "small-island": {
+    "slug": "small-island",
+    "name": "Small Island",
+    "family": "Coast",
+    "sea": true,
+    "tile": 1,
+    "mist": null,
+    "mark": "sand",
+    "ground": {
+      "wide": {
+        "top": 36.556,
+        "h": 63.444
+      },
+      "tall": {
+        "top": 33.6,
+        "h": 66.4
+      }
+    },
+    "glints": {
+      "wide": {
+        "top": 37,
+        "h": 27.222
+      },
+      "tall": {
+        "top": 34,
+        "h": 28.5
+      }
+    },
+    "foam": {
+      "wide": {
+        "top": 37.444,
+        "h": 36.44500000000001
+      },
+      "tall": {
+        "top": 34.6,
+        "h": 38.09999999999999
+      }
+    },
+    "clump": null
+  },
+  "grassland": {
+    "slug": "grassland",
+    "name": "Grassland",
+    "family": "Meadow",
+    "sea": false,
+    "tile": 1,
+    "mist": null,
+    "mark": "turf",
+    "ground": {
+      "wide": {
+        "top": 34.333,
+        "h": 65.667
+      },
+      "tall": {
+        "top": 31.4,
+        "h": 68.6
+      }
+    },
+    "glints": null,
+    "foam": null,
+    "clump": null
+  },
+  "plains": {
+    "slug": "plains",
+    "name": "Plains",
+    "family": "Meadow",
+    "sea": false,
+    "tile": 1,
+    "mist": null,
+    "mark": "turf",
+    "ground": {
+      "wide": {
+        "top": 34.111,
+        "h": 65.889
+      },
+      "tall": {
+        "top": 31.2,
+        "h": 68.8
+      }
+    },
+    "glints": null,
+    "foam": null,
+    "clump": null
+  },
+  "mushroom-forest": {
+    "slug": "mushroom-forest",
+    "name": "Mushroom Forest",
+    "family": "Meadow",
+    "sea": false,
+    "tile": 1,
+    "mist": "rgb(190 120 255 / 22%)",
+    "mark": "turf",
+    "ground": {
+      "wide": {
+        "top": 32,
+        "h": 68
+      },
+      "tall": {
+        "top": 29.1,
+        "h": 70.9
+      }
+    },
+    "glints": null,
+    "foam": null,
+    "clump": null
+  },
+  "inland-river": {
+    "slug": "inland-river",
+    "name": "Inland River",
+    "family": "Meadow",
+    "sea": true,
+    "tile": 1,
+    "mist": null,
+    "mark": "turf",
+    "ground": {
+      "wide": {
+        "top": 29.444,
+        "h": 70.556
+      },
+      "tall": {
+        "top": 30.9,
+        "h": 69.1
+      }
+    },
+    "glints": {
+      "wide": {
+        "top": 43.333,
+        "h": 10.222
+      },
+      "tall": {
+        "top": 40.6,
+        "h": 10.7
+      }
+    },
+    "foam": null,
+    "clump": null
+  },
+  "mountains": {
+    "slug": "mountains",
+    "name": "Mountains",
+    "family": "Rock",
+    "sea": false,
+    "tile": 1,
+    "mist": null,
+    "mark": "sand",
+    "ground": {
+      "wide": {
+        "top": 18.333,
+        "h": 81.667
+      },
+      "tall": {
+        "top": 15.2,
+        "h": 84.8
+      }
+    },
+    "glints": null,
+    "foam": null,
+    "clump": null
+  },
+  "icy-mountains": {
+    "slug": "icy-mountains",
+    "name": "Icy Mountains",
+    "family": "Rock",
+    "sea": false,
+    "tile": 1,
+    "mist": "rgb(235 245 255 / 24%)",
+    "mark": "sand",
+    "ground": {
+      "wide": {
+        "top": 17.111,
+        "h": 82.889
+      },
+      "tall": {
+        "top": 14.1,
+        "h": 85.9
+      }
+    },
+    "glints": null,
+    "foam": null,
+    "clump": null
+  },
+  "rocky-desert": {
+    "slug": "rocky-desert",
+    "name": "Rocky Desert",
+    "family": "Rock",
+    "sea": false,
+    "tile": 1,
+    "mist": "rgb(255 196 140 / 20%)",
+    "mark": "sand",
+    "ground": {
+      "wide": {
+        "top": 20.222,
+        "h": 79.778
+      },
+      "tall": {
+        "top": 18.4,
+        "h": 81.6
+      }
+    },
+    "glints": null,
+    "foam": null,
+    "clump": null
+  },
+  "rocky-crater": {
+    "slug": "rocky-crater",
+    "name": "Rocky Crater",
+    "family": "Rock",
+    "sea": false,
+    "tile": 1,
+    "mist": "rgb(200 170 150 / 14%)",
+    "mark": "sand",
+    "ground": {
+      "wide": {
+        "top": 24.333,
+        "h": 75.667
+      },
+      "tall": {
+        "top": 21.4,
+        "h": 78.6
+      }
+    },
+    "glints": null,
+    "foam": null,
+    "clump": null
+  },
+  "icy-desert": {
+    "slug": "icy-desert",
+    "name": "Icy Desert",
+    "family": "Dunes",
+    "sea": false,
+    "tile": 1,
+    "mist": "rgb(230 244 255 / 22%)",
+    "mark": "sand",
+    "ground": {
+      "wide": {
+        "top": 35.556,
+        "h": 64.444
+      },
+      "tall": {
+        "top": 32.6,
+        "h": 67.4
+      }
+    },
+    "glints": null,
+    "foam": null,
+    "clump": null
+  },
+  "sandy-desert": {
+    "slug": "sandy-desert",
+    "name": "Sandy Desert",
+    "family": "Dunes",
+    "sea": false,
+    "tile": 1,
+    "mist": "rgb(255 220 150 / 16%)",
+    "mark": "sand",
+    "ground": {
+      "wide": {
+        "top": 36.111,
+        "h": 63.889
+      },
+      "tall": {
+        "top": 33.1,
+        "h": 66.9
+      }
+    },
+    "glints": null,
+    "foam": null,
+    "clump": null
+  },
+  "active-volcano": {
+    "slug": "active-volcano",
+    "name": "Active Volcano",
+    "family": "Heat",
+    "sea": false,
+    "tile": 1,
+    "mist": "rgb(255 110 40 / 20%)",
+    "mark": "sand",
+    "ground": {
+      "wide": {
+        "top": 36.556,
+        "h": 63.444
+      },
+      "tall": {
+        "top": 33.6,
+        "h": 66.4
+      }
+    },
+    "glints": {
+      "wide": {
+        "top": 37,
+        "h": 6.778
+      },
+      "tall": {
+        "top": 34,
+        "h": 7.2
+      }
+    },
+    "foam": {
+      "wide": {
+        "top": 39.667,
+        "h": 5.4439999999999955
+      },
+      "tall": {
+        "top": 37,
+        "h": 5.399999999999999
+      }
+    },
+    "clump": null
+  },
+  "geothermal-springs": {
+    "slug": "geothermal-springs",
+    "name": "Geothermal Springs",
+    "family": "Heat",
+    "sea": false,
+    "tile": 1,
+    "mist": "rgb(255 255 255 / 26%)",
+    "mark": "sand",
+    "ground": {
+      "wide": {
+        "top": 27,
+        "h": 73
+      },
+      "tall": {
+        "top": 30.2,
+        "h": 69.8
+      }
+    },
+    "glints": null,
+    "foam": null,
+    "clump": null
+  },
+  "methane-swampland": {
+    "slug": "methane-swampland",
+    "name": "Methane Swampland",
+    "family": "Swamp",
+    "sea": false,
+    "tile": 1,
+    "mist": "rgb(170 255 90 / 20%)",
+    "mark": "turf",
+    "ground": {
+      "wide": {
+        "top": 31.111,
+        "h": 68.889
+      },
+      "tall": {
+        "top": 32,
+        "h": 68
+      }
+    },
+    "glints": {
+      "wide": {
+        "top": 37,
+        "h": 7.222
+      },
+      "tall": {
+        "top": 34,
+        "h": 7.6
+      }
+    },
+    "foam": {
+      "wide": {
+        "top": 40.333,
+        "h": 5.334000000000003
+      },
+      "tall": {
+        "top": 37.6,
+        "h": 5.399999999999999
+      }
+    },
+    "clump": null
+  }
+}

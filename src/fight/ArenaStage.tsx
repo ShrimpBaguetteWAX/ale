@@ -22,7 +22,7 @@ function scatter(n: number, seed: number): [number, number, number, number, numb
     +(0.2 + rnd() * 0.35).toFixed(2),
   ])
 }
-const MOTES: Record<StageForm, Record<'snow' | 'dust', ReturnType<typeof scatter>>> = {
+export const MOTES: Record<StageForm, Record<'snow' | 'dust', ReturnType<typeof scatter>>> = {
   wide: { snow: scatter(46, 61), dust: scatter(46, 71) },
   tall: { snow: scatter(34, 61), dust: scatter(34, 71) },
 }

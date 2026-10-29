@@ -61,6 +61,7 @@ import { fightStageFor, stageFor, type Stage } from '@/fight/stages'
 import { GroundMark, LandStage } from '@/fight/LandStage'
 import { ArenaStage } from '@/fight/ArenaStage'
 import { onGround, roleLines, type Spot } from '@/fight/formation'
+import { useLandType } from '@/fight/useLandType'
 import { GildedCards } from '@/fight/GildedCards'
 import { asset } from '@/assets'
 import {
@@ -829,10 +830,15 @@ function Arena({
   /*
      The ground it is fought on: an arena fight in the arena, under the sky of
      the planet the player is on (the arena stands on their land); a dungeon
-     on its land, for now always Veles' Grass Coastline.
+     on its land: that land's ground under the sky of the planet it is on.
   */
   const planet = useGame((s) => s.player?.planet)
-  const ground = useMemo(() => fightStageFor(venue, planet), [venue, planet])
+  const land = useLandType()
+  const ground = useMemo(() => {
+    const g = fightStageFor(venue, planet, land.type)
+    /* until the land is known the stage draws nothing: not the default first, and then the real one */
+    return g.kind === 'land' && land.pending ? { ...g, waiting: true } : g
+  }, [venue, planet, land.type, land.pending])
   /*
      On a desktop the battlefield plays as a broadcast on the glass, with the
      map behind it: a window with a scorebar and a transport bar under the
@@ -1332,7 +1338,7 @@ function Battlefield({
           depth={depth.get(current.defenderUid) ?? 1}
           fire={current.element === 'fire'}
           big={current.killed || (shake?.[0] ?? 0) >= 1.6}
-          ground={stage.kind === 'arena' ? 'sand' : 'turf'}
+          ground={stage.kind === 'arena' ? 'sand' : stage.spec.mark}
           blades={stage.kind === 'land' ? stage.blades : undefined}
         />
       )}

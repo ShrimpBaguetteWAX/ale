@@ -24,26 +24,33 @@ describe('the fight look', () => {
 })
 
 describe('the stage', () => {
-  it('is a Grass Coastline on Veles, wherever the fight is', () => {
-    for (const [planet, land] of [
-      ['veles', 'Grass Coastline'],
-      ['veles', 'Tree Forest'],
-      ['neri', 'Icy Desert'],
-      [undefined, undefined],
-    ] as const) {
-      const stage = stageFor(planet, land)
-      expect(stage.planet).toBe('veles')
-      expect(stage.land).toBe('Grass Coastline')
+  it('is the land it is fought on, under the planet it is on', () => {
+    const stage = stageFor('neri', 'Icy Desert')
+    expect(stage.planet).toBe('neri')
+    expect(stage.land).toBe('Icy Desert')
+  })
+
+  it('falls back to what it has a picture of, down to the Grass Coastline on Veles', () => {
+    expect(stageFor().planet).toBe('veles')
+    expect(stageFor().land).toBe('Grass Coastline')
+    const unknownPlanet = stageFor('nowhere', 'Dunes')
+    expect([unknownPlanet.planet, unknownPlanet.land]).toEqual(['veles', 'Dunes'])
+    const unknownLand = stageFor('neri', 'Cheese Plains')
+    expect([unknownLand.planet, unknownLand.land]).toEqual(['neri', 'Grass Coastline'])
+  })
+
+  it('has a picture of the ground for both shapes of field, one per planet where there is water', () => {
+    for (const form of ['wide', 'tall'] as const) {
+      expect(stageFor('magor', 'Sandy Coastline').ground[form].src).toContain(`ground-${form}-magor.webp`)
+      expect(stageFor('magor', 'Dunes').ground[form].src).toContain(`ground-${form}.webp`)
+      expect(stageFor('veles').backdrop[form].src).toContain('/planets/veles/backdrop-')
     }
   })
 
-  it('has a painted layer for both shapes of field', () => {
-    const stage = stageFor()
-    for (const form of ['wide', 'tall'] as const) {
-      expect(stage.shore[form]).toMatch(/stages\/veles\/shore-/)
-      expect(stage.far[form]).toMatch(/stages\/veles\/far-/)
-      expect(stage.foam[form]).toHaveLength(2)
-    }
+  it('moves only where there is water to move', () => {
+    expect(stageFor('veles', 'Grass Coastline').foam).not.toBeNull()
+    expect(stageFor('veles', 'Dunes').foam).toBeNull()
+    expect(stageFor('veles', 'Inland River').glints).not.toBeNull()
   })
 })
 
