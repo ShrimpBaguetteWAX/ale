@@ -1180,7 +1180,9 @@ function Battlefield({
       setStretch(1)
       return
     }
-    const measure = () => setStretch(Math.max(1, el.offsetHeight / Math.max(1, el.offsetWidth)))
+    /* Below 1 on a short phone, where the field is less than square and the
+       ground at its foot is trimmed from above; 0.6 is the field's floor. */
+    const measure = () => setStretch(Math.max(0.6, el.offsetHeight / Math.max(1, el.offsetWidth)))
     measure()
     const watch = new ResizeObserver(measure)
     watch.observe(el)

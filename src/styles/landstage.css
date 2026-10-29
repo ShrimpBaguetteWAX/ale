@@ -1680,19 +1680,25 @@
   .shell .main:has(.bfwrap--full) {
     padding: 0 0 env(safe-area-inset-bottom);
   }
+  /* Exactly the screen under the top bar: a real phone's browser bars take
+     height a resized desktop never loses, and the controls were pushed off. */
   .bfwrap--full .bfmain {
     position: relative;
     display: flex;
     flex-direction: column;
-    min-height: calc(100dvh - var(--topbar-h, 56px) - env(safe-area-inset-bottom));
+    height: calc(100dvh - var(--topbar-h, 56px) - env(safe-area-inset-bottom));
     border-radius: 0;
   }
   .bfwrap--full .bfmain > * {
     flex: none;
   }
-  /* At least square, as before; taller when the page has the room. */
+  /* What the cards and the controls leave: taller with room to spare, and
+     shorter than square on a short screen (the sky is trimmed, never the
+     ground; Battlefield's `stretch` follows), but not below 60% of the width. */
   .bfwrap--full .bfmain > .bfield.bfield--land {
-    flex: 1 0 auto;
+    flex: 1 1 0;
+    min-height: 60vw;
+    aspect-ratio: auto;
   }
   .bfwrap--full .lstage {
     background: linear-gradient(
