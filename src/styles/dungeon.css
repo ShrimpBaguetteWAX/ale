@@ -6829,8 +6829,12 @@ button.combatcard--empty:hover {
 .hudcentre__track {
   stroke: rgb(255 255 255 / 10%);
 }
+/* The arc fills to a new chance rather than jumping, the figure counting with it (useCountUp, GAUGE_MS). */
 .hudcentre__fill {
   stroke: var(--hc);
+  transition:
+    stroke-dashoffset 600ms cubic-bezier(0.33, 1, 0.68, 1),
+    stroke 600ms ease;
 }
 .hudcentre__gauge b {
   position: absolute;
@@ -7316,7 +7320,15 @@ button.combatcard--empty:hover {
 }
 .teamdock__fill {
   stroke: var(--tone);
-  transition: stroke-dasharray 450ms cubic-bezier(0.2, 0.8, 0.3, 1);
+  transition:
+    stroke-dashoffset 600ms cubic-bezier(0.33, 1, 0.68, 1),
+    stroke 600ms ease;
+}
+@media (prefers-reduced-motion: reduce) {
+  .hudcentre__fill,
+  .teamdock__fill {
+    transition: none;
+  }
 }
 .teamdock--hud .teamdock__pct {
   position: absolute;

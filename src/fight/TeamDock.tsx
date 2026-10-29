@@ -4,6 +4,7 @@ import { GameImg } from '@/components/GameImg'
 import { elementBackground, fighterArtFallback, fighterAvatar } from '@/tavern/fighterStats'
 import { matchupStyle } from '@/fight/matchupStyle'
 import { verdictOf } from '@/fight/OddsCentre'
+import { useCountUp } from '@/fight/useCountUp'
 
 /**
  * The team and its chance to win, docked at the foot of the screen while the
@@ -38,6 +39,8 @@ export function TeamDock({
   /* The dock follows the matchup's look on a phone as well as a desktop. */
   const hud = matchupStyle() === 'hud'
   const pct = winRate === null ? null : Math.round(winRate * 100)
+  /* The figure counts to a new chance as the arc fills to it. */
+  const counted = useCountUp(pct)
   const band = pct === null ? 'none' : pct >= 55 ? 'good' : pct >= 35 ? 'even' : 'poor'
   const filled = slots.filter(Boolean).length
 
@@ -100,11 +103,16 @@ export function TeamDock({
             <svg viewBox="0 0 80 46">
               <path className="teamdock__track" d="M6 40 A34 34 0 0 1 74 40" />
               {pct !== null && (
-                <path className="teamdock__fill" d="M6 40 A34 34 0 0 1 74 40" strokeDasharray={`${(arc * pct) / 100} ${arc}`} />
+                <path
+                  className="teamdock__fill"
+                  d="M6 40 A34 34 0 0 1 74 40"
+                  strokeDasharray={`${arc} ${arc}`}
+                  strokeDashoffset={(arc * (100 - pct)) / 100}
+                />
               )}
             </svg>
             <b className="teamdock__pct">
-              {pct === null ? '—' : pct}
+              {pct === null ? '—' : (counted ?? pct)}
               {pct !== null && <i>%</i>}
             </b>
           </span>

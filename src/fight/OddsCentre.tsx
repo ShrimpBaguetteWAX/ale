@@ -1,4 +1,5 @@
 import { oddsTitle, type Odds } from './odds'
+import { useCountUp } from './useCountUp'
 
 /**
  * What stands between the two line-ups: the chance of winning the fight.
@@ -56,6 +57,8 @@ type Side = { landShare: number; blockShare: number; bonuses: number }
  * `VS` while there is nothing to say yet, as in the cards look.
  */
 export function HudCentre({ odds, mine, theirs }: { odds: Odds | null; mine: Side; theirs: Side }) {
+  /* The figure counts to a new chance as the arc fills to it. */
+  const counted = useCountUp(odds ? Math.round(odds.winRate * 100) : null)
   if (!odds) {
     return (
       <span className="versus__vs" aria-hidden="true">
@@ -78,10 +81,15 @@ export function HudCentre({ odds, mine, theirs }: { odds: Odds | null; mine: Sid
       <span className="hudcentre__gauge" role="img" aria-label={oddsTitle(odds, 'mine')}>
         <svg viewBox="0 0 170 96" aria-hidden="true">
           <path className="hudcentre__track" d="M15 88 A70 70 0 0 1 155 88" />
-          <path className="hudcentre__fill" d="M15 88 A70 70 0 0 1 155 88" strokeDasharray={`${(arc * pct) / 100} ${arc}`} />
+          <path
+            className="hudcentre__fill"
+            d="M15 88 A70 70 0 0 1 155 88"
+            strokeDasharray={`${arc} ${arc}`}
+            strokeDashoffset={(arc * (100 - pct)) / 100}
+          />
         </svg>
         <b>
-          {pct}
+          {counted ?? pct}
           <i>%</i>
         </b>
       </span>
