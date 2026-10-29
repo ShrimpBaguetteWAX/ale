@@ -41,8 +41,16 @@ function detectLowPower(): boolean {
   return window.matchMedia('(prefers-reduced-motion: reduce)').matches
 }
 
+/*
+ * Off for now: the guess caught most phones (iOS reports no memory at all,
+ * and many phones cap the cores they report) on hardware that runs the full
+ * look without trouble. The cheap path stays in the code and still answers to
+ * `al:fx` = 'low' in storage; set this to true to guess again.
+ */
+const AUTO_LOW_FX = false
+
 const stored = localStorage.getItem('al:fx')
-const low = stored ? stored === 'low' : detectLowPower()
+const low = stored ? stored === 'low' : AUTO_LOW_FX && detectLowPower()
 document.documentElement.dataset.fx = low ? 'low' : 'full'
 
 createRoot(document.getElementById('root')!).render(
