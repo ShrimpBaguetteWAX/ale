@@ -18,16 +18,12 @@
     />
 
     <!--
-      Fonts are preconnected and loaded with display=swap so first paint never
-      waits on the network. Orbitron is the display face, Titillium Web the
-      body face; both were already the game's typography.
+      The game's own fonts (styles/fonts.css): Orbitron for display, Titillium
+      Web for text, served from here so first paint waits on no other server.
+      The two every screen needs first are fetched before the stylesheet asks.
     -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&family=Titillium+Web:wght@400;600;700&display=swap"
-    />
+    <link rel="preload" as="font" type="font/woff2" href="./assets/fonts/titillium-400-latin.woff2" crossorigin />
+    <link rel="preload" as="font" type="font/woff2" href="./assets/fonts/orbitron-latin.woff2" crossorigin />
 
     <!-- Warm the TCP/TLS handshake to the fastest WAX nodes before any read. -->
     <link rel="preconnect" href="https://wax.greymass.com" crossorigin />
@@ -36,10 +32,11 @@
     <link rel="preload" as="image" href="./assets/logo.webp" />
 
     <!-- The boot screen's look, shared with components/BootScreen.tsx. -->
-    <script type="module" crossorigin src="./assets/index-BFaX6aqq.js"></script>
+    <script type="module" crossorigin src="./assets/index-DHA6tA0V.js"></script>
     <link rel="modulepreload" crossorigin href="./assets/react-BnBjmWcX.js">
     <link rel="modulepreload" crossorigin href="./assets/router-YOXIOte-.js">
-    <link rel="stylesheet" crossorigin href="./assets/index-4NYn74h_.css">
+    <link rel="stylesheet" crossorigin href="./assets/index-CfL6TUO4.css">
+    <script>addEventListener('load',function(){setTimeout(function(){(window.requestIdleCallback||setTimeout)(function(){var l=document.createElement('link');l.rel='prefetch';l.as='style';l.crossOrigin='';l.href='./assets/game-CxM_A5lu.css';document.head.appendChild(l)},{timeout:3000})},4000)})</script>
   </head>
 
   <body>
