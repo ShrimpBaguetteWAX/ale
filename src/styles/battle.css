@@ -3654,20 +3654,19 @@
 /*
  * The result screen's secondary buttons, in the same frosted glass as Leave
  * on the dungeon screen: the shared ghost button all but vanished over the
- * map. The way out keeps its own solid colour.
+ * map. The way out keeps its own solid colour. A phone's two icon buttons
+ * too: they sit over the same map.
  */
-@media (min-width: 720px) {
-  .result__bar .btn--ghost {
-    --btn-bg: rgb(255 255 255 / 9%);
-    --btn-line: rgb(255 255 255 / 24%);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-  }
-  .result__bar .btn--ghost:hover:not(:disabled) {
-    --btn-bg: rgb(255 255 255 / 15%);
-    --btn-line: rgb(255 255 255 / 40%);
-    filter: none;
-  }
+.result__bar .btn--ghost {
+  --btn-bg: rgb(255 255 255 / 9%);
+  --btn-line: rgb(255 255 255 / 24%);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+.result__bar .btn--ghost:hover:not(:disabled) {
+  --btn-bg: rgb(255 255 255 / 15%);
+  --btn-line: rgb(255 255 255 / 40%);
+  filter: none;
 }
 
 /* ---------- the verdict in solid metal, on a lit floor ---------- */
