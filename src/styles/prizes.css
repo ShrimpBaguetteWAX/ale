@@ -19,6 +19,10 @@
     0 18px 44px rgb(0 0 0 / 45%);
   backdrop-filter: blur(6px);
 }
+/* Its place kept while the prizes are read (see PrizeStrip). */
+.prizestrip--pending {
+  visibility: hidden;
+}
 .prizestrip__head {
   display: flex;
   flex-wrap: wrap;

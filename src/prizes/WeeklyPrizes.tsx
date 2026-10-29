@@ -3,15 +3,16 @@ import { asset } from '@/assets'
 import { formatCompact } from '@/format'
 import { fetchWeeklyPrizes, type WeeklyPrizes } from './weekly'
 
-/** Last week's prizes, once read; undefined until then or if the read fails. */
-export function useWeeklyPrizes(): WeeklyPrizes | undefined {
-  const [prizes, setPrizes] = useState<WeeklyPrizes>()
+/** Last week's prizes, once read; undefined while reading, null if the read failed. */
+export function useWeeklyPrizes(): WeeklyPrizes | null | undefined {
+  const [prizes, setPrizes] = useState<WeeklyPrizes | null>()
   useEffect(() => {
     let live = true
     fetchWeeklyPrizes()
       .then((p) => live && setPrizes(p))
       .catch(() => {
         /* No history server answered: the prizes simply stay hidden. */
+        if (live) setPrizes(null)
       })
     return () => {
       live = false
@@ -33,9 +34,15 @@ const TOKENS = [
  */
 export function PrizeStrip() {
   const p = useWeeklyPrizes()
-  if (!p) return null
+  if (p === null) return null
+  /*
+     While the prizes are read the strip already takes its place, unseen: it
+     sits in the hero's copy, which a phone anchors at the foot and a desktop
+     centres, so a strip arriving late pushed the title and Play up (the
+     landing page's layout shift).
+  */
   return (
-    <div className="prizestrip">
+    <div className={`prizestrip${p ? '' : ' prizestrip--pending'}`} aria-hidden={p ? undefined : true}>
       <div className="prizestrip__head">
         <b>Weekly prizes</b>
         <span>Paid into the reward pools last week</span>
@@ -45,7 +52,7 @@ export function PrizeStrip() {
           <div className={`prizestrip__tok is-${t.key}`} key={t.key}>
             <img src={asset(t.icon)} alt="" />
             <span>
-              <b>{formatCompact(Math.round(p[t.key]))}</b>
+              <b>{p ? formatCompact(Math.round(p[t.key])) : '000K'}</b>
               <small>{t.label}</small>
             </span>
           </div>
