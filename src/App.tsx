@@ -86,13 +86,17 @@ type Screen<P> = LazyExoticComponent<ComponentType<P>> & {
 function lazyScreen<P extends object>(
   load: () => Promise<{ default: ComponentType<P> }>,
 ): Screen<P> {
-  /* One fetch, shared by the preload and the screen itself. */
+  /* One fetch, shared by the preload and the screen itself. The game's
+     stylesheets come with it (styles/game.ts), so no screen paints without
+     them; after the first screen they are already there. */
   let pending: Promise<{ default: ComponentType<P> }> | null = null
   const fetchOnce = () =>
-    (pending ??= load().catch((err: unknown) => {
-      pending = null
-      throw err
-    }))
+    (pending ??= Promise.all([import('./styles/game'), load()])
+      .then(([, mod]) => mod)
+      .catch((err: unknown) => {
+        pending = null
+        throw err
+      }))
 
   const screen = lazy(async () => {
     try {

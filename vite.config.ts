@@ -1,6 +1,26 @@
-import { defineConfig } from 'vite'
+import { defineConfig, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
 import { fileURLToPath, URL } from 'node:url'
+
+// The game's stylesheets (src/styles/game.ts) stay off the first page, but a
+// visitor who presses Play should not then wait on them: the first page asks
+// for them a few seconds after it has loaded, when the browser is idle. Not a
+// <link> in the head: the browser starts one of those straight away, and on a
+// slow connection it took bandwidth from the first page's own paint. Nor on
+// `load` alone, which fires before React has drawn the page.
+const prefetchGameCss = (): Plugin => ({
+  name: 'prefetch-game-css',
+  apply: 'build',
+  transformIndexHtml: {
+    order: 'post',
+    handler(html, ctx) {
+      const css = Object.keys(ctx.bundle ?? {}).find((f) => /^assets\/game-[\w-]+\.css$/.test(f))
+      if (!css) throw new Error('prefetch-game-css: no assets/game-*.css in the build (was styles/game.ts renamed?)')
+      const later = `addEventListener('load',function(){setTimeout(function(){(window.requestIdleCallback||setTimeout)(function(){var l=document.createElement('link');l.rel='prefetch';l.as='style';l.crossOrigin='';l.href='./${css}';document.head.appendChild(l)},{timeout:3000})},4000)})`
+      return [{ tag: 'script', children: later, injectTo: 'head' }]
+    },
+  },
+})
 
 // GitHub Pages serves this from the repo's /docs folder.
 //
@@ -21,7 +41,7 @@ import { fileURLToPath, URL } from 'node:url'
 // Routing is hash-based (see App.tsx), so Pages needs no 404.html fallback:
 // every route is one document and the server never sees the path.
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), prefetchGameCss()],
   base: './',
   resolve: {
     alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },
