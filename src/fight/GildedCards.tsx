@@ -5,7 +5,7 @@ import { GameImg } from '@/components/GameImg'
 import { elementIcon, fighterArtFallback, fighterFace, fighterName, formatScaled } from '@/tavern/fighterStats'
 
 /* Each element's own colour, for the rim inside a card's frame. */
-const ELEMENT_RIM: Record<string, string> = {
+export const ELEMENT_RIM: Record<string, string> = {
   metal: '#d9e4ff',
   air: '#9fe6ff',
   nature: '#7dffb0',

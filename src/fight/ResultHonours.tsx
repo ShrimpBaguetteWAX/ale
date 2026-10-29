@@ -1,9 +1,11 @@
 import { GameImg } from '@/components/GameImg'
 import { asset } from '@/assets'
+import { ELEMENT_RIM } from './GildedCards'
+import { elementIcon } from '@/tavern/fighterStats'
 
 /**
  * The pieces of the result screen's honours look on a desktop: the laurels
- * either side of the verdict, a fighter as a medallion, and a reward pool as
+ * either side of the verdict, a fighter as a card, and a reward pool as
  * an engram. The phone keeps its own result screen; these are only drawn
  * where there is room for all six fighters side by side.
  */
@@ -39,44 +41,48 @@ export function Laurel({ flip = false }: { flip?: boolean }) {
 }
 
 /**
- * A fighter as a medallion: the face in a ring that is its experience
- * towards the next level, and a tab under it with the level — or DOWN for
- * the fallen and NFT for the NFT fighter, which has no level.
+ * A fighter as the card it was in the fight: the gilded frame, the level in
+ * its diamond, the element, the name, and under it a bar that is its
+ * experience towards the next level (full at the cap). The best fighter has
+ * its crown and a gold frame, a fallen one is greyed under the DOWN plate it
+ * fell with, and one with a level waiting wears a green arrow in a ring.
  *
- * A phone taps one to open its record (`onSelect`), and marks the ones with
- * a level waiting (`ready`) with a green arrow in a ring.
+ * A phone taps one to open its record (`onSelect`), and shows it small: the
+ * face, the level and the element.
  */
-export function Medal({
+export function ResultCard({
   src,
   fallback,
   xp,
-  tab,
+  name,
+  level,
+  element,
   mvp,
   down,
   ready = false,
   selected = false,
-  label,
   onSelect,
 }: {
   src: string
   fallback: string
   /** Progress to the next level, 0–100; full at the cap. */
   xp: number
-  tab: string
+  /** The class, or "NFT Fighter". */
+  name: string
+  /** The level, or "NFT" for the NFT fighter, which has none. */
+  level: string
+  element?: string
   mvp: boolean
   down: boolean
   ready?: boolean
   selected?: boolean
-  /** The fighter's name, for the button a tappable medallion becomes. */
-  label?: string
   onSelect?: () => void
 }) {
   const fill = Math.max(0, Math.min(100, xp))
-  const className =
-    `honours__medal${down ? ' is-down' : ''}${mvp ? ' is-mvp' : ''}${ready ? ' is-ready' : ''}${selected ? ' is-selected' : ''}`
+  const className = `rcard${down ? ' is-down' : ''}${mvp ? ' is-mvp' : ''}${ready ? ' is-ready' : ''}${selected ? ' is-selected' : ''}`
   const body = (
     <>
-      <div className="honours__mvp">
+      <div className="rcard__mvp">
         {mvp && (
           <>
             <svg viewBox="0 0 24 16" aria-hidden="true">
@@ -86,31 +92,34 @@ export function Medal({
           </>
         )}
       </div>
-      <div className="honours__ring">
-        <svg viewBox="0 0 140 140" aria-hidden="true">
-          <circle className="honours__track" cx="70" cy="70" r="66" pathLength={100} />
-          {/* No arc at all for nothing, or the round cap would leave a dot. */}
-          {fill > 0 && (
-            <circle
-              className="honours__xp"
-              cx="70"
-              cy="70"
-              r="66"
-              pathLength={100}
-              strokeDasharray={`${fill} 100`}
-            />
-          )}
-        </svg>
-        <GameImg className="honours__face" src={src} alt="" fallback={fallback} />
-        <span className="honours__tab">{tab}</span>
-        {ready && (
-          <span className="honours__up" title="Ready to level up">
-            <svg viewBox="0 0 12 12" aria-hidden="true">
-              <path d="M6 10.5 V2 M2.5 5.5 L6 2 L9.5 5.5" />
-            </svg>
+      <div
+        className={`gcard gcard--mine${down ? ' gcard--ko' : ''}`}
+        style={{ '--ec': (element && ELEMENT_RIM[element]) || '#dfe3ee', '--h': fill / 100, '--kc': '#ff5a6a' } as React.CSSProperties}
+      >
+        <div className="gcard__frame">
+          <div className="gcard__pic">
+            <GameImg src={src} alt="" fallback={fallback} />
+          </div>
+          <span className="gcard__lv">
+            <b>{level}</b>
           </span>
-        )}
+          {element && <img className="gcard__el" src={elementIcon(element)} alt={element} />}
+        </div>
+        <span className="gcard__name">{name}</span>
+        <span className="gcard__hp">
+          <i className="gcard__fill" />
+        </span>
+        <span className="gcard__down" aria-hidden="true">
+          DOWN
+        </span>
       </div>
+      {ready && (
+        <span className="rcard__up" title="Ready to level up">
+          <svg viewBox="0 0 12 12" aria-hidden="true">
+            <path d="M6 10.5 V2 M2.5 5.5 L6 2 L9.5 5.5" />
+          </svg>
+        </span>
+      )}
     </>
   )
   return onSelect ? (
@@ -118,7 +127,7 @@ export function Medal({
       type="button"
       className={className}
       aria-pressed={selected}
-      aria-label={`${label ?? 'Fighter'}${down ? ', down' : ''}${ready ? ', ready to level up' : ''}`}
+      aria-label={`${name}${down ? ', down' : ''}${ready ? ', ready to level up' : ''}`}
       onClick={onSelect}
     >
       {body}

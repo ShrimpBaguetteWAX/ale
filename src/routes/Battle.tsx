@@ -55,7 +55,7 @@ import { MineToast, type MineToastState } from '@/pools/MineToast'
 import { NUM_LOCALE } from '@/format'
 import { rememberWinPower } from '@/briefing/winPower'
 import { GameImg } from '@/components/GameImg'
-import { Engram, Laurel, Medal } from '@/fight/ResultHonours'
+import { Engram, Laurel, ResultCard } from '@/fight/ResultHonours'
 import { fightLook, type FightLook } from '@/fight/fightLook'
 import { fightStageFor, stageFor, type Stage } from '@/fight/stages'
 import { GroundMark, LandStage } from '@/fight/LandStage'
@@ -2780,10 +2780,10 @@ function Result({
       {phone ? (
       <>
       {/*
-        A phone: the whole result on one screen. The six medallions in a row,
+        A phone: the whole result on one screen. The six cards in a row,
         the record of whichever one is tapped under them (the MVP's first),
         and the pools as flasks either side of Mine at the foot. A green
-        arrow on a medallion says that fighter has a level waiting.
+        arrow on a card says that fighter has a level waiting.
       */}
       <div className={`phonours phonours--${won ? 'win' : 'loss'}`}>
         <div className="phonours__head">
@@ -2807,7 +2807,7 @@ function Result({
             const live = byId.get(Number(f.fighter_id))
             const plan = live ? levelUpOf(live, levels) : null
             return (
-              <Medal
+              <ResultCard
                 key={f.uid}
                 src={
                   f.classname && f.racename
@@ -2816,12 +2816,13 @@ function Result({
                 }
                 fallback={asset('/assets/fighters/unknown_unknown_avatar.webp')}
                 xp={plan ? (plan.atMax ? 100 : plan.xpPercent) : 0}
-                tab={!survived ? 'DOWN' : nft ? 'NFT' : `L${live?.stats.level ?? f.level}`}
+                name={f.classname || 'NFT Fighter'}
+                level={nft ? 'NFT' : String(live?.stats.level ?? f.level)}
+                element={f.element}
                 mvp={i === mvpIndex}
                 down={!survived}
                 ready={!!plan && !plan.atMax && plan.ready}
                 selected={i === pickedIndex}
-                label={f.classname || 'NFT Fighter'}
                 onSelect={() => setPicked(i)}
               />
             )
@@ -2918,7 +2919,7 @@ function Result({
             return (
               <article className="honours__fighter" key={f.uid}>
                 <div className="honours__top">
-                  <Medal
+                  <ResultCard
                     src={
                       f.classname && f.racename
                         ? fighterAvatar({ classname: f.classname, racename: f.racename })
@@ -2926,12 +2927,12 @@ function Result({
                     }
                     fallback={asset('/assets/fighters/unknown_unknown_avatar.webp')}
                     xp={plan ? (plan.atMax ? 100 : plan.xpPercent) : 0}
-                    tab={!survived ? 'DOWN' : nft ? 'NFT' : `L${live?.stats.level ?? f.level}`}
+                    name={f.classname || 'NFT Fighter'}
+                    level={nft ? 'NFT' : String(live?.stats.level ?? f.level)}
+                    element={f.element}
                     mvp={i === mvpIndex}
                     down={!survived}
                   />
-                  <div className="honours__class">{f.classname || 'NFT Fighter'}</div>
-                  <div className="honours__race">{f.racename || 'unknown'}</div>
                   {/* Winning an arena costs a fighter; this says which one. */}
                   {holds && (
                     <div

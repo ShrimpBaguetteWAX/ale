@@ -1,6 +1,6 @@
 /*
  * The result of a Dungeon or Arena fight. Wider than a phone: the
- * verdict between laurels, the team as medallions over their service
+ * verdict between laurels, the team as cards over their service
  * records, and the pools as engrams either side of Mine. A phone draws the
  * same pieces smaller, one fighter's record at a time (`.phonours`, below).
  *
@@ -79,8 +79,6 @@
 /* ---------- the team ---------- */
 
 .honours__team {
-  --medal: 140px;
-
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
   column-gap: 12px;
@@ -100,7 +98,7 @@
 /* Too narrow for six: two rows of three, still centred. */
 @media (max-width: 1179px) {
   .honours__team {
-    --medal: 124px;
+    --ru: 15px;
 
     grid-template-columns: repeat(3, minmax(0, 1fr));
     max-width: 780px;
@@ -117,135 +115,107 @@
   text-align: center;
 }
 
-.honours__medal {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
+/* A fighter as the battle's gilded card (.gcard, landstage.css), here at the size of a column. */
+.rcard {
+  --u: var(--ru, clamp(12px, 1.2vw, 17px));
 
-.honours__mvp {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  /* Room for the crown, whether or not this one wears it. */
+  padding-top: calc(var(--u) * 2.4);
+  padding-inline: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+}
+button.rcard {
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.rcard .gcard {
+  position: relative;
+  width: calc(var(--u) * 7.3);
+  transform: none;
+  list-style: none;
+}
+/* Experience, not health: the bar the old ring was. */
+.rcard .gcard__fill {
+  background: linear-gradient(90deg, #00baff, #5fd8ff);
+  transition: none;
+}
+.rcard__mvp {
+  position: absolute;
+  top: calc(var(--u) * 0.2);
+  left: 50%;
   display: flex;
-  flex-direction: column;
   align-items: center;
-  height: 30px;
+  gap: calc(var(--u) * 0.3);
+  translate: -50% 0;
   font-family: var(--font-display);
-  font-size: 9px;
+  font-size: calc(var(--u) * 0.8);
   font-weight: 900;
-  letter-spacing: 0.2em;
+  letter-spacing: 0.14em;
   color: #ffd979;
 }
-.honours__mvp svg {
-  width: 26px;
-  height: 17px;
-  filter: drop-shadow(0 0 8px rgb(255 200 90 / 70%));
+.rcard__mvp svg {
+  width: calc(var(--u) * 1.7);
+  height: auto;
+  filter: drop-shadow(0 0 6px rgb(255 217 121 / 70%));
+}
+.rcard.is-mvp .gcard__frame {
+  background: linear-gradient(160deg, #ffe9a8, #c8901e 30%, #6a4a10 55%, #d8a838 78%, #fff0b8);
+  box-shadow:
+    0 0 0 calc(var(--u) * 0.1) #ffd979,
+    0 0 calc(var(--u) * 2) rgb(255 217 121 / 50%),
+    0 calc(var(--u) * 0.5) calc(var(--u) * 1.2) rgb(0 0 0 / 55%);
+}
+.rcard.is-mvp .gcard__frame::before {
+  box-shadow: 0 0 calc(var(--u) * 0.8) #ffd979;
+}
+/* The fallen: the card keeps what it fell with, without the tilt. */
+.rcard.is-down .gcard__name {
+  opacity: 0.6;
+}
+/* The open record's fighter, ringed in white. */
+.rcard.is-selected .gcard__frame {
+  box-shadow:
+    0 0 0 calc(var(--u) * 0.14) #fff,
+    0 0 calc(var(--u) * 1.4) rgb(255 255 255 / 45%);
 }
 
-.honours__ring {
-  position: relative;
-  width: var(--medal);
-  height: var(--medal);
-}
-/* The ring's own drawing, not the level-up arrow that sits on it. */
-.honours__ring > svg {
+/* A level waiting: a green arrow in a ring on the card's flank. */
+.rcard__up {
   position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  overflow: visible;
-  transform: rotate(-90deg);
-}
-.honours__track {
-  fill: none;
-  stroke: rgb(255 255 255 / 12%);
-  stroke-width: 5;
-}
-.honours__xp {
-  fill: none;
-  stroke: var(--cyan);
-  stroke-width: 5;
-  stroke-linecap: round;
-  filter: drop-shadow(0 0 5px var(--cyan));
-}
-
-.honours__face {
-  position: absolute;
-  inset: 11.5%;
-  width: 77%;
-  height: 77%;
+  right: calc(var(--u) * -0.3);
+  bottom: calc(var(--u) * 2.6);
+  z-index: 8;
+  display: grid;
+  place-items: center;
+  width: calc(var(--u) * 1.5);
+  height: calc(var(--u) * 1.5);
   border-radius: 50%;
-  object-fit: cover;
+  color: #5ff2b0;
+  background: #0b1426;
   box-shadow:
-    0 0 0 3px #0b1426,
-    0 0 0 5px rgb(0 186 255 / 55%),
-    0 12px 26px rgb(0 0 0 / 55%);
+    0 0 0 2px #5ff2b0,
+    0 0 10px rgb(95 242 176 / 70%);
+  animation: level-ready 2s ease-in-out infinite;
 }
-.honours__medal.is-mvp .honours__face {
-  box-shadow:
-    0 0 0 3px #0b1426,
-    0 0 0 5px #ffd979,
-    0 0 30px rgb(255 200 90 / 50%);
+.rcard__up svg {
+  width: 62%;
+  height: 62%;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
-
-/* The fallen: greyed, ringed in red, and struck through. */
-.honours__medal.is-down .honours__face {
-  filter: grayscale(1) brightness(0.5);
-  box-shadow:
-    0 0 0 3px #0b1426,
-    0 0 0 5px rgb(255 90 106 / 65%);
-}
-.honours__medal.is-down .honours__xp {
-  stroke: rgb(255 255 255 / 30%);
-  filter: none;
-}
-.honours__medal.is-down .honours__ring::after {
-  content: '';
-  position: absolute;
-  left: 50%;
-  top: 14%;
-  bottom: 14%;
-  width: 3px;
-  border-radius: 2px;
-  transform: rotate(28deg);
-  background: linear-gradient(#ff5a6a, transparent);
-  box-shadow: 0 0 10px #ff5a6a;
-}
-
-.honours__tab {
-  position: absolute;
-  left: 50%;
-  bottom: 3%;
-  translate: -50% 0;
-  padding: 3px 10px;
-  border-radius: 999px;
-  font-family: var(--font-display);
-  font-size: 10px;
-  font-weight: 900;
-  letter-spacing: 0.08em;
-  color: #fff;
-  background: #0b1730;
-  box-shadow: inset 0 0 0 1px rgb(0 186 255 / 75%);
-}
-.honours__medal.is-down .honours__tab {
-  color: #ff5a6a;
-  box-shadow: inset 0 0 0 1px rgb(255 90 106 / 75%);
-}
-
-.honours__class {
-  margin-top: 10px;
-  font-family: var(--font-display);
-  font-size: 13px;
-  font-weight: 800;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--white);
-}
-.honours__race {
-  font-family: var(--font-display);
-  font-size: 9.5px;
-  font-weight: 700;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--text-faint);
+@keyframes level-ready {
+  50% {
+    transform: scale(1.14);
+  }
 }
 
 .honours__holds {
@@ -598,7 +568,7 @@
 /* ---------- on a phone: one screen, one record at a time ---------- */
 
 /*
- * The six medallions in a row, the tapped fighter's record under them, and
+ * The six cards in a row, the tapped fighter's record under them, and
  * the flasks either side of Mine at the foot: all of it fits between the top
  * bar and the bottom of the screen (fights have no tab bar), so nothing on
  * the result needs scrolling to.
@@ -663,113 +633,41 @@
   color: var(--text-dim);
 }
 
-/* ---- the row of medallions, each a button ---- */
+/* ---- the row of cards, each a button ---- */
 .phonours__row {
-  --medal: 46px;
+  --ru: 6.9px;
 
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
   justify-items: center;
-  padding: 12px 0 6px;
+  padding: 4px 6px 6px;
+  gap: 4px;
 }
-.phonours__row .honours__medal {
-  position: relative;
-  padding: 0;
-  border: 0;
-  background: none;
-  color: inherit;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-}
-/* The crown sits on the rim; the word is the record's to say. */
-.phonours__row .honours__mvp {
-  position: absolute;
-  z-index: 2;
-  top: -11px;
-  left: 50%;
-  height: auto;
-  translate: -50% 0;
-}
-.phonours__row .honours__mvp svg {
-  width: 18px;
-  height: 12px;
-}
-.phonours__row .honours__mvp span {
+/* Small: the face, the level and the element; the name and the bar are the record's to say. */
+.phonours__row .gcard__name,
+.phonours__row .gcard__hp,
+.phonours__row .gcard__down,
+.phonours__row .rcard__mvp span {
   display: none;
 }
-.phonours__row .honours__track,
-.phonours__row .honours__xp {
-  stroke-width: 9;
-}
-.phonours__row .honours__face {
-  box-shadow:
-    0 0 0 2px #0b1426,
-    0 0 0 3px rgb(0 186 255 / 55%);
-}
-.phonours__row .honours__medal.is-mvp .honours__face {
-  box-shadow:
-    0 0 0 2px #0b1426,
-    0 0 0 3px #ffd979,
-    0 0 16px rgb(255 200 90 / 50%);
-}
-.phonours__row .honours__medal.is-down .honours__face {
-  box-shadow:
-    0 0 0 2px #0b1426,
-    0 0 0 3px rgb(255 90 106 / 65%);
-}
-.phonours__row .honours__medal.is-down .honours__ring::after {
-  width: 2px;
-  top: 16%;
-  bottom: 16%;
-}
-.phonours__row .honours__tab {
-  bottom: -7px;
-  padding: 1px 6px;
-  font-size: 8px;
-  letter-spacing: 0.06em;
-}
-/* The open record's fighter, ringed in white. */
-.phonours__row .honours__medal.is-selected .honours__ring::before {
-  content: '';
+.phonours__row .rcard.is-down .gcard__frame::after {
+  content: 'DOWN';
   position: absolute;
-  inset: -5px;
-  border-radius: 50%;
-  box-shadow:
-    0 0 0 2px #fff,
-    0 0 14px rgb(255 255 255 / 60%);
+  inset: auto 0 3px;
+  text-align: center;
+  font-family: var(--font-display);
+  font-size: 5.5px;
+  font-weight: 900;
+  color: #ff5a6a;
 }
-
-/* A level waiting: a green arrow in a ring on the rim, top right. */
-.honours__up {
-  position: absolute;
-  z-index: 3;
-  top: -3px;
-  right: -3px;
-  display: grid;
-  place-items: center;
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  color: #5ff2b0;
-  background: #0b1426;
-  box-shadow:
-    0 0 0 2px #5ff2b0,
-    0 0 10px rgb(95 242 176 / 70%);
-  animation: level-ready 2s ease-in-out infinite;
+.phonours__row .rcard.is-selected .gcard {
+  translate: 0 -4px;
 }
-.honours__up svg {
-  width: 11px;
-  height: 11px;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 2.6;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-@keyframes level-ready {
-  50% {
-    transform: scale(1.14);
-  }
+.phonours__row .rcard__up {
+  right: -2px;
+  bottom: calc(var(--u) * 0.5);
+  width: 14px;
+  height: 14px;
 }
 
 /* ---- the open record ---- */
@@ -897,10 +795,10 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .honours__up {
+  .rcard__up {
     animation: none;
   }
 }
-:root[data-fx='low'] .honours__up {
+:root[data-fx='low'] .rcard__up {
   animation: none;
 }
