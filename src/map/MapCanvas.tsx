@@ -161,7 +161,7 @@ const MAX_SCALE = 72
  */
 const PHONE = '(max-width: 719px)'
 const onPhone = () => window.matchMedia(PHONE).matches
-/** Rows of the mirrored art a phone can pan up past the map's last row. */
+/** Rows of the mirrored art a phone can pan past the map's first and last rows. */
 const PHONE_ROWS_BEYOND = 2
 
 /** Movement beyond this during a press counts as a pan, not a tap. */
@@ -1489,10 +1489,11 @@ export function MapCanvas({
        The bottom-left corner's taller band too, or a tile in it could never
        clear it. A phone gets a little more past the last row on top of that:
        its sheets and the browser's own bars still sat over the bottom row.
-       The mirrored art fills that room, without buildings.
+       And the same past the first row: the planet's dropdown sat over it.
+       The mirrored art fills that room at both ends, without buildings.
     */
     const beyond = onPhone() ? PHONE_ROWS_BEYOND * v.scale : 0
-    v.ty = Math.min(top, Math.max(h - gridH - Math.max(bottom, cornerRef.current) - beyond, v.ty))
+    v.ty = Math.min(top + beyond, Math.max(h - gridH - Math.max(bottom, cornerRef.current) - beyond, v.ty))
     /* Smaller than the open area: sit in the middle of it, not of the window. */
     if (gridW + left + right < w) v.tx = left + (w - left - right - gridW) / 2
     if (gridH + top + bottom < h) v.ty = top + (h - top - bottom - gridH) / 2
