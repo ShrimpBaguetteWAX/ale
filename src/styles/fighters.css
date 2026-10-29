@@ -2292,9 +2292,18 @@
  * score as a rating badge. The other views keep the name at the top and set
  * their figures in the room under it.
  */
+/*
+ * A roster runs to hundreds of fighters. The browser lays out and paints only
+ * the cards near the screen; one further off costs its height and nothing
+ * else (its last real height once it has been seen, an estimate before).
+ * It looks and scrolls the same: a card has overflow hidden, so nothing of it
+ * reaches outside, and the hover card is drawn elsewhere (a portal).
+ */
 .drost__row.is-card {
   --hw: 128px;
   position: relative;
+  content-visibility: auto;
+  contain-intrinsic-size: auto 202px;
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   grid-template-rows: auto minmax(0, 1fr);
@@ -2307,6 +2316,7 @@
 }
 .drost--stack .drost__row.is-card {
   --hw: 84px;
+  contain-intrinsic-size: auto 194px;
   gap: 8px 10px;
   min-height: 194px;
   padding: 10px 10px 10px calc(var(--hw) + 10px);

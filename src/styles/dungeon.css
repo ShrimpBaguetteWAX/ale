@@ -636,10 +636,17 @@
   .fightergrid.fightergrid--compact {
     grid-template-columns: repeat(auto-fill, minmax(52px, 1fr));
   }
+  /* the later, wider rule would win at equal weight */
+  .fightergrid--compact .fightercard--compact {
+    contain-intrinsic-size: auto 56px;
+  }
 }
 
+/* Hundreds of these in a picker: only the ones near the screen are laid out and painted (see .drost__row in fighters.css). */
 .fightercard {
   position: relative;
+  content-visibility: auto;
+  contain-intrinsic-size: auto 300px;
   /* The crew card's frame exactly — softer line, tighter corner, one shade
      darker. Two cards in one picker should not be two designs. */
   border: 1px solid var(--line-soft);
@@ -715,6 +722,7 @@
  * and wanting a payday are one chip just above the foot, clear of the face.
  */
 .fightercard--compact {
+  contain-intrinsic-size: auto 88px;
   container-type: inline-size;
   border: 0;
   border-radius: 12px;
