@@ -445,6 +445,9 @@ export function formatCpuTime(micros: number): string {
 }
 
 /** Whether Legend access is still live — `maxpowerup` refuses without it. */
+/** How close to expiry a Legend Pass is worth mentioning: the Briefing says so, the nameplate turns orange. */
+export const LEGEND_REMIND_MS = 5 * 86_400_000
+
 export function hasLegendAccess(expiry: string | undefined, now = Date.now()): boolean {
   if (!expiry) return false
   return Date.parse(expiry + 'Z') > now

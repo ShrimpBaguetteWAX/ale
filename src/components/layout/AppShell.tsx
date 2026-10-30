@@ -6,6 +6,7 @@ import { NetworkStatus } from '../NetworkStatus'
 import { useChores } from '@/chores/useChores'
 import { CHORE_CHECKS } from '@/chores/checks'
 import { ResourceStrip } from '../ResourceStrip'
+import { AccountPlate } from './AccountPlate'
 import { MORE_ORDER, NAV_ITEMS, TABBAR_ORDER, type NavItem } from './nav'
 import { asset } from '@/assets'
 import { PrizeCard } from '@/prizes/WeeklyPrizes'
@@ -315,6 +316,9 @@ export function AppShell() {
           </NavLink>
         </div>
 
+        {/* Who is playing, and whether they hold the Legend Pass. */}
+        {player && <AccountPlate player={player} />}
+
         {/*
           The balances, in the menu: desktop has no top bar, and they belong
           on every screen. The phone keeps them in its top bar.
@@ -381,6 +385,7 @@ export function AppShell() {
         <NavLink className="topbar__home" to="/map" aria-label="World map">
           <img className="topbar__logo" src={asset("/assets/logo.webp")} alt="Alien Legends" />
         </NavLink>
+        {player && <AccountPlate player={player} bar />}
         {player && <ResourceStrip player={player} />}
         <span className="spacer" />
         <NetworkStatus />

@@ -307,8 +307,12 @@ export default function Shop() {
             <div className="legendvs" role="table" aria-label="Trial against Legend">
               <div className="legendvs__row legendvs__row--head" role="row">
                 <span role="columnheader" />
-                <span role="columnheader">Trial</span>
-                <span role="columnheader" className="legendvs__legend">
+                <span role="columnheader" className="legendvs__col">
+                  <img src={asset('/assets/icons/account-trial.svg')} alt="" width={22} height={22} />
+                  Trial
+                </span>
+                <span role="columnheader" className="legendvs__col legendvs__legend">
+                  <img src={asset('/assets/icons/account-legend.svg')} alt="" width={22} height={22} />
                   Legend
                 </span>
               </div>

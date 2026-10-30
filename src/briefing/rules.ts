@@ -1,7 +1,7 @@
 import type { Player } from '@/chain/types'
 import type { PoolEntry } from '@/pools/rules'
 import { MINE_POWER, mineEstimate, poolAmount } from '@/pools/rules'
-import { hasLegendAccess } from '@/account/rules'
+import { hasLegendAccess, LEGEND_REMIND_MS } from '@/account/rules'
 import { kvToRecord } from '@/chain/types'
 import { formatNumber } from '@/format'
 
@@ -141,8 +141,6 @@ export interface BriefingInput {
 
 export const TEAM_SIZE = 5
 export const LEVELING_BELOW = 10
-/** How close to expiry a Legend pass is worth mentioning. */
-export const LEGEND_REMIND_MS = 5 * 86_400_000
 
 const TLM_PLACES = 4
 const SHARD_PLACES = 1

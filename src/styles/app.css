@@ -3004,3 +3004,164 @@ a.res {
   flex: 1;
   min-height: 38px;
 }
+
+/* ---------- The nameplate: who is playing, and their Legend Pass ---------- */
+
+.plate {
+  display: grid;
+  gap: 2px;
+  margin-bottom: var(--sp-2);
+  padding: 7px 12px 7px 13px;
+  color: var(--text);
+  text-decoration: none;
+  background: linear-gradient(90deg, rgb(246 168 0 / 20%), transparent 85%);
+  border-left: 3px solid var(--gold);
+  border-radius: var(--radius-sm);
+  transition: background var(--dur-fast) var(--ease);
+}
+.plate:hover {
+  background: linear-gradient(90deg, rgb(246 168 0 / 30%), transparent 92%);
+}
+
+.plate__name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: var(--fw-extrabold);
+  letter-spacing: 0.03em;
+}
+.plate__name img {
+  width: 22px;
+  height: 22px;
+  flex: none;
+}
+.plate__name b {
+  overflow: hidden;
+  font-weight: inherit;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* The title: LEGEND runs in a slow gold-and-magenta shimmer. */
+.plate__title {
+  font-family: var(--font-display);
+  font-size: 12.5px;
+  font-weight: var(--fw-extrabold);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: transparent;
+  background: linear-gradient(90deg, #ffe27a, #f6a800, #ff6ad8, #f6a800, #ffe27a) 0 0 / 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  animation: plate-flow 5s linear infinite;
+}
+@keyframes plate-flow {
+  to {
+    background-position: 200% 0;
+  }
+}
+:root[data-fx='low'] .plate__title {
+  animation: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .plate__title {
+    animation: none;
+  }
+}
+
+/* The title and the time left share a line, to keep the plate short. */
+.plate__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+.plate__left {
+  font-size: 13px;
+  white-space: nowrap;
+  color: var(--text-faint);
+}
+
+/* The last five days: orange, as the Briefing starts reminding. */
+.plate--soon {
+  background: linear-gradient(90deg, rgb(237 137 54 / 18%), transparent 85%);
+  border-left-color: var(--orange);
+}
+.plate--soon .plate__left {
+  color: var(--orange);
+}
+
+.plate--trial {
+  background: linear-gradient(90deg, rgb(255 255 255 / 7%), transparent 85%);
+  border-left-color: rgb(255 255 255 / 30%);
+}
+.plate--trial:hover {
+  background: linear-gradient(90deg, rgb(255 255 255 / 12%), transparent 92%);
+}
+.plate--trial .plate__title {
+  color: var(--text-faint);
+  background: none;
+  animation: none;
+}
+.plate--trial .plate__left {
+  color: var(--gold);
+}
+
+/* The phone's top bar: the name and the title only, between the logo and the counters. */
+.plate--bar {
+  flex: 1 1 0;
+  gap: 0;
+  min-width: 0;
+  margin: 0;
+  padding: 0 0 0 8px;
+  line-height: 1.15;
+  background: none;
+  border-left-width: 2px;
+  border-radius: 0;
+}
+.plate--bar:hover,
+.plate--trial.plate--bar:hover {
+  background: none;
+}
+.plate--bar .plate__name {
+  display: block;
+  overflow: hidden;
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.plate--bar .plate__title {
+  font-size: 8.5px;
+  letter-spacing: 0.1em;
+}
+.plate--soon.plate--bar .plate__title {
+  color: var(--orange);
+  background: none;
+  animation: none;
+}
+@media (min-width: 1024px) {
+  .plate--bar {
+    display: none;
+  }
+}
+/* The counters keep their width; the plate has what is left, and the logo gives a little. */
+@media (max-width: 1023px) {
+  .topbar .resources {
+    flex: none;
+  }
+}
+@media (max-width: 479px) {
+  .topbar__logo {
+    width: 60px;
+  }
+}
+/* Too narrow for a name: the title still says where the account stands. */
+@media (max-width: 359px) {
+  .plate--bar .plate__name {
+    display: none;
+  }
+}
