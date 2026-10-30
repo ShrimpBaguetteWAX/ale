@@ -25,7 +25,7 @@ import {
   xpFor,
 } from '@/dungeon/rules'
 import { EMPTY_FILTER, type RosterFilter } from '@/dungeon/filters'
-import { FilterDrop, Row, ViewSeg, figuresOf, type View } from '@/fighters/DeskRoster'
+import { FilterDrop, HolderRow, ViewSeg, figuresOf, type View } from '@/fighters/DeskRoster'
 import { TeamDock, useScrolledAway } from '@/fight/TeamDock'
 import {
   NFT_FIGHTER_ART,
@@ -72,7 +72,6 @@ import {
   POLL_ATTEMPTS,
   POLL_INTERVAL_MS,
   MarkerLine,
-  PickRowAside,
   RosterFilters,
   VersusBadges,
   VersusFloors,
@@ -985,20 +984,17 @@ export default function Dungeon() {
   }
 
   const pickRow = (f: RosterFighter, state: { inTeam: boolean; blocked: boolean; reason?: string }) => (
-    <Row
+    <HolderRow
       f={f}
       fig={cardFigures.get(f.fighter_id)!}
       view={cardView}
-      mode="inventory"
       now={cardNow}
-      picked={state.inTeam}
-      checked={false}
-      gate={{ ok: true }}
-      dim={state.blocked && !state.inTeam}
+      inTeam={state.inTeam}
+      blocked={state.blocked}
+      reason={state.reason}
       onClick={() => {
         if (state.inTeam || !state.blocked) toggleFighter(f)
       }}
-      aside={state.inTeam || state.reason ? <PickRowAside inTeam={state.inTeam} reason={state.reason} /> : undefined}
       note={enemies.length > 0 ? <VersusBadges matchup={matchups.get(f.fighter_id)} /> : undefined}
     />
   )

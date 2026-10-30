@@ -2177,7 +2177,7 @@ export function FighterGrid({
       {rows && density === 'full' ? (
         /* My Fighters' own list, in its own wrapper, so the cards are drawn exactly as there. */
         <div className={`drost pickdrost${phone ? ' drost--phone drost--stack' : ''}`}>
-        <div className="drost__rows">
+        <div className="drost__holders">
           {shown.map((f) => {
             const state = fighterAvailable(f)
             const inTeam = teamIds.includes(f.fighter_id)

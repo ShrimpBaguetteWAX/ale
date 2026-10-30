@@ -1031,6 +1031,247 @@ export function CompactCard({
   )
 }
 
+/**
+ * A fighter in the fight screens' full view: the compact card in its slot,
+ * and beside it a steel holder with what the view asks for - the card
+ * growing a sheet rather than turning into another design.
+ *
+ * The holder keeps one height in every view, so switching views never makes
+ * the list jump, and every view shares the same head (name, age, payday or
+ * where the fighter is busy, the matchup badges) so the score can hang from
+ * the holder's edge as a gold pennant without ever covering a figure. The
+ * holder is gold for a fighter in the team.
+ */
+export function HolderRow({
+  f,
+  fig,
+  view,
+  now,
+  inTeam,
+  blocked,
+  reason,
+  onClick,
+  note,
+}: {
+  f: RosterFighter
+  fig: Figures
+  view: View
+  now: number
+  inTeam: boolean
+  /** Cannot be put in the team now: busy, owed a payday, or the team is full. */
+  blocked: boolean
+  /** Why, in the fight screen's words. */
+  reason?: string
+  onClick: () => void
+  /** The matchup against the other side, where there is one. */
+  note?: React.ReactNode
+}) {
+  const s = f.stats
+  const state = fighterState(f, now)
+  const abilities = s.abilities ?? []
+  const daysLeft = Math.max(0, Math.ceil(fig.pay.msLeft / DAY))
+  const ready = s.required_experience > 0 && s.experience >= s.required_experience
+  const xp = s.required_experience > 0 ? s.experience / s.required_experience : 0
+  const ribbon: Ribbon | null = inTeam
+    ? { key: 'team', label: 'In team' }
+    : state === 'overdue'
+      ? { key: 'payday', label: 'Payday' }
+      : state === 'busy'
+        ? placeRibbon(f.use_type ?? '')
+        : reason
+          ? { key: 'busy', label: reason }
+          : ready
+            ? { key: 'level', label: 'Level up' }
+            : null
+  const role = roleOf(fig.combat.dpsG, fig.combat.survG)
+  /* Ten segments, as the cards count experience: how far the roll reaches in its class. */
+  const strip = (grade: StatGrade | null) => (
+    <span className={`codex__seg is-${grade ?? 'none'}`}>
+      {Array.from({ length: 10 }, (_, i) => (
+        <i key={i} className={i < Math.round(GRADE_REACH[grade ?? 'middle'] * 10) ? 'is-on' : undefined} />
+      ))}
+    </span>
+  )
+  return (
+    <button
+      type="button"
+      className={['hold', inTeam ? 'is-team' : '', blocked && !inTeam ? 'is-off' : ''].filter(Boolean).join(' ')}
+      onClick={onClick}
+      aria-pressed={inTeam}
+      title={blocked && !inTeam ? reason : undefined}
+    >
+      <span className="rocard hold__card">
+        <RosterCardFace
+          f={f}
+          ribbon={ribbon}
+          xp={xp}
+          busy={state === 'busy'}
+          due={state === 'overdue'}
+          up={ready && !inTeam}
+        />
+      </span>
+      <span className="hold__plate">
+        <span className="hold__score" title="Combat score: damage and survival together">
+          <small>Score</small>
+          <b>{Math.round(fig.combat.score).toLocaleString(NUM_LOCALE)}</b>
+        </span>
+        <span className="hold__head">
+          <span className="hold__name">
+            {f.classname}
+            <small>{f.racename}</small>
+          </span>
+          <span className="hold__facts">
+            <span className="hold__chip">
+              Age
+              <b className={fig.age < 0 ? 'is-down' : undefined}>
+                {fig.age > 0 ? '+' : ''}
+                {fig.age.toFixed(0)}%
+              </b>
+            </span>
+            {state === 'busy' ? (
+              <span className="hold__chip is-busy">{useLabel(f)}</span>
+            ) : (
+              <span className={`hold__chip${fig.pay.overdue || daysLeft <= 3 ? ' is-due' : ''}`}>
+                Payday {fig.pay.overdue ? 'due' : `${daysLeft}d`}
+              </span>
+            )}
+            {note}
+          </span>
+        </span>
+
+        {view === 'default' && (
+          <>
+            <span className="hold__stats">
+              {fig.stats.map((x) => (
+                <span className="hold__st" key={x.field} title={`${STAT_NAMES[x.field]}${x.grade ? ` · ${GRADE_LABEL[x.grade]}` : ''}`}>
+                  <small>
+                    <img src={statIcon(x.field)} alt="" />
+                    {STAT_SHORT[x.field]}
+                  </small>
+                  {strip(x.grade)}
+                  <b>
+                    {x.value}
+                    <Grade grade={x.grade} />
+                  </b>
+                </span>
+              ))}
+            </span>
+            <span className="hold__pills">
+              {abilities.map((a, i) => (
+                <span
+                  key={`${a.ability}-${i}`}
+                  className={`hold__pill${a.locked ? ' is-locked' : ''}`}
+                  style={{ '--ab': rarityColor(a.displayname) } as React.CSSProperties}
+                  title={`${abilityName(a.displayname)}${a.locked ? ' · locked' : ''}: ${resolveAbilityDescription(a)}`}
+                >
+                  {a.locked ? '🔒 ' : ''}
+                  {abilityName(a.displayname)}
+                </span>
+              ))}
+            </span>
+          </>
+        )}
+
+        {view === 'stats' && (
+          <span className="hold__cols">
+            <span className="hold__stats">
+              {fig.stats.map((x) => (
+                <span className="hold__st" key={x.field} title={`${STAT_NAMES[x.field]}${x.grade ? ` · ${GRADE_LABEL[x.grade]}` : ''}`}>
+                  <small>
+                    <img src={statIcon(x.field)} alt="" />
+                    {STAT_SHORT[x.field]}
+                  </small>
+                  {strip(x.grade)}
+                  <b>
+                    {x.value}
+                    <Grade grade={x.grade} />
+                    {x.spread > 0 && <em>±{x.spread}</em>}
+                  </b>
+                </span>
+              ))}
+            </span>
+            <span className="hold__stats">
+              {fig.res.map((x) => (
+                <span className="hold__st" key={x.field} title={`${cap(x.el)} resistance${x.grade ? ` · ${GRADE_LABEL[x.grade]}` : ''}`}>
+                  <small>
+                    <img src={elementIcon(x.el)} alt="" />
+                    {x.el.slice(0, 4)}
+                  </small>
+                  {strip(x.grade)}
+                  <b>
+                    {x.value}
+                    <Grade grade={x.grade} />
+                  </b>
+                </span>
+              ))}
+            </span>
+          </span>
+        )}
+
+        {view === 'combat' && (
+          <>
+            <span className="hold__role">
+              <small title={`Graded against other ${f.classname}s, not against other classes`}>Role among {f.classname}s</small>
+              <span className={`drost__rolename is-${role.key}`}>
+                <b>{role.name}</b>
+                <span>{role.line}</span>
+              </span>
+            </span>
+            <span className="hold__tiles">
+              <span className={toneOf(fig.combat.dpsG)} title="Damage per second">
+                <small>DPS</small>
+                <b>
+                  {formatDecimals(fig.combat.dps, 2)}
+                  <Grade grade={fig.combat.dpsG} />
+                </b>
+              </span>
+              <span className={toneOf(fig.combat.survG)} title="Survival: how much damage it takes to bring down">
+                <small>Survival</small>
+                <b>
+                  {Math.round(fig.combat.survival).toLocaleString(NUM_LOCALE)}
+                  <Grade grade={fig.combat.survG} />
+                </b>
+              </span>
+              <span className={toneOf(fig.stats[4].grade)} title="Windup: how soon it strikes">
+                <small>Windup</small>
+                <b>
+                  {fig.stats[4].value}
+                  <Grade grade={fig.stats[4].grade} />
+                </b>
+              </span>
+              <span title="Who it strikes">
+                <small>Targets</small>
+                <b className="is-text">{s.target ? formatTarget(s.target) : 'Highest Taunt'}</b>
+              </span>
+            </span>
+          </>
+        )}
+
+        {view === 'abilities' && (
+          <span className="hold__abs">
+            {abilities.map((a, i) => {
+              const r = abilityRarity(a.displayname)
+              const text = resolveAbilityDescription(a)
+              return (
+                <span
+                  key={`${a.ability}-${i}`}
+                  className={`hold__ab${a.locked ? ' is-locked' : ''}`}
+                  style={{ '--ab': rarityColor(a.displayname) } as React.CSSProperties}
+                  title={`${abilityName(a.displayname)}: ${text}`}
+                >
+                  <span className="codex__rib">{a.locked ? 'Locked' : (r ?? 'unique')}</span>
+                  <b>{abilityName(a.displayname)}</b>
+                  <small>{text}</small>
+                </span>
+              )
+            })}
+          </span>
+        )}
+      </span>
+    </button>
+  )
+}
+
 export function Row({
   f,
   fig,

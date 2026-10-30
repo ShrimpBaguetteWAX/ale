@@ -4765,3 +4765,486 @@ h2.drost__bname {
 .codex .drost__abitem > p {
   -webkit-line-clamp: 1;
 }
+
+/* ---------- the fight screens' full view: the card in a holder ---------- */
+
+/*
+ * The compact card in its slot and a steel holder running out to its right
+ * with what the view asks for. Two to a row on a desktop, never wider than
+ * 600px; one per line on a phone. Every view keeps the holder's height, so
+ * switching views never makes the list jump.
+ */
+.pickdrost .drost__holders {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 440px), 1fr));
+  gap: 16px 20px;
+  padding-top: 26px;
+}
+.hold {
+  --cw: 112px;
+  --ph: 216px;
+  position: relative;
+  display: grid;
+  grid-template-columns: var(--cw) minmax(0, 1fr);
+  align-items: center;
+  max-width: 600px;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.hold__card {
+  position: relative;
+  z-index: 2;
+  width: var(--cw);
+}
+.hold.is-off {
+  cursor: not-allowed;
+}
+.hold.is-off > * {
+  opacity: 0.5;
+}
+.hold:focus-visible {
+  outline: none;
+}
+.hold:focus-visible .hold__plate {
+  outline: 2px solid var(--cyan);
+  outline-offset: 2px;
+}
+.hold:not(.is-off):hover .hold__plate {
+  filter: brightness(1.1);
+}
+
+/* The holder: the cards' steel, gold for a fighter in the team. */
+.hold__plate {
+  position: relative;
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  height: var(--ph);
+  margin-left: -10px;
+  padding: 10px 14px 10px 22px;
+  overflow: hidden;
+  border: 3px solid transparent;
+  border-left: 0;
+  border-radius: 0 14px 14px 0;
+  background:
+    linear-gradient(180deg, #0f1a31, #070d1c) padding-box,
+    linear-gradient(160deg, #6d7ea3 0%, #232f4d 30%, #0c1222 55%, #2b3757 78%, #8295bb 100%) border-box;
+  box-shadow: 0 8px 18px rgb(0 0 0 / 55%);
+  transition: filter var(--dur-fast) var(--ease);
+}
+.hold.is-team .hold__plate {
+  background:
+    linear-gradient(180deg, #13203a, #08101f) padding-box,
+    linear-gradient(160deg, #fff6d6 0%, #f2c35a 25%, #8a5d14 55%, #d9a640 78%, #fff3c4 100%) border-box;
+  box-shadow:
+    0 0 22px rgb(255 200 90 / 30%),
+    0 8px 18px rgb(0 0 0 / 55%);
+}
+
+/*
+ * The score as a gold pennant hanging from the holder's top edge, like a
+ * bookmark: the one figure that ranks fighters, set apart from the rest.
+ */
+.hold__score {
+  position: absolute;
+  top: 0;
+  right: 14px;
+  z-index: 2;
+  display: grid;
+  justify-items: center;
+  gap: 1px;
+  width: 48px;
+  padding: 5px 0 13px;
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 80%, 0 100%);
+  background: linear-gradient(180deg, #fff3c4, #f2c35a 30%, #b07a1a 75%, #8a5d14);
+  box-shadow: inset 0 -2px 0 rgb(0 0 0 / 25%);
+  color: #1a1205;
+}
+.hold__score small {
+  font-family: var(--font-display);
+  font-size: 6.5px;
+  font-weight: 900;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  opacity: 0.75;
+}
+.hold__score b {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 900;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+/* The head every view shares: name and race, then age, payday or where it is, and the matchup. */
+.hold__head {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+  padding-right: 52px;
+}
+.hold__name {
+  overflow: hidden;
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: #fff3c4;
+}
+.hold__name small {
+  margin-left: 7px;
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--text-dim);
+}
+.hold__facts {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  overflow: hidden;
+}
+.hold__chip {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 7px;
+  border-radius: 6px;
+  background: rgb(0 0 0 / 45%);
+  box-shadow: inset 0 0 0 1px rgb(255 217 121 / 35%);
+  font-family: var(--font-display);
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.hold__chip b {
+  color: #5ff2b0;
+}
+.hold__chip b.is-down {
+  color: #ff8a9a;
+}
+.hold__chip.is-busy {
+  box-shadow: inset 0 0 0 1px rgb(246 168 0 / 70%);
+  color: #ffd98a;
+}
+.hold__chip.is-due {
+  box-shadow: inset 0 0 0 1px rgb(255 90 106 / 70%);
+  color: #ffb3bd;
+}
+.hold__facts .vsbadges {
+  flex: none;
+}
+
+/* The figures as the codex's strips. */
+.hold__stats {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+.hold__st {
+  display: grid;
+  grid-template-columns: 54px minmax(0, 1fr) 50px;
+  gap: 8px;
+  align-items: center;
+}
+.hold__st > small {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  overflow: hidden;
+  font-family: var(--font-display);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--text-dim);
+}
+.hold__st > small img {
+  width: 11px;
+  height: 11px;
+}
+.hold__st > b {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.hold__st > b em {
+  margin-left: 2px;
+  font-family: var(--font-body);
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 700;
+  color: var(--text-faint);
+}
+.hold__st .drost__grade {
+  width: 10px;
+  height: 10px;
+}
+.hold .codex__seg {
+  height: 7px;
+}
+
+/* Default: the abilities as rarity pills along the foot. */
+.hold__pills {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 4px;
+  min-width: 0;
+  overflow: hidden;
+}
+.hold__pill {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  height: 17px;
+  padding: 0 9px;
+  clip-path: polygon(6% 0, 94% 0, 100% 50%, 94% 100%, 6% 100%, 0 50%);
+  background: var(--ab);
+  font-family: var(--font-display);
+  font-size: 8px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  color: #0b1426;
+}
+.hold__pill.is-locked {
+  background: #3a4560;
+  color: #b9c2d6;
+}
+
+/* Stats: the stats with their spread, and the resistances, side by side. */
+.hold__cols {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  gap: 0 14px;
+}
+.hold__cols .hold__stats {
+  gap: 4px;
+}
+.hold__cols .hold__st {
+  grid-template-columns: 46px minmax(0, 1fr) 62px;
+  gap: 6px;
+}
+.hold__cols .hold__stats + .hold__stats .hold__st {
+  grid-template-columns: 50px minmax(0, 1fr) 44px;
+}
+/* Five stats and six resistances: the stats spread to the same height. */
+.hold__cols > .hold__stats:first-child {
+  align-content: space-between;
+}
+
+/* Combat: the role, then four tiles edged by their grade. */
+.hold__role {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+.hold__role > small {
+  font-size: 10.5px;
+  color: var(--text-faint);
+}
+.hold__role .drost__rolename > b {
+  font-size: 14px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.hold__role .drost__rolename > span {
+  font-size: 12px;
+}
+.hold__tiles {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+}
+.hold__tiles > span {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  padding: 6px 8px;
+  border-radius: 8px;
+  background: rgb(0 0 0 / 30%);
+  box-shadow: inset 0 0 0 1px rgb(255 217 121 / 22%);
+}
+.hold__tiles > span.is-up {
+  box-shadow: inset 0 0 0 1px rgb(95 242 176 / 50%);
+}
+.hold__tiles > span.is-down {
+  box-shadow: inset 0 0 0 1px rgb(255 90 106 / 50%);
+}
+.hold__tiles small {
+  font-family: var(--font-display);
+  font-size: 7.5px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.hold__tiles b {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+.hold__tiles b.is-text {
+  font-family: var(--font-body);
+  font-size: 11.5px;
+  font-weight: 700;
+  line-height: 1.1;
+  white-space: normal;
+}
+
+/* Abilities: two by two, each under a ribbon in its rarity. */
+.hold__abs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px 8px;
+  margin-top: 4px;
+}
+.hold__ab {
+  position: relative;
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+  padding: 10px 8px 6px;
+  border-radius: 8px;
+  background: rgb(0 0 0 / 28%);
+  box-shadow: inset 0 0 0 1px rgb(255 217 121 / 16%);
+}
+.hold__ab .codex__rib {
+  top: -7px;
+  left: 8px;
+  padding: 1px 9px;
+  font-size: 7px;
+}
+.hold__ab.is-locked {
+  opacity: 0.65;
+}
+.hold__ab.is-locked .codex__rib {
+  background: #5a6580;
+  color: #dfe6f2;
+}
+.hold__ab > b {
+  overflow: hidden;
+  font-family: var(--font-display);
+  font-size: 10.5px;
+  font-weight: 800;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.hold__ab > small {
+  display: -webkit-box;
+  overflow: hidden;
+  font-size: 11px;
+  line-height: 1.3;
+  color: var(--text-dim);
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+/* A phone: one holder per line, the card a size down, the strips without their spread. */
+.drost--phone .hold {
+  --cw: 84px;
+  --ph: 176px;
+}
+.pickdrost.drost--phone .drost__holders {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 14px;
+}
+.drost--phone .hold__plate {
+  gap: 6px;
+  padding: 8px 9px 8px 17px;
+}
+.drost--phone .hold__name {
+  font-size: 12.5px;
+}
+.drost--phone .hold__name small {
+  font-size: 10.5px;
+}
+.drost--phone .hold__score {
+  right: 8px;
+  width: 40px;
+  padding-bottom: 11px;
+}
+.drost--phone .hold__score b {
+  font-size: 12.5px;
+}
+.drost--phone .hold__head {
+  padding-right: 44px;
+}
+.drost--phone .hold__chip {
+  padding: 0 5px;
+  font-size: 8px;
+}
+.drost--phone .hold__stats {
+  gap: 3px;
+}
+.drost--phone .hold__st {
+  grid-template-columns: 40px minmax(0, 1fr) 36px;
+  gap: 6px;
+}
+.drost--phone .hold__st > small {
+  font-size: 7.5px;
+}
+.drost--phone .hold__st > b {
+  font-size: 10px;
+}
+.drost--phone .hold__st > b em {
+  display: none;
+}
+.drost--phone .hold__cols {
+  gap: 0 8px;
+}
+.drost--phone .hold__cols .hold__st,
+.drost--phone .hold__cols .hold__stats + .hold__stats .hold__st {
+  grid-template-columns: 30px minmax(0, 1fr) 32px;
+  gap: 4px;
+}
+.drost--phone .hold__tiles {
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+}
+.drost--phone .hold__tiles > span {
+  padding: 3px 6px;
+}
+.drost--phone .hold__tiles b {
+  font-size: 11px;
+}
+.drost--phone .hold__tiles b.is-text {
+  font-size: 10px;
+}
+.drost--phone .hold__pill {
+  height: 15px;
+  padding: 0 6px;
+  font-size: 7px;
+}
+.drost--phone .hold__abs {
+  gap: 10px 6px;
+}
+.drost--phone .hold__ab > small {
+  font-size: 10px;
+}
