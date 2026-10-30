@@ -28,6 +28,7 @@ import {
   seasonTiming,
 } from '@/leaderboard/rules'
 import { avatarRarity } from '@/account/rules'
+import { portraitCut } from '@/fighters/portraitFrame'
 import { claimLeaderboardReward, DIRTIES } from '@/wharf/actions'
 import { useAction } from '@/wharf/useAction'
 import { useChainQuery } from '@/chain/useChainQuery'
@@ -1098,12 +1099,14 @@ function TeamFace({
         </HoverPopover>
       )}
       <GameImg
-        src={
-          nft
-            ? NFT_FIGHTER_ART
-            : /* A card is a portrait, as in the battle - the full body would be a speck. */
-              (cards ? fighterAvatar : fighterArt)({ classname: f.classname, racename: f.racename })
-        }
+        /*
+          A card is a portrait, cut from the full art (portraitFrame): the
+          full body would be a speck, and the art's own _avatar crops are
+          stretched for some fighters.
+        */
+        className={cards ? `lbcard__art${nft ? '' : ' is-cut'}` : undefined}
+        style={cards && !nft ? portraitCut(f.classname, f.racename) : undefined}
+        src={nft ? NFT_FIGHTER_ART : fighterArt({ classname: f.classname, racename: f.racename })}
         alt={name}
         loading="lazy"
         fallback={fighterArtFallback()}

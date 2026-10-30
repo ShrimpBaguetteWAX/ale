@@ -28,6 +28,7 @@ import {
   fighterState,
   levelUpOf,
   paydayOf,
+  type LevelUp,
   sellable,
   useLabel,
   type PaydayScope,
@@ -72,6 +73,8 @@ import { NUM_LOCALE, formatDecimals } from '@/format'
 import { canAscend, coverableSlots, SACRIFICE_COUNT } from '@/ascension/rules'
 import { useLazyConfig } from '@/state/useConfig'
 import { asset } from '@/assets'
+import { elementRim } from '@/fight/GildedCards'
+import { portraitCut } from '@/fighters/portraitFrame'
 
 /**
  * My Fighters on a desktop: the Market's rows, with payday and age.
@@ -108,6 +111,57 @@ export function ViewSeg({ view, onChange }: { view: View; onChange: (view: View)
           {label}
         </button>
       ))}
+    </span>
+  )
+}
+
+/**
+ * How the roster is laid out: the standard card, or the compact one - the
+ * battle's gilded card, many to a row. Remembered on the device, apart for a
+ * phone and a desktop: a long list of wide cards on a phone is mostly
+ * scrolling, so a phone starts compact and a desktop on the cards.
+ */
+export type Density = 'cards' | 'compact'
+
+const densityKey = (phone: boolean) => `ale.roster.density.${phone ? 'phone' : 'desk'}`
+
+function recallDensity(phone: boolean): Density {
+  try {
+    const v = localStorage.getItem(densityKey(phone))
+    if (v === 'cards' || v === 'compact') return v
+  } catch {
+    /* Storage refused (a private window): the default. */
+  }
+  return phone ? 'compact' : 'cards'
+}
+
+function keepDensity(phone: boolean, d: Density) {
+  try {
+    localStorage.setItem(densityKey(phone), d)
+  } catch {
+    /* Not remembered this time; the switch still works. */
+  }
+}
+
+function DensitySeg({ density, onChange }: { density: Density; onChange: (d: Density) => void }) {
+  return (
+    <span className="drost__seg drost__seg--sm drost__densseg" role="group" aria-label="Layout">
+      <button type="button" aria-pressed={density === 'cards'} title="Cards" onClick={() => onChange('cards')}>
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <rect x="3" y="4" width="18" height="6" rx="1.5" />
+          <rect x="3" y="14" width="18" height="6" rx="1.5" />
+        </svg>
+        <span className="drost__denslabel">Cards</span>
+      </button>
+      <button type="button" aria-pressed={density === 'compact'} title="Compact" onClick={() => onChange('compact')}>
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <rect x="3" y="3" width="8" height="8" rx="1.5" />
+          <rect x="13" y="3" width="8" height="8" rx="1.5" />
+          <rect x="3" y="13" width="8" height="8" rx="1.5" />
+          <rect x="13" y="13" width="8" height="8" rx="1.5" />
+        </svg>
+        <span className="drost__denslabel">Compact</span>
+      </button>
     </span>
   )
 }
@@ -328,6 +382,11 @@ export function DeskRoster(p: DeskRosterProps) {
   const [view, setView] = useState<View>('default')
   const [pop, setPop] = useState<'filters' | 'sort' | null>(null)
   const phone = !!p.phone
+  const [density, setDensityState] = useState<Density>(() => recallDensity(phone))
+  const setDensity = (d: Density) => {
+    setDensityState(d)
+    keepDensity(phone, d)
+  }
   /* Below this the picked fighter opens from the side rather than beside the list. */
   const [wide, setWide] = useState(() => !phone && window.matchMedia(WIDE).matches)
   useEffect(() => {
@@ -722,7 +781,9 @@ export function DeskRoster(p: DeskRosterProps) {
                     : `${list.length} of ${p.roster.length}`}
                 </span>
               )}
-              <ViewSeg view={view} onChange={setView} />
+              {/* The views are the standard card's columns; the compact card has none to switch. */}
+              {density === 'cards' && <ViewSeg view={view} onChange={setView} />}
+              <DensitySeg density={density} onChange={setDensity} />
               {/* The markers at hand beside the views on a desktop; the filter keeps them too, as a phone's does. */}
               {!phone && <MarkerSeg roster={p.roster} filter={p.filter} onFilter={p.onFilter} />}
             </div>
@@ -738,6 +799,23 @@ export function DeskRoster(p: DeskRosterProps) {
                 </button>
                 .
               </p>
+            ) : density === 'compact' ? (
+              <div className="drost__grid">
+                {list.map((f) => (
+                  <CompactCard
+                    key={f.fighter_id}
+                    f={f}
+                    mode={p.mode}
+                    now={p.now}
+                    picked={f.fighter_id === (wide ? shownFighter : selected)?.fighter_id}
+                    checked={p.checked.includes(f.fighter_id)}
+                    gate={gateOf(f)}
+                    onClick={() => onRow(f)}
+                    onTick={looks && gateOf(f).ok ? () => p.onCheck(f.fighter_id) : undefined}
+                    level={levelUpOf(f, p.levels)}
+                  />
+                ))}
+              </div>
             ) : (
               <div className="drost__rows">
                 {list.map((f) => (
@@ -853,6 +931,154 @@ export function DeskRoster(p: DeskRosterProps) {
  * One fighter's card. My Fighters draws its list with it, and Ascension its
  * own, so a player meets the same card wherever they pick a fighter.
  */
+/* Where a busy fighter is, in a word, for the ribbon over its compact card. */
+const RIBBON: Record<string, string> = {
+  market: 'Market',
+  arena: 'Arena',
+  dungeon: 'Dungeon',
+  tournament: 'Tourney',
+}
+
+/**
+ * A fighter as the battle draws it: the gilded card of the fight's line-up
+ * (GildedCards, landstage.css) - the steel frame, the diamond at its crown,
+ * the element's rim round the portrait, the level in its diamond - with the
+ * roster's facts where the battle puts the fight's.
+ *
+ * The ribbon over the crown says what the fighter is doing or wants, one
+ * thing at a time: a payday owed, else where it is busy, else a level
+ * waiting. The crown diamond takes the ribbon's colour. The strip at the
+ * foot, the battle's charge, is the experience toward the next level, full
+ * and lit once it is there. There is no health bar: outside a fight it is
+ * always full.
+ *
+ * The portrait is cut from the full art (portraitFrame), not the `_avatar`
+ * crop the battle uses, which is stretched for some fighters.
+ */
+export function CompactCard({
+  f,
+  mode,
+  now,
+  picked,
+  checked,
+  gate,
+  onClick,
+  onTick,
+  level,
+}: {
+  f: RosterFighter
+  mode: Mode
+  now: number
+  picked: boolean
+  checked: boolean
+  gate: { ok: boolean; reason?: string }
+  onClick: () => void
+  onTick?: () => void
+  level: LevelUp
+}) {
+  const state = fighterState(f, now)
+  const ticking = mode !== 'inventory'
+  const use = (f.use_type ?? '').toLowerCase()
+  const ribbon =
+    state === 'overdue' ? 'payday' : state === 'busy' ? (RIBBON[use] ? use : 'busy') : level.ready ? 'level' : null
+  const label =
+    ribbon === 'payday'
+      ? 'Payday'
+      : ribbon === 'level'
+        ? 'Level up'
+        : ribbon === 'busy'
+          ? 'In use'
+          : ribbon
+            ? RIBBON[ribbon]
+            : null
+  const title = [
+    `${cap(f.classname)} · ${f.racename} · L${f.stats.level}`,
+    state === 'busy' ? useLabel(f) : state === 'overdue' ? 'Requests payday' : '',
+    level.ready ? 'Ready to level up' : level.atMax ? '' : `${Math.floor(level.xpPercent)}% to the next level`,
+  ]
+    .filter(Boolean)
+    .join(' · ')
+  return (
+    <button
+      type="button"
+      className={['rcard', picked ? 'is-picked' : '', ticking && !gate.ok ? 'is-locked' : ''].filter(Boolean).join(' ')}
+      onClick={onClick}
+      aria-pressed={ticking ? checked : picked}
+      aria-label={title}
+      title={ticking && !gate.ok ? gate.reason : title}
+    >
+      <span
+        className={[
+          'gcard',
+          ribbon ? `rcard--${ribbon}` : '',
+          state === 'busy' ? 'is-busy' : '',
+          state === 'overdue' ? 'is-due' : '',
+          level.ready ? 'is-up' : '',
+        ]
+          .filter(Boolean)
+          .join(' ')}
+        style={
+          {
+            '--ec': elementRim(f.element),
+            '--c': level.ready ? 1 : level.xpPercent / 100,
+          } as React.CSSProperties
+        }
+      >
+        <span className="gcard__frame">
+          <span className="gcard__pic" style={{ backgroundImage: `url('${elementBackground(f.element)}')` }}>
+            <GameImg
+              className="rcard__art"
+              style={portraitCut(f.classname, f.racename)}
+              src={fighterArt(f)}
+              alt=""
+              loading="lazy"
+              fallback={fighterArtFallback()}
+            />
+          </span>
+          <span className="gcard__fx" />
+          <span className="gcard__lv">
+            <b>{f.stats.level}</b>
+          </span>
+          {level.ready && (
+            <span className="rcard__up" aria-hidden="true">
+              <svg viewBox="0 0 12 12">
+                <path d="M6 10.5 V2 M2.5 5.5 L6 2 L9.5 5.5" />
+              </svg>
+            </span>
+          )}
+          {f.ascension_level > 0 && <span className="rcard__asc">✦{f.ascension_level}</span>}
+          <img className="gcard__el" src={elementIcon(f.element)} alt={f.element} />
+          {!!f.marker && (
+            <span className="rcard__mk">
+              <img src={markerIcon(f.marker)} alt={f.marker} />
+            </span>
+          )}
+          {label && <span className="gcard__tag">{label}</span>}
+        </span>
+        <span className="gcard__name">{f.classname}</span>
+        <span className="gcard__chg">
+          <i />
+        </span>
+      </span>
+      {ticking && (
+        <span
+          className={`drost__tick${checked ? ' is-on' : ''}${gate.ok ? '' : ' is-off'}${onTick ? ' is-hit' : ''}`}
+          aria-hidden="true"
+          title={onTick ? (checked ? 'Take out of the sale' : 'Add to the sale') : undefined}
+          onClick={
+            onTick
+              ? (e) => {
+                  e.stopPropagation()
+                  onTick()
+                }
+              : undefined
+          }
+        />
+      )}
+    </button>
+  )
+}
+
 export function Row({
   f,
   fig,

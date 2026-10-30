@@ -3948,3 +3948,264 @@ h2.drost__bname {
 .rolebtn.is-underdog {
   --role: #a8b2c6;
 }
+
+/* ---------- the compact roster: the battle's gilded cards ---------- */
+
+/*
+ * The cards are the fight's own (.gcard, landstage.css), sized in each card's
+ * width: --u is the battle's unit, a card 7.3 of them wide. What My Fighters
+ * adds is the ribbon's colours, the level waiting, the marker and the
+ * ascension, and the picked card in the gold the battle gives the fighter
+ * swinging.
+ */
+.drost__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: 2px 12px;
+  padding: 2px 2px 10px;
+}
+.drost--phone .drost__grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0 8px;
+}
+.drost__densseg svg {
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linejoin: round;
+}
+.drost--phone .drost__denslabel {
+  display: none;
+}
+
+.rcard {
+  position: relative;
+  display: block;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  container-type: inline-size;
+}
+.rcard .gcard {
+  --u: 13.7cqw;
+  --beat: 1;
+  display: block;
+  width: 100%;
+  /* Room above for the ribbon, which stands over the crown. */
+  margin-top: calc(var(--u) * 1.7);
+}
+.rcard .gcard__frame,
+.rcard .gcard__pic {
+  display: block;
+}
+.rcard .gcard__pic {
+  background-position: center;
+  background-size: cover;
+}
+/* The portrait, cut from the full art at one even scale (portraitFrame.ts). */
+.rcard .gcard__pic .rcard__art {
+  position: absolute;
+  left: var(--px);
+  top: var(--py);
+  width: var(--pz);
+  max-width: none;
+  height: auto;
+  object-fit: fill;
+}
+/* No health bar outside a fight: the name sits down on the strip. */
+.rcard .gcard__name {
+  bottom: calc(var(--u) * 0.95);
+}
+.rcard:hover:not(.is-picked) .gcard {
+  transform: translateY(calc(var(--u) * -0.6));
+}
+.rcard:focus-visible {
+  outline: none;
+}
+.rcard:focus-visible .gcard__frame {
+  outline: 2px solid var(--cyan);
+  outline-offset: 2px;
+}
+
+/* Picked: the battle's acting card, lifted, in polished gold, a light running over it. */
+.rcard.is-picked .gcard {
+  z-index: 2;
+  transform: translateY(calc(var(--u) * -0.9)) scale(1.06);
+}
+.rcard.is-picked .gcard__frame {
+  background: linear-gradient(160deg, #fff6d6 0%, #f2c35a 25%, #8a5d14 55%, #d9a640 78%, #fff3c4 100%);
+  box-shadow:
+    inset 0 1px 0 #fff,
+    0 calc(var(--u) * 1) calc(var(--u) * 2.2) rgb(0 0 0 / 60%),
+    0 0 calc(var(--u) * 2) rgb(255 200 90 / 55%);
+}
+.rcard.is-picked .gcard__fx {
+  opacity: 1;
+}
+.rcard.is-picked .gcard__fx::before {
+  animation: gcard-sweep 1.5s ease-in-out infinite;
+}
+
+/* The ribbon over the crown, and the crown diamond in its colour. */
+.rcard .gcard__tag {
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-size: max(6.5px, calc(var(--u) * 0.6));
+}
+.rcard .rcard--payday {
+  --tc: #ff5a6a;
+}
+.rcard .rcard--payday .gcard__tag {
+  color: #fff;
+  background: linear-gradient(180deg, #ff7a88, #c3203a);
+}
+.rcard .rcard--market {
+  --tc: #00baff;
+}
+.rcard .rcard--market .gcard__tag {
+  color: #062033;
+  background: linear-gradient(180deg, #a8ecff, #00baff);
+}
+.rcard .rcard--arena {
+  --tc: #f6a800;
+}
+.rcard .rcard--arena .gcard__tag {
+  color: #1a1205;
+  background: linear-gradient(180deg, #ffe39a, #f6a800);
+}
+.rcard .rcard--dungeon {
+  --tc: #a67cff;
+}
+.rcard .rcard--dungeon .gcard__tag {
+  color: #1b0b3a;
+  background: linear-gradient(180deg, #e3d2ff, #a67cff);
+}
+.rcard .rcard--tournament {
+  --tc: #ff8a3d;
+}
+.rcard .rcard--tournament .gcard__tag {
+  color: #2a1204;
+  background: linear-gradient(180deg, #ffd0a8, #ff8a3d);
+}
+.rcard .rcard--busy {
+  --tc: #b9c2d6;
+}
+.rcard .rcard--busy .gcard__tag {
+  color: #0b1426;
+  background: linear-gradient(180deg, #eef2fa, #9aa6bf);
+}
+.rcard .rcard--level {
+  --tc: #5ff2b0;
+}
+.rcard .rcard--level .gcard__tag {
+  color: #04210f;
+  background: linear-gradient(180deg, #b9ffe0, #2bd28a);
+}
+
+/* Busy: the frame goes a little iron; the portrait and the ribbon stay readable. */
+.rcard .is-busy .gcard__frame {
+  filter: saturate(0.6) brightness(0.82);
+}
+/* A payday owed: the red rim of a fighter low on health, pulsing. */
+.rcard .is-due .gcard__pic::after {
+  box-shadow:
+    inset 0 0 0 calc(var(--u) * 0.14) #ff5a6a,
+    inset 0 0 calc(var(--u) * 1.8) rgb(255 60 80 / 55%);
+  animation: gcard-pulse 1.1s ease-in-out infinite;
+}
+/* A level waiting: the diamond green and pulsing, an arrow rising from it, the strip full and lit. */
+.rcard .is-up .gcard__lv::before {
+  background: linear-gradient(135deg, #2bd28a, #0b6a44);
+  box-shadow:
+    inset 0 0 0 1px #b9ffe0,
+    0 0 calc(var(--u) * 0.9) #5ff2b0;
+  animation: gcard-pulse 1.6s ease-in-out infinite;
+}
+.rcard .is-up .gcard__chg i {
+  background: #fff;
+  box-shadow: 0 0 6px #5ff2b0;
+}
+.rcard__up {
+  position: absolute;
+  z-index: 6;
+  left: calc(var(--u) * 0.28);
+  top: calc(var(--u) * -1.15);
+  width: calc(var(--u) * 1.3);
+  height: calc(var(--u) * 1.3);
+  color: #5ff2b0;
+  filter: drop-shadow(0 0 3px #5ff2b0);
+}
+.rcard__up svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.rcard__asc {
+  position: absolute;
+  z-index: 5;
+  left: calc(var(--u) * 0.25);
+  top: calc(var(--u) * 2.05);
+  font-family: var(--font-display);
+  font-size: max(6px, calc(var(--u) * 0.55));
+  font-weight: 900;
+  color: #ffd979;
+  text-shadow: 0 1px 2px #000;
+}
+.rcard__mk {
+  position: absolute;
+  z-index: 5;
+  right: calc(var(--u) * 0.55);
+  top: calc(var(--u) * 2);
+  display: grid;
+  place-items: center;
+  width: calc(var(--u) * 1.3);
+  height: calc(var(--u) * 1.3);
+  border-radius: 50%;
+  background: rgb(4 8 20 / 80%);
+  box-shadow: 0 0 0 1px rgb(255 255 255 / 22%);
+}
+.rcard__mk img {
+  width: 66%;
+  height: 66%;
+}
+/* Selling: the tick over the portrait's corner; a fighter that cannot go is set back. */
+.rcard > .drost__tick {
+  position: absolute;
+  z-index: 8;
+  right: 8cqw;
+  top: calc(13.7cqw * 5.1);
+  background-color: rgb(4 8 20 / 80%);
+}
+.rcard > .drost__tick.is-on {
+  background-color: var(--cyan);
+}
+.rcard.is-locked {
+  cursor: not-allowed;
+}
+.rcard.is-locked .gcard {
+  opacity: 0.45;
+}
+@media (prefers-reduced-motion: reduce) {
+  .rcard .is-due .gcard__pic::after,
+  .rcard .is-up .gcard__lv::before,
+  .rcard.is-picked .gcard__fx::before {
+    animation: none;
+  }
+}
+:root[data-fx='low'] .rcard .is-due .gcard__pic::after,
+:root[data-fx='low'] .rcard .is-up .gcard__lv::before,
+:root[data-fx='low'] .rcard.is-picked .gcard__fx::before {
+  animation: none;
+}

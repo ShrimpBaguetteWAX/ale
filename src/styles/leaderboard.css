@@ -325,6 +325,17 @@
   object-fit: cover;
   object-position: 50% 10%;
 }
+/* The portrait cut from the full art: its own width and place in the card (portraitFrame.ts). */
+.lbrow__team--cards .lbcard img.lbcard__art.is-cut {
+  right: auto;
+  bottom: auto;
+  left: var(--px);
+  top: var(--py);
+  width: var(--pz);
+  max-width: none;
+  height: auto;
+  object-fit: fill;
+}
 .lbcard::before {
   content: '';
   position: absolute;

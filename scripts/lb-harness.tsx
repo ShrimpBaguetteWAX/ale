@@ -7,6 +7,7 @@ import { createRoot } from 'react-dom/client'
 import { avatarRarity } from '../src/account/rules'
 import { PlayerAvatar } from '../src/components/PlayerAvatar'
 import { elementBackground, elementIcon } from '../src/tavern/fighterStats'
+import { portraitCut } from '../src/fighters/portraitFrame'
 import '../src/styles/global.css'
 import '../src/styles/app.css'
 import '../src/styles/leaderboard.css'
@@ -30,7 +31,7 @@ const cardsOf = (team: typeof rows[number]['team']) => (
   <span className="lbrow__team lbrow__team--cards">
     {team.map((f, n) => (
       <span key={n} className={`lbrow__face lbcard${f.nft ? ' lbcard--nft' : ''}`} style={{ backgroundImage: `url('${elementBackground(f.el)}')` }}>
-        <img className="lbcard__art" src={f.nft ? '/assets/fighters/bonus_fighter_avatar.webp' : `/assets/fighters/${f.c}_${f.r}_avatar.webp`} alt="" />
+        <img className={`lbcard__art${f.nft ? '' : ' is-cut'}`} style={f.nft ? undefined : portraitCut(f.c, f.r)} src={f.nft ? '/assets/fighters/bonus_fighter_avatar.webp' : `/assets/fighters/${f.c}_${f.r}.webp`} alt="" />
         <span className="lbcard__el"><img src={elementIcon(f.el)} alt="" /></span>
         <span className="lbcard__lv"><s>L</s>{f.lv}</span>
       </span>
@@ -76,7 +77,7 @@ createRoot(document.getElementById('root')!).render(
                 className={`lbrow__face lbcard${f.nft ? ' lbcard--nft' : ''}`}
                 style={{ backgroundImage: `url('${elementBackground(f.el)}')` }}
               >
-                <img className="lbcard__art" src={f.nft ? '/assets/fighters/bonus_fighter_avatar.webp' : `/assets/fighters/${f.c}_${f.r}_avatar.webp`} alt="" />
+                <img className={`lbcard__art${f.nft ? '' : ' is-cut'}`} style={f.nft ? undefined : portraitCut(f.c, f.r)} src={f.nft ? '/assets/fighters/bonus_fighter_avatar.webp' : `/assets/fighters/${f.c}_${f.r}.webp`} alt="" />
                 <span className="lbcard__el"><img src={elementIcon(f.el)} alt="" /></span>
                 <span className="lbcard__lv"><s>L</s>{f.lv}</span>
               </span>
