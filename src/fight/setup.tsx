@@ -1302,6 +1302,8 @@ export function RosterFilters({
     sort?: { value: string; options: { value: string; label: string }[]; onChange: (value: string) => void }
     /** The filter panel itself, in place of the old fields when Filter is open; as `bar.filters`. */
     filters?: (close: () => void) => ReactNode
+    /** What the full cards show (Default, Stats, Combat, Abilities): a line of the pinned bar, so it never scrolls away. */
+    views?: ReactNode
   }
   /**
    * Drawn as My Fighters' desktop toolbar: what the cards show on the left,
@@ -1485,6 +1487,7 @@ export function RosterFilters({
           )}
         </button>
         )}
+        {sheet.views && <div className="sheetbar__views">{sheet.views}</div>}
       </div>
     )}
     {bar && (

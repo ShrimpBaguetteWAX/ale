@@ -7665,3 +7665,22 @@ button.combatcard--empty:hover {
     box-shadow: 0 0 6px rgb(255 120 90 / 70%);
   }
 }
+
+/* The view switch as a line of the phone's pinned sheet bar, so it never scrolls away. */
+.sheetbar__views {
+  flex-basis: 100%;
+  display: flex;
+}
+.sheetbar__views > * {
+  flex: 1;
+}
+.sheetbar__views button {
+  flex: 1;
+  justify-content: center;
+}
+
+/* With the view switch on its own line, the bar wraps to two. */
+.sheetbar:has(> .sheetbar__views) {
+  flex-wrap: wrap;
+  row-gap: 8px;
+}

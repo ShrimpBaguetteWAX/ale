@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import type { RosterFighter } from '@/dungeon/types'
-import { GameImg } from '@/components/GameImg'
-import { elementBackground, fighterArtFallback, fighterAvatar } from '@/tavern/fighterStats'
+import { RosterCardFace } from '@/fighters/RosterCard'
 import { matchupStyle } from '@/fight/matchupStyle'
 import { verdictOf } from '@/fight/OddsCentre'
 import { useCountUp } from '@/fight/useCountUp'
@@ -57,17 +56,17 @@ export function TeamDock({
   const faces = (
     <span className="teamdock__faces">
       {slots.map((f, i) =>
+        /* The team as the cards they were picked as: the same face the grid draws. */
         f ? (
-          <span
-            className="teamdock__face"
-            key={f.fighter_id}
-            style={{ backgroundImage: `url('${elementBackground(f.element)}')` }}
-            title={`${f.racename} ${f.classname}`}
-          >
-            <GameImg src={fighterAvatar(f)} alt="" fallback={fighterArtFallback()} />
+          <span className="rocard teamdock__card" key={f.fighter_id} title={`${f.racename} ${f.classname} · L${f.stats.level}`}>
+            <RosterCardFace
+              f={f}
+              ribbon={null}
+              xp={f.stats.required_experience > 0 ? f.stats.experience / f.stats.required_experience : 0}
+            />
           </span>
         ) : (
-          <span className="teamdock__face is-empty" key={`empty-${i}`} />
+          <span className="teamdock__card is-empty" key={`empty-${i}`} />
         ),
       )}
     </span>
@@ -134,22 +133,7 @@ export function TeamDock({
       className={`teamdock${sheet ? ' teamdock--sheet' : ''}${shown ? ' is-shown' : ''}`}
       aria-hidden={shown ? undefined : true}
     >
-      <span className="teamdock__faces">
-        {slots.map((f, i) =>
-          f ? (
-            <span
-              className="teamdock__face"
-              key={f.fighter_id}
-              style={{ backgroundImage: `url('${elementBackground(f.element)}')` }}
-              title={`${f.racename} ${f.classname}`}
-            >
-              <GameImg src={fighterAvatar(f)} alt="" fallback={fighterArtFallback()} />
-            </span>
-          ) : (
-            <span className="teamdock__face is-empty" key={`empty-${i}`} />
-          ),
-        )}
-      </span>
+      {faces}
       <span className={`teamdock__tug is-${band}`}>
         <span className="teamdock__top">
           <span className="teamdock__cap">

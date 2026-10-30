@@ -71,7 +71,7 @@ import { BottomSheet } from '@/components/BottomSheet'
 import { GameImg } from '@/components/GameImg'
 import { NUM_LOCALE, formatDecimals } from '@/format'
 import { canAscend, coverableSlots, SACRIFICE_COUNT } from '@/ascension/rules'
-import { useLazyConfig } from '@/state/useConfig'
+import { useConfigStore, useLazyConfig } from '@/state/useConfig'
 import { asset } from '@/assets'
 import { RosterCardFace, placeRibbon, type Ribbon } from '@/fighters/RosterCard'
 import { elementRim } from '@/fight/GildedCards'
@@ -1070,8 +1070,16 @@ export function HolderRow({
   const state = fighterState(f, now)
   const abilities = s.abilities ?? []
   const daysLeft = Math.max(0, Math.ceil(fig.pay.msLeft / DAY))
-  const ready = s.required_experience > 0 && s.experience >= s.required_experience
-  const xp = s.required_experience > 0 ? s.experience / s.required_experience : 0
+  /*
+     A level waiting needs a level left to take: a fighter at the top keeps
+     banking experience it can never spend, so experience alone would mark
+     every maxed fighter. The ladder decides, as on My Fighters.
+  */
+  const levels = useConfigStore((c) => c.levels)
+  const level = levelUpOf(f, levels)
+  const ready = level.ready
+  const max = levels.length > 0 && level.atMax
+  const xp = level.xpPercent / 100
   const ribbon: Ribbon | null = inTeam
     ? { key: 'team', label: 'In team' }
     : state === 'overdue'
@@ -1108,6 +1116,7 @@ export function HolderRow({
           busy={state === 'busy'}
           due={state === 'overdue'}
           up={ready && !inTeam}
+          max={max}
         />
       </span>
       <span className="hold__plate">

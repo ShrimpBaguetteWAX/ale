@@ -5250,3 +5250,37 @@ h2.drost__bname {
 .drost--phone .hold__ab > small {
   font-size: 10px;
 }
+
+/*
+ * The team in the dock as the cards they were picked as: the grid's gilded
+ * card, small. No ribbon (they are all in the team) and no room for a name
+ * at this size; the level, the element and the marker carry it. An empty
+ * place is the card's outline, dashed.
+ */
+.teamdock__faces {
+  align-items: flex-end;
+}
+.teamdock__card {
+  flex: none;
+  width: 46px;
+}
+.teamdock__card.is-empty {
+  aspect-ratio: 3 / 4.25;
+  border: 1px dashed rgb(255 255 255 / 24%);
+  border-radius: 6px;
+  background: rgb(255 255 255 / 4%);
+}
+.teamdock__card .gcard {
+  margin-top: 0;
+}
+.teamdock__card .gcard__name,
+.teamdock__card .rocard__mk,
+.teamdock__card .rocard__asc {
+  display: none;
+}
+.teamdock--sheet .teamdock__card {
+  width: 36px;
+}
+.teamdock--sheet .teamdock__card.is-empty {
+  border-radius: 5px;
+}

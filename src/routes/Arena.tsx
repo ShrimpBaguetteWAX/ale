@@ -1447,6 +1447,7 @@ export default function Arena() {
                     ? {
                         density: sheetDensity,
                         onDensity: chooseSheetDensity,
+                        views: sheetDensity === 'full' && <ViewSeg view={cardView} onChange={setCardView} />,
                         filters: (close) => filterPanel(close, 'drost__fsheet pickfilters pickfilters--sheet'),
                       }
                     : undefined
@@ -1477,7 +1478,7 @@ export default function Arena() {
                 onDensity={phone ? chooseSheetDensity : chooseDeskDensity}
                 /* Held on a desktop, so the grid leaves the toolbar to the filter bar above it. */
                 view={phone ? undefined : 'combat'}
-                rows={{ render: pickRow, switch: <ViewSeg view={cardView} onChange={setCardView} /> }}
+                rows={{ render: pickRow, switch: phone ? null : <ViewSeg view={cardView} onChange={setCardView} /> }}
               />
             </>
           ) : (
