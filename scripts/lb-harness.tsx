@@ -50,7 +50,7 @@ createRoot(document.getElementById('root')!).render(
                 className={`lbrow__face lbcard${f.nft ? ' lbcard--nft' : ''}`}
                 style={{ backgroundImage: `url('${elementBackground(f.el)}')` }}
               >
-                <img className="lbcard__art" src={f.nft ? '/assets/fighters/bonus_fighter_avatar.webp' : `/assets/fighters/${f.c}_${f.r}.webp`} alt="" />
+                <img className="lbcard__art" src={f.nft ? '/assets/fighters/bonus_fighter_avatar.webp' : `/assets/fighters/${f.c}_${f.r}_avatar.webp`} alt="" />
                 <span className="lbcard__el"><img src={elementIcon(f.el)} alt="" /></span>
                 <span className="lbcard__lv"><s>L</s>{f.lv}</span>
               </span>

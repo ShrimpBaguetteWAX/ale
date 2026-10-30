@@ -1092,7 +1092,12 @@ function TeamFace({
         </HoverPopover>
       )}
       <GameImg
-        src={nft ? NFT_FIGHTER_ART : fighterArt({ classname: f.classname, racename: f.racename })}
+        src={
+          nft
+            ? NFT_FIGHTER_ART
+            : /* A card is a portrait, as in the battle - the full body would be a speck. */
+              (cards ? fighterAvatar : fighterArt)({ classname: f.classname, racename: f.racename })
+        }
         alt={name}
         loading="lazy"
         fallback={fighterArtFallback()}
