@@ -91,7 +91,7 @@ export function DeskBriefing({
         </div>
         <div className="dbrief__chips">
           <Link className={`dbrief__chip${legend ? ' is-legend' : ''}`} to="/shop?c=account">
-            <img src={asset('/assets/icons/account-legend.svg')} alt="" />
+            <img src={asset(legend ? '/assets/icons/account-legend.svg' : '/assets/icons/account-trial.svg')} alt="" />
             {legend ? 'Legend' : 'Trial account'}
           </Link>
           {roster && (

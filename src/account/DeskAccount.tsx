@@ -239,7 +239,10 @@ function IdentityCard({
           Legend · {daysLeft === 1 ? '1 day' : `${daysLeft} days`} left
         </span>
       ) : (
-        <span className="dacc__legend is-off">No Legend Access</span>
+        <span className="dacc__legend is-off">
+          <img src={asset('/assets/icons/account-trial.svg')} alt="" />
+          No Legend Access
+        </span>
       )}
 
       <dl className="dacc__facts">
