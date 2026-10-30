@@ -25,6 +25,8 @@ import {
 import { ageBand, ageNote } from '@/fighters/rules'
 import { asset, ipfsImage } from '@/assets'
 import { GameImg } from '@/components/GameImg'
+import { elementRim } from '@/fight/GildedCards'
+import { portraitCut } from '@/fighters/portraitFrame'
 
 /**
  * The full read on a fighter — the tavern's display, made reusable.
@@ -425,12 +427,39 @@ export function FighterAbilities({
   )
 }
 
+/* How far along its strip a grade reaches, in ten segments: the class's average stands at five or six. */
+const GRADE_SEGMENTS: Record<string, number> = {
+  'gold-up': 10,
+  'green-duble-up': 9,
+  'green-up': 7,
+  middle: 5,
+  'red-down': 4,
+  'red-duble-down': 2,
+}
+
+/* Ten segments, as the cards count experience: how far the figure reaches in its class. */
+function Strip({ grade }: { grade: string | null }) {
+  const on = GRADE_SEGMENTS[grade ?? 'middle'] ?? 5
+  return (
+    <span className={`codex__seg is-${grade ?? 'none'}`}>
+      {Array.from({ length: 10 }, (_, i) => (
+        <i key={i} className={i < on ? 'is-on' : undefined} />
+      ))}
+    </span>
+  )
+}
+
 /**
- * The same read as `FighterPanel`, laid out for a hover.
+ * The fighter's read on hover: the card it is, full size, with its sheet
+ * beside it - the pickers' holder, opened over the screen.
  *
- * Wide rather than tall, and without the portrait — the card being hovered
- * is already showing the art. Main stats on the left, the six resistances
- * in the same rows on the right, abilities across the bottom.
+ * The card is the gilded card of the fight (portrait cut from the full art,
+ * the level in its diamond, the element in its badge); the sheet carries the
+ * name, race and element and the age, the five stats and the six resistances
+ * as the codex's strips side by side, who it targets, and the abilities under
+ * ribbons in their rarity. Everything at once, nothing to scroll. Strips
+ * without a class band to grade against (the NFT fighter) stand at the
+ * middle, uncoloured.
  */
 export function FighterHoverCard({
   fighter,
@@ -442,80 +471,151 @@ export function FighterHoverCard({
   /** For an NFT fighter: the crew and weapon templates it is made of. */
   cards?: CardTemplate[]
 }) {
+  const raw = fighter as unknown as Record<string, number>
+  const grade = (field: string, value: number) => (template ? gradeStat(field, value, template) : null)
   return (
-    <div className="fhover">
-      <div className="fhover__head">
-        <span className="fhover__name">{fighter.title ?? fighter.classname}</span>
-        <span className="fhover__meta">
-          {fighter.subtitle ?? `${fighter.racename} · ${fighter.element}`}
-        </span>
-        <span className="spacer" />
-        {fighter.level !== undefined && fighter.level > 0 && (
-          <span className="tag">Level {fighter.level}</span>
-        )}
-        {fighter.age && (
-          <span className="fhover__age">
-            {/* The percentage alone. The factor beside it said the same thing
-                a second way, on a card read at a glance. */}
-            <span className="fpanel__ageValue mono">
-              {fighter.age.bonus > 0 ? '+' : ''}
-              {fighter.age.bonus.toFixed(0)}%
-            </span>
-          </span>
-        )}
-      </div>
-
-      {cards && cards.length > 0 && (
-        <div className="fhover__cards">
-          {cards.map((c) => (
-            <div className="fhover__card" key={c.template_id}>
+    <div className="fhover2">
+      <span className="rocard fhover2__card">
+        <span className="gcard" style={{ '--ec': elementRim(fighter.element), '--c': 0 } as React.CSSProperties}>
+          <span className="gcard__frame">
+            <span
+              className="gcard__pic"
+              style={{ backgroundImage: `url('${elementBackground(fighter.element)}')` }}
+            >
               <GameImg
-                src={asset(`/assets/cards/${c.template_id}.webp`)}
+                className={fighter.art ? undefined : 'rocard__art'}
+                style={fighter.art ? undefined : portraitCut(fighter.classname, fighter.racename)}
+                src={fighter.art ?? fighterArt(fighter)}
                 alt=""
-                /* A template minted since this build has no file of ours;
-                   its own picture on IPFS is the next thing to try. */
-                fallback={[ipfsImage(c.img), asset('/assets/default-card.png')].filter(
-                  (u): u is string => !!u,
-                )}
+                fallback={fighterArtFallback()}
               />
-              <span className="fhover__cardText">
-                <span className="fhover__cardName">{c.name}</span>
-                <span className="fhover__cardMeta">
-                  {c.schema === 'crew.worlds' ? 'Crew' : 'Weapon'} · {c.rarity}
-                  {c.shine && c.shine.toLowerCase() !== 'stone' ? ` · ${c.shine}` : ''}
-                </span>
+            </span>
+            {fighter.level !== undefined && fighter.level > 0 && (
+              <span className="gcard__lv">
+                <b>{fighter.level}</b>
               </span>
-            </div>
-          ))}
-        </div>
-      )}
+            )}
+            <img className="gcard__el" src={elementIcon(fighter.element)} alt={fighter.element} />
+          </span>
+          <span className="gcard__name">{fighter.title ?? fighter.classname}</span>
+        </span>
+      </span>
 
-      <div className="fhover__cols">
-        <FighterStats fighter={fighter} template={template} resistances={false} />
-        <div className="fhover__res">
-          {RESISTANCES.map(([key, label]) => {
-            const raw = (fighter as unknown as Record<string, number>)[key]
-            return (
-              <div className="statline" key={key}>
-                <span className="statline__k">
-                  <img
-                    className="statline__icon"
-                    src={elementIcon(label.toLowerCase())}
-                    alt=""
-                  />
-                  {label}
-                </span>
-                <span className="statline__v mono">
-                  {formatResistance(raw)}
-                  <Grade field={key} raw={raw} template={template} />
+      <div className="fhover2__sheet">
+        <div className="fhover2__head">
+          <span className="fhover2__name">{fighter.title ?? fighter.classname}</span>
+          <span className="fhover2__meta">
+            <img src={elementIcon(fighter.element)} alt="" />
+            {fighter.subtitle ?? `${fighter.racename} · ${fighter.element}`}
+            {fighter.age && (
+              <span className={`fhover2__chip is-${ageBand(fighter.age.bonus)}`} title={ageNote(fighter.age.bonus, fighter.age.days, fighter.age.factor)}>
+                Age
+                <b>
+                  {fighter.age.bonus > 0 ? '+' : ''}
+                  {fighter.age.bonus.toFixed(0)}%
+                </b>
+              </span>
+            )}
+          </span>
+        </div>
+
+        {cards && cards.length > 0 && (
+          <div className="fhover__cards">
+            {cards.map((c) => (
+              <div className="fhover__card" key={c.template_id}>
+                <GameImg
+                  src={asset(`/assets/cards/${c.template_id}.webp`)}
+                  alt=""
+                  /* A template minted since this build has no file of ours;
+                     its own picture on IPFS is the next thing to try. */
+                  fallback={[ipfsImage(c.img), asset('/assets/default-card.png')].filter(
+                    (u): u is string => !!u,
+                  )}
+                />
+                <span className="fhover__cardText">
+                  <span className="fhover__cardName">{c.name}</span>
+                  <span className="fhover__cardMeta">
+                    {c.schema === 'crew.worlds' ? 'Crew' : 'Weapon'} · {c.rarity}
+                    {c.shine && c.shine.toLowerCase() !== 'stone' ? ` · ${c.shine}` : ''}
+                  </span>
                 </span>
               </div>
-            )
-          })}
-        </div>
-      </div>
+            ))}
+          </div>
+        )}
 
-      {fighter.abilities.length > 0 && <FighterAbilities abilities={fighter.abilities} />}
+        <div className="fhover2__cols">
+          <div className="fhover2__strips">
+            {STAT_ORDER.map((field) => {
+              const stat = fighter[field] as PanelStat
+              const ranged = stat.max !== undefined && stat.max !== stat.min
+              const shown = ranged ? statDisplay(stat.min, stat.max!) : null
+              const g = grade(field, stat.grade ?? (ranged ? midpoint(stat.min, stat.max!) : stat.min))
+              return (
+                <span className="fhover2__st" key={field} title={g ? GRADE_LABEL[g] : undefined}>
+                  <small>
+                    <img src={statIcon(field)} alt="" />
+                    {STAT_LABEL[field] ?? field}
+                  </small>
+                  <Strip grade={g} />
+                  <b>
+                    {shown ? shown.value : formatScaled(stat.min)}
+                    {g && <img className="grade" src={GRADE_ICON[g]} alt={GRADE_LABEL[g]} />}
+                    {shown && shown.spread > 0 && <em>±{shown.spread}</em>}
+                  </b>
+                </span>
+              )
+            })}
+          </div>
+          <div className="fhover2__strips">
+            {RESISTANCES.map(([key, label]) => {
+              const g = grade(key, raw[key])
+              return (
+                <span className="fhover2__st is-res" key={key} title={g ? GRADE_LABEL[g] : undefined}>
+                  <small>
+                    <img src={elementIcon(label.toLowerCase())} alt="" />
+                    {label}
+                  </small>
+                  <Strip grade={g} />
+                  <b>
+                    {formatResistance(raw[key])}
+                    {g && <img className="grade" src={GRADE_ICON[g]} alt={GRADE_LABEL[g]} />}
+                  </b>
+                </span>
+              )
+            })}
+          </div>
+        </div>
+
+        <span className="fhover2__target">
+          <img src={statIcon('target')} alt="" />
+          Targets
+          {/* An empty target falls through to highest taunt in `pick_defender`. */}
+          <b>{fighter.target ? formatTarget(fighter.target) : 'Highest Taunt'}</b>
+        </span>
+
+        {fighter.abilities.length > 0 && (
+          <div className="fhover2__abs">
+            {fighter.abilities.map((ab, i) => {
+              const rarity = abilityRarity(ab.displayname)
+              return (
+                <div
+                  key={`${ab.ability}-${i}`}
+                  className={`fhover2__ab${ab.locked ? ' is-locked' : ''}`}
+                  style={{ '--ab': abilityColor(ab.displayname) } as React.CSSProperties}
+                >
+                  <span className="codex__rib">{ab.locked ? 'Locked' : (rarity ?? 'Unique')}</span>
+                  <b>
+                    {abilityName(ab.displayname)}
+                    {!!ab.locked && <small> · unlocks on ascension</small>}
+                  </b>
+                  <p>{resolveAbilityDescription(ab)}</p>
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </div>
     </div>
   )
 }
