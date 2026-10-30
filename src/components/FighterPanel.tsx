@@ -25,8 +25,6 @@ import {
 import { ageBand, ageNote } from '@/fighters/rules'
 import { asset, ipfsImage } from '@/assets'
 import { GameImg } from '@/components/GameImg'
-import { elementRim } from '@/fight/GildedCards'
-import { portraitCut } from '@/fighters/portraitFrame'
 
 /**
  * The full read on a fighter — the tavern's display, made reusable.
@@ -450,12 +448,11 @@ function Strip({ grade }: { grade: string | null }) {
 }
 
 /**
- * The fighter's read on hover: the card it is, full size, with its sheet
- * beside it - the pickers' holder, opened over the screen.
+ * The fighter's read on hover: the pickers' steel sheet, opened over the
+ * screen. The card it opens from is already under the pointer, so the read
+ * does not draw it again.
  *
- * The card is the gilded card of the fight (portrait cut from the full art,
- * the level in its diamond, the element in its badge); the sheet carries the
- * name, race and element and the age, the five stats and the six resistances
+ * The sheet carries the name, race and element, the level and the age, the five stats and the six resistances
  * as the codex's strips side by side, who it targets, and the abilities under
  * ribbons in their rarity. Everything at once, nothing to scroll. Strips
  * without a class band to grade against (the NFT fighter) stand at the
@@ -475,38 +472,13 @@ export function FighterHoverCard({
   const grade = (field: string, value: number) => (template ? gradeStat(field, value, template) : null)
   return (
     <div className="fhover2">
-      <span className="rocard fhover2__card">
-        <span className="gcard" style={{ '--ec': elementRim(fighter.element), '--c': 0 } as React.CSSProperties}>
-          <span className="gcard__frame">
-            <span
-              className="gcard__pic"
-              style={{ backgroundImage: `url('${elementBackground(fighter.element)}')` }}
-            >
-              <GameImg
-                className={fighter.art ? undefined : 'rocard__art'}
-                style={fighter.art ? undefined : portraitCut(fighter.classname, fighter.racename)}
-                src={fighter.art ?? fighterArt(fighter)}
-                alt=""
-                fallback={fighterArtFallback()}
-              />
-            </span>
-            {fighter.level !== undefined && fighter.level > 0 && (
-              <span className="gcard__lv">
-                <b>{fighter.level}</b>
-              </span>
-            )}
-            <img className="gcard__el" src={elementIcon(fighter.element)} alt={fighter.element} />
-          </span>
-          <span className="gcard__name">{fighter.title ?? fighter.classname}</span>
-        </span>
-      </span>
-
       <div className="fhover2__sheet">
         <div className="fhover2__head">
           <span className="fhover2__name">{fighter.title ?? fighter.classname}</span>
           <span className="fhover2__meta">
             <img src={elementIcon(fighter.element)} alt="" />
             {fighter.subtitle ?? `${fighter.racename} · ${fighter.element}`}
+            {fighter.level !== undefined && fighter.level > 0 && <span className="fhover2__chip">Level {fighter.level}</span>}
             {fighter.age && (
               <span className={`fhover2__chip is-${ageBand(fighter.age.bonus)}`} title={ageNote(fighter.age.bonus, fighter.age.days, fighter.age.factor)}>
                 Age
@@ -558,10 +530,11 @@ export function FighterHoverCard({
                     {STAT_LABEL[field] ?? field}
                   </small>
                   <Strip grade={g} />
+                  {/* Figure, spread and arrow each in a column of their own, so the arrows stand in one line. */}
                   <b>
-                    {shown ? shown.value : formatScaled(stat.min)}
-                    {g && <img className="grade" src={GRADE_ICON[g]} alt={GRADE_LABEL[g]} />}
-                    {shown && shown.spread > 0 && <em>±{shown.spread}</em>}
+                    <span>{shown ? shown.value : formatScaled(stat.min)}</span>
+                    {shown && shown.spread > 0 ? <em>±{shown.spread}</em> : <i />}
+                    {g ? <img className="grade" src={GRADE_ICON[g]} alt={GRADE_LABEL[g]} /> : <i />}
                   </b>
                 </span>
               )
@@ -578,8 +551,8 @@ export function FighterHoverCard({
                   </small>
                   <Strip grade={g} />
                   <b>
-                    {formatResistance(raw[key])}
-                    {g && <img className="grade" src={GRADE_ICON[g]} alt={GRADE_LABEL[g]} />}
+                    <span>{formatResistance(raw[key])}</span>
+                    {g ? <img className="grade" src={GRADE_ICON[g]} alt={GRADE_LABEL[g]} /> : <i />}
                   </b>
                 </span>
               )
