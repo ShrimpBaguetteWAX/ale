@@ -407,6 +407,23 @@ export function cancelAuction(
   return transact(session, [action])
 }
 
+/** Withdraw a fixed-price offer; the fighter comes back to the roster. */
+export function cancelOffer(
+  session: Session,
+  params: { scope: string; offerId: number },
+) {
+  const action: ActionInput = {
+    account: CONTRACTS.market,
+    name: 'canceloffer',
+    data: {
+      wallet: String(session.actor),
+      scope: params.scope,
+      offer_id: params.offerId,
+    },
+  }
+  return transact(session, [action])
+}
+
 /**
  * Buy a fixed-price listing outright.
  *
@@ -1226,6 +1243,7 @@ export const DIRTIES = {
   addAuctions: ['player', 'fighters', 'auctions'],
   bidAuction: ['player', 'auctions'],
   cancelAuction: ['fighters', 'auctions'],
+  cancelOffer: ['fighters', 'offers'],
   buyOffer: ['player', 'fighters', 'offers'],
 
   /* The roster. */

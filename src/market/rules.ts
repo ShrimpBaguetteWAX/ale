@@ -159,6 +159,20 @@ export function canCancelAuction(auction: Auction, player: Player): Gate {
 }
 
 /**
+ * Whether a fixed-price offer can be withdrawn.
+ *
+ * Any time, by its owner: an offer takes no bids, so nothing binds it.
+ * `canceloffer` used to check `gems == 0` — the price, never zero — and
+ * so refused every offer; market.ale was redeployed without it on 2026-10-30.
+ */
+export function canCancelOffer(offer: InstantOffer, player: Player): Gate {
+  if (offer.owner !== player.wallet) {
+    return { ok: false, reason: 'Not your offer' }
+  }
+  return { ok: true }
+}
+
+/**
  * Whether a fighter can be put up for auction.
  *
  * Mirrors the five checks in `addauction`, in its order, so the reason shown
@@ -276,19 +290,6 @@ export function bulkListPlan(
   return { ids, gems, gate }
 }
 
-/**
- * Why an instant offer has no cancel button.
- *
- * `canceloffer` checks `gems == 0`, but `newoffer` always stores the
- * auction's starting price, which is never below the minimum start — so the check can never pass
- * and the action always reverts. Offers can only run to their end, which is
- * the fighter's next payday. Surfaced rather than hidden, because a seller
- * looking for the button deserves to know it does not work rather than to
- * conclude the screen is missing it.
- */
-export const OFFER_CANCEL_IS_BROKEN =
-  'An instant offer cannot be withdrawn: the contract only allows it when the ' +
-  'price is zero, which never happens. It ends on its own at the payday below.'
 
 /* ---------- ordering the board ---------- */
 

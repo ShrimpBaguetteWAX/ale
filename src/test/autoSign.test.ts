@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { AUTO_SIGN_GROUPS, NEVER_AUTO_SIGNED, groupsFrom, whitelistFor, type AutoSignAction } from '@/wharf/autoSign'
+import { AUTO_SIGN_GROUPS, NEVER_AUTO_SIGNED, groupsFrom, linkedOnly, whitelistFor, type AutoSignAction } from '@/wharf/autoSign'
 
 /**
  * What the key in a browser may ever be allowed to sign.
@@ -76,6 +76,25 @@ describe('groupsFrom', () => {
 
   it('is empty for an empty whitelist', () => {
     expect(groupsFrom([])).toEqual([])
+  })
+
+  it('keeps a group on that was linked before an action joined it', () => {
+    /* Market as players turned it on before withdrawing an offer worked. */
+    const before = flat(['market']).filter((a) => a.action !== 'canceloffer')
+    expect(groupsFrom(before)).toContain('market')
+  })
+})
+
+describe('linkedOnly', () => {
+  it('signs only what the chain has linked', () => {
+    const links = flat(['market']).filter((a) => a.action !== 'canceloffer')
+    const kept = linkedOnly(whitelistFor(['market']), links).flatMap((e) => (e.actions ?? []).map(String))
+    expect(kept).toContain('cancelauct')
+    expect(kept).not.toContain('canceloffer')
+  })
+
+  it('drops a contract with nothing linked', () => {
+    expect(linkedOnly(whitelistFor(['market']), [])).toEqual([])
   })
 })
 

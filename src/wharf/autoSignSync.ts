@@ -1,6 +1,6 @@
 import { PublicKey } from '@wharfkit/antelope'
 import { Session, isSessionKeyWallet, type AnyAction } from '@wharfkit/session'
-import { AUTO_SIGN_PERMISSION, groupsFrom, rememberGroups, whitelistFor, type AutoSignAction } from './autoSign'
+import { AUTO_SIGN_PERMISSION, groupsFrom, linkedOnly, rememberGroups, whitelistFor, type AutoSignAction } from './autoSign'
 
 /**
  * Keeping this browser's auto-signing true to the chain.
@@ -88,7 +88,7 @@ export async function syncAutoSign(session: Session): Promise<AutoSignReading | 
   const mine = localKey(session)
   const reading = reconcile(mine, chain)
   const plugin = session.walletPlugin
-  const list = whitelistFor(reading.groups)
+  const list = linkedOnly(whitelistFor(reading.groups), chain?.links ?? [])
 
   if (mine && plugin && isSessionKeyWallet(plugin)) {
     if (reading.active) {

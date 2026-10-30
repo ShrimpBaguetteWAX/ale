@@ -11,10 +11,10 @@ import {
 } from '@/market/queries'
 import {
   MARKET_SORTS,
-  OFFER_CANCEL_IS_BROKEN,
   canBid,
   canBuy,
   canCancelAuction,
+  canCancelOffer,
   canList,
   extendsOnBid,
   hasEnded,
@@ -53,7 +53,7 @@ import {
   type Detail,
 } from '@/fight/setup'
 import { elementBackground, fighterArt, fighterArtFallback, type ClassTemplate, elementIcon } from '@/tavern/fighterStats'
-import { addAuction, bidAuction, buyOffer, cancelAuction } from '@/wharf/actions'
+import { addAuction, bidAuction, buyOffer, cancelAuction, cancelOffer } from '@/wharf/actions'
 import { SACRIFICE_ABILITY } from '@/ascension/rules'
 import { asset, artSet } from '@/assets'
 import { Row, VIEWS, figuresOf, type View } from '@/fighters/DeskRoster'
@@ -286,6 +286,18 @@ export default function Market() {
         }),
       'Auction withdrawn.',
       opts('cancelAuction'),
+    )
+
+  const withdrawOffer = (o: InstantOffer) =>
+    void run(
+      `cancelo${o.offer_id}`,
+      () =>
+        cancelOffer(session!, {
+          scope: o.fighter.classname,
+          offerId: o.offer_id,
+        }),
+      'Offer withdrawn. The fighter is back on your roster.',
+      opts('cancelOffer'),
     )
 
   const placeBid = (a: Auction, gems: number) =>
@@ -543,6 +555,8 @@ export default function Market() {
                     now={now}
                     busy={busy === 'buy'}
                     onBuy={() => buyNow(picked)}
+                    cancelling={busy === `cancelo${picked.offer_id}`}
+                    onCancel={() => withdrawOffer(picked)}
                   />
                 ))
               }
@@ -664,6 +678,7 @@ export default function Market() {
               onToggle={toggleRow}
               onOpen={show}
               onCancel={cancel}
+              onCancelOffer={withdrawOffer}
               onSell={() => setTab('sell')}
               markerOf={markerOf}
             />
@@ -933,8 +948,8 @@ function ListingRow({
  * Winning — auctions where you hold the top bid. Selling — your auctions,
  * with who is on top and what you would net, and Withdraw while nobody has
  * bid (the only time the contract allows it). Fixed price — unsold fighters
- * kept at the market's fixed price, which cannot be withdrawn and end on the
- * fighter's payday.
+ * kept at the market's fixed price, which end on the fighter's payday and
+ * can be withdrawn until then.
  */
 function PhoneMine({
   bids,
@@ -950,6 +965,7 @@ function PhoneMine({
   onToggle,
   onOpen,
   onCancel,
+  onCancelOffer,
   onSell,
   markerOf,
 }: {
@@ -966,6 +982,7 @@ function PhoneMine({
   onToggle: (key: string) => void
   onOpen: (l: Auction | InstantOffer) => void
   onCancel: (a: Auction) => void
+  onCancelOffer: (o: InstantOffer) => void
   onSell: () => void
   /** The player's markers by fighter, for their own listings. */
   markerOf: Map<number, string>
@@ -1066,17 +1083,32 @@ function PhoneMine({
             <small>ends on the fighter's payday</small>
           </p>
           <div className="mrows">
-            {sortListings(offers, 'ending', now).map((o) =>
-              row(
+            {sortListings(offers, 'ending', now).map((o) => {
+              const gate = canCancelOffer(o, player)
+              const cancelling = busy === `cancelo${o.offer_id}`
+              return row(
                 `o${o.offer_id}`,
                 o,
                 o.gems,
                 false,
-                <span className="mrow__line">
-                  Can't be withdrawn · you net <span className="mrow__lead">{sellerPayout(o.gems, config)}</span> if it sells
-                </span>,
-              ),
-            )}
+                <>
+                  <span className="mrow__line">
+                    You net <span className="mrow__lead">{sellerPayout(o.gems, config)}</span> if it sells
+                  </span>
+                  {gate.ok && !hasEnded(o, now) && (
+                    <button
+                      type="button"
+                      className="btn btn--sm mrow__withdraw"
+                      onClick={() => onCancelOffer(o)}
+                      disabled={cancelling}
+                    >
+                      {cancelling && <span className="spinner" />}
+                      Withdraw
+                    </button>
+                  )}
+                </>,
+              )
+            })}
           </div>
         </>
       )}
@@ -1448,6 +1480,8 @@ function OfferDeal({
   now,
   busy,
   onBuy,
+  cancelling,
+  onCancel,
 }: {
   offer: InstantOffer
   config: MarketConfig | undefined
@@ -1455,9 +1489,12 @@ function OfferDeal({
   now: number
   busy: boolean
   onBuy: () => void
+  cancelling: boolean
+  onCancel: () => void
 }) {
   const mine = o.owner === player.wallet
   const gate = canBuy(o, player, now)
+  const withdraw = canCancelOffer(o, player)
   return (
     <aside className="mdeal" aria-label="The offer">
       <span className="mdeal__cap">{mine ? 'Your fixed-price listing' : 'Buy now'}</span>
@@ -1498,7 +1535,20 @@ function OfferDeal({
         )}
       </dl>
       {mine ? (
-        <p className="msell__hint">{OFFER_CANCEL_IS_BROKEN}</p>
+        withdraw.ok && !hasEnded(o, now) && (
+          <>
+            <button
+              type="button"
+              className="btn mrow__withdraw mdeal__go"
+              onClick={onCancel}
+              disabled={cancelling}
+            >
+              {cancelling && <span className="spinner" />}
+              Withdraw
+            </button>
+            <p className="msell__hint">The fighter comes back to your roster. The listing fee is not refunded.</p>
+          </>
+        )
       ) : (
         <>
           <button

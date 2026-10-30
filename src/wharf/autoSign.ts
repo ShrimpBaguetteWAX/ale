@@ -29,6 +29,14 @@ export const AUTO_SIGN_PERMISSION = 'alienlegends'
 export interface AutoSignAction {
   contract: string
   action: string
+  /**
+   * The day it joined a group that was already out. A player who turned the
+   * group on before then has every other action linked and not this one, and
+   * the group must not read as off for them — that would take the rest of it
+   * away. So it is left out of `groupsFrom`, the key signs it only once the
+   * chain links it (`linkedOnly`), and the next save in the settings does.
+   */
+  since?: string
 }
 
 export interface AutoSignGroup {
@@ -131,6 +139,7 @@ export const AUTO_SIGN_GROUPS: AutoSignGroup[] = [
       { contract: C.market, action: 'bidauction' },
       { contract: C.market, action: 'buyoffer' },
       { contract: C.market, action: 'cancelauct' },
+      { contract: C.market, action: 'canceloffer', since: '2026-10-30' },
     ],
   },
   {
@@ -226,12 +235,29 @@ export function whitelistFor(groupIds: readonly string[]): SessionKeyWhitelistEn
   }))
 }
 
-/** Which groups a whitelist covers: every one of a group's actions has to be in it. */
+/**
+ * Which groups a whitelist covers: every one of a group's actions has to be
+ * in it, bar those added after the group shipped (see `since`).
+ */
 export function groupsFrom(whitelisted: readonly AutoSignAction[]): string[] {
   const has = new Set(whitelisted.map((a) => `${a.contract}::${a.action}`))
-  return AUTO_SIGN_GROUPS.filter((g) => g.actions.every((a) => has.has(`${a.contract}::${a.action}`))).map(
-    (g) => g.id,
-  )
+  return AUTO_SIGN_GROUPS.filter((g) =>
+    g.actions.every((a) => !!a.since || has.has(`${a.contract}::${a.action}`)),
+  ).map((g) => g.id)
+}
+
+/** A whitelist cut down to what the chain has linked, so the key never signs what it would be refused. */
+export function linkedOnly(
+  list: SessionKeyWhitelistEntry[],
+  links: readonly AutoSignAction[],
+): SessionKeyWhitelistEntry[] {
+  const has = new Set(links.map((a) => `${a.contract}::${a.action}`))
+  return list
+    .map((e) => ({
+      contract: e.contract,
+      actions: (e.actions ?? []).filter((a) => has.has(`${String(e.contract)}::${String(a)}`)),
+    }))
+    .filter((e) => e.actions.length > 0)
 }
 
 const STORAGE_KEY = 'al:autosign.v1'
