@@ -40,22 +40,31 @@ export interface ShopCooldown {
  * which follows the economy: WAX buys gems, gems buy credits and Legend,
  * credits buy energy.
  */
-export const SHOP_CATEGORIES: { key: string; label: string }[] = [
+export const SHOP_CATEGORIES: {
+  key: string
+  label: string
+  /** Drawn before the label: the currency the tab sells. */
+  icon?: string
+}[] = [
   {
     key: 'gems',
     label: 'Gems',
+    icon: '/assets/icons/gems.svg',
   },
   {
     key: 'credits',
     label: 'Credits',
+    icon: '/assets/icons/credits.svg',
   },
   {
     key: 'flasks',
     label: 'Energy',
+    icon: '/assets/icons/energy.svg',
   },
   {
     key: 'account',
     label: 'Legend',
+    icon: '/assets/icons/account-legend.svg',
   },
   /*
      Last, and outside the ladder the other three describe. `uspts.worlds` is

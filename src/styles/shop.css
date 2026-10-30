@@ -2277,3 +2277,11 @@
   margin: 0;
   color: var(--text-dim);
 }
+
+/* The currency a tab sells, before its name. */
+.shop__tabicon {
+  width: 16px;
+  height: 16px;
+  flex: none;
+  object-fit: contain;
+}

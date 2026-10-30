@@ -180,6 +180,7 @@ export default function Shop() {
               aria-selected={category === c.key}
               onClick={() => setCategory(c.key)}
             >
+              {c.icon && <img className="shop__tabicon" src={asset(c.icon)} alt="" width={16} height={16} />}
               {c.label}
             </button>
           ))}
