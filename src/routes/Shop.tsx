@@ -38,6 +38,7 @@ import { NUM_LOCALE } from '@/format'
 import { OutpostTab } from '@/outpost/OutpostTab'
 import { CurrencyGuide } from '@/shop/CurrencyGuide'
 import { MarketGuide, MarketTab } from '@/shop/MarketTab'
+import { SwapTab } from '@/shop/SwapTab'
 import { usePhone } from '@/components/usePhone'
 import { Showcase, type ShowcaseTile } from '@/shop/Showcase'
 import type { Player } from '@/chain/types'
@@ -196,6 +197,10 @@ export default function Shop() {
           </div>
         )}
 
+        {/* Just the swap: no guide beside it, on any width. */}
+        {category === 'swap' ? (
+          <SwapTab />
+        ) : (
         <ShopBoard
           phone={phone}
           guide={
@@ -325,6 +330,7 @@ export default function Shop() {
           </section>
         )}
         </ShopBoard>
+        )}
       </div>
 
       {confirming && (

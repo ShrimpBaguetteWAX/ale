@@ -100,6 +100,8 @@ export const CONTRACTS = {
   atomicmarket: 'atomicmarket',
   /** Alien Worlds TLM token contract. */
   alienWorlds: 'alien.worlds',
+  /** Alcor's swap contract: the Shop's Swap tab sends TLM here and gets WAX back. */
+  alcorSwap: 'swap.alcor',
   /** Alien Worlds bag contract, read on signup to seed mining NFTs. */
   federation: 'm.federation',
 } as const

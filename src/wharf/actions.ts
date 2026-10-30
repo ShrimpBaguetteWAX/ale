@@ -175,6 +175,28 @@ export function buyShopItemWithWax(
 }
 
 /**
+ * Swap TLM for WAX on Alcor: one transfer of the TLM to `swap.alcor`.
+ *
+ * The memo is the swap — the route, who receives the WAX, and the least it
+ * may pay — and Alcor refuses rather than pay below that minimum. It comes
+ * from Alcor's router and is checked by `fetchSwapQuote` before it gets here.
+ * A transfer, so it never signs itself.
+ */
+export function swapTlmForWax(session: Session, params: { tlm: number; memo: string }) {
+  const action: ActionInput = {
+    account: CONTRACTS.alienWorlds,
+    name: 'transfer',
+    data: {
+      from: String(session.actor),
+      to: CONTRACTS.alcorSwap,
+      quantity: `${params.tlm.toFixed(4)} TLM`,
+      memo: params.memo,
+    },
+  }
+  return transact(session, [action])
+}
+
+/**
  * Buy one Alien Worlds card on AtomicMarket, through `shop.ale`.
  *
  * Three actions in one transaction, so they stand or fall together:
@@ -1291,6 +1313,9 @@ export const DIRTIES = {
   /* The Candle. */
   contributeGems: ['player', 'candleStakes'],
   claimCandle: ['player', 'candleClaims'],
+
+  /* Wallet balances only, which no table here holds. */
+  swapTlmForWax: [],
 } as const satisfies Record<string, readonly TableKey[]>
 
 /**

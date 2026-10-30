@@ -76,6 +76,11 @@ export const SHOP_CATEGORIES: { key: string; label: string }[] = [
     key: 'market',
     label: 'NFT Market',
   },
+  /* TLM into WAX through Alcor; see shop/swap.ts. */
+  {
+    key: 'swap',
+    label: 'Swap',
+  },
 ]
 
 /**
