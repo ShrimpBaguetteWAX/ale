@@ -943,6 +943,39 @@ function ListingRow({
 }
 
 /**
+ * Withdraw, inside a listing row.
+ *
+ * The row is itself a button, and a button may not hold another — the nested
+ * one also passed its tap on to the row, which opened behind the withdrawal.
+ * So this is a span that acts as a button and keeps its tap to itself, as the
+ * row's own tick does.
+ */
+function RowWithdraw({ busy, onClick }: { busy: boolean; onClick: () => void }) {
+  const go = (e: React.SyntheticEvent) => {
+    e.stopPropagation()
+    if (!busy) onClick()
+  }
+  return (
+    <span
+      role="button"
+      tabIndex={0}
+      aria-disabled={busy}
+      className="btn btn--sm mrow__withdraw"
+      onClick={go}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          go(e)
+        }
+      }}
+    >
+      {busy && <span className="spinner" />}
+      Withdraw
+    </span>
+  )
+}
+
+/**
  * Mine, on the phone: a section for each way a listing can stand.
  *
  * Winning — auctions where you hold the top bid. Selling — your auctions,
@@ -1057,17 +1090,7 @@ function PhoneMine({
                       No bids yet · if nobody bids it{' '}
                       {a.keep_after_auction ? `stays listed at ${a.current_bid} gems` : 'comes back to you'}
                     </span>
-                    {gate.ok && !ended && (
-                      <button
-                        type="button"
-                        className="btn btn--sm mrow__withdraw"
-                        onClick={() => onCancel(a)}
-                        disabled={cancelling}
-                      >
-                        {cancelling && <span className="spinner" />}
-                        Withdraw
-                      </button>
-                    )}
+                    {gate.ok && !ended && <RowWithdraw busy={cancelling} onClick={() => onCancel(a)} />}
                   </>
                 ),
               )
@@ -1095,17 +1118,7 @@ function PhoneMine({
                   <span className="mrow__line">
                     You net <span className="mrow__lead">{sellerPayout(o.gems, config)}</span> if it sells
                   </span>
-                  {gate.ok && !hasEnded(o, now) && (
-                    <button
-                      type="button"
-                      className="btn btn--sm mrow__withdraw"
-                      onClick={() => onCancelOffer(o)}
-                      disabled={cancelling}
-                    >
-                      {cancelling && <span className="spinner" />}
-                      Withdraw
-                    </button>
-                  )}
+                  {gate.ok && !hasEnded(o, now) && <RowWithdraw busy={cancelling} onClick={() => onCancelOffer(o)} />}
                 </>,
               )
             })}
