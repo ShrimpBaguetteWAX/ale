@@ -44,7 +44,6 @@ import {
   statIcon,
   fighterArt,
   fighterArtFallback,
-  fighterAvatar,
   formatScaled,
   statDisplay,
   abilityColor,
@@ -75,6 +74,7 @@ import { useConfigStore } from '@/state/useConfig'
 import { formatDecimals, NUM_LOCALE } from '@/format'
 import { GameImg } from '@/components/GameImg'
 import { RosterCardFace, placeRibbon, type Ribbon } from '@/fighters/RosterCard'
+import { portraitCut } from '@/fighters/portraitFrame'
 
 /**
  * The parts of a fight setup screen that the dungeon and the arena share.
@@ -913,9 +913,28 @@ export function CombatCard({
           style={{ '--ec': ELEMENT_RIM[element] ?? '#dfe3ee' } as React.CSSProperties}
         >
           <span className="gcard__frame">
-            <span className="gcard__pic">
+            {/*
+              The fighter on its element, as in My Fighters' cards: the portrait
+              cut from the full art (portraitFrame) - the _avatar crops are
+              stretched for some fighters. Art handed in (an NFT, a card) keeps
+              its own cover.
+            */}
+            <span
+              className="gcard__pic"
+              style={
+                element
+                  ? {
+                      backgroundImage: `url('${elementBackground(element)}')`,
+                      backgroundSize: 'cover',
+                      backgroundPosition: 'center',
+                    }
+                  : undefined
+              }
+            >
               <GameImg
-                src={art ?? fighterAvatar({ classname, racename })}
+                className={art ? undefined : 'rcard__art'}
+                style={art ? undefined : portraitCut(classname, racename)}
+                src={art ?? fighterArt({ classname, racename })}
                 alt={`${classname} ${racename}`}
                 loading="lazy"
                 fallback={fighterArtFallback()}

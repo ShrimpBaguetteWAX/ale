@@ -3986,9 +3986,26 @@ h2.drost__bname {
 /* The layout switch and the views together at the head's start; icons only, so the markers keep their room. */
 .drost__headl {
   display: inline-flex;
+  flex: none;
   align-items: center;
   gap: 8px;
+}
+/*
+ * On a desktop the markers take what room the switches leave, and scroll
+ * sideways within it rather than running over the views: a roster with a
+ * dozen markers in use is wider than the list.
+ */
+.drost:not(.drost--phone) .drost__listhead .drost__markseg {
+  flex: 0 1 auto;
   min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.drost:not(.drost--phone) .drost__listhead .drost__markseg::-webkit-scrollbar {
+  display: none;
+}
+.drost:not(.drost--phone) .drost__listhead .drost__markseg button {
+  flex: none;
 }
 .drost:not(.drost--phone) .drost__listhead .drost__densseg button {
   padding: 0 9px;
@@ -4023,8 +4040,8 @@ h2.drost__bname {
   background-position: center;
   background-size: cover;
 }
-/* The portrait, cut from the full art at one even scale (portraitFrame.ts). */
-.rcard .gcard__pic .rcard__art {
+/* The portrait, cut from the full art at one even scale (portraitFrame.ts), on any gilded card. */
+.gcard__pic .rcard__art {
   position: absolute;
   left: var(--px);
   top: var(--py);
