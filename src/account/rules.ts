@@ -141,6 +141,21 @@ export function avatarArt(id: number | string): string {
   return asset(`/assets/avatar/${id}.webp`)
 }
 
+/**
+ * How rare an avatar is, 0 (Common) to 5 (Mythical), for the boards that
+ * dress a row in it.
+ *
+ * Nothing on the avatar row says so, but every ladder is six consecutive ids
+ * starting on a hundred, rarest last - 500 is the first Arenas Won, 505 the
+ * Mythical - so the tier is the last two digits. Anything else, which is no
+ * avatar set or an id from a newer contract than this build, has no rarity.
+ */
+export function avatarRarity(id: number | undefined): number | undefined {
+  if (!id || id < 200) return undefined
+  const tier = id % 100
+  return tier <= 5 ? tier : undefined
+}
+
 /* ---------- cpu ---------- */
 
 export interface CpuStatus {

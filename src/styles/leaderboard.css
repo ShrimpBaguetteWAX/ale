@@ -103,7 +103,8 @@
 
 .lbtable {
   display: grid;
-  gap: var(--sp-1);
+  /* The portraits stand a few pixels proud of their rows, and need the room. */
+  gap: 10px;
 }
 
 .lbtable__head {
@@ -141,6 +142,36 @@
   border: 1px solid var(--line);
   border-radius: var(--radius-sm);
   background: linear-gradient(180deg, rgb(14 20 38 / 90%), rgb(6 10 24 / 94%));
+}
+
+/*
+ * A row in its avatar's rarity: the six colours of the avatar art, a wash of
+ * the colour running in from the left edge and a stripe down it. The portrait
+ * takes the same colour (below). The cells sit over the wash, which is laid
+ * on the row itself so it follows the corners.
+ */
+.lbrow {
+  position: relative;
+}
+.lbrow--r0 { --rc: #c3cadb; --rg: transparent; }
+.lbrow--r1 { --rc: #2fe6bb; --rg: rgb(47 230 187 / 45%); }
+.lbrow--r2 { --rc: #2ec4ff; --rg: rgb(46 196 255 / 50%); }
+.lbrow--r3 { --rc: #c374f0; --rg: rgb(195 116 240 / 55%); }
+.lbrow--r4 { --rc: #ffb81f; --rg: rgb(255 184 31 / 60%); }
+.lbrow--r5 { --rc: #ff4a5e; --rg: rgb(255 74 94 / 65%); }
+.lbrow--rar {
+  border-left: 3px solid var(--rc);
+}
+.lbrow--rar::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--rc) 34%, transparent), transparent 52%);
+  pointer-events: none;
+}
+.lbrow--rar > * {
+  position: relative;
 }
 
 /* The player's own row, which is the one they came to find. */
@@ -426,25 +457,34 @@
   min-width: 0;
 }
 
+/*
+ * The portrait breaks out of its row: bigger than the row is tall, square the
+ * way the art was drawn instead of cropped to a circle, and framed in its own
+ * rarity (a player with no avatar set gets the same frame in slate). The
+ * negative margins keep it from making the row any taller. The player's own
+ * row is already outlined in cyan, so the portrait keeps its rarity colour.
+ */
 .lbrow__avatar {
   flex: none;
-  width: 34px;
-  height: 34px;
+  width: 62px;
+  height: 62px;
+  margin: -14px 0;
   object-fit: cover;
-  background: rgb(0 0 0 / 40%);
-  border: 1px solid var(--line);
-  border-radius: 50%;
-}
-
-/* The player's own row is already outlined; the portrait follows it. */
-.lbrow--you .lbrow__avatar {
-  border-color: var(--cyan);
+  background: #000;
+  border: 2px solid var(--rc, #3a4560);
+  border-radius: 13px;
+  box-shadow: 0 8px 14px -4px rgb(0 0 0 / 70%), 0 0 16px -2px var(--rg, transparent);
 }
 
 @media (max-width: 719px) {
+  .lbtable {
+    gap: 8px;
+  }
   .lbrow__avatar {
-    width: 28px;
-    height: 28px;
+    width: 48px;
+    height: 48px;
+    margin: -4px 0;
+    border-radius: 11px;
   }
 }
 

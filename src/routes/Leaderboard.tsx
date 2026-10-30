@@ -27,6 +27,7 @@ import {
   seasonPot,
   seasonTiming,
 } from '@/leaderboard/rules'
+import { avatarRarity } from '@/account/rules'
 import { claimLeaderboardReward, DIRTIES } from '@/wharf/actions'
 import { useAction } from '@/wharf/useAction'
 import { useChainQuery } from '@/chain/useChainQuery'
@@ -101,6 +102,17 @@ interface BoardData {
   loading: boolean
   error: string | null
   reload: () => Promise<unknown>
+}
+
+/**
+ * The class that dresses a row in its player's avatar: the rarity colour on
+ * the portrait, a wash of it across the row, and a stripe down its edge. A
+ * player with no avatar set - four in five - gets none, and keeps the row
+ * as it was.
+ */
+function rarityRow(avatar: number | undefined): string {
+  const tier = avatarRarity(avatar)
+  return tier === undefined ? '' : ` lbrow--rar lbrow--r${tier}`
 }
 
 function useBoards(account: string | null): BoardData {
@@ -511,7 +523,7 @@ export function DungeonBoard({
           return (
             <div key={row.wallet}>
               <article
-                className={`lbrow lbrow--dungeon${
+                className={`lbrow lbrow--dungeon${rarityRow(row.avatar)}${
                   row.wallet === wallet ? ' lbrow--you' : ''
                 }`}
               >
@@ -904,7 +916,7 @@ export function ArenaBoards({
                   return (
                     <div key={row.wallet}>
                       <article
-                        className={`lbrow lbrow--arena${
+                        className={`lbrow lbrow--arena${rarityRow(row.avatar)}${
                           row.wallet === wallet ? ' lbrow--you' : ''
                         }`}
                       >
@@ -1401,7 +1413,7 @@ function YouPin({
   }
   return (
     <div className="lbpin">
-      <article className="lbrow lbrow--you lbpin__row">
+      <article className={`lbrow lbrow--you lbpin__row${rarityRow(avatar)}`}>
         <span className={`rank ${rankClass(rank)}`}>{rank}</span>
         <span className="lbrow__who">
           <PlayerAvatar id={avatar} name={name} />
