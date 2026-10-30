@@ -151,7 +151,6 @@ function DensitySeg({ density, onChange }: { density: Density; onChange: (d: Den
           <rect x="3" y="4" width="18" height="6" rx="1.5" />
           <rect x="3" y="14" width="18" height="6" rx="1.5" />
         </svg>
-        <span className="drost__denslabel">Cards</span>
       </button>
       <button type="button" aria-pressed={density === 'compact'} title="Compact" onClick={() => onChange('compact')}>
         <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -160,7 +159,6 @@ function DensitySeg({ density, onChange }: { density: Density; onChange: (d: Den
           <rect x="3" y="13" width="8" height="8" rx="1.5" />
           <rect x="13" y="13" width="8" height="8" rx="1.5" />
         </svg>
-        <span className="drost__denslabel">Compact</span>
       </button>
     </span>
   )
@@ -770,7 +768,7 @@ export function DeskRoster(p: DeskRosterProps) {
           You have no fighters yet. Recruits are hired at a tavern — stand on one on the map to reveal and hire.
         </p>
       ) : (
-        <div className={`drost__main${wide ? '' : ' is-narrow'}`}>
+        <div className={`drost__main${wide ? '' : ' is-narrow'}${density === 'compact' ? ' is-compact' : ''}`}>
           <section className="drost__list" aria-label="Fighters">
             <div className={`drost__listhead${stuck ? ' is-stuck' : ''}`} ref={listHead}>
               {/* A desktop's view switch stands where the count was; a phone keeps both. */}
@@ -781,9 +779,14 @@ export function DeskRoster(p: DeskRosterProps) {
                     : `${list.length} of ${p.roster.length}`}
                 </span>
               )}
-              {/* The views are the standard card's columns; the compact card has none to switch. */}
-              {density === 'cards' && <ViewSeg view={view} onChange={setView} />}
-              <DensitySeg density={density} onChange={setDensity} />
+              {/*
+                The layout first, then the views: the views are the standard
+                card's columns, and the compact card has none to switch.
+              */}
+              <span className="drost__headl">
+                <DensitySeg density={density} onChange={setDensity} />
+                {density === 'cards' && <ViewSeg view={view} onChange={setView} />}
+              </span>
               {/* The markers at hand beside the views on a desktop; the filter keeps them too, as a phone's does. */}
               {!phone && <MarkerSeg roster={p.roster} filter={p.filter} onFilter={p.onFilter} />}
             </div>
@@ -813,6 +816,8 @@ export function DeskRoster(p: DeskRosterProps) {
                     onClick={() => onRow(f)}
                     onTick={looks && gateOf(f).ok ? () => p.onCheck(f.fighter_id) : undefined}
                     level={levelUpOf(f, p.levels)}
+                    /* Only once the ladder is read: before it, every fighter looks to have no level left. */
+                    max={p.levels.length > 0 && levelUpOf(f, p.levels).atMax}
                   />
                 ))}
               </div>
@@ -965,6 +970,7 @@ export function CompactCard({
   onClick,
   onTick,
   level,
+  max = false,
 }: {
   f: RosterFighter
   mode: Mode
@@ -975,6 +981,8 @@ export function CompactCard({
   onClick: () => void
   onTick?: () => void
   level: LevelUp
+  /** At the top of the ladder: the strip full and green, for good. */
+  max?: boolean
 }) {
   const state = fighterState(f, now)
   const ticking = mode !== 'inventory'
@@ -994,7 +1002,7 @@ export function CompactCard({
   const title = [
     `${cap(f.classname)} · ${f.racename} · L${f.stats.level}`,
     state === 'busy' ? useLabel(f) : state === 'overdue' ? 'Requests payday' : '',
-    level.ready ? 'Ready to level up' : level.atMax ? '' : `${Math.floor(level.xpPercent)}% to the next level`,
+    level.ready ? 'Ready to level up' : max ? 'Top level' : level.atMax ? '' : `${Math.floor(level.xpPercent)}% to the next level`,
   ]
     .filter(Boolean)
     .join(' · ')
@@ -1014,13 +1022,14 @@ export function CompactCard({
           state === 'busy' ? 'is-busy' : '',
           state === 'overdue' ? 'is-due' : '',
           level.ready ? 'is-up' : '',
+          max ? 'is-max' : '',
         ]
           .filter(Boolean)
           .join(' ')}
         style={
           {
             '--ec': elementRim(f.element),
-            '--c': level.ready ? 1 : level.xpPercent / 100,
+            '--c': level.ready || max ? 1 : level.xpPercent / 100,
           } as React.CSSProperties
         }
       >

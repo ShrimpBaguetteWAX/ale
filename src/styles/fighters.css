@@ -1605,6 +1605,9 @@
   margin: -4px -16px -2px;
   padding: 4px 16px 6px;
   transition: background var(--dur-fast) var(--ease);
+  /* The count, the layout switch and the views: on the narrowest phones the switches drop under the count. */
+  flex-wrap: wrap;
+  row-gap: 6px;
 }
 .drost--phone .drost__listhead.is-stuck {
   background: rgb(6 10 22 / 55%);
@@ -2014,6 +2017,10 @@
 /* The fighter's panel level with the first row of the list, under its view switch. */
 .drost:not(.drost--phone) .drost__main:not(.is-narrow):has(> .drost__list > .drost__listhead) > .drost__side {
   margin-top: 46px;
+}
+/* Level with the first compact card's frame: under the grid's 2px and the ribbon's 24px. */
+.drost:not(.drost--phone) .drost__main.is-compact:not(.is-narrow):has(> .drost__list > .drost__listhead) > .drost__side {
+  margin-top: 72px;
 }
 
 /*
@@ -3976,8 +3983,15 @@ h2.drost__bname {
   stroke-width: 2;
   stroke-linejoin: round;
 }
-.drost--phone .drost__denslabel {
-  display: none;
+/* The layout switch and the views together at the head's start; icons only, so the markers keep their room. */
+.drost__headl {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.drost:not(.drost--phone) .drost__listhead .drost__densseg button {
+  padding: 0 9px;
 }
 
 .rcard {
@@ -4018,6 +4032,10 @@ h2.drost__bname {
   max-width: none;
   height: auto;
   object-fit: fill;
+}
+/* A desktop's ribbon room in pixels, so the fighter's panel can line up with the cards. */
+.drost:not(.drost--phone) .rcard .gcard {
+  margin-top: 24px;
 }
 /* No health bar outside a fight: the name sits down on the strip. */
 .rcard .gcard__name {
@@ -4208,4 +4226,9 @@ h2.drost__bname {
 :root[data-fx='low'] .rcard .is-up .gcard__lv::before,
 :root[data-fx='low'] .rcard.is-picked .gcard__fx::before {
   animation: none;
+}
+/* At the top of the ladder: nothing left to earn, the strip full and green. */
+.rcard .is-max .gcard__chg i {
+  background: #5ff2b0;
+  box-shadow: 0 0 5px rgb(95 242 176 / 60%);
 }

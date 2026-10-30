@@ -33,6 +33,7 @@ void Promise.all([fetchRoster(wallet), fetchFighterLevels()]).then(([roster, lev
             onClick={() => {}}
             onTick={() => {}}
             level={levelUpOf(f, levels)}
+            max={levels.length > 0 && levelUpOf(f, levels).atMax}
           />
         ))}
       </div>
