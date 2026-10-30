@@ -17,6 +17,26 @@
   margin-top: var(--sp-6);
 }
 
+/*
+ * On a desktop the result is the height of the window (less the page's
+ * padding), the buttons at its top and everything else in the middle of
+ * what is left, rather than hanging under the bar over an empty lower half.
+ * Taller than the window, it simply grows: the auto margins come to nothing.
+ */
+@media (min-width: 1024px) {
+  .result:not(.result--pick) {
+    display: flex;
+    flex-direction: column;
+    min-height: calc(100dvh - 2 * var(--sp-6));
+  }
+  .result:not(.result--pick) > .honours {
+    margin-top: auto;
+  }
+  .result:not(.result--pick) > :last-child {
+    margin-bottom: auto;
+  }
+}
+
 /* ---------- the verdict ---------- */
 
 .honours__head {
