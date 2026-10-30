@@ -4784,6 +4784,8 @@ h2.drost__bname {
   --cw: 112px;
   --ph: 216px;
   position: relative;
+  /* The card and the score pennant stack inside the holder, not over the sticky filter bar it scrolls under. */
+  isolation: isolate;
   display: grid;
   grid-template-columns: var(--cw) minmax(0, 1fr);
   align-items: center;
