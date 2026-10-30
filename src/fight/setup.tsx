@@ -932,7 +932,7 @@ export function CombatCard({
               }
             >
               <GameImg
-                className={art ? undefined : 'rcard__art'}
+                className={art ? undefined : 'rocard__art'}
                 style={art ? undefined : portraitCut(classname, racename)}
                 src={art ?? fighterArt({ classname, racename })}
                 alt={`${classname} ${racename}`}
@@ -2384,7 +2384,7 @@ export function PickCard({
     const xp = f.stats.required_experience > 0 ? f.stats.experience / f.stats.required_experience : 0
     return (
       <div
-        className={'rcard rcard--pick' + (picked ? ' is-picked' : '') + (blocked ? ' is-locked' : '')}
+        className={'rocard rocard--pick' + (picked ? ' is-picked' : '') + (blocked ? ' is-locked' : '')}
         ref={hoverRef}
         {...hoverHandlers}
       >
@@ -2395,7 +2395,7 @@ export function PickCard({
         )}
         <button
           type="button"
-          className="rcard__hit"
+          className="rocard__hit"
           onClick={() => {
             closeHover()
             onClick()

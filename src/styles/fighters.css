@@ -2018,9 +2018,9 @@
 .drost:not(.drost--phone) .drost__main:not(.is-narrow):has(> .drost__list > .drost__listhead) > .drost__side {
   margin-top: 46px;
 }
-/* Level with the first compact card's frame: under the grid's 2px and the ribbon's 24px. */
+/* Level with the first compact card's frame: under the grid's 10px and the ribbon's 24px. */
 .drost:not(.drost--phone) .drost__main.is-compact:not(.is-narrow):has(> .drost__list > .drost__listhead) > .drost__side {
-  margin-top: 72px;
+  margin-top: 80px;
 }
 
 /*
@@ -3969,7 +3969,8 @@ h2.drost__bname {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
   gap: 2px 12px;
-  padding: 2px 2px 10px;
+  /* Room above the first row for a picked card, lifted with its ribbon. */
+  padding: 10px 2px 10px;
 }
 .drost--phone .drost__grid {
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -4011,8 +4012,14 @@ h2.drost__bname {
   padding: 0 9px;
 }
 
-.rcard {
+.rocard {
   position: relative;
+  /*
+   * The battle's card lifts its level, badges, name and ribbon with z-index;
+   * kept inside the card, or they paint over a picker's bars and a pinned
+   * list head as the grid scrolls under them.
+   */
+  isolation: isolate;
   display: block;
   min-width: 0;
   padding: 0;
@@ -4024,7 +4031,7 @@ h2.drost__bname {
   cursor: pointer;
   container-type: inline-size;
 }
-.rcard .gcard {
+.rocard .gcard {
   --u: 13.7cqw;
   --beat: 1;
   display: block;
@@ -4032,16 +4039,16 @@ h2.drost__bname {
   /* Room above for the ribbon, which stands over the crown. */
   margin-top: calc(var(--u) * 1.7);
 }
-.rcard .gcard__frame,
-.rcard .gcard__pic {
+.rocard .gcard__frame,
+.rocard .gcard__pic {
   display: block;
 }
-.rcard .gcard__pic {
+.rocard .gcard__pic {
   background-position: center;
   background-size: cover;
 }
 /* The portrait, cut from the full art at one even scale (portraitFrame.ts), on any gilded card. */
-.gcard__pic .rcard__art {
+.gcard__pic .rocard__art {
   position: absolute;
   left: var(--px);
   top: var(--py);
@@ -4051,105 +4058,105 @@ h2.drost__bname {
   object-fit: fill;
 }
 /* A desktop's ribbon room in pixels, so the fighter's panel can line up with the cards. */
-.drost:not(.drost--phone) .rcard .gcard {
+.drost:not(.drost--phone) .rocard .gcard {
   margin-top: 24px;
 }
 /* No health bar outside a fight: the name sits down on the strip. */
-.rcard .gcard__name {
+.rocard .gcard__name {
   bottom: calc(var(--u) * 0.95);
 }
-.rcard:hover:not(.is-picked) .gcard {
+.rocard:hover:not(.is-picked) .gcard {
   transform: translateY(calc(var(--u) * -0.6));
 }
-.rcard:focus-visible {
+.rocard:focus-visible {
   outline: none;
 }
-.rcard:focus-visible .gcard__frame {
+.rocard:focus-visible .gcard__frame {
   outline: 2px solid var(--cyan);
   outline-offset: 2px;
 }
 
 /* Picked: the battle's acting card, lifted, in polished gold, a light running over it. */
-.rcard.is-picked .gcard {
+.rocard.is-picked .gcard {
   z-index: 2;
   transform: translateY(calc(var(--u) * -0.9)) scale(1.06);
 }
-.rcard.is-picked .gcard__frame {
+.rocard.is-picked .gcard__frame {
   background: linear-gradient(160deg, #fff6d6 0%, #f2c35a 25%, #8a5d14 55%, #d9a640 78%, #fff3c4 100%);
   box-shadow:
     inset 0 1px 0 #fff,
     0 calc(var(--u) * 1) calc(var(--u) * 2.2) rgb(0 0 0 / 60%),
     0 0 calc(var(--u) * 2) rgb(255 200 90 / 55%);
 }
-.rcard.is-picked .gcard__fx {
+.rocard.is-picked .gcard__fx {
   opacity: 1;
 }
-.rcard.is-picked .gcard__fx::before {
+.rocard.is-picked .gcard__fx::before {
   animation: gcard-sweep 1.5s ease-in-out infinite;
 }
 
 /* The ribbon over the crown, and the crown diamond in its colour. */
-.rcard .gcard__tag {
+.rocard .gcard__tag {
   letter-spacing: 0.12em;
   text-transform: uppercase;
   font-size: max(6.5px, calc(var(--u) * 0.6));
 }
-.rcard .rcard--payday {
+.rocard .rocard--payday {
   --tc: #ff5a6a;
 }
-.rcard .rcard--payday .gcard__tag {
+.rocard .rocard--payday .gcard__tag {
   color: #fff;
   background: linear-gradient(180deg, #ff7a88, #c3203a);
 }
-.rcard .rcard--market {
+.rocard .rocard--market {
   --tc: #00baff;
 }
-.rcard .rcard--market .gcard__tag {
+.rocard .rocard--market .gcard__tag {
   color: #062033;
   background: linear-gradient(180deg, #a8ecff, #00baff);
 }
-.rcard .rcard--arena {
+.rocard .rocard--arena {
   --tc: #f6a800;
 }
-.rcard .rcard--arena .gcard__tag {
+.rocard .rocard--arena .gcard__tag {
   color: #1a1205;
   background: linear-gradient(180deg, #ffe39a, #f6a800);
 }
-.rcard .rcard--dungeon {
+.rocard .rocard--dungeon {
   --tc: #a67cff;
 }
-.rcard .rcard--dungeon .gcard__tag {
+.rocard .rocard--dungeon .gcard__tag {
   color: #1b0b3a;
   background: linear-gradient(180deg, #e3d2ff, #a67cff);
 }
-.rcard .rcard--tournament {
+.rocard .rocard--tournament {
   --tc: #ff8a3d;
 }
-.rcard .rcard--tournament .gcard__tag {
+.rocard .rocard--tournament .gcard__tag {
   color: #2a1204;
   background: linear-gradient(180deg, #ffd0a8, #ff8a3d);
 }
-.rcard .rcard--busy {
+.rocard .rocard--busy {
   --tc: #b9c2d6;
 }
-.rcard .rcard--busy .gcard__tag {
+.rocard .rocard--busy .gcard__tag {
   color: #0b1426;
   background: linear-gradient(180deg, #eef2fa, #9aa6bf);
 }
-.rcard .rcard--level {
+.rocard .rocard--level {
   --tc: #5ff2b0;
 }
-.rcard .rcard--level .gcard__tag {
+.rocard .rocard--level .gcard__tag {
   color: #04210f;
   background: linear-gradient(180deg, #b9ffe0, #2bd28a);
 }
 
 /* Busy: the frame goes a little iron; the portrait and the ribbon stay readable. */
-.rcard .is-busy .gcard__frame {
+.rocard .is-busy .gcard__frame {
   filter: saturate(0.6) brightness(0.82);
 }
 /* A payday owed: the red rim of a fighter low on health, pulsing. */
-.rcard .is-due .gcard__pic::after {
+.rocard .is-due .gcard__pic::after {
   box-shadow:
     inset 0 0 0 calc(var(--u) * 0.14) #ff5a6a,
     inset 0 0 calc(var(--u) * 1.8) rgb(255 60 80 / 55%);
@@ -4162,17 +4169,17 @@ h2.drost__bname {
  * strip is full and lit. The LEVEL UP ribbon names it; a picked card keeps
  * its gold and only the motes rise from it.
  */
-@property --rcard-run {
+@property --rocard-run {
   syntax: '<angle>';
   inherits: false;
   initial-value: 0deg;
 }
-@keyframes rcard-run {
+@keyframes rocard-run {
   to {
-    --rcard-run: 360deg;
+    --rocard-run: 360deg;
   }
 }
-@keyframes rcard-rise {
+@keyframes rocard-rise {
   0% {
     transform: translateY(0) scale(1);
     opacity: 0;
@@ -4185,9 +4192,9 @@ h2.drost__bname {
     opacity: 0;
   }
 }
-.rcard:not(.is-picked) .is-up .gcard__frame {
+.rocard:not(.is-picked) .is-up .gcard__frame {
   background: conic-gradient(
-    from var(--rcard-run),
+    from var(--rocard-run),
     #0e6a45 0deg,
     #2bd28a 40deg,
     #eafff5 70deg,
@@ -4200,17 +4207,17 @@ h2.drost__bname {
     inset 0 1px 0 rgb(255 255 255 / 40%),
     0 calc(var(--u) * 0.5) calc(var(--u) * 1.2) rgb(0 0 0 / 55%),
     0 0 calc(var(--u) * 1.5) rgb(95 242 176 / 60%);
-  animation: rcard-run 2.4s linear infinite;
+  animation: rocard-run 2.4s linear infinite;
 }
-.rcard .is-up .gcard__lv::before {
+.rocard .is-up .gcard__lv::before {
   background: linear-gradient(135deg, #2bd28a, #0b6a44);
   box-shadow: inset 0 0 0 1px #b9ffe0;
 }
-.rcard .is-up .gcard__chg i {
+.rocard .is-up .gcard__chg i {
   background: #fff;
   box-shadow: 0 0 6px #5ff2b0;
 }
-.rcard__mote {
+.rocard__mote {
   position: absolute;
   z-index: 7;
   bottom: calc(var(--u) * 1.5);
@@ -4221,9 +4228,9 @@ h2.drost__bname {
   box-shadow: 0 0 calc(var(--u) * 0.5) #5ff2b0;
   opacity: 0;
   pointer-events: none;
-  animation: rcard-rise 2.2s ease-out infinite;
+  animation: rocard-rise 2.2s ease-out infinite;
 }
-.rcard__asc {
+.rocard__asc {
   position: absolute;
   z-index: 5;
   left: calc(var(--u) * 0.25);
@@ -4234,7 +4241,7 @@ h2.drost__bname {
   color: #ffd979;
   text-shadow: 0 1px 2px #000;
 }
-.rcard__mk {
+.rocard__mk {
   position: absolute;
   z-index: 5;
   right: calc(var(--u) * 0.55);
@@ -4247,47 +4254,47 @@ h2.drost__bname {
   background: rgb(4 8 20 / 80%);
   box-shadow: 0 0 0 1px rgb(255 255 255 / 22%);
 }
-.rcard__mk img {
+.rocard__mk img {
   width: 66%;
   height: 66%;
 }
 /* Selling: the tick over the portrait's corner; a fighter that cannot go is set back. */
-.rcard > .drost__tick {
+.rocard > .drost__tick {
   position: absolute;
   z-index: 8;
   right: 8cqw;
   top: calc(13.7cqw * 5.1);
   background-color: rgb(4 8 20 / 80%);
 }
-.rcard > .drost__tick.is-on {
+.rocard > .drost__tick.is-on {
   background-color: var(--cyan);
 }
-.rcard.is-locked {
+.rocard.is-locked {
   cursor: not-allowed;
 }
-.rcard.is-locked .gcard {
+.rocard.is-locked .gcard {
   opacity: 0.45;
 }
 @media (prefers-reduced-motion: reduce) {
-  .rcard .is-due .gcard__pic::after,
-  .rcard.is-picked .gcard__fx::before,
-  .rcard .is-up .gcard__frame {
+  .rocard .is-due .gcard__pic::after,
+  .rocard.is-picked .gcard__fx::before,
+  .rocard .is-up .gcard__frame {
     animation: none;
   }
-  .rcard__mote {
+  .rocard__mote {
     display: none;
   }
 }
-:root[data-fx='low'] .rcard .is-due .gcard__pic::after,
-:root[data-fx='low'] .rcard.is-picked .gcard__fx::before,
-:root[data-fx='low'] .rcard .is-up .gcard__frame {
+:root[data-fx='low'] .rocard .is-due .gcard__pic::after,
+:root[data-fx='low'] .rocard.is-picked .gcard__fx::before,
+:root[data-fx='low'] .rocard .is-up .gcard__frame {
   animation: none;
 }
-:root[data-fx='low'] .rcard__mote {
+:root[data-fx='low'] .rocard__mote {
   display: none;
 }
 /* At the top of the ladder: nothing left to earn, the strip full and green. */
-.rcard .is-max .gcard__chg i {
+.rocard .is-max .gcard__chg i {
   background: #5ff2b0;
   box-shadow: 0 0 5px rgb(95 242 176 / 60%);
 }
@@ -4301,10 +4308,10 @@ h2.drost__bname {
  * a picker, but no content-visibility: it clips paint to the card's box,
  * and the ribbon of a picked card stands above it.
  */
-.rcard--pick {
+.rocard--pick {
   cursor: default;
 }
-.rcard__hit {
+.rocard__hit {
   display: block;
   width: 100%;
   padding: 0;
@@ -4315,34 +4322,34 @@ h2.drost__bname {
   text-align: left;
   cursor: pointer;
 }
-.rcard__hit:disabled {
+.rocard__hit:disabled {
   cursor: not-allowed;
 }
-.rcard__hit:focus-visible {
+.rocard__hit:focus-visible {
   outline: none;
 }
-.rcard__hit:focus-visible .gcard__frame {
+.rocard__hit:focus-visible .gcard__frame {
   outline: 2px solid var(--cyan);
   outline-offset: 2px;
 }
-.rcard .rcard--team {
+.rocard .rocard--team {
   --tc: #00baff;
 }
-.rcard .rcard--team .gcard__tag {
+.rocard .rocard--team .gcard__tag {
   color: #062033;
   background: linear-gradient(180deg, #a8ecff, #00baff);
 }
-.rcard .rcard--ascending {
+.rocard .rocard--ascending {
   --tc: #f6a800;
 }
-.rcard .rcard--ascending .gcard__tag {
+.rocard .rocard--ascending .gcard__tag {
   color: #1a1205;
   background: linear-gradient(180deg, #ffe39a, #f6a800);
 }
-.rcard .rcard--sacrifice {
+.rocard .rocard--sacrifice {
   --tc: #ff5a6a;
 }
-.rcard .rcard--sacrifice .gcard__tag {
+.rocard .rocard--sacrifice .gcard__tag {
   color: #fff;
   background: linear-gradient(180deg, #ff7a88, #c3203a);
 }
@@ -4367,7 +4374,7 @@ h2.drost__bname {
   padding: 1.5px;
   border-radius: inherit;
   background: conic-gradient(
-    from var(--rcard-run),
+    from var(--rocard-run),
     #0e6a45 0deg,
     #2bd28a 40deg,
     #eafff5 70deg,
@@ -4381,7 +4388,7 @@ h2.drost__bname {
     linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
-  animation: rcard-run 2.4s linear infinite;
+  animation: rocard-run 2.4s linear infinite;
   pointer-events: none;
 }
 @media (prefers-reduced-motion: reduce) {
@@ -4391,4 +4398,370 @@ h2.drost__bname {
 }
 :root[data-fx='low'] .btn--levelup::before {
   animation: none;
+}
+
+/* ---------- the fighter in full on a desktop: a page of the codex ---------- */
+
+/*
+ * Made of the cards' stuff: a gold edge drawn as the border, the element's
+ * facets faint under a dark inlay, a hairline inside the edge and a diamond
+ * at each corner. The fighter's own compact card leads; the sections are
+ * engraved headings between diamonds.
+ */
+.drost:not(.drost--phone) .drost__detail.codex,
+.drost--phone .drost__detail.codex {
+  position: relative;
+  gap: 10px;
+  padding: 20px 22px 22px;
+  border: 3px solid transparent;
+  border-radius: 18px;
+  background:
+    linear-gradient(180deg, rgb(11 20 38 / 92%), rgb(6 12 24 / 96%)) padding-box,
+    var(--bg) center / cover padding-box,
+    linear-gradient(160deg, #ffe39a, #8a5d14 30%, #3a2a08 50%, #8a5d14 70%, #ffe39a) border-box;
+  box-shadow: 0 12px 28px rgb(0 0 0 / 60%);
+}
+.drost__detail.codex::before {
+  content: '';
+  position: absolute;
+  inset: 6px;
+  border: 1px solid rgb(255 217 121 / 28%);
+  border-radius: 12px;
+  pointer-events: none;
+}
+.codex__corner {
+  position: absolute;
+  z-index: 3;
+  width: 12px;
+  height: 12px;
+  transform: rotate(45deg);
+  background: linear-gradient(135deg, #fff3c4, #d9a640);
+  box-shadow: 0 0 8px rgb(255 200 90 / 60%);
+}
+/* On the gold corner itself, inside the panel: the side scrolls, and would clip anything hanging out of it. */
+.codex__corner.is-tl {
+  top: -2px;
+  left: -2px;
+}
+.codex__corner.is-tr {
+  top: -2px;
+  right: -2px;
+}
+.codex__corner.is-bl {
+  bottom: -2px;
+  left: -2px;
+}
+.codex__corner.is-br {
+  right: -2px;
+  bottom: -2px;
+}
+.codex__head {
+  display: grid;
+  grid-template-columns: 112px minmax(0, 1fr) auto;
+  gap: 16px;
+  align-items: center;
+}
+.codex__card {
+  width: 112px;
+  cursor: default;
+}
+.codex__title {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+.codex__name {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #fff3c4;
+  text-shadow: 0 0 14px rgb(255 200 90 / 35%);
+}
+.codex .drost__upkeep {
+  background: rgb(0 0 0 / 30%);
+  box-shadow: inset 0 0 0 1px rgb(255 217 121 / 25%);
+}
+
+/* An engraved heading between two diamonds. */
+.codex__div {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 4px;
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: #ffd979;
+}
+.codex__div::before,
+.codex__div::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgb(255 217 121 / 55%), transparent);
+}
+.codex__div > i {
+  flex: none;
+  width: 7px;
+  height: 7px;
+  transform: rotate(45deg);
+  background: #ffd979;
+}
+
+/* The stats in ten slanted segments, coloured by their grade as the bars were. */
+.codex__seg {
+  display: grid;
+  grid-template-columns: repeat(10, minmax(0, 1fr));
+  gap: 3px;
+  height: 9px;
+}
+.codex__seg > i {
+  border-radius: 1px;
+  background: rgb(255 255 255 / 8%);
+  transform: skewX(-18deg);
+}
+.codex__seg > i.is-on {
+  background: var(--sg, #9aa6bd);
+}
+.codex__seg.is-gold-up {
+  --sg: #ffc23d;
+}
+.codex__seg.is-green-duble-up {
+  --sg: #3ddc84;
+}
+.codex__seg.is-green-up {
+  --sg: #7fe3a9;
+}
+.codex__seg.is-red-down {
+  --sg: #ff5a6a;
+}
+.codex__seg.is-red-duble-down {
+  --sg: #ff3048;
+}
+
+/* The resistances as hex medallions in their element's rim. */
+.codex .drost__resrow > span {
+  gap: 4px;
+  padding: 2px 0;
+  background: none;
+}
+.codex__hex {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 40px;
+  clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+  background: linear-gradient(160deg, #fff, var(--ec) 35%, color-mix(in srgb, var(--ec) 35%, #000));
+}
+.codex__hex > span {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 34px;
+  clip-path: inherit;
+  background: #0b1426;
+}
+.codex .drost__resrow .codex__hex img {
+  width: 17px;
+  height: 17px;
+}
+
+/* Each ability under a ribbon in its rarity. */
+.codex .drost__ablist {
+  gap: 12px;
+}
+.codex .drost__abitem {
+  padding-top: 16px;
+  background: rgb(0 0 0 / 28%);
+  box-shadow: inset 0 0 0 1px rgb(255 217 121 / 16%);
+}
+.codex .drost__abitem::before {
+  display: none;
+}
+.codex .drost__abitem:not(.is-locked) > b > small {
+  display: none;
+}
+.codex__rib {
+  position: absolute;
+  top: -8px;
+  left: 12px;
+  padding: 2px 12px;
+  clip-path: polygon(7% 0, 93% 0, 100% 50%, 93% 100%, 7% 100%, 0 50%);
+  font-family: var(--font-display);
+  font-size: 8.5px;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #0b1426;
+  background: var(--ab);
+}
+.codex .drost__abitem.is-locked .codex__rib {
+  background: #7d879e;
+}
+
+/* The buttons as steel plates glowing in their colour. */
+.drost:not(.drost--phone) .drost__side .codex .drost__acts {
+  margin: 6px 0 0;
+  padding: 0;
+  border-top: 0;
+  border-radius: 0;
+  background: none;
+}
+.codex .drost__acts .btn {
+  --btn-bg: linear-gradient(180deg, #2b3757, #0c1222 60%, #1a2440);
+  --btn-line: color-mix(in srgb, var(--bc, #7d879e) 70%, transparent);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 30%),
+    inset 0 0 14px color-mix(in srgb, var(--bc, #7d879e) 30%, transparent),
+    0 4px 10px rgb(0 0 0 / 50%);
+}
+.codex .drost__acts .btn--primary {
+  --bc: #00baff;
+}
+.codex .drost__acts .btn--danger {
+  --bc: #ff5a6a;
+}
+.codex .drost__acts a.btn {
+  --bc: #f6a800;
+}
+.codex .drost__acts .btn--levelup {
+  --bc: #5ff2b0;
+  --btn-line: transparent;
+}
+
+/*
+ * The codex, compact: it has to stand beside the grid in one screen's
+ * height, so the side never needs its scrollbar on a desktop. Tighter
+ * gaps, a smaller card and name, slimmer strips, smaller medallions.
+ */
+.drost:not(.drost--phone) .drost__detail.codex {
+  gap: 7px;
+  padding: 14px 18px 16px;
+}
+.drost:not(.drost--phone) .drost__side:has(> .codex) {
+  scrollbar-width: none;
+}
+.drost:not(.drost--phone) .drost__side:has(> .codex)::-webkit-scrollbar {
+  display: none;
+}
+.codex__head {
+  grid-template-columns: 88px minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: start;
+}
+.codex__card {
+  width: 88px;
+}
+/* The card's ribbon room, a little less than the grid's. */
+.drost:not(.drost--phone) .codex__card .gcard {
+  margin-top: 18px;
+}
+.codex__title {
+  align-self: center;
+}
+.codex__name {
+  font-size: 22px;
+}
+.codex .drost__badge.drost__badge--detail {
+  align-self: center;
+  width: 60px;
+  height: 70px;
+}
+.codex .drost__badge--detail > b {
+  font-size: 21px;
+}
+.codex__div {
+  margin-top: 2px;
+  font-size: 9px;
+}
+.codex .drost__bars--detail {
+  gap: 4px;
+}
+.codex__seg {
+  height: 7px;
+}
+.codex .drost__resrow > span {
+  gap: 3px;
+  padding: 0;
+}
+.codex__hex {
+  width: 30px;
+  height: 34px;
+}
+.codex__hex > span {
+  width: 25px;
+  height: 29px;
+}
+.codex .drost__resrow .codex__hex img {
+  width: 14px;
+  height: 14px;
+}
+.codex .drost__resrow b {
+  font-size: 11.5px;
+}
+.codex .drost__ablist {
+  gap: 11px;
+}
+.codex .drost__abitem {
+  padding: 12px 11px 7px 12px;
+}
+.codex .drost__abitem > b {
+  font-size: 12.5px;
+}
+.codex .drost__abitem > p {
+  font-size: 12px;
+}
+.drost:not(.drost--phone) .drost__side .codex .drost__acts {
+  margin-top: 4px;
+}
+.drost:not(.drost--phone) .drost__side .codex .drost__acts > .btn,
+.drost:not(.drost--phone) .drost__side .codex .drost__acts > .drost__markpick > .btn {
+  height: 34px;
+}
+.drost:not(.drost--phone) .drost__side .codex .drost__acts > .drost__markpick > .btn {
+  width: 34px;
+}
+
+/* The codex in a phone's sheet: the same page, a size down. */
+.drost--phone .drost__detail.codex {
+  gap: 8px;
+  padding: 12px 12px 14px;
+}
+.drost--phone .codex__head {
+  grid-template-columns: 74px minmax(0, 1fr) auto;
+  gap: 10px;
+}
+.drost--phone .codex__card {
+  width: 74px;
+}
+.drost--phone .codex__name {
+  font-size: 18px;
+}
+.drost--phone .codex .drost__badge.drost__badge--detail {
+  width: 50px;
+  height: 58px;
+}
+.drost--phone .codex .drost__badge--detail > b {
+  font-size: 17px;
+}
+.drost--phone .codex .drost__upkeep {
+  padding: 6px 9px;
+  font-size: 11px;
+}
+.drost--phone .codex__hex {
+  width: 28px;
+  height: 31px;
+}
+.drost--phone .codex__hex > span {
+  width: 23px;
+  height: 26px;
+}
+/* One line per ability in the codex, the whole text on hover: the page has to fit one screen. */
+.codex .drost__abitem > p {
+  -webkit-line-clamp: 1;
 }

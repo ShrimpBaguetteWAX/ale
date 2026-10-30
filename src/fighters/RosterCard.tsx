@@ -5,7 +5,7 @@ import { GameImg } from '@/components/GameImg'
 import { portraitCut } from '@/fighters/portraitFrame'
 import { elementBackground, elementIcon, fighterArt, fighterArtFallback } from '@/tavern/fighterStats'
 
-/** What the ribbon over the crown says, and the colour it says it in (`.rcard--<key>`). */
+/** What the ribbon over the crown says, and the colour it says it in (`.rocard--<key>`). */
 export interface Ribbon {
   key: string
   label: string
@@ -69,7 +69,7 @@ export function RosterCardFace({
     <span
       className={[
         'gcard',
-        ribbon ? `rcard--${ribbon.key}` : '',
+        ribbon ? `rocard--${ribbon.key}` : '',
         busy ? 'is-busy' : '',
         due ? 'is-due' : '',
         up ? 'is-up' : '',
@@ -87,7 +87,7 @@ export function RosterCardFace({
       <span className="gcard__frame">
         <span className="gcard__pic" style={{ backgroundImage: `url('${elementBackground(f.element)}')` }}>
           <GameImg
-            className="rcard__art"
+            className="rocard__art"
             style={portraitCut(f.classname, f.racename)}
             src={fighterArt(f)}
             alt=""
@@ -99,10 +99,10 @@ export function RosterCardFace({
         <span className="gcard__lv">
           <b>{f.stats.level}</b>
         </span>
-        {f.ascension_level > 0 && <span className="rcard__asc">✦{f.ascension_level}</span>}
+        {f.ascension_level > 0 && <span className="rocard__asc">✦{f.ascension_level}</span>}
         <img className="gcard__el" src={elementIcon(f.element)} alt={f.element} />
         {!!f.marker && (
-          <span className="rcard__mk">
+          <span className="rocard__mk">
             <img src={markerIcon(f.marker)} alt={f.marker} />
           </span>
         )}
@@ -114,7 +114,7 @@ export function RosterCardFace({
       </span>
       {up &&
         MOTES.map(([left, delay]) => (
-          <span key={left} className="rcard__mote" style={{ left: `${left}%`, animationDelay: `${delay}s` }} />
+          <span key={left} className="rocard__mote" style={{ left: `${left}%`, animationDelay: `${delay}s` }} />
         ))}
     </span>
   )

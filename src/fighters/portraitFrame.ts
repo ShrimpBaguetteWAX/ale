@@ -68,7 +68,7 @@ const FRAME: Record<string, [number, number, number]> = {
 /** A fighter the table does not know yet: the cut that suits most of them. */
 const FALLBACK: [number, number, number] = [228, -60, -16]
 
-/** The cut, as the custom properties `.rcard__art` reads. */
+/** The cut, as the custom properties `.rocard__art` reads. */
 export function portraitCut(classname: string, racename: string): CSSProperties {
   const [z, x, y] = FRAME[`${classname}_${racename}`] ?? FALLBACK
   return { '--pz': `${z}%`, '--px': `${x}%`, '--py': `${y}%` } as CSSProperties

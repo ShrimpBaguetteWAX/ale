@@ -74,6 +74,7 @@ import { canAscend, coverableSlots, SACRIFICE_COUNT } from '@/ascension/rules'
 import { useLazyConfig } from '@/state/useConfig'
 import { asset } from '@/assets'
 import { RosterCardFace, placeRibbon, type Ribbon } from '@/fighters/RosterCard'
+import { elementRim } from '@/fight/GildedCards'
 
 /**
  * My Fighters on a desktop: the Market's rows, with payday and age.
@@ -935,6 +936,24 @@ export function DeskRoster(p: DeskRosterProps) {
  * One fighter's card. My Fighters draws its list with it, and Ascension its
  * own, so a player meets the same card wherever they pick a fighter.
  */
+/** The ribbon over a fighter's card: a payday owed, else where it is busy, else a level waiting. */
+function ribbonOf(f: RosterFighter, state: ReturnType<typeof fighterState>, level: LevelUp): Ribbon | null {
+  if (state === 'overdue') return { key: 'payday', label: 'Payday' }
+  if (state === 'busy') return placeRibbon(f.use_type ?? '')
+  return level.ready ? { key: 'level', label: 'Level up' } : null
+}
+
+/* An engraved heading between two diamonds, for the codex's sections. */
+function Divider({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="codex__div">
+      <i />
+      {children}
+      <i />
+    </span>
+  )
+}
+
 /**
  * My Fighters' compact card: the battle's gilded card (RosterCardFace) with
  * the roster's facts on it - a payday owed, else where a busy fighter is,
@@ -967,14 +986,7 @@ export function CompactCard({
 }) {
   const state = fighterState(f, now)
   const ticking = mode !== 'inventory'
-  const ribbon: Ribbon | null =
-    state === 'overdue'
-      ? { key: 'payday', label: 'Payday' }
-      : state === 'busy'
-        ? placeRibbon(f.use_type ?? '')
-        : level.ready
-          ? { key: 'level', label: 'Level up' }
-          : null
+  const ribbon = ribbonOf(f, state, level)
   const title = [
     `${cap(f.classname)} · ${f.racename} · L${f.stats.level}`,
     state === 'busy' ? useLabel(f) : state === 'overdue' ? 'Requests payday' : '',
@@ -985,7 +997,7 @@ export function CompactCard({
   return (
     <button
       type="button"
-      className={['rcard', picked ? 'is-picked' : '', ticking && !gate.ok ? 'is-locked' : ''].filter(Boolean).join(' ')}
+      className={['rocard', picked ? 'is-picked' : '', ticking && !gate.ok ? 'is-locked' : ''].filter(Boolean).join(' ')}
       onClick={onClick}
       aria-pressed={ticking ? checked : picked}
       aria-label={title}
@@ -1376,48 +1388,71 @@ function Detail(props: DeskRosterProps & { f: RosterFighter; fig: Figures }) {
     : 'Unlocks on ascension'
   const daysLeft = Math.max(0, Math.ceil(fig.pay.msLeft / DAY))
   /*
-     The card from the list, opened up: the art as a banner with the name on
-     it and the score badge at its corner, the upkeep in one slim line, the
-     stats as bars against the class, the resistances in a row, the abilities
-     with what they do, and the actions at the foot.
+     The fighter in full is a page of a codex, made of the same stuff as the
+     cards: a gold-edged frame with diamonds at its corners, the element's
+     facets faint behind, the fighter's own card at its head, and engraved
+     headings between the stats (segmented strips), the resistances (hex
+     medallions in the element's rim) and the abilities (a ribbon in their
+     rarity). A phone's sheet holds the same page, a size down.
   */
+  const kick = (
+    <>
+      {state === 'busy' ? useLabel(f) : state === 'overdue' ? 'Requests payday' : 'Ready'} · sells for{' '}
+      <Credits value={s.credits ?? 0} />
+    </>
+  )
+  const chips = (
+    <>
+      <span>
+        Level {s.level}
+        {level.atMax ? ' · max' : ''}
+      </span>
+      {f.ascension_level > 0 && <span>Ascended {f.ascension_level}</span>}
+      <span>
+        <img src={statIcon('target')} alt="" />
+        {s.target ? formatTarget(s.target) : 'Highest Taunt'}
+      </span>
+      {/* A phone's foot has room for four buttons; the marker rides up here. */}
+      {phone && <MarkerPick {...props} chip />}
+    </>
+  )
+  const score = (
+    <span className="drost__badge drost__badge--detail" title="Combat score: damage and survival together">
+      <b>{Math.round(fig.combat.score).toLocaleString(NUM_LOCALE)}</b>
+      <small>Score</small>
+    </span>
+  )
   return (
-    <div className="drost__detail">
-      <div className="drost__banner" style={{ backgroundImage: `url('${elementBackground(f.element)}')` }}>
-        <GameImg className="drost__bannerart" src={fighterArt(f)} alt="" fallback={fighterArtFallback()} />
-        {f.marker && (
-          <span className="drost__mk">
-            <img src={markerIcon(f.marker)} alt={f.marker} />
-          </span>
-        )}
-        <span className="drost__bannertext">
-          <span className="drost__bkick">
-            {state === 'busy' ? useLabel(f) : state === 'overdue' ? 'Requests payday' : 'Ready'} · sells for{' '}
-            <Credits value={s.credits ?? 0} />
-          </span>
-          <h2 className="drost__bname">{f.classname}</h2>
+    <div
+      className="drost__detail codex"
+      style={{ '--bg': `url('${elementBackground(f.element)}')` } as React.CSSProperties}
+    >
+      <span className="codex__corner is-tl" />
+      <span className="codex__corner is-tr" />
+      <span className="codex__corner is-bl" />
+      <span className="codex__corner is-br" />
+      <div className="codex__head">
+        <span className="rocard codex__card">
+          <RosterCardFace
+            f={f}
+            ribbon={ribbonOf(f, state, level)}
+            xp={level.xpPercent / 100}
+            busy={state === 'busy'}
+            due={state === 'overdue'}
+            up={level.ready}
+            max={levels.length > 0 && level.atMax}
+          />
+        </span>
+        <span className="codex__title">
+          <span className="drost__bkick">{kick}</span>
+          <h2 className="codex__name">{f.classname}</h2>
           <span className="drost__bline">
             <img src={elementIcon(f.element)} alt="" />
             {f.racename} · {f.element}
           </span>
-          <span className="drost__bchips">
-            <span>
-              Level {s.level}
-              {level.atMax ? ' · max' : ''}
-            </span>
-            {f.ascension_level > 0 && <span>Ascended {f.ascension_level}</span>}
-            <span>
-              <img src={statIcon('target')} alt="" />
-              {s.target ? formatTarget(s.target) : 'Highest Taunt'}
-            </span>
-            {/* A phone's foot has room for four buttons; the marker rides up here. */}
-            {phone && <MarkerPick {...props} chip />}
-          </span>
+          <span className="drost__bchips">{chips}</span>
         </span>
-        <span className="drost__badge drost__badge--detail" title="Combat score: damage and survival together">
-          <b>{Math.round(fig.combat.score).toLocaleString(NUM_LOCALE)}</b>
-          <small>Score</small>
-        </span>
+        {score}
       </div>
 
       {/* The two clocks a fighter runs on and what the next payday costs, in one slim line; the long words on hover. */}
@@ -1446,6 +1481,7 @@ function Detail(props: DeskRosterProps & { f: RosterFighter; fig: Figures }) {
         </span>
       </div>
 
+      <Divider>Stats</Divider>
       {/* Each stat against its class, as on the card, with the range a blow can land in. */}
       <div className="drost__bars drost__bars--detail">
         {fig.stats.map((x) => (
@@ -1458,8 +1494,11 @@ function Detail(props: DeskRosterProps & { f: RosterFighter; fig: Figures }) {
               <img className="drost__si" src={statIcon(x.field)} alt="" />
               {STAT_NAMES[x.field]}
             </small>
-            <span className={`drost__track is-${x.grade ?? 'none'}`}>
-              <i style={{ width: `${GRADE_REACH[x.grade ?? 'middle'] * 100}%` }} />
+            {/* Ten segments, as the cards count experience: how far the roll reaches in its class. */}
+            <span className={`codex__seg is-${x.grade ?? 'none'}`}>
+              {Array.from({ length: 10 }, (_, i) => (
+                <i key={i} className={i < Math.round(GRADE_REACH[x.grade ?? 'middle'] * 10) ? 'is-on' : undefined} />
+              ))}
             </span>
             <b>
               {x.value}
@@ -1470,10 +1509,15 @@ function Detail(props: DeskRosterProps & { f: RosterFighter; fig: Figures }) {
         ))}
       </div>
 
+      <Divider>Resistances</Divider>
       <div className="drost__resrow">
         {fig.res.map((x) => (
           <span key={x.field} title={`${cap(x.el)} resistance`}>
-            <img src={elementIcon(x.el)} alt={x.el} />
+            <span className="codex__hex" style={{ '--ec': elementRim(x.el) } as React.CSSProperties}>
+              <span>
+                <img src={elementIcon(x.el)} alt={x.el} />
+              </span>
+            </span>
             <b>
               {x.value}
               <Grade grade={x.grade} />
@@ -1482,6 +1526,7 @@ function Detail(props: DeskRosterProps & { f: RosterFighter; fig: Figures }) {
         ))}
       </div>
 
+      <Divider>Abilities</Divider>
       <div className="drost__ablist">
         {abilities.map((a, i) => {
           const r = abilityRarity(a.displayname)
@@ -1492,6 +1537,7 @@ function Detail(props: DeskRosterProps & { f: RosterFighter; fig: Figures }) {
               style={{ '--ab': rarityColor(a.displayname) } as React.CSSProperties}
               title={resolveAbilityDescription(a)}
             >
+              <span className="codex__rib">{a.locked ? 'Locked' : (r ?? 'unique')}</span>
               <b>
                 {abilityName(a.displayname)}
                 {!!a.locked && <img src={asset('/assets/icons/lock.svg')} alt="" />}
