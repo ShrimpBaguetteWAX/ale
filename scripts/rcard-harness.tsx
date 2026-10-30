@@ -6,20 +6,43 @@ import { fetchRoster } from '../src/dungeon/queries'
 import { fetchFighterLevels } from '../src/fighters/queries'
 import { levelUpOf } from '../src/fighters/rules'
 import { CompactCard, type Mode } from '../src/fighters/DeskRoster'
+import { PickCard } from '../src/fight/setup'
 import '../src/styles/global.css'
 import '../src/styles/app.css'
 import '../src/styles/fighters.css'
 import '../src/styles/landstage.css'
+import '../src/styles/dungeon.css'
 
 const q = new URLSearchParams(location.search)
 const wallet = q.get('as') ?? 'onabs.wam'
 const phone = q.get('phone') === '1'
 const mode = (q.get('mode') ?? 'inventory') as Mode
+/* ?pick=1: the fight screens' picker grid instead of My Fighters. */
+const pick = q.get('pick') === '1'
+/* ?up=1: every fifth fighter with a level waiting, to see the shine. */
+const fakeUp = q.get('up') === '1'
 
 void Promise.all([fetchRoster(wallet), fetchFighterLevels()]).then(([roster, levels]) => {
   const now = Date.now()
   createRoot(document.getElementById('root')!).render(
     <div className={`drost${phone ? ' drost--phone drost--stack' : ''}`} style={{ maxWidth: phone ? 360 : 900 }}>
+      {pick ? (
+        <div className="fightergrid fightergrid--compact">
+          {roster.map((f, i) => (
+            <PickCard
+              key={f.fighter_id}
+              fighter={f}
+              ageDecay={0}
+              density="compact"
+              picked={i < 3}
+              tick="In team"
+              blocked={f.in_use}
+              blockedNote={f.in_use ? 'In Arena' : undefined}
+              onClick={() => {}}
+            />
+          ))}
+        </div>
+      ) : (
       <div className="drost__grid">
         {roster.map((f, i) => (
           <CompactCard
@@ -32,11 +55,12 @@ void Promise.all([fetchRoster(wallet), fetchFighterLevels()]).then(([roster, lev
             gate={{ ok: !f.in_use }}
             onClick={() => {}}
             onTick={() => {}}
-            level={levelUpOf(f, levels)}
-            max={levels.length > 0 && levelUpOf(f, levels).atMax}
+            level={fakeUp && i % 5 === 2 ? { ...levelUpOf(f, levels), ready: true } : levelUpOf(f, levels)}
+            max={!(fakeUp && i % 5 === 2) && levels.length > 0 && levelUpOf(f, levels).atMax}
           />
         ))}
       </div>
+      )}
     </div>,
   )
 })

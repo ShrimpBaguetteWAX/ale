@@ -627,7 +627,7 @@
  * across and a desktop a dozen, so a whole roster is one screen.
  */
 .fightergrid.fightergrid--compact {
-  grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
 }
 
 @media (max-width: 719px) {

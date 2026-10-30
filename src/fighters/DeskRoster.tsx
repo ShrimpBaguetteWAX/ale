@@ -73,8 +73,7 @@ import { NUM_LOCALE, formatDecimals } from '@/format'
 import { canAscend, coverableSlots, SACRIFICE_COUNT } from '@/ascension/rules'
 import { useLazyConfig } from '@/state/useConfig'
 import { asset } from '@/assets'
-import { elementRim } from '@/fight/GildedCards'
-import { portraitCut } from '@/fighters/portraitFrame'
+import { RosterCardFace, placeRibbon, type Ribbon } from '@/fighters/RosterCard'
 
 /**
  * My Fighters on a desktop: the Market's rows, with payday and age.
@@ -936,29 +935,11 @@ export function DeskRoster(p: DeskRosterProps) {
  * One fighter's card. My Fighters draws its list with it, and Ascension its
  * own, so a player meets the same card wherever they pick a fighter.
  */
-/* Where a busy fighter is, in a word, for the ribbon over its compact card. */
-const RIBBON: Record<string, string> = {
-  market: 'Market',
-  arena: 'Arena',
-  dungeon: 'Dungeon',
-  tournament: 'Tourney',
-}
-
 /**
- * A fighter as the battle draws it: the gilded card of the fight's line-up
- * (GildedCards, landstage.css) - the steel frame, the diamond at its crown,
- * the element's rim round the portrait, the level in its diamond - with the
- * roster's facts where the battle puts the fight's.
- *
- * The ribbon over the crown says what the fighter is doing or wants, one
- * thing at a time: a payday owed, else where it is busy, else a level
- * waiting. The crown diamond takes the ribbon's colour. The strip at the
- * foot, the battle's charge, is the experience toward the next level, full
- * and lit once it is there. There is no health bar: outside a fight it is
- * always full.
- *
- * The portrait is cut from the full art (portraitFrame), not the `_avatar`
- * crop the battle uses, which is stretched for some fighters.
+ * My Fighters' compact card: the battle's gilded card (RosterCardFace) with
+ * the roster's facts on it - a payday owed, else where a busy fighter is,
+ * else a level waiting - the picked card in the gold the battle gives the
+ * fighter swinging, and the sale's tick when selling.
  */
 export function CompactCard({
   f,
@@ -986,19 +967,14 @@ export function CompactCard({
 }) {
   const state = fighterState(f, now)
   const ticking = mode !== 'inventory'
-  const use = (f.use_type ?? '').toLowerCase()
-  const ribbon =
-    state === 'overdue' ? 'payday' : state === 'busy' ? (RIBBON[use] ? use : 'busy') : level.ready ? 'level' : null
-  const label =
-    ribbon === 'payday'
-      ? 'Payday'
-      : ribbon === 'level'
-        ? 'Level up'
-        : ribbon === 'busy'
-          ? 'In use'
-          : ribbon
-            ? RIBBON[ribbon]
-            : null
+  const ribbon: Ribbon | null =
+    state === 'overdue'
+      ? { key: 'payday', label: 'Payday' }
+      : state === 'busy'
+        ? placeRibbon(f.use_type ?? '')
+        : level.ready
+          ? { key: 'level', label: 'Level up' }
+          : null
   const title = [
     `${cap(f.classname)} · ${f.racename} · L${f.stats.level}`,
     state === 'busy' ? useLabel(f) : state === 'overdue' ? 'Requests payday' : '',
@@ -1015,60 +991,15 @@ export function CompactCard({
       aria-label={title}
       title={ticking && !gate.ok ? gate.reason : title}
     >
-      <span
-        className={[
-          'gcard',
-          ribbon ? `rcard--${ribbon}` : '',
-          state === 'busy' ? 'is-busy' : '',
-          state === 'overdue' ? 'is-due' : '',
-          level.ready ? 'is-up' : '',
-          max ? 'is-max' : '',
-        ]
-          .filter(Boolean)
-          .join(' ')}
-        style={
-          {
-            '--ec': elementRim(f.element),
-            '--c': level.ready || max ? 1 : level.xpPercent / 100,
-          } as React.CSSProperties
-        }
-      >
-        <span className="gcard__frame">
-          <span className="gcard__pic" style={{ backgroundImage: `url('${elementBackground(f.element)}')` }}>
-            <GameImg
-              className="rcard__art"
-              style={portraitCut(f.classname, f.racename)}
-              src={fighterArt(f)}
-              alt=""
-              loading="lazy"
-              fallback={fighterArtFallback()}
-            />
-          </span>
-          <span className="gcard__fx" />
-          <span className="gcard__lv">
-            <b>{f.stats.level}</b>
-          </span>
-          {level.ready && (
-            <span className="rcard__up" aria-hidden="true">
-              <svg viewBox="0 0 12 12">
-                <path d="M6 10.5 V2 M2.5 5.5 L6 2 L9.5 5.5" />
-              </svg>
-            </span>
-          )}
-          {f.ascension_level > 0 && <span className="rcard__asc">✦{f.ascension_level}</span>}
-          <img className="gcard__el" src={elementIcon(f.element)} alt={f.element} />
-          {!!f.marker && (
-            <span className="rcard__mk">
-              <img src={markerIcon(f.marker)} alt={f.marker} />
-            </span>
-          )}
-          {label && <span className="gcard__tag">{label}</span>}
-        </span>
-        <span className="gcard__name">{f.classname}</span>
-        <span className="gcard__chg">
-          <i />
-        </span>
-      </span>
+      <RosterCardFace
+        f={f}
+        ribbon={ribbon}
+        xp={level.xpPercent / 100}
+        busy={state === 'busy'}
+        due={state === 'overdue'}
+        up={level.ready}
+        max={max}
+      />
       {ticking && (
         <span
           className={`drost__tick${checked ? ' is-on' : ''}${gate.ok ? '' : ' is-off'}${onTick ? ' is-hit' : ''}`}
@@ -1695,6 +1626,7 @@ function Acts({
   const inSale = rest.checked.includes(f.fighter_id)
   const s = f.stats
   const level = levelUpOf(f, levels)
+  const canLevel = canAct && level.ready && level.cost.credits <= credits && level.cost.gems <= gems && !busy
   /* Of the three sacrifice slots, how many the roster could fill today. */
   const ascend = canAscend(f, useLazyConfig('ascension'))
   const slots = coverableSlots(roster, f)
@@ -1713,8 +1645,9 @@ function Acts({
       {!level.atMax && (
         <button
           type="button"
-          className="btn btn--ghost btn--sm"
-          disabled={!canAct || !level.ready || level.cost.credits > credits || level.cost.gems > gems || !!busy}
+          /* Shining green when it can be pressed, as the card with a level waiting does. */
+          className={`btn btn--ghost btn--sm${canLevel ? ' btn--levelup' : ''}`}
+          disabled={!canLevel}
           onClick={() => onLevelOne(f)}
           title={level.ready ? 'Spend the banked experience' : 'Not enough experience yet'}
         >

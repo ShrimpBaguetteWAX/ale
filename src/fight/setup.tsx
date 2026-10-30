@@ -74,6 +74,7 @@ import {
 import { useConfigStore } from '@/state/useConfig'
 import { formatDecimals, NUM_LOCALE } from '@/format'
 import { GameImg } from '@/components/GameImg'
+import { RosterCardFace, placeRibbon, type Ribbon } from '@/fighters/RosterCard'
 
 /**
  * The parts of a fight setup screen that the dungeon and the arena share.
@@ -2335,39 +2336,36 @@ export function PickCard({
     handlers: hoverHandlers,
   } = useHoverCard(hoverPreview, !!hoverStats && density === 'compact')
 
-  const ageChip = ageDecay > 0 && (
-    <span
-      className={`fightercard__age ${bonus >= 0 ? 'is-up' : 'is-down'}`}
-      title={ageNote(bonus, ageDays(f), age)}
-    >
-      {bonus > 0 ? '+' : ''}
-      {bonus.toFixed(0)}%
-    </span>
-  )
-
   /*
-     The compact tile: My Fighters' card art, cut square.
+     The compact card: the battle's gilded card, as My Fighters draws it
+     (RosterCardFace), so a fighter looks the same where it is kept and
+     where it is chosen.
 
      Everything the full card asks is deliberately absent rather than
      shrunk — a smaller version of it would still be its questions asked in
      a font nobody can read. This answers the ones a roster is scanned by;
-     on a desktop, resting on the tile reads out the rest. The marker earns
-     its place: it is the label the player chose themselves, so at this
-     size it is the fastest way to find a particular fighter.
-
-     All of it rides on the art, in My Fighters' chips: the level and the
-     age at the foot, the marker in the top corner, and in the team or why
-     not available as one chip above the foot.
+     on a desktop, resting on the card reads out the rest. The level, the
+     element and the marker ride on the frame; in the team, or why not
+     available, is the ribbon over its crown.
   */
   if (density === 'compact') {
+    /*
+       The ribbon over the crown says what being picked means here, else
+       why the fighter cannot be: a payday owed, or where it is busy.
+    */
+    const ribbon: Ribbon | null = banner
+      ? { key: variant ?? 'team', label: banner }
+      : picked && tick
+        ? { key: 'team', label: tick }
+        : blockedNote
+          ? blockedNote === 'Wants a payday'
+            ? { key: 'payday', label: 'Payday' }
+            : placeRibbon(blockedNote)
+          : null
+    const xp = f.stats.required_experience > 0 ? f.stats.experience / f.stats.required_experience : 0
     return (
       <div
-        className={
-          'fightercard fightercard--compact' +
-          (picked ? ' fightercard--picked' : '') +
-          (blocked ? ' fightercard--off' : '') +
-          (variant ? ` fightercard--${variant}` : '')
-        }
+        className={'rcard rcard--pick' + (picked ? ' is-picked' : '') + (blocked ? ' is-locked' : '')}
         ref={hoverRef}
         {...hoverHandlers}
       >
@@ -2378,67 +2376,29 @@ export function PickCard({
         )}
         <button
           type="button"
-          className="fightercard__hit"
+          className="rcard__hit"
           onClick={() => {
             closeHover()
             onClick()
           }}
           disabled={blocked}
-          /* The card no longer says who this is, so the tooltip has to — and
+          /* The card does not say race or the whole note, so the tooltip has to - and
              on a desktop the hover read says it at length, where a native
              tooltip would sit on top of it. */
           title={
             hoverStats
               ? undefined
-              : `${f.classname} · ${f.racename} · L${f.stats.level}${
-                  hint ? ` — ${hint}` : ''
-                }`
+              : `${f.classname} · ${f.racename} · L${f.stats.level}${hint ? ` — ${hint}` : ''}`
           }
           aria-label={`${f.classname} · ${f.racename} · L${f.stats.level}`}
         >
-          <span className="fightercard__portrait">
-            <Portrait element={f.element} classname={f.classname} racename={f.racename} />
-            {/* The same chip the full card draws, so one marker is one
-                component rather than two that drift. */}
-            {!!f.marker && (
-              <span
-                className="fightercard__marker"
-                title={`Marked ${f.marker}`}
-                aria-label={`Marked ${f.marker}`}
-              >
-                <img src={markerIcon(f.marker)} alt="" width={16} height={16} />
-              </span>
-            )}
-            {banner && <span className="fightercard__banner">{banner}</span>}
-            {/* Picked and blocked both have to survive the shrink: they are
-                why a card can or cannot be tapped. One chip, above the foot
-                and clear of the face: in the team, or why not available. */}
-            {tick ? (
-              <span className="fightercard__state is-in">{tick}</span>
-            ) : (
-              blockedNote && (
-                <span className={`fightercard__state ${blockedNote === 'Wants a payday' ? 'is-pay' : 'is-busy'}`}>
-                  {blockedNote === 'Wants a payday' ? 'Payday' : blockedNote.split(':')[0]}
-                </span>
-              )
-            )}
-            {/*
-              The level and the age bonus in My Fighters' chips at the foot.
-              The level stays on the compact tile because it multiplies
-              health and damage before the first blow, so two identical
-              portraits can be very different picks.
-            */}
-            <span className="fightercard__foot">
-              {f.stats.level > 0 && (
-                <span className="fightercard__lvl">
-                  <span className="fightercard__lvlL">L</span>
-                  {f.stats.level}
-                  {f.ascension_level > 0 && <em>✦{f.ascension_level}</em>}
-                </span>
-              )}
-              {ageChip}
-            </span>
-          </span>
+          <RosterCardFace
+            f={f}
+            ribbon={ribbon}
+            xp={xp}
+            busy={!!blockedNote && blockedNote !== 'Wants a payday'}
+            due={blockedNote === 'Wants a payday'}
+          />
         </button>
       </div>
     )

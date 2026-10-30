@@ -4138,37 +4138,73 @@ h2.drost__bname {
     inset 0 0 calc(var(--u) * 1.8) rgb(255 60 80 / 55%);
   animation: gcard-pulse 1.1s ease-in-out infinite;
 }
-/* A level waiting: the diamond green and pulsing, an arrow rising from it, the strip full and lit. */
+/*
+ * A level waiting: the frame shines green. A bright green light runs round
+ * its edge, a green glow stands around it, and motes of light rise off the
+ * card the way a fighter powers up. The diamond turns green with it and the
+ * strip is full and lit. The LEVEL UP ribbon names it; a picked card keeps
+ * its gold and only the motes rise from it.
+ */
+@property --rcard-run {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+@keyframes rcard-run {
+  to {
+    --rcard-run: 360deg;
+  }
+}
+@keyframes rcard-rise {
+  0% {
+    transform: translateY(0) scale(1);
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(calc(var(--u) * -9)) scale(0.4);
+    opacity: 0;
+  }
+}
+.rcard:not(.is-picked) .is-up .gcard__frame {
+  background: conic-gradient(
+    from var(--rcard-run),
+    #0e6a45 0deg,
+    #2bd28a 40deg,
+    #eafff5 70deg,
+    #2bd28a 100deg,
+    #0e6a45 140deg,
+    #1d3d33 220deg,
+    #0e6a45 360deg
+  );
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 40%),
+    0 calc(var(--u) * 0.5) calc(var(--u) * 1.2) rgb(0 0 0 / 55%),
+    0 0 calc(var(--u) * 1.5) rgb(95 242 176 / 60%);
+  animation: rcard-run 2.4s linear infinite;
+}
 .rcard .is-up .gcard__lv::before {
   background: linear-gradient(135deg, #2bd28a, #0b6a44);
-  box-shadow:
-    inset 0 0 0 1px #b9ffe0,
-    0 0 calc(var(--u) * 0.9) #5ff2b0;
-  animation: gcard-pulse 1.6s ease-in-out infinite;
+  box-shadow: inset 0 0 0 1px #b9ffe0;
 }
 .rcard .is-up .gcard__chg i {
   background: #fff;
   box-shadow: 0 0 6px #5ff2b0;
 }
-.rcard__up {
+.rcard__mote {
   position: absolute;
-  z-index: 6;
-  left: calc(var(--u) * 0.28);
-  top: calc(var(--u) * -1.15);
-  width: calc(var(--u) * 1.3);
-  height: calc(var(--u) * 1.3);
-  color: #5ff2b0;
-  filter: drop-shadow(0 0 3px #5ff2b0);
-}
-.rcard__up svg {
-  display: block;
-  width: 100%;
-  height: 100%;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 2.8;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+  z-index: 7;
+  bottom: calc(var(--u) * 1.5);
+  width: calc(var(--u) * 0.32);
+  height: calc(var(--u) * 0.32);
+  border-radius: 50%;
+  background: #b9ffe0;
+  box-shadow: 0 0 calc(var(--u) * 0.5) #5ff2b0;
+  opacity: 0;
+  pointer-events: none;
+  animation: rcard-rise 2.2s ease-out infinite;
 }
 .rcard__asc {
   position: absolute;
@@ -4217,18 +4253,125 @@ h2.drost__bname {
 }
 @media (prefers-reduced-motion: reduce) {
   .rcard .is-due .gcard__pic::after,
-  .rcard .is-up .gcard__lv::before,
-  .rcard.is-picked .gcard__fx::before {
+  .rcard.is-picked .gcard__fx::before,
+  .rcard .is-up .gcard__frame {
     animation: none;
+  }
+  .rcard__mote {
+    display: none;
   }
 }
 :root[data-fx='low'] .rcard .is-due .gcard__pic::after,
-:root[data-fx='low'] .rcard .is-up .gcard__lv::before,
-:root[data-fx='low'] .rcard.is-picked .gcard__fx::before {
+:root[data-fx='low'] .rcard.is-picked .gcard__fx::before,
+:root[data-fx='low'] .rcard .is-up .gcard__frame {
   animation: none;
+}
+:root[data-fx='low'] .rcard__mote {
+  display: none;
 }
 /* At the top of the ladder: nothing left to earn, the strip full and green. */
 .rcard .is-max .gcard__chg i {
   background: #5ff2b0;
   box-shadow: 0 0 5px rgb(95 242 176 / 60%);
+}
+
+/* ---------- the same card in the pickers that choose a team ---------- */
+
+/*
+ * The fight screens' compact grid draws My Fighters' card (RosterCardFace).
+ * The card is the hit area; its ribbon says "In team" (or the ascension's
+ * part) in cyan, or why the fighter cannot be picked. Hundreds of these in
+ * a picker, but no content-visibility: it clips paint to the card's box,
+ * and the ribbon of a picked card stands above it.
+ */
+.rcard--pick {
+  cursor: default;
+}
+.rcard__hit {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.rcard__hit:disabled {
+  cursor: not-allowed;
+}
+.rcard__hit:focus-visible {
+  outline: none;
+}
+.rcard__hit:focus-visible .gcard__frame {
+  outline: 2px solid var(--cyan);
+  outline-offset: 2px;
+}
+.rcard .rcard--team {
+  --tc: #00baff;
+}
+.rcard .rcard--team .gcard__tag {
+  color: #062033;
+  background: linear-gradient(180deg, #a8ecff, #00baff);
+}
+.rcard .rcard--ascending {
+  --tc: #f6a800;
+}
+.rcard .rcard--ascending .gcard__tag {
+  color: #1a1205;
+  background: linear-gradient(180deg, #ffe39a, #f6a800);
+}
+.rcard .rcard--sacrifice {
+  --tc: #ff5a6a;
+}
+.rcard .rcard--sacrifice .gcard__tag {
+  color: #fff;
+  background: linear-gradient(180deg, #ff7a88, #c3203a);
+}
+
+/*
+ * The Level up button when it can be pressed: the shine of a card with a
+ * level waiting - a green light running round its edge, a green glow.
+ */
+.btn--levelup {
+  position: relative;
+  isolation: isolate;
+  --btn-bg: rgb(43 210 138 / 12%);
+  --btn-line: transparent;
+  color: #eafff5;
+  box-shadow: 0 0 14px rgb(95 242 176 / 45%);
+}
+.btn--levelup::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  z-index: -1;
+  padding: 1.5px;
+  border-radius: inherit;
+  background: conic-gradient(
+    from var(--rcard-run),
+    #0e6a45 0deg,
+    #2bd28a 40deg,
+    #eafff5 70deg,
+    #2bd28a 100deg,
+    #0e6a45 140deg,
+    #1d3d33 220deg,
+    #0e6a45 360deg
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: rcard-run 2.4s linear infinite;
+  pointer-events: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .btn--levelup::before {
+    animation: none;
+  }
+}
+:root[data-fx='low'] .btn--levelup::before {
+  animation: none;
 }
