@@ -490,7 +490,7 @@ export function DungeonBoard({
             avatar: r.avatar,
             rating: r.rating,
             pays: payNow(i + 1),
-            team: <Team row={r} />,
+            team: <Team row={r} cards />,
           }))}
           wallet={wallet}
           title="Dungeon champion"
@@ -1224,9 +1224,9 @@ function DeskPodium({
                 <span className="mono">{formatNumber(p.rating)}</span> rating
                 {p.pays && <span className="lbrow__pays dpodium__pays">{p.pays}</span>}
               </span>
-              {p.team}
             </span>
             <span className="dpodium__num">{p.rank}</span>
+            {p.team}
           </div>
         ))}
       </div>

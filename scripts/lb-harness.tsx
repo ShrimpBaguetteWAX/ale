@@ -26,7 +26,33 @@ const rows = [
   { id: 601, name: 'Sable Quill', rating: '13,844', you: true, team: [T('arcanist', 'altan', 52), T('tactician', 'elgem', 51), T('explosioneer', 'robotron', 49), T('voidwarden', 'lopati', 48), T('mystic', 'elgem', 46), NFT(44)] },
 ]
 
+const cardsOf = (team: typeof rows[number]['team']) => (
+  <span className="lbrow__team lbrow__team--cards">
+    {team.map((f, n) => (
+      <span key={n} className={`lbrow__face lbcard${f.nft ? ' lbcard--nft' : ''}`} style={{ backgroundImage: `url('${elementBackground(f.el)}')` }}>
+        <img className="lbcard__art" src={f.nft ? '/assets/fighters/bonus_fighter_avatar.webp' : `/assets/fighters/${f.c}_${f.r}_avatar.webp`} alt="" />
+        <span className="lbcard__el"><img src={elementIcon(f.el)} alt="" /></span>
+        <span className="lbcard__lv"><s>L</s>{f.lv}</span>
+      </span>
+    ))}
+  </span>
+)
+
 createRoot(document.getElementById('root')!).render(
+  <>
+  <div className="dpodium__side" style={{ maxWidth: 360, marginBottom: 20 }}>
+    {[1, 2].map((i) => (
+      <div key={i} className={`dpodium__card dpodium__card--${i + 1}`}>
+        <PlayerAvatar id={rows[i].id} name={rows[i].name} className="dpodium__avatar" size={54} />
+        <span className="dpodium__cardtext">
+          <b className="dpodium__name">{rows[i].name}</b>
+          <span className="dpodium__line"><span className="mono">{rows[i].rating}</span> rating</span>
+        </span>
+        <span className="dpodium__num">{i + 1}</span>
+        {cardsOf(rows[i].team)}
+      </div>
+    ))}
+  </div>
   <div className="lbtable" style={{ maxWidth: 1000 }}>
     {rows.map((r, i) => {
       const t = avatarRarity(r.id)
@@ -61,5 +87,6 @@ createRoot(document.getElementById('root')!).render(
         </article>
       )
     })}
-  </div>,
+  </div>
+  </>,
 )

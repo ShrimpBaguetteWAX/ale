@@ -1154,6 +1154,22 @@
     width: 26px;
     height: 26px;
   }
+  /*
+   * The second and third places hold the same battle cards as the rows, at the
+   * same size, on a line of their own across the foot of the card - beside the
+   * avatar there is not the room for six. They are shown at every width the
+   * podium is: the narrow-row rule above, for a table, would otherwise take
+   * the team away.
+   */
+  .dpodium__card > .lbrow__team--cards {
+    display: flex;
+    grid-column: 1 / -1;
+    gap: 5px;
+  }
+  .dpodium__card .lbrow__team--cards .lbcard__el img {
+    width: 62%;
+    height: 62%;
+  }
   .dpodium__num {
     font-family: var(--font-display);
     font-size: 34px;
