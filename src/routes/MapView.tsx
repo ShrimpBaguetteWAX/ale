@@ -973,11 +973,18 @@ export default function MapView() {
   const here = useMemo(() => {
     if (!hereLand) return null
     const building = hereLand.buildings[0]
-    if (!building) {
+    if (!building && !inTavern) {
       const to = hereLand.special_effect ? PORTAL_EFFECTS[hereLand.special_effect] : undefined
       return to ? { kind: 'portal', icon: MARKER_SRC.portal, name: `Portal to ${to}`, sub: 'Portal' } : null
     }
-    const raw = String(building.building_name)
+    /*
+       The tag names what Enter opens. A tavern lives in the player's own
+       list, not on the land: `delbuilding` leaves every player's
+       `active_taverns` alone and hire never looks at the land, so a tavern
+       whose owner tore it down for an arena (or for nothing) still recruits.
+       Reading the land would label it Arena while Enter leads to the tavern.
+    */
+    const raw = inTavern ? 'tavern' : String(building?.building_name)
     const name = raw.replace(/-/g, ' ')
     const kind = name === 'tavern' || name === 'dungeon' || name === 'arena' ? name : 'other'
     /*
@@ -996,8 +1003,8 @@ export default function MapView() {
         ? ''
         : formatBoost(
             liveBoostPercent(
-              Number(building.boost_score ?? 0),
-              String(building.boost_score_update ?? ''),
+              Number(building?.boost_score ?? 0),
+              String(building?.boost_score_update ?? ''),
               landsConfig?.boost_decay_per_hour ?? 0,
             ),
           )
