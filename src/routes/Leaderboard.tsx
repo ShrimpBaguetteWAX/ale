@@ -32,7 +32,13 @@ import { claimLeaderboardReward, DIRTIES } from '@/wharf/actions'
 import { useAction } from '@/wharf/useAction'
 import { useChainQuery } from '@/chain/useChainQuery'
 import { formatNumber, formatDecimals } from '@/format'
-import { fighterArt, fighterArtFallback, fighterAvatar } from '@/tavern/fighterStats'
+import {
+  elementBackground,
+  elementIcon,
+  fighterArt,
+  fighterArtFallback,
+  fighterAvatar,
+} from '@/tavern/fighterStats'
 import { ActionBanner } from '@/components/ActionBanner'
 import { asset } from '@/assets'
 import { PlayerAvatar } from '@/components/PlayerAvatar'
@@ -542,7 +548,7 @@ export function DungeonBoard({
                   and it is already in the row — so it is shown rather than
                   hidden behind a click.
                 */}
-                <Team row={row} />
+                <Team row={row} cards />
 
                 <span className="lbrow__rating">{formatNumber(row.rating)}</span>
 
@@ -991,11 +997,16 @@ export function ArenaBoards({
  * The defending team is the whole reason a dungeon row has a rating, and it is
  * already in the row — so it is shown rather than hidden behind a click.
  */
-function Team({ row }: { row: DungeonRank }) {
+function Team({ row, cards = false }: { row: DungeonRank; cards?: boolean }) {
   return (
-    <span className="lbrow__team">
+    <span className={`lbrow__team${cards ? ' lbrow__team--cards' : ''}`}>
       {(row.recent_fighters ?? []).slice(0, 6).map((f, n) => (
-        <TeamFace key={`${row.wallet}-${n}`} fighter={f} templateIds={row.used_template_ids} />
+        <TeamFace
+          key={`${row.wallet}-${n}`}
+          fighter={f}
+          templateIds={row.used_template_ids}
+          cards={cards}
+        />
       ))}
     </span>
   )
@@ -1014,11 +1025,14 @@ function TeamFace({
   fighter: f,
   templateIds,
   full = false,
+  cards = false,
 }: {
   fighter: BattleFighter
   templateIds: number[]
   /** Standing full-size in the champion's spotlight, rather than a portrait in a row. */
   full?: boolean
+  /** A battle card - element, art, level - rather than a portrait: the dungeon board's rows. */
+  cards?: boolean
 }) {
   const phone = usePhone()
   const { classes } = useConfig()
@@ -1055,7 +1069,8 @@ function TeamFace({
   const name = nft ? 'NFT Fighter' : `${f.racename} ${f.classname}`
   return (
     <span
-      className={full ? 'dpodium__figure' : 'lbrow__face'}
+      className={full ? 'dpodium__figure' : cards ? `lbrow__face lbcard${nft ? ' lbcard--nft' : ''}` : 'lbrow__face'}
+      style={cards ? { backgroundImage: `url('${elementBackground(nft ? 'neutral' : f.element)}')` } : undefined}
       ref={ref}
       onMouseEnter={() => {
         setWanted(true)
@@ -1082,6 +1097,19 @@ function TeamFace({
         loading="lazy"
         fallback={fighterArtFallback()}
       />
+      {cards && (
+        <>
+          <span className="lbcard__el">
+            <img src={elementIcon(nft ? 'neutral' : f.element)} alt="" />
+          </span>
+          {f.level > 0 && (
+            <span className="lbcard__lv">
+              <s>L</s>
+              {f.level}
+            </span>
+          )}
+        </>
+      )}
     </span>
   )
 }

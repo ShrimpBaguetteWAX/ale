@@ -270,6 +270,108 @@
   object-fit: contain;
 }
 
+/*
+ * The defending team as battle cards, on the dungeon board's rows.
+ *
+ * The compact tile the fighter picker draws: the fighter on their element's
+ * background, a fade at the foot for the level chip to stand on, the element
+ * badge, and the thin ring. Six cards at 34px were six grey blobs; at 50px
+ * with a level and an element they can be told apart at a glance. The cards
+ * shrink with the column rather than overflow it, and the NFT fighter keeps
+ * a gold ring so it is not mistaken for a sixth class.
+ */
+.lbrow__team--cards {
+  gap: 5px;
+}
+.lbcard {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: 50px;
+  aspect-ratio: 50 / 66;
+  border-radius: 9px;
+  overflow: hidden;
+  background: #0a1224 center / cover;
+  box-shadow: 0 5px 9px -3px rgb(0 0 0 / 75%);
+  transition: transform var(--dur-fast, 0.15s), box-shadow var(--dur-fast, 0.15s);
+}
+.lbcard:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 16px -4px rgb(0 0 0 / 80%);
+}
+.lbrow__team--cards .lbcard img.lbcard__art,
+.lbcard > img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 10%;
+}
+.lbcard::before {
+  content: '';
+  position: absolute;
+  inset: auto 0 0;
+  height: 46%;
+  z-index: 1;
+  background: linear-gradient(transparent, rgb(3 7 18 / 85%));
+  pointer-events: none;
+}
+.lbcard::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  border-radius: inherit;
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 14%);
+  pointer-events: none;
+}
+.lbcard--nft {
+  box-shadow: 0 5px 9px -3px rgb(0 0 0 / 75%), 0 0 10px -1px rgb(255 184 31 / 70%);
+}
+.lbcard--nft::after {
+  box-shadow: inset 0 0 0 1.5px #ffb81f;
+}
+.lbcard__el {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: rgb(0 0 0 / 55%);
+}
+.lbrow__team--cards .lbcard__el img {
+  width: 62%;
+  height: 62%;
+  object-fit: contain;
+}
+.lbcard__lv {
+  position: absolute;
+  left: 3px;
+  bottom: 3px;
+  z-index: 2;
+  padding: 0 4px;
+  border-radius: 5px;
+  background: rgb(0 0 0 / 62%);
+  font-family: var(--font-display);
+  font-size: 9px;
+  font-weight: 900;
+  line-height: 15px;
+  font-variant-numeric: tabular-nums;
+}
+.lbcard__lv s {
+  margin-right: 1px;
+  text-decoration: none;
+  opacity: 0.6;
+}
+.lbcard--nft .lbcard__lv {
+  color: #ffd25a;
+}
+
 .lbrow__rating {
   font-family: var(--font-display);
   font-size: var(--fs-md);
@@ -519,6 +621,21 @@
 
   .lbrow__team {
     display: none;
+  }
+
+  /*
+   * The cards take a line of their own under the player, which brings the
+   * team back to a phone that had to drop six portraits. Placed on the
+   * second row by hand: the other four cells then fill the first.
+   */
+  .lbrow--dungeon > .lbrow__team--cards {
+    display: flex;
+    grid-column: 1 / -1;
+    grid-row: 2;
+    gap: 4px;
+  }
+  .lbrow--dungeon > .lbrow__team--cards .lbcard {
+    max-width: 46px;
   }
 }
 

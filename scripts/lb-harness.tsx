@@ -1,32 +1,39 @@
 /**
- * The leaderboard rows, with the avatar frames, over made-up players - the
- * real board is behind a wallet. See lb-harness.html.
+ * The dungeon board's rows, with the avatar frames and the team as battle
+ * cards, over made-up players - the real board is behind a wallet. See
+ * lb-harness.html.
  */
 import { createRoot } from 'react-dom/client'
 import { avatarRarity } from '../src/account/rules'
 import { PlayerAvatar } from '../src/components/PlayerAvatar'
+import { elementBackground, elementIcon } from '../src/tavern/fighterStats'
 import '../src/styles/global.css'
 import '../src/styles/app.css'
 import '../src/styles/leaderboard.css'
 
+const EL: Record<string, string> = {
+  arcanist: 'air', astralknight: 'metal', desperado: 'fire', explosioneer: 'fire', hunter: 'nature',
+  juggernaut: 'metal', lunatic: 'neutral', mindblade: 'gem', mystic: 'gem', tactician: 'neutral',
+  voidcaller: 'air', voidwarden: 'nature',
+}
+const T = (c: string, r: string, lv: number) => ({ c, r, lv, el: EL[c], nft: false })
+const NFT = (lv: number) => ({ c: 'bonus', r: '', lv, el: 'neutral', nft: true })
+
 const rows = [
-  { id: 505, name: 'Nyx Harrow', rating: '9,412' },
-  { id: 1304, name: 'Stormbound', rating: '9,180' },
-  { id: 1203, name: 'Cinder Knox', rating: '8,966' },
-  { id: 0, name: 'gh0stfarm', rating: '8,741' },
-  { id: 1102, name: 'Marrow & Co', rating: '8,530' },
-  { id: 601, name: 'Sable Quill', rating: '8,314', you: true },
-  { id: 1900, name: 'Tin Pilgrim', rating: '8,102' },
+  { id: 505, name: 'Nyx Harrow', rating: '14,812', team: [T('juggernaut', 'human', 71), T('mindblade', 'altan', 69), T('voidcaller', 'onoros', 68), T('hunter', 'elgem', 66), T('desperado', 'khaured', 64), NFT(60)] },
+  { id: 1304, name: 'Stormbound', rating: '14,590', team: [T('astralknight', 'lopati', 67), T('arcanist', 'human', 66), T('explosioneer', 'elgem', 64), T('tactician', 'nordic', 63), T('mystic', 'altan', 61), T('lunatic', 'onoros', 60)] },
+  { id: 0, name: 'gh0stfarm', rating: '14,102', team: [T('voidwarden', 'human', 58), T('tactician', 'human', 57), T('hunter', 'robotron', 55), T('arcanist', 'robotron', 54), T('mystic', 'lopati', 52), T('lunatic', 'human', 50)] },
+  { id: 601, name: 'Sable Quill', rating: '13,844', you: true, team: [T('arcanist', 'altan', 52), T('tactician', 'elgem', 51), T('explosioneer', 'robotron', 49), T('voidwarden', 'lopati', 48), T('mystic', 'elgem', 46), NFT(44)] },
 ]
 
 createRoot(document.getElementById('root')!).render(
-  <div className="lbtable" style={{ maxWidth: 760 }}>
+  <div className="lbtable" style={{ maxWidth: 1000 }}>
     {rows.map((r, i) => {
       const t = avatarRarity(r.id)
       return (
         <article
           key={i}
-          className={`lbrow lbrow--arena${t === undefined ? '' : ` lbrow--rar lbrow--r${t}`}${r.you ? ' lbrow--you' : ''}`}
+          className={`lbrow lbrow--dungeon${t === undefined ? '' : ` lbrow--rar lbrow--r${t}`}${r.you ? ' lbrow--you' : ''}`}
         >
           <span className="rank">{i + 1}</span>
           <span className="lbrow__who">
@@ -35,6 +42,19 @@ createRoot(document.getElementById('root')!).render(
               <span className="lbrow__name">{r.name}</span>
               <span className="lbrow__wallet">{r.name.toLowerCase().replace(/\W/g, '')}.wam</span>
             </span>
+          </span>
+          <span className="lbrow__team lbrow__team--cards">
+            {r.team.map((f, n) => (
+              <span
+                key={n}
+                className={`lbrow__face lbcard${f.nft ? ' lbcard--nft' : ''}`}
+                style={{ backgroundImage: `url('${elementBackground(f.el)}')` }}
+              >
+                <img className="lbcard__art" src={f.nft ? '/assets/fighters/bonus_fighter_avatar.webp' : `/assets/fighters/${f.c}_${f.r}.webp`} alt="" />
+                <span className="lbcard__el"><img src={elementIcon(f.el)} alt="" /></span>
+                <span className="lbcard__lv"><s>L</s>{f.lv}</span>
+              </span>
+            ))}
           </span>
           <span className="lbrow__rating">{r.rating}</span>
           <span className="lbrow__pays">323</span>
