@@ -3020,6 +3020,7 @@ a.res {
   transition: background var(--dur-fast) var(--ease);
 }
 .plate:hover {
+  text-decoration: none;
   background: linear-gradient(90deg, rgb(246 168 0 / 30%), transparent 92%);
 }
 
@@ -3130,7 +3131,7 @@ a.res {
 .plate--bar .plate__name {
   display: block;
   overflow: hidden;
-  font-size: 11px;
+  font-size: 10.5px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }

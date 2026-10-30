@@ -2,6 +2,7 @@ import type { Player } from '@/chain/types'
 import type { PoolEntry } from '@/pools/rules'
 import { MINE_POWER, mineEstimate, poolAmount } from '@/pools/rules'
 import { hasLegendAccess, LEGEND_REMIND_MS } from '@/account/rules'
+import { legendLeft } from '@/shop/rules'
 import { kvToRecord } from '@/chain/types'
 import { formatNumber } from '@/format'
 
@@ -673,7 +674,8 @@ export function buildBriefing(input: BriefingInput): BriefItem[] {
         rank: 12,
         tone: 'warn',
         icon: ICON.legend,
-        title: `Your Legend pass ends in ${spanLabel(left)}`,
+        /* Counted as the nameplate and the Shop count it, so they never disagree by a day. */
+        title: `Your Legend Pass has ${legendLeft(left)}`,
         body: `After that, wins bank only ${Math.round(trialShare * 100)}% of their Reward Power. Buying again adds to the time you have left.`,
         cta: { label: 'Extend Legend', to: '/shop?c=account' },
       })

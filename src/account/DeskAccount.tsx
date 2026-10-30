@@ -10,6 +10,7 @@ import {
   cpuLow,
   cpuStatus,
   formatCpuTime,
+  LEGEND_REMIND_MS,
   nextCpuReset,
   untilLabel,
   validateTag,
@@ -25,7 +26,7 @@ import { GameImg } from '@/components/GameImg'
 import { useChainQuery } from '@/chain/useChainQuery'
 import { landId } from '@/chain/landId'
 import { landThumbStyle } from '@/map/terrain'
-import { legendExpiry } from '@/shop/rules'
+import { legendExpiry, legendLeft } from '@/shop/rules'
 import { AUTO_SIGN_GROUPS } from '@/wharf/autoSign'
 import { formatCompact, formatNumber, formatStat } from '@/format'
 import { asset } from '@/assets'
@@ -40,7 +41,6 @@ const TABS: [AccountTab, string][] = [
 const UNKNOWN_AVATAR = asset('/assets/avatar/unknown.webp')
 /* The closest tracks are the ones worth a look; the rest are one click away. */
 const TRACKS_FIRST = 9
-const DAY = 86_400_000
 
 /**
  * Account on a desktop: an identity card beside the tabs.
@@ -158,7 +158,8 @@ function IdentityCard({
   const changed = tag.trim() !== player.playertag
 
   const legend = legendExpiry(player)
-  const daysLeft = legend ? Math.max(1, Math.ceil((legend.getTime() - Date.now()) / DAY)) : 0
+  /* The time left, counted as the nameplate, the Shop and the Briefing count it. */
+  const left = legend ? legend.getTime() - Date.now() : 0
   const owned = board.filter((e) => e.state === 'active' || e.state === 'unlocked').length
   const status = cpuStatus(cpu.config, cpu.usage)
 
@@ -234,9 +235,9 @@ function IdentityCard({
       )}
       <span className="dacc__wallet mono">{player.wallet}</span>
       {legend ? (
-        <span className={`dacc__legend${daysLeft <= 7 ? ' is-soon' : ''}`}>
+        <span className={`dacc__legend${left < LEGEND_REMIND_MS ? ' is-soon' : ''}`}>
           <img src={asset('/assets/icons/account-legend.svg')} alt="" />
-          Legend · {daysLeft === 1 ? '1 day' : `${daysLeft} days`} left
+          Legend · {legendLeft(left)}
         </span>
       ) : (
         <span className="dacc__legend is-off">
