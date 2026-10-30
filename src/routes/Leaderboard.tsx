@@ -121,6 +121,12 @@ function rarityRow(avatar: number | undefined): string {
   return tier === undefined ? '' : ` lbrow--rar lbrow--r${tier}`
 }
 
+/** Just the colour, for a portrait standing on its own: the podium's. */
+function rarityClass(avatar: number | undefined): string {
+  const tier = avatarRarity(avatar)
+  return tier === undefined ? '' : ` lbrow--r${tier}`
+}
+
 function useBoards(account: string | null): BoardData {
   /*
      One query, because the reads are not independent: the pool is named by
@@ -1178,7 +1184,12 @@ function DeskPodium({
     <div className="dpodium">
       <section className={`dpodium__hero${you(first) ? ' is-you' : ''}`} aria-label={`First: ${first.name}`}>
         <div className="dpodium__who">
-          <PlayerAvatar id={first.avatar} name={first.name} className="dpodium__avatar" size={92} />
+          <PlayerAvatar
+            id={first.avatar}
+            name={first.name}
+            className={`dpodium__avatar${rarityClass(first.avatar)}`}
+            size={92}
+          />
           <span className="dpodium__kick">#1 · {title}</span>
           <h3 className="dpodium__champ">
             {first.name}
@@ -1214,7 +1225,12 @@ function DeskPodium({
             className={`dpodium__card dpodium__card--${p.rank}${you(p) ? ' is-you' : ''}`}
             key={p.wallet}
           >
-            <PlayerAvatar id={p.avatar} name={p.name} className="dpodium__avatar" size={54} />
+            <PlayerAvatar
+              id={p.avatar}
+              name={p.name}
+              className={`dpodium__avatar${rarityClass(p.avatar)}`}
+              size={54}
+            />
             <span className="dpodium__cardtext">
               <b className="dpodium__name">
                 {p.name}
@@ -1339,7 +1355,12 @@ function PhonePodium({
       <div className="ppod">
         <section className={`ppod__hero${you(first) ? ' is-you' : ''}`} aria-label={`First: ${first.name}`}>
           <div className="ppod__who">
-            <PlayerAvatar id={first.avatar} name={first.name} className="ppod__avatar" size={58} />
+            <PlayerAvatar
+              id={first.avatar}
+              name={first.name}
+              className={`ppod__avatar${rarityClass(first.avatar)}`}
+              size={58}
+            />
             <span className="ppod__text">
               <span className="ppod__kick">#1 · {title}</span>
               <b className="ppod__name">
@@ -1381,7 +1402,12 @@ function PhonePodium({
             <div className={`ppod__card ppod__card--${p.rank}${you(p) ? ' is-you' : ''}`} key={p.wallet}>
               <span className="ppod__num">{p.rank}</span>
               <span className="ppod__cardtop">
-                <PlayerAvatar id={p.avatar} name={p.name} className="ppod__avatar" size={38} />
+                <PlayerAvatar
+                  id={p.avatar}
+                  name={p.name}
+                  className={`ppod__avatar${rarityClass(p.avatar)}`}
+                  size={38}
+                />
                 <b className="ppod__cardname">{p.name}</b>
               </span>
               {you(p) && <em className="ppod__you">You</em>}

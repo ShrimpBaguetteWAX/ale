@@ -129,6 +129,23 @@
   grid-template-columns: 52px minmax(0, 2fr) 110px 140px;
 }
 
+/*
+ * An arena row is as tall as a dungeon row, which carries six cards: the two
+ * boards are one table to the eye, and swapping tabs should not make the
+ * rows jump. The dungeon row is 84px, or 125px where its team moves onto a
+ * line of its own. A phone keeps its slim one-line row.
+ */
+@media (min-width: 821px) {
+  .lbrow--arena {
+    min-height: 84px;
+  }
+}
+@media (min-width: 720px) and (max-width: 820px) {
+  .lbrow--arena {
+    min-height: 125px;
+  }
+}
+
 /* The figures are right-aligned in the rows; their headings follow them there. */
 .lbtable__head span:nth-last-child(-n + 2) {
   text-align: right;
@@ -924,7 +941,8 @@
    */
   .dpodium {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(300px, 340px);
+    /* Wide enough for the second and third places to hold six battle cards in a line. */
+    grid-template-columns: minmax(0, 1fr) minmax(360px, 380px);
     gap: 14px;
   }
   .dpodium__hero {
@@ -964,10 +982,14 @@
     --medal: #f6a800;
     width: 92px;
     height: 92px;
+    border-radius: 24px;
   }
+  /* Square, the way the art was drawn, in its rarity colour inside the medal ring. */
   .dpodium__avatar {
     --medal: #cd7f32;
-    border-radius: 50%;
+    border: 2px solid var(--rc, #3a4560);
+    border-radius: 16px;
+    background: #000;
     object-fit: cover;
     box-shadow:
       0 0 0 3px var(--medal),
@@ -1445,7 +1467,9 @@
 }
 .ppod__avatar {
   --medal: #f6a800;
-  border-radius: 50%;
+  border: 2px solid var(--rc, #3a4560);
+  border-radius: 14px;
+  background: #000;
   object-fit: cover;
   box-shadow:
     0 0 0 3px var(--medal),
@@ -1565,6 +1589,9 @@
 }
 .ppod__card--3 .ppod__avatar {
   --medal: #cd7f32;
+}
+.ppod__card .ppod__avatar {
+  border-radius: 10px;
 }
 .ppod__card.is-you {
   box-shadow:

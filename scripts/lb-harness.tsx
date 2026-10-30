@@ -43,7 +43,7 @@ createRoot(document.getElementById('root')!).render(
   <div className="dpodium__side" style={{ maxWidth: 360, marginBottom: 20 }}>
     {[1, 2].map((i) => (
       <div key={i} className={`dpodium__card dpodium__card--${i + 1}`}>
-        <PlayerAvatar id={rows[i].id} name={rows[i].name} className="dpodium__avatar" size={54} />
+        <PlayerAvatar id={rows[i].id} name={rows[i].name} className={`dpodium__avatar lbrow--r${avatarRarity(rows[i].id) ?? 9}`} size={54} />
         <span className="dpodium__cardtext">
           <b className="dpodium__name">{rows[i].name}</b>
           <span className="dpodium__line"><span className="mono">{rows[i].rating}</span> rating</span>
@@ -87,6 +87,24 @@ createRoot(document.getElementById('root')!).render(
         </article>
       )
     })}
+    <article className={`lbrow lbrow--arena${avatarRarity(rows[0].id) === undefined ? '' : ` lbrow--rar lbrow--r${avatarRarity(rows[0].id)}`}`}>
+      <span className="rank">5</span>
+      <span className="lbrow__who">
+        <PlayerAvatar id={rows[0].id} name={rows[0].name} />
+        <span className="lbrow__id">
+          <span className="lbrow__name">{rows[0].name}</span>
+          <span className="lbrow__wallet">arena.wam</span>
+        </span>
+      </span>
+      <span className="lbrow__rating">1,204</span>
+      <span className="lbrow__pays">323</span>
+    </article>
   </div>
+  <pre id="m" />
   </>,
 )
+
+setTimeout(() => {
+  const h = (s: string) => [...document.querySelectorAll(s)].map((e) => Math.round(e.getBoundingClientRect().height)).join(',')
+  document.getElementById('m')!.textContent = `dungeon ${h('.lbrow--dungeon')} arena ${h('.lbrow--arena')}`
+}, 2500)
