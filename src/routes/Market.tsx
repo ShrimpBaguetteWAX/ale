@@ -35,6 +35,7 @@ import { useModal } from '@/components/useModal'
 import { BottomSheet } from '@/components/BottomSheet'
 import { usePhone } from '@/components/usePhone'
 import { useAction } from '@/wharf/useAction'
+import { fetchBidAuctionIds, rememberBid } from '@/market/myBids'
 import { DIRTIES } from '@/wharf/actions'
 import { fighterAvailable } from '@/dungeon/rules'
 import {
@@ -196,6 +197,10 @@ export default function Market() {
     },
     { deps: ['auctions', 'offers', 'fighters'] },
   )
+  /* The auctions this wallet has bid on, for the ones it has since been outbid on. */
+  const bidHistory = useChainQuery(`market:bids:${player.wallet}`, () => fetchBidAuctionIds(player.wallet), {
+    deps: ['auctions'],
+  })
   const auctions = listings.data?.auctions ?? null
   const offers = listings.data?.offers ?? null
   const roster = listings.data?.roster ?? null
@@ -255,6 +260,14 @@ export default function Market() {
       ),
     [auctions, player.wallet, now],
   )
+  /* Bid on and topped, still running: a bid again would put the player back on top. */
+  const myOutbid = useMemo(() => {
+    const bidOn = new Set(bidHistory.data ?? [])
+    return (auctions ?? []).filter(
+      (a) =>
+        bidOn.has(a.auction_id) && a.current_bidder !== player.wallet && a.owner !== player.wallet && !hasEnded(a, now),
+    )
+  }, [auctions, bidHistory.data, player.wallet, now])
   const myOffers = useMemo(
     () => (offers ?? []).filter((o) => o.owner === player.wallet),
     [offers, player.wallet],
@@ -285,7 +298,7 @@ export default function Market() {
   const counts: Record<Tab, number> = {
     auctions: liveAuctions.length,
     offers: liveOffers.length,
-    mine: myAuctions.length + myOffers.length + myBids.length,
+    mine: myAuctions.length + myOffers.length + myBids.length + myOutbid.length,
     sell: sellable.length,
   }
 
@@ -321,7 +334,8 @@ export default function Market() {
       opts('cancelOffer'),
     )
 
-  const placeBid = (a: Auction, gems: number) =>
+  const placeBid = (a: Auction, gems: number) => {
+    const o = opts('bidAuction')
     void run(
       'bid',
       () =>
@@ -331,8 +345,17 @@ export default function Market() {
           gems,
         }),
       'Bid placed.',
-      opts('bidAuction'),
+      {
+        ...o,
+        /* Noted here, so the auction moves to Outbid the moment someone tops it, indexer or not. */
+        after: () => {
+          rememberBid(player.wallet, a.auction_id)
+          void bidHistory.reload()
+          return o.after()
+        },
+      },
     )
+  }
 
   const buyNow = (o: InstantOffer) =>
     void run(
@@ -353,13 +376,14 @@ export default function Market() {
      is anything to show.
   */
   const mineBids = useMemo(() => sortListings(myBids, 'ending', now), [myBids, now])
+  const mineOutbid = useMemo(() => sortListings(myOutbid, 'ending', now), [myOutbid, now])
   const mineAuctions = useMemo(() => sortListings(myAuctions, 'ending', now), [myAuctions, now])
   const mineOffers = useMemo(() => sortListings(myOffers, 'ending', now), [myOffers, now])
   const board: (Auction | InstantOffer)[] =
     tab === 'offers'
       ? liveOffers
       : tab === 'mine'
-        ? [...mineBids, ...mineAuctions, ...mineOffers]
+        ? [...mineBids, ...mineOutbid, ...mineAuctions, ...mineOffers]
         : liveAuctions
   const picked = board.find((l) => listingKey(l) === pick) ?? board[0] ?? null
   /* A row of the desktop list: picking it shows it beside the list. */
@@ -570,6 +594,7 @@ export default function Market() {
                     (
                       [
                         ['Winning', mineBids, 'you hold the top bid'],
+                        ['Outbid', mineOutbid, 'still running · bid again to win it'],
                         ['Selling', mineAuctions, `${Math.round(Number(config?.standard_duration_minutes ?? 0) / 60)}h auctions`],
                         ['Fixed price', mineOffers, "ends on the fighter's payday"],
                       ] as [string, (Auction | InstantOffer)[], string][]
@@ -754,6 +779,8 @@ export default function Market() {
           {tab === 'mine' && phone && (
             <PhoneMine
               bids={myBids}
+              outbid={myOutbid}
+              onBid={(a) => setDialog({ kind: 'bid', auction: a })}
               auctions={myAuctions}
               offers={myOffers}
               config={config}
@@ -1151,6 +1178,8 @@ function RowWithdraw({ busy, onClick }: { busy: boolean; onClick: () => void }) 
  */
 function PhoneMine({
   bids,
+  outbid,
+  onBid,
   auctions,
   offers,
   config,
@@ -1168,6 +1197,9 @@ function PhoneMine({
   markerOf,
 }: {
   bids: Auction[]
+  /** Bid on, topped, still running. */
+  outbid: Auction[]
+  onBid: (a: Auction) => void
   auctions: Auction[]
   offers: InstantOffer[]
   config: MarketConfig | undefined
@@ -1185,7 +1217,7 @@ function PhoneMine({
   /** The player's markers by fighter, for their own listings. */
   markerOf: Map<number, string>
 }) {
-  if (bids.length + auctions.length + offers.length === 0) {
+  if (bids.length + outbid.length + auctions.length + offers.length === 0) {
     return (
       <div className="mrows__empty">
         <p className="faint">Nothing of yours is on the market.</p>
@@ -1195,7 +1227,14 @@ function PhoneMine({
       </div>
     )
   }
-  const row = (key: string, l: Auction | InstantOffer, price: number, closing: boolean, below?: React.ReactNode) => (
+  const row = (
+    key: string,
+    l: Auction | InstantOffer,
+    price: number,
+    closing: boolean,
+    below?: React.ReactNode,
+    action?: React.ReactNode,
+  ) => (
     <ListingRow
       key={key}
       listing={l}
@@ -1209,6 +1248,7 @@ function PhoneMine({
       below={below}
       marker={markerOf.get(l.fighter_id)}
       onOpen={() => onOpen(l)}
+      action={action}
     />
   )
   return (
@@ -1222,6 +1262,32 @@ function PhoneMine({
           <div className="mrows drost--phone">
             {sortListings(bids, 'ending', now).map((a) =>
               row(`b${a.auction_id}`, a, a.current_bid, extendsOnBid(a, config, now)),
+            )}
+          </div>
+        </>
+      )}
+
+      {outbid.length > 0 && (
+        <>
+          <p className="mrows__head">
+            <span>Outbid · {outbid.length}</span>
+            <small>still running · bid again to win it</small>
+          </p>
+          <div className="mrows drost--phone">
+            {sortListings(outbid, 'ending', now).map((a) =>
+              row(
+                `x${a.auction_id}`,
+                a,
+                a.current_bid,
+                extendsOnBid(a, config, now),
+                <span className="mrow__line">
+                  Top bid <span className="mrow__lead">{a.current_bid}</span> by{' '}
+                  <b>{a.current_bidder_gamertag || a.current_bidder}</b>
+                </span>,
+                <button type="button" className="btn btn--primary btn--sm" onClick={() => onBid(a)}>
+                  Bid {minNextBid(a.current_bid, config)}
+                </button>,
+              ),
             )}
           </div>
         </>

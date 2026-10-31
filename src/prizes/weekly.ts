@@ -1,4 +1,5 @@
 import { CONTRACTS } from '@/chain/config'
+import { historyActions, type HistoryRow } from '@/chain/history'
 import { fetchShardPools } from '@/pools/queries'
 
 /**
@@ -51,68 +52,12 @@ export function weekLabel(start: number): string {
     : `${a.getUTCDate()} ${month(a)} – ${b.getUTCDate()} ${month(b)}`
 }
 
-/*
- * History indexers that answered these queries reliably when this was
- * written. Each is tried in turn; one that fails is skipped for the rest of
- * the read. alcor hands out at most 100 rows a page.
- */
-const HISTORY: { base: string; page: number }[] = [
-  { base: 'https://wax.eosusa.io', page: 1000 },
-  { base: 'https://api.waxsweden.org', page: 1000 },
-  { base: 'https://wax-hyperion.alcor.exchange', page: 100 },
-]
+/** A token transfer as the indexers return it. */
+type ActionRow = HistoryRow<{ from?: string; to?: string; amount?: number; quantity?: string; symbol?: string }>
 
-interface ActionRow {
-  timestamp: string
-  global_sequence: number
-  act: { account: string; data: { from?: string; to?: string; amount?: number; quantity?: string; symbol?: string } }
-  receipts?: { receiver: string }[]
-}
-
-/* History timestamps arrive without their zone. */
-const timeOf = (s: string) => Date.parse(s.endsWith('Z') ? s : s + 'Z')
-
-/**
- * Every matching action in [start, end), oldest first, paged by time.
- *
- * Paging restarts at the last row's timestamp rather than an offset, which
- * re-reads that block; `global_sequence` removes the repeats.
- */
-async function actions(params: Record<string, string>, start: number, end: number): Promise<ActionRow[]> {
-  let lastError: unknown
-  for (const { base, page } of HISTORY) {
-    try {
-      const seen = new Set<number>()
-      const out: ActionRow[] = []
-      let cursor = start
-      for (let n = 0; n < 60; n++) {
-        const q = new URLSearchParams({
-          ...params,
-          after: new Date(cursor).toISOString(),
-          before: new Date(end - 1).toISOString(),
-          sort: 'asc',
-          limit: String(page),
-        })
-        const res = await fetch(`${base}/v2/history/get_actions?${q}`, { signal: AbortSignal.timeout(10_000) })
-        if (!res.ok) throw new Error(`${base} answered ${res.status}`)
-        const rows = ((await res.json()) as { actions?: ActionRow[] }).actions ?? []
-        let fresh = 0
-        for (const r of rows) {
-          if (seen.has(r.global_sequence)) continue
-          seen.add(r.global_sequence)
-          out.push(r)
-          fresh++
-        }
-        if (rows.length < page || fresh === 0) break
-        cursor = timeOf(rows[rows.length - 1].timestamp)
-      }
-      return out
-    } catch (e) {
-      lastError = e
-    }
-  }
-  throw lastError instanceof Error ? lastError : new Error('No history server answered')
-}
+/* Read through the shared history reader (chain/history.ts). */
+const actions = (params: Record<string, string>, start: number, end: number) =>
+  historyActions<ActionRow['act']['data']>(params, start, end)
 
 /*
  * A transfer's amount, counted once per time it ran. The indexers fold
