@@ -4,6 +4,7 @@ import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useGame } from '@/state/useGame'
 import { NetworkStatus } from '../NetworkStatus'
 import { useChores } from '@/chores/useChores'
+import { ChoreCount } from '@/chores/choreCount'
 import { CHORE_CHECKS } from '@/chores/checks'
 import { ResourceStrip } from '../ResourceStrip'
 import { AccountPlate } from './AccountPlate'
@@ -293,6 +294,10 @@ export function AppShell() {
   const moreDots = Object.fromEntries(
     secondary.map((i) => [i.to, chores[choreFor(i.to)?.key as never] ? choreFor(i.to)?.hint : undefined]),
   )
+  /* More is where you are on any of its pages, and carries a dot when one of them has one. */
+  const onMorePage = secondary.some((i) => location.pathname === i.to || location.pathname.startsWith(i.to + '/'))
+  const moreDot = Object.values(moreDots).find(Boolean)
+  const choreCount = Object.values(chores).filter(Boolean).length
 
   return (
     <div
@@ -397,7 +402,10 @@ export function AppShell() {
       */}
       <main className={isMap ? 'main main--flush' : 'main'} ref={mainRef}>
         {isMap ? (
-          <Outlet />
+          /* The map's rail carries the way to the Briefing, with how many sections have something waiting. */
+          <ChoreCount.Provider value={choreCount}>
+            <Outlet />
+          </ChoreCount.Provider>
         ) : (
           <div
             className="main__inner"
@@ -431,10 +439,11 @@ export function AppShell() {
 
         <button
           type="button"
-          className={`tab${sheetOpen ? ' tab--on' : ''}`}
+          className={`tab${sheetOpen || onMorePage ? ' tab--on' : ''}`}
           onClick={() => (sheetOpen ? closeSheet() : setSheetOpen(true))}
           aria-haspopup="dialog"
           aria-expanded={sheetOpen}
+          aria-current={onMorePage ? 'page' : undefined}
         >
           <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
             <circle cx="5" cy="12" r="2" />
@@ -442,6 +451,7 @@ export function AppShell() {
             <circle cx="19" cy="12" r="2" />
           </svg>
           More
+          {moreDot && !sheetOpen && <span className="tab__dot" aria-label={moreDot} />}
         </button>
       </nav>
 

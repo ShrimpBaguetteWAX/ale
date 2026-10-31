@@ -1218,6 +1218,8 @@ export default function Arena() {
                     NFT Fighter
                     <em>crew + weapon</em>
                   </span>
+                  {/* A phone hides the hint; this short tag says the sixth slot is the NFT fighter's. */}
+                  <span className="combatcard__nfttag">NFT</span>
                 </button>
               )}
             </div>

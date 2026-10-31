@@ -354,6 +354,8 @@ export interface DeskRosterProps {
   gems: number
 
   payAll: { ids: number[]; credits: number }
+  /** How many the whole-roster payday would pay, whichever scope is on. */
+  payAllCount: number
   payScope: PaydayScope
   onPayScope: (s: PaydayScope) => void
   overdue: number
@@ -588,30 +590,44 @@ export function DeskRoster(p: DeskRosterProps) {
         <span className="drost__headacts">
           {p.mode === 'inventory' && (
             <>
+              {/*
+                Who the payday pays, as a switch that says both choices with
+                their counts, then one Pay button. The toggle whose label was
+                its state, explained only in a tooltip, read as a second action.
+                Short of credits, the button says so and stays off.
+              */}
               <span className="paysplit">
+                <span className="drost__seg drost__seg--sm payscope" role="group" aria-label="Pay for">
+                  <button
+                    type="button"
+                    aria-pressed={p.payScope === 'overdue'}
+                    disabled={!!p.busy || p.overdue === 0}
+                    onClick={() => p.onPayScope('overdue')}
+                  >
+                    Won't fight <em>{p.overdue}</em>
+                  </button>
+                  <button type="button" aria-pressed={p.payScope === 'all'} disabled={!!p.busy} onClick={() => p.onPayScope('all')}>
+                    All <em>{p.payAllCount}</em>
+                  </button>
+                </span>
                 <button
                   type="button"
                   className="btn btn--gold paysplit__go"
-                  disabled={!p.canAct || p.payAll.ids.length === 0 || !!p.busy}
+                  disabled={!p.canAct || p.payAll.ids.length === 0 || p.payAll.credits > p.credits || !!p.busy}
                   onClick={p.onPayAll}
-                >
-                  {p.busy === 'pay-all' && <span className="spinner" />}
-                  Payday {p.payScope === 'overdue' ? 'unwilling' : 'all'} ({p.payAll.ids.length})
-                  {p.payAll.credits > 0 && <Credits value={p.payAll.credits} />}
-                </button>
-                <button
-                  type="button"
-                  className="btn btn--ghost paysplit__mode"
-                  aria-pressed={p.payScope === 'overdue'}
-                  disabled={!!p.busy}
-                  onClick={() => p.onPayScope(p.payScope === 'overdue' ? 'all' : 'overdue')}
                   title={
-                    p.payScope === 'overdue'
-                      ? `Paying only the ${p.overdue} unwilling to fight. Switch to the whole roster.`
-                      : `Paying all ${p.payAll.ids.length}. Switch to the ${p.overdue} unwilling to fight.`
+                    p.payAll.credits > p.credits
+                      ? `Needs ${p.payAll.credits.toLocaleString(NUM_LOCALE)} credits; you have ${p.credits.toLocaleString(NUM_LOCALE)}`
+                      : undefined
                   }
                 >
-                  {p.payScope === 'overdue' ? 'Unwilling' : 'All'}
+                  {p.busy === 'pay-all' && <span className="spinner" />}
+                  Pay {p.payAll.ids.length}
+                  {p.payAll.credits > 0 && (
+                    <span className={p.payAll.credits > p.credits ? 'paysplit__short' : undefined}>
+                      <Credits value={p.payAll.credits} />
+                    </span>
+                  )}
                 </button>
               </span>
               <button
@@ -1321,7 +1337,10 @@ export function HolderRow({
                   style={{ '--ab': rarityColor(a.displayname) } as React.CSSProperties}
                   title={`${abilityName(a.displayname)}: ${text}`}
                 >
-                  <span className="codex__rib">{a.locked ? 'Locked' : (r ?? 'unique')}</span>
+                  <span className="codex__rib">
+                {r ?? 'unique'}
+                {!!a.locked && <i className="codex__riblock">Locked</i>}
+              </span>
                   <b>{abilityName(a.displayname)}</b>
                   <small>{text}</small>
                 </span>
@@ -1883,7 +1902,10 @@ export function FighterCodex({
               style={{ '--ab': rarityColor(a.displayname) } as React.CSSProperties}
               title={resolveAbilityDescription(a)}
             >
-              <span className="codex__rib">{a.locked ? 'Locked' : (r ?? 'unique')}</span>
+              <span className="codex__rib">
+                {r ?? 'unique'}
+                {!!a.locked && <i className="codex__riblock">Locked</i>}
+              </span>
               <b>
                 {abilityName(a.displayname)}
                 {!!a.locked && <img src={asset('/assets/icons/lock.svg')} alt="" />}

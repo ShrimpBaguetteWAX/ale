@@ -531,12 +531,18 @@ function LandCard({
       {face}
       {earn &&
         (building ? (
+          /* TLM only when there is some to claim; the shards labelled as what came in since the last claim. */
           <span className="lcard__earn mono">
-            <span className="lcard__tlm">
-              {tlm(income.tlm)}
-              <TlmIcon />
+            {income.tlm > 0 && (
+              <span className="lcard__tlm">
+                {tlm(income.tlm)}
+                <TlmIcon />
+              </span>
+            )}
+            <span className="lcard__shards">
+              <Shards value={income.shards} />
+              <small>earned</small>
             </span>
-            <Shards value={income.shards} />
           </span>
         ) : (
           <span className="lcard__earn is-build">Build</span>
@@ -680,6 +686,8 @@ function DeskLands({
           <span className="plands__claimtext">
             <small>Ready to claim</small>
             <b className="mono">{tlm(totalTlm)} TLM</b>
+            {/* The cards' shards are a tally: they reach the owner as they are mined. */}
+            <small className="plands__shardnote">Shards are paid as they are mined</small>
           </span>
           <button
             type="button"
@@ -712,7 +720,7 @@ function DeskLands({
       </div>
 
       <div className="dlands__main">
-        {group('Needs a boost', 'players cannot see or use these, or soon will not', needs)}
+        {group('Needs a boost', 'fading off the map, or already gone from it', needs)}
         {group('Empty land', 'build a tavern, dungeon or arena and earn from every use', empty)}
         {/*
           Open, but never finished: a higher boost is more players and bigger
@@ -840,6 +848,7 @@ export function PhoneLands({
         <span className="plands__claimtext">
           <small>Ready to claim</small>
           <b className="mono">{tlm(totalTlm)} TLM</b>
+          <small className="plands__shardnote">Shards are paid as they are mined</small>
         </span>
         <button
           type="button"
@@ -1316,7 +1325,7 @@ function LandSheet({
                 {/* Keyed by the art, so a new look pops in rather than just swapping. */}
                 <img key={buildingArt(name, target)} src={buildingArt(name, target)} alt="" />
                 <b className="mono">{boostLabel(target / 10_000)}</b>
-                <small>{newLook ? 'New look' : 'Same look'}</small>
+                <small>{newLook ? 'Building upgrades' : 'Building looks the same'}</small>
               </span>
             </div>
             <input

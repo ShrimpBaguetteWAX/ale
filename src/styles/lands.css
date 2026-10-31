@@ -1475,3 +1475,18 @@
   font-size: max(6px, calc(var(--u) * 0.56));
   letter-spacing: 0;
 }
+
+/* The claim strip's note on shards, and a card's shards labelled as earned. */
+.plands__shardnote {
+  font-family: var(--font-body);
+  font-size: max(10px, var(--fs-floor));
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--text-faint);
+}
+.lcard__shards small {
+  font-family: var(--font-body);
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-faint);
+}

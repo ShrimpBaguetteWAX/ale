@@ -2208,7 +2208,8 @@ a.res {
   --stick: calc(var(--topbar-h, 0px) + var(--sp-4));
   display: grid;
   /* The list a phone's width: My Fighters' stacked card fits it. */
-  grid-template-columns: minmax(340px, 400px) minmax(0, 1fr) minmax(270px, 310px);
+  /* The list wide enough for the desktop holder; the altar gives up width first. */
+  grid-template-columns: minmax(460px, 560px) minmax(0, 1fr) minmax(270px, 310px);
   grid-template-areas: 'list middle side';
   gap: var(--sp-4);
   align-items: start;
@@ -2516,12 +2517,12 @@ a.res {
 /*
    Too narrow for three columns: the list, and beside it the altar over the
    deal. Three columns need the altar's own width and its labels (about
-   450px) beside the list and the deal, so they take a board of 1200px.
+   450px) beside the list and the deal, so they take a board of 1360px.
    The build step's altar and deal stay in view as one column.
 */
-@container dasc (max-width: 1200px) {
+@container dasc (max-width: 1360px) {
   .dasc {
-    grid-template-columns: clamp(340px, 45%, 400px) minmax(0, 1fr);
+    grid-template-columns: clamp(440px, 50%, 560px) minmax(0, 1fr);
     grid-template-areas:
       'list middle'
       'list side';
@@ -3186,8 +3187,9 @@ a.res {
   grid-template-columns: minmax(0, 1fr);
   gap: 14px;
 }
+/* The sockets chip in the holder's own chip type, like Age and Payday beside it. */
 .hold__chip.dasc__fit {
-  font: inherit;
+  font-size: max(9.5px, var(--fs-floor));
   color: inherit;
 }
 .hold__chip.dasc__fit b {
@@ -3287,3 +3289,4 @@ a.res {
 .dasc__risen > b {
   margin-top: 10px;
 }
+

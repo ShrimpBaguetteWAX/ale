@@ -8179,3 +8179,25 @@ button.combatcard--empty:hover {
   filter: grayscale(0.6);
   pointer-events: none;
 }
+
+/*
+ * The sixth slot is the NFT fighter's (crew + weapon): on a phone, where the
+ * hint is hidden, a short NFT tag and a gap set it apart from the five.
+ */
+.combatcard__nfttag {
+  display: none;
+}
+@media (max-width: 719px) {
+  .versus--hud .versus__row > .combatcard--nft {
+    margin-left: 6px;
+  }
+  .versus--hud .versus__row > .combatcard--nft .combatcard__nfttag {
+    display: block;
+    margin-top: 2px;
+    font-family: var(--font-display);
+    font-size: 10px;
+    font-weight: 900;
+    letter-spacing: 0.1em;
+    color: #c9a8ff;
+  }
+}

@@ -95,12 +95,17 @@ describe('batchableMines', () => {
   })
 })
 
-describe('the Mine ×N button', () => {
-  it('appears only once there is more than one banked mine', async () => {
+/*
+ * A desktop mines with the banner's one Mine, which takes every ready pool; the
+ * pool's own panel says how many of its mines that is, capped as one
+ * signature takes them, and offers no second Mine.
+ */
+describe('the desktop pool panel', () => {
+  it('says how many mines the one Mine takes from it', async () => {
     const { render, screen, cleanup } = await import('@testing-library/react')
     const { DeskPool } = await import('@/rewards/DeskRewards')
 
-    const row = (mines: number, over: Partial<PoolEntry> = {}) => {
+    const note = (mines: number, over: Partial<PoolEntry> = {}) => {
       cleanup()
       render(
         <DeskPool
@@ -113,23 +118,21 @@ describe('the Mine ×N button', () => {
           onMine={() => {}}
         />,
       )
-      return screen.queryByText(/^Mine ×/)
+      return screen.queryByText(/the Mine button above/)?.textContent ?? null
     }
 
-    expect(row(1), 'one banked mine is just Mine').toBeNull()
-    expect(row(4)?.textContent).toBe('Mine ×4')
+    expect(note(1), 'one banked mine has no count').not.toMatch(/mines/)
+    expect(note(4)).toMatch(/· 4 mines/)
     /* Capped, however much is banked. */
-    expect(row(40)?.textContent).toBe(`Mine ×${MAX_BATCH_MINES}`)
-    /* And never for a pool that spends everything in one call. */
-    expect(row(9, { anyAmount: true })).toBeNull()
+    expect(note(40)).toMatch(new RegExp(`· ${MAX_BATCH_MINES} mines`))
+    /* And never a count for a pool that spends everything in one call. */
+    expect(note(9, { anyAmount: true })).not.toMatch(/mines/)
     cleanup()
   })
 
-  it('asks for exactly the number on the button', async () => {
-    const { render, screen, fireEvent, cleanup } = await import('@testing-library/react')
+  it('has no Mine of its own', async () => {
+    const { render, screen, cleanup } = await import('@testing-library/react')
     const { DeskPool } = await import('@/rewards/DeskRewards')
-
-    const asked: number[] = []
     render(
       <DeskPool
         entry={entry({ mines: 6, power: 6 * MINE_POWER })}
@@ -138,14 +141,10 @@ describe('the Mine ×N button', () => {
         trial={null}
         busy={false}
         disabled={false}
-        onMine={(times) => asked.push(times)}
+        onMine={() => {}}
       />,
     )
-
-    fireEvent.click(screen.getByText('Mine'))
-    fireEvent.click(screen.getByText('Mine ×6'))
+    expect(screen.queryByRole('button', { name: /Mine/ })).toBeNull()
     cleanup()
-
-    expect(asked).toEqual([1, 6])
   })
 })

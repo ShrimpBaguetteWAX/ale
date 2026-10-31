@@ -170,7 +170,7 @@ export function DeskAscension({
 
   /*
      The fighter in its holder, as My Fighters and the fight screens show it.
-     The list is a phone's width, so it takes the phone's holder.
+     The list is wide enough for the desktop holder.
   */
   const [now] = useState(() => Date.now())
   const figures = useMemo(() => {
@@ -306,7 +306,7 @@ export function DeskAscension({
               : 'Nothing matches.'}
           </p>
         ) : (
-          <div className="drost--phone drost__holders dasc__rows">
+          <div className="drost__holders dasc__rows">
             {rows.map((f) => {
               if (list === 'target') {
                 const n = covered.get(f.fighter_id) ?? 0

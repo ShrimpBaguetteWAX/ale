@@ -444,6 +444,8 @@ export function DungeonBoard({
   /* Still the cutoff for the "Pays now" column and the threshold rule. */
   const paid = rewardCount(config)
   const phone = usePhone()
+  /* A phone keeps each row to its rank, name, rating and pay; the squad opens on a tap. */
+  const [openRow, setOpenRow] = useState<string | null>(null)
   /* Both put the top three on a podium and list from fourth. */
   const from = Math.min(3, ranks.length)
   const payNow = (rank: number) =>
@@ -538,7 +540,9 @@ export function DungeonBoard({
               <article
                 className={`lbrow lbrow--dungeon${rarityRow(row.avatar)}${
                   row.wallet === wallet ? ' lbrow--you' : ''
-                }`}
+                }${phone && openRow === row.wallet ? ' is-open' : ''}`}
+                onClick={phone ? () => setOpenRow((w) => (w === row.wallet ? null : row.wallet)) : undefined}
+                aria-expanded={phone ? openRow === row.wallet : undefined}
               >
                 <span className={`rank ${rankClass(rank)}`}>{rank}</span>
 

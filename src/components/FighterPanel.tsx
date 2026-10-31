@@ -573,7 +573,10 @@ export function FighterHoverCard({
                   className={`fhover2__ab${ab.locked ? ' is-locked' : ''}`}
                   style={{ '--ab': abilityColor(ab.displayname) } as React.CSSProperties}
                 >
-                  <span className="codex__rib">{ab.locked ? 'Locked' : (rarity ?? 'Unique')}</span>
+                  <span className="codex__rib">
+                    {rarity ?? 'Unique'}
+                    {!!ab.locked && <i className="codex__riblock">Locked</i>}
+                  </span>
                   <b>
                     {abilityName(ab.displayname)}
                     {!!ab.locked && <small> · unlocks on ascension</small>}
@@ -720,7 +723,10 @@ export function CodexReadout({
                   className={`drost__abitem${ab.locked ? ' is-locked' : ''}`}
                   style={{ '--ab': abilityColor(ab.displayname) } as React.CSSProperties}
                 >
-                  <span className="codex__rib">{ab.locked ? 'Locked' : (rarity ?? 'Unique')}</span>
+                  <span className="codex__rib">
+                    {rarity ?? 'Unique'}
+                    {!!ab.locked && <i className="codex__riblock">Locked</i>}
+                  </span>
                   <b>
                     {abilityName(ab.displayname)}
                     {!!ab.locked && (

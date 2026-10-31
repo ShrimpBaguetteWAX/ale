@@ -929,17 +929,15 @@ function DeskCurrency({
 
 /**
  * The pool open beside the rings: the phone's pool sheet, kept open — what it
- * holds, what a mine pays, how far along it is, and Mine. Mine ×N appears
- * once more than one mine is banked, capped at what one signature takes.
+ * holds, what a mine pays and how far along it is. Mining is the banner's one
+ * Mine, which takes every ready pool in one go: two more buttons here with
+ * other figures were the same action twice.
  */
 export function DeskPool({
   entry,
   places,
   symbol,
   trial,
-  busy,
-  disabled,
-  onMine,
 }: {
   entry: PoolEntry
   places: number
@@ -963,32 +961,19 @@ export function DeskPool({
         pays={entry.anyAmount ? entry.payout : poolPayout(entry.balance, MINE_POWER)}
         trial={trial}
       />
-      <div className="rsheet__actions">
-        {entry.ready ? (
-          <>
-            <button type="button" className="btn btn--gold" disabled={disabled} onClick={() => onMine(1)}>
-              {busy && <span className="spinner" />}
-              Mine
-            </button>
-            {batch > 1 && (
-              <button type="button" className="btn" disabled={disabled} onClick={() => onMine(batch)}>
-                Mine ×{batch}
-              </button>
-            )}
-          </>
-        ) : (
-          <>
-            {link && (
-              <Link className="btn btn--primary" to={link.to}>
-                {link.label}
-              </Link>
-            )}
-            <button type="button" className="btn" disabled>
-              Mine
-            </button>
-          </>
-        )}
-      </div>
+      {entry.ready ? (
+        <p className="rsheet__hint">
+          Ready{batch > 1 ? ` · ${batch} mines` : ''}: the Mine button above takes it with the other ready pools.
+        </p>
+      ) : (
+        link && (
+          <div className="rsheet__actions">
+            <Link className="btn btn--primary" to={link.to}>
+              {link.label}
+            </Link>
+          </div>
+        )
+      )}
     </section>
   )
 }

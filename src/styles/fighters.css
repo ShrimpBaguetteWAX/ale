@@ -4591,9 +4591,6 @@ h2.drost__bname {
   color: #0b1426;
   background: var(--ab);
 }
-.codex .drost__abitem.is-locked .codex__rib {
-  background: #7d879e;
-}
 
 /* The buttons as steel plates glowing in their colour. */
 .drost:not(.drost--phone) .drost__side .codex .drost__acts {
@@ -5046,18 +5043,21 @@ h2.drost__bname {
 
 /* Default: the abilities as rarity pills along the foot. */
 /*
- * Whole pills only: they wrap to a second row rather than being cut mid-word
- * at the card's edge, and a third row, if any, is left out whole. The codex
- * has every ability in full.
+ * Whole pills only: one line of the pills that fit, the rest wrapped out of
+ * sight whole rather than one cut mid-word at the card's edge (the holder has
+ * no room for a second line). The codex has every ability in full.
  */
 .hold__pills {
   display: flex;
   flex-wrap: wrap;
   align-content: flex-start;
-  gap: 3px 4px;
+  gap: 4px;
   min-width: 0;
-  max-height: 37px;
+  max-height: 17px;
   overflow: hidden;
+}
+.drost--phone .hold__pills {
+  max-height: 15px;
 }
 .hold__lock {
   width: 9px;
@@ -5080,9 +5080,9 @@ h2.drost__bname {
   white-space: nowrap;
   color: #0b1426;
 }
+/* Locked keeps its rarity's colour, dimmed, with the lock before the name. */
 .hold__pill.is-locked {
-  background: #3a4560;
-  color: #b9c2d6;
+  opacity: 0.6;
 }
 
 /* Stats: the stats with their spread, and the resistances, side by side. */
@@ -5194,10 +5194,6 @@ h2.drost__bname {
 }
 .hold__ab.is-locked {
   opacity: 0.65;
-}
-.hold__ab.is-locked .codex__rib {
-  background: #5a6580;
-  color: #dfe6f2;
 }
 .hold__ab > b {
   overflow: hidden;
@@ -5531,10 +5527,6 @@ h2.drost__bname {
   padding: 1px 9px;
   font-size: max(7px, var(--fs-floor));
 }
-.fhover2__ab.is-locked .codex__rib {
-  background: #5a6580;
-  color: #dfe6f2;
-}
 .fhover2__ab > b {
   font-family: var(--font-display);
   font-size: 10.5px;
@@ -5678,4 +5670,40 @@ h2.drost__bname {
 .gcard__name.is-long {
   font-size: max(6px, calc(var(--u) * 0.6));
   letter-spacing: 0.01em;
+}
+
+/* Who the payday pays, a switch with both counts, then one Pay button beside it. */
+.paysplit {
+  gap: 8px;
+  align-items: center;
+}
+.paysplit__go {
+  border-radius: var(--radius-sm, 10px);
+}
+.payscope button em {
+  margin-left: 4px;
+  font-style: normal;
+  opacity: 0.7;
+}
+.paysplit__short {
+  color: #ff8fa0;
+}
+
+/*
+ * A locked ability keeps its rarity: the ribbon in the rarity's colour, with a
+ * grey LOCKED end on it, rather than a grey ribbon that hid what it will be.
+ */
+.codex__riblock {
+  display: inline-block;
+  margin: -2px -12px -2px 8px;
+  padding: 2px 12px 2px 8px;
+  font-style: normal;
+  background: #7d879e;
+  box-shadow: inset 1px 0 0 rgb(11 20 38 / 45%);
+}
+/* The smaller ribbons of the holder and the hover card, their locked end to match. */
+.hold__ab .codex__riblock,
+.fhover2__ab .codex__riblock {
+  margin: -1px -9px -1px 6px;
+  padding: 1px 9px 1px 6px;
 }

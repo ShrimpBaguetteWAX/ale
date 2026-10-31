@@ -59,6 +59,7 @@ function Harness({ roster, ...rest }: { roster: RosterFighter[] } & Record<strin
       credits={1_000_000}
       gems={100_000}
       payAll={{ ids: [], credits: 0 }}
+      payAllCount={0}
       payScope="overdue"
       onPayScope={nop}
       overdue={0}

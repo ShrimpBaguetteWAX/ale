@@ -43,6 +43,7 @@ import { planetRoute } from '@/map/route'
 import { readableError } from '@/wharf/errors'
 import { NUM_LOCALE } from '@/format'
 import { asset } from '@/assets'
+import { useChoreCount } from '@/chores/choreCount'
 
 /**
  * What the markers mean, and the one rule the map cannot show.
@@ -355,6 +356,8 @@ export default function MapView() {
   const zoomApi = useRef<ZoomApi | null>(null)
   const [zoomLevel, setZoomLevel] = useState(1)
   const { claimable, reload: reloadQuests } = useClaimableQuests()
+  /* Sections with something waiting, for the rail's way to the Briefing. */
+  const chores = useChoreCount()
   /*
      Everything over the map, out of the way.
 
@@ -1243,8 +1246,8 @@ export default function MapView() {
             aria-label={railOpen ? 'Close the map controls' : 'Map controls'}
           >
             {railOpen ? ICON_CLOSE : ICON_MENU}
-            {!railOpen && claimable.length > 0 && (
-              <span className="maprail__badge">{claimable.length}</span>
+            {!railOpen && claimable.length + chores > 0 && (
+              <span className="maprail__badge">{claimable.length + chores}</span>
             )}
           </button>
           <button
@@ -1259,6 +1262,20 @@ export default function MapView() {
             {ICON_FIND}
           </button>
           <div className={`maprail${railOpen ? ' maprail--open' : ''}`}>
+            {/*
+              The way to the Briefing from the map, where a returning trainer
+              lands, with how many sections have something waiting: the same
+              chores that put the dots on the menu.
+            */}
+            <Link
+              className="maprail__btn maprail__btn--brief"
+              to="/briefing"
+              data-tip={chores > 0 ? `Briefing · ${chores} to do` : 'Briefing'}
+              aria-label={chores > 0 ? `Briefing, ${chores} to do` : 'Briefing'}
+            >
+              <img src={asset('/assets/icons/menu/briefing.svg')} alt="" />
+              {chores > 0 && <span className="maprail__badge">{chores}</span>}
+            </Link>
             {claimable.length > 0 && (
               <div className="maprail__slot">
                 <button

@@ -163,7 +163,7 @@ export default function Shop() {
               {legend ? 'Legend' : 'Trial'}
             </span>
             <span className="faint" style={{ fontSize: 'var(--fs-xs)' }}>
-              {legend && expiry ? legendLeft(expiry.getTime() - Date.now()) : 'Trial account'}
+              {legend && expiry ? legendLeft(expiry.getTime() - Date.now()) : 'Trial'}
             </span>
           </div>
         </header>

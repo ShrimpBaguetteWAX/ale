@@ -278,6 +278,8 @@ export default function Fighters() {
     () => paydayAllPlan(roster, config, now, payScope),
     [roster, config, now, payScope],
   )
+  /* How many the whole-roster payday would pay, for its side of the switch. */
+  const payAllCount = useMemo(() => paydayAllPlan(roster, config, now, 'all').ids.length, [roster, config, now])
 
   const checkedFighters = useMemo(
     () => roster.filter((f) => checked.includes(f.fighter_id)),
@@ -514,6 +516,7 @@ export default function Fighters() {
         credits={credits}
         gems={gems}
         payAll={payAll}
+        payAllCount={payAllCount}
         payScope={payScope}
         onPayScope={(next) => {
           setPayScope(next)

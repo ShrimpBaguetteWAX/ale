@@ -1652,13 +1652,25 @@
 }
 
 /*
-   Tabs on a phone: rows of three, each exactly a third. Fixed rather than
-   grown, so the seventh, Swap, sits in its own row as a tab like the others
-   instead of stretching across it.
+   Tabs on a phone: what you buy (gems, credits, energy, the Legend Pass) as
+   one row of four, and the other places (Outpost, NFT Market, Swap) as a
+   lighter row of three under it, rather than seven tabs in three rows.
 */
 @media (max-width: 719px) {
   .shop .tabs__tab {
-    flex: 0 0 calc((100% - 2 * var(--sp-1)) / 3);
+    flex: 0 0 calc((100% - 3 * var(--sp-1)) / 4);
+    min-width: 0;
+    padding: 0 4px;
+    font-size: 11px;
+  }
+  .shop .tabs__tab:nth-child(n + 5) {
+    flex: 1 1 0;
+    min-height: 36px;
+    font-size: 10.5px;
+    opacity: 0.85;
+  }
+  .shop .tabs__tab:nth-child(n + 5)[aria-selected='true'] {
+    opacity: 1;
   }
 }
 

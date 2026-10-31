@@ -179,14 +179,7 @@
 .lbrow--rar {
   border-left: 3px solid var(--rc);
 }
-.lbrow--rar::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background: linear-gradient(90deg, color-mix(in srgb, var(--rc) 34%, transparent), transparent 52%);
-  pointer-events: none;
-}
+/* The rarity on the left rail only: a wash across every row made the list a stripe of colours and your own row hard to find. */
 .lbrow--rar > * {
   position: relative;
 }
@@ -1660,4 +1653,14 @@
   letter-spacing: 0.1em;
   text-transform: uppercase;
   text-shadow: none;
+}
+
+/* A phone: a row is rank, name, rating and pay; its squad opens on a tap. */
+@media (max-width: 719px) {
+  .lbrow--dungeon {
+    cursor: pointer;
+  }
+  .lbrow--dungeon:not(.is-open) > .lbrow__team {
+    display: none;
+  }
 }
