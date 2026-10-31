@@ -1,0 +1,1 @@
+import{j as s}from"./react-BnBjmWcX.js";function m({children:e,action:t}){return s.jsxs("div",{className:"emptystate",children:[s.jsx("p",{children:e}),t&&s.jsx("div",{className:"emptystate__acts",children:t})]})}export{m as E};
