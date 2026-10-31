@@ -11,7 +11,7 @@ import { asset, ipfsImage } from '@/assets'
 const CREDITS = asset('/assets/icons/credits.svg')
 const GEMS = asset('/assets/icons/gems.svg')
 /* Best first, the way a player reads their own collection. */
-const SHELVES = [...RARITIES].reverse()
+const RAREST_FIRST = [...RARITIES].reverse()
 
 /**
  * Farming on a desktop: the card table.
@@ -87,14 +87,13 @@ export function DeskFarming({
   const lastClaim = Date.parse((user?.last_claim ?? '') + 'Z')
 
   /* The cards on shelves by rarity, best first. */
-  const shelves = useMemo(() => {
-    const by = new Map<string, CardStack[]>()
-    for (const s of stacks) {
-      const r = SHELVES.find((x) => x.toLowerCase() === (s.rarity || '').toLowerCase()) ?? s.rarity
-      by.set(r, [...(by.get(r) ?? []), s])
+  /* The cards rarest first, in the order they came within a rarity; one the list does not know goes last. */
+  const byRarity = useMemo(() => {
+    const rank = (s: CardStack) => {
+      const i = RAREST_FIRST.findIndex((x) => x.toLowerCase() === (s.rarity || '').toLowerCase())
+      return i < 0 ? RAREST_FIRST.length : i
     }
-    const order = [...SHELVES, ...[...by.keys()].filter((k) => !SHELVES.includes(k))]
-    return order.filter((r) => by.has(r)).map((r) => ({ rarity: r, stacks: by.get(r)! }))
+    return [...stacks].sort((x, y) => rank(x) - rank(y))
   }, [stacks])
 
   /* What the hand holds, and what it does to the pool. */
@@ -224,34 +223,18 @@ export function DeskFarming({
               : `No ${label.toLowerCase()} in your wallet.`}
         </p>
       ) : (
-        shelves.map(({ rarity, stacks: row }) => {
-          const n = row.reduce((sum, s) => sum + s.count, 0)
-          const ws = row.map((s) => s.weight)
-          const lo = Math.min(...ws)
-          const hi = Math.max(...ws)
-          return (
-            <section className={`dfarm__shelf is-${rarity.toLowerCase()}`} key={rarity} aria-label={rarity}>
-              <span className="dfarm__shelfhead">
-                {rarity}
-                <small>
-                  {formatNumber(n)} card{n === 1 ? '' : 's'} · weight{' '}
-                  {lo === hi ? formatNumber(lo) : `${formatNumber(lo)}–${formatNumber(hi)}`}
-                </small>
-              </span>
-              <div className="dfarm__grid">
-                {row.map((stack) => (
-                  <Card
-                    key={stack.key}
-                    stack={stack}
-                    count={counts[stack.key] ?? 0}
-                    disabled={busy !== null}
-                    onChange={(v) => onCount(stack.key, v, stack.count)}
-                  />
-                ))}
-              </div>
-            </section>
-          )
-        })
+        /* One grid, rarest first: each card says its rarity, so the rarities need no shelves of their own. */
+        <div className="dfarm__flow">
+          {byRarity.map((stack) => (
+            <Card
+              key={stack.key}
+              stack={stack}
+              count={counts[stack.key] ?? 0}
+              disabled={busy !== null}
+              onChange={(v) => onCount(stack.key, v, stack.count)}
+            />
+          ))}
+        </div>
       )}
 
       {/* The hand: what is about to be staked or unstaked, what it does, and the one button. */}
@@ -309,7 +292,7 @@ export function DeskFarming({
 }
 
 /**
- * One design on a shelf: click the card to play all of them into the hand or
+ * One design in the grid: click the card to play all of them into the hand or
  * take them back; the stepper under it is for when it is eleven of forty.
  */
 function Card({
