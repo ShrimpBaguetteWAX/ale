@@ -59,7 +59,7 @@ import {
 import { asset, ipfsImage } from '@/assets'
 import { rarityColor } from '@/map/terrain'
 import { usePhone } from '@/components/usePhone'
-import { CodexSheet } from '@/fighters/CodexSheet'
+import { CodexSheet, PanelCodexSheet } from '@/fighters/CodexSheet'
 import { useMedallions } from '@/fight/matchupStyle'
 import { ELEMENT_RIM } from '@/fight/GildedCards'
 import { useModal } from '@/components/useModal'
@@ -3476,6 +3476,7 @@ export function DetailSheet({
 }) {
   const phone = usePhone()
   if (phone && fighter) return <CodexSheet f={fighter} onClose={props.onClose} />
+  if (phone) return <PanelCodexSheet {...props} />
   return <PanelSheet {...props} />
 }
 

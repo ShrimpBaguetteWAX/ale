@@ -56,8 +56,10 @@ import {
   fighterArtFallback,
   fighterAvatar,
   formatResistance,
+  formatScaled,
   formatTarget,
   gradeAged,
+  gradeStat,
   gradeOfStat,
   resolveAbilityDescription,
   statDisplay,
@@ -76,6 +78,7 @@ import { asset } from '@/assets'
 import { RosterCardFace, placeRibbon, type Ribbon } from '@/fighters/RosterCard'
 import { elementRim } from '@/fight/GildedCards'
 import { FighterPeek } from '@/fighters/CompactPick'
+import type { PanelFighter, PanelStat } from '@/components/FighterPanel'
 
 /**
  * My Fighters on a desktop: the Market's rows, with payday and age.
@@ -1727,6 +1730,145 @@ function Detail(props: DeskRosterProps & { f: RosterFighter; fig: Figures }) {
     >
       {!phone && <Acts {...props} />}
     </FighterCodex>
+  )
+}
+
+/**
+ * The codex page for a fighter that is not the player's: an opponent, a
+ * leaderboard team's fighter, the NFT fighter a crew and weapon make. Drawn
+ * from the panel's figures (what it fights with; no roll, payday or upkeep
+ * of the viewer's), graded against its class where there is one, so it
+ * reads like the codex of the player's own fighters.
+ */
+export function PanelCodex({ panel, template }: { panel: PanelFighter; template?: ClassTemplate }) {
+  const level = panel.level ?? 0
+  const unlock = 'Unlocks on ascension'
+  /* The card at its head: the class's own, or the art the panel brings (the NFT fighter has no class). */
+  const face = {
+    fighter_id: 0,
+    classname: panel.classname,
+    racename: panel.racename,
+    element: panel.element,
+    marker: '',
+    stats: { level },
+  } as unknown as RosterFighter
+  const stats = STAT_FIELDS.map((field) => {
+    const st = panel[field] as PanelStat
+    const ranged = st.max !== undefined && st.max !== st.min
+    const shown = ranged ? statDisplay(st.min, st.max!) : { value: formatScaled(st.min), spread: 0 }
+    const raw = st.grade ?? (ranged ? (st.min + st.max!) / 2 : st.min)
+    return { field, value: shown.value, spread: shown.spread, grade: field === 'taunt' || !template ? null : gradeStat(field, raw, template) }
+  })
+  const raws = panel as unknown as Record<string, number>
+  return (
+    <div
+      className="drost__detail codex"
+      style={{ '--bg': `url('${elementBackground(panel.element)}')` } as React.CSSProperties}
+    >
+      <div className="codex__head">
+        <span className="rocard codex__card">
+          {panel.art ? (
+            <span className="gcard" style={{ '--ec': elementRim(panel.element) } as React.CSSProperties}>
+              <span className="gcard__frame">
+                <span className="gcard__pic codex__ownart" style={{ backgroundImage: `url('${elementBackground(panel.element)}')` }}>
+                  <GameImg src={panel.art} alt="" fallback={fighterArtFallback()} />
+                </span>
+              </span>
+            </span>
+          ) : (
+            <RosterCardFace f={face} ribbon={null} xp={0} />
+          )}
+        </span>
+        <span className="codex__title">
+          <h2 className="codex__name">{panel.title ?? panel.classname}</h2>
+          <span className="drost__bline">
+            <img src={elementIcon(panel.element)} alt="" />
+            {panel.subtitle ?? `${panel.racename} · ${panel.element}`}
+          </span>
+          <span className="drost__bchips">
+            {level > 0 && <span>Level {level}</span>}
+            {panel.age && (
+              <span>
+                Age {panel.age.bonus > 0 ? '+' : ''}
+                {panel.age.bonus.toFixed(0)}%
+              </span>
+            )}
+            <span>
+              <img src={statIcon('target')} alt="" />
+              {panel.target ? formatTarget(panel.target) : 'Highest Taunt'}
+            </span>
+          </span>
+        </span>
+      </div>
+
+      <Divider>Stats</Divider>
+      <div className="drost__bars drost__bars--detail">
+        {stats.map((x) => (
+          <span className="drost__bar" key={x.field} title={`${STAT_NAMES[x.field]}${x.grade ? ` · ${GRADE_LABEL[x.grade]}` : ''}`}>
+            <small>
+              <img className="drost__si" src={statIcon(x.field)} alt="" />
+              {STAT_NAMES[x.field]}
+            </small>
+            <span
+              className={`codex__seg is-${x.grade ?? 'none'}`}
+              style={{ '--n': Math.round(GRADE_REACH[x.grade ?? 'middle'] * 10) } as React.CSSProperties}
+            />
+            <b className="codex__fig">
+              <span>{x.value}</span>
+              {x.spread > 0 ? <em>±{x.spread}</em> : <i />}
+              {x.grade ? <Grade grade={x.grade} /> : <i />}
+            </b>
+          </span>
+        ))}
+      </div>
+
+      <Divider>Resistances</Divider>
+      <div className="drost__resrow">
+        {RES.map(([field, el]) => (
+          <span key={field} title={`${cap(el)} resistance`}>
+            <span className="codex__hex" style={{ '--ec': elementRim(el) } as React.CSSProperties}>
+              <span>
+                <img src={elementIcon(el)} alt={el} />
+              </span>
+            </span>
+            <b>
+              {formatResistance(raws[field] ?? 0)}
+              <Grade grade={template ? gradeStat(field, raws[field] ?? 0, template) : null} />
+            </b>
+          </span>
+        ))}
+      </div>
+
+      {panel.abilities.length > 0 && (
+        <>
+          <Divider>Abilities</Divider>
+          <div className="drost__ablist">
+            {panel.abilities.map((a, i) => {
+              const r = abilityRarity(a.displayname)
+              return (
+                <div
+                  key={`${a.ability}-${i}`}
+                  className={`drost__abitem${a.locked ? ' is-locked' : ''}`}
+                  style={{ '--ab': rarityColor(a.displayname) } as React.CSSProperties}
+                  title={resolveAbilityDescription(a)}
+                >
+                  <span className="codex__rib">
+                    {r ?? 'unique'}
+                    {!!a.locked && <i className="codex__riblock">Locked</i>}
+                  </span>
+                  <b>
+                    {abilityName(a.displayname)}
+                    {!!a.locked && <img src={asset('/assets/icons/lock.svg')} alt="" />}
+                    <small>{a.locked ? unlock : (r ?? 'unique')}</small>
+                  </b>
+                  <p>{resolveAbilityDescription(a)}</p>
+                </div>
+              )
+            })}
+          </div>
+        </>
+      )}
+    </div>
   )
 }
 

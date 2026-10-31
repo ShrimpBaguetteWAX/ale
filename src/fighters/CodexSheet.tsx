@@ -2,7 +2,9 @@ import { useMemo, useState } from 'react'
 import type { RosterFighter } from '@/dungeon/types'
 import { BottomSheet } from '@/components/BottomSheet'
 import { useConfig, useConfigStore } from '@/state/useConfig'
-import { FighterCodex, figuresOf } from '@/fighters/DeskRoster'
+import { FighterCodex, PanelCodex, figuresOf } from '@/fighters/DeskRoster'
+import type { PanelFighter } from '@/components/FighterPanel'
+import type { ClassTemplate } from '@/tavern/fighterStats'
 
 const cap = (w: string) => w.charAt(0).toUpperCase() + w.slice(1)
 
@@ -37,6 +39,26 @@ export function CodexSheet({
       {/* The phone codex's sizes come with My Fighters' phone class. */}
       <div className="drost--phone codexsheet">
         <FighterCodex f={f} fig={fig} config={fighters} levels={levels} now={now} kick={kick} upkeep={upkeep} />
+      </div>
+    </BottomSheet>
+  )
+}
+
+/** Someone else's fighter (an opponent, the NFT fighter) as the same codex page, from its panel figures. */
+export function PanelCodexSheet({
+  panel,
+  template,
+  onClose,
+}: {
+  panel: PanelFighter
+  template?: ClassTemplate
+  onClose: () => void
+}) {
+  const name = panel.title ?? `${cap(panel.racename)} ${cap(panel.classname)}`
+  return (
+    <BottomSheet title={name} onClose={onClose}>
+      <div className="drost--phone codexsheet">
+        <PanelCodex panel={panel} template={template} />
       </div>
     </BottomSheet>
   )
