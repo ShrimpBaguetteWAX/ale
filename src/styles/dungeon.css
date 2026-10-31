@@ -7391,7 +7391,8 @@ button.combatcard--empty:hover {
 
 /* The phone's picker sheet: the filter and sort bar stays in view, docked under the tabs. */
 @media (max-width: 719px) {
-  .picker--sheet > .sheetbar {
+  .picker--sheet > .sheetbar,
+  .picker--sheet > .nftpick > .sheetbar {
     position: sticky;
     top: 48px;
     z-index: 2;
@@ -7686,4 +7687,475 @@ button.combatcard--empty:hover {
 .sheetbar:has(> .sheetbar__views) {
   flex-wrap: wrap;
   row-gap: 8px;
+}
+
+/*
+ * The crew and weapon tabs: the Fighters tab's bar, the rarities as a line of
+ * chips, and the cards in the fighters' gilded frame with a codex plate under
+ * each.
+ */
+.nftpick {
+  position: relative;
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+.nftpick .pickbar {
+  position: relative;
+  z-index: 21;
+}
+
+/* Element, shine and name, dropped over the cards on a desktop, in the sheet on a phone. */
+.nftpick__drop {
+  display: grid;
+  gap: 8px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: rgb(10 16 32 / 98%);
+  box-shadow:
+    inset 0 0 0 1px rgb(255 255 255 / 14%),
+    0 24px 60px rgb(0 0 0 / 70%);
+}
+.nftpick:not(.nftpick--phone) > .nftpick__drop {
+  position: absolute;
+  top: 46px;
+  right: 0;
+  z-index: 21;
+  width: min(100%, 460px);
+}
+.nftpick--phone > .nftpick__drop {
+  background: rgb(255 255 255 / 3%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 10%);
+}
+.nftpick__fhead {
+  font-family: var(--font-display);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.nftpick__opts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.nftpick__opt {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 30px;
+  padding: 0 11px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 14%);
+  font-size: 12.5px;
+  text-transform: capitalize;
+  color: var(--text-dim);
+  cursor: pointer;
+}
+.nftpick__opt:hover {
+  color: var(--white);
+}
+.nftpick__opt[aria-pressed='true'] {
+  color: var(--white);
+  background: rgb(0 186 255 / 14%);
+  box-shadow: inset 0 0 0 1px rgb(0 186 255 / 60%);
+}
+.nftpick__opt img {
+  width: 14px;
+  height: 14px;
+}
+.nftpick__name {
+  width: 100%;
+}
+
+/* The rarities: the quickest filter, in their colours. All lit until one is picked. */
+.nftpick__rar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+.nftpick__rchip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 24px;
+  padding: 0 12px;
+  border: 0;
+  clip-path: polygon(7% 0, 93% 0, 100% 50%, 93% 100%, 7% 100%, 0 50%);
+  font-family: var(--font-display);
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #0b1426;
+  background: var(--rc);
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.nftpick__rchip b {
+  opacity: 0.65;
+}
+.nftpick__rar.is-on .nftpick__rchip:not([aria-pressed='true']) {
+  opacity: 0.35;
+}
+.nftpick__rar.is-on .nftpick__rchip:not([aria-pressed='true']):hover {
+  opacity: 0.7;
+}
+
+/* The rarity colours, shared by the chips, the frames and the ribbons. */
+.nftpick .r-abundant {
+  --rc: #e8edf6;
+}
+.nftpick .r-common {
+  --rc: #c3cadb;
+}
+.nftpick .r-rare {
+  --rc: #2ec4ff;
+}
+.nftpick .r-epic {
+  --rc: #c374f0;
+}
+.nftpick .r-legendary {
+  --rc: #ffb81f;
+}
+.nftpick .r-mythical {
+  --rc: #ff4a5e;
+}
+
+.nftpick__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(176px, 1fr));
+  gap: 30px 14px;
+  padding-top: 8px;
+}
+
+.ncard {
+  position: relative;
+  min-width: 0;
+  content-visibility: auto;
+  contain-intrinsic-size: auto 176px auto 290px;
+  overflow-clip-margin: 24px;
+}
+.ncard__hit {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  gap: 8px;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+/* The Alien Worlds card in the gilded frame, its rarity on the crown diamond. */
+.ncard__frame {
+  position: relative;
+  justify-self: center;
+  width: 118px;
+  padding: 4px;
+  border-radius: 12px;
+  background: linear-gradient(160deg, #6d7ea3 0%, #232f4d 30%, #0c1222 55%, #2b3757 78%, #8295bb 100%);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 40%),
+    0 6px 14px rgb(0 0 0 / 55%);
+  transition: transform 0.2s;
+}
+.ncard__frame::before {
+  content: '';
+  position: absolute;
+  z-index: 3;
+  left: 50%;
+  top: -7px;
+  width: 13px;
+  height: 13px;
+  transform: translateX(-50%) rotate(45deg);
+  background: linear-gradient(135deg, #fff, var(--rc) 55%, #0b1426);
+  box-shadow: 0 0 10px var(--rc);
+}
+.ncard__art {
+  display: block;
+  width: 100%;
+  aspect-ratio: 137 / 192;
+  object-fit: cover;
+  border-radius: 8px;
+  box-shadow:
+    0 0 0 1.5px color-mix(in srgb, var(--rc) 75%, transparent),
+    0 0 12px color-mix(in srgb, var(--rc) 25%, transparent);
+}
+.ncard__hit:hover .ncard__frame {
+  transform: translateY(-3px);
+}
+.ncard__hit:focus-visible {
+  outline: none;
+}
+.ncard__hit:focus-visible .ncard__frame {
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 40%),
+    0 0 0 2px var(--cyan);
+}
+
+/* The shine as a foil passing over the card. */
+@keyframes ncard-foil {
+  from {
+    background-position: 160% 0;
+  }
+  to {
+    background-position: -60% 0;
+  }
+}
+.ncard.s-gold .ncard__frame::after,
+.ncard.s-stardust .ncard__frame::after,
+.ncard.s-antimatter .ncard__frame::after,
+.ncard.s-xdimension .ncard__frame::after {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  border-radius: 8px;
+  pointer-events: none;
+  mix-blend-mode: screen;
+  background-size: 260% 100%;
+  animation: ncard-foil 4s ease-in-out infinite;
+}
+.ncard.s-gold .ncard__frame::after {
+  background-image: linear-gradient(115deg, transparent 35%, rgb(255 220 120 / 55%) 50%, transparent 65%);
+}
+.ncard.s-stardust .ncard__frame::after {
+  background-image: linear-gradient(115deg, transparent 35%, rgb(200 230 255 / 55%) 50%, transparent 65%);
+}
+.ncard.s-antimatter .ncard__frame::after,
+.ncard.s-xdimension .ncard__frame::after {
+  background-image: linear-gradient(115deg, transparent 30%, rgb(255 90 200 / 45%) 45%, rgb(90 220 255 / 45%) 55%, transparent 70%);
+}
+@media (prefers-reduced-motion: reduce) {
+  .ncard .ncard__frame::after {
+    animation: none;
+  }
+}
+:root[data-fx='low'] .ncard .ncard__frame::after {
+  animation: none;
+}
+
+/* Picked: the frame turns gold and the card stands up, IN FIGHT across it. */
+.ncard.is-pick .ncard__frame {
+  background: linear-gradient(160deg, #fff6d6 0%, #f2c35a 25%, #8a5d14 55%, #d9a640 78%, #fff3c4 100%);
+  box-shadow:
+    inset 0 1px 0 #fff,
+    0 0 22px rgb(255 200 90 / 50%),
+    0 6px 14px rgb(0 0 0 / 55%);
+  transform: translateY(-4px);
+}
+.ncard__tag {
+  position: absolute;
+  z-index: 4;
+  left: 50%;
+  bottom: 26px;
+  transform: translateX(-50%);
+  padding: 2px 12px;
+  clip-path: polygon(7% 0, 93% 0, 100% 50%, 93% 100%, 7% 100%, 0 50%);
+  font-family: var(--font-display);
+  font-size: 8.5px;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: #062033;
+  background: linear-gradient(180deg, #a8ecff, #00baff);
+}
+.ncard__cnt {
+  position: absolute;
+  z-index: 4;
+  right: -6px;
+  bottom: -6px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: #0b1426;
+  box-shadow: inset 0 0 0 1px rgb(255 217 121 / 60%);
+  font-family: var(--font-display);
+  font-size: 9.5px;
+  font-weight: 900;
+  color: #ffd979;
+}
+
+/* The plate: name, rarity ribbon, then the bonus, the resistances or the ability. */
+.ncard__plate {
+  display: grid;
+  align-content: start;
+  gap: 5px;
+  min-width: 0;
+  padding: 8px 9px 9px;
+  border-radius: 9px;
+  background: rgb(0 0 0 / 30%);
+  box-shadow: inset 0 0 0 1px rgb(255 217 121 / 18%);
+}
+.ncard.is-pick .ncard__plate {
+  box-shadow: inset 0 0 0 1px rgb(255 217 121 / 55%);
+}
+.ncard__nm {
+  padding-right: 18px;
+  overflow: hidden;
+  font-family: var(--font-display);
+  font-size: 10.5px;
+  font-weight: 900;
+  text-transform: uppercase;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #fff3c4;
+}
+.ncard__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 7px;
+  margin-bottom: 2px;
+}
+.ncard__rib {
+  padding: 1px 10px;
+  clip-path: polygon(7% 0, 93% 0, 100% 50%, 93% 100%, 7% 100%, 0 50%);
+  font-family: var(--font-display);
+  font-size: 8px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: #0b1426;
+  background: var(--rc);
+}
+.ncard__el {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 11px;
+  text-transform: capitalize;
+  color: var(--text-dim);
+}
+.ncard__el img {
+  width: 12px;
+  height: 12px;
+}
+.ncard__st {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) 28px;
+  gap: 6px;
+  align-items: center;
+  font-family: var(--font-display);
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+.ncard__k {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+.ncard__k img {
+  width: 11px;
+  height: 11px;
+}
+.ncard__st .codex__seg {
+  height: 7px;
+}
+.ncard__st b {
+  font-size: 10.5px;
+  letter-spacing: 0;
+  text-align: right;
+  color: #5ff2b0;
+}
+.ncard__res {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 9px;
+  font-family: var(--font-display);
+  font-size: 10.5px;
+  font-weight: 800;
+  color: #bff0d2;
+}
+.ncard__res > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+.ncard__res img {
+  width: 13px;
+  height: 13px;
+}
+.ncard__ab {
+  position: relative;
+  display: grid;
+  gap: 1px;
+  margin-top: 8px;
+  padding: 12px 8px 7px;
+  border-radius: 8px;
+  background: rgb(0 0 0 / 28%);
+  box-shadow: inset 0 0 0 1px rgb(255 217 121 / 16%);
+}
+.ncard__ab:not(:has(> .codex__rib)) {
+  margin-top: 2px;
+  padding-top: 7px;
+}
+.ncard__ab .codex__rib {
+  top: -7px;
+  left: 8px;
+  padding: 1px 9px;
+  font-size: 7px;
+}
+.ncard__ab b {
+  font-family: var(--font-display);
+  font-size: 10.5px;
+  color: var(--white);
+}
+.ncard__ab small {
+  font-size: 11px;
+  line-height: 1.3;
+  color: var(--text-dim);
+}
+.ncard__none {
+  font-size: 11.5px;
+  color: var(--text-faint);
+}
+/* The details, at the top right of the plate. */
+.ncard__info {
+  position: absolute;
+  z-index: 5;
+  top: calc(118px * 192 / 137 + 22px);
+  right: 6px;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgb(255 255 255 / 8%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 22%);
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: 900;
+  color: var(--text-dim);
+  cursor: pointer;
+}
+.ncard__info:hover {
+  color: var(--white);
+  box-shadow: inset 0 0 0 1px var(--cyan);
+}
+
+/* A phone: two to a row, the frames a little smaller. */
+.nftpick--phone .nftpick__grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 26px 10px;
+}
+.nftpick--phone .ncard__frame {
+  width: 100px;
+}
+.nftpick--phone .ncard__info {
+  top: calc(100px * 192 / 137 + 22px);
 }

@@ -31,7 +31,7 @@ import {
   weatherTargets,
   type Weather,
 } from '@/fight/weather'
-import { byQuality, rarityRank, type NftValue } from '@/dungeon/nftFighter'
+import { byQuality, rarityRank, shineRank, type NftValue } from '@/dungeon/nftFighter'
 import type { BattleFighter, RosterFighter } from '@/dungeon/types'
 import {
   FILTER_STATS,
@@ -48,6 +48,7 @@ import {
   statDisplay,
   abilityColor,
   abilityName,
+  abilityRarity,
   resolveAbilityDescription,
   RESISTANCE_FIELDS,
   type ClassTemplate,
@@ -108,20 +109,28 @@ export const mid = (min: number, max: number) => Math.round((min + max) / 2)
  * touch.
  */
 const NFT_STATS: [string, string][] = [
-  ['damage', 'Damage'],
-  ['health', 'Health'],
-  ['attackspeed', 'Cooldown'],
-  ['initiative', 'Wind-up'],
+  ['damage', 'DMG'],
+  ['health', 'HP'],
+  ['attackspeed', 'Cool'],
+  ['initiative', 'Wind'],
   ['taunt', 'Taunt'],
 ]
 
-/** Which face of a card is showing. */
+/** What the crew and weapon plates show. */
 type CardView = 'stats' | 'res' | 'ability'
 
 const CARD_VIEWS: [CardView, string][] = [
-  ['stats', 'Stats'],
-  ['res', 'Res'],
+  ['stats', 'Bonus'],
+  ['res', 'Resistances'],
   ['ability', 'Ability'],
+]
+
+type CardSort = 'rarity' | 'damage' | 'health'
+
+const CARD_SORTS: [CardSort, string][] = [
+  ['rarity', 'Rarity & shine'],
+  ['damage', 'Damage added'],
+  ['health', 'Health added'],
 ]
 
 /**
@@ -3027,11 +3036,14 @@ export function CardSlot({
 }
 
 /**
- * The card grid.
+ * The crew and weapon tabs: the Fighters tab's filter bar over the cards,
+ * each in the gilded frame with what it adds as codex strips under it.
  *
- * Each tile carries what the card actually contributes — the health and
- * damage it adds to your sixth fighter, and how many abilities it brings —
- * because that, not the artwork, is what the choice turns on.
+ * The bar is the Fighters tab's, on a desktop and in a phone's sheet alike -
+ * what the plates show on the left, Filters and the sort on the right - so
+ * the three tabs of the picker work as one. The rarities sit under it as a
+ * line of chips in their colours, the quickest filter there is; element,
+ * shine and name open under the bar.
  */
 export function CardGrid({
   cards,
@@ -3052,29 +3064,46 @@ export function CardGrid({
   onInspect: (c: CardTemplate) => void
   kind: 'crew' | 'weapon'
 }) {
-  const [rarity, setRarity] = useState('')
-  const [element, setElement] = useState('')
-  /* Which face every card shows, until one is turned over on its own. */
+  const phone = usePhone()
+  const [rarities, setRarities] = useState<string[]>([])
+  const [elements, setElements] = useState<string[]>([])
+  const [shines, setShines] = useState<string[]>([])
+  const [open, setOpen] = useState(false)
+  /* What every plate shows: the bonus, the resistances or the ability. */
   const [view, setView] = useState<CardView>('stats')
   /* Best cards first, which is the order a player looks for them in. */
-  const [sort, setSort] = useState<'damage' | 'health' | 'rarity'>('rarity')
+  const [sort, setSort] = useState<CardSort>('rarity')
 
-  const rarities = useMemo(
-    () =>
-      [...new Set(cards.map((c) => values.get(c.template_id)?.rarity ?? ''))]
-        .filter(Boolean)
-        .sort((a, b) => rarityRank(a) - rarityRank(b)),
-    [cards, values],
+  const valued = useMemo(() => cards.filter((c) => values.has(c.template_id)), [cards, values])
+  const facet = (pick: (v: NftValue) => string) =>
+    [...new Set(valued.map((c) => pick(values.get(c.template_id)!)).filter(Boolean))]
+  const rarityList = useMemo(
+    () => facet((v) => v.rarity).sort((a, b) => rarityRank(b) - rarityRank(a)),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [valued, values],
   )
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const shineList = useMemo(() => facet((v) => v.shine).sort((a, b) => shineRank(b) - shineRank(a)), [valued, values])
+  const countOf = (r: string) => valued.filter((c) => values.get(c.template_id)!.rarity === r).length
+
+  /* The strips measure each bonus against the best of the player's own cards. */
+  const best = useMemo(() => {
+    const out: Record<string, number> = {}
+    for (const c of valued) {
+      const s = values.get(c.template_id)!.stats as unknown as Record<string, number>
+      for (const [field] of NFT_STATS) out[field] = Math.max(out[field] ?? 0, s[field] ?? 0)
+    }
+    return out
+  }, [valued, values])
 
   const shown = useMemo(() => {
     const q = query.trim().toLowerCase()
-    return cards
+    return valued
       .filter((c) => {
-        const v = values.get(c.template_id)
-        if (!v) return false
-        if (rarity && v.rarity !== rarity) return false
-        if (element && v.element !== element) return false
+        const v = values.get(c.template_id)!
+        if (rarities.length && !rarities.includes(v.rarity)) return false
+        if (elements.length && !elements.includes(v.element)) return false
+        if (shines.length && !shines.includes(v.shine)) return false
         if (q && !c.name.toLowerCase().includes(q)) return false
         return true
       })
@@ -3085,7 +3114,7 @@ export function CardGrid({
         /* Same numbers, better card first. */
         return bv.stats[sort] - av.stats[sort] || byQuality(av, bv)
       })
-  }, [cards, values, query, rarity, element, sort])
+  }, [valued, values, query, rarities, elements, shines, sort])
 
   if (cards.length === 0) {
     return (
@@ -3096,100 +3125,187 @@ export function CardGrid({
     )
   }
 
-  return (
-    <>
-      <div className="filters">
-        <div className="filters__row">
-          <label className="field">
-            <span className="field__label">Rarity</span>
-            <select
-              className="input"
-              value={rarity}
-              onChange={(e) => setRarity(e.target.value)}
-            >
-              <option value="">Any</option>
-              {rarities.map((r) => (
-                <option key={r} value={r}>
-                  {r}
-                </option>
-              ))}
-            </select>
-          </label>
+  const toggle = (list: string[], set: (l: string[]) => void, x: string) =>
+    set(list.includes(x) ? list.filter((y) => y !== x) : [...list, x])
+  /* The rarity chips are out on show, so only what is behind the bar counts as on. */
+  const active = elements.length + shines.length + (query.trim() ? 1 : 0)
+  const clear = () => {
+    setElements([])
+    setShines([])
+    onQuery('')
+  }
+  const summary = [...elements, ...shines, query.trim() && `“${query.trim()}”`].filter(Boolean).join(' · ')
 
-          <label className="field">
-            <span className="field__label">Element</span>
-            <select
-              className="input"
-              value={element}
-              onChange={(e) => setElement(e.target.value)}
-            >
-              <option value="">Any</option>
-              {ELEMENTS.map((el) => (
-                <option key={el} value={el}>
-                  {el}
-                </option>
-              ))}
-            </select>
-          </label>
+  const seg = (
+    <span className="drost__seg drost__seg--sm drost__viewseg" role="tablist" aria-label="Cards show">
+      {CARD_VIEWS.map(([v, label]) => (
+        <button type="button" role="tab" key={v} aria-selected={view === v} onClick={() => setView(v)}>
+          {label}
+        </button>
+      ))}
+    </span>
+  )
+  const sortSelect = (
+    <select aria-label="Sort by" value={sort} onChange={(e) => setSort(e.target.value as CardSort)}>
+      {CARD_SORTS.map(([key, label]) => (
+        <option key={key} value={key}>
+          {label}
+        </option>
+      ))}
+    </select>
+  )
 
-          <label className="field">
-            <span className="field__label">Sort by</span>
-            <select
-              className="input"
-              value={sort}
-              onChange={(e) => setSort(e.target.value as typeof sort)}
-            >
-              <option value="damage">Damage added</option>
-              <option value="health">Health added</option>
-              <option value="rarity">Rarity &amp; shine</option>
-            </select>
-          </label>
-
-          {/*
-            One readout for every card at once, as on the roster.
-
-            Comparing thirty cards on cooldown is what this grid is for, and
-            per-card tabs make that thirty taps. A card can still be flipped
-            on its own; the next change here brings them all back into step.
-          */}
-          <div className="field field--tabs">
-            <span className="field__label">Show</span>
-            <div className="showtabs" role="group" aria-label="Readout">
-              {CARD_VIEWS.map(([key, label]) => (
-                <button
-                  type="button"
-                  key={key}
-                  className="showtabs__btn"
-                  aria-pressed={view === key}
-                  onClick={() => setView(key)}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
+  const drop = open && (
+    <div className="nftpick__drop">
+      <span className="nftpick__fhead">Element</span>
+      <div className="nftpick__opts" role="group" aria-label="Element">
+        {ELEMENTS.map((el) => (
+          <button
+            type="button"
+            key={el}
+            className="nftpick__opt"
+            aria-pressed={elements.includes(el)}
+            onClick={() => toggle(elements, setElements, el)}
+          >
+            <img src={elementIcon(el)} alt="" />
+            {el}
+          </button>
+        ))}
+      </div>
+      {shineList.length > 1 && (
+        <>
+          <span className="nftpick__fhead">Shine</span>
+          <div className="nftpick__opts" role="group" aria-label="Shine">
+            {shineList.map((s) => (
+              <button
+                type="button"
+                key={s}
+                className="nftpick__opt"
+                aria-pressed={shines.includes(s)}
+                onClick={() => toggle(shines, setShines, s)}
+              >
+                {s}
+              </button>
+            ))}
           </div>
+        </>
+      )}
+      <span className="nftpick__fhead">Name</span>
+      <input
+        className="input nftpick__name"
+        placeholder="Search card names"
+        value={query}
+        onChange={(e) => onQuery(e.target.value)}
+      />
+    </div>
+  )
 
-          <label className="field field--grow">
-            <span className="field__label">Name</span>
-            <input
-              className="input"
-              placeholder="Search card names"
-              value={query}
-              onChange={(e) => onQuery(e.target.value)}
-            />
+  return (
+    <div className={`nftpick${phone ? ' nftpick--phone' : ''}`}>
+      {phone ? (
+        <div className="sheetbar">
+          <div className={`sheetbar__filter${active > 0 ? ' sheetbar__filter--on' : ''}`}>
+            <button type="button" className="sheetbar__main" aria-expanded={open} onClick={() => setOpen((v) => !v)}>
+              <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                <path d="M1.5 3h13l-5 6v4.5l-3-1.5V9z" />
+              </svg>
+              {active > 0 ? (
+                <span className="sheetbar__what">{summary}</span>
+              ) : (
+                <>
+                  <span className="sheetbar__label">Filter</span>
+                  <span className="sheetbar__hint">Element, shine, name…</span>
+                </>
+              )}
+            </button>
+            {active > 0 ? (
+              <button type="button" className="sheetbar__end" aria-label="Clear filters" onClick={clear}>
+                ✕
+              </button>
+            ) : (
+              <button
+                type="button"
+                className="sheetbar__end"
+                aria-hidden="true"
+                tabIndex={-1}
+                onClick={() => setOpen((v) => !v)}
+              >
+                {open ? '▴' : '▾'}
+              </button>
+            )}
+          </div>
+          <label className="sheetbar__icon" title="Sort by">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M5 2.5v11M2.5 11 5 13.5 7.5 11M11 13.5v-11M8.5 5 11 2.5 13.5 5" />
+            </svg>
+            {sortSelect}
+          </label>
+          <div className="sheetbar__views">{seg}</div>
+        </div>
+      ) : (
+        <div className="pickbar">
+          {seg}
+          <span className="pickbar__sp" />
+          {shown.length < valued.length && (
+            <span className="pickbar__count">
+              <b className="mono">{shown.length}</b> of {valued.length}
+            </span>
+          )}
+          <button
+            type="button"
+            className={`drost__tool${open || active > 0 ? ' is-on' : ''}`}
+            aria-expanded={open}
+            onClick={() => setOpen((v) => !v)}
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M3 5h18l-7 8v5l-4 2v-7z" />
+            </svg>
+            Filters
+            {active > 0 && <em>{active}</em>}
+          </button>
+          {active > 0 && (
+            <button type="button" className="drost__dir" aria-label="Clear filters" title="Clear filters" onClick={clear}>
+              ✕
+            </button>
+          )}
+          <label className="drost__tool pickbar__sort">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M7 4v16M3 16l4 4 4-4M17 20V4M13 8l4-4 4 4" />
+            </svg>
+            <small>Sort</small> {CARD_SORTS.find(([k]) => k === sort)![1]}
+            <span className="pickbar__caret" aria-hidden="true">
+              ▾
+            </span>
+            {sortSelect}
           </label>
         </div>
-      </div>
+      )}
 
-      <p className="faint picker__count">
-        Showing {shown.length} of {cards.length}
-        {kind === 'weapon' && ' · the weapon decides your NFT fighter’s element'}
-      </p>
+      {drop}
+      {/* A desktop's filters drop over the cards; a click beside them shuts them. */}
+      {open && !phone && <div className="filters__dropshade" onClick={() => setOpen(false)} />}
+
+      {rarityList.length > 1 && (
+        <div className={`nftpick__rar${rarities.length ? ' is-on' : ''}`} role="group" aria-label="Rarity">
+          {rarityList.map((r) => (
+            <button
+              type="button"
+              key={r}
+              className={`nftpick__rchip r-${r}`}
+              aria-pressed={rarities.includes(r)}
+              onClick={() => toggle(rarities, setRarities, r)}
+            >
+              {r}
+              <b>{countOf(r)}</b>
+            </button>
+          ))}
+        </div>
+      )}
 
       {shown.length === 0 ? (
         <p className="faint">No cards match those filters.</p>
       ) : (
-        <div className="cardgrid cardgrid--nft">
+        <div className="nftpick__grid">
           {shown.map((c) => (
             <NftCard
               key={c.template_id}
@@ -3198,24 +3314,26 @@ export function CardGrid({
               kind={kind}
               picked={selected?.template_id === c.template_id}
               view={view}
+              best={best}
               onPick={() => onPick(c)}
               onInspect={() => onInspect(c)}
             />
           ))}
         </div>
       )}
-    </>
+    </div>
   )
 }
 
 /**
- * One crew or weapon card.
+ * One crew or weapon card: the Alien Worlds card in the gilded frame of the
+ * fighters, its rarity on the crown diamond and its shine as a foil over it;
+ * under it a plate with the name, the rarity ribbon and what the grid's view
+ * asks for - the bonus as codex strips, the resistances, or the ability
+ * under its ribbon.
  *
- * Everything the card grants is on it, but not all at once: eleven figures
- * and an ability with a paragraph of text do not fit a tile side by side, and
- * squeezing them in was what cost the labels. Three tabs give each group the
- * whole width, so a stat can be named rather than left to its icon and the
- * ability can bring its description.
+ * The whole card picks it. The details sit on their own small button, so
+ * reading a card is never a mis-tap away from putting it in the fight.
  */
 function NftCard({
   card,
@@ -3223,6 +3341,7 @@ function NftCard({
   kind,
   picked,
   view,
+  best,
   onPick,
   onInspect,
 }: {
@@ -3230,136 +3349,113 @@ function NftCard({
   value: NftValue
   kind: 'crew' | 'weapon'
   picked: boolean
-  /** What the grid is showing; a card can be turned over on its own. */
   view: CardView
+  /** The best of each bonus among the player's cards, a full strip. */
+  best: Record<string, number>
   onPick: () => void
   onInspect: () => void
 }) {
-  const [override, setOverride] = useState<CardView | null>(null)
-  /* The next change to the shared view takes every card back into step. */
-  useEffect(() => setOverride(null), [view])
-  const tab = override ?? view
+  const s = v.stats as unknown as Record<string, number>
+  const bonuses = NFT_STATS.filter(([field]) => s[field] > 0)
+  const res = RESISTANCE_FIELDS.filter((field) => s[field] > 0)
   const abilities = v.ability ?? []
+  const shine = (v.shine || 'stone').toLowerCase()
 
   return (
-    <div className={`nftcard${picked ? ' nftcard--picked' : ''}`}>
-      <button type="button" className="nftcard__hit" onClick={onPick}>
-        <img
-          className="nftcard__art"
-          src={asset(`/assets/cards/${card.template_id}.webp`)}
-          alt=""
-          loading="lazy"
-          /* Ours, then the card's own picture on IPFS for a template minted
-             since this build, then the blank back. */
-          onError={(e) => {
-            const img = e.currentTarget
-            const next = img.dataset.tried ? undefined : ipfsImage(card.img)
-            img.dataset.tried = '1'
-            img.src = next ?? asset('/assets/default-card.png')
-          }}
-        />
-        <span className="nftcard__name">{card.name}</span>
-        <span className={`nftcard__rarity nftcard__rarity--${v.rarity}`}>
-          {v.rarity}
-          {v.shine && v.shine !== 'stone' ? ` · ${v.shine}` : ''}
-          {/*
-            The element belongs to the weapon alone: it is what the sixth
-            fighter's damage counts as, and `combineNftFighter` takes it from
-            the weapon. On a crew card it was a fact about the card that
-            changes nothing about the fight.
-          */}
-          {kind === 'weapon' && v.element && (
-            <span className="nftcard__element">
-              <img src={elementIcon(v.element)} alt="" width={12} height={12} />
-              {v.element}
-            </span>
-          )}
+    <div className={`ncard r-${v.rarity} s-${shine}${picked ? ' is-pick' : ''}`}>
+      <button type="button" className="ncard__hit" aria-pressed={picked} onClick={onPick}>
+        <span className="ncard__frame">
+          <img
+            className="ncard__art"
+            src={asset(`/assets/cards/${card.template_id}.webp`)}
+            alt=""
+            decoding="async"
+            /* Ours, then the card's own picture on IPFS for a template minted
+               since this build, then the blank back. */
+            onError={(e) => {
+              const img = e.currentTarget
+              const next = img.dataset.tried ? undefined : ipfsImage(card.img)
+              img.dataset.tried = '1'
+              img.src = next ?? asset('/assets/default-card.png')
+            }}
+          />
+          {picked && <span className="ncard__tag">In fight</span>}
+          {card.owned > 1 && <span className="ncard__cnt">×{card.owned}</span>}
         </span>
-        {card.owned > 1 && <span className="cardtile__count">×{card.owned}</span>}
-      </button>
 
-      {/*
-        Outside the pick button, because a tab is a control of its own — nested
-        buttons are invalid, and reading a card's resistances should not be a
-        mis-tap away from putting it in the fight.
-      */}
-      <div className="nftcard__tabs" role="tablist">
-        {CARD_VIEWS.map(([key, label]) => (
-          <button
-            type="button"
-            key={key}
-            role="tab"
-            aria-selected={tab === key}
-            className="nftcard__tab"
-            onClick={() => setOverride(key)}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
+        <span className="ncard__plate">
+          <span className="ncard__nm">{card.name}</span>
+          <span className="ncard__meta">
+            <span className="ncard__rib">{v.rarity}</span>
+            {/*
+              The element belongs to the weapon alone: it is what the sixth
+              fighter's damage counts as, and `combineNftFighter` takes it from
+              the weapon. On a crew card it changes nothing about the fight.
+            */}
+            {kind === 'weapon' && v.element && (
+              <span className="ncard__el">
+                <img src={elementIcon(v.element)} alt="" />
+                {v.element}
+              </span>
+            )}
+          </span>
 
-      <div className="nftcard__panel">
-        {tab === 'stats' && (
-          <dl className="cardstats">
-            {NFT_STATS.map(([field, label]) => (
-              <div className="cardstats__row" key={field}>
-                <dt>
-                  <img src={statIcon(field)} alt="" width={13} height={13} />
-                  {label}
-                </dt>
-                <dd className="mono">
-                  +{formatScaled(v.stats[field as keyof typeof v.stats] as number)}
-                </dd>
-              </div>
-            ))}
-          </dl>
-        )}
-
-        {tab === 'res' && (
-          <dl className="cardstats cardstats--res">
-            {RESISTANCE_FIELDS.map((field) => {
-              const el = field.slice(4)
-              return (
-                <div className="cardstats__row" key={field}>
-                  <dt>
-                    <img src={elementIcon(el)} alt="" width={13} height={13} />
-                    {el}
-                  </dt>
-                  <dd className="mono">
-                    +{formatScaled(v.stats[field as keyof typeof v.stats] as number)}%
-                  </dd>
-                </div>
-              )
-            })}
-          </dl>
-        )}
-
-        {tab === 'ability' &&
-          (abilities.length === 0 ? (
-            <p className="faint nftcard__none">No ability.</p>
-          ) : (
-            abilities.map((a, i) => (
-              <div className="nftability" key={`${a.displayname}-${i}`}>
-                <span
-                  className="nftability__name"
-                  style={{ '--pip': abilityColor(a.displayname) } as React.CSSProperties}
-                >
-                  {abilityName(a.displayname)}
+          {view === 'stats' &&
+            (bonuses.length === 0 ? (
+              <span className="ncard__none">No bonus</span>
+            ) : (
+              bonuses.map(([field, label]) => (
+                <span className="ncard__st" key={field}>
+                  <span className="ncard__k">
+                    <img src={statIcon(field)} alt="" />
+                    {label}
+                  </span>
+                  <span
+                    className="codex__seg is-green-up"
+                    style={{ '--n': Math.max(1, Math.round((s[field] / (best[field] || 1)) * 10)) } as React.CSSProperties}
+                  />
+                  <b>+{formatScaled(s[field])}</b>
                 </span>
-                {/*
-                  The description with its placeholders filled in — the chain
-                  stores "deals [value] damage", and the number is what the
-                  player is choosing on.
-                */}
-                <p className="nftability__text">{resolveAbilityDescription(a)}</p>
-              </div>
-            ))
-          ))}
-      </div>
+              ))
+            ))}
+
+          {view === 'res' &&
+            (res.length === 0 ? (
+              <span className="ncard__none">No resistances</span>
+            ) : (
+              <span className="ncard__res">
+                {res.map((field) => (
+                  <span key={field} title={`${field.slice(4)} resistance`}>
+                    <img src={elementIcon(field.slice(4))} alt={field.slice(4)} />+{formatScaled(s[field])}%
+                  </span>
+                ))}
+              </span>
+            ))}
+
+          {view === 'ability' &&
+            (abilities.length === 0 ? (
+              <span className="ncard__none">No ability</span>
+            ) : (
+              abilities.map((a, i) => (
+                <span
+                  className="ncard__ab"
+                  key={`${a.displayname}-${i}`}
+                  style={{ '--ab': abilityColor(a.displayname) } as React.CSSProperties}
+                >
+                  {/* Most card abilities carry no rarity of their own; the card's is the ribbon above. */}
+                  {abilityRarity(a.displayname) && <span className="codex__rib">{abilityRarity(a.displayname)}</span>}
+                  <b>{abilityName(a.displayname)}</b>
+                  {/* The description with its placeholders filled in: the number is what the player chooses on. */}
+                  <small>{resolveAbilityDescription(a)}</small>
+                </span>
+              ))
+            ))}
+        </span>
+      </button>
 
       <button
         type="button"
-        className="fightercard__info"
+        className="ncard__info"
         onClick={onInspect}
         aria-label={`Details for ${card.name}`}
       >
