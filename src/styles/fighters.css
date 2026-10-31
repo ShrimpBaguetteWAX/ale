@@ -5609,3 +5609,23 @@ h2.drost__bname {
 .drost__detail.codex {
   position: relative;
 }
+
+/* The codex's figures: the number right-aligned, then the spread, then the grade arrow, each in a column, so every arrow stands in one line. */
+.drost__bar > b.codex__fig {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 30px 12px;
+  align-items: center;
+  gap: 4px;
+}
+.drost__bar > b.codex__fig > span {
+  text-align: right;
+}
+.drost__bar > b.codex__fig em {
+  margin-left: 0;
+}
+.drost__bar > b.codex__fig .drost__grade {
+  margin: 0;
+}
+.codex .drost__bars--detail .drost__bar {
+  grid-template-columns: 92px minmax(0, 1fr) 96px;
+}

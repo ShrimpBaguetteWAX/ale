@@ -588,3 +588,136 @@ export function FighterHoverCard({
     </div>
   )
 }
+
+/* The element rims of the resistance medallions, as on the gilded cards. */
+const RES_RIM: Record<string, string> = {
+  metal: '#d9e4ff',
+  air: '#9fe6ff',
+  nature: '#7dffb0',
+  gem: '#c8b4ff',
+  fire: '#ffb070',
+  neutral: '#dfe3ee',
+}
+
+/**
+ * A fighter's figures as a codex page reads them: the five stats as
+ * segmented strips with their spread and grade, who it targets, the six
+ * resistances as hex medallions in their element's rim, and the abilities
+ * under ribbons in their rarity, between engraved headings. For a fighter
+ * that is not a roster row - the tavern's recruit - so it reads as My
+ * Fighters' codex does. `part` draws one section, for a phone's tabs.
+ */
+export function CodexReadout({
+  fighter,
+  template,
+  abilityUnlockLevel,
+  part = 'all',
+}: {
+  fighter: PanelFighter
+  template?: ClassTemplate
+  abilityUnlockLevel?: number
+  part?: 'all' | 'stats' | 'res' | 'abilities'
+}) {
+  const raw = fighter as unknown as Record<string, number>
+  const grade = (field: string, value: number) => (template ? gradeStat(field, value, template) : null)
+  const heading = (label: string) =>
+    part === 'all' && (
+      <span className="codex__div">
+        <i />
+        {label}
+        <i />
+      </span>
+    )
+  return (
+    <div className="codex codex--readout">
+      {(part === 'all' || part === 'stats') && (
+        <>
+          {heading('Stats')}
+          <div className="drost__bars drost__bars--detail">
+            {STAT_ORDER.map((field) => {
+              const stat = fighter[field] as PanelStat
+              const ranged = stat.max !== undefined && stat.max !== stat.min
+              const shown = ranged ? statDisplay(stat.min, stat.max!) : null
+              const g = grade(field, stat.grade ?? (ranged ? midpoint(stat.min, stat.max!) : stat.min))
+              return (
+                <span className="drost__bar" key={field} title={g ? GRADE_LABEL[g] : undefined}>
+                  <small>
+                    <img className="drost__si" src={statIcon(field)} alt="" />
+                    {STAT_LABEL[field] ?? field}
+                  </small>
+                  <span
+                    className={`codex__seg is-${g ?? 'none'}`}
+                    style={{ '--n': GRADE_SEGMENTS[g ?? 'middle'] ?? 5 } as React.CSSProperties}
+                  />
+                  <b className="codex__fig">
+                    <span>{shown ? shown.value : formatScaled(stat.min)}</span>
+                    {shown && shown.spread > 0 ? <em>±{shown.spread}</em> : <i />}
+                    {g ? <img className="drost__grade" src={GRADE_ICON[g]} alt={GRADE_LABEL[g]} /> : <i />}
+                  </b>
+                </span>
+              )
+            })}
+          </div>
+          <span className="fhover2__target">
+            <img src={statIcon('target')} alt="" />
+            Targets
+            {/* An empty target falls through to highest taunt in \`pick_defender\`. */}
+            <b>{fighter.target ? formatTarget(fighter.target) : 'Highest Taunt'}</b>
+          </span>
+        </>
+      )}
+      {(part === 'all' || part === 'res') && (
+        <>
+          {heading('Resistances')}
+          <div className="drost__resrow">
+            {RESISTANCES.map(([key, label]) => {
+              const el = label.toLowerCase()
+              const g = grade(key, raw[key])
+              return (
+                <span key={key} title={`${label} resistance`}>
+                  <span className="codex__hex" style={{ '--ec': RES_RIM[el] ?? RES_RIM.neutral } as React.CSSProperties}>
+                    <span>
+                      <img src={elementIcon(el)} alt={el} />
+                    </span>
+                  </span>
+                  <b>
+                    {formatResistance(raw[key])}
+                    {g && <img className="drost__grade" src={GRADE_ICON[g]} alt={GRADE_LABEL[g]} />}
+                  </b>
+                </span>
+              )
+            })}
+          </div>
+        </>
+      )}
+      {(part === 'all' || part === 'abilities') && fighter.abilities.length > 0 && (
+        <>
+          {heading('Abilities')}
+          <div className="drost__ablist">
+            {fighter.abilities.map((ab, i) => {
+              const rarity = abilityRarity(ab.displayname)
+              return (
+                <div
+                  key={`${ab.ability}-${i}`}
+                  className={`drost__abitem${ab.locked ? ' is-locked' : ''}`}
+                  style={{ '--ab': abilityColor(ab.displayname) } as React.CSSProperties}
+                >
+                  <span className="codex__rib">{ab.locked ? 'Locked' : (rarity ?? 'Unique')}</span>
+                  <b>
+                    {abilityName(ab.displayname)}
+                    {!!ab.locked && (
+                      <small>
+                        {abilityUnlockLevel ? `Unlocks at ascension ${abilityUnlockLevel}` : 'Unlocks on ascension'}
+                      </small>
+                    )}
+                  </b>
+                  <p>{resolveAbilityDescription(ab)}</p>
+                </div>
+              )
+            })}
+          </div>
+        </>
+      )}
+    </div>
+  )
+}

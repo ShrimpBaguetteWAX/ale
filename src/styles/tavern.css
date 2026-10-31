@@ -1706,3 +1706,22 @@
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+/* The recruit's stage as a codex page: the gold edge round it, the figures read as My Fighters' codex reads them. */
+.hall__stage {
+  border: 3px solid transparent;
+  background:
+    linear-gradient(180deg, rgb(11 20 38 / 94%), rgb(6 12 24 / 97%)) padding-box,
+    linear-gradient(160deg, #ffe39a, #8a5d14 30%, #3a2a08 50%, #8a5d14 70%, #ffe39a) border-box;
+  box-shadow: 0 20px 50px rgb(0 0 0 / 45%);
+}
+.codex--readout {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+/* The tavern reads every ability in full: it is where a recruit is weighed before the hire. */
+.codex--readout .drost__abitem > p {
+  display: block;
+  -webkit-line-clamp: unset;
+}

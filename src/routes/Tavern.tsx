@@ -16,24 +16,9 @@ import {
 } from '@/tavern/hireCost'
 import { SCHEMA_TABS, type OwnedTemplate, type TavernTemplate } from '@/tavern/types'
 import {
-  GRADE_ICON,
-  GRADE_LABEL,
-  STAT_LABEL,
-  abilityColor,
-  abilityName,
-  abilityRarity,
   elementBackground,
   fighterArt,
   fighterArtFallback,
-  formatResistance,
-  formatStat,
-  formatTarget,
-  gradeStat,
-  resolveAbilityDescription,
-  statIcon,
-  midpoint,
-  type ClassTemplate,
-  elementIcon,
 } from '@/tavern/fighterStats'
 import { fetchRoster } from '@/dungeon/queries'
 import { useChainQuery } from '@/chain/useChainQuery'
@@ -44,6 +29,7 @@ import { settle } from '@/wharf/settle'
 import { readableError } from '@/wharf/errors'
 import { asset, artSet } from '@/assets'
 import { GameImg } from '@/components/GameImg'
+import { CodexReadout, type PanelFighter } from '@/components/FighterPanel'
 import { usePhone } from '@/components/usePhone'
 import { BottomSheet } from '@/components/BottomSheet'
 
@@ -61,30 +47,6 @@ function cardArt(t: TavernTemplate): string {
 
 /** What a card tile shows when its art is missing. */
 const CARD_FALLBACK = asset('/assets/default-card.png')
-
-/** The good/bad arrow for one stat, or nothing where it has no meaning. */
-function Grade({
-  field,
-  raw,
-  template,
-}: {
-  field: string
-  raw: number
-  template: ClassTemplate | undefined
-}) {
-  const grade = gradeStat(field, raw, template)
-  if (!grade) return null
-  return (
-    <img
-      className="grade"
-      src={GRADE_ICON[grade]}
-      alt={GRADE_LABEL[grade]}
-      title={GRADE_LABEL[grade]}
-      width={16}
-      height={16}
-    />
-  )
-}
 
 /**
  * A marker to put on the recruit, chosen before the hire.
@@ -278,47 +240,6 @@ function Objective({
     </div>
   )
 }
-
-/**
- * One stat of a revealed recruit.
- *
- * Values arrive at ten times their displayed size, and stats come as min/max
- * ranges because the roll only happens on hire. The arrow grades the
- * *midpoint* of that range against the class band — the roll to expect.
- */
-function StatRow({
-  field,
-  min,
-  max,
-  template,
-}: {
-  field: string
-  min: number
-  max: number
-  template: ClassTemplate | undefined
-}) {
-  return (
-    <div className="statline">
-      <span className="statline__k">
-        <img className="statline__icon" src={statIcon(field)} alt="" />
-        {STAT_LABEL[field] ?? field}
-      </span>
-      <span className="statline__v mono">
-        {formatStat(min, max)}
-        <Grade field={field} raw={midpoint(min, max)} template={template} />
-      </span>
-    </div>
-  )
-}
-
-const RESISTANCES: [string, string][] = [
-  ['res_gem', 'Gem'],
-  ['res_metal', 'Metal'],
-  ['res_air', 'Air'],
-  ['res_fire', 'Fire'],
-  ['res_nature', 'Nature'],
-  ['res_neutral', 'Neutral'],
-]
 
 export default function Tavern() {
   const player = useGame((s) => s.player)!
@@ -665,125 +586,44 @@ export default function Tavern() {
   }
 
   /*
-     The recruit's three readouts, written once: a desktop shows them side
-     by side, a phone one at a time behind a switch.
+     The recruit's three readouts, written once, as a codex page reads a
+     fighter - the stats as segmented strips with spread and grade, the
+     resistances as hex medallions, the abilities under rarity ribbons - so
+     the recruit looks as it will in My Fighters once hired. A desktop shows
+     them on the stage together, a phone one at a time behind a switch.
+
+     The recruit's last ability arrives flagged locked, as on every revealed
+     recruit: the readout greys it with when it unlocks, because this is the
+     most expensive place in the game to overstate a fighter.
   */
-  const statsList = revealed && (
-    <>
-      {/*
-         Damage, then health, then the two timings together, then
-         taunt and who it goes for.
-
-         Damage leads because it is what a recruit is bought for;
-         health says how long it keeps doing it. Cooldown and
-         wind-up are one question in two halves - how often it
-         swings and how long before the first one - so they sit
-         together rather than either side of taunt.
-
-         Cooldown and wind-up, not "attack speed" and "initiative":
-         the contract's numbers are delays, so lower is better and
-         the old labels told the player the opposite.
-      */}
-      <StatRow
-        field="damage"
-        min={fighter.damage_min}
-        max={fighter.damage_max}
-        template={classTemplate}
-      />
-      <StatRow
-        field="health"
-        min={fighter.health_min}
-        max={fighter.health_max}
-        template={classTemplate}
-      />
-      <StatRow
-        field="attackspeed"
-        min={fighter.attackspeed_min}
-        max={fighter.attackspeed_max}
-        template={classTemplate}
-      />
-      <StatRow
-        field="initiative"
-        min={fighter.initiative_min}
-        max={fighter.initiative_max}
-        template={classTemplate}
-      />
-      <StatRow
-        field="taunt"
-        min={fighter.taunt_min}
-        max={fighter.taunt_max}
-        template={classTemplate}
-      />
-      <div className="statline">
-        <span className="statline__k">
-          <img className="statline__icon" src={statIcon('target')} alt="" />
-          Targets
-        </span>
-        <span className="statline__v">{formatTarget(fighter.target)}</span>
-      </div>
-      <div className="statline">
-        <span className="statline__k">Credits</span>
-        <span className="statline__v mono">{fighter.credits}</span>
-      </div>
-    </>
-  )
-  const resList =
-    revealed &&
-    RESISTANCES.map(([key, label]) => {
-      const raw = (fighter as unknown as Record<string, number>)[key]
-      return (
-        <div className="statline" key={key}>
-          <span className="statline__k">
-            <img
-              className="statline__icon"
-              src={elementIcon(label.toLowerCase())}
-              alt=""
-            />
-            {label}
-          </span>
-          <span className="statline__v mono">
-            {formatResistance(raw)}
-            <Grade field={key} raw={raw} template={classTemplate} />
-          </span>
-        </div>
-      )
-    })
-  const abilityList = revealed && fighter.abilities.length > 0 && (
-    <div className="abilities">
-      {fighter.abilities.map((a, i) => {
-        const rarity = abilityRarity(a.displayname)
-        /*
-                         The recruit's last ability does not work yet.
-
-                         This is the screen where a player decides whether the
-                         roll is worth the energy, and an ability they cannot
-                         use for several ascensions was reading as one of the
-                         reasons to hire — which is the most expensive place
-                         in the game to overstate a fighter.
-                      */
-        const locked = !!a.locked
-        return (
-          <div
-            className={`ability${locked ? ' ability--locked' : ''}`}
-            key={`${a.ability}-${i}`}
-            style={{ borderLeftColor: abilityColor(a.displayname) }}
-          >
-            <div className="ability__name" style={{ color: abilityColor(a.displayname) }}>
-              {abilityName(a.displayname)}
-              {rarity && <span className="ability__rarity">{rarity}</span>}
-              {locked && (
-                <span className="ability__locked">
-                  <img src={asset('/assets/icons/lock.svg')} alt="" width={11} height={11} />
-                  {unlockLevel ? `Unlocks at ascension ${unlockLevel}` : 'Unlocks on ascension'}
-                </span>
-              )}
-            </div>
-            <div className="ability__desc">{resolveAbilityDescription(a)}</div>
-          </div>
-        )
-      })}
-    </div>
-  )
+  const recruitPanel: PanelFighter | null = revealed
+    ? {
+        classname: fighter.classname,
+        racename: fighter.racename,
+        element: fighter.element,
+        target: fighter.target,
+        level: fighter.level,
+        health: { min: fighter.health_min, max: fighter.health_max },
+        damage: { min: fighter.damage_min, max: fighter.damage_max },
+        taunt: { min: fighter.taunt_min, max: fighter.taunt_max },
+        attackspeed: { min: fighter.attackspeed_min, max: fighter.attackspeed_max },
+        initiative: { min: fighter.initiative_min, max: fighter.initiative_max },
+        res_gem: fighter.res_gem,
+        res_metal: fighter.res_metal,
+        res_air: fighter.res_air,
+        res_fire: fighter.res_fire,
+        res_nature: fighter.res_nature,
+        res_neutral: fighter.res_neutral,
+        abilities: fighter.abilities,
+      }
+    : null
+  const readout = (part: 'all' | 'stats' | 'res' | 'abilities') =>
+    recruitPanel && (
+      <CodexReadout fighter={recruitPanel} template={classTemplate} abilityUnlockLevel={unlockLevel} part={part} />
+    )
+  const statsList = readout('stats')
+  const resList = readout('res')
+  const abilityList = revealed && fighter.abilities.length > 0 && readout('abilities')
 
   const discountsPanel = (
     <section className="panel tavern__objectives">
@@ -986,13 +826,7 @@ export default function Tavern() {
                     <span className="hall__level">Level {fighter.level}</span>
                   </div>
                 </div>
-                <div className="hall__body">
-                  <div className="recruit__cols">
-                    <div className="recruit__stats">{statsList}</div>
-                    <div className="recruit__res">{resList}</div>
-                  </div>
-                  {abilityList}
-                </div>
+                <div className="hall__body">{readout('all')}</div>
               </>
             ) : (
               <>

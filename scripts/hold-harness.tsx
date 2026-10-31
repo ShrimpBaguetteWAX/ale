@@ -9,7 +9,7 @@ import { fighterAvailable } from '../src/dungeon/rules'
 import { TeamDock } from '../src/fight/TeamDock'
 import { CombatCard, rosterPanel } from '../src/fight/setup'
 import { MatchupHud } from '../src/fight/matchupStyle'
-import { FighterHoverCard } from '../src/components/FighterPanel'
+import { CodexReadout, FighterHoverCard } from '../src/components/FighterPanel'
 import '../src/styles/global.css'
 import '../src/styles/app.css'
 import '../src/styles/game'
@@ -23,6 +23,8 @@ const dock = q.get('dock') === '1'
 /* ?hover=1: the hover read of the first three fighters, laid out flat. */
 const hover = q.get('hover') === '1'
 const market = q.get('market') === '1'
+/* ?readout=1: the codex readout the tavern draws its recruit with. */
+const readout = q.get('readout') === '1'
 /* ?medal=1: three team cards in the matchup's medallion look, with their remove buttons. */
 const medal = q.get('medal') === '1'
 
@@ -51,6 +53,11 @@ void Promise.all([fetchRoster(wallet), fetchFightersConfig(), fetchClassTemplate
             ))}
           </div>
         </MatchupHud.Provider>
+      )}
+      {readout && (
+        <div className="hall__stage" style={{ maxWidth: 560, padding: 16, marginBottom: 20 }}>
+          <CodexReadout fighter={rosterPanel(roster[0], 1, 0.995)} template={templates.get(roster[0].classname)} />
+        </div>
       )}
       {hover && (
         <div style={{ display: 'grid', gap: 24 }}>

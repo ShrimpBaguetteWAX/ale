@@ -1833,10 +1833,11 @@ export function FighterCodex({
               className={`codex__seg is-${x.grade ?? 'none'}`}
               style={{ '--n': Math.round(GRADE_REACH[x.grade ?? 'middle'] * 10) } as React.CSSProperties}
             />
-            <b>
-              {x.value}
-              <Grade grade={x.grade} />
-              {x.spread > 0 && <em>±{x.spread}</em>}
+            {/* Figure, spread and arrow each in a column of their own, so the arrows stand in one line. */}
+            <b className="codex__fig">
+              <span>{x.value}</span>
+              {x.spread > 0 ? <em>±{x.spread}</em> : <i />}
+              {x.grade ? <Grade grade={x.grade} /> : <i />}
             </b>
           </span>
         ))}
