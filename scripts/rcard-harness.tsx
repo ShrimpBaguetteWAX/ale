@@ -64,3 +64,23 @@ void Promise.all([fetchRoster(wallet), fetchFighterLevels()]).then(([roster, lev
     </div>,
   )
 })
+
+/* ?check=1: scroll the grid a screen at a time and count the portraits loaded in view, for a headless run. */
+if (q.get('check') === '1') {
+  setTimeout(async () => {
+    const out: string[] = []
+    for (let step = 0; step < 6; step++) {
+      window.scrollTo(0, step * window.innerHeight)
+      await new Promise((r) => setTimeout(r, 2500))
+      const vis = [...document.querySelectorAll<HTMLImageElement>('.rocard__art')].filter((i) => {
+        const r = i.closest('.rocard')!.getBoundingClientRect()
+        return r.bottom > 0 && r.top < window.innerHeight
+      })
+      out.push(`${step}:${vis.filter((i) => i.complete && i.naturalWidth > 0).length}/${vis.length}`)
+    }
+    const pre = document.createElement('pre')
+    pre.id = 'check'
+    pre.textContent = 'RESULT ' + out.join(' ')
+    document.body.appendChild(pre)
+  }, 9000)
+}

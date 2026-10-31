@@ -91,7 +91,13 @@ export function RosterCardFace({
             style={portraitCut(f.classname, f.racename)}
             src={fighterArt(f)}
             alt=""
-            loading="lazy"
+            /*
+              Not lazy: the art is one file per class and race, so a roster of two
+              hundred needs a few dozen, cached after the first. Lazy loading a
+              portrait inside a card the browser skips while off screen left some
+              never loading.
+            */
+            decoding="async"
             fallback={fighterArtFallback()}
           />
         </span>

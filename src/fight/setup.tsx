@@ -937,7 +937,8 @@ export function CombatCard({
                 style={art ? undefined : portraitCut(classname, racename)}
                 src={art ?? fighterArt({ classname, racename })}
                 alt={`${classname} ${racename}`}
-                loading="lazy"
+                /* Not lazy, as RosterCardFace: a few dozen files, and a team is six. */
+                decoding="async"
                 fallback={fighterArtFallback()}
               />
             </span>

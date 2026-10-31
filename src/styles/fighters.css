@@ -4055,6 +4055,8 @@ h2.drost__bname {
   width: var(--pz);
   max-width: none;
   height: auto;
+  /* The full art's frame, so the portrait has its box before the file arrives. */
+  aspect-ratio: 362 / 512;
   object-fit: fill;
 }
 /* A desktop's ribbon room in pixels, so the fighter's panel can line up with the cards. */
