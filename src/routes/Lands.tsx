@@ -819,7 +819,10 @@ export function PhoneLands({
   const due = (land: OwnedLand) =>
     !!land.buildings[0] && boostState(scoreOf(land), config) !== 'ok'
   const count = (name: BuildingName) => lands.filter((l) => landBuilding(l) === name).length
-  const shown = tab === 'all' ? lands : lands.filter((l) => landBuilding(l) === tab)
+  /* Lowest boost first, the one closest to dropping off; empty land after the buildings. */
+  const shown = (tab === 'all' ? lands : lands.filter((l) => landBuilding(l) === tab))
+    .slice()
+    .sort((a, b) => Number(!a.buildings[0]) - Number(!b.buildings[0]) || scoreOf(a) - scoreOf(b))
   const tabTlm = shown.reduce((sum, l) => sum + incomeOf(l.buildings).tlm, 0)
   const tabs: [PhoneTab, string][] = [
     ['all', `All ${lands.length}`],
