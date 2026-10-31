@@ -3518,12 +3518,8 @@ function PanelSheet({
         <button type="button" className="sheet__x" onClick={onClose} aria-label="Close">
           ×
         </button>
+        {/* One way out: the × in the corner, as every sheet has it. */}
         <FighterPanel fighter={panel} template={template} />
-        <div className="confirm__actions">
-          <button type="button" className="btn btn--ghost" onClick={onClose}>
-            Close
-          </button>
-        </div>
       </div>
     </div>
   )

@@ -400,8 +400,9 @@ export function CombatLogSheet({
             >
               Download CSV
             </button>
-            <button type="button" className="btn btn--ghost btn--sm" onClick={onClose}>
-              Close
+            {/* The sheets' ×, not a Close button of its own. */}
+            <button type="button" className="rsheet__x" onClick={onClose} aria-label="Close">
+              ×
             </button>
           </div>
         </header>
