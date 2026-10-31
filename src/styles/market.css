@@ -2309,3 +2309,34 @@ i.mrow__arrow {
     margin-top: 0;
   }
 }
+
+/*
+ * A listing's holder in the old card's wrapper (what it opens under it
+ * rides along): the holder is the frame, so the wrapper goes bare. Its
+ * panel stuck out to the right of the holder wherever the list was wider
+ * than the holder's 600px.
+ */
+.mrows > .mcard.drost--stack:has(> .hold),
+.mrows > .mcard.drost--stack.is-open:has(> .hold) {
+  overflow: visible;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+}
+
+/* A phone: what the cards show stays in reach under the top bar while the list scrolls. */
+@media (max-width: 719px) {
+  .market__panel > .mview {
+    position: sticky;
+    top: var(--topbar-h, 56px);
+    z-index: calc(var(--z-sticky) - 3);
+    background: #0a1222;
+    box-shadow:
+      0 0 0 6px rgb(5 10 22 / 96%),
+      0 10px 16px rgb(0 0 0 / 45%);
+  }
+  /* Pinned, the panel is the list's own scroller: the switch holds at its top. */
+  .market--pinned .market__panel > .mview {
+    top: 0;
+  }
+}

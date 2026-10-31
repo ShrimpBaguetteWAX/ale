@@ -4843,6 +4843,14 @@ h2.drost__bname {
 .hold__card .gcard__pic {
   border-radius: 13px 0 0 13px;
 }
+/*
+ * No element rim: the card has no frame of its own here, so the rim
+ * line read as the background showing from under the card at its edges.
+ * The soft glow keeps the element.
+ */
+.hold__card .gcard__pic::after {
+  box-shadow: inset 0 0 calc(var(--u) * 1.4) color-mix(in srgb, var(--ec) 25%, transparent);
+}
 /* The ribbon inside the card, above the name plate, clear of the level and the element. */
 .hold__card .gcard__tag {
   top: auto;
