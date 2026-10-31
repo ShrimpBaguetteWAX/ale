@@ -5602,10 +5602,16 @@ h2.drost__bname {
 }
 
 /* My Fighters and the Market: the one shown in full beside the list has a cyan edge. */
+/*
+ * The one on show, as a picked compact card is: the frame turns gold and
+ * glows warm (the cyan edge it had read as a different kind of choice).
+ */
 .hold.is-picked {
+  background:
+    linear-gradient(180deg, #13203a, #08101f) padding-box,
+    linear-gradient(160deg, #fff6d6 0%, #f2c35a 25%, #8a5d14 55%, #d9a640 78%, #fff3c4 100%) border-box;
   box-shadow:
-    0 0 0 2px var(--cyan),
-    0 0 18px -4px rgb(0 186 255 / 60%),
+    0 0 24px rgb(255 200 90 / 45%),
     0 8px 18px rgb(0 0 0 / 55%);
 }
 /* What the screen adds - a price and its clock, a sale's credits, a cue - under the score pennant at the head's end. */
