@@ -3,8 +3,8 @@
  * the land underfoot in perspective, and the gilded cards under the picture.
  *
  * Everything here hangs off .bfield--land, .bfwrap--land and the stage's own
- * classes, which only the Dungeon and Arena fight page asks for; the
- * tournament's player never gets them. The fighters, their class attacks and
+ * classes, which the Dungeon and Arena fight page asks for, and the
+ * tournament's player on its colosseum. The fighters, their class attacks and
  * the blow's timing (--impact, --beat) are battle.css's and are untouched:
  * this file restyles what stands around them.
  *
@@ -2220,4 +2220,150 @@
 .gcard__pic--el {
   background-position: center;
   background-size: cover;
+}
+
+/* ---------- the Colosseum of Champions: the Grand Tournament's stage ---------- */
+/*
+ * Drawn in one SVG per form (ColosseumStage.tsx): only the cameras, the board's
+ * glow, the light on the floor, the spotlights, the running text and the
+ * confetti move, and all of it is opacity or transform.
+ */
+.cstage {
+  background: #05061a;
+}
+/* A phone's field taller than the square: the crowd carries on up into it. */
+.bfwrap--full .lstage.cstage,
+.cstage.lstage--tall {
+  background-color: #140f2c;
+  background-image:
+    radial-gradient(circle at 30% 35%, #3a2c66 0 2.4px, transparent 2.9px),
+    radial-gradient(circle at 75% 70%, #2c2350 0 2.2px, transparent 2.7px),
+    radial-gradient(circle at 55% 10%, #55408a 0 1.8px, transparent 2.3px);
+  background-size: 17px 13px, 23px 18px, 29px 21px;
+}
+.cstage__flash {
+  fill: #fff;
+  opacity: 0;
+  animation: cstage-flash 3.2s linear infinite;
+}
+@keyframes cstage-flash {
+  0%,
+  100% {
+    opacity: 0;
+  }
+  8% {
+    opacity: 1;
+  }
+  22% {
+    opacity: 0;
+  }
+}
+.cstage__screen {
+  animation: cstage-glow 2.4s ease-in-out infinite;
+}
+@keyframes cstage-glow {
+  50% {
+    opacity: 0.6;
+  }
+}
+.cstage__title {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: 44px;
+  letter-spacing: 3px;
+  fill: #fff;
+}
+.cstage__sub {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 18px;
+  letter-spacing: 6px;
+  fill: #f2c35a;
+}
+.cstage__ribbon {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 19px;
+  letter-spacing: 5px;
+  fill: #f2c35a;
+  animation: cstage-run 22s linear infinite;
+}
+@keyframes cstage-run {
+  to {
+    transform: translateX(-50%);
+  }
+}
+.cstage__pool {
+  animation: cstage-pool 3.5s ease-in-out infinite;
+}
+@keyframes cstage-pool {
+  50% {
+    opacity: 0.45;
+  }
+}
+.cstage__beam {
+  transform-box: fill-box;
+  transform-origin: 50% 0%;
+  mix-blend-mode: screen;
+  animation: cstage-sway 7s ease-in-out infinite;
+}
+@keyframes cstage-sway {
+  0%,
+  100% {
+    transform: rotate(-7deg);
+  }
+  50% {
+    transform: rotate(7deg);
+  }
+}
+/* Confetti: each piece falls the field's height, turning as it goes. */
+.cstage__confetti {
+  inset: 0;
+  overflow: hidden;
+}
+.cstage__confetti > span {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  width: 0.5%;
+  animation: cstage-fall linear infinite;
+}
+@keyframes cstage-fall {
+  from {
+    transform: translate(0, -8%);
+  }
+  to {
+    transform: translate(var(--cx, 0), 100%);
+  }
+}
+.cstage__confetti i {
+  display: block;
+  width: 100%;
+  aspect-ratio: 0.6;
+  border-radius: 1px;
+  opacity: 0.85;
+  animation: cstage-turn linear infinite;
+}
+@keyframes cstage-turn {
+  to {
+    transform: rotate(360deg) scaleX(0.4);
+  }
+}
+.cstage__vig {
+  inset: 0;
+  background: radial-gradient(125% 95% at 50% 46%, transparent 58%, rgb(4 2 12 / 50%));
+}
+@media (prefers-reduced-motion: reduce) {
+  .cstage__flash,
+  .cstage__screen,
+  .cstage__ribbon,
+  .cstage__pool,
+  .cstage__beam,
+  .cstage__confetti > span,
+  .cstage__confetti i {
+    animation: none;
+  }
+  .cstage__confetti {
+    display: none;
+  }
 }

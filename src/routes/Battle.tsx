@@ -60,6 +60,7 @@ import { fightLook, type FightLook } from '@/fight/fightLook'
 import { fightStageFor, stageFor, type Stage } from '@/fight/stages'
 import { GroundMark, LandStage } from '@/fight/LandStage'
 import { ArenaStage } from '@/fight/ArenaStage'
+import { ColosseumStage } from '@/fight/ColosseumStage'
 import { onGround, roleLines, type Spot } from '@/fight/formation'
 import { useLandType } from '@/fight/useLandType'
 import { GildedCards } from '@/fight/GildedCards'
@@ -536,10 +537,10 @@ export function FightStage({
   overlay?: React.ReactNode
   /**
    * The fight on its ground, with the gilded cards under it (see fightLook).
-   * Only the fight page passes one; the tournament keeps the classic field.
+   * The fight page passes one, and the tournament's player, on its colosseum.
    */
   look?: FightLook
-  /** Which ground, in the land look: the arena, or a dungeon's land. Veles' coast if none is given. */
+  /** Which ground, in the land look: the arena, a dungeon's land, or the tournament's colosseum. Veles' coast if none is given. */
   ground?: Stage
 }) {
   const { step, total, speed, playing } = pb
@@ -1255,6 +1256,7 @@ function Battlefield({
     >
       {stage?.kind === 'land' && <LandStage stage={stage} form={wide ? 'wide' : 'tall'} />}
       {stage?.kind === 'arena' && <ArenaStage stage={stage} form={wide ? 'wide' : 'tall'} />}
+      {stage?.kind === 'colosseum' && <ColosseumStage form={wide ? 'wide' : 'tall'} />}
 
       <div className="bfield__labels">
         <span className="bfield__label bfield__label--mine">
@@ -1338,7 +1340,7 @@ function Battlefield({
           depth={depth.get(current.defenderUid) ?? 1}
           fire={current.element === 'fire'}
           big={current.killed || (shake?.[0] ?? 0) >= 1.6}
-          ground={stage.kind === 'arena' ? 'sand' : stage.spec.mark}
+          ground={stage.kind === 'land' ? stage.spec.mark : 'sand'}
           blades={stage.kind === 'land' ? stage.blades : undefined}
         />
       )}

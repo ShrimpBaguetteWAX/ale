@@ -4,6 +4,8 @@ import { useConfig, useLazyConfig } from '@/state/useConfig'
 import { fetchFightersByIds } from '@/tournament/queries'
 import { dayClock } from '@/routes/Tournament'
 import { FightStage, useFightPlayback } from '@/routes/Battle'
+import { fightLook } from '@/fight/fightLook'
+import { COLOSSEUM } from '@/fight/stages'
 import { usePhone } from '@/components/usePhone'
 import { simulateBout, type BoutSide } from '@/tournament/bout'
 import { combineNftFlat } from '@/dungeon/nftFighter'
@@ -315,6 +317,8 @@ function BoutStage({ replay, a, b }: { replay: Replay; a: string; b: string }) {
         logHidden
         phone={phone}
         broadcast
+        look={fightLook()}
+        ground={COLOSSEUM}
         overlay={pb.finished ? <Result replay={replay} a={a} b={b} onAgain={pb.restart} /> : null}
       />
     </div>

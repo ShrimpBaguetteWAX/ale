@@ -11,8 +11,8 @@
  * both looks live side by side. To compare without a build, set
  * localStorage 'fight-look' to 'classic' or 'land' and reload.
  *
- * The tournament's player never asks: it keeps its own look whatever this
- * says, because only the fight page passes a look on.
+ * The tournament's player asks too, and fights in the Colosseum of Champions
+ * (ColosseumStage) rather than on a land or in the arena.
  */
 export type FightLook = 'land' | 'classic'
 

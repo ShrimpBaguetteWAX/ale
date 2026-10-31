@@ -82,7 +82,15 @@ export interface ArenaStage {
   floor: string
 }
 
-export type Stage = GroundStage | ArenaStage
+/** The Grand Tournament's stadium, the Colosseum of Champions: drawn by ColosseumStage, the same on every planet. */
+export interface ColosseumStage {
+  kind: 'colosseum'
+}
+
+export type Stage = GroundStage | ArenaStage | ColosseumStage
+
+/** Where the tournament's fights are fought. */
+export const COLOSSEUM: ColosseumStage = { kind: 'colosseum' }
 
 const GRASS_COAST = 'grass-coastline'
 const slugOf = (name: string) => name.toLowerCase().replace(/[^a-z]+/g, '-').replace(/^-|-$/g, '')
