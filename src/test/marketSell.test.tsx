@@ -84,7 +84,7 @@ const row = (c: HTMLElement, classname: string) =>
   [...c.querySelectorAll('.mdesk .hold')].find(
     (r) => r.querySelector('.hold__name')?.firstChild?.textContent === classname,
   ) as HTMLElement
-const shown = (c: HTMLElement) => c.querySelector('.mfighter__name')?.textContent
+const shown = (c: HTMLElement) => c.querySelector('.codex__name')?.textContent
 const listBtn = (c: HTMLElement) => c.querySelector('.mdeal .btn--primary') as HTMLButtonElement
 const keepBox = (c: HTMLElement) => c.querySelector('.mdeal .msell__keep input') as HTMLInputElement
 

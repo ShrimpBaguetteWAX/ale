@@ -1669,6 +1669,52 @@ export function Row({
 
 function Detail(props: DeskRosterProps & { f: RosterFighter; fig: Figures }) {
   const { f, fig, config, levels, now, phone } = props
+  return (
+    <FighterCodex
+      f={f}
+      fig={fig}
+      config={config}
+      levels={levels}
+      now={now}
+      /* A phone's foot has room for four buttons; the marker rides up among the chips. */
+      chip={phone && <MarkerPick {...props} chip />}
+    >
+      {!phone && <Acts {...props} />}
+    </FighterCodex>
+  )
+}
+
+/**
+ * A fighter in full, as a page of the codex: My Fighters' panel and the
+ * Market's, so a fighter reads the same wherever it is looked at in full.
+ * The screen hands in what differs: the line over the name (a listing's
+ * dates in the Market), a chip of its own, and its buttons at the foot.
+ */
+export function FighterCodex({
+  f,
+  fig,
+  config,
+  levels,
+  now,
+  kick: kickOver,
+  chip,
+  upkeep = true,
+  children,
+}: {
+  f: RosterFighter
+  fig: Figures
+  config?: FightersConfig
+  levels: FighterLevel[]
+  now: number
+  /** The line over the name; the fighter's state and its sale price when not given. */
+  kick?: React.ReactNode
+  /** One more chip after the level and the target. */
+  chip?: React.ReactNode
+  /** The age, payday and pay-now line: a listing in the Market has no payday of the viewer's to pay. */
+  upkeep?: boolean
+  /** The screen's buttons at the foot. */
+  children?: React.ReactNode
+}) {
   const s = f.stats
   const level = levelUpOf(f, levels)
   const state = fighterState(f, now)
@@ -1680,13 +1726,13 @@ function Detail(props: DeskRosterProps & { f: RosterFighter; fig: Figures }) {
   const daysLeft = Math.max(0, Math.ceil(fig.pay.msLeft / DAY))
   /*
      The fighter in full is a page of a codex, made of the same stuff as the
-     cards: a gold-edged frame with diamonds at its corners, the element's
+     cards: a gold-edged frame, the element's
      facets faint behind, the fighter's own card at its head, and engraved
      headings between the stats (segmented strips), the resistances (hex
      medallions in the element's rim) and the abilities (a ribbon in their
      rarity). A phone's sheet holds the same page, a size down.
   */
-  const kick = (
+  const kick = kickOver ?? (
     <>
       {state === 'busy' ? useLabel(f) : state === 'overdue' ? 'Requests payday' : 'Ready'} · sells for{' '}
       <Credits value={s.credits ?? 0} />
@@ -1703,8 +1749,7 @@ function Detail(props: DeskRosterProps & { f: RosterFighter; fig: Figures }) {
         <img src={statIcon('target')} alt="" />
         {s.target ? formatTarget(s.target) : 'Highest Taunt'}
       </span>
-      {/* A phone's foot has room for four buttons; the marker rides up here. */}
-      {phone && <MarkerPick {...props} chip />}
+      {chip}
     </>
   )
   const score = (
@@ -1718,10 +1763,6 @@ function Detail(props: DeskRosterProps & { f: RosterFighter; fig: Figures }) {
       className="drost__detail codex"
       style={{ '--bg': `url('${elementBackground(f.element)}')` } as React.CSSProperties}
     >
-      <span className="codex__corner is-tl" />
-      <span className="codex__corner is-tr" />
-      <span className="codex__corner is-bl" />
-      <span className="codex__corner is-br" />
       <div className="codex__head">
         <span className="rocard codex__card">
           <RosterCardFace
@@ -1747,6 +1788,7 @@ function Detail(props: DeskRosterProps & { f: RosterFighter; fig: Figures }) {
       </div>
 
       {/* The two clocks a fighter runs on and what the next payday costs, in one slim line; the long words on hover. */}
+      {upkeep && (
       <div className="drost__upkeep">
         <span
           title={`${ageNote(fig.age, days, fig.factor.age)} Health & damage ×${fig.factor.age.toFixed(2)} · ${days} day${days === 1 ? '' : 's'} old. It only goes down.`}
@@ -1771,6 +1813,7 @@ function Detail(props: DeskRosterProps & { f: RosterFighter; fig: Figures }) {
           </b>
         </span>
       </div>
+      )}
 
       <Divider>Stats</Divider>
       {/* Each stat against its class, as on the card, with the range a blow can land in. */}
@@ -1838,7 +1881,7 @@ function Detail(props: DeskRosterProps & { f: RosterFighter; fig: Figures }) {
           )
         })}
       </div>
-      {!phone && <Acts {...props} />}
+      {children}
     </div>
   )
 }

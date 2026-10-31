@@ -4409,7 +4409,8 @@ h2.drost__bname {
  * engraved headings between diamonds.
  */
 .drost:not(.drost--phone) .drost__detail.codex,
-.drost--phone .drost__detail.codex {
+.drost--phone .drost__detail.codex,
+.mdesk__side > .drost__detail.codex {
   position: relative;
   gap: 10px;
   padding: 20px 22px 22px;
@@ -4428,32 +4429,6 @@ h2.drost__bname {
   border: 1px solid rgb(255 217 121 / 28%);
   border-radius: 12px;
   pointer-events: none;
-}
-.codex__corner {
-  position: absolute;
-  z-index: 3;
-  width: 12px;
-  height: 12px;
-  transform: rotate(45deg);
-  background: linear-gradient(135deg, #fff3c4, #d9a640);
-  box-shadow: 0 0 8px rgb(255 200 90 / 60%);
-}
-/* On the gold corner itself, inside the panel: the side scrolls, and would clip anything hanging out of it. */
-.codex__corner.is-tl {
-  top: -2px;
-  left: -2px;
-}
-.codex__corner.is-tr {
-  top: -2px;
-  right: -2px;
-}
-.codex__corner.is-bl {
-  bottom: -2px;
-  left: -2px;
-}
-.codex__corner.is-br {
-  right: -2px;
-  bottom: -2px;
 }
 .codex__head {
   display: grid;
@@ -4644,7 +4619,8 @@ h2.drost__bname {
  * height, so the side never needs its scrollbar on a desktop. Tighter
  * gaps, a smaller card and name, slimmer strips, smaller medallions.
  */
-.drost:not(.drost--phone) .drost__detail.codex {
+.drost:not(.drost--phone) .drost__detail.codex,
+.mdesk__side > .drost__detail.codex {
   gap: 7px;
   padding: 14px 18px 16px;
 }
@@ -5627,4 +5603,9 @@ h2.drost__bname {
 }
 .hold__card > .drost__tick.hold__tick.is-on {
   background-color: var(--cyan);
+}
+
+/* The codex positions its own pieces wherever it stands - My Fighters, its phone sheet, the Market. */
+.drost__detail.codex {
+  position: relative;
 }

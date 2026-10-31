@@ -27,36 +27,31 @@ import {
   type MarketSort,
 } from '@/market/rules'
 import { fetchRoster } from '@/dungeon/queries'
-import { useConfig, useLazyConfig } from '@/state/useConfig'
+import { useConfig, useConfigStore, useLazyConfig } from '@/state/useConfig'
 import { useChainQuery } from '@/chain/useChainQuery'
 import { useModal } from '@/components/useModal'
 import { BottomSheet } from '@/components/BottomSheet'
 import { usePhone } from '@/components/usePhone'
-import { FighterAbilities, FighterStats, type PanelFighter } from '@/components/FighterPanel'
-import { GameImg } from '@/components/GameImg'
 import { useAction } from '@/wharf/useAction'
 import { DIRTIES } from '@/wharf/actions'
 import { fighterAvailable } from '@/dungeon/rules'
-import { ageNote } from '@/fighters/rules'
 import {
   EMPTY_FILTER,
   applyFilter,
   isFilterActive,
-  markerIcon,
   type RosterFilter,
 } from '@/dungeon/filters'
-import type { RosterFighter, RosterStats } from '@/dungeon/types'
+import type { RosterFighter } from '@/dungeon/types'
 import {
   DetailSheet,
   RosterFilters,
   rosterPanel,
   type Detail,
 } from '@/fight/setup'
-import { elementBackground, fighterArt, fighterArtFallback, type ClassTemplate, elementIcon } from '@/tavern/fighterStats'
+import type { ClassTemplate } from '@/tavern/fighterStats'
 import { addAuction, bidAuction, buyOffer, cancelAuction, cancelOffer } from '@/wharf/actions'
-import { SACRIFICE_ABILITY } from '@/ascension/rules'
 import { asset, artSet } from '@/assets'
-import { HolderRow, VIEWS, figuresOf, type View } from '@/fighters/DeskRoster'
+import { FighterCodex, HolderRow, VIEWS, figuresOf, type View } from '@/fighters/DeskRoster'
 
 /**
  * The fighter market.
@@ -526,9 +521,6 @@ export default function Market() {
                 picked && (
                   <ListingFighter
                     listing={picked}
-                    panel={rosterPanel(listingAsFighter(picked), levelMod, ageDecay)}
-                    template={classes.get(picked.fighter.classname)}
-                    unlockLevel={unlockLevel}
                     marker={tab === 'mine' ? markerOf.get(picked.fighter_id) : undefined}
                   />
                 )
@@ -1204,115 +1196,30 @@ function DeskBoard<T>({
 }
 
 /**
- * A fighter in full: what the Details sheet shows, standing in the board
- * rather than over it. The game's own stat lines, resistances and ability
- * texts, laid out as tiles for the width. The same for a listing and for a
- * fighter of your own about to be listed; `facts` is what differs.
+ * A fighter in full beside the board: the codex page My Fighters shows, so a
+ * fighter reads the same in the Market as in the roster. Only the line over
+ * the name differs - a listing's dates, or how long a fighter has been yours
+ * - and the buttons, which are the deal's beside it.
  */
-function MarketFighter({
-  stats: f,
-  ascension,
-  id,
-  panel,
-  template,
-  unlockLevel,
-  facts,
-  marker,
-}: {
-  stats: RosterStats
-  ascension: number
-  id: number
-  panel: PanelFighter
-  template?: ClassTemplate
-  unlockLevel?: number
-  /** The dated lines under the name: listed, payday. */
-  facts: string[]
-  /** The player's marker, on a fighter of their own. */
-  marker?: string
-}) {
-  const sacrifice = (f.abilities ?? []).some((a) => String(a.ability) === SACRIFICE_ABILITY)
+function MarketFighter({ f, facts, upkeep = false }: { f: RosterFighter; facts: string[]; upkeep?: boolean }) {
+  const { classes, fighters, levelMod, ageDecay } = useConfig()
+  const levels = useConfigStore((c) => c.levels)
+  const [now] = useState(() => Date.now())
+  const fig = useMemo(
+    () => figuresOf(f, classes.get(f.classname), fighters, levelMod, ageDecay, now, false),
+    [f, classes, fighters, levelMod, ageDecay, now],
+  )
   return (
-    <section className="mfighter" aria-label={`${f.classname}, in full`}>
-      <div className="mfighter__hero">
-        <span className="mfighter__art" style={{ backgroundImage: `url('${elementBackground(f.element)}')` }}>
-          <GameImg
-            src={fighterArt({ classname: f.classname, racename: f.racename })}
-            fallback={fighterArtFallback()}
-            alt=""
-          />
-          <span className="mrow__level">
-            <span>Level {f.level}</span>
-            {ascension > 0 && <em>✦{ascension}</em>}
-          </span>
-          {marker && (
-            <span className="mrow__marker" title="Your marker">
-              <img src={markerIcon(marker)} alt="" />
-            </span>
-          )}
-          {sacrifice && (
-            <span className="mrow__skull" title="Has the Sacrifice ability">
-              ☠
-            </span>
-          )}
-        </span>
-        <div className="mfighter__who">
-          <span className="mfighter__kick">Fighter #{id}</span>
-          <h2 className="mfighter__name">{f.classname}</h2>
-          <span className="mfighter__line">
-            <img src={elementIcon(f.element)} alt="" width={18} height={18} />
-            {f.racename} · {f.element}
-          </span>
-          <div className="mfighter__meta">
-            {facts.map((t) => (
-              <span key={t}>{t}</span>
-            ))}
-            {panel.age && (
-              <span
-                className="mfighter__age"
-                title={ageNote(panel.age.bonus, panel.age.days, panel.age.factor)}
-              >
-                Age {panel.age.bonus > 0 ? '+' : ''}
-                {panel.age.bonus.toFixed(0)}%
-              </span>
-            )}
-          </div>
-        </div>
-      </div>
-      <h3 className="mfighter__cap">Stats</h3>
-      <FighterStats fighter={panel} template={template} />
-      {panel.abilities.length > 0 && (
-        <>
-          <h3 className="mfighter__cap">Abilities · {panel.abilities.length}</h3>
-          <FighterAbilities abilities={panel.abilities} abilityUnlockLevel={unlockLevel} />
-        </>
-      )}
-    </section>
+    <FighterCodex f={f} fig={fig} config={fighters} levels={levels} now={now} kick={facts.join(' · ')} upkeep={upkeep} />
   )
 }
 
 /** A listing in full, with the dates a buyer weighs. */
-function ListingFighter({
-  listing,
-  panel,
-  template,
-  unlockLevel,
-  marker,
-}: {
-  listing: Auction | InstantOffer
-  panel: PanelFighter
-  template?: ClassTemplate
-  unlockLevel?: number
-  marker?: string
-}) {
+function ListingFighter({ listing, marker }: { listing: Auction | InstantOffer; marker?: string }) {
+  const f = useMemo(() => ({ ...listingAsFighter(listing), in_use: 0, marker: marker ?? '' }), [listing, marker])
   return (
     <MarketFighter
-      marker={marker}
-      stats={listing.fighter}
-      ascension={listing.ascension_level}
-      id={listing.fighter_id}
-      panel={panel}
-      template={template}
-      unlockLevel={unlockLevel}
+      f={f}
       facts={[
         `Listed ${shortDay('auction_id' in listing ? listing.auction_start : listing.offer_start)}`,
         `Payday ${shortDay(listing.next_payday)}`,
@@ -1872,7 +1779,6 @@ export function SellTab({
   player,
   busy,
   onInspect,
-  unlockLevel,
   onList,
 }: {
   sellable: RosterFighter[]
@@ -2131,14 +2037,9 @@ export function SellTab({
       fighter={
         deskPicked && (
           <MarketFighter
-            marker={deskPicked.marker}
-            stats={deskPicked.stats}
-            ascension={deskPicked.ascension_level}
-            id={deskPicked.fighter_id}
-            panel={rosterPanel(deskPicked, levelMod, ageDecay)}
-            template={classes.get(deskPicked.classname)}
-            unlockLevel={unlockLevel}
-            facts={[`Yours since ${shortDay(deskPicked.creation_date)}`, `Payday ${shortDay(deskPicked.next_payday)}`]}
+            f={deskPicked}
+            upkeep
+            facts={[`Yours since ${shortDay(deskPicked.creation_date)}`]}
           />
         )
       }

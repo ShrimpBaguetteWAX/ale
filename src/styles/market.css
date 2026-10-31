@@ -2275,3 +2275,36 @@ i.mrow__arrow {
 .mcard__below {
   padding: 6px 4px 0;
 }
+
+/* ---------- the board with the card in its holder ---------- */
+@media (min-width: 720px) {
+  /* Room between the view switch and the filter bar under it. */
+  .market__panel > .mview {
+    margin-bottom: 12px;
+  }
+  /*
+   * The list wide enough for the holder (its card, the sheet, the price at
+   * its head), the fighter and the deal kept at their own widths beside it
+   * rather than stretched across the window, so the three stay together.
+   */
+  .mdesk {
+    grid-template-columns: minmax(470px, 540px) minmax(0, 600px) minmax(250px, 280px);
+    justify-content: start;
+  }
+  /* The codex level with the first card, under the filter bar, as the deal is. */
+  .mdesk:has(> .mdesk__list > .sheetbar) > .mdesk__side > .codex {
+    margin-top: 56px;
+  }
+  .mdesk:has(> .mdesk__list > .mrows__head:first-child) > .mdesk__side > .codex {
+    margin-top: 32px;
+  }
+}
+@container mkboard (max-width: 980px) {
+  .mdesk {
+    grid-template-columns: clamp(440px, 52%, 520px) minmax(0, 1fr);
+  }
+  .mdesk:has(> .mdesk__list > .sheetbar) > .mdesk__side > .codex,
+  .mdesk:has(> .mdesk__list > .mrows__head:first-child) > .mdesk__side > .codex {
+    margin-top: 0;
+  }
+}
