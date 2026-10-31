@@ -2762,3 +2762,8 @@ i.mrow__arrow {
     box-shadow: none;
   }
 }
+
+/* A desktop's filters and sort start the bar, at the left edge, over the list they act on. */
+.market__panel .pickbar > .pickbar__sp {
+  display: none;
+}
