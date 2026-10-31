@@ -5707,3 +5707,31 @@ h2.drost__bname {
   margin: -1px -9px -1px 6px;
   padding: 1px 9px 1px 6px;
 }
+
+/*
+ * A compact card with a marker wears it on the crown, where the diamond sat:
+ * the marker a trainer chose is the first thing to find a fighter by. Larger
+ * than the corner badge it was, in a gold ring. The holder's card (no crown)
+ * keeps it in the corner.
+ */
+/* No diamond on a compact card: the crown carries the marker, or nothing. */
+.rocard:not(.hold__card) .gcard__frame::before {
+  display: none;
+}
+.rocard:not(.hold__card) .rocard__mk {
+  z-index: 6;
+  top: calc(var(--u) * -0.4);
+  right: auto;
+  left: 50%;
+  width: calc(var(--u) * 1.7);
+  height: calc(var(--u) * 1.7);
+  transform: translateX(-50%);
+  background: #0b1426;
+  box-shadow:
+    0 0 0 calc(var(--u) * 0.12) #ffd979,
+    0 0 calc(var(--u) * 0.6) rgb(255 200 90 / 55%);
+}
+.rocard:not(.hold__card) .rocard__mk img {
+  width: 70%;
+  height: 70%;
+}
