@@ -6612,6 +6612,8 @@ button.combatcard--empty:hover {
   min-width: 0;
 }
 .medal__hit {
+  /* The card lifts its badges with z-index; kept inside the card, under the remove button. */
+  isolation: isolate;
   display: grid;
   justify-items: center;
   gap: 4px;
@@ -6674,7 +6676,8 @@ button.combatcard--empty:hover {
 .gcard__lv--badge::before {
   background: linear-gradient(135deg, #ffd979, #d99a1c);
 }
-.medal__hit:hover .scard,
+/* Lifted while the pointer is anywhere on the medal - its remove button included - so reaching for the button never drops the card under it. */
+.medal:hover .scard,
 .medal--selected .scard {
   transform: translateY(-3px);
   filter: drop-shadow(0 0 10px rgb(0 186 255 / 55%));
@@ -6734,7 +6737,7 @@ button.combatcard--empty:hover {
   position: absolute;
   top: 0;
   right: 2%;
-  z-index: 2;
+  z-index: 10;
   width: 24px;
   height: 24px;
   border: 0;

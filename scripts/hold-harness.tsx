@@ -7,7 +7,8 @@ import { fetchFightersConfig } from '../src/fighters/queries'
 import { HolderRow, figuresOf, type View } from '../src/fighters/DeskRoster'
 import { fighterAvailable } from '../src/dungeon/rules'
 import { TeamDock } from '../src/fight/TeamDock'
-import { rosterPanel } from '../src/fight/setup'
+import { CombatCard, rosterPanel } from '../src/fight/setup'
+import { MatchupHud } from '../src/fight/matchupStyle'
 import { FighterHoverCard } from '../src/components/FighterPanel'
 import '../src/styles/global.css'
 import '../src/styles/app.css'
@@ -21,11 +22,35 @@ const view = (q.get('view') ?? 'default') as View
 const dock = q.get('dock') === '1'
 /* ?hover=1: the hover read of the first three fighters, laid out flat. */
 const hover = q.get('hover') === '1'
+/* ?medal=1: three team cards in the matchup's medallion look, with their remove buttons. */
+const medal = q.get('medal') === '1'
 
 void Promise.all([fetchRoster(wallet), fetchFightersConfig(), fetchClassTemplates()]).then(([roster, config, templates]) => {
   const now = Date.now()
   createRoot(document.getElementById('root')!).render(
     <div className={`drost pickdrost${phone ? ' drost--phone drost--stack' : ''}`} style={{ maxWidth: phone ? 360 : 1200 }}>
+      {medal && (
+        <MatchupHud.Provider value>
+          <div className="versus--hud" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 120px)', gap: 12, marginBottom: 20 }}>
+            {roster.slice(0, 3).map((f) => (
+              <CombatCard
+                key={f.fighter_id}
+                element={f.element}
+                classname={f.classname}
+                racename={f.racename}
+                level={f.stats.level}
+                health={100}
+                damage={50}
+                side="mine"
+                marker={f.marker}
+                preview={() => ({ panel: rosterPanel(f, 1, 0.995), template: templates.get(f.classname) })}
+                onRemove={() => ((window as unknown as { removed: number }).removed = f.fighter_id)}
+                onOpen={() => ((window as unknown as { opened: number }).opened = f.fighter_id)}
+              />
+            ))}
+          </div>
+        </MatchupHud.Provider>
+      )}
       {hover && (
         <div style={{ display: 'grid', gap: 24 }}>
           {roster.slice(0, 3).map((f) => (
