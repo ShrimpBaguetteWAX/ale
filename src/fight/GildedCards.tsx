@@ -2,7 +2,16 @@ import { useEffect, useRef, useState } from 'react'
 import type { FighterSnapshot, SimFighter, TurnEvent } from '@/dungeon/sim'
 import { NFT_FIGHTER_ID } from '@/dungeon/rules'
 import { GameImg } from '@/components/GameImg'
-import { elementIcon, fighterArtFallback, fighterFace, fighterName, formatScaled } from '@/tavern/fighterStats'
+import {
+  elementBackground,
+  elementIcon,
+  fighterArt,
+  fighterArtFallback,
+  fighterFace,
+  fighterName,
+  formatScaled,
+} from '@/tavern/fighterStats'
+import { portraitCut } from '@/fighters/portraitFrame'
 
 /* Each element's own colour, for the rim inside a card's frame. */
 export const ELEMENT_RIM: Record<string, string> = {
@@ -172,9 +181,7 @@ function GildedCard({
       title={`${fighterName(fighter)} — ${formatScaled(Math.max(0, health))}/${formatScaled(maxHealth)}`}
     >
       <div className="gcard__frame">
-        <div className="gcard__pic">
-          <GameImg src={fighterFace(fighter)} alt="" loading="lazy" fallback={fighterArtFallback()} />
-        </div>
+        <BattlePortrait fighter={fighter} nft={nft} />
         <span className="gcard__fx" />
         <span className="gcard__crack">
           <svg viewBox="0 0 100 130" preserveAspectRatio="none" aria-hidden="true">
@@ -242,9 +249,7 @@ export function MiniCard({
       aria-hidden="true"
     >
       <div className="gcard__frame">
-        <div className="gcard__pic">
-          <GameImg src={fighterFace(fighter)} alt="" loading="lazy" fallback={fighterArtFallback()} />
-        </div>
+        <BattlePortrait fighter={fighter} nft={nft} />
         <span className="gcard__lv">
           <b>{nft ? 'NFT' : fighter.level}</b>
         </span>
@@ -253,6 +258,30 @@ export function MiniCard({
         <i className="gcard__fill" />
       </span>
       <span className="gcard__down">DOWN</span>
+    </div>
+  )
+}
+
+/**
+ * The picture of a battle card, as My Fighters draws a fighter: the head and
+ * shoulders cut from the full art at one even scale, over its element's
+ * background. The NFT fighter has art of its own and keeps it.
+ */
+function BattlePortrait({ fighter, nft }: { fighter: SimFighter; nft: boolean }) {
+  return (
+    <div className="gcard__pic gcard__pic--el" style={{ backgroundImage: `url('${elementBackground(fighter.element)}')` }}>
+      {nft ? (
+        <GameImg src={fighterFace(fighter)} alt="" decoding="async" fallback={fighterArtFallback()} />
+      ) : (
+        <GameImg
+          className="rocard__art"
+          style={portraitCut(fighter.classname, fighter.racename)}
+          src={fighterArt(fighter)}
+          alt=""
+          decoding="async"
+          fallback={fighterArtFallback()}
+        />
+      )}
     </div>
   )
 }

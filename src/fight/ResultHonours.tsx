@@ -1,7 +1,7 @@
 import { GameImg } from '@/components/GameImg'
 import { asset } from '@/assets'
 import { ELEMENT_RIM } from './GildedCards'
-import { elementIcon } from '@/tavern/fighterStats'
+import { elementBackground, elementIcon } from '@/tavern/fighterStats'
 
 /**
  * The pieces of the result screen's honours look on a desktop: the laurels
@@ -97,7 +97,11 @@ export function ResultCard({
         style={{ '--ec': (element && ELEMENT_RIM[element]) || '#dfe3ee', '--h': fill / 100, '--kc': '#ff5a6a' } as React.CSSProperties}
       >
         <div className="gcard__frame">
-          <div className="gcard__pic">
+          {/* The element behind the fighter, as on the battle's cards. */}
+          <div
+            className="gcard__pic gcard__pic--el"
+            style={element ? { backgroundImage: `url('${elementBackground(element)}')` } : undefined}
+          >
             <GameImg src={src} alt="" fallback={fallback} />
           </div>
           <span className="gcard__lv">

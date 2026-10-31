@@ -2215,3 +2215,9 @@
     opacity: 0;
   }
 }
+
+/* A battle card's element behind the fighter, as on My Fighters' cards. */
+.gcard__pic--el {
+  background-position: center;
+  background-size: cover;
+}
