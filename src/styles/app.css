@@ -3136,7 +3136,7 @@ a.res {
   white-space: nowrap;
 }
 .plate--bar .plate__title {
-  font-size: 8.5px;
+  font-size: max(8.5px, var(--fs-floor));
   letter-spacing: 0.1em;
 }
 .plate--soon.plate--bar .plate__title {

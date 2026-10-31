@@ -1092,7 +1092,7 @@
   font-size: 11px;
 }
 .dfarm .dfarm__shine {
-  font-size: 9px;
+  font-size: max(9px, var(--fs-floor));
 }
 .dfarm .dfarm__chosen {
   font-size: 22px;

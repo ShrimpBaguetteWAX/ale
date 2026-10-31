@@ -110,12 +110,12 @@
   /* Hero type is the one place we go fluid, so it fits a 320px phone. */
   --fs-hero: clamp(28px, 4vw + 12px, 56px);
   /*
-     The smallest text a screen may draw. Nothing on a phone, where the
-     badges and letters were sized for the room there is; at desktop width
-     every size under 10px is written max(size, var(--fs-floor)) and so
-     comes up to 10px. The world map's own labels are left out.
+     The smallest text a screen may draw: 10px, a phone included. Every size
+     under it is written max(size, var(--fs-floor)) and so comes up to 10px.
+     The world map's own labels, and the glyphs drawn inside a card in its own
+     units, are left out.
   */
-  --fs-floor: 0px;
+  --fs-floor: 10px;
 
   --fw-thin: 300;
   --fw-normal: 400;

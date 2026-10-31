@@ -2542,7 +2542,7 @@ function Fighting(p: PhoneTournamentProps & {
             <>
               <div className="ptour__rhead">
                 <b>Still to come</b>
-                <small>times are fixed; pairings are drawn round by round</small>
+                <small>pairings drawn each round</small>
               </div>
               <LaterRounds board={board} from={round + 1} now={p.now} onSelect={(r) => setPicked(r)} />
             </>

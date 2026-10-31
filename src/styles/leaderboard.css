@@ -386,7 +386,7 @@
   border-radius: 5px;
   background: rgb(0 0 0 / 62%);
   font-family: var(--font-display);
-  font-size: 9px;
+  font-size: max(9px, var(--fs-floor));
   font-weight: 900;
   line-height: 15px;
   font-variant-numeric: tabular-nums;
@@ -1493,7 +1493,7 @@
 }
 .ppod__kick {
   font-family: var(--font-display);
-  font-size: 9px;
+  font-size: max(9px, var(--fs-floor));
   font-weight: 800;
   letter-spacing: 0.16em;
   text-transform: uppercase;
@@ -1654,7 +1654,7 @@
   background: var(--cyan);
   color: #04121b;
   font-family: var(--font-display);
-  font-size: 8.5px;
+  font-size: max(8.5px, var(--fs-floor));
   font-style: normal;
   font-weight: 800;
   letter-spacing: 0.1em;

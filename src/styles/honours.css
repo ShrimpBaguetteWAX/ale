@@ -244,7 +244,7 @@ button.rcard {
   border-radius: 999px;
   white-space: nowrap;
   font-family: var(--font-display);
-  font-size: 9.5px;
+  font-size: max(9.5px, var(--fs-floor));
   font-weight: 800;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -280,7 +280,7 @@ button.rcard {
   padding: 7px 10px;
   border-bottom: 1px solid rgb(255 255 255 / 8%);
   font-family: var(--font-display);
-  font-size: 8.5px;
+  font-size: max(8.5px, var(--fs-floor));
   font-weight: 800;
   letter-spacing: 0.2em;
   text-transform: uppercase;
@@ -646,7 +646,7 @@ button.rcard {
   margin: 5px 0 0;
   padding-left: 0.2em;
   font-family: var(--font-display);
-  font-size: 8.5px;
+  font-size: max(8.5px, var(--fs-floor));
   font-weight: 800;
   letter-spacing: 0.2em;
   text-transform: uppercase;
@@ -698,7 +698,7 @@ button.rcard {
   flex-wrap: wrap;
   align-items: center;
   gap: 4px 8px;
-  font-size: 8px;
+  font-size: max(8px, var(--fs-floor));
 }
 .phonours__recordhead b {
   font-family: var(--font-display);
@@ -710,7 +710,7 @@ button.rcard {
 }
 .phonours__recordhead small {
   font-family: var(--font-display);
-  font-size: 8px;
+  font-size: max(8px, var(--fs-floor));
   font-weight: 700;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -719,13 +719,13 @@ button.rcard {
 .phonours__recordhead .honours__holds {
   margin: 0;
   padding: 2px 7px;
-  font-size: 7.5px;
+  font-size: max(7.5px, var(--fs-floor));
 }
 .phonours__mvp {
   padding: 2px 7px;
   border-radius: 999px;
   font-family: var(--font-display);
-  font-size: 7.5px;
+  font-size: max(7.5px, var(--fs-floor));
   font-weight: 900;
   letter-spacing: 0.14em;
   color: #1a1205;
@@ -765,11 +765,11 @@ button.rcard {
   font-size: 15px;
 }
 .phonours__dock .honours-eng > span {
-  font-size: 7.5px;
+  font-size: max(7.5px, var(--fs-floor));
   letter-spacing: 0.14em;
 }
 .phonours__dock .honours-eng > em {
-  font-size: 9.5px;
+  font-size: max(9.5px, var(--fs-floor));
 }
 .phonours__claim {
   display: grid;
@@ -788,7 +788,7 @@ button.rcard {
   flex-basis: 100%;
   justify-content: center;
   text-align: center;
-  font-size: 8px;
+  font-size: max(8px, var(--fs-floor));
   letter-spacing: 0.16em;
 }
 .phonours .minepower__mine {
@@ -796,7 +796,7 @@ button.rcard {
 }
 .phonours .minepower__left,
 .phonours .minepower__done {
-  font-size: 9.5px;
+  font-size: max(9.5px, var(--fs-floor));
 }
 
 /* One line until the i opens the whole note. */

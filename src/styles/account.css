@@ -3526,7 +3526,7 @@ button.prew__row:hover:not(:disabled) {
   font-size: 11px;
 }
 .dacc .dtier em {
-  font-size: 8.5px;
+  font-size: max(8.5px, var(--fs-floor));
 }
 .dacc .dtrack__next small {
   font-size: 12.5px;

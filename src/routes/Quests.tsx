@@ -559,7 +559,7 @@ function QuestCard({
             onClick={onReroll}
             title={
               tooPoor
-                ? `Rerolling costs ${cost} credits`
+                ? `Re-rolling costs ${cost} credits`
                 : 'Trade this quest for another in the same cadence'
             }
           >

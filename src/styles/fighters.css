@@ -2225,7 +2225,7 @@
   padding: 14px;
 }
 .drost:not(.drost--phone) .drost__side .drost__cells--6 .drost__cell small {
-  font-size: 9.5px;
+  font-size: max(9.5px, var(--fs-floor));
 }
 .drost:not(.drost--phone) .drost__side .drost__acts {
   gap: 5px;
@@ -2623,7 +2623,7 @@
   align-items: center;
   gap: 5px;
   font-family: var(--font-display);
-  font-size: 9.5px;
+  font-size: max(9.5px, var(--fs-floor));
   font-weight: 800;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -2708,7 +2708,7 @@
 }
 .drost__badge > small {
   font-family: var(--font-display);
-  font-size: 9px;
+  font-size: max(9px, var(--fs-floor));
   font-weight: 900;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -2774,7 +2774,7 @@
   gap: 4px;
 }
 .drost--stack .drost__bar > small {
-  font-size: 8.5px;
+  font-size: max(8.5px, var(--fs-floor));
   letter-spacing: 0.04em;
 }
 .drost--stack .drost__bar > small .drost__si {
@@ -2793,7 +2793,7 @@
   font-size: 16px;
 }
 .drost--stack .drost__badge > small {
-  font-size: 7px;
+  font-size: max(7px, var(--fs-floor));
   letter-spacing: 0.1em;
 }
 .drost--stack .drost__badge > img {
@@ -3048,7 +3048,7 @@
   border-radius: 4px;
   background: rgb(0 0 0 / 65%);
   font-family: var(--font-display);
-  font-size: 8.5px;
+  font-size: max(8.5px, var(--fs-floor));
   font-style: normal;
   font-weight: 900;
   line-height: 13px;
@@ -3188,7 +3188,7 @@ h2.lstep__title {
 }
 .lstep__fee small {
   font-family: var(--font-display);
-  font-size: 9.5px;
+  font-size: max(9.5px, var(--fs-floor));
   font-weight: 800;
   letter-spacing: 0.16em;
   text-transform: uppercase;
@@ -3363,7 +3363,7 @@ h2.drost__bname {
   font-size: 25px;
 }
 .drost__badge--detail > small {
-  font-size: 8.5px;
+  font-size: max(8.5px, var(--fs-floor));
   letter-spacing: 0.14em;
 }
 
@@ -3421,7 +3421,7 @@ h2.drost__bname {
   grid-template-columns: 92px minmax(0, 1fr) 86px;
 }
 .drost__bars--detail .drost__bar > small {
-  font-size: 9.5px;
+  font-size: max(9.5px, var(--fs-floor));
 }
 .drost__bars--detail .drost__bar > b em {
   margin-left: 2px;
@@ -3436,7 +3436,7 @@ h2.drost__bname {
   gap: 8px;
 }
 .drost--stack .drost__bars--detail .drost__bar > small {
-  font-size: 9px;
+  font-size: max(9px, var(--fs-floor));
   letter-spacing: 0.06em;
 }
 .drost--stack .drost__bars--detail .drost__bar > small .drost__si {
@@ -3512,7 +3512,7 @@ h2.drost__bname {
 .drost__abitem > b > small {
   margin-left: auto;
   font-family: var(--font-display);
-  font-size: 9px;
+  font-size: max(9px, var(--fs-floor));
   font-weight: 800;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -3755,7 +3755,7 @@ h2.drost__bname {
 }
 .drost__rolewho > small {
   font-family: var(--font-display);
-  font-size: 9px;
+  font-size: max(9px, var(--fs-floor));
   font-weight: 800;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -3825,7 +3825,7 @@ h2.drost__bname {
 }
 .drost__roletiles small {
   font-family: var(--font-display);
-  font-size: 9px;
+  font-size: max(9px, var(--fs-floor));
   font-weight: 800;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -3860,7 +3860,7 @@ h2.drost__bname {
   font-size: 24px;
 }
 .drost__badge--role > small {
-  font-size: 8.5px;
+  font-size: max(8.5px, var(--fs-floor));
 }
 /* Stacked: the role over its line, the four figures two by two, the badge on the default view. */
 .drost--stack .drost__row.is-view > .drost__role {
@@ -3889,7 +3889,7 @@ h2.drost__bname {
   padding: 4px 7px;
 }
 .drost--stack .drost__roletiles small {
-  font-size: 7.5px;
+  font-size: max(7.5px, var(--fs-floor));
   letter-spacing: 0.08em;
 }
 .drost--stack .drost__roletiles b {
@@ -4584,7 +4584,7 @@ h2.drost__bname {
   padding: 2px 12px;
   clip-path: polygon(7% 0, 93% 0, 100% 50%, 93% 100%, 7% 100%, 0 50%);
   font-family: var(--font-display);
-  font-size: 8.5px;
+  font-size: max(8.5px, var(--fs-floor));
   font-weight: 900;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -4669,7 +4669,7 @@ h2.drost__bname {
 }
 .codex__div {
   margin-top: 2px;
-  font-size: 9px;
+  font-size: max(9px, var(--fs-floor));
 }
 .codex .drost__bars--detail {
   gap: 4px;
@@ -4905,7 +4905,7 @@ h2.drost__bname {
 }
 .hold__score small {
   font-family: var(--font-display);
-  font-size: 6.5px;
+  font-size: max(6.5px, var(--fs-floor));
   font-weight: 900;
   letter-spacing: 0.16em;
   text-transform: uppercase;
@@ -4964,7 +4964,7 @@ h2.drost__bname {
   background: rgb(0 0 0 / 45%);
   box-shadow: inset 0 0 0 1px rgb(255 217 121 / 35%);
   font-family: var(--font-display);
-  font-size: 9.5px;
+  font-size: max(9.5px, var(--fs-floor));
   font-weight: 800;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -4996,7 +4996,8 @@ h2.drost__bname {
 }
 .hold__st {
   display: grid;
-  grid-template-columns: 54px minmax(0, 1fr) 50px;
+  /* Room for TAUNT whole at the 10px floor. */
+  grid-template-columns: 62px minmax(0, 1fr) 50px;
   gap: 8px;
   align-items: center;
 }
@@ -5006,9 +5007,9 @@ h2.drost__bname {
   gap: 5px;
   overflow: hidden;
   font-family: var(--font-display);
-  font-size: 9px;
+  font-size: max(9px, var(--fs-floor));
   font-weight: 800;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   white-space: nowrap;
   color: var(--text-dim);
@@ -5044,12 +5045,25 @@ h2.drost__bname {
 }
 
 /* Default: the abilities as rarity pills along the foot. */
+/*
+ * Whole pills only: they wrap to a second row rather than being cut mid-word
+ * at the card's edge, and a third row, if any, is left out whole. The codex
+ * has every ability in full.
+ */
 .hold__pills {
   display: flex;
-  flex-wrap: nowrap;
-  gap: 4px;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  gap: 3px 4px;
   min-width: 0;
+  max-height: 37px;
   overflow: hidden;
+}
+.hold__lock {
+  width: 9px;
+  height: 9px;
+  margin-right: 3px;
+  opacity: 0.8;
 }
 .hold__pill {
   flex: none;
@@ -5060,7 +5074,7 @@ h2.drost__bname {
   clip-path: polygon(6% 0, 94% 0, 100% 50%, 94% 100%, 6% 100%, 0 50%);
   background: var(--ab);
   font-family: var(--font-display);
-  font-size: 8px;
+  font-size: max(8px, var(--fs-floor));
   font-weight: 900;
   letter-spacing: 0.04em;
   white-space: nowrap;
@@ -5132,7 +5146,7 @@ h2.drost__bname {
 }
 .hold__tiles small {
   font-family: var(--font-display);
-  font-size: 7.5px;
+  font-size: max(7.5px, var(--fs-floor));
   font-weight: 800;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -5176,7 +5190,7 @@ h2.drost__bname {
   top: -7px;
   left: 8px;
   padding: 1px 9px;
-  font-size: 7px;
+  font-size: max(7px, var(--fs-floor));
 }
 .hold__ab.is-locked {
   opacity: 0.65;
@@ -5237,20 +5251,20 @@ h2.drost__bname {
 }
 .drost--phone .hold__chip {
   padding: 0 5px;
-  font-size: 8px;
+  font-size: max(8px, var(--fs-floor));
 }
 .drost--phone .hold__stats {
   gap: 3px;
 }
 .drost--phone .hold__st {
   /* Room for TAUNT whole, its icon and all. */
-  grid-template-columns: 46px minmax(0, 1fr) 36px;
-  gap: 6px;
+  grid-template-columns: 58px minmax(0, 1fr) 36px;
+  gap: 5px;
 }
 .drost--phone .hold__st > small {
   gap: 4px;
-  font-size: 7.5px;
-  letter-spacing: 0.06em;
+  font-size: max(7.5px, var(--fs-floor));
+  letter-spacing: 0.02em;
 }
 .drost--phone .hold__st > b {
   font-size: 10px;
@@ -5282,7 +5296,7 @@ h2.drost__bname {
 .drost--phone .hold__pill {
   height: 15px;
   padding: 0 6px;
-  font-size: 7px;
+  font-size: max(7px, var(--fs-floor));
 }
 .drost--phone .hold__abs {
   gap: 10px 6px;
@@ -5384,7 +5398,7 @@ h2.drost__bname {
   background: rgb(0 0 0 / 45%);
   box-shadow: inset 0 0 0 1px rgb(255 217 121 / 35%);
   font-family: var(--font-display);
-  font-size: 9.5px;
+  font-size: max(9.5px, var(--fs-floor));
   font-weight: 800;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -5425,7 +5439,7 @@ h2.drost__bname {
   gap: 5px;
   overflow: hidden;
   font-family: var(--font-display);
-  font-size: 8.5px;
+  font-size: max(8.5px, var(--fs-floor));
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -5515,7 +5529,7 @@ h2.drost__bname {
   top: -7px;
   left: 9px;
   padding: 1px 9px;
-  font-size: 7px;
+  font-size: max(7px, var(--fs-floor));
 }
 .fhover2__ab.is-locked .codex__rib {
   background: #5a6580;
@@ -5650,4 +5664,18 @@ h2.drost__bname {
 }
 .codex .drost__bars--detail .drost__bar {
   grid-template-columns: 92px minmax(0, 1fr) 96px;
+}
+
+/* A phone has no hover to read the rest on: every ability in full; the sheet scrolls. */
+@media (max-width: 719px) {
+  .codex .drost__abitem > p {
+    display: block;
+    -webkit-line-clamp: unset;
+  }
+}
+
+/* A long class name on a card, a step smaller and closer, read whole. */
+.gcard__name.is-long {
+  font-size: max(6px, calc(var(--u) * 0.6));
+  letter-spacing: 0.01em;
 }

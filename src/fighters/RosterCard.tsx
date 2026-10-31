@@ -114,7 +114,8 @@ export function RosterCardFace({
         )}
         {ribbon && <span className="gcard__tag">{ribbon.label}</span>}
       </span>
-      <span className="gcard__name">{f.classname}</span>
+      {/* A long class name a step smaller, so ASTRALKNIGHT is read whole rather than cut. */}
+      <span className={`gcard__name${f.classname.length > 10 ? ' is-long' : ''}`}>{f.classname}</span>
       <span className="gcard__chg">
         <i />
       </span>

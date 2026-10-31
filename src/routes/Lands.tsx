@@ -513,7 +513,7 @@ function LandCard({
           style={{ backgroundImage: `url('${planetMapSrc(land.planet)}')` }}
           title={`${cap(land.planet)} ${land.x}:${land.y}`}
         />
-        <span className="lcard__name">{shortName(land.name)}</span>
+        <span className={`lcard__name${shortName(land.name).length > 12 ? ' is-long' : ''}`}>{shortName(land.name)}</span>
         {building && (
           <span className="lcard__bar" style={{ '--b': Math.min(1, score / BOOST_MAX) } as React.CSSProperties}>
             <i />

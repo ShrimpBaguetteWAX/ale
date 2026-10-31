@@ -1469,3 +1469,9 @@
 .lsheet__line.is-short b {
   color: #ff8fa0;
 }
+
+/* A long land name, a step smaller and closer, read whole. */
+.lcard__name.is-long {
+  font-size: max(6px, calc(var(--u) * 0.56));
+  letter-spacing: 0;
+}

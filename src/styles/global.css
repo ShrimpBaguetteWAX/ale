@@ -616,3 +616,54 @@ select optgroup {
 :root[data-fx='low'] .pageload i {
   animation-duration: 2.4s;
 }
+
+/*
+ * A thumb's 44px on a phone. Buttons in a row grow to it; the small icon
+ * controls keep their look and get an invisible 44px hit area round them
+ * (only upward and downward where they stand side by side, so neighbours
+ * never steal each other's taps).
+ */
+@media (max-width: 719px) {
+  .mview button,
+  .cardsbar .btn,
+  .cardchip,
+  .plands__tabs button,
+  .pcandle__presets button,
+  .qcard__action {
+    min-height: 44px;
+  }
+  .lsheet__destroy {
+    min-height: 44px;
+    margin-top: 6px;
+  }
+  .dstep__arrow,
+  .dstep__tick,
+  .lboard__info,
+  .pacc__pen,
+  .plate--bar,
+  .res {
+    position: relative;
+  }
+  .dstep__arrow::after,
+  .lboard__info::after,
+  .pacc__pen::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: max(100%, 44px);
+    height: max(100%, 44px);
+    transform: translate(-50%, -50%);
+  }
+  .dstep__tick::after,
+  .plate--bar::after,
+  .res::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 50%;
+    height: max(100%, 44px);
+    transform: translateY(-50%);
+  }
+}

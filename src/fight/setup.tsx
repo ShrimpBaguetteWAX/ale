@@ -1963,7 +1963,8 @@ export function QualityFilters({
             {/* Best first: the useful end of the scale is the top of it. */}
             {[...GRADE_ORDER].reverse().map((g) => (
               <option key={g} value={g}>
-                {GRADE_LABEL[g]}
+                {/* "for this class" goes without saying in a filter over one class's rolls, and it cut the option off. */}
+                {GRADE_LABEL[g].replace(' for this class', '')}
               </option>
             ))}
           </select>

@@ -1225,7 +1225,7 @@ export function HolderRow({
                   style={{ '--ab': rarityColor(a.displayname) } as React.CSSProperties}
                   title={`${abilityName(a.displayname)}${a.locked ? ' · locked' : ''}: ${resolveAbilityDescription(a)}`}
                 >
-                  {a.locked ? '🔒 ' : ''}
+                  {!!a.locked && <img className="hold__lock" src={asset('/assets/icons/lock.svg')} alt="locked" />}
                   {abilityName(a.displayname)}
                 </span>
               ))}

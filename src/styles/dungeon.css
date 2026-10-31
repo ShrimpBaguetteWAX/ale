@@ -835,7 +835,7 @@
   padding: 0 6px;
   border-radius: 6px;
   font-family: var(--font-display);
-  font-size: 9px;
+  font-size: max(9px, var(--fs-floor));
   font-weight: 900;
   line-height: 16px;
   letter-spacing: 0.06em;
@@ -892,7 +892,7 @@
 
 .fightercard--compact .fightercard__lvl em {
   margin-left: 1px;
-  font-size: 8px;
+  font-size: max(8px, var(--fs-floor));
   font-style: normal;
   vertical-align: 1px;
   color: #ffc23d;
@@ -917,14 +917,14 @@
   .fightercard--compact .fightercard__lvl,
   .fightercard--compact .fightercard__age {
     padding: 0 3px;
-    font-size: 9px;
+    font-size: max(9px, var(--fs-floor));
     letter-spacing: -0.02em;
   }
 
   .fightercard--compact .fightercard__state {
     bottom: 25px;
     padding: 0 5px;
-    font-size: 8.5px;
+    font-size: max(8.5px, var(--fs-floor));
   }
 }
 
@@ -961,7 +961,7 @@
   .fightercard--compact .fightercard__age {
     padding: 0;
     background: none;
-    font-size: 8.5px;
+    font-size: max(8.5px, var(--fs-floor));
     line-height: 13px;
   }
 
@@ -973,7 +973,7 @@
     bottom: 17px;
     padding: 0 4px;
     border-radius: 5px;
-    font-size: 7px;
+    font-size: max(7px, var(--fs-floor));
     line-height: 13px;
     letter-spacing: 0.03em;
   }
@@ -6335,7 +6335,7 @@ button.combatcard--empty:hover {
   border-radius: 6px;
   background: rgb(255 255 255 / 8%);
   font-family: var(--font-display);
-  font-size: 9.5px;
+  font-size: max(9.5px, var(--fs-floor));
   font-weight: 900;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -6437,7 +6437,7 @@ button.combatcard--empty:hover {
   align-items: baseline;
   gap: 8px;
   font-family: var(--font-display);
-  font-size: 9.5px;
+  font-size: max(9.5px, var(--fs-floor));
   font-weight: 800;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -6730,8 +6730,9 @@ button.combatcard--empty:hover {
   font-size: 10.5px;
   font-weight: 700;
   text-align: center;
-  /* One line: on a phone the medallion is narrow enough to break a word in two. */
-  white-space: nowrap;
+  /* Between words only: on a phone the medallion is narrow enough to break a word in two. */
+  overflow-wrap: normal;
+  word-break: keep-all;
   pointer-events: none;
 }
 /* Take out, on a resting pointer: a small red disc on the medallion's corner. */
@@ -6837,7 +6838,7 @@ button.combatcard--empty:hover {
 }
 .hudcentre__cap {
   font-family: var(--font-display);
-  font-size: 9px;
+  font-size: max(9px, var(--fs-floor));
   font-weight: 800;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -7334,7 +7335,7 @@ button.combatcard--empty:hover {
   gap: 2px;
 }
 .teamdock__word .teamdock__cap {
-  font-size: 9.5px;
+  font-size: max(9.5px, var(--fs-floor));
 }
 .teamdock__word b {
   font-family: var(--font-display);
@@ -7439,7 +7440,7 @@ button.combatcard--empty:hover {
   font-size: 14px;
 }
 .teamdock--sheet.teamdock--hud .teamdock__pct i {
-  font-size: 8px;
+  font-size: max(8px, var(--fs-floor));
 }
 .teamdock--sheet.teamdock--hud .teamdock__word {
   justify-items: center;
@@ -7545,7 +7546,7 @@ button.combatcard--empty:hover {
     font-size: 19px;
   }
   .versus--hud .hudcentre__cap {
-    font-size: 8.5px;
+    font-size: max(8.5px, var(--fs-floor));
   }
   .versus--hud .hudcentre__line {
     gap: 8px;
@@ -7731,7 +7732,7 @@ button.combatcard--empty:hover {
 }
 .nftpick__fhead {
   font-family: var(--font-display);
-  font-size: 9px;
+  font-size: max(9px, var(--fs-floor));
   font-weight: 800;
   letter-spacing: 0.16em;
   text-transform: uppercase;
@@ -7788,7 +7789,7 @@ button.combatcard--empty:hover {
   border: 0;
   clip-path: polygon(7% 0, 93% 0, 100% 50%, 93% 100%, 7% 100%, 0 50%);
   font-family: var(--font-display);
-  font-size: 9px;
+  font-size: max(9px, var(--fs-floor));
   font-weight: 900;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -7962,7 +7963,7 @@ button.combatcard--empty:hover {
   padding: 2px 12px;
   clip-path: polygon(7% 0, 93% 0, 100% 50%, 93% 100%, 7% 100%, 0 50%);
   font-family: var(--font-display);
-  font-size: 8.5px;
+  font-size: max(8.5px, var(--fs-floor));
   font-weight: 900;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -7980,7 +7981,7 @@ button.combatcard--empty:hover {
   background: #0b1426;
   box-shadow: inset 0 0 0 1px rgb(255 217 121 / 60%);
   font-family: var(--font-display);
-  font-size: 9.5px;
+  font-size: max(9.5px, var(--fs-floor));
   font-weight: 900;
   color: #ffd979;
 }
@@ -8021,7 +8022,7 @@ button.combatcard--empty:hover {
   padding: 1px 10px;
   clip-path: polygon(7% 0, 93% 0, 100% 50%, 93% 100%, 7% 100%, 0 50%);
   font-family: var(--font-display);
-  font-size: 8px;
+  font-size: max(8px, var(--fs-floor));
   font-weight: 900;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -8047,7 +8048,7 @@ button.combatcard--empty:hover {
   gap: 6px;
   align-items: center;
   font-family: var(--font-display);
-  font-size: 8px;
+  font-size: max(8px, var(--fs-floor));
   font-weight: 800;
   letter-spacing: 0.05em;
   text-transform: uppercase;
@@ -8108,7 +8109,7 @@ button.combatcard--empty:hover {
   top: -7px;
   left: 8px;
   padding: 1px 9px;
-  font-size: 7px;
+  font-size: max(7px, var(--fs-floor));
 }
 .ncard__ab b {
   font-family: var(--font-display);

@@ -1226,3 +1226,9 @@
   letter-spacing: 0.04em;
   color: #ffb3ff;
 }
+
+/* The greeting wraps rather than cutting the trainer's name. */
+.shell .main__inner .pbrief h1.pbrief__name {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
