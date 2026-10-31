@@ -127,6 +127,8 @@ export default function Market() {
   const [sort, setSort] = useState<MarketSort>('ending')
   const [filter, setFilter] = useState<RosterFilter>(EMPTY_FILTER)
   const [detail, setDetail] = useState<Detail>(null)
+  /* A phone's Details: the codex page, in a sheet. */
+  const [codexOf, setCodexOf] = useState<{ f: RosterFighter; facts: string[]; upkeep: boolean } | null>(null)
   const [dialog, setDialog] = useState<Dialog>(null)
   /*
      A phone lists a row a listing and opens one in place; a desktop keeps the
@@ -377,13 +379,24 @@ export default function Market() {
   const show = useCallback(
     (listing: Auction | InstantOffer) => {
       const f = listingAsFighter(listing)
+      if (phone) {
+        setCodexOf({
+          f: { ...f, in_use: 0, marker: markerOf.get(f.fighter_id) ?? '' },
+          facts: [
+            `Listed ${shortDay('auction_id' in listing ? listing.auction_start : listing.offer_start)}`,
+            `Payday ${shortDay(listing.next_payday)}`,
+          ],
+          upkeep: false,
+        })
+        return
+      }
       setDetail({
         kind: 'panel',
         panel: rosterPanel(f, levelMod, ageDecay),
         template: classes.get(f.classname),
       })
     },
-    [classes, levelMod, ageDecay],
+    [classes, levelMod, ageDecay, phone, markerOf],
   )
 
   const pinned = phone && (tab === 'auctions' || tab === 'offers')
@@ -708,7 +721,9 @@ export default function Market() {
               busy={busy === 'list'}
               unlockLevel={unlockLevel}
               onInspect={(f) =>
-                setDetail({
+                phone
+                  ? setCodexOf({ f, facts: [`Yours since ${shortDay(f.creation_date)}`], upkeep: true })
+                  : setDetail({
                   kind: 'panel',
                   panel: rosterPanel(f, levelMod, ageDecay),
                   template: classes.get(f.classname),
@@ -784,6 +799,17 @@ export default function Market() {
         />
       )}
 
+      {codexOf && (
+        <BottomSheet
+          title={`${capWord(codexOf.f.racename)} ${capWord(codexOf.f.classname)}`}
+          onClose={() => setCodexOf(null)}
+        >
+          {/* The phone codex's sizes come with My Fighters' phone class. */}
+          <div className="drost--phone mcodex">
+            <MarketFighter f={codexOf.f} facts={codexOf.facts} upkeep={codexOf.upkeep} />
+          </div>
+        </BottomSheet>
+      )}
       {detail && (
         <DetailSheet
           panel={detail.panel}
@@ -798,6 +824,8 @@ export default function Market() {
   )
 }
 
+
+const capWord = (w: string) => w.charAt(0).toUpperCase() + w.slice(1)
 
 /* ---------- the desktop: My Fighters' card, with the price ---------- */
 
