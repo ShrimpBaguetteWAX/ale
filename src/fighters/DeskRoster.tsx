@@ -75,6 +75,7 @@ import { useConfigStore, useLazyConfig } from '@/state/useConfig'
 import { asset } from '@/assets'
 import { RosterCardFace, placeRibbon, type Ribbon } from '@/fighters/RosterCard'
 import { elementRim } from '@/fight/GildedCards'
+import { FighterPeek } from '@/fighters/CompactPick'
 
 /**
  * My Fighters on a desktop: the Market's rows, with payday and age.
@@ -143,7 +144,7 @@ function keepDensity(phone: boolean, d: Density) {
   }
 }
 
-function DensitySeg({ density, onChange }: { density: Density; onChange: (d: Density) => void }) {
+export function DensitySeg({ density, onChange }: { density: Density; onChange: (d: Density) => void }) {
   return (
     <span className="drost__seg drost__seg--sm drost__densseg" role="group" aria-label="Layout">
       <button type="button" aria-pressed={density === 'cards'} title="Cards" onClick={() => onChange('cards')}>
@@ -829,9 +830,10 @@ export function DeskRoster(p: DeskRosterProps) {
               </p>
             ) : density === 'compact' ? (
               <div className="drost__grid">
+                {/* Compact always reads in full on a resting pointer (a desktop); a click still picks. */}
                 {list.map((f) => (
+                  <FighterPeek fighter={f} key={f.fighter_id}>
                   <CompactCard
-                    key={f.fighter_id}
                     f={f}
                     mode={p.mode}
                     now={p.now}
@@ -844,6 +846,7 @@ export function DeskRoster(p: DeskRosterProps) {
                     /* Only once the ladder is read: before it, every fighter looks to have no level left. */
                     max={p.levels.length > 0 && levelUpOf(f, p.levels).atMax}
                   />
+                  </FighterPeek>
                 ))}
               </div>
             ) : (

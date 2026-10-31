@@ -51,7 +51,8 @@ import {
 import type { ClassTemplate } from '@/tavern/fighterStats'
 import { addAuction, bidAuction, buyOffer, cancelAuction, cancelOffer } from '@/wharf/actions'
 import { asset, artSet } from '@/assets'
-import { FighterCodex, HolderRow, VIEWS, figuresOf, type View } from '@/fighters/DeskRoster'
+import { DensitySeg, FighterCodex, HolderRow, VIEWS, figuresOf, type View } from '@/fighters/DeskRoster'
+import { CompactPick, useDensity, type Density } from '@/fighters/CompactPick'
 
 /**
  * The fighter market.
@@ -89,6 +90,8 @@ const WIDE_BOARD = 1360
 const WideBoard = createContext(false)
 /* What the cards show — Default, Stats, Res, Combat, Abilities — as on My Fighters. */
 const CardView = createContext<View>('default')
+/* The holder, or the compact card with the overlay on hover: the Market's own layout switch. */
+const CardDensity = createContext<Density>('cards')
 
 export default function Market() {
   const player = useGame((s) => s.player)!
@@ -140,6 +143,7 @@ export default function Market() {
   }, [])
   const wide = !phone && boardW >= WIDE_BOARD
   const [view, setView] = useState<View>('default')
+  const [density, setDensity] = useDensity('market')
   const toggleRow = (key: string) => setOpenRow((k) => (k === key ? null : key))
   /* A desktop shows one listing in full beside the list: which one. */
   const [pick, setPick] = useState<string | null>(null)
@@ -402,6 +406,7 @@ export default function Market() {
   return (
     <WideBoard.Provider value={wide}>
     <CardView.Provider value={view}>
+    <CardDensity.Provider value={density}>
     <div className={`market${pinned ? ' market--pinned' : ''}`}>
       <img className="market__art" {...artSet('bg-shop')} alt="" />
       <div className="market__scrim" />
@@ -452,12 +457,17 @@ export default function Market() {
           )}
 
           {/* What the cards show, as on My Fighters: one switch, for every tab. */}
-          <span className="drost__seg drost__seg--sm mview" role="tablist" aria-label="Cards show">
-            {VIEWS.map(([v, label]) => (
-              <button type="button" role="tab" key={v} aria-selected={view === v} onClick={() => setView(v)}>
-                {label}
-              </button>
-            ))}
+          <span className="mview__row">
+            <DensitySeg density={density} onChange={setDensity} />
+            {density === 'cards' && (
+              <span className="drost__seg drost__seg--sm mview" role="tablist" aria-label="Cards show">
+                {VIEWS.map(([v, label]) => (
+                  <button type="button" role="tab" key={v} aria-selected={view === v} onClick={() => setView(v)}>
+                    {label}
+                  </button>
+                ))}
+              </span>
+            )}
           </span>
 
           {!phone && (tab === 'auctions' || tab === 'offers' || tab === 'mine') && (
@@ -741,6 +751,7 @@ export default function Market() {
         />
       )}
     </div>
+    </CardDensity.Provider>
     </CardView.Provider>
     </WideBoard.Provider>
   )
@@ -782,6 +793,7 @@ function MarketCard({
   void wide
   const { classes, fighters, levelMod, ageDecay } = useConfig()
   const view = useContext(CardView)
+  const density = useContext(CardDensity)
   const f = useMemo(
     () => ({ ...listingAsFighter(listing), in_use: 0, marker: marker ?? '' }),
     [listing, marker],
@@ -790,6 +802,15 @@ function MarketCard({
     () => figuresOf(f, classes.get(f.classname), fighters, levelMod, ageDecay, now, false),
     [f, classes, fighters, levelMod, ageDecay, now],
   )
+  if (density === 'compact')
+    return (
+      <CompactPick
+        f={f}
+        picked={picked}
+        onClick={onPick}
+        below={<PriceTag price={price} closing={closing} left={msLeft(listing, now)} />}
+      />
+    )
   return (
     <HolderRow
       f={f}
@@ -827,12 +848,16 @@ function OwnCard({
 }) {
   const { classes, fighters, levelMod, ageDecay } = useConfig()
   const view = useContext(CardView)
+  const density = useContext(CardDensity)
   const [now] = useState(() => Date.now())
   const fig = useMemo(
     () => figuresOf(f, classes.get(f.classname), fighters, levelMod, ageDecay, now, false),
     [f, classes, fighters, levelMod, ageDecay, now],
   )
   return (
+    density === 'compact' ? (
+      <CompactPick f={f} picked={picked} onClick={onPick} below={<span className="mrow__cue">{cue}</span>} />
+    ) : (
     <HolderRow
       f={f}
       fig={fig}
@@ -844,6 +869,19 @@ function OwnCard({
       onClick={onPick}
       aside={<span className="mrow__cue">{cue}</span>}
     />
+    )
+  )
+}
+
+/** A listing's price and its clock, under a compact card. */
+function PriceTag({ price, closing, left }: { price: number; closing: boolean; left: number }) {
+  return (
+    <>
+      <span className="mono">
+        {price.toLocaleString(NUM_LOCALE)} <img src={asset('/assets/icons/gems.svg')} alt="gems" />
+      </span>
+      <small className={closing ? 'is-closing' : undefined}>{timeLeftLabel(left)}</small>
+    </>
   )
 }
 
@@ -888,6 +926,7 @@ function ListingRow({
 }) {
   const { classes, fighters, levelMod, ageDecay } = useConfig()
   const view = useContext(CardView)
+  const density = useContext(CardDensity)
   const f = useMemo(
     () => ({ ...listingAsFighter(listing), in_use: 0, marker: marker ?? '' }),
     [listing, marker],
@@ -896,6 +935,16 @@ function ListingRow({
     () => figuresOf(f, classes.get(f.classname), fighters, levelMod, ageDecay, now, false),
     [f, classes, fighters, levelMod, ageDecay, now],
   )
+  /* Compact, a card opens the fighter in full (and its deal) at once: a grid has no room for the row's buttons. */
+  if (density === 'compact')
+    return (
+      <CompactPick
+        f={f}
+        picked={open}
+        onClick={onOpen}
+        below={<PriceTag price={price} closing={closing} left={msLeft(listing, now)} />}
+      />
+    )
   return (
     <div className={`drost--stack mcard${open ? ' is-open' : ''}`}>
       <HolderRow

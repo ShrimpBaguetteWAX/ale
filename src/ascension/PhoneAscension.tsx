@@ -17,7 +17,8 @@ import {
 } from '@/ascension/rules'
 import { fighterArt, fighterArtFallback } from '@/tavern/fighterStats'
 import { BottomSheet } from '@/components/BottomSheet'
-import { HolderRow, figuresOf } from '@/fighters/DeskRoster'
+import { DensitySeg, HolderRow, figuresOf } from '@/fighters/DeskRoster'
+import { CompactPick, useDensity } from '@/fighters/CompactPick'
 import { DetailSheet, rosterPanel } from '@/fight/setup'
 import { useConfig } from '@/state/useConfig'
 import { GameImg } from '@/components/GameImg'
@@ -303,12 +304,15 @@ function PickRow({
   onToggle,
   onDetails,
   onChoose,
+  compact = false,
 }: {
   fighter: RosterFighter
   on: boolean
   open: boolean
   note?: string
   dim?: boolean
+  /** The compact card: Details and Choose on its plate once tapped. */
+  compact?: boolean
   onToggle: () => void
   onDetails: () => void
   onChoose: () => void
@@ -319,6 +323,29 @@ function PickRow({
     () => figuresOf(f, classes.get(f.classname), fighters, levelMod, ageDecay, now, false),
     [f, classes, fighters, levelMod, ageDecay, now],
   )
+  if (compact)
+    return (
+      <CompactPick
+        f={f}
+        picked={on || open}
+        dim={dim}
+        onClick={onToggle}
+        below={
+          open ? (
+            <span className="pasc__minacts">
+              <button type="button" className="btn btn--ghost btn--sm" onClick={onDetails}>
+                Details
+              </button>
+              <button type="button" className="btn btn--primary btn--sm" onClick={onChoose}>
+                {on ? 'Chosen' : 'Choose'}
+              </button>
+            </span>
+          ) : (
+            note
+          )
+        }
+      />
+    )
   return (
     <div className={`pasc__pick${open ? ' is-open' : ''}`}>
       <HolderRow
@@ -380,6 +407,7 @@ function TargetSheet({
   const shown = cls ? ready.filter((f) => f.classname === cls) : ready
   const [open, setOpen] = useState<number | null>(null)
   const [details, setDetails] = useState<RosterFighter | null>(null)
+  const [density, setDensity] = useDensity('ascension')
 
   return (
     <BottomSheet title="Fighter to ascend" onClose={onClose}>
@@ -399,9 +427,13 @@ function TargetSheet({
               </button>
             ))}
           </div>
-          <div className="drost--phone drost__holders pasc__picks">
+          <div className="pasc__dens">
+            <DensitySeg density={density} onChange={setDensity} />
+          </div>
+          <div className={density === 'compact' ? 'pasc__picks pasc__grid' : 'drost--phone drost__holders pasc__picks'}>
             {shown.map((f) => (
               <PickRow
+                compact={density === 'compact'}
                 key={f.fighter_id}
                 fighter={f}
                 on={f.fighter_id === picked}
@@ -442,6 +474,7 @@ function SocketSheet({
   )
   const [open, setOpen] = useState<number | null>(null)
   const [details, setDetails] = useState<RosterFighter | null>(null)
+  const [density, setDensity] = useDensity('ascension')
   const title =
     requirement === 'ability' ? 'Sacrifice ability' : `${cap(need.sub)} · ${need.name}`
   const what =
@@ -460,7 +493,11 @@ function SocketSheet({
           is not busy or mid-ascension.
         </p>
       ) : (
-        <div className="drost--phone drost__holders pasc__picks">
+        <>
+        <div className="pasc__dens">
+          <DensitySeg density={density} onChange={setDensity} />
+        </div>
+        <div className={density === 'compact' ? 'pasc__picks pasc__grid' : 'drost--phone drost__holders pasc__picks'}>
           {rows.map((f) => {
             const met = requirementsMet(f, target)
             const elsewhere = REQUIREMENTS.find(
@@ -469,6 +506,7 @@ function SocketSheet({
             const also = REQUIREMENTS.filter((r) => r.key !== requirement && met.has(r.key))
             return (
               <PickRow
+                compact={density === 'compact'}
                 key={f.fighter_id}
                 fighter={f}
                 on={slots[requirement] === f.fighter_id}
@@ -488,6 +526,7 @@ function SocketSheet({
             )
           })}
         </div>
+        </>
       )}
       {details && <PickDetails fighter={details} onClose={() => setDetails(null)} />}
     </BottomSheet>

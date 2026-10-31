@@ -2280,7 +2280,7 @@ i.mrow__arrow {
 /* ---------- the board with the card in its holder ---------- */
 @media (min-width: 720px) {
   /* Room between the view switch and the filter bar under it. */
-  .market__panel > .mview {
+  .market__panel > .mview__row {
     margin-bottom: 12px;
   }
   /*
@@ -2326,7 +2326,7 @@ i.mrow__arrow {
 
 /* A phone: what the cards show stays in reach under the top bar while the list scrolls. */
 @media (max-width: 719px) {
-  .market__panel > .mview {
+  .market__panel > .mview__row {
     position: sticky;
     top: var(--topbar-h, 56px);
     z-index: calc(var(--z-sticky) - 3);
@@ -2336,7 +2336,67 @@ i.mrow__arrow {
       0 10px 16px rgb(0 0 0 / 45%);
   }
   /* Pinned, the panel is the list's own scroller: the switch holds at its top. */
-  .market--pinned .market__panel > .mview {
+  .market--pinned .market__panel > .mview__row {
     top: 0;
   }
+}
+
+/* The layout switch left of the views, as My Fighters has them; the views only for the holder. */
+.mview__row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+@media (max-width: 719px) {
+  .mview__row > .mview {
+    flex: 1;
+  }
+}
+/* Compact: the gilded cards in a grid, the price under each, the overlay on a resting pointer. */
+.mrows:has(> .cpick) {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
+  gap: 18px 12px;
+  padding-top: 12px;
+  overflow: visible;
+  background: none;
+  box-shadow: none;
+}
+@media (max-width: 719px) {
+  .mrows:has(> .cpick) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px 8px;
+  }
+}
+.cpick__below small {
+  font-family: var(--font-body);
+  font-weight: 600;
+  color: var(--text-faint);
+}
+.cpick__below small.is-closing {
+  color: #ff8fa0;
+}
+
+/* Under a compact card: the price large on its own line, the time left under it, both readable at a glance. */
+.mrows > .cpick .cpick__below,
+.mrows > .mcard > .cpick .cpick__below {
+  display: grid;
+  justify-items: center;
+  gap: 1px;
+  padding: 6px 4px 5px;
+}
+.mrows .cpick__below > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 14px;
+  color: #fff3c4;
+}
+.mrows .cpick__below > span img {
+  width: 14px;
+  height: 14px;
+}
+.mrows .cpick__below > small {
+  font-size: 11.5px;
+  color: var(--text-dim);
 }

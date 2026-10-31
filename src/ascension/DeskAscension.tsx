@@ -10,7 +10,8 @@ import {
 } from '@/ascension/rules'
 import { markerIcon } from '@/dungeon/filters'
 import { fighterArt, fighterArtFallback } from '@/tavern/fighterStats'
-import { HolderRow, figuresOf, type Figures } from '@/fighters/DeskRoster'
+import { DensitySeg, HolderRow, figuresOf, type Figures } from '@/fighters/DeskRoster'
+import { CompactPick, useDensity } from '@/fighters/CompactPick'
 import { GameImg } from '@/components/GameImg'
 import { HoverPopover, useHoverCard } from '@/components/HoverPopover'
 import { FighterHoverCard } from '@/components/FighterPanel'
@@ -178,7 +179,18 @@ export function DeskAscension({
     for (const f of rows) m.set(f.fighter_id, figuresOf(f, classes.get(f.classname), fighters, levelMod, ageDecay, now, false))
     return m
   }, [rows, classes, fighters, levelMod, ageDecay, now])
-  const card = (f: RosterFighter, extra: Partial<React.ComponentProps<typeof HolderRow>>) => (
+  /* The holder, or the compact card with the overlay on hover, as My Fighters offers. */
+  const [density, setDensity] = useDensity('ascension')
+  const card = (f: RosterFighter, extra: Partial<React.ComponentProps<typeof HolderRow>>) =>
+    density === 'compact' ? (
+      <CompactPick
+        f={f}
+        picked={!!extra.picked}
+        dim={!!extra.dim}
+        onClick={extra.onClick ?? (() => {})}
+        below={extra.note}
+      />
+    ) : (
     <HolderRow
       f={f}
       fig={figures.get(f.fighter_id)!}
@@ -189,7 +201,7 @@ export function DeskAscension({
       onClick={() => {}}
       {...extra}
     />
-  )
+    )
 
   const filled = chosenFighters.length === SACRIFICE_COUNT
   const complete = filled && !!check?.ok
@@ -263,6 +275,7 @@ export function DeskAscension({
         )}
 
         <div className="dasc__tools">
+          <DensitySeg density={density} onChange={setDensity} />
           {(markerCounts.length > 0 || unmarked > 0) && (
             <div className="dasc__markers" role="group" aria-label="Your markers">
               {markerCounts.map(([m, n]) => (
@@ -306,12 +319,12 @@ export function DeskAscension({
               : 'Nothing matches.'}
           </p>
         ) : (
-          <div className="drost__holders dasc__rows">
+          <div className={density === 'compact' ? 'dasc__rows dasc__grid' : 'drost__holders dasc__rows'}>
             {rows.map((f) => {
               if (list === 'target') {
                 const n = covered.get(f.fighter_id) ?? 0
                 return (
-                  <Peek key={f.fighter_id} fighter={f}>
+                  <Peek key={f.fighter_id} fighter={f} off={density === 'compact'}>
                     {card(f, {
                       onClick: () => {
                         onPlace(f.fighter_id)
@@ -333,7 +346,7 @@ export function DeskAscension({
                 : []
               const on = slots[key] === f.fighter_id
               return (
-                <Peek key={f.fighter_id} fighter={f}>
+                <Peek key={f.fighter_id} fighter={f} off={density === 'compact'}>
                   {card(f, {
                     picked: on,
                     dim: !!elsewhere,
@@ -563,13 +576,14 @@ export function DeskAscension({
  * the desktop pickers open — so a fighter can be looked at before it is
  * chosen, while a click still chooses it at once.
  */
-function Peek({ fighter, children }: { fighter: RosterFighter; children: React.ReactNode }) {
+function Peek({ fighter, off = false, children }: { fighter: RosterFighter; off?: boolean; children: React.ReactNode }) {
   const { classes, levelMod, ageDecay } = useConfig()
   const make = useCallback(
     () => ({ panel: rosterPanel(fighter, levelMod, ageDecay), template: classes.get(fighter.classname) }),
     [fighter, levelMod, ageDecay, classes],
   )
-  const { ref, shown, close, handlers } = useHoverCard(make, true)
+  /* Off where the card brings its own (the compact card): one overlay, not two. */
+  const { ref, shown, close, handlers } = useHoverCard(make, !off)
   return (
     <div className="dasc__peek" ref={ref} {...handlers} onClick={close}>
       {children}

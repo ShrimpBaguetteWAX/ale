@@ -3290,3 +3290,48 @@ a.res {
   margin-top: 10px;
 }
 
+
+/* Ascension compact: the gilded cards in a grid, what fits a socket under each, the overlay on hover. */
+.dasc__rows.dasc__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(108px, 1fr));
+  gap: 16px 12px;
+  padding-top: 10px;
+}
+.dasc__grid > .dasc__peek {
+  min-width: 0;
+}
+.dasc__grid .cpick__below {
+  font-family: var(--font-body);
+  font-weight: 600;
+  color: var(--text-dim);
+  text-align: center;
+}
+
+/* Ascension's pick sheets on a phone: the layout switch, and the compact grid. */
+.pasc__dens {
+  display: flex;
+  justify-content: flex-end;
+  margin: 2px 0 6px;
+}
+.pasc__picks.pasc__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px 8px;
+  padding-top: 8px;
+}
+.pasc__grid .cpick__below {
+  font-family: var(--font-body);
+  font-weight: 600;
+  color: var(--text-dim);
+  text-align: center;
+}
+.pasc__minacts {
+  display: grid;
+  gap: 4px;
+  width: 100%;
+}
+.pasc__minacts .btn {
+  min-height: 32px;
+  padding: 0 6px;
+}
