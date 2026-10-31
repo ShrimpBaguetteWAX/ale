@@ -2403,7 +2403,7 @@ i.mrow__arrow {
  * with a fade above it, as the candle's Contribute has, so the list scrolls
  * under it rather than showing through.
  */
-.selldock {
+.mdock {
   position: fixed;
   right: 0;
   bottom: calc(var(--nav-h) + env(safe-area-inset-bottom));
@@ -2416,7 +2416,7 @@ i.mrow__arrow {
   background: #070d1c;
   box-shadow: inset 0 1px 0 rgb(192 205 224 / 30%);
 }
-.selldock::before {
+.mdock::before {
   content: '';
   position: absolute;
   left: 0;
@@ -2426,34 +2426,80 @@ i.mrow__arrow {
   background: linear-gradient(0deg, #070d1c, transparent);
   pointer-events: none;
 }
-.selldock__count {
+.mdock__info {
   display: grid;
   margin-right: auto;
   min-width: 0;
   font-size: 13px;
   color: var(--text-dim);
 }
-.selldock__count b {
+.mdock__info b {
   font-size: 17px;
   color: var(--white);
 }
-.selldock__count small {
+.mdock__info small {
   font-size: max(10px, var(--fs-floor));
   color: var(--text-faint);
 }
-.selldock .btn--primary {
+.mdock .btn--primary {
   min-height: 42px;
 }
 /* Clear in the quiet line the phone sheets use, not the ghost button's violet. */
-.selldock .btn--ghost {
+.mdock .btn--ghost {
   --btn-bg: rgb(255 255 255 / 8%);
   --btn-line: rgb(255 255 255 / 22%);
   min-height: 42px;
   box-shadow: none;
 }
 /* The list ends above the band. */
-.selltab--phone.has-dock {
-  padding-bottom: 72px;
+.selltab--phone.has-dock,
+.market__panel.has-dock {
+  padding-bottom: 76px;
+}
+/* The picked listing: × to unpick, its name over price and time, Details and Bid or Buy. */
+.mdock__x {
+  flex: none;
+  width: 30px;
+  height: 30px;
+  margin-left: -4px;
+  border-radius: 50%;
+  border: 0;
+  background: rgb(255 255 255 / 8%);
+  color: var(--text-dim);
+  font-size: 18px;
+  line-height: 1;
+}
+.mdock__info > span b {
+  font-family: var(--font-display);
+  font-size: 13px;
+  color: var(--white);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.mdock__info > span small {
+  font-size: 11px;
+  color: var(--text-faint);
+}
+.mdock__info small b {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 13px;
+  color: var(--white);
+}
+.mdock__info .is-closing {
+  color: var(--red, #ff5a6a);
+}
+.mdock__info {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.mdock > .btn {
+  min-height: 42px;
+  padding-inline: 14px;
+  flex: none;
+  white-space: nowrap;
 }
 /* The sheet: the fighters in the sale as compact cards, four to a row, then the terms. */
 .selltab__sheet {

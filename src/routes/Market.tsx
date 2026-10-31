@@ -147,6 +147,23 @@ export default function Market() {
   const [view, setView] = useState<View>('default')
   const [density, setDensity] = useDensity('market')
   const toggleRow = (key: string) => setOpenRow((k) => (k === key ? null : key))
+  /* Bid and Buy, for the phone's bar at the foot. */
+  const bidButton = (a: Auction) => {
+    const mine = a.owner === player?.wallet
+    return (
+      <button type="button" className="btn btn--primary" disabled={mine} onClick={() => setDialog({ kind: 'bid', auction: a })}>
+        {mine ? 'Your auction' : `Bid ${minNextBid(a.current_bid, config)}`}
+      </button>
+    )
+  }
+  const buyButton = (o: InstantOffer) => {
+    const mine = o.owner === player?.wallet
+    return (
+      <button type="button" className="btn btn--primary" disabled={mine} onClick={() => setDialog({ kind: 'buy', offer: o })}>
+        {mine ? 'Your listing' : 'Buy'}
+      </button>
+    )
+  }
   /* A desktop shows one listing in full beside the list: which one. */
   const [pick, setPick] = useState<string | null>(null)
 
@@ -370,6 +387,9 @@ export default function Market() {
   )
 
   const pinned = phone && (tab === 'auctions' || tab === 'offers')
+  /* The listing picked on a phone, whose Details and Bid or Buy sit in the bar at the foot. */
+  const dockAuction = phone && tab === 'auctions' ? liveAuctions.find((a) => openRow === `a${a.auction_id}`) : undefined
+  const dockOffer = phone && tab === 'offers' ? liveOffers.find((o) => openRow === `o${o.offer_id}`) : undefined
   /* A phone's tabs at the top, under the title, as every other screen has them; the desktop's names. */
   const phoneTabs = phone && (
         <nav className="mkbar" role="tablist" aria-label="Market">
@@ -484,7 +504,7 @@ export default function Market() {
 
         {error && <div className="alert alert--error">{error}</div>}
 
-        <section className="panel market__panel" ref={panelRef}>
+        <section className={`panel market__panel${dockAuction || dockOffer ? ' has-dock' : ''}`} ref={panelRef}>
           {!phone && (
           <div className="tabs" role="tablist">
             {(
@@ -610,7 +630,6 @@ export default function Market() {
           {tab === 'auctions' && phone && (
             <PhoneRows loading={!auctions} empty="No auctions are running. List one and it will show up here.">
               {liveAuctions.map((a) => {
-                const mine = a.owner === player.wallet
                 return (
                   <ListingRow
                     key={`a${a.auction_id}`}
@@ -623,16 +642,7 @@ export default function Market() {
                     unlockLevel={unlockLevel}
                     now={now}
                     onOpen={() => show(a)}
-                    action={
-                      <button
-                        type="button"
-                        className="btn btn--primary btn--sm"
-                        disabled={mine}
-                        onClick={() => setDialog({ kind: 'bid', auction: a })}
-                      >
-                        {mine ? 'Your auction' : `Bid ${minNextBid(a.current_bid, config)}`}
-                      </button>
-                    }
+                    docked
                   />
                 )
               })}
@@ -645,7 +655,6 @@ export default function Market() {
               empty="Nothing is on sale at a fixed price. These only appear when an auction ends unsold and the seller chose to keep it listed."
             >
               {liveOffers.map((o) => {
-                const mine = o.owner === player.wallet
                 return (
                   <ListingRow
                     key={`o${o.offer_id}`}
@@ -658,20 +667,34 @@ export default function Market() {
                     unlockLevel={unlockLevel}
                     now={now}
                     onOpen={() => show(o)}
-                    action={
-                      <button
-                        type="button"
-                        className="btn btn--primary btn--sm"
-                        disabled={mine}
-                        onClick={() => setDialog({ kind: 'buy', offer: o })}
-                      >
-                        {mine ? 'Your listing' : 'Buy'}
-                      </button>
-                    }
+                    docked
                   />
                 )
               })}
             </PhoneRows>
+          )}
+
+          {dockAuction && (
+            <ListingDock
+              listing={dockAuction}
+              price={dockAuction.current_bid}
+              closing={extendsOnBid(dockAuction, config, now)}
+              now={now}
+              onDetails={() => show(dockAuction)}
+              onClose={() => setOpenRow(null)}
+              action={bidButton(dockAuction)}
+            />
+          )}
+          {dockOffer && (
+            <ListingDock
+              listing={dockOffer}
+              price={dockOffer.gems}
+              closing={false}
+              now={now}
+              onDetails={() => show(dockOffer)}
+              onClose={() => setOpenRow(null)}
+              action={buyButton(dockOffer)}
+            />
           )}
 
           {tab === 'sell' && (
@@ -932,6 +955,7 @@ function ListingRow({
   marker,
   action,
   onOpen,
+  docked = false,
 }: {
   listing: Auction | InstantOffer
   price: number
@@ -948,6 +972,8 @@ function ListingRow({
   /** The bid or buy button, or nothing on a listing of your own. */
   action?: React.ReactNode
   onOpen: () => void
+  /** A tap picks it, and its Details and Bid or Buy are in the bar at the foot (a phone's Auctions and Buy now). */
+  docked?: boolean
 }) {
   const { classes, fighters, levelMod, ageDecay } = useConfig()
   const view = useContext(CardView)
@@ -966,7 +992,7 @@ function ListingRow({
       <CompactPick
         f={f}
         picked={open}
-        onClick={onOpen}
+        onClick={docked ? onToggle : onOpen}
         below={<PriceTag price={price} closing={closing} left={msLeft(listing, now)} />}
       />
     )
@@ -993,7 +1019,7 @@ function ListingRow({
       />
       {/* What a listing of your own is doing, under its card. */}
       {below && <div className="mcard__below">{below}</div>}
-      {open && (
+      {open && !docked && (
         <div className="mcard__acts">
           <button type="button" className="btn btn--ghost btn--sm" onClick={onOpen}>
             Details
@@ -1001,6 +1027,55 @@ function ListingRow({
           {action}
         </div>
       )}
+    </div>
+  )
+}
+
+/**
+ * The listing picked on a phone, docked above the tab bar: who it is, the
+ * price and the time left, Details and Bid or Buy. Whichever card density is
+ * on, a tap on a listing picks it and this bar acts on it; nothing opens in
+ * the list.
+ */
+function ListingDock({
+  listing,
+  price,
+  closing,
+  now,
+  onDetails,
+  onClose,
+  action,
+}: {
+  listing: Auction | InstantOffer
+  price: number
+  closing: boolean
+  now: number
+  onDetails: () => void
+  onClose: () => void
+  action: React.ReactNode
+}) {
+  const f = listingAsFighter(listing)
+  return (
+    <div className="mdock" role="region" aria-label="The picked listing">
+      <button type="button" className="mdock__x" onClick={onClose} aria-label="Unpick">
+        ×
+      </button>
+      <span className="mdock__info">
+        <span>
+          <b>{f.classname}</b> <small>L{f.stats.level}</small>
+        </span>
+        <small>
+          <b className="mono">
+            {price.toLocaleString(NUM_LOCALE)}
+            <img src={asset('/assets/icons/gems.svg')} alt="gems" width={12} height={12} />
+          </b>{' '}
+          · <span className={closing ? 'is-closing' : ''}>{timeLeftLabel(msLeft(listing, now))}</span>
+        </small>
+      </span>
+      <button type="button" className="btn btn--ghost" onClick={onDetails}>
+        Details
+      </button>
+      {action}
     </div>
   )
 }
@@ -2159,8 +2234,8 @@ export function SellTab({
           </>
         )}
         {group.length > 0 && (
-          <div className="selldock" role="region" aria-label="The sale">
-            <span className="selldock__count">
+          <div className="mdock" role="region" aria-label="The sale">
+            <span className="mdock__info">
               <span>
                 <b className="mono">{group.length}</b> selected
               </span>
