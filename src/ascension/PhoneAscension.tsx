@@ -17,7 +17,7 @@ import {
 } from '@/ascension/rules'
 import { fighterArt, fighterArtFallback } from '@/tavern/fighterStats'
 import { BottomSheet } from '@/components/BottomSheet'
-import { Row, figuresOf } from '@/fighters/DeskRoster'
+import { HolderRow, figuresOf } from '@/fighters/DeskRoster'
 import { DetailSheet, rosterPanel } from '@/fight/setup'
 import { useConfig } from '@/state/useConfig'
 import { GameImg } from '@/components/GameImg'
@@ -321,19 +321,17 @@ function PickRow({
   )
   return (
     <div className={`pasc__pick${open ? ' is-open' : ''}`}>
-      <Row
+      <HolderRow
         f={f}
         fig={fig}
         view="default"
-        mode="inventory"
         now={now}
+        inTeam={false}
+        blocked={false}
         picked={on || open}
-        checked={false}
-        gate={{ ok: true }}
         onClick={onToggle}
         dim={dim}
-        note={note}
-        aside={<span className={`pasc__radio${on ? ' is-on' : ''}`} aria-hidden="true" />}
+        note={note && <span className="hold__note">{note}</span>}
       />
       {open && (
         <div className="pasc__pickacts">
@@ -401,7 +399,7 @@ function TargetSheet({
               </button>
             ))}
           </div>
-          <div className="drost--phone drost--stack drost__rows pasc__picks">
+          <div className="drost--phone drost__holders pasc__picks">
             {shown.map((f) => (
               <PickRow
                 key={f.fighter_id}
@@ -462,7 +460,7 @@ function SocketSheet({
           is not busy or mid-ascension.
         </p>
       ) : (
-        <div className="drost--phone drost--stack drost__rows pasc__picks">
+        <div className="drost--phone drost__holders pasc__picks">
           {rows.map((f) => {
             const met = requirementsMet(f, target)
             const elsewhere = REQUIREMENTS.find(

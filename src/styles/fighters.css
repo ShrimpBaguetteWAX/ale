@@ -2014,13 +2014,22 @@
   }
 }
 
-/* The fighter's panel level with the first row of the list, under its view switch. */
-.drost:not(.drost--phone) .drost__main:not(.is-narrow):has(> .drost__list > .drost__listhead) > .drost__side {
-  margin-top: 46px;
+/*
+ * A desktop's view switch and markers head both columns, so the markers run
+ * on over the space above the fighter's panel; the list and the panel start
+ * under it, level with each other.
+ */
+.drost:not(.drost--phone) .drost__main > .drost__listhead {
+  grid-column: 1 / -1;
+  min-width: 0;
+  justify-content: flex-start;
+}
+.drost:not(.drost--phone) .drost__main:has(> .drost__listhead) {
+  row-gap: 8px;
 }
 /* Level with the first compact card's frame: under the grid's 10px and the ribbon's 24px. */
-.drost:not(.drost--phone) .drost__main.is-compact:not(.is-narrow):has(> .drost__list > .drost__listhead) > .drost__side {
-  margin-top: 80px;
+.drost:not(.drost--phone) .drost__main.is-compact:not(.is-narrow):has(> .drost__listhead) > .drost__side {
+  margin-top: 34px;
 }
 
 /*
@@ -5226,11 +5235,14 @@ h2.drost__bname {
   gap: 3px;
 }
 .drost--phone .hold__st {
-  grid-template-columns: 40px minmax(0, 1fr) 36px;
+  /* Room for TAUNT whole, its icon and all. */
+  grid-template-columns: 46px minmax(0, 1fr) 36px;
   gap: 6px;
 }
 .drost--phone .hold__st > small {
+  gap: 4px;
   font-size: 7.5px;
+  letter-spacing: 0.06em;
 }
 .drost--phone .hold__st > b {
   font-size: 10px;

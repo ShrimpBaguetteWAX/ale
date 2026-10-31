@@ -10,7 +10,7 @@ import {
 } from '@/ascension/rules'
 import { markerIcon } from '@/dungeon/filters'
 import { fighterArt, fighterArtFallback } from '@/tavern/fighterStats'
-import { Row, figuresOf, type Figures } from '@/fighters/DeskRoster'
+import { HolderRow, figuresOf, type Figures } from '@/fighters/DeskRoster'
 import { GameImg } from '@/components/GameImg'
 import { HoverPopover, useHoverCard } from '@/components/HoverPopover'
 import { FighterHoverCard } from '@/components/FighterPanel'
@@ -169,8 +169,8 @@ export function DeskAscension({
   }, [inClass, marker, list, order, covered])
 
   /*
-     My Fighters' own card, figures and all, so a fighter looks the same on
-     both screens. The list is a phone's width, so it takes the stacked card.
+     The fighter in its holder, as My Fighters and the fight screens show it.
+     The list is a phone's width, so it takes the phone's holder.
   */
   const [now] = useState(() => Date.now())
   const figures = useMemo(() => {
@@ -178,16 +178,14 @@ export function DeskAscension({
     for (const f of rows) m.set(f.fighter_id, figuresOf(f, classes.get(f.classname), fighters, levelMod, ageDecay, now, false))
     return m
   }, [rows, classes, fighters, levelMod, ageDecay, now])
-  const card = (f: RosterFighter, extra: Partial<React.ComponentProps<typeof Row>>) => (
-    <Row
+  const card = (f: RosterFighter, extra: Partial<React.ComponentProps<typeof HolderRow>>) => (
+    <HolderRow
       f={f}
       fig={figures.get(f.fighter_id)!}
       view="default"
-      mode="inventory"
       now={now}
-      picked={false}
-      checked={false}
-      gate={{ ok: true }}
+      inTeam={false}
+      blocked={false}
       onClick={() => {}}
       {...extra}
     />
@@ -308,7 +306,7 @@ export function DeskAscension({
               : 'Nothing matches.'}
           </p>
         ) : (
-          <div className="drost--stack drost__rows dasc__rows">
+          <div className="drost--phone drost__holders dasc__rows">
             {rows.map((f) => {
               if (list === 'target') {
                 const n = covered.get(f.fighter_id) ?? 0
@@ -319,9 +317,9 @@ export function DeskAscension({
                         onPlace(f.fighter_id)
                         show('race')
                       },
-                      aside: (
-                        <span className={`dasc__fit${n === 3 ? ' is-all' : ''}`} title="Sockets you have a fighter for">
-                          {n}/3
+                      note: (
+                        <span className={`hold__chip dasc__fit${n === 3 ? ' is-all' : ''}`} title="Sockets you have a fighter for">
+                          Sockets <b>{n}/3</b>
                         </span>
                       ),
                     })}
@@ -340,12 +338,13 @@ export function DeskAscension({
                     picked: on,
                     dim: !!elsewhere,
                     onClick: () => onAssign(key, f.fighter_id),
-                    note: elsewhere
-                      ? `In the ${elsewhere.label.toLowerCase()} socket — choosing it moves it here`
-                      : also.length > 0
-                        ? `Also fits ${also.map((r) => r.label.toLowerCase()).join(' and ')}`
-                        : undefined,
-                    aside: <span className={`pasc__radio${on ? ' is-on' : ''}`} aria-hidden="true" />,
+                    note: elsewhere ? (
+                      <span className="hold__note">
+                        In the {elsewhere.label.toLowerCase()} socket — choosing it moves it here
+                      </span>
+                    ) : also.length > 0 ? (
+                      <span className="hold__note">Also fits {also.map((r) => r.label.toLowerCase()).join(' and ')}</span>
+                    ) : undefined,
                   })}
                 </Peek>
               )

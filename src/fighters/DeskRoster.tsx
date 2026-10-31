@@ -553,6 +553,29 @@ export function DeskRoster(p: DeskRosterProps) {
     </span>
   )
 
+  const listHeadEl = (
+    <div className={`drost__listhead${stuck ? ' is-stuck' : ''}`} ref={listHead}>
+      {/* A desktop's view switch stands where the count was; a phone keeps both. */}
+      {phone && (
+        <span className="drost__cap">
+          {list.length === p.roster.length
+            ? `${p.roster.length} fighters`
+            : `${list.length} of ${p.roster.length}`}
+        </span>
+      )}
+      {/*
+        The layout first, then the views: the views are the standard
+        card's columns, and the compact card has none to switch.
+      */}
+      <span className="drost__headl">
+        <DensitySeg density={density} onChange={setDensity} />
+        {density === 'cards' && <ViewSeg view={view} onChange={setView} />}
+      </span>
+      {/* The markers at hand beside the views on a desktop; the filter keeps them too, as a phone's does. */}
+      {!phone && <MarkerSeg roster={p.roster} filter={p.filter} onFilter={p.onFilter} />}
+    </div>
+  )
+
   return (
     <div className={`drost${phone ? ` drost--phone drost--stack is-${p.mode}` : ''}${basket ? ' has-basket' : ''}`}>
       <header className="drost__head">
@@ -769,27 +792,13 @@ export function DeskRoster(p: DeskRosterProps) {
         </p>
       ) : (
         <div className={`drost__main${wide ? '' : ' is-narrow'}${density === 'compact' ? ' is-compact' : ''}`}>
+          {/*
+            A desktop's head spans the fighter's column too, so the markers run on
+            over the empty space above the panel rather than stopping at the list.
+          */}
+          {!phone && listHeadEl}
           <section className="drost__list" aria-label="Fighters">
-            <div className={`drost__listhead${stuck ? ' is-stuck' : ''}`} ref={listHead}>
-              {/* A desktop's view switch stands where the count was; a phone keeps both. */}
-              {phone && (
-                <span className="drost__cap">
-                  {list.length === p.roster.length
-                    ? `${p.roster.length} fighters`
-                    : `${list.length} of ${p.roster.length}`}
-                </span>
-              )}
-              {/*
-                The layout first, then the views: the views are the standard
-                card's columns, and the compact card has none to switch.
-              */}
-              <span className="drost__headl">
-                <DensitySeg density={density} onChange={setDensity} />
-                {density === 'cards' && <ViewSeg view={view} onChange={setView} />}
-              </span>
-              {/* The markers at hand beside the views on a desktop; the filter keeps them too, as a phone's does. */}
-              {!phone && <MarkerSeg roster={p.roster} filter={p.filter} onFilter={p.onFilter} />}
-            </div>
+            {phone && listHeadEl}
             {list.length === 0 ? (
               <p className="roster__empty">
                 No fighter matches these filters.{' '}
@@ -1081,6 +1090,7 @@ export function HolderRow({
   onClick,
   note,
   picked = false,
+  dim = false,
   aside,
   tick,
 }: {
@@ -1089,6 +1099,8 @@ export function HolderRow({
   view: View
   now: number
   inTeam: boolean
+  /** Still a choice, but a second one: Ascension's fighter already in another socket. */
+  dim?: boolean
   /** The one shown in full beside the list: a cyan edge, as My Fighters marks it. */
   picked?: boolean
   /** At the head's end: the Market's price and clock, a sale's credits or a cue. */
@@ -1139,7 +1151,7 @@ export function HolderRow({
   return (
     <button
       type="button"
-      className={['hold', inTeam ? 'is-team' : '', picked ? 'is-picked' : '', blocked && !inTeam ? 'is-off' : '', aside ? 'has-aside' : '']
+      className={['hold', inTeam ? 'is-team' : '', picked ? 'is-picked' : '', blocked && !inTeam ? 'is-off' : '', dim ? 'is-dim' : '', aside ? 'has-aside' : '']
         .filter(Boolean)
         .join(' ')}
       onClick={onClick}

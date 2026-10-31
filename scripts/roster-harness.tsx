@@ -3,6 +3,7 @@
  */
 import { useState } from 'react'
 import { createRoot } from 'react-dom/client'
+import { MemoryRouter } from 'react-router-dom'
 import { fetchClassTemplates, fetchRoster } from '../src/dungeon/queries'
 import { fetchFighterLevels, fetchFightersConfig } from '../src/fighters/queries'
 import { EMPTY_FILTER, type RosterFilter } from '../src/dungeon/filters'
@@ -82,7 +83,9 @@ function Harness({ roster, ...rest }: { roster: RosterFighter[] } & Record<strin
 void Promise.all([fetchRoster(wallet), fetchFighterLevels(), fetchFightersConfig(), fetchClassTemplates()]).then(
   ([roster, levels, config, templates]) => {
     createRoot(document.getElementById('root')!).render(
-      <Harness roster={roster} levels={levels} config={config} templates={templates} />,
+      <MemoryRouter>
+        <Harness roster={roster} levels={levels} config={config} templates={templates} />
+      </MemoryRouter>,
     )
   },
 )
