@@ -1158,8 +1158,8 @@ export function HolderRow({
                   </small>
                   {strip(x.grade)}
                   <b>
-                    {x.value}
-                    <Grade grade={x.grade} />
+                    <span>{x.value}</span>
+                    {x.grade ? <Grade grade={x.grade} /> : <i />}
                   </b>
                 </span>
               ))}
@@ -1190,10 +1190,11 @@ export function HolderRow({
                     {STAT_SHORT[x.field]}
                   </small>
                   {strip(x.grade)}
-                  <b>
-                    {x.value}
-                    <Grade grade={x.grade} />
-                    {x.spread > 0 && <em>±{x.spread}</em>}
+                  {/* Figure, spread and arrow each in a column of their own, so the arrows stand in one line. */}
+                  <b className="is-spread">
+                    <span>{x.value}</span>
+                    {x.spread > 0 ? <em>±{x.spread}</em> : <i />}
+                    {x.grade ? <Grade grade={x.grade} /> : <i />}
                   </b>
                 </span>
               ))}
@@ -1207,8 +1208,8 @@ export function HolderRow({
                   </small>
                   {strip(x.grade)}
                   <b>
-                    {x.value}
-                    <Grade grade={x.grade} />
+                    <span>{x.value}</span>
+                    {x.grade ? <Grade grade={x.grade} /> : <i />}
                   </b>
                 </span>
               ))}

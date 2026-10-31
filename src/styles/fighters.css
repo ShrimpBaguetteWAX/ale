@@ -5576,3 +5576,23 @@ h2.drost__bname {
 .drost--phone .hold {
   contain-intrinsic-size: auto 198px;
 }
+
+/* The holder's figures: the number right-aligned in its own column, the grade arrow (and the spread) in fixed ones, so every arrow stands in one line. */
+.hold__st > b {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 11px;
+  align-items: center;
+  gap: 4px;
+}
+.hold__st > b.is-spread {
+  grid-template-columns: minmax(0, 1fr) 26px 11px;
+}
+.hold__st > b > span {
+  text-align: right;
+}
+.hold__st > b em {
+  margin-left: 0;
+}
+.hold__st > b .drost__grade {
+  margin: 0;
+}
