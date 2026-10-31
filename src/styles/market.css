@@ -396,8 +396,8 @@
 }
 
 .sellpick__one[aria-pressed='true'] {
-  border-color: var(--purple);
-  background: rgb(120 80 220 / 18%);
+  border-color: var(--cyan);
+  background: rgb(0 186 255 / 18%);
 }
 
 .sellpick__name {
@@ -1146,10 +1146,7 @@
 
 /* ---------- the phone: rows opened in place, the market's own tab bar ---------- */
 @media (max-width: 719px) {
-  /* Room under the list for the market's bar, which sits over the game's. */
-  .market__inner {
-    padding-bottom: calc(var(--sp-4) + 58px);
-  }
+  /* The market's bar is at the top now: no room kept for it at the foot. */
   /* No frame of its own: the filter and the rows carry theirs, and the
      filter needs the width for its rows of controls. */
   .market__panel {
@@ -1182,9 +1179,7 @@
     display: flex;
     flex-direction: column;
     height: 100%;
-    /* The list ends where the market's bar begins: the bar's 50px less the
-       main area's bottom padding and the tab bar's hairline. */
-    padding-bottom: calc(50px - var(--sp-4) - 1px);
+    padding-bottom: 0;
   }
   .market--pinned .market__panel {
     flex: 1;
@@ -1686,30 +1681,27 @@ i.mrow__arrow {
 }
 
 @media (max-width: 719px) {
-  /* The market's tabs, as a bar of their own over the game's. */
+  /* The market's tabs, at the top under the title, as every screen's are. */
   .mkbar {
-    position: fixed;
-    left: 0;
-    right: 0;
-    bottom: calc(var(--nav-h) + env(safe-area-inset-bottom));
-    z-index: calc(var(--z-sticky) - 2);
+    position: static;
+    margin: 0 0 10px;
+    border-radius: 12px;
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, auto));
-    justify-content: space-between;
-    gap: 2px;
-    padding: 6px 8px;
-    background: rgb(8 14 26 / 96%);
-    box-shadow: 0 -1px 0 rgb(255 255 255 / 10%), 0 -10px 24px rgb(0 0 0 / 35%);
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 4px;
+    padding: 4px;
+    background: rgb(8 14 26 / 80%);
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 10%);
   }
   .mkbar__tab {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 5px;
-    height: 38px;
-    padding: 0 9px;
+    min-height: 40px;
+    padding: 0 4px;
     border: 0;
-    border-radius: 10px;
+    border-radius: 9px;
     font-family: var(--font-display);
     font-size: 10px;
     font-weight: 800;
@@ -1730,11 +1722,12 @@ i.mrow__arrow {
   }
   .mkbar__tab.is-on {
     color: var(--white);
-    background: rgb(124 92 255 / 25%);
-    box-shadow: inset 0 0 0 1px #6f55ff;
+    background: rgb(0 186 255 / 18%);
+    box-shadow: inset 0 0 0 1px rgb(0 186 255 / 60%);
   }
   .mkbar__tab.is-on em {
-    background: #6f55ff;
+    background: var(--cyan);
+    color: #062033;
   }
 }
 
@@ -2520,4 +2513,94 @@ i.mrow__arrow {
 }
 .cpick__below .msel__short {
   display: inline;
+}
+
+/* Under a compact card the Sell toggle is the plate itself: a full-width button with the plate's corners. */
+.mrows .cpick__below:has(> .msel) {
+  padding: 0;
+  background: none;
+  box-shadow: none;
+}
+.mrows .cpick__below > .msel {
+  width: 100%;
+  min-height: 32px;
+  border-radius: 8px;
+  justify-content: center;
+}
+.mrows .cpick__below > .msel i {
+  border-radius: 3px;
+}
+@media (max-width: 719px) {
+  /* The phone's market tabs: the label over its count, so four fit side by side. */
+  .mkbar__tab {
+    flex-direction: column;
+    gap: 2px;
+    min-height: 44px;
+    line-height: 1.1;
+    font-size: max(9.5px, var(--fs-floor));
+  }
+  .mkbar__tab em {
+    padding: 0 6px;
+  }
+}
+
+/*
+ * Compact rows that sit in a wrapper (the phone's Sell tab, which opens terms
+ * under a fighter): the same grid of cards; an opened one spans the row, its
+ * card on the left and the terms beside it.
+ */
+.mrows:has(> .mcard > .cpick) {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
+  gap: 18px 12px;
+  padding-top: 12px;
+  overflow: visible;
+  background: none;
+  box-shadow: none;
+}
+@media (max-width: 719px) {
+  .mrows:has(> .mcard > .cpick) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px 8px;
+  }
+}
+.mrows > .mcard.drost--stack:has(> .cpick) {
+  min-width: 0;
+  overflow: visible;
+  background: none;
+  box-shadow: none;
+}
+.mrows > .mcard.drost--stack.is-open:has(> .cpick) {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+  gap: 10px;
+  align-items: start;
+}
+
+/* A phone's holder: the price a size down and closer to the pennant, so the name keeps its room. */
+.drost--phone .hold__aside {
+  top: 9px;
+  right: 48px;
+}
+.drost--phone .hold.has-aside .hold__head {
+  padding-right: 96px;
+}
+/* Beside a price the class alone: the race is in the codex. */
+.drost--phone .hold.has-aside .hold__name small {
+  display: none;
+}
+.drost--phone .mcard__price b {
+  font-size: 13px;
+}
+.drost--phone .mcard__price img {
+  width: 13px;
+  height: 13px;
+}
+.drost--phone .mcard__price small {
+  font-size: max(10px, var(--fs-floor));
+}
+.drost--phone .hold.has-aside .hold__name {
+  font-size: 11.5px;
+  letter-spacing: 0.02em;
 }

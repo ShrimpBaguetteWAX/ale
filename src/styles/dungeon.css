@@ -5195,8 +5195,8 @@ button.combatcard--empty:hover {
     cursor: pointer;
   }
   .picker__sheettab[aria-selected='true'] {
-    background: rgb(124 92 255 / 35%);
-    box-shadow: inset 0 0 0 1px #6f55ff;
+    background: rgb(0 186 255 / 18%);
+    box-shadow: inset 0 0 0 1px rgb(0 186 255 / 60%);
     color: var(--white);
   }
   .picker__sheettab i {
@@ -5300,8 +5300,8 @@ button.combatcard--empty:hover {
     height: 16px;
   }
   .sheetbar__icon--on {
-    background: rgb(124 92 255 / 25%);
-    box-shadow: inset 0 0 0 1px #6f55ff;
+    background: rgb(0 186 255 / 18%);
+    box-shadow: inset 0 0 0 1px rgb(0 186 255 / 60%);
   }
   /* The real select, invisible over the icon, so a tap opens it. */
   .sheetbar__icon select {

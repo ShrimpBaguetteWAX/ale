@@ -57,6 +57,7 @@ export function CompactPick({
   dim = false,
   title,
   tick,
+  marked = false,
 }: {
   f: RosterFighter
   picked: boolean
@@ -68,6 +69,8 @@ export function CompactPick({
   title?: string
   /** A tick over the portrait's corner: the Market's bulk listing. */
   tick?: React.ReactNode
+  /** In a group being acted on together (the Market's sale): a silver frame. */
+  marked?: boolean
 }) {
   const levels = useConfigStore((c) => c.levels)
   const level = levelUpOf(f, levels)
@@ -75,7 +78,7 @@ export function CompactPick({
     <FighterPeek fighter={f} className="cpick">
       <button
         type="button"
-        className={['rocard', picked ? 'is-picked' : '', dim ? 'is-dim' : ''].filter(Boolean).join(' ')}
+        className={['rocard', picked ? 'is-picked' : '', marked && !picked ? 'is-marked' : '', dim ? 'is-dim' : ''].filter(Boolean).join(' ')}
         onClick={onClick}
         aria-pressed={picked}
         aria-label={title ?? `${f.classname} · ${f.racename} · L${f.stats.level}`}

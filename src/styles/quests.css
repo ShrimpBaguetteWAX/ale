@@ -413,8 +413,8 @@
     border-color: transparent;
   }
   .scopetab[aria-selected='true'] {
-    background: rgb(124 92 255 / 35%);
-    box-shadow: inset 0 0 0 1px #6f55ff;
+    background: rgb(0 186 255 / 18%);
+    box-shadow: inset 0 0 0 1px rgb(0 186 255 / 60%);
   }
   .scopetab__name {
     gap: 6px;

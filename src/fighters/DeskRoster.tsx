@@ -1119,6 +1119,7 @@ export function HolderRow({
   note,
   picked = false,
   dim = false,
+  marked = false,
   aside,
   tick,
 }: {
@@ -1129,6 +1130,8 @@ export function HolderRow({
   inTeam: boolean
   /** Still a choice, but a second one: Ascension's fighter already in another socket. */
   dim?: boolean
+  /** In a group being acted on together (the Market's sale): a silver frame. */
+  marked?: boolean
   /** The one shown in full beside the list: a cyan edge, as My Fighters marks it. */
   picked?: boolean
   /** At the head's end: the Market's price and clock, a sale's credits or a cue. */
@@ -1179,7 +1182,7 @@ export function HolderRow({
   return (
     <button
       type="button"
-      className={['hold', inTeam ? 'is-team' : '', picked ? 'is-picked' : '', blocked && !inTeam ? 'is-off' : '', dim ? 'is-dim' : '', aside ? 'has-aside' : '']
+      className={['hold', inTeam ? 'is-team' : '', picked ? 'is-picked' : '', blocked && !inTeam ? 'is-off' : '', dim ? 'is-dim' : '', marked && !picked ? 'is-marked' : '', aside ? 'has-aside' : '']
         .filter(Boolean)
         .join(' ')}
       onClick={onClick}

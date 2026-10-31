@@ -370,6 +370,35 @@ export default function Market() {
   )
 
   const pinned = phone && (tab === 'auctions' || tab === 'offers')
+  /* A phone's tabs at the top, under the title, as every other screen has them; the desktop's names. */
+  const phoneTabs = phone && (
+        <nav className="mkbar" role="tablist" aria-label="Market">
+          {(
+            [
+              ['auctions', 'Auctions'],
+              ['offers', 'Buy now'],
+              ['mine', 'My listings'],
+              ['sell', 'Sell'],
+            ] as [Tab, string][]
+          ).map(([key, label]) => (
+            <button
+              type="button"
+              key={key}
+              role="tab"
+              aria-selected={tab === key}
+              className={`mkbar__tab${tab === key ? ' is-on' : ''}`}
+              onClick={() => {
+                setTab(key)
+                setOpenRow(null)
+              }}
+            >
+              <span>{label}</span>
+              {counts[key] > 0 && <em className="mono">{counts[key]}</em>}
+            </button>
+          ))}
+        </nav>
+  )
+
   const head = (
     <header className="market__head">
       <div>
@@ -424,10 +453,14 @@ export default function Market() {
         {pinned ? (
           <div className="mktop">
             {head}
+            {phoneTabs}
             {browseTools}
           </div>
         ) : (
-          head
+          <>
+            {head}
+            {phoneTabs}
+          </>
         )}
 
         {error && <div className="alert alert--error">{error}</div>}
@@ -438,8 +471,8 @@ export default function Market() {
             {(
               [
                 ['auctions', 'Auctions'],
-                ['offers', 'Buy Now'],
-                ['mine', 'My Listings'],
+                ['offers', 'Buy now'],
+                ['mine', 'My listings'],
                 ['sell', 'Sell'],
               ] as [Tab, string][]
             ).map(([key, label]) => (
@@ -695,33 +728,6 @@ export default function Market() {
       </div>
 
 
-      {phone && (
-        <nav className="mkbar" role="tablist" aria-label="Market">
-          {(
-            [
-              ['auctions', 'Browse'],
-              ['offers', 'Buy now'],
-              ['mine', 'Mine'],
-              ['sell', 'Sell'],
-            ] as [Tab, string][]
-          ).map(([key, label]) => (
-            <button
-              type="button"
-              key={key}
-              role="tab"
-              aria-selected={tab === key}
-              className={`mkbar__tab${tab === key ? ' is-on' : ''}`}
-              onClick={() => {
-                setTab(key)
-                setOpenRow(null)
-              }}
-            >
-              <span>{label}</span>
-              {counts[key] > 0 && <em className="mono">{counts[key]}</em>}
-            </button>
-          ))}
-        </nav>
-      )}
 
       {dialog?.kind === 'bid' && (
         <BidDialog
@@ -846,6 +852,7 @@ function OwnCard({
   onPick,
   cue = 'Sell ›',
   select,
+  marked = false,
 }: {
   f: RosterFighter
   picked: boolean
@@ -853,6 +860,8 @@ function OwnCard({
   cue?: string
   /** The Sell tab's checkbox, to list several at once: where the cue was. */
   select?: React.ReactNode
+  /** In the sale: a silver frame. */
+  marked?: boolean
 }) {
   const { classes, fighters, levelMod, ageDecay } = useConfig()
   const view = useContext(CardView)
@@ -864,7 +873,7 @@ function OwnCard({
   )
   return (
     density === 'compact' ? (
-      <CompactPick f={f} picked={picked} onClick={onPick} below={select ?? <span className="mrow__cue">{cue}</span>} />
+      <CompactPick f={f} picked={picked} marked={marked} onClick={onPick} below={select ?? <span className="mrow__cue">{cue}</span>} />
     ) : (
     <HolderRow
       f={f}
@@ -875,6 +884,7 @@ function OwnCard({
       blocked={false}
       picked={picked}
       onClick={onPick}
+      marked={marked}
       aside={select ?? <span className="mrow__cue">{cue}</span>}
     />
     )
@@ -1100,7 +1110,7 @@ function PhoneMine({
             <span>Winning · {bids.length}</span>
             <small>you hold the top bid</small>
           </p>
-          <div className="mrows">
+          <div className="mrows drost--phone">
             {sortListings(bids, 'ending', now).map((a) =>
               row(`b${a.auction_id}`, a, a.current_bid, extendsOnBid(a, config, now)),
             )}
@@ -1114,7 +1124,7 @@ function PhoneMine({
             <span>Selling · {auctions.length}</span>
             <small>{Math.round(Number(config?.standard_duration_minutes ?? 0) / 60)}h auctions</small>
           </p>
-          <div className="mrows">
+          <div className="mrows drost--phone">
             {sortListings(auctions, 'ending', now).map((a) => {
               const n = Number(a.bids)
               const gate = canCancelAuction(a, player)
@@ -1151,7 +1161,7 @@ function PhoneMine({
             <span>Fixed price · {offers.length}</span>
             <small>ends on the fighter's payday</small>
           </p>
-          <div className="mrows">
+          <div className="mrows drost--phone">
             {sortListings(offers, 'ending', now).map((o) => {
               const gate = canCancelOffer(o, player)
               const cancelling = busy === `cancelo${o.offer_id}`
@@ -1548,9 +1558,11 @@ function OfferDeal({
 
 /** The phone's list: rows, a skeleton while reading, a line when empty. */
 function PhoneRows({ loading, empty, children }: { loading: boolean; empty: string; children: React.ReactNode[] }) {
+  /* The phone holder (its sizes and strips) wherever these rows are on a phone. */
+  const rowClass = usePhone() ? 'mrows drost--phone' : 'mrows'
   if (loading) {
     return (
-      <div className="mrows">
+      <div className={rowClass}>
         {Array.from({ length: 6 }, (_, i) => (
           <div className="skeleton mrow mrow--loading" key={i} />
         ))}
@@ -1558,7 +1570,7 @@ function PhoneRows({ loading, empty, children }: { loading: boolean; empty: stri
     )
   }
   if (children.length === 0) return <p className="faint listinggrid__empty">{empty}</p>
-  return <div className="mrows">{children}</div>
+  return <div className={rowClass}>{children}</div>
 }
 
 /* ---------- dialogs ---------- */
@@ -2097,7 +2109,7 @@ export function SellTab({
             {shown.length === 0 ? (
               <p className="faint">No fighter you can sell matches these filters.</p>
             ) : (
-              <div className="mrows">
+              <div className="mrows drost--phone">
                 {shown.map((f) => {
                   const open = f.fighter_id === pickedId
                   return (
@@ -2108,6 +2120,7 @@ export function SellTab({
                         cue={open ? 'Close' : 'Sell ›'}
                         onPick={() => setPickedId(open ? null : f.fighter_id)}
                         select={tickFor(f)}
+                  marked={ticked.includes(f.fighter_id)}
                       />
                       {open && <div className="mcard__terms">{terms(f, () => onInspect(f))}</div>}
                     </div>
@@ -2148,6 +2161,7 @@ export function SellTab({
                   picked={f === deskPicked}
                   onPick={() => setPickedId(f.fighter_id)}
                   select={tickFor(f)}
+                  marked={ticked.includes(f.fighter_id)}
                 />
               ))}
             </div>

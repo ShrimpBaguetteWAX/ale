@@ -1487,8 +1487,8 @@
 }
 .drost--phone .drost__seg button[aria-selected='true'],
 .drost--phone .drost__seg button[aria-pressed='true'] {
-  background: rgb(124 92 255 / 35%);
-  box-shadow: inset 0 0 0 1px #6f55ff;
+  background: rgb(0 186 255 / 18%);
+  box-shadow: inset 0 0 0 1px rgb(0 186 255 / 60%);
 }
 .drost--phone .drost__seg button[aria-selected='true'] small,
 .drost--phone .drost__seg button[aria-pressed='true'] small {
@@ -1561,12 +1561,12 @@
   box-shadow: inset 0 0 0 1.5px var(--cyan);
 }
 .drost--phone .drost__tool.is-on {
-  background: rgb(124 92 255 / 30%);
-  box-shadow: inset 0 0 0 1px #6f55ff;
+  background: rgb(0 186 255 / 18%);
+  box-shadow: inset 0 0 0 1px rgb(0 186 255 / 60%);
 }
 .drost--phone .drost__tool em {
-  background: #7c5cff;
-  color: var(--white);
+  background: var(--cyan);
+  color: #062033;
 }
 .drost__hint {
   margin: 0;
@@ -1588,8 +1588,8 @@
 }
 .drost--phone .drost__chip {
   flex: none;
-  background: rgb(124 92 255 / 20%);
-  box-shadow: inset 0 0 0 1px rgb(124 92 255 / 55%);
+  background: rgb(0 186 255 / 14%);
+  box-shadow: inset 0 0 0 1px rgb(0 186 255 / 55%);
   font-size: 11.5px;
 }
 .drost--phone .drost__chipsline .linklike {
@@ -1809,8 +1809,8 @@
   font-size: 12px;
 }
 .drost--phone .drost__seg--chips button[aria-pressed='true'] {
-  background: rgb(124 92 255 / 30%);
-  box-shadow: inset 0 0 0 1px #6f55ff;
+  background: rgb(0 186 255 / 18%);
+  box-shadow: inset 0 0 0 1px rgb(0 186 255 / 60%);
   color: var(--white);
 }
 .drost--phone .drost__seg--chips {
@@ -1853,8 +1853,8 @@
 }
 .drost__fsheet .elembtn[aria-pressed='true'],
 .drost__fsheet .markbtn[aria-pressed='true'] {
-  background: rgb(124 92 255 / 30%);
-  box-shadow: inset 0 0 0 1.5px #6f55ff;
+  background: rgb(0 186 255 / 18%);
+  box-shadow: inset 0 0 0 1.5px rgb(0 186 255 / 70%);
 }
 
 /* fields: the stylesheet's 34px wells */
@@ -5793,4 +5793,37 @@ h2.drost__bname {
 }
 .drost__seg .drost__seglink:hover {
   color: var(--white);
+}
+
+/*
+ * In a group being acted on together (the Market's sale): the frame in
+ * silver, as the one on show is in gold.
+ */
+.hold.is-marked {
+  background:
+    linear-gradient(180deg, #121c33, #08101f) padding-box,
+    linear-gradient(160deg, #ffffff 0%, #c9d2e3 25%, #5f6b84 55%, #b8c2d6 78%, #f4f7fb 100%) border-box;
+  box-shadow:
+    0 0 20px rgb(205 218 240 / 35%),
+    0 8px 18px rgb(0 0 0 / 55%);
+}
+.rocard.is-marked .gcard__frame {
+  background: linear-gradient(160deg, #ffffff 0%, #c9d2e3 25%, #5f6b84 55%, #b8c2d6 78%, #f4f7fb 100%);
+  box-shadow:
+    inset 0 1px 0 #fff,
+    0 0 calc(var(--u) * 1.8) rgb(205 218 240 / 45%),
+    0 calc(var(--u) * 0.5) calc(var(--u) * 1.2) rgb(0 0 0 / 55%);
+}
+
+/* A phone's holder strips: thin gaps, so ten segments still read as a bar in its narrow column. */
+.drost--phone .hold .codex__seg {
+  background: repeating-linear-gradient(90deg, rgb(255 255 255 / 8%) 0 calc(10% - 1.5px), transparent calc(10% - 1.5px) 10%);
+}
+.drost--phone .hold .codex__seg::after {
+  background: repeating-linear-gradient(90deg, var(--sg, #9aa6bd) 0 calc(10% - 1.5px), transparent calc(10% - 1.5px) 10%);
+}
+
+/* A phone's pennant: SCORE whole at the 10px floor. */
+.drost--phone .hold__score small {
+  letter-spacing: 0.02em;
 }
