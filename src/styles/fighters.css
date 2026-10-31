@@ -5545,3 +5545,9 @@ h2.drost__bname {
 .drost--phone .hold__role .drost__rolename > span {
   display: none;
 }
+
+/* The wing is part of the holder: it does not lift on its own when the holder is hovered. */
+.rocard.hold__card:hover .gcard,
+.hold:hover .hold__card .gcard {
+  transform: none;
+}
