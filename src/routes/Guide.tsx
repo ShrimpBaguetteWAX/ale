@@ -98,7 +98,6 @@ export default function Guide() {
   const player = useGame((s) => s.player)
   const account = useGame((s) => s.account)
   const [on, setOn] = useState(0)
-  const chips = useRef<HTMLElement>(null)
   /* The chapter last clicked in the contents, while the page scrolls to it. */
   const clicked = useRef<{ i: number; until: number } | null>(null)
 
@@ -155,9 +154,6 @@ export default function Guide() {
       window.removeEventListener('keydown', release)
     }
   }, [])
-  useEffect(() => {
-    chips.current?.querySelector('.is-on')?.scrollIntoView({ inline: 'center', block: 'nearest' })
-  }, [on])
 
   const go = (id: string) => {
     const el = document.getElementById(`guide-${id}`)
@@ -225,12 +221,46 @@ export default function Guide() {
         </nav>
 
         <main className="guide__main">
-          <nav className="guide__chips" ref={chips} aria-label="Chapters">
-            {CHAPTERS.map(([id, t], i) => (
-              <button type="button" key={id} className={i === on ? 'is-on' : undefined} onClick={() => go(id)}>
-                {i + 1} · {t}
-              </button>
-            ))}
+          {/*
+            A phone's chapters: one bar, the chapter in view in the middle and
+            the phone's own picker under it, a step back and on either side.
+            Twelve chips in a row ran off the page.
+          */}
+          <nav className="guide__chips" aria-label="Chapters">
+            <button
+              type="button"
+              className="guide__step"
+              aria-label="Previous chapter"
+              disabled={on === 0}
+              onClick={() => go(CHAPTERS[on - 1][0])}
+            >
+              ‹
+            </button>
+            <label className="guide__pick">
+              <span>
+                <small>
+                  {on + 1}/{CHAPTERS.length}
+                </small>
+                {CHAPTERS[on][1]}
+              </span>
+              <b aria-hidden="true">▾</b>
+              <select aria-label="Chapter" value={on} onChange={(e) => go(CHAPTERS[Number(e.target.value)][0])}>
+                {CHAPTERS.map(([id, t], i) => (
+                  <option key={id} value={i}>
+                    {i + 1} · {t}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <button
+              type="button"
+              className="guide__step"
+              aria-label="Next chapter"
+              disabled={on === CHAPTERS.length - 1}
+              onClick={() => go(CHAPTERS[on + 1][0])}
+            >
+              ›
+            </button>
           </nav>
 
           <Chapter id="welcome" n={1} title={<>What is <em>Alien Legends?</em></>}>
