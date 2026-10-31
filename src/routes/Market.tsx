@@ -56,7 +56,7 @@ import { elementBackground, fighterArt, fighterArtFallback, type ClassTemplate, 
 import { addAuction, bidAuction, buyOffer, cancelAuction, cancelOffer } from '@/wharf/actions'
 import { SACRIFICE_ABILITY } from '@/ascension/rules'
 import { asset, artSet } from '@/assets'
-import { Row, VIEWS, figuresOf, type View } from '@/fighters/DeskRoster'
+import { HolderRow, VIEWS, figuresOf, type View } from '@/fighters/DeskRoster'
 
 /**
  * The fighter market.
@@ -784,9 +784,10 @@ function MarketCard({
   now: number
   /** The player's marker, for a listing of their own. */
   marker?: string
-  /** A wide board: the price takes a column of its own rather than the name line. */
+  /** A wide board. The holder sets the price under its score whatever the width; kept for the boards that pass it. */
   wide: boolean
 }) {
+  void wide
   const { classes, fighters, levelMod, ageDecay } = useConfig()
   const view = useContext(CardView)
   const f = useMemo(
@@ -798,17 +799,15 @@ function MarketCard({
     [f, classes, fighters, levelMod, ageDecay, now],
   )
   return (
-    <Row
+    <HolderRow
       f={f}
       fig={fig}
       view={view}
-      mode="inventory"
       now={now}
+      inTeam={false}
+      blocked={false}
       picked={picked}
-      checked={false}
-      gate={{ ok: true }}
       onClick={onPick}
-      wideAside={!wide}
       aside={
         <span className="mcard__price">
           <b className="mono">
@@ -842,15 +841,14 @@ function OwnCard({
     [f, classes, fighters, levelMod, ageDecay, now],
   )
   return (
-    <Row
+    <HolderRow
       f={f}
       fig={fig}
       view={view}
-      mode="inventory"
       now={now}
+      inTeam={false}
+      blocked={false}
       picked={picked}
-      checked={false}
-      gate={{ ok: true }}
       onClick={onPick}
       aside={<span className="mrow__cue">{cue}</span>}
     />
@@ -908,18 +906,15 @@ function ListingRow({
   )
   return (
     <div className={`drost--stack mcard${open ? ' is-open' : ''}`}>
-      <Row
+      <HolderRow
         f={f}
         fig={fig}
         view={view}
-        mode="inventory"
         now={now}
+        inTeam={false}
+        blocked={false}
         picked={open}
-        checked={false}
-        gate={{ ok: true }}
         onClick={onToggle}
-        note={below}
-        wideAside
         aside={
           <span className="mcard__price">
             <b className="mono">
@@ -930,6 +925,8 @@ function ListingRow({
           </span>
         }
       />
+      {/* What a listing of your own is doing, under its card. */}
+      {below && <div className="mcard__below">{below}</div>}
       {open && (
         <div className="mcard__acts">
           <button type="button" className="btn btn--ghost btn--sm" onClick={onOpen}>

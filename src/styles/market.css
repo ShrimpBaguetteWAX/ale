@@ -2262,3 +2262,16 @@ i.mrow__arrow {
     font-size: 12.5px;
   }
 }
+
+/* The Market's lists of holders: the holders are the frames, the list box goes. */
+.mrows:has(> .hold),
+.mrows:has(> .mcard > .hold) {
+  display: grid;
+  gap: 14px;
+  overflow: visible;
+  background: none;
+  box-shadow: none;
+}
+.mcard__below {
+  padding: 6px 4px 0;
+}

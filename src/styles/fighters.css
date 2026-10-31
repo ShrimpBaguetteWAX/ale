@@ -4779,7 +4779,7 @@ h2.drost__bname {
  * 600px; one per line on a phone. Every view keeps the holder's height, so
  * switching views never makes the list jump.
  */
-.pickdrost .drost__holders {
+.drost__holders {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(min(100%, 440px), 1fr));
   gap: 16px 20px;
@@ -5595,4 +5595,36 @@ h2.drost__bname {
 }
 .hold__st > b .drost__grade {
   margin: 0;
+}
+
+/* My Fighters and the Market: the one shown in full beside the list has a cyan edge. */
+.hold.is-picked {
+  box-shadow:
+    0 0 0 2px var(--cyan),
+    0 0 18px -4px rgb(0 186 255 / 60%),
+    0 8px 18px rgb(0 0 0 / 55%);
+}
+/* What the screen adds - a price and its clock, a sale's credits, a cue - under the score pennant at the head's end. */
+.hold__aside {
+  position: absolute;
+  top: 10px;
+  right: 72px;
+  z-index: 2;
+  display: grid;
+  justify-items: end;
+  gap: 2px;
+}
+.hold.has-aside .hold__head {
+  padding-right: 160px;
+}
+/* Selling: the tick in the card's top corner, over the element badge. */
+.hold__card > .drost__tick.hold__tick {
+  position: absolute;
+  top: 40px;
+  right: 8px;
+  z-index: 4;
+  background-color: rgb(4 8 20 / 85%);
+}
+.hold__card > .drost__tick.hold__tick.is-on {
+  background-color: var(--cyan);
 }

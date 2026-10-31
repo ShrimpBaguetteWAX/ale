@@ -22,6 +22,7 @@ const view = (q.get('view') ?? 'default') as View
 const dock = q.get('dock') === '1'
 /* ?hover=1: the hover read of the first three fighters, laid out flat. */
 const hover = q.get('hover') === '1'
+const market = q.get('market') === '1'
 /* ?medal=1: three team cards in the matchup's medallion look, with their remove buttons. */
 const medal = q.get('medal') === '1'
 
@@ -82,6 +83,10 @@ void Promise.all([fetchRoster(wallet), fetchFightersConfig(), fetchClassTemplate
               blocked={!state.available}
               reason={state.available ? undefined : state.reason}
               onClick={() => {}}
+              /* ?market=1: the Market's price on each, the second picked, a sale tick on the third. */
+              picked={market && i === 1}
+              aside={market ? <span className="mcard__price"><b className="mono">{(1200 + i * 75).toLocaleString()}</b><small>2d 4h</small></span> : undefined}
+              tick={market && i === 2 ? <span className="drost__tick hold__tick is-on" /> : undefined}
             />
           )
         })}

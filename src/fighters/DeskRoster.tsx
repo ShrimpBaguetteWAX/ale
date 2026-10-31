@@ -822,23 +822,51 @@ export function DeskRoster(p: DeskRosterProps) {
                 ))}
               </div>
             ) : (
-              <div className="drost__rows">
-                {list.map((f) => (
-                  <Row
-                    key={f.fighter_id}
-                    f={f}
-                    fig={figures.get(f.fighter_id)!}
-                    view={view}
-                    mode={p.mode}
-                    now={p.now}
-                    picked={f.fighter_id === (wide ? shownFighter : selected)?.fighter_id}
-                    checked={p.checked.includes(f.fighter_id)}
-                    gate={gateOf(f)}
-                    onClick={() => onRow(f)}
-                    onTick={looks && gateOf(f).ok ? () => p.onCheck(f.fighter_id) : undefined}
-                    levelReady={levelUpOf(f, p.levels).ready}
-                  />
-                ))}
+              /* The card in its holder, as the fight screens draw a fighter: one design for a fighter in full. */
+              <div className="drost__holders">
+                {list.map((f) => {
+                  const gate = gateOf(f)
+                  const ticking = p.mode !== 'inventory'
+                  const checked = p.checked.includes(f.fighter_id)
+                  return (
+                    <HolderRow
+                      key={f.fighter_id}
+                      f={f}
+                      fig={figures.get(f.fighter_id)!}
+                      view={view}
+                      now={p.now}
+                      inTeam={false}
+                      picked={f.fighter_id === (wide ? shownFighter : selected)?.fighter_id}
+                      blocked={ticking && !gate.ok}
+                      reason={ticking && !gate.ok ? gate.reason : undefined}
+                      onClick={() => onRow(f)}
+                      aside={
+                        p.mode === 'sell' ? (
+                          <span className="drost__pay">
+                            {gate.ok ? <Credits value={f.stats.credits ?? 0} /> : <small>Busy</small>}
+                          </span>
+                        ) : undefined
+                      }
+                      tick={
+                        ticking && (
+                          <span
+                            className={`drost__tick hold__tick${checked ? ' is-on' : ''}${gate.ok ? '' : ' is-off'}${looks && gate.ok ? ' is-hit' : ''}`}
+                            aria-hidden="true"
+                            title={looks && gate.ok ? (checked ? 'Take out of the sale' : 'Add to the sale') : undefined}
+                            onClick={
+                              looks && gate.ok
+                                ? (e) => {
+                                    e.stopPropagation()
+                                    p.onCheck(f.fighter_id)
+                                  }
+                                : undefined
+                            }
+                          />
+                        )
+                      }
+                    />
+                  )
+                })}
               </div>
             )}
           </section>
@@ -1052,12 +1080,21 @@ export function HolderRow({
   reason,
   onClick,
   note,
+  picked = false,
+  aside,
+  tick,
 }: {
   f: RosterFighter
   fig: Figures
   view: View
   now: number
   inTeam: boolean
+  /** The one shown in full beside the list: a cyan edge, as My Fighters marks it. */
+  picked?: boolean
+  /** At the head's end: the Market's price and clock, a sale's credits or a cue. */
+  aside?: React.ReactNode
+  /** Selling: the tick that puts the fighter in or out of the sale. */
+  tick?: React.ReactNode
   /** Cannot be put in the team now: busy, owed a payday, or the team is full. */
   blocked: boolean
   /** Why, in the fight screen's words. */
@@ -1102,9 +1139,11 @@ export function HolderRow({
   return (
     <button
       type="button"
-      className={['hold', inTeam ? 'is-team' : '', blocked && !inTeam ? 'is-off' : ''].filter(Boolean).join(' ')}
+      className={['hold', inTeam ? 'is-team' : '', picked ? 'is-picked' : '', blocked && !inTeam ? 'is-off' : '', aside ? 'has-aside' : '']
+        .filter(Boolean)
+        .join(' ')}
       onClick={onClick}
-      aria-pressed={inTeam}
+      aria-pressed={inTeam || picked}
       title={blocked && !inTeam ? reason : undefined}
     >
       <span className="rocard hold__card">
@@ -1117,6 +1156,7 @@ export function HolderRow({
           up={ready && !inTeam}
           max={max}
         />
+        {tick}
       </span>
       <span className="hold__plate">
         <span className="hold__score" title="Combat score: damage and survival together">
@@ -1146,6 +1186,7 @@ export function HolderRow({
             {note}
           </span>
         </span>
+        {aside && <span className="hold__aside">{aside}</span>}
 
         {view === 'default' && (
           <>

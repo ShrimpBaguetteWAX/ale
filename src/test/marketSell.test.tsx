@@ -81,8 +81,8 @@ const draw = (sellable: RosterFighter[], onList: (...a: never[]) => void = () =>
    order the fixtures were written in. */
 /* The desktop board draws My Fighters' card: a button, its class name in the name line. */
 const row = (c: HTMLElement, classname: string) =>
-  [...c.querySelectorAll('.mdesk .drost__row')].find(
-    (r) => r.querySelector('.drost__l1 b')?.textContent === classname,
+  [...c.querySelectorAll('.mdesk .hold')].find(
+    (r) => r.querySelector('.hold__name')?.firstChild?.textContent === classname,
   ) as HTMLElement
 const shown = (c: HTMLElement) => c.querySelector('.mfighter__name')?.textContent
 const listBtn = (c: HTMLElement) => c.querySelector('.mdeal .btn--primary') as HTMLButtonElement
@@ -103,7 +103,7 @@ describe('the sell tab', () => {
     fireEvent.click(row(container, 'Juggernaut'))
 
     expect(shown(container)).toBe('Juggernaut')
-    expect(container.querySelector('.mdesk .drost__row.is-picked .drost__l1 b')?.textContent).toBe('Juggernaut')
+    expect(container.querySelector('.mdesk .hold.is-picked .hold__name')?.firstChild?.textContent).toBe('Juggernaut')
   })
 
   it('will not step the price under the minimum start', () => {

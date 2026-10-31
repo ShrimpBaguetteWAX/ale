@@ -74,6 +74,7 @@ import { useConfigStore } from '@/state/useConfig'
 import { formatDecimals, NUM_LOCALE } from '@/format'
 import { GameImg } from '@/components/GameImg'
 import { RosterCardFace, placeRibbon, type Ribbon } from '@/fighters/RosterCard'
+import { HolderRow, ViewSeg, figuresOf, type View } from '@/fighters/DeskRoster'
 import { portraitCut } from '@/fighters/portraitFrame'
 
 /**
@@ -2098,7 +2099,7 @@ export function FighterGrid({
   }
 }) {
   /* Which face every card shows, until one is turned over on its own. */
-  const [ownView, setView] = useState<PickView>('combat')
+  const [ownView] = useState<PickView>('combat')
   const view = heldView ?? ownView
   /* Read once here rather than in every card: a grid is 150 of them. */
   const phone = usePhone()
@@ -2111,6 +2112,25 @@ export function FighterGrid({
   }
 
   const classes = useConfigStore((st) => st.classes)
+  const fightersConfig = useConfigStore((st) => st.fighters)
+  /* The holder's own view, where the screen does not keep one. */
+  const [holderView, setHolderView] = useState<View>('default')
+  const [holderNow] = useState(() => Date.now())
+  const defaultHolder = (f: RosterFighter, state: { inTeam: boolean; blocked: boolean; reason?: string }) => (
+    <HolderRow
+      f={f}
+      fig={figuresOf(f, classes.get(f.classname), fightersConfig, levelMod, ageDecay, holderNow, !!atLevelOne)}
+      view={holderView}
+      now={holderNow}
+      inTeam={state.inTeam}
+      blocked={state.blocked}
+      reason={state.reason}
+      onClick={() => {
+        if (state.inTeam || !state.blocked) onToggle(f)
+      }}
+      note={matchups ? <VersusBadges matchup={matchups.get(f.fighter_id)} /> : undefined}
+    />
+  )
   const shown = useMemo(
     () =>
       roster
@@ -2172,12 +2192,12 @@ export function FighterGrid({
           {/* The readout switch is what the compact card does not have, so it
               goes away with the thing it controls rather than sitting there
               changing nothing. */}
-          {density === 'full' && (rows ? rows.switch : <PickViewSwitch view={view} onChange={setView} />)}
+          {density === 'full' && (rows ? rows.switch : <ViewSeg view={holderView} onChange={setHolderView} />)}
           <span className="spacer" />
           {!onDensity && <PickDensitySwitch density={density} onChange={chooseDensity} />}
         </div>
       )}
-      {rows && density === 'full' ? (
+      {density === 'full' ? (
         /* My Fighters' own list, in its own wrapper, so the cards are drawn exactly as there. */
         <div className={`drost pickdrost${phone ? ' drost--phone drost--stack' : ''}`}>
         <div className="drost__holders">
@@ -2186,7 +2206,7 @@ export function FighterGrid({
             const inTeam = teamIds.includes(f.fighter_id)
             return (
               <Fragment key={f.fighter_id}>
-                {rows.render(f, {
+                {(rows?.render ?? defaultHolder)(f, {
                   inTeam,
                   blocked: !state.available || (full && !inTeam),
                   reason: state.available ? (full && !inTeam ? 'Team full' : undefined) : state.reason,
