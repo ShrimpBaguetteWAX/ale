@@ -1171,9 +1171,11 @@
      The screen less the game's top bar and tab bar, and the main area's own
      padding.
   */
+  /* The list runs down to the tab bar: the main area's bottom padding is taken back, so no band of page shows between the cards and the bar. */
   .market--pinned {
-    height: calc(100dvh - var(--topbar-h, 0px) - var(--nav-h) - 1px - env(safe-area-inset-bottom) - 2 * var(--sp-4));
+    height: calc(100dvh - var(--topbar-h, 0px) - var(--nav-h) - 1px - env(safe-area-inset-bottom) - var(--sp-4));
     min-height: 0;
+    margin-bottom: calc(-1 * var(--sp-4));
   }
   .market--pinned .market__inner {
     display: flex;
