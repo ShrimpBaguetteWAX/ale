@@ -1894,7 +1894,9 @@ export function SellTab({
         }}
       >
         <i aria-hidden="true" />
-        {on ? 'In the sale' : 'Sell'}
+        {/* Compact shows just Sell, ticked or not, so the plate under the card keeps its size. */}
+        {on ? <span className="msel__long">In the sale</span> : null}
+        {on ? <span className="msel__short">Sell</span> : 'Sell'}
       </span>
     )
   }
