@@ -365,11 +365,17 @@ export default function Profile({ section = 'account' }: { section?: Section }) 
 
   return (
     <div className="account">
-      {(deskRewards || deskAccount) && (
-        <header className="drew__head">
-          <h1 className="drew__title">{deskRewards ? 'Rewards' : 'Account'}</h1>
-        </header>
-      )}
+      {/* The page's title on a phone too: Rewards and Account had none there. */}
+      <header className="drew__head">
+        <div>
+          <h1 className="drew__title">{section === 'rewards' ? 'Rewards' : 'Account'}</h1>
+          <p className="pagesub">
+            {section === 'rewards'
+              ? 'What your fighters and lands have earned, ready to mine'
+              : 'Your profile, avatars and how the game signs for you'}
+          </p>
+        </div>
+      </header>
 
 
       {(error ?? own.error) && (

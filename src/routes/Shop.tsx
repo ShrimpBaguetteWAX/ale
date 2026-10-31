@@ -156,7 +156,10 @@ export default function Shop() {
 
       <div className="shop__inner">
         <header className="shop__head">
-          <h1 className="page__title">Shop</h1>
+          <div>
+            <h1 className="page__title">Shop</h1>
+            <p className="pagesub">Gems, credits, energy and the Legend Pass</p>
+          </div>
           <span className="spacer" />
           <div className="shop__status">
             <span className={`tag ${legend ? 'tag--legend' : ''}`}>

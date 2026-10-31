@@ -321,7 +321,10 @@ export default function Lands() {
   return (
     <div className="lands">
       <header className="lands__head">
-        <h1 className="lands__title">My Lands</h1>
+        <div>
+          <h1 className="lands__title">My Lands</h1>
+          <p className="pagesub">Your dungeons, arenas and taverns, and what they earn</p>
+        </div>
 
       </header>
 

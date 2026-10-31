@@ -496,9 +496,7 @@ export default function Market() {
     <header className="market__head">
       <div>
         <h1 className="page__title">Market</h1>
-        <p className="faint" style={{ fontSize: 'var(--fs-sm)' }}>
-          Buy and sell fighters for gems
-        </p>
+        <p className="pagesub">Buy and sell fighters for gems</p>
       </div>
       <span className="spacer" />
       <span className="market__purse mono">

@@ -2749,3 +2749,16 @@ i.mrow__arrow {
   text-transform: uppercase;
   color: var(--green, #4ade80);
 }
+
+/* A desktop: the Market on the page as every screen is, not indented in a box of its own. */
+@media (min-width: 720px) {
+  .market__inner {
+    padding: 0;
+  }
+  .shell:not(.shell--flush) > .main .market .panel.market__panel {
+    padding: 0;
+    border: 0;
+    background: none;
+    box-shadow: none;
+  }
+}

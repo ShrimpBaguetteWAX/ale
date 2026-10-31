@@ -1034,6 +1034,23 @@
   }
 }
 
+/*
+ * The page's one-line subtitle, under the title on every screen: what the
+ * screen is for, or where it stands. The header is the title, its accent
+ * line, this, and a slot on the right for the page's balance or action.
+ */
+.pagesub {
+  margin: 6px 0 0;
+  font-size: 14px;
+  line-height: 1.35;
+  color: var(--text-faint);
+}
+@media (max-width: 719px) {
+  .pagesub {
+    font-size: 13px;
+  }
+}
+
 /* ---------- Stat lines ---------- */
 
 .statline {

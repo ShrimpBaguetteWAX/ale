@@ -556,7 +556,7 @@
 }
 .dfarm__head {
   display: flex;
-  align-items: flex-end;
+  align-items: flex-start;
   gap: 16px;
 }
 .shell .main__inner .dfarm h1.dfarm__title {

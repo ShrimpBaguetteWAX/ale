@@ -106,8 +106,10 @@ export function DeskFarming({
   return (
     <div className="dfarm">
       <header className="dfarm__head">
-        <h1 className="dfarm__title">Farming</h1>
-        <span className="dfarm__sub">Play cards into the pools · they earn credits until the pool is full</span>
+        <div>
+          <h1 className="dfarm__title">Farming</h1>
+          <p className="pagesub">Play cards into the pools · they earn credits until the pool is full</p>
+        </div>
       </header>
 
       {banner}

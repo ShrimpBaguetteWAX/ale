@@ -87,10 +87,12 @@ export function DeskCandle({
   return (
     <div className="dcan">
       <header className="dcan__head">
-        <h1 className="dcan__title">Candle</h1>
-        <span className="dcan__sub">
-          {open.length} running · {upcoming.length} coming up
-        </span>
+        <div>
+          <h1 className="dcan__title">Candle</h1>
+          <p className="pagesub">
+            {open.length} running · {upcoming.length} coming up
+          </p>
+        </div>
         <span className="dcan__sp" />
         <ClaimBar claim={claim} busy={busy} canAct={canAct} onClaim={onClaim} />
       </header>

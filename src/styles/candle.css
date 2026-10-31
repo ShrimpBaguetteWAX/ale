@@ -598,7 +598,7 @@
 }
 .dcan__head {
   display: flex;
-  align-items: flex-end;
+  align-items: flex-start;
   gap: 16px;
 }
 .shell .main__inner .dcan h1.dcan__title {
