@@ -69,7 +69,7 @@ void Promise.all([fetchRoster(wallet), fetchFightersConfig(), fetchClassTemplate
         />
       )}
       <div className="drost__holders">
-        {roster.slice(0, 8).map((f, i) => {
+        {roster.slice(0, Number(q.get("n") ?? 8)).map((f, i) => {
           const state = fighterAvailable(f)
           return (
             <HolderRow

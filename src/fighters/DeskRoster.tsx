@@ -1094,11 +1094,10 @@ export function HolderRow({
   const role = roleOf(fig.combat.dpsG, fig.combat.survG)
   /* Ten segments, as the cards count experience: how far the roll reaches in its class. */
   const strip = (grade: StatGrade | null) => (
-    <span className={`codex__seg is-${grade ?? 'none'}`}>
-      {Array.from({ length: 10 }, (_, i) => (
-        <i key={i} className={i < Math.round(GRADE_REACH[grade ?? 'middle'] * 10) ? 'is-on' : undefined} />
-      ))}
-    </span>
+    <span
+      className={`codex__seg is-${grade ?? 'none'}`}
+      style={{ '--n': Math.round(GRADE_REACH[grade ?? 'middle'] * 10) } as React.CSSProperties}
+    />
   )
   return (
     <button
@@ -1745,11 +1744,10 @@ function Detail(props: DeskRosterProps & { f: RosterFighter; fig: Figures }) {
               {STAT_NAMES[x.field]}
             </small>
             {/* Ten segments, as the cards count experience: how far the roll reaches in its class. */}
-            <span className={`codex__seg is-${x.grade ?? 'none'}`}>
-              {Array.from({ length: 10 }, (_, i) => (
-                <i key={i} className={i < Math.round(GRADE_REACH[x.grade ?? 'middle'] * 10) ? 'is-on' : undefined} />
-              ))}
-            </span>
+            <span
+              className={`codex__seg is-${x.grade ?? 'none'}`}
+              style={{ '--n': Math.round(GRADE_REACH[x.grade ?? 'middle'] * 10) } as React.CSSProperties}
+            />
             <b>
               {x.value}
               <Grade grade={x.grade} />

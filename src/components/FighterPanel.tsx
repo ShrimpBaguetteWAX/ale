@@ -439,11 +439,7 @@ const GRADE_SEGMENTS: Record<string, number> = {
 function Strip({ grade }: { grade: string | null }) {
   const on = GRADE_SEGMENTS[grade ?? 'middle'] ?? 5
   return (
-    <span className={`codex__seg is-${grade ?? 'none'}`}>
-      {Array.from({ length: 10 }, (_, i) => (
-        <i key={i} className={i < on ? 'is-on' : undefined} />
-      ))}
-    </span>
+    <span className={`codex__seg is-${grade ?? 'none'}`} style={{ '--n': on } as React.CSSProperties} />
   )
 }
 
