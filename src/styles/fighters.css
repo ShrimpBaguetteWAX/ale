@@ -5841,3 +5841,53 @@ h2.drost__bname {
   height: 100%;
   object-fit: cover;
 }
+
+/* ---------- the phone's head, two rows shorter (P3) ---------- */
+/* The title, the count under it, and Level all in the corner beside it. */
+.drost--phone .drost__head > span:first-child {
+  display: block;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.drost--phone .drost__counts {
+  padding-bottom: 0;
+}
+.drost--phone .drost__head > .drost__levelall {
+  flex: none;
+  align-self: center;
+  min-height: 36px;
+  padding: 0 10px;
+  font-size: 11px;
+  white-space: nowrap;
+}
+/* The payday on a row of its own: the switch, then Pay taking the rest. */
+.drost--phone .drost__headacts > .paysplit {
+  flex: 1 1 100%;
+}
+.drost--phone .paysplit > .payscope {
+  flex: none;
+}
+.drost--phone .paysplit > .paysplit__go {
+  flex: 1 1 auto;
+  justify-content: center;
+}
+/* Filters, the sort and its direction start the pinned row; the count and the layout end it. */
+.drost__phonetools {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.drost--phone .drost__listhead {
+  flex-wrap: wrap;
+}
+.drost--phone .drost__listhead > .drost__cap {
+  margin-left: auto;
+}
+.drost--phone .drost__phonetools .drost__sortpick {
+  max-width: 128px;
+}
+/* What is left of the phone's toolbar (the markers, the market note) only when there is any. */
+.drost--phone .drost__toolbar:not(:has(> .drost__markseg, > .drost__note)) {
+  display: none;
+}

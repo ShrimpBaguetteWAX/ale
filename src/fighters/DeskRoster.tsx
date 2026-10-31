@@ -569,8 +569,94 @@ export function DeskRoster(p: DeskRosterProps) {
     </span>
   )
 
+  /* Filters, the sort and its direction: a desktop's toolbar end; on a phone, the pinned row's start. */
+  const sortTools = (
+    <>
+      <button
+        type="button"
+        className={`drost__tool${pop === 'filters' || active > 0 ? ' is-on' : ''}`}
+        aria-expanded={pop === 'filters'}
+        onClick={() => setPop(pop === 'filters' ? null : 'filters')}
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M3 5h18l-7 8v5l-4 2v-7z" />
+        </svg>
+        {phone ? <span className="sr-only">Filters</span> : 'Filters'}
+        {active > 0 && <em>{active}</em>}
+      </button>
+      {phone ? (
+        /*
+          A phone's sort is a dropdown of its own: the button wears the
+          current sort, and a tap opens the phone's own picker over it.
+        */
+        <label className="drost__tool drost__sortpick">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M7 4v16M3 16l4 4 4-4M17 20V4M13 8l4-4 4 4" />
+          </svg>
+          {sortLabel}
+          <span className="drost__caret" aria-hidden="true">
+            ▾
+          </span>
+          <select value={p.filter.sort} onChange={(e) => set({ sort: e.target.value })} aria-label="Sort by">
+            {SORT_GROUPS.map(([group, options]) => (
+              <optgroup key={group} label={group}>
+                {options.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </optgroup>
+            ))}
+          </select>
+        </label>
+      ) : (
+        <button
+          type="button"
+          className={`drost__tool${pop === 'sort' ? ' is-on' : ''}`}
+          aria-expanded={pop === 'sort'}
+          onClick={() => setPop(pop === 'sort' ? null : 'sort')}
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M7 4v16M3 16l4 4 4-4M17 20V4M13 8l4-4 4 4" />
+          </svg>
+          <small>Sort</small> {sortLabel}
+        </button>
+      )}
+      <button
+        type="button"
+        className="drost__dir"
+        onClick={() => set({ sortAsc: !p.filter.sortAsc })}
+        title={p.filter.sortAsc ? 'Smallest first' : 'Biggest first'}
+        aria-label={p.filter.sortAsc ? 'Smallest first' : 'Biggest first'}
+      >
+        {p.filter.sortAsc ? '↑' : '↓'}
+      </button>
+    </>
+  )
+
+  const levelAllBtn = (
+    <button
+      type="button"
+      className="btn btn--ghost drost__levelall"
+      disabled={
+        !p.canAct ||
+        p.levelAll.ids.length === 0 ||
+        p.levelAll.credits > p.credits ||
+        p.levelAll.gems > p.gems ||
+        !!p.busy
+      }
+      onClick={p.onLevelAll}
+    >
+      {p.busy === 'level-all' && <span className="spinner" />}
+      Level all ({p.levelAll.ids.length})
+      {p.levelAll.credits > 0 && <Credits value={p.levelAll.credits} />}
+    </button>
+  )
+
   const listHeadEl = (
     <div className={`drost__listhead${stuck ? ' is-stuck' : ''}`} ref={listHead}>
+      {/* A phone: the filter, the sort and its direction pinned with the count and the layout, one row. */}
+      {phone && <span className="drost__phonetools">{sortTools}</span>}
       {/* A desktop's view switch stands where the count was; a phone keeps both. */}
       {phone && (
         <span className="drost__cap">
@@ -597,10 +683,12 @@ export function DeskRoster(p: DeskRosterProps) {
       <header className="drost__head">
         <span>
           <h1 className="drost__title">My Fighters</h1>
-          <span className="drost__counts">
+          <p className="pagesub drost__counts">
             <b>{p.roster.length}</b> owned · <b>{p.lockedCount}</b> locked
-          </span>
+          </p>
         </span>
+        {/* A phone: Level all in the title's empty corner, so the payday has its row to itself. */}
+        {phone && p.mode === 'inventory' && levelAllBtn}
         <span className="drost__headacts">
           {p.mode === 'inventory' && (
             <>
@@ -644,22 +732,7 @@ export function DeskRoster(p: DeskRosterProps) {
                   )}
                 </button>
               </span>
-              <button
-                type="button"
-                className="btn btn--ghost"
-                disabled={
-                  !p.canAct ||
-                  p.levelAll.ids.length === 0 ||
-                  p.levelAll.credits > p.credits ||
-                  p.levelAll.gems > p.gems ||
-                  !!p.busy
-                }
-                onClick={p.onLevelAll}
-              >
-                {p.busy === 'level-all' && <span className="spinner" />}
-                Level all ({p.levelAll.ids.length})
-                {p.levelAll.credits > 0 && <Credits value={p.levelAll.credits} />}
-              </button>
+              {!phone && levelAllBtn}
             </>
           )}
           {phone && modeSeg}
@@ -690,65 +763,7 @@ export function DeskRoster(p: DeskRosterProps) {
             <Link to="/market?tab=mine">Market › My listings</Link>
           </span>
         )}
-        <button
-          type="button"
-          className={`drost__tool${pop === 'filters' || active > 0 ? ' is-on' : ''}`}
-          aria-expanded={pop === 'filters'}
-          onClick={() => setPop(pop === 'filters' ? null : 'filters')}
-        >
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M3 5h18l-7 8v5l-4 2v-7z" />
-          </svg>
-          {phone ? <span className="sr-only">Filters</span> : 'Filters'}
-          {active > 0 && <em>{active}</em>}
-        </button>
-        {phone ? (
-          /*
-            A phone's sort is a dropdown of its own: the button wears the
-            current sort, and a tap opens the phone's own picker over it.
-          */
-          <label className="drost__tool drost__sortpick">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M7 4v16M3 16l4 4 4-4M17 20V4M13 8l4-4 4 4" />
-            </svg>
-            {sortLabel}
-            <span className="drost__caret" aria-hidden="true">
-              ▾
-            </span>
-            <select value={p.filter.sort} onChange={(e) => set({ sort: e.target.value })} aria-label="Sort by">
-              {SORT_GROUPS.map(([group, options]) => (
-                <optgroup key={group} label={group}>
-                  {options.map((o) => (
-                    <option key={o.value} value={o.value}>
-                      {o.label}
-                    </option>
-                  ))}
-                </optgroup>
-              ))}
-            </select>
-          </label>
-        ) : (
-          <button
-            type="button"
-            className={`drost__tool${pop === 'sort' ? ' is-on' : ''}`}
-            aria-expanded={pop === 'sort'}
-            onClick={() => setPop(pop === 'sort' ? null : 'sort')}
-          >
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M7 4v16M3 16l4 4 4-4M17 20V4M13 8l4-4 4 4" />
-            </svg>
-            <small>Sort</small> {sortLabel}
-          </button>
-        )}
-        <button
-          type="button"
-          className="drost__dir"
-          onClick={() => set({ sortAsc: !p.filter.sortAsc })}
-          title={p.filter.sortAsc ? 'Smallest first' : 'Biggest first'}
-          aria-label={p.filter.sortAsc ? 'Smallest first' : 'Biggest first'}
-        >
-          {p.filter.sortAsc ? '↑' : '↓'}
-        </button>
+        {!phone && sortTools}
 
         {pop && !phone && <button type="button" className="drost__scrim" aria-label="Close" onClick={() => setPop(null)} />}
         {pop === 'filters' && !phone && (
