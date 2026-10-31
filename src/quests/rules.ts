@@ -199,7 +199,16 @@ export function boardOf(
       expired,
       claimable,
       emptySlots: Math.max(0, max - live.length),
-      endsAt: row ? ts(row.quest_end) : undefined,
+      /*
+         The group's clock is its quests' own: the soonest of them to run out.
+         The scope's `quest_end` can sit a day past them, which put "1D 14H" over
+         a quest saying "ends in 14h". Only with none live does the scope's own end show.
+      */
+      endsAt: live.length
+        ? Math.min(...live.map((q) => ts(q.expiry_date)).filter(Number.isFinite))
+        : row
+          ? ts(row.quest_end)
+          : undefined,
     }
   })
 }

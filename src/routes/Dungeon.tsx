@@ -1367,7 +1367,7 @@ export default function Dungeon() {
                   abilities={picked.length ? enemySlots[i] : undefined}
                   dormant={
                     f.fighter_id === NFT_FIGHTER_ID && difficulty < nftMinDifficulty
-                      ? `Joins at difficulty ${nftMinDifficulty}`
+                      ? `From diff. ${nftMinDifficulty}`
                       : undefined
                   }
                   onOpen={phone ? () => showEnemy(f) : undefined}

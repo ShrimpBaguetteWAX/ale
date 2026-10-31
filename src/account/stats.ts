@@ -58,6 +58,7 @@ const STAT_ICONS: [RegExp, string][] = [
   [/^portals/, '/assets/old-markers/portal.svg'],
   [/^quests/, '/assets/icons/menu/quests.svg'],
   [/^recruits/, '/assets/icons/add-fighter.svg'],
+  [/^fighters_sold/, '/assets/icons/credits.svg'],
   [/^nfts_staked/, '/assets/icons/menu/farming.svg'],
   [/^premium/, '/assets/icons/account-legend.svg'],
   [/travel/, '/assets/icons/menu/world.svg'],

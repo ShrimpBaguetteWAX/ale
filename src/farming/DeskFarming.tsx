@@ -173,10 +173,10 @@ export function DeskFarming({
         {held > 0 && (
           <span className="dfarm__pick">
             {formatNumber(pickedCount)} of {formatNumber(held)} in hand
-            <button type="button" className="linklike" disabled={busy !== null || pickedCount >= held} onClick={onAll}>
+            <button type="button" className="btn btn--ghost btn--sm" disabled={busy !== null || pickedCount >= held} onClick={onAll}>
               All
             </button>
-            <button type="button" className="linklike" disabled={busy !== null || pickedCount === 0} onClick={onNone}>
+            <button type="button" className="btn btn--ghost btn--sm" disabled={busy !== null || pickedCount === 0} onClick={onNone}>
               Clear
             </button>
           </span>

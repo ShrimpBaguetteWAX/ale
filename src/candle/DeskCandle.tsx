@@ -123,7 +123,7 @@ export function DeskCandle({
             {upcoming.map((o) => (
               <MissionCard key={o.offer_id} offer={o} player={player} now={now} picked={o.offer_id === offer.offer_id} onPick={() => setPicked(o.offer_id)} />
             ))}
-            <p className="dcan__note">The ring is what is left of the mission's day.</p>
+            <p className="dcan__note">Each ring shows the time left.</p>
           </nav>
 
           <Dossier
@@ -212,7 +212,7 @@ function MissionCard({
         <span>{offer.requirements}</span>
         <Gate offer={offer} player={player} compact />
       </span>
-      <span className="dcan__ring" style={{ '--p': dayLeft(state) * 100 } as React.CSSProperties}>
+      <span className="dcan__ring" title="Time left" style={{ '--p': dayLeft(state) * 100 } as React.CSSProperties}>
         <b>
           {state.phase === 'upcoming' ? 'opens' : state.phase === 'closed' ? 'closed' : first}
           <br />
@@ -310,7 +310,8 @@ export function Dossier({
           ) : open ? (
             <>
               <span>Opened {countdown(now - state.startsAt)} ago</span>
-              <span>Settles in {countdown(state.msLeft)}</span>
+              {/* The close is in the corner already; the bar's end says how long the mission runs. */}
+              <span>Runs {Math.round(day / HOUR)} hours</span>
             </>
           ) : (
             <>
@@ -510,10 +511,16 @@ export function Contribute({
   return (
     <aside className="dcan__panel dcan__side">
       <h3 className="dcan__sidetitle">Contribute</h3>
+      {/* Two plain lines, each figure kept with its words: the letter-spaced caption broke apart. */}
       <span className="dcan__cap">
-        Your gems in · {formatNumber(board.mine)}
         <span>
-          You hold {formatNumber(balance)} {gemIcon}
+          Your gems in <b>{formatNumber(board.mine)}</b>
+        </span>
+        <span>
+          You hold
+          <b>
+            {formatNumber(balance)} {gemIcon}
+          </b>
         </span>
       </span>
 

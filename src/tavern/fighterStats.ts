@@ -91,7 +91,7 @@ export const STAT_LABEL: Record<string, string> = {
   damage: 'Damage',
   taunt: 'Taunt',
   attackspeed: 'Cooldown',
-  initiative: 'Windup',
+  initiative: 'Wind-up',
 }
 
 /** Fields where a smaller number is the better roll. */
@@ -475,7 +475,7 @@ export function resolveAbilityDescription(ability: AbilityWithEffects): string {
  * Who a fighter goes for, in words.
  *
  * The contract stores targeting as `enemy_<stat>_<min|max>`; this is the
- * original's own mapping of those to labels. Note it says Windup and Cooldown
+ * original's own mapping of those to labels. Note it says Wind-up and Cooldown
  * for `initiative` and `attackspeed`, matching the renaming applied to the
  * stat rows — the same reasoning, since both are delays.
  */
@@ -486,8 +486,8 @@ export const TARGET_LABEL: Record<string, string> = {
   enemy_health_max: 'Highest Health',
   enemy_damage_min: 'Lowest Damage',
   enemy_damage_max: 'Highest Damage',
-  enemy_initiative_min: 'Lowest Windup',
-  enemy_initiative_max: 'Highest Windup',
+  enemy_initiative_min: 'Lowest Wind-up',
+  enemy_initiative_max: 'Highest Wind-up',
   enemy_attackspeed_min: 'Lowest Cooldown',
   enemy_attackspeed_max: 'Highest Cooldown',
   enemy_res_fire_min: 'Lowest Fire Res',
@@ -554,7 +554,7 @@ export const FILTER_STATS: { field: string; label: string; graded: boolean }[] =
   { field: 'taunt', label: 'Taunt', graded: false },
   { field: 'age', label: 'Age bonus', graded: false },
   { field: 'attackspeed', label: 'Cooldown', graded: true },
-  { field: 'initiative', label: 'Windup', graded: true },
+  { field: 'initiative', label: 'Wind-up', graded: true },
   { field: 'res_fire', label: 'Fire resistance', graded: true },
   { field: 'res_air', label: 'Air resistance', graded: true },
   { field: 'res_metal', label: 'Metal resistance', graded: true },

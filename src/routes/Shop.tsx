@@ -436,6 +436,6 @@ function rewardName(item: ShopItem): string {
   if (item.gain_gem > 0) return 'Gems'
   if (item.gain_dust > 0) return 'Credits'
   if (item.gain_action_points > 0) return 'Energy'
-  return 'Legend'
+  return 'Legend Pass'
 }
 

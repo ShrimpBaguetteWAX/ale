@@ -1464,3 +1464,8 @@
   background: rgb(0 0 0 / 28%);
   box-shadow: inset 0 0 0 1px rgb(255 217 121 / 22%);
 }
+
+/* The boost's "You have" line, red when it does not cover the total. */
+.lsheet__line.is-short b {
+  color: #ff8fa0;
+}

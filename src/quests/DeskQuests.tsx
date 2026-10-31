@@ -148,8 +148,8 @@ export function DeskQuests({
                     className="dquests__reroll"
                     disabled={!canAct || busy.has(key) || tooPoor}
                     onClick={() => rerollRow(q)}
-                    aria-label={`Reroll ${questNameText(q)} for ${cost.toLocaleString(NUM_LOCALE)} credits`}
-                    title={tooPoor ? `Rerolling costs ${cost.toLocaleString(NUM_LOCALE)} credits` : `Reroll for ${cost.toLocaleString(NUM_LOCALE)} credits`}
+                    aria-label={`Re-roll ${questNameText(q)} for ${cost.toLocaleString(NUM_LOCALE)} credits`}
+                    title={tooPoor ? `Re-rolling costs ${cost.toLocaleString(NUM_LOCALE)} credits` : `Re-roll for ${cost.toLocaleString(NUM_LOCALE)} credits`}
                   >
                     {doing === 'reroll' ? (
                       <span className="spinner" />
@@ -315,10 +315,10 @@ function Detail({
                 className="btn btn--ghost"
                 disabled={!canAct || working || tooPoor}
                 onClick={onReroll}
-                title={tooPoor ? `Rerolling costs ${cost} credits` : 'Trade this quest for another in the same cadence'}
+                title={tooPoor ? `Re-rolling costs ${cost} credits` : 'Trade this quest for another in the same cadence'}
               >
                 {doing === 'reroll' && <span className="spinner" />}
-                Reroll
+                Re-roll
                 <span className={`cost${tooPoor ? ' cost--short' : ''}`}>
                   {cost.toLocaleString(NUM_LOCALE)}
                   <img src={asset('/assets/icons/credits.svg')} alt="credits" width={16} height={16} />

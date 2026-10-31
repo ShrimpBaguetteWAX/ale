@@ -170,11 +170,11 @@ const STAT_NAMES: Record<string, string> = {
   health: 'Health',
   taunt: 'Taunt',
   attackspeed: 'Cooldown',
-  initiative: 'Windup',
+  initiative: 'Wind-up',
 }
 /* The column heads over a desktop's default rows, where a whole word would not fit. */
 const STAT_SHORT: Record<string, string> = {
-  damage: 'Dmg',
+  damage: 'DMG',
   health: 'HP',
   taunt: 'Taunt',
   attackspeed: 'Cool',
@@ -200,7 +200,7 @@ const SORT_GROUPS: [string, SortOption[]][] = [
   ['Roster', [...ROSTER_SORTS, ...SORTS.filter((s) => s.value === 'level')]],
   ['Combat', SORTS.filter((s) => ['combat_score', 'dps', 'survival'].includes(s.value))],
   ['Stats', SORTS.filter((s) => /_max$/.test(s.value))],
-  ['Resistance', SORTS.filter((s) => s.value.startsWith('res_'))],
+  ['Resistances', SORTS.filter((s) => s.value.startsWith('res_'))],
 ]
 const DAY = 86_400_000
 /* Room for the list and the fighter in full side by side. */
@@ -1294,8 +1294,8 @@ export function HolderRow({
                   <Grade grade={fig.combat.survG} />
                 </b>
               </span>
-              <span className={toneOf(fig.stats[4].grade)} title="Windup: how soon it strikes">
-                <small>Windup</small>
+              <span className={toneOf(fig.stats[4].grade)} title="Wind-up: how soon it strikes">
+                <small>Wind-up</small>
                 <b>
                   {fig.stats[4].value}
                   <Grade grade={fig.stats[4].grade} />
@@ -1626,8 +1626,8 @@ export function Row({
                     <Grade grade={fig.combat.survG} />
                   </b>
                 </span>
-                <span className={toneOf(fig.stats[4].grade)} title="Windup: how soon it strikes">
-                  <small>Windup</small>
+                <span className={toneOf(fig.stats[4].grade)} title="Wind-up: how soon it strikes">
+                  <small>Wind-up</small>
                   <b>
                     {fig.stats[4].value}
                     <Grade grade={fig.stats[4].grade} />

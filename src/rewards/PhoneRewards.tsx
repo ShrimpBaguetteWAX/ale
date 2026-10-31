@@ -1022,7 +1022,10 @@ export function PoolFacts({
         <span>
           {entry.anyAmount
             ? `${formatNumber(entry.power)} power · no minimum`
-            : `${formatNumber(entry.power)} / ${formatNumber(MINE_POWER)} power`}
+            : entry.mines > 1
+              ? /* Past one mine the fraction ran far over 100%: what counts is the way to the next. */
+                `${formatNumber(entry.power % MINE_POWER)} / ${formatNumber(MINE_POWER)} toward the next`
+              : `${formatNumber(entry.power)} / ${formatNumber(MINE_POWER)} power`}
         </span>
         <span className={entry.ready ? 'poolsheet__banked' : 'faint'}>
           {entry.mines > 1
@@ -1049,7 +1052,7 @@ export function PoolFacts({
       </p>
       {trial !== null && (
         <p className="rsheet__hint rsheet__hint--error">
-          Your Legend access has lapsed, so you are banking {Math.round(trial * 100)}% of the Reward
+          Your Legend Pass has lapsed, so you are banking {Math.round(trial * 100)}% of the Reward
           Power you earn.
         </p>
       )}

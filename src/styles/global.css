@@ -267,11 +267,12 @@ a:hover {
  * sits on: without a scheme and a colour of its own, a light system list
  * showed the white option text on white.
  */
-select.input {
+select {
   color-scheme: dark;
 }
-select.input option,
-select.input optgroup {
+/* Every select, not only .input ones: the white-on-white list kept coming back on selects outside it. */
+select option,
+select optgroup {
   color: var(--white);
   background: #0b1324;
 }

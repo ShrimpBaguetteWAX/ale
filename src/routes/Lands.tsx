@@ -99,8 +99,9 @@ function tlm(raw: number): string {
   return formatDecimals(raw / 10_000, 1)
 }
 
+/* Whole credits, as every other screen shows them; rounded up, so a price never reads under what is charged. */
 function credits(raw: number): string {
-  return formatDecimals(raw, 2)
+  return formatNumber(Math.ceil(raw))
 }
 
 function landKey(land: OwnedLand): string {
@@ -309,7 +310,7 @@ export default function Lands() {
           building: String(building.building_name),
           costGems: Number(config?.delete_building_gems_cost ?? 0),
         }),
-      'Building destroyed successfully!',
+      'Building destroyed.',
       opts('destroyBuilding'),
     )
 
@@ -1350,6 +1351,14 @@ function LandSheet({
               <span>Total</span>
               <b className="mono">
                 {credits(cost)}
+                <CreditIcon />
+              </b>
+            </div>
+            {/* What there is to pay it with, in red when it falls short: the red price alone did not say why. */}
+            <div className={`lsheet__line${cost > playerCredits ? ' is-short' : ''}`}>
+              <span>You have</span>
+              <b className="mono">
+                {formatNumber(playerCredits)}
                 <CreditIcon />
               </b>
             </div>

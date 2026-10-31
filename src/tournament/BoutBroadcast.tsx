@@ -385,7 +385,7 @@ function Poster({
           className="bcast__play"
           onClick={onPlay}
           disabled={waiting}
-          aria-label="Watch this bout"
+          aria-label="Watch this fight"
         >
           {waiting ? (
             <span className="spinner" />

@@ -32,6 +32,7 @@ import { GameImg } from '@/components/GameImg'
 import { CodexReadout, type PanelFighter } from '@/components/FighterPanel'
 import { usePhone } from '@/components/usePhone'
 import { BottomSheet } from '@/components/BottomSheet'
+import { formatNumber } from '@/format'
 
 /**
  * Card art, keyed by template id.
@@ -882,7 +883,7 @@ export default function Tavern() {
                   {breakdown.cost}
                 </b>
                 <small>
-                  energy to hire · you have {player.activestats.action_points.toLocaleString()}
+                  energy to hire · you have {formatNumber(player.activestats.action_points)}
                 </small>
               </span>
               <span className="hall__meter" aria-hidden="true">
@@ -1170,7 +1171,7 @@ export default function Tavern() {
                       Abilities
                     </button>
                   </div>
-                  {['Damage', 'Health', 'Cooldown', 'Windup', 'Taunt'].map((label) => (
+                  {['Damage', 'Health', 'Cooldown', 'Wind-up', 'Taunt'].map((label) => (
                     <div className="recruitveil__row" key={label}>
                       <span>{label}</span>
                       <i />

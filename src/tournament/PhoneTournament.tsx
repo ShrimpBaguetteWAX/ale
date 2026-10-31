@@ -3303,7 +3303,7 @@ function RoadResults({ p, champion, runnerUp, semis, final, paid, round, onRound
                     </b>
                   </div>
                 </div>
-                {mePaid.tenth && <p className="ptour__fine">A tenth, without Legend Access</p>}
+                {mePaid.tenth && <p className="ptour__fine">A tenth, without the Legend Pass</p>}
               </section>
             ) : null,
             'side',

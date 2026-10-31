@@ -232,7 +232,7 @@ export default function Candle() {
     return run(
       `contribute:${offer.offer_id}`,
       () => contributeGems(session!, offer.offer_id, amount),
-      'Contribution registered',
+      'Contribution registered.',
       opts('contributeGems'),
     )
   }

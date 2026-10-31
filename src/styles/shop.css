@@ -1099,9 +1099,6 @@
 .amk__search {
   width: 200px;
 }
-.amk__sort option {
-  color: #000;
-}
 
 /* One panel of rows: the whole card, what it does here, the price. */
 .amk__rows {

@@ -1123,3 +1123,8 @@
 .dfarm .dfarm__handtext small {
   font-size: 13px;
 }
+
+/* The stake count's field has no outline of its own: its stepper shows the focus. */
+.dfarm__step:focus-within {
+  box-shadow: inset 0 0 0 1.5px var(--cyan);
+}

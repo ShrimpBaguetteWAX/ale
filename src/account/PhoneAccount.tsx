@@ -477,7 +477,7 @@ function PhoneCpu({
           <small>resets in {untilReset}</small>
           <button
             type="button"
-            className="btn btn--primary btn--sm"
+            className="btn btn--gold btn--sm"
             disabled={!canAct || busy !== null || status.left === 0 || !legend}
             onClick={onClaim}
           >
@@ -505,7 +505,7 @@ function PhoneCpu({
       </div>
       {!legend && (
         <p className="rsheet__hint">
-          Claiming needs <Link to="/shop?c=account">Legend Access</Link>.
+          Claiming needs the <Link to="/shop?c=account">Legend Pass</Link>.
         </p>
       )}
       {legend && status.left === 0 && (

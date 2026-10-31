@@ -252,7 +252,7 @@ function MissionPage({
             {open ? (
               <>
                 <span>Opened {countdown(now - state.startsAt)} ago</span>
-                <span>Settles in {countdown(state.msLeft)}</span>
+                <span>Runs {Math.round((state.endsAt - state.startsAt) / 3_600_000)} hours</span>
               </>
             ) : (
               <span>Closed · settling</span>

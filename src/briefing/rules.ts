@@ -161,7 +161,7 @@ const ICON = {
   rewards: '/assets/icons/menu/rewards.svg',
   legend: '/assets/icons/account-legend.svg',
   farming: '/assets/icons/menu/farming.svg',
-  avatar: '/assets/icons/menu/account.svg',
+  avatar: '/assets/avatar/1000.webp',
   ascension: '/assets/icons/menu/ascension.svg',
   level: '/assets/icons/medal.svg',
   map: '/assets/icons/menu/world.svg',
@@ -284,7 +284,7 @@ export function buildBriefing(input: BriefingInput): BriefItem[] {
         `Taverns are marked on your World Map${taverns ? ` — you have ${plural(taverns, 'tavern')} waiting` : ''}. ` +
         `Travel to one (it costs energy), ` +
         (legend
-          ? 'your Legend pass reveals the recruit on offer for free as you arrive, '
+          ? 'your Legend Pass reveals the recruit on offer for free as you arrive, '
           : 'reveal the recruit on offer, ') +
         `then hire them with credits. Showing the tavern the Alien Worlds NFTs it asks for makes the hire cheaper, and the NFTs stay yours.`,
       cta: { label: 'Find a tavern', to: '/map' },
@@ -474,7 +474,7 @@ export function buildBriefing(input: BriefingInput): BriefItem[] {
           ? input.cpuBoosts && input.cpuBoosts.left === 0
             ? "You've used this week's free CPU boosts, so this one is down to your own wallet until they reset."
             : `As a Legend you can ${boostLine} — claim one on your Account.`
-          : `A Legend pass lets you ${boostLine}.`),
+          : `A Legend Pass lets you ${boostLine}.`),
       cta: { label: legend && input.cpuBoosts?.left !== 0 ? 'Boost CPU' : 'Check CPU', to: '/profile?tab=cpu' },
     })
   }
@@ -656,14 +656,14 @@ export function buildBriefing(input: BriefingInput): BriefItem[] {
       rank: 0,
       tone: 'grow',
       icon: ICON.legend,
-      title: 'Get a Legend pass',
+      title: 'Get a Legend Pass',
       body:
         `Trial accounts bank only ${Math.round(trialShare * 100)}% of the Reward Power they earn` +
         (perWin
           ? ` — your recent dungeon wins banked ~${formatNumber(Math.round(perWin))} each, a Legend would have banked ~${formatNumber(Math.round(perWin / trialShare))}.`
           : '. A Legend banks all of it, so every win fills your pools many times faster.') +
         ` It also reveals tavern recruits for free as you arrive, lets you ${boostLine}, and gives a larger free energy flask every day.`,
-      cta: { label: 'See Legend passes', to: '/shop?c=account' },
+      cta: { label: 'See the Legend Pass', to: '/shop?c=account' },
     })
   } else {
     const left = Date.parse(player.legend_access_expiry + 'Z') - now
@@ -677,7 +677,7 @@ export function buildBriefing(input: BriefingInput): BriefItem[] {
         /* Counted as the nameplate and the Shop count it, so they never disagree by a day. */
         title: `Your Legend Pass has ${legendLeft(left)}`,
         body: `After that, wins bank only ${Math.round(trialShare * 100)}% of their Reward Power. Buying again adds to the time you have left.`,
-        cta: { label: 'Extend Legend', to: '/shop?c=account' },
+        cta: { label: 'Extend Legend Pass', to: '/shop?c=account' },
       })
     }
   }

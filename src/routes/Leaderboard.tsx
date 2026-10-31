@@ -335,7 +335,7 @@ export default function Leaderboard() {
         {tab === 'dungeons' && phone && (
           <button
             type="button"
-            className="btn btn--primary lboard__claim"
+            className="btn btn--gold lboard__claim"
             disabled={!session || busy || onCooldown || !canClaim}
             onClick={() => void doClaim()}
             title={
@@ -361,7 +361,7 @@ export default function Leaderboard() {
               </>
             ) : (
               <>
-                Claim<span className="lboard__claimlong"> daily Rewards</span>
+                Claim<span className="lboard__claimlong"> daily rewards</span>
               </>
             )}
           </button>

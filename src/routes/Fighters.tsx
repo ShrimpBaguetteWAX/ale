@@ -635,13 +635,15 @@ function Confirm({
   const box = useModal(onCancel)
 
   return (
-    <div className="sheet" role="dialog" aria-modal="true" onClick={onCancel}>
+    <div className="sheet" role="dialog" aria-modal="true" aria-labelledby="confirm-title" onClick={onCancel}>
       <div
         className="sheet__panel panel"
         ref={box}
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 className="panel__title">{title}</h2>
+        <h2 className="panel__title" id="confirm-title">
+          {title}
+        </h2>
         {body}
         <div className="confirm__actions">
           <button type="button" className="btn btn--ghost" onClick={onCancel}>

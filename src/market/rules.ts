@@ -310,7 +310,7 @@ export const MARKET_SORTS: { value: MarketSort; label: string }[] = [
   { value: 'health', label: 'Health' },
   { value: 'taunt', label: 'Taunt' },
   { value: 'attackspeed', label: 'Cooldown' },
-  { value: 'initiative', label: 'Windup' },
+  { value: 'initiative', label: 'Wind-up' },
   { value: 'level', label: 'Level' },
 ]
 

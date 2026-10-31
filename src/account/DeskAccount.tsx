@@ -242,7 +242,7 @@ function IdentityCard({
       ) : (
         <span className="dacc__legend is-off">
           <img src={asset('/assets/icons/account-trial.svg')} alt="" />
-          No Legend Access
+          No Legend Pass
         </span>
       )}
 
@@ -285,7 +285,7 @@ function IdentityCard({
           </dd>
         </div>
         <div>
-          <dt>Legend Access</dt>
+          <dt>Legend Pass</dt>
           <dd>
             {legend && (
               <span className="mono">
@@ -511,7 +511,7 @@ function DeskCpu({
           <h2 className="dgauge__title">Free CPU claims</h2>
           <p className="rsheet__hint">
             The game pays the network for a CPU top-up, up to {formatNumber(status.allowance)} times a
-            week with Legend Access.
+            week with the Legend Pass.
           </p>
           <span className="dgauge__facts">
             <span>
@@ -545,7 +545,7 @@ function DeskCpu({
             */}
             <button
               type="button"
-              className="btn btn--primary"
+              className="btn btn--gold"
               disabled={!canAct || busy !== null || status.left === 0 || !legend}
               onClick={onClaim}
             >
@@ -554,7 +554,7 @@ function DeskCpu({
             </button>
             {!legend ? (
               <small>
-                Claiming needs <Link to="/shop?c=account">Legend Access</Link>.
+                Claiming needs the <Link to="/shop?c=account">Legend Pass</Link>.
               </small>
             ) : status.left === 0 ? (
               <small>All {formatNumber(status.allowance)} used this week. The next is back in {untilReset}.</small>

@@ -3483,7 +3483,7 @@ export function DetailSheet({
   const { grip } = useSwipeToClose(onClose, box)
 
   return (
-    <div className="sheet sheet--fighter" role="dialog" aria-modal="true" onClick={onClose}>
+    <div className="sheet sheet--fighter" role="dialog" aria-modal="true" aria-label={`${panel.classname}, in full`} onClick={onClose}>
       <div
         className="sheet__panel panel sheet__panel--fighter"
         ref={box}

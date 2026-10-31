@@ -253,7 +253,7 @@ export default function Quests() {
     return run(
       busyKey('reroll', key),
       () => rerollQuest(session!, quest),
-      'Quest rerolled.',
+      'Quest re-rolled.',
       {
         ...opts('rerollQuest'),
         /* Remembered only once the new quest is on the board: until then the
@@ -564,7 +564,7 @@ function QuestCard({
             }
           >
             {doing === 'reroll' && <span className="spinner" />}
-            Reroll
+            Re-roll
             <span className={`cost${tooPoor ? ' cost--short' : ''}`}>
               {cost.toLocaleString(NUM_LOCALE)}
               <img src={asset("/assets/icons/credits.svg")} alt="credits" width={16} height={16} />

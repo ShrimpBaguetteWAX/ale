@@ -118,7 +118,7 @@ export const SORTS: SortOption[] = [
   { value: 'survival', label: 'Survival' },
   { value: 'damage_max', label: 'Damage' },
   { value: 'health_max', label: 'Health' },
-  { value: 'initiative_max', label: 'Windup' },
+  { value: 'initiative_max', label: 'Wind-up' },
   { value: 'attackspeed_max', label: 'Cooldown' },
   { value: 'taunt_max', label: 'Taunt' },
   { value: 'res_fire', label: 'Fire resistance' },
@@ -467,7 +467,7 @@ export function applyFilter(
         return asFielded('damage')
       case 'taunt_max':
         return mid(s.taunt_min, s.taunt_max)
-      // Windup and cooldown are delays, so the best fighter is the smallest.
+      // Wind-up and cooldown are delays, so the best fighter is the smallest.
       // Negated here so every sort can stay "biggest first".
       case 'initiative_max':
         return -mid(s.initiative_min, s.initiative_max)

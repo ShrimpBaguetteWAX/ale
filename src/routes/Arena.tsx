@@ -981,7 +981,8 @@ export default function Arena() {
       <img className="dungeon__art" {...artSet('bg-arena')} alt="" />
       <div className="dungeon__scrim" />
 
-      <div className="dungeon__inner">
+      {/* A refusal standing dims the team builder: nothing picked here can be fought with. */}
+      <div className={`dungeon__inner${holding || (arenaLoaded && !maintained) ? ' is-refused' : ''}`}>
         <header className="dungeon__head">
           <div>
             <h1 className="page__title">Arena</h1>
@@ -1008,7 +1009,7 @@ export default function Arena() {
               <div className="dungeon__conditions">
                 <WeatherPanel weather={weather} twin />
                 {weather && <span className="dungeon__rule" aria-hidden="true" />}
-                <ArenaStanding power={arenaPower} />
+                <ArenaStanding power={arenaPower} decayed={arenaLoaded && !maintained} />
               </div>
             </>
           )}
@@ -1055,7 +1056,7 @@ export default function Arena() {
           landowner.
         */}
         {holding && (
-          <div className="alert">
+          <div className="alert alert--refusal">
             You already hold this arena with{' '}
             {mine.length === 1 ? 'a fighter' : `${mine.length} fighters`}
             {mine.some((f) => f.fighter_id === NFT_FIGHTER_ID) && ' and your NFT fighter'}.
@@ -1064,7 +1065,7 @@ export default function Arena() {
           </div>
         )}
         {arenaLoaded && !maintained && (
-          <div className="alert alert--error">
+          <div className="alert alert--error alert--refusal">
             The landowner has let this arena decay, so it can no longer be
             challenged.
           </div>
@@ -1587,7 +1588,7 @@ export default function Arena() {
  * what the bands said: red at full strength, gold part worn, teal once
  * challengers have worn it down.
  */
-function ArenaStanding({ power }: { power: number }) {
+function ArenaStanding({ power, decayed = false }: { power: number; decayed?: boolean }) {
   const percent = arenaPowerPercent(power)
   const band = percent >= 90 ? 'high' : percent >= 50 ? 'mid' : 'low'
 
@@ -1603,8 +1604,15 @@ function ArenaStanding({ power }: { power: number }) {
       <span className="weathertwin__line">
         <img className="weathertwin__stat" src={asset('/assets/icons/shield.svg')} alt="" width={18} height={18} />
         <span className="weathertwin__name">
-          <span className="weathertwin__lead mono">{percent.toFixed(0)}%</span>
-          strength
+          {/* A decayed arena has no fight left to measure: say so rather than 100%. */}
+          {decayed ? (
+            <span className="weathertwin__lead">Decayed</span>
+          ) : (
+            <>
+              <span className="weathertwin__lead mono">{percent.toFixed(0)}%</span>
+              strength
+            </>
+          )}
         </span>
       </span>
     </div>

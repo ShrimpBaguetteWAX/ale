@@ -216,7 +216,7 @@ export type Currency = (typeof CURRENCIES)[number]
 
 export const CURRENCY_LABEL: Record<Currency, string> = {
   tlm: 'TLM',
-  wax: 'Wax',
+  wax: 'WAX',
   shrds: 'Shards',
 }
 

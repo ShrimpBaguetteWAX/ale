@@ -82,8 +82,8 @@ export function canBuy(
   if (!item.trial_availability && !legend) {
     return {
       canBuy: false,
-      reason: 'Legend only',
-      detail: 'This item is only available to Legend accounts',
+      reason: 'Legend Pass only',
+      detail: 'This item is only available with the Legend Pass',
     }
   }
 

@@ -63,7 +63,7 @@ export const SHOP_CATEGORIES: {
   },
   {
     key: 'account',
-    label: 'Legend',
+    label: 'Legend Pass',
     icon: '/assets/icons/account-legend.svg',
   },
   /*

@@ -68,7 +68,7 @@ describe('the quest journal', () => {
 
     /* No confirmation: Reroll goes straight through. */
     const detail = document.querySelector('.dquests__detail') as HTMLElement
-    fireEvent.click(within(detail).getByRole('button', { name: /Reroll/ }))
+    fireEvent.click(within(detail).getByRole('button', { name: /Re-roll/ }))
     expect(onReroll).toHaveBeenCalledWith(c)
 
     const fresh = quest('d', 'week', 'Weekly three')
@@ -84,7 +84,7 @@ describe('the quest journal', () => {
     const { rerender } = render(view(boardOf([a], [b, c]), onReroll))
 
     fireEvent.click(screen.getByRole('button', { name: /^Weekly two/ }))
-    fireEvent.click(screen.getByRole('button', { name: /^Reroll Weekly one/ }))
+    fireEvent.click(screen.getByRole('button', { name: /^Re-roll Weekly one/ }))
     expect(onReroll).toHaveBeenCalledWith(b)
 
     const fresh = quest('d', 'week', 'Weekly three')
@@ -116,7 +116,7 @@ describe('the phone quest cards', () => {
         />
       </MemoryRouter>,
     )
-    fireEvent.click(screen.getByRole('button', { name: /Reroll/ }))
+    fireEvent.click(screen.getByRole('button', { name: /Re-roll/ }))
     expect(onReroll).toHaveBeenCalledWith(a)
   })
 })

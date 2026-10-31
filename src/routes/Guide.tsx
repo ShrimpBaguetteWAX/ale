@@ -316,7 +316,7 @@ export default function Guide() {
               {(
                 [
                   ['credits.svg', 'Credits', 'Pay paydays, level-ups, ascension, quest rerolls and land boosts. Earned from Farming, land and selling fighters back.'],
-                  ['gems.svg', 'Gems', 'Bought with WAX. Buy credits and Legend, trade on the Market, enter the Candle.'],
+                  ['gems.svg', 'Gems', 'Bought with WAX. Buy credits and the Legend Pass, trade on the Market, enter the Candle.'],
                   ['wax-coin.png', 'WAX', "The chain's own coin. Pays the sign-up fee and gem packs."],
                   ['tlm.svg', 'TLM', 'Trilium, the main payout from reward pools, quests, tournaments and land.'],
                   ['shards.svg', 'Shards', 'Alien Worlds shards: paid by reward pools, spent at the AW Outpost in the Shop.'],
@@ -428,7 +428,7 @@ export default function Guide() {
                       ['health', 'Health', '126', 'middle'],
                       ['taunt', 'Taunt', '22', ''],
                       ['attackspeed', 'Cooldown', '89', 'green-duble-up'],
-                      ['initiative', 'Windup', '73', 'green-up'],
+                      ['initiative', 'Wind-up', '73', 'green-up'],
                     ] as const
                   ).map(([icon, label, v, g]) => (
                     <span key={label}>
@@ -466,7 +466,7 @@ export default function Guide() {
                 <b>Taunt</b>: draws enemy attacks. A role, not a quality; it drops with each hit taken.
               </span>
               <span>
-                <b>Cooldown / Windup</b>: <b>lower is better</b>. Windup decides who acts first; cooldown, how soon again.
+                <b>Cooldown / Wind-up</b>: <b>lower is better</b>. Wind-up decides who acts first; cooldown, how soon again.
               </span>
               <span>
                 <b>Resistances</b>: one per element; each cuts damage of that element by its %.
@@ -662,7 +662,7 @@ export default function Guide() {
                   ['menu/lands.svg', 'Lands', 'Own AW land, build a tavern, dungeon or arena, earn from it. Keep its boost up.'],
                   ['menu/farming.svg', 'Farming', 'Stake AW tools, crew or weapons for credits.'],
                   ['menu/candle.svg', 'Candle', 'Put gems into a campaign for a share of a fixed prize.'],
-                  ['account-legend.svg', 'Legend', 'Free reveals, full reward power, a bigger daily flask, full tournament prizes.'],
+                  ['account-legend.svg', 'Legend Pass', 'Free reveals, full reward power, a bigger daily flask, full tournament prizes.'],
                 ] as const
               ).map(([icon, name, body]) => (
                 <div key={name}>

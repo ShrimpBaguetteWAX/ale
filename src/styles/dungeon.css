@@ -6730,6 +6730,8 @@ button.combatcard--empty:hover {
   font-size: 10.5px;
   font-weight: 700;
   text-align: center;
+  /* One line: on a phone the medallion is narrow enough to break a word in two. */
+  white-space: nowrap;
   pointer-events: none;
 }
 /* Take out, on a resting pointer: a small red disc on the medallion's corner. */
@@ -8158,4 +8160,21 @@ button.combatcard--empty:hover {
 }
 .nftpick--phone .ncard__info {
   top: calc(100px * 192 / 137 + 22px);
+}
+
+/*
+ * A refusal the contract will make (a decayed arena, or one already held) is
+ * read before the team builder, directly under the header, and the builder
+ * dims: nothing picked here can be fought with.
+ */
+@media (min-width: 720px) {
+  .dungeon__inner > .alert--refusal {
+    order: -1;
+  }
+}
+.dungeon__inner.is-refused > .versus,
+.dungeon__inner.is-refused > .picker {
+  opacity: 0.45;
+  filter: grayscale(0.6);
+  pointer-events: none;
 }

@@ -92,7 +92,7 @@ export function DeskBriefing({
         <div className="dbrief__chips">
           <Link className={`dbrief__chip${legend ? ' is-legend' : ''}`} to="/shop?c=account">
             <img src={asset(legend ? '/assets/icons/account-legend.svg' : '/assets/icons/account-trial.svg')} alt="" />
-            {legend ? 'Legend' : 'Trial account'}
+            {legend ? 'Legend' : 'Trial'}
           </Link>
           {roster && (
             <Link className="dbrief__chip" to="/fighters">
@@ -140,7 +140,10 @@ export function DeskBriefing({
               <img className={iconClass(item.icon)} src={asset(item.icon)} alt="" />
               <span className="dbrief__warntext">
                 <b>{item.title}</b>
-                {item.figure && <small>{item.figure}</small>}
+                {/* The countdown as a chip at the title's weight: the most serious line was the smallest. */}
+                {item.figure && (
+                  <small className="dbrief__countdown">{item.figure[0].toUpperCase() + item.figure.slice(1)}</small>
+                )}
                 <span>{firstSentence(item.body)}</span>
               </span>
               <Link className="btn btn--sm dbrief__warngo" to={item.cta.to}>

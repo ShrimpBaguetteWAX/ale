@@ -1368,19 +1368,11 @@ function AuctionDeal({
               gate.reason
             )}
           </button>
-          <p className="msell__hint">
-            Your gems are taken as soon as you bid. If somebody outbids you they are refunded to you in the same
-            transaction.
-          </p>
+          {/* One line under the bid; the closing window as a short second. The minimum is in the figures above. */}
+          <p className="msell__hint">Your gems leave when you bid. Outbid? They come straight back.</p>
           {closing && (
             <p className="msell__hint">
-              This auction is inside its closing window, so any bid pushes the end back out by{' '}
-              {Math.round(Number(config?.reset_duration_below_minutes ?? 0) / 60)} hours.
-            </p>
-          )}
-          {n === 0 && (
-            <p className="msell__hint">
-              The first bid has to clear the starting price by the minimum raise, so {a.current_bid} opens at {min}.
+              A bid now adds {Math.round(Number(config?.reset_duration_below_minutes ?? 0) / 60)} hours to the clock.
             </p>
           )}
         </>
@@ -1645,14 +1637,10 @@ export function BidDialog({
         afterwards: the gems leave now rather than on winning, and bidding
         late does not shorten the wait.
       */}
-      <p className={hint}>
-        Your gems are taken as soon as you bid. If somebody outbids you they
-        are refunded to you in the same transaction.
-      </p>
+      <p className={hint}>Your gems leave when you bid. Outbid? They come straight back.</p>
       {closing && (
         <p className={hint}>
-          This auction is inside its closing window, so any bid pushes the end
-          back out by {Math.round(Number(config?.reset_duration_below_minutes ?? 0) / 60)} hours.
+          A bid now adds {Math.round(Number(config?.reset_duration_below_minutes ?? 0) / 60)} hours to the clock.
         </p>
       )}
 

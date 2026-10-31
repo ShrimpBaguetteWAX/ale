@@ -34,7 +34,7 @@ const CURRENCIES: { key: Key; name: string; icon: string; uses: string[] }[] = [
     name: 'Gems',
     icon: '/assets/icons/gems.svg',
     uses: [
-      'Buy credits and Legend passes',
+      'Buy credits and the Legend Pass',
       'Bid on and buy fighters at the Market, and list your own',
       'Put into Candle missions',
       'Build, upgrade or remove buildings on your land',
