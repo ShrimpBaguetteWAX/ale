@@ -2722,3 +2722,11 @@ i.mrow__arrow {
 .mrows .rocard.is-picked .gcard {
   transform: none;
 }
+
+/* The Market's compact cards carry no ribbon: no room kept over the crown for one, just enough for the marker on it. */
+.mrows .cpick .rocard .gcard {
+  margin-top: calc(var(--u) * 0.6);
+}
+.mrows:has(> .cpick) {
+  padding-top: 2px;
+}
