@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useGame } from '@/state/useGame'
 import { fetchOwnedLands, type LandAsset } from '@/chain/atomic'
 import { fetchPlanetLands } from '@/chain/queries'
@@ -11,7 +11,6 @@ import {
   buildingIcon,
   boostRank,
   formatBoost,
-  landThumbStyle,
   liveBoostScore,
   PLANET_MAP_H,
   PLANET_MAP_W,
@@ -434,16 +433,120 @@ const LOOK_STEPS = [210_000, 410_000, 610_000, 810_000]
 /* How far ahead a drop to a smaller look is worth showing. */
 const LOOK_WARNING_HOURS = 14 * 24
 
+/* The ribbon over a land card's crown: what it needs. */
+const LAND_TAG = { low: 'Running low', hidden: 'Off the map', empty: 'Empty land' } as const
+
+/**
+ * A window of the planet's map, kx squares across and ky down, centred on the
+ * land's own square where the map's edge allows: a percentage size and
+ * position, so it fits a card at any width.
+ */
+function landCropStyle(planet: string, x: number, y: number, kx: number, ky: number): React.CSSProperties {
+  const clamp = (v: number) => Math.max(0, Math.min(1, v))
+  const px = clamp((x - 1 - (kx - 1) / 2) / (MAP_COLS - kx))
+  const py = clamp((y - 1 - (ky - 1) / 2) / (MAP_ROWS - ky))
+  return {
+    backgroundImage: `url('${planetMapSrc(planet)}')`,
+    backgroundSize: `${(MAP_COLS / kx) * 100}% ${(MAP_ROWS / ky) * 100}%`,
+    backgroundPosition: `${px * 100}% ${py * 100}%`,
+  }
+}
+
+/**
+ * A land as a card of the game, in the fighters' battle card: the gilded
+ * frame with its rarity on the crown diamond, the planet's map round the land
+ * and the building standing on it at its boost's look, the boost where a
+ * fighter has its level and as the bar where it has its health (the four
+ * looks marked on it), the planet as a little globe where a fighter has its
+ * element, and a ribbon over the crown for what it needs. What it holds to
+ * claim sits on a plate under it.
+ */
+function LandCard({
+  land,
+  score,
+  state,
+  costs,
+  open = false,
+  tag = true,
+  earn = true,
+  onClick,
+}: {
+  land: OwnedLand
+  score: number
+  state: BoostState
+  costs: Map<string, BuildingCost[]>
+  open?: boolean
+  /** The ribbon over the crown; the land's own panel says it in words. */
+  tag?: boolean
+  /** The plate under the card with what is ready to claim. */
+  earn?: boolean
+  onClick?: () => void
+}) {
+  const building = land.buildings[0]
+  const name = landBuilding(land)
+  const muted = state === 'hidden' || state === 'closed'
+  const flag = !building ? 'empty' : state === 'ok' ? null : state === 'low' ? 'low' : 'hidden'
+  const income = incomeOf(land.buildings)
+  const face = (
+    <span className={`lcard r-${(land.rarity || 'common').toLowerCase()} is-${flag ?? 'ok'}${open ? ' is-open' : ''}`}>
+      {tag && flag && <span className="lcard__tag">{LAND_TAG[flag]}</span>}
+      <span className="lcard__frame">
+        <span className="lcard__pic">
+          {/* Its own layer, so off the map greys the land and not the rim round it. */}
+          <span className="lcard__map" style={landCropStyle(land.planet, land.x, land.y, 3, 4.25)} />
+          {building ? (
+            <img className="lcard__bld" src={buildingArt(name, score, muted)} alt={buildingLabel(name, costs)} />
+          ) : (
+            <span className="lcard__plot" aria-hidden="true">
+              +
+            </span>
+          )}
+        </span>
+        {building && (
+          <span className="lcard__lv">
+            <b className="mono">{stateLabel(score, state)}</b>
+          </span>
+        )}
+        <span
+          className="lcard__planet"
+          style={{ backgroundImage: `url('${planetMapSrc(land.planet)}')` }}
+          title={`${cap(land.planet)} ${land.x}:${land.y}`}
+        />
+        <span className="lcard__name">{shortName(land.name)}</span>
+        {building && (
+          <span className="lcard__bar" style={{ '--b': Math.min(1, score / BOOST_MAX) } as React.CSSProperties}>
+            <i />
+            {LOOK_STEPS.map((t) => (
+              <s key={t} style={{ left: `${(t / BOOST_MAX) * 100}%` }} />
+            ))}
+          </span>
+        )}
+      </span>
+    </span>
+  )
+  if (!onClick) return face
+  return (
+    <button type="button" className="lcell" onClick={onClick} aria-pressed={open}>
+      {face}
+      {earn &&
+        (building ? (
+          <span className="lcard__earn mono">
+            <span className="lcard__tlm">
+              {tlm(income.tlm)}
+              <TlmIcon />
+            </span>
+            <Shards value={income.shards} />
+          </span>
+        ) : (
+          <span className="lcard__earn is-build">Build</span>
+        ))}
+    </button>
+  )
+}
+
 /* Off the map is under 0.1x, which rounds up to "0.1x" — say so instead. */
 function stateLabel(score: number, state: BoostState): string {
   return state === 'hidden' ? '<0.1×' : boostLabel(score / 10_000)
-}
-
-const BOOST_LINE: Record<Exclude<BoostState, 'ok'>, string> = {
-  low: 'Running low — boost soon',
-  hidden: 'Off the map — boost it',
-  /* Closed reads as off the map: to a player they are the same thing. */
-  closed: 'Off the map — boost it',
 }
 
 function TlmIcon() {
@@ -544,55 +647,17 @@ function DeskLands({
     ),
   ]
 
-  const tile = (land: OwnedLand) => {
-    const building = land.buildings[0]
-    const name = landBuilding(land)
-    const score = scoreOf(land)
-    const state = stateOf(land)
-    const income = incomeOf(land.buildings)
-    return (
-      <button
-        type="button"
-        className={`dlands__tile${open === land ? ' is-open' : ''}`}
-        key={landKey(land)}
-        onClick={() => setOpenKey(landKey(land))}
-      >
-        <span
-          className="dlands__map"
-          style={{ ...landTileStyle(land.planet, land.x, land.y), borderColor: rarityColor(land.rarity) }}
-        >
-          {building ? (
-            <img
-              src={buildingArt(name, score, state === 'hidden' || state === 'closed')}
-              alt={buildingLabel(name, costs)}
-            />
-          ) : (
-            <span className="dlands__plot">Empty land</span>
-          )}
-          {building && state !== 'ok' && (
-            <span className={`dlands__badge is-${state}`}>{BOOST_BADGE[state]}</span>
-          )}
-          {building && (
-            <span className={`dlands__boost mono is-${state}`}>{stateLabel(score, state)}</span>
-          )}
-        </span>
-        <span className="dlands__name">{shortName(land.name)}</span>
-        <small className="dlands__where">
-          {building ? buildingLabel(name, costs) : 'No building'} · {cap(land.planet)} {land.x}:
-          {land.y}
-        </small>
-        {building ? (
-          <span className="dlands__tlm mono">
-            {tlm(income.tlm)}
-            <TlmIcon />
-            <Shards value={income.shards} />
-          </span>
-        ) : (
-          <span className="btn btn--primary btn--sm dlands__build">Build</span>
-        )}
-      </button>
-    )
-  }
+  const tile = (land: OwnedLand) => (
+    <LandCard
+      key={landKey(land)}
+      land={land}
+      score={scoreOf(land)}
+      state={stateOf(land)}
+      costs={costs}
+      open={open === land}
+      onClick={() => setOpenKey(landKey(land))}
+    />
+  )
 
   const group = (title: string, hint: string, list: OwnedLand[]) =>
     list.length > 0 && (
@@ -601,7 +666,7 @@ function DeskLands({
           {title} · {list.length}
           <span>{hint}</span>
         </h2>
-        <div className="dlands__tiles">{list.map(tile)}</div>
+        <div className="lcards">{list.map(tile)}</div>
       </section>
     )
 
@@ -691,25 +756,7 @@ function DeskLands({
 /** Room for the land's column beside four tiles, as the page measures it. */
 const COLUMN_MIN_WIDTH = 1000
 
-/* A tile's corner badge: the phone's flag, in two words. */
-const BOOST_BADGE: Record<Exclude<BoostState, 'ok'>, string> = {
-  low: 'Running low',
-  hidden: 'Off the map',
-  closed: 'Off the map',
-}
-
-/**
- * A land's square of its planet's map at any size: the map is a grid of
- * 40 × 20 squares, so a percentage size and position pick out one square
- * however wide the tile turns out.
- */
-function landTileStyle(planet: string, x: number, y: number): React.CSSProperties {
-  return {
-    backgroundImage: `url('${planetMapSrc(planet)}')`,
-    backgroundSize: `${MAP_COLS * 100}% ${MAP_ROWS * 100}%`,
-    backgroundPosition: `${((x - 1) / (MAP_COLS - 1)) * 100}% ${((y - 1) / (MAP_ROWS - 1)) * 100}%`,
-  }
-}
+/** The planet's map is a grid of 40 × 20 squares. */
 const MAP_COLS = PLANET_MAP_W / PLANET_TILE
 const MAP_ROWS = PLANET_MAP_H / PLANET_TILE
 
@@ -758,18 +805,6 @@ export function PhoneLands({
   onBoost: (land: OwnedLand, building: Building, target: number, cost: number) => void
   onDestroy: (land: OwnedLand, building: Building) => void
 }) {
-  /*
-     Every row's shards as wide as the widest, so the TLM icons all stand in
-     one column, where the row with the most shards puts its own.
-  */
-  const listRef = useRef<HTMLDivElement>(null)
-  useLayoutEffect(() => {
-    const list = listRef.current
-    if (!list) return
-    list.style.removeProperty('--shards-w')
-    const widths = [...list.querySelectorAll<HTMLElement>('.plands__shards')].map((el) => el.offsetWidth)
-    list.style.setProperty('--shards-w', Math.max(0, ...widths) + 'px')
-  })
   const [tab, setTab] = useState<PhoneTab>('all')
   const [openKey, setOpenKey] = useState<string | null>(null)
   const open = lands.find((l) => landKey(l) === openKey) ?? null
@@ -830,84 +865,20 @@ export function PhoneLands({
         ))}
       </div>
 
-      <div className="plands__list" ref={listRef}>
+      {/* Three cards a row, as the compact fighters; a tap opens the land in the sheet. */}
+      <div className="lcards lcards--phone">
         {shown.map((land) => {
-          const building = land.buildings[0]
-          const name = landBuilding(land)
           const score = scoreOf(land)
-          const percent = score / 10_000
-          const income = incomeOf(land.buildings)
-          const state = building ? boostState(score, config) : 'ok'
-          const drop =
-            building && state === 'ok' && name !== 'tavern'
-              ? hoursToSmallerLook(score, decay)
-              : null
           return (
-            <button
-              type="button"
-              className={`plands__row${building ? '' : ' plands__row--empty'}`}
+            <LandCard
               key={landKey(land)}
+              land={land}
+              score={score}
+              state={land.buildings[0] ? boostState(score, config) : 'ok'}
+              costs={costs}
+              open={land === open}
               onClick={() => setOpenKey(landKey(land))}
-            >
-              <span
-                className="plands__thumb"
-                style={{
-                  ...landThumbStyle(land.planet, land.x, land.y, 44),
-                  borderColor: rarityColor(land.rarity),
-                }}
-              >
-                {building && (
-                  <img
-                    src={buildingArt(name, score, state === 'hidden' || state === 'closed')}
-                    alt={buildingLabel(name, costs)}
-                  />
-                )}
-              </span>
-              <span className="plands__text">
-                <strong>{shortName(land.name)}</strong>
-                <small>
-                  {state !== 'ok' ? (
-                    <span className={`plands__flag is-${state}`}>{BOOST_LINE[state]}</span>
-                  ) : drop !== null && drop < LOOK_WARNING_HOURS ? (
-                    <span
-                      className="plands__drop"
-                      aria-label={`Drops to a smaller look in about ${formatSpan(drop * 3_600_000)}`}
-                    >
-                      <img src={buildingArt(name, score)} alt="" />→
-                      <img src={buildingArt(name, score - 200_000)} alt="" />
-                      in ~{formatSpan(drop * 3_600_000)}
-                    </span>
-                  ) : (
-                    <>
-                      {cap(land.planet)} {land.x}:{land.y} ·{' '}
-                      <em style={{ color: rarityColor(land.rarity) }}>
-                        {cap(land.rarity || 'common')}
-                      </em>
-                      {!building && ' · no building'}
-                    </>
-                  )}
-                </small>
-                {building && (
-                  <span className={`plands__bar is-${state}`}>
-                    <i style={{ width: `${Math.max(1.5, Math.min(100, percent))}%` }} />
-                  </span>
-                )}
-              </span>
-              {building ? (
-                <>
-                  <span className={`plands__boost mono is-${state}`}>
-                    {stateLabel(score, state)}
-                  </span>
-                  <span className="plands__amount mono">
-                    {tlm(income.tlm)}
-                    <TlmIcon />
-                    <Shards value={income.shards} />
-                  </span>
-                </>
-              ) : (
-                <span className="btn btn--primary btn--sm plands__build">Build</span>
-              )}
-            </button>
+            />
           )
         })}
       </div>
@@ -1061,17 +1032,13 @@ function LandSheet({
   const muted = state === 'hidden' || state === 'closed'
   const tavern = name === 'tavern'
   const newLook = !tavern && boostRank(target / 10_000) !== boostRank(current / 10_000)
+  /* Hours until a dungeon or arena slips to a smaller look, by time alone. */
+  const drop = building && state === 'ok' && !tavern ? hoursToSmallerLook(current, decay) : null
 
   const head = (
     <div className="lsheet__head">
-      <span
-        className="lsheet__thumb"
-        style={{
-          ...landThumbStyle(land.planet, land.x, land.y, 84),
-          borderColor: rarityColor(land.rarity),
-        }}
-      >
-        {building && <img src={buildingArt(name, current, muted)} alt="" />}
+      <span className="lsheet__card">
+        <LandCard land={land} score={current} state={state} costs={costs} tag={false} />
       </span>
       <span className="lsheet__text">
         <small>
@@ -1087,7 +1054,17 @@ function LandSheet({
             <span className={`plands__bar is-${state}`}>
               <i style={{ width: `${Math.max(1.5, Math.min(100, current / 10_000))}%` }} />
             </span>
-            <small>Boost decays over time, faster the more it is used.</small>
+            <small>
+              {drop !== null && drop < LOOK_WARNING_HOURS ? (
+                <span className="plands__drop">
+                  <img src={buildingArt(name, current)} alt="" />→
+                  <img src={buildingArt(name, current - 200_000)} alt="" />
+                  smaller look in ~{formatSpan(drop * 3_600_000)}
+                </span>
+              ) : (
+                'Boost decays over time, faster the more it is used.'
+              )}
+            </small>
           </>
         ) : (
           <>
