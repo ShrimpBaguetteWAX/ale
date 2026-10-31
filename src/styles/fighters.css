@@ -4782,22 +4782,41 @@ h2.drost__bname {
 }
 .hold {
   --cw: 112px;
-  --ph: 216px;
+  --ph: 196px;
   position: relative;
   /* The card and the score pennant stack inside the holder, not over the sticky filter bar it scrolls under. */
   isolation: isolate;
   display: grid;
   grid-template-columns: var(--cw) minmax(0, 1fr);
   align-items: center;
+  gap: 14px;
   max-width: 600px;
   min-width: 0;
-  padding: 0;
-  border: 0;
-  background: none;
+  /*
+   * One frame round the card and its sheet: the cards' steel, gold for a
+   * fighter in the team. Nothing overlaps and no border is cut; the card
+   * stands inside it, the sheet beside it.
+   */
+  padding: 10px 12px 10px 12px;
+  border: 3px solid transparent;
+  border-radius: 16px;
+  background:
+    linear-gradient(180deg, #0f1a31, #070d1c) padding-box,
+    linear-gradient(160deg, #6d7ea3 0%, #232f4d 30%, #0c1222 55%, #2b3757 78%, #8295bb 100%) border-box;
+  box-shadow: 0 8px 18px rgb(0 0 0 / 55%);
   color: inherit;
   font: inherit;
   text-align: left;
   cursor: pointer;
+  transition: filter var(--dur-fast) var(--ease);
+}
+.hold.is-team {
+  background:
+    linear-gradient(180deg, #13203a, #08101f) padding-box,
+    linear-gradient(160deg, #fff6d6 0%, #f2c35a 25%, #8a5d14 55%, #d9a640 78%, #fff3c4 100%) border-box;
+  box-shadow:
+    0 0 22px rgb(255 200 90 / 30%),
+    0 8px 18px rgb(0 0 0 / 55%);
 }
 .hold__card {
   position: relative;
@@ -4813,40 +4832,23 @@ h2.drost__bname {
 .hold:focus-visible {
   outline: none;
 }
-.hold:focus-visible .hold__plate {
+.hold:focus-visible {
   outline: 2px solid var(--cyan);
   outline-offset: 2px;
 }
-.hold:not(.is-off):hover .hold__plate {
+.hold:not(.is-off):hover {
   filter: brightness(1.1);
 }
 
-/* The holder: the cards' steel, gold for a fighter in the team. */
+/* The sheet: no frame of its own, inside the holder's. Static, so the score pennant hangs from the holder's edge. */
 .hold__plate {
-  position: relative;
   display: grid;
   align-content: start;
   gap: 8px;
   height: var(--ph);
-  margin-left: -10px;
-  padding: 10px 14px 10px 22px;
+  min-width: 0;
+  padding: 2px 0;
   overflow: hidden;
-  border: 3px solid transparent;
-  border-left: 0;
-  border-radius: 0 14px 14px 0;
-  background:
-    linear-gradient(180deg, #0f1a31, #070d1c) padding-box,
-    linear-gradient(160deg, #6d7ea3 0%, #232f4d 30%, #0c1222 55%, #2b3757 78%, #8295bb 100%) border-box;
-  box-shadow: 0 8px 18px rgb(0 0 0 / 55%);
-  transition: filter var(--dur-fast) var(--ease);
-}
-.hold.is-team .hold__plate {
-  background:
-    linear-gradient(180deg, #13203a, #08101f) padding-box,
-    linear-gradient(160deg, #fff6d6 0%, #f2c35a 25%, #8a5d14 55%, #d9a640 78%, #fff3c4 100%) border-box;
-  box-shadow:
-    0 0 22px rgb(255 200 90 / 30%),
-    0 8px 18px rgb(0 0 0 / 55%);
 }
 
 /*
@@ -4855,7 +4857,7 @@ h2.drost__bname {
  */
 .hold__score {
   position: absolute;
-  top: 0;
+  top: -3px;
   right: 14px;
   z-index: 2;
   display: grid;
@@ -5172,6 +5174,8 @@ h2.drost__bname {
 .drost--phone .hold {
   --cw: 84px;
   --ph: 176px;
+  gap: 10px;
+  padding: 8px;
 }
 .pickdrost.drost--phone .drost__holders {
   grid-template-columns: minmax(0, 1fr);
@@ -5179,7 +5183,6 @@ h2.drost__bname {
 }
 .drost--phone .hold__plate {
   gap: 6px;
-  padding: 8px 9px 8px 17px;
 }
 .drost--phone .hold__name {
   font-size: 12.5px;
@@ -5503,4 +5506,8 @@ h2.drost__bname {
 }
 .fhover2__chip.is-worn b {
   color: #ffd98a;
+}
+/* On a phone the role keeps its name; its line is in the hover and the sheet. */
+.drost--phone .hold__role .drost__rolename > span {
+  display: none;
 }
