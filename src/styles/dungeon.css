@@ -8201,3 +8201,14 @@ button.combatcard--empty:hover {
     color: #c9a8ff;
   }
 }
+
+/* The sort's direction on the phone bar: an arrow in the icon's square. */
+.sheetbar__dir {
+  font-size: 16px;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--text-dim);
+}
+.sheetbar__dir[aria-pressed='true'] {
+  color: var(--cyan);
+}

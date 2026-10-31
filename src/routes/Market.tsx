@@ -55,7 +55,7 @@ import type { ClassTemplate } from '@/tavern/fighterStats'
 import { addAuctions, bidAuction, buyOffer, cancelAuction, cancelOffer } from '@/wharf/actions'
 import { asset, artSet } from '@/assets'
 import { CodexSheet } from '@/fighters/CodexSheet'
-import { DensitySeg, FighterCodex, HolderRow, VIEWS, figuresOf, type View } from '@/fighters/DeskRoster'
+import { DensitySeg, FilterDrop, FilterFields, FighterCodex, HolderRow, VIEWS, figuresOf, type View } from '@/fighters/DeskRoster'
 import { CompactPick, useDensity, type Density } from '@/fighters/CompactPick'
 import { EmptyState } from '@/components/EmptyState'
 
@@ -128,6 +128,8 @@ export default function Market() {
     () => (['auctions', 'offers', 'mine', 'sell'] as Tab[]).find((t) => t === params.get('tab')) ?? 'auctions',
   )
   const [sort, setSort] = useState<MarketSort>('ending')
+  /* The order turned round, by the arrow beside the sort. */
+  const [sortRev, setSortRev] = useState(false)
   const [filter, setFilter] = useState<RosterFilter>(EMPTY_FILTER)
   const [detail, setDetail] = useState<Detail>(null)
   /* A phone's Details: the codex page, in a sheet. */
@@ -232,22 +234,28 @@ export default function Market() {
 
   const liveAuctions = useMemo(
     () =>
-      sortListings(
-        (auctions ?? []).filter((a) => !hasEnded(a, now) && keep(`a${a.auction_id}`)),
-        sort,
-        now,
+      flip(
+        sortListings(
+          (auctions ?? []).filter((a) => !hasEnded(a, now) && keep(`a${a.auction_id}`)),
+          sort,
+          now,
+        ),
+        sortRev,
       ),
-    [auctions, keep, now, sort],
+    [auctions, keep, now, sort, sortRev],
   )
 
   const liveOffers = useMemo(
     () =>
-      sortListings(
-        (offers ?? []).filter((o) => !hasEnded(o, now) && keep(`o${o.offer_id}`)),
-        sort,
-        now,
+      flip(
+        sortListings(
+          (offers ?? []).filter((o) => !hasEnded(o, now) && keep(`o${o.offer_id}`)),
+          sort,
+          now,
+        ),
+        sortRev,
       ),
-    [offers, keep, now, sort],
+    [offers, keep, now, sort, sortRev],
   )
 
   const myAuctions = useMemo(
@@ -512,6 +520,15 @@ export default function Market() {
      the fifth matches everything; and the board is ordered by the market's
      own sort below, which would silently override the roster one.
   */
+  const marketSort = {
+    value: sort,
+    options: MARKET_SORTS,
+    onChange: (v: string) => setSort(v as MarketSort),
+    reversed: sortRev,
+    onFlip: () => setSortRev((r) => !r),
+  }
+  const matching = tab === 'offers' ? liveOffers.length : liveAuctions.length
+  const clearFilters = () => setFilter({ ...EMPTY_FILTER, sort: filter.sort })
   const browseTools = (
     <>
       <RosterFilters
@@ -519,7 +536,50 @@ export default function Market() {
         onChange={setFilter}
         roster={filterRoster}
         omit={['status', 'sort', 'markers']}
-        sheet={{ sort: { value: sort, options: MARKET_SORTS, onChange: (v) => setSort(v as MarketSort) } }}
+        sheet={
+          phone
+            ? {
+                sort: marketSort,
+                /* The filters in a sheet with Show N, as My Fighters has them, rather than pushing the list down. */
+                filters: (close) => (
+                  <BottomSheet
+                    title="Filters"
+                    onClose={close}
+                    foot={
+                      <>
+                        <button type="button" className="btn btn--ghost" onClick={clearFilters}>
+                          Clear all
+                        </button>
+                        <button type="button" className="btn btn--primary drost__grow" onClick={close}>
+                          Show {matching} fighter{matching === 1 ? '' : 's'}
+                        </button>
+                      </>
+                    }
+                  >
+                    <div className="drost__fsheet drost--phone">
+                      <FilterFields roster={filterRoster} filter={filter} onFilter={setFilter} />
+                    </div>
+                  </BottomSheet>
+                ),
+              }
+            : undefined
+        }
+        bar={
+          phone
+            ? undefined
+            : {
+                sort: marketSort,
+                filters: (close) => (
+                  <FilterDrop
+                    className="drost__pop--filters pickfilters"
+                    fields={{ roster: filterRoster, filter, onFilter: setFilter }}
+                    matching={matching}
+                    onClear={clearFilters}
+                    onClose={close}
+                  />
+                ),
+              }
+        }
       />
       {/* The roll-quality rules now come with `RosterFilters`, which
           is where every screen that has them wanted them. */}
@@ -894,6 +954,9 @@ export default function Market() {
   )
 }
 
+
+/* A sorted list, turned round when asked. */
+const flip = <T,>(list: T[], reversed: boolean): T[] => (reversed ? [...list].reverse() : list)
 
 /* ---------- the desktop: My Fighters' card, with the price ---------- */
 

@@ -1228,6 +1228,32 @@ export function CombatCard({
  * single choices and belong in pickers. Ability stays free text because it
  * genuinely is.
  */
+/** A screen's own order (the Market's), with the direction flipped by the arrow beside it. */
+export interface ScreenSort {
+  value: string
+  options: { value: string; label: string }[]
+  onChange: (value: string) => void
+  /** Reversed, and the arrow that reverses it; left out where the order has one way only. */
+  reversed?: boolean
+  onFlip?: () => void
+}
+
+/* The sort's direction, the arrow My Fighters has beside its sort: every sorted list can turn round. */
+function SortFlip({ asc, onFlip, className = 'drost__dir' }: { asc: boolean; onFlip: () => void; className?: string }) {
+  return (
+    <button
+      type="button"
+      className={className}
+      onClick={onFlip}
+      title={asc ? 'Reversed: tap for the usual order' : 'Tap to reverse the order'}
+      aria-label={asc ? 'Order reversed' : 'Reverse the order'}
+      aria-pressed={asc}
+    >
+      {asc ? '↑' : '↓'}
+    </button>
+  )
+}
+
 /** The sort's name as the toolbar wears it. */
 function sortLabelOf(value: string): string {
   return [...VERSUS_SORTS, ...SORTS].find((o) => o.value === value)?.label ?? 'Sort'
@@ -1309,7 +1335,7 @@ export function RosterFilters({
   sheet?: {
     density?: PickDensity
     onDensity?: (density: PickDensity) => void
-    sort?: { value: string; options: { value: string; label: string }[]; onChange: (value: string) => void }
+    sort?: ScreenSort
     /** The filter panel itself, in place of the old fields when Filter is open; as `bar.filters`. */
     filters?: (close: () => void) => ReactNode
     /** What the full cards show (Default, Stats, Combat, Abilities): a line of the pinned bar, so it never scrolls away. */
@@ -1324,6 +1350,8 @@ export function RosterFilters({
   bar?: {
     lead?: ReactNode
     tail?: ReactNode
+    /** A screen that orders by its own sorts (the Market), in place of the roster's. */
+    sort?: ScreenSort
     /**
      * The filter panel itself, dropped over the cards when Filters is open —
      * My Fighters' panel, handed in by the screen, which knows the count and
@@ -1455,6 +1483,9 @@ export function RosterFilters({
             </select>
           </label>
         )}
+        {!omit.includes('sort') && (
+          <SortFlip className="sheetbar__icon sheetbar__dir" asc={!!filter.sortAsc} onFlip={() => set({ sortAsc: !filter.sortAsc })} />
+        )}
         {sheet.sort && (
           <label className="sheetbar__icon" title="Order">
             <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -1468,6 +1499,9 @@ export function RosterFilters({
               ))}
             </select>
           </label>
+        )}
+        {sheet.sort?.onFlip && (
+          <SortFlip className="sheetbar__icon sheetbar__dir" asc={!!sheet.sort.reversed} onFlip={sheet.sort.onFlip} />
         )}
         {sheet.density && sheet.onDensity && (
         <button
@@ -1546,6 +1580,26 @@ export function RosterFilters({
             </select>
           </label>
         )}
+        {!omit.includes('sort') && <SortFlip asc={!!filter.sortAsc} onFlip={() => set({ sortAsc: !filter.sortAsc })} />}
+        {bar.sort && (
+          <label className="drost__tool pickbar__sort">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M7 4v16M3 16l4 4 4-4M17 20V4M13 8l4-4 4 4" />
+            </svg>
+            <small>Sort</small> {bar.sort.options.find((o) => o.value === bar.sort!.value)?.label}
+            <span className="pickbar__caret" aria-hidden="true">
+              ▾
+            </span>
+            <select aria-label="Sort by" value={bar.sort.value} onChange={(e) => bar.sort!.onChange(e.target.value)}>
+              {bar.sort.options.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
+        {bar.sort?.onFlip && <SortFlip asc={!!bar.sort.reversed} onFlip={bar.sort.onFlip} />}
         {bar.tail}
       </div>
     )}

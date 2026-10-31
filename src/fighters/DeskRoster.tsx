@@ -2645,8 +2645,9 @@ export interface FilterFieldsProps {
   onFilter: (filter: RosterFilter) => void
   /** The classes to choose from; the roster's own when not given. */
   classes?: string[]
-  atLevelOne: boolean
-  onAtLevelOne: (on: boolean) => void
+  /** Compare at level 1; left out where the screen cannot (the Market). */
+  atLevelOne?: boolean
+  onAtLevelOne?: (on: boolean) => void
   /** How many could level now, for the "ready to level" switch; a screen that does not level leaves it out. */
   readyToLevel?: number
   /** What a fight adds: floors against the team on the other side, under "Against this team". */
@@ -2766,6 +2767,7 @@ export function FilterFields(p: FilterFieldsProps) {
             <div className="drost__vfloors">{p.versus}</div>
           </div>
         )}
+        {(p.onAtLevelOne || p.readyToLevel !== undefined) && (
         <div>
           <span className="drost__fhead">Roster</span>
           {p.readyToLevel !== undefined && (
@@ -2782,6 +2784,7 @@ export function FilterFields(p: FilterFieldsProps) {
               />
             </label>
           )}
+          {p.onAtLevelOne && (
           <label className="drost__sw">
             <span>
               Compare at level 1
@@ -2790,11 +2793,13 @@ export function FilterFields(p: FilterFieldsProps) {
             <input
               type="checkbox"
               className="drost__switch"
-              checked={p.atLevelOne}
-              onChange={(e) => p.onAtLevelOne(e.target.checked)}
+              checked={!!p.atLevelOne}
+              onChange={(e) => p.onAtLevelOne!(e.target.checked)}
             />
           </label>
+          )}
         </div>
+        )}
       </div>
 
       <div className="drost__fcol">
