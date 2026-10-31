@@ -91,6 +91,7 @@ import { readableError } from '@/wharf/errors'
 import { asset, artSet } from '@/assets'
 import { usePhone } from '@/components/usePhone'
 import { useSwipeToClose } from '@/components/useSwipeToClose'
+import { useModal } from '@/components/useModal'
 import { useConfig, useLazyConfig } from '@/state/useConfig'
 import { useChainQuery } from '@/chain/useChainQuery'
 import { confirmThen } from '@/chain/confirm'
@@ -241,9 +242,11 @@ export default function Dungeon() {
      fighter; 'nft' is the crew-and-weapon sixth.
   */
   const [focus, setFocus] = useState<number | 'nft' | null>(null)
+  const phone = usePhone()
   /* Scrolled to from the empty sixth slot, which is two panels above it. */
   /* And from the empty fighter slots, which are three panels above this. */
-  const picker = useRef<HTMLElement>(null)
+  /* On a phone it is a sheet: Escape closes it and focus stays inside while open. */
+  const picker = useModal<HTMLElement>(() => setSheet(false), phone && sheet)
   /* The phone's sheet closes on a swipe down from its head, too. */
   const { grip: sheetGrip } = useSwipeToClose(() => setSheet(false), picker)
   const [filter, setFilter] = useState<RosterFilter>(EMPTY_FILTER)
@@ -524,7 +527,6 @@ export default function Dungeon() {
      line-up reads best on the line that names it. A phone header has no
      spare width — the totals already wrap — so there it goes under the row.
   */
-  const phone = usePhone()
   /* The desktop matchup's look, medallions or cards: see matchupStyle. */
   const hud = useMatchupHud()
 
@@ -1425,6 +1427,9 @@ export default function Dungeon() {
           className={`panel picker${phone ? ' picker--sheet' : ''}${phone && sheet ? ' picker--open' : ''}`}
           ref={picker}
           aria-hidden={phone && !sheet ? true : undefined}
+          role={phone && sheet ? 'dialog' : undefined}
+          aria-modal={phone && sheet ? true : undefined}
+          aria-label={phone && sheet ? 'Pick your team' : undefined}
         >
           {phone && (
             <div className="picker__sheethead" {...sheetGrip}>

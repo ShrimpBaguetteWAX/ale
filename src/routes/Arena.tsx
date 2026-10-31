@@ -87,6 +87,7 @@ import { asset, artSet } from '@/assets'
 import { Loading } from '@/components/Loading'
 import { usePhone } from '@/components/usePhone'
 import { useSwipeToClose } from '@/components/useSwipeToClose'
+import { useModal } from '@/components/useModal'
 import { useConfig, useLazyConfig } from '@/state/useConfig'
 import { useChainQuery } from '@/chain/useChainQuery'
 
@@ -239,8 +240,10 @@ export default function Arena() {
      'nft' is the crew-and-weapon sixth.
   */
   const [focus, setFocus] = useState<number | 'nft' | null>(null)
-  /* Scrolled to from the empty fighter slots, three panels above it. */
-  const picker = useRef<HTMLElement>(null)
+  const phone = usePhone()
+  /* Scrolled to from the empty fighter slots, three panels above it. On a
+     phone it is a sheet: Escape closes it and focus stays inside while open. */
+  const picker = useModal<HTMLElement>(() => setSheet(false), phone && sheet)
   /* The phone's sheet closes on a swipe down from its head, too. */
   const { grip: sheetGrip } = useSwipeToClose(() => setSheet(false), picker)
   const [filter, setFilter] = useState<RosterFilter>(EMPTY_FILTER)
@@ -512,7 +515,6 @@ export default function Arena() {
      they are taken out of the pool so none is placed twice, and the picks
      fill the slots left over.
   */
-  const phone = usePhone()
   /* The desktop matchup's look, medallions or cards: see matchupStyle. */
   const hud = useMatchupHud()
 
@@ -1363,6 +1365,9 @@ export default function Arena() {
           className={`panel picker${phone ? ' picker--sheet' : ''}${phone && sheet ? ' picker--open' : ''}`}
           ref={picker}
           aria-hidden={phone && !sheet ? true : undefined}
+          role={phone && sheet ? 'dialog' : undefined}
+          aria-modal={phone && sheet ? true : undefined}
+          aria-label={phone && sheet ? 'Pick your team' : undefined}
         >
           {phone && (
             <div className="picker__sheethead" {...sheetGrip}>

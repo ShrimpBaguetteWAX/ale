@@ -2,6 +2,7 @@ import { createContext, Fragment, useContext, useEffect, useMemo, useRef, useSta
 import { fetchSchemaTemplates, type CardTemplate } from '@/chain/atomic'
 import type { RosterFighter } from '@/dungeon/types'
 import { BottomSheet } from '@/components/BottomSheet'
+import { useModal } from '@/components/useModal'
 import { GameImg } from '@/components/GameImg'
 import { PlayerAvatar } from '@/components/PlayerAvatar'
 import { WeatherPanel } from '@/fight/setup'
@@ -441,9 +442,15 @@ function Sheet({ title, onClose, children }: { title: string; onClose: () => voi
       </BottomSheet>
     )
   }
+  return <DeskWindow title={title} onClose={onClose}>{children}</DeskWindow>
+}
+
+/* The desktop's window: Escape closes it, focus stays inside, the page behind holds still. */
+function DeskWindow({ title, onClose, children }: { title: string; onClose: () => void; children: ReactNode }) {
+  const panel = useModal(onClose)
   return (
     <div className="ptour__modal" role="dialog" aria-modal="true" aria-label={title} onClick={onClose}>
-      <div className="ptour__modalpanel" onClick={(e) => e.stopPropagation()}>
+      <div className="ptour__modalpanel" ref={panel} onClick={(e) => e.stopPropagation()}>
         <header className="ptour__modalhead">
           <b>{title}</b>
           <button type="button" onClick={onClose} aria-label="Close">

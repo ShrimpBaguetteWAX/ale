@@ -41,8 +41,13 @@ const FOCUSABLE = [
  */
 const open: object[] = []
 
-export function useModal(onClose: () => void) {
-  const panel = useRef<HTMLDivElement>(null)
+/**
+ * `active` is for a sheet that stays mounted and slides in and out (the
+ * Dungeon's and the Arena's team pickers): the overlay's behaviour runs only
+ * while it is open.
+ */
+export function useModal<T extends HTMLElement = HTMLDivElement>(onClose: () => void, active = true) {
+  const panel = useRef<T>(null)
 
   /*
      The close callback is read through a ref so the effect below can depend
@@ -62,6 +67,7 @@ export function useModal(onClose: () => void) {
   })
 
   useEffect(() => {
+    if (!active) return
     const opener = document.activeElement as HTMLElement | null
     const me = {}
     open.push(me)
@@ -120,9 +126,9 @@ export function useModal(onClose: () => void) {
       /* Back where it came from, if that is still on the page. */
       if (opener && document.contains(opener)) opener.focus?.()
     }
-    /* Mount and unmount only — see the ref above. */
+    /* Opening and closing only — see the ref above. */
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [active])
 
   return panel
 }

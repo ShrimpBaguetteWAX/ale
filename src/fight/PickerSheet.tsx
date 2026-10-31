@@ -1,9 +1,10 @@
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useState } from 'react'
 import type { CardTemplate } from '@/chain/atomic'
 import type { NftValue } from '@/dungeon/nftFighter'
 import { EMPTY_FILTER, type RosterFilter } from '@/dungeon/filters'
 import { TEAM_SIZE, type RosterFighter } from '@/dungeon/types'
 import { useSwipeToClose } from '@/components/useSwipeToClose'
+import { useModal } from '@/components/useModal'
 import {
   CardGrid,
   FighterGrid,
@@ -81,7 +82,8 @@ export function PickerSheet({
       setShownCount((c) => (c && c.shown === shown && c.total === total ? c : { shown, total })),
     [],
   )
-  const sheet = useRef<HTMLElement>(null)
+  /* Escape closes it and focus stays inside while it is open. */
+  const sheet = useModal<HTMLElement>(onClose, open && !inline)
   const { grip } = useSwipeToClose(onClose, sheet)
   const picked = teamIds.length
 
@@ -92,6 +94,9 @@ export function PickerSheet({
         className={inline ? 'panel picker picker--inline' : `panel picker picker--sheet${open ? ' picker--open' : ''}`}
         ref={sheet}
         aria-hidden={open || inline ? undefined : true}
+        role={open && !inline ? 'dialog' : undefined}
+        aria-modal={open && !inline ? true : undefined}
+        aria-label={open && !inline ? 'Pick your team' : undefined}
       >
         {inline ? (
           <div className="tabs" role="tablist">
