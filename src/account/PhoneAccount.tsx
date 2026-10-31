@@ -250,7 +250,7 @@ function AvatarTracks({
   const [openStat, setOpenStat] = useState<string | null>(null)
   const open = tracks.find((t) => t.stat === openStat)
 
-  if (tracks.length === 0) return <p className="rsheet__hint">Reading the avatars…</p>
+  if (tracks.length === 0) return <p className="rsheet__hint">Loading the avatars…</p>
 
   return (
     <>

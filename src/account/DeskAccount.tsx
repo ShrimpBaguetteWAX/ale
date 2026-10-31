@@ -329,7 +329,7 @@ function DeskTracks({
   const ready = claimableAvatars(board)
   const [everything, setEverything] = useState(false)
 
-  if (tracks.length === 0) return <p className="rsheet__hint">Reading the avatars…</p>
+  if (tracks.length === 0) return <p className="rsheet__hint">Loading the avatars…</p>
 
   const shown = everything ? tracks : tracks.slice(0, TRACKS_FIRST)
   const readyTracks = tracks.filter((t) => t.ready > 0)

@@ -251,7 +251,7 @@ function PoolPage({
 
   let body: ReactNode
   if (mode === 'inventory' && loadingInventory) {
-    body = <p className="pfarm__note">Reading your wallet…</p>
+    body = <p className="pfarm__note">Loading your wallet…</p>
   } else if (stacks.length === 0) {
     body = (
       <p className="pfarm__note">

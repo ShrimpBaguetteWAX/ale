@@ -105,7 +105,7 @@ export function PhoneCandle({
       )}
 
       {loading ? (
-        <p className="pcandle__note">Reading the missions…</p>
+        <p className="pcandle__note">Loading the missions…</p>
       ) : all.length === 0 || !offer ? (
         <p className="pcandle__note">
           No mission is running.

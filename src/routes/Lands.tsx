@@ -50,6 +50,7 @@ import { ActionBanner } from '@/components/ActionBanner'
 import { asset } from '@/assets'
 import { usePhone } from '@/components/usePhone'
 import { BottomSheet } from '@/components/BottomSheet'
+import { EmptyState } from '@/components/EmptyState'
 
 /**
  * My Lands.
@@ -337,10 +338,15 @@ export default function Lands() {
           ))}
         </div>
       ) : lands.length === 0 ? (
-        <p className="lands__empty">
-          You do not own any land yet. Land is an Alien Worlds NFT — buy a plot
-          on the Alien Worlds market and it will appear here, ready to build on.
-        </p>
+        <EmptyState
+          action={
+            <a className="btn btn--primary btn--sm" href="https://wax.atomichub.io/market?collection_name=alien.worlds&schema_name=land.worlds&order=asc&sort=price" target="_blank" rel="noreferrer">
+              Land on the Alien Worlds market ↗
+            </a>
+          }
+        >
+          You do not own any land yet. Land is an Alien Worlds NFT: buy a plot and it appears here, ready to build on.
+        </EmptyState>
       ) : phone ? (
         <PhoneLands
           lands={lands}

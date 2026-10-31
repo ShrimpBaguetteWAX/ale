@@ -78,6 +78,8 @@ import { GameImg } from '@/components/GameImg'
 import { RosterCardFace, placeRibbon, type Ribbon } from '@/fighters/RosterCard'
 import { DensitySeg, HolderRow, ViewSeg, figuresOf, type View } from '@/fighters/DeskRoster'
 import { portraitCut } from '@/fighters/portraitFrame'
+import { EmptyState } from '@/components/EmptyState'
+import { Link } from 'react-router-dom'
 
 /**
  * The parts of a fight setup screen that the dungeon and the arena share.
@@ -2176,12 +2178,18 @@ export function FighterGrid({
   }
 
   if (shown.length === 0) {
-    return (
-      <p className="faint">
-        {roster.length === 0
-          ? 'No fighters in this wallet yet. Hire one at a tavern.'
-          : 'No fighters match those filters.'}
-      </p>
+    return roster.length === 0 ? (
+      <EmptyState
+        action={
+          <Link className="btn btn--primary btn--sm" to="/map">
+            Find a tavern on the map
+          </Link>
+        }
+      >
+        No fighters in this wallet yet. Recruits are hired at a tavern.
+      </EmptyState>
+    ) : (
+      <EmptyState>No fighters match those filters.</EmptyState>
     )
   }
 

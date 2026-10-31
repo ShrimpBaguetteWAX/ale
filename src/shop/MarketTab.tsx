@@ -447,7 +447,7 @@ function Details({ card, game, bag }: { card: MarketCard; game: Game; bag?: BagT
             </div>
           </div>
         ) : (
-          <p className="faint">Reading your equipped tools…</p>
+          <p className="faint">Loading your equipped tools…</p>
         )}
         <p className="amk__note">
           Equip up to three tools under Rewards. Their TLM and shard power set the Reward Power every
@@ -530,7 +530,7 @@ function Gain({ gain }: { gain: ReturnType<typeof toolGain> }) {
 
 /** What the card does here, in one line. */
 function Benefits({ card, game, bag }: { card: MarketCard; game: Game | undefined; bag?: BagTool[] }) {
-  if (!game) return <div className="amk__ben faint">Reading what it does…</div>
+  if (!game) return <div className="amk__ben faint">Loading what it does…</div>
   const farm = weightOf(card, game.weights)
   const farming = farm ? (
     <span className="amk__farm">Farming {formatNumber(farm)}/day</span>
@@ -652,7 +652,7 @@ function cardFigures(
   game: Game | undefined,
   bag: BagTool[] | undefined,
 ): { tiles: ShowcaseTile[]; line?: React.ReactNode } {
-  if (!game) return { tiles: [], line: <span className="faint">Reading what it does…</span> }
+  if (!game) return { tiles: [], line: <span className="faint">Loading what it does…</span> }
   const farm = weightOf(card, game.weights)
   const farmTile: ShowcaseTile[] = farm ? [{ label: 'Farming', value: `${formatNumber(farm)}/day` }] : []
   if (card.schema === 'tool.worlds') {

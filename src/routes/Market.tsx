@@ -57,6 +57,7 @@ import { asset, artSet } from '@/assets'
 import { CodexSheet } from '@/fighters/CodexSheet'
 import { DensitySeg, FighterCodex, HolderRow, VIEWS, figuresOf, type View } from '@/fighters/DeskRoster'
 import { CompactPick, useDensity, type Density } from '@/fighters/CompactPick'
+import { EmptyState } from '@/components/EmptyState'
 
 /**
  * The fighter market.
@@ -615,12 +616,15 @@ export default function Market() {
                       {[]}
                     </PhoneRows>
                   ) : board.length === 0 ? (
-                    <div className="mrows__empty">
-                      <p className="faint">Nothing of yours is on the market.</p>
-                      <button type="button" className="btn btn--ghost btn--sm" onClick={() => setTab('sell')}>
-                        Sell a fighter
-                      </button>
-                    </div>
+                    <EmptyState
+                      action={
+                        <button type="button" className="btn btn--primary btn--sm" onClick={() => setTab('sell')}>
+                          Sell a fighter
+                        </button>
+                      }
+                    >
+                      Nothing of yours is on the market.
+                    </EmptyState>
                   ) : (
                     /* Mine in the phone's sections, by where each listing stands. */
                     (
@@ -1214,12 +1218,15 @@ function PhoneMine({
 }) {
   if (bids.length + outbid.length + auctions.length + offers.length === 0) {
     return (
-      <div className="mrows__empty">
-        <p className="faint">Nothing of yours is on the market.</p>
-        <button type="button" className="btn btn--ghost btn--sm" onClick={onSell}>
-          Sell a fighter
-        </button>
-      </div>
+      <EmptyState
+        action={
+          <button type="button" className="btn btn--primary btn--sm" onClick={onSell}>
+            Sell a fighter
+          </button>
+        }
+      >
+        Nothing of yours is on the market.
+      </EmptyState>
     )
   }
   const row = (
@@ -1730,7 +1737,7 @@ function PhoneRows({ loading, empty, children }: { loading: boolean; empty: stri
       </div>
     )
   }
-  if (children.length === 0) return <p className="faint listinggrid__empty">{empty}</p>
+  if (children.length === 0) return <EmptyState>{empty}</EmptyState>
   return <div className={rowClass}>{children}</div>
 }
 

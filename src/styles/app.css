@@ -1051,6 +1051,31 @@
   }
 }
 
+/* The one empty state (EmptyState): why there is nothing here, and the next step. */
+.emptystate {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  padding: 28px 18px;
+  border-radius: 14px;
+  background: rgb(8 14 28 / 55%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 10%);
+  text-align: center;
+}
+.emptystate > p {
+  margin: 0;
+  max-width: 46ch;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--text-dim);
+}
+.emptystate__acts {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
 /* ---------- Stat lines ---------- */
 
 .statline {

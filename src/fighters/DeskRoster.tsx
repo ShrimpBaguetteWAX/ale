@@ -79,6 +79,7 @@ import { RosterCardFace, placeRibbon, type Ribbon } from '@/fighters/RosterCard'
 import { elementRim } from '@/fight/GildedCards'
 import { FighterPeek } from '@/fighters/CompactPick'
 import type { PanelFighter, PanelStat } from '@/components/FighterPanel'
+import { EmptyState } from '@/components/EmptyState'
 
 /**
  * My Fighters on a desktop: the Market's rows, with payday and age.
@@ -816,9 +817,15 @@ export function DeskRoster(p: DeskRosterProps) {
           ))}
         </div>
       ) : p.roster.length === 0 ? (
-        <p className="roster__empty">
-          You have no fighters yet. Recruits are hired at a tavern — stand on one on the map to reveal and hire.
-        </p>
+        <EmptyState
+          action={
+            <Link className="btn btn--primary btn--sm" to="/map">
+              Find a tavern on the map
+            </Link>
+          }
+        >
+          You have no fighters yet. Recruits are hired at a tavern: stand on one on the map to reveal it and hire.
+        </EmptyState>
       ) : (
         <div className={`drost__main${wide ? '' : ' is-narrow'}${density === 'compact' ? ' is-compact' : ''}`}>
           {/*

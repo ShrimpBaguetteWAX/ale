@@ -66,7 +66,7 @@ export function StatBoard({
             <small>
               {ranks
                 ? `${formatNumber(ranks.length)} player${ranks.length === 1 ? ' has' : 's have'} recorded this`
-                : 'Reading every player…'}
+                : 'Loading every player…'}
             </small>
           </span>
           <button type="button" className="dboard__close" aria-label="Close" onClick={onClose}>
