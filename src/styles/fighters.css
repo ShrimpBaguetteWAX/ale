@@ -4778,26 +4778,28 @@ h2.drost__bname {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(min(100%, 440px), 1fr));
   gap: 16px 20px;
-  padding-top: 26px;
+  /* Room for the score pennant over the first row's frame; the ribbon is inside the card now. */
+  padding-top: 6px;
 }
 .hold {
-  --cw: 112px;
-  --ph: 196px;
+  --cw: 134px;
+  --ph: 216px;
   position: relative;
   /* The card and the score pennant stack inside the holder, not over the sticky filter bar it scrolls under. */
   isolation: isolate;
   display: grid;
   grid-template-columns: var(--cw) minmax(0, 1fr);
-  align-items: center;
+  align-items: stretch;
   gap: 14px;
   max-width: 600px;
   min-width: 0;
   /*
    * One frame round the card and its sheet: the cards' steel, gold for a
-   * fighter in the team. Nothing overlaps and no border is cut; the card
-   * stands inside it, the sheet beside it.
+   * fighter in the team. The card is the frame's left wing - the full
+   * height, flush with the frame's left edge and sharing its corners, with
+   * no steel of its own - and the sheet is printed on the rest.
    */
-  padding: 10px 12px 10px 12px;
+  padding: 0 12px 0 0;
   border: 3px solid transparent;
   border-radius: 16px;
   background:
@@ -4822,6 +4824,37 @@ h2.drost__bname {
   position: relative;
   z-index: 2;
   width: var(--cw);
+  align-self: stretch;
+}
+/* The card without a frame of its own: the picture to the holder's edge, its inner corners the holder's. */
+.hold__card .gcard,
+.drost:not(.drost--phone) .hold__card .gcard {
+  height: 100%;
+  margin-top: 0;
+}
+.hold__card .gcard__frame {
+  height: 100%;
+  aspect-ratio: auto;
+  padding: 0;
+  border-radius: 13px 0 0 13px;
+  background: none;
+  box-shadow: inset -1px 0 0 rgb(255 255 255 / 12%);
+}
+.rocard.hold__card .gcard__frame {
+  background: none;
+  box-shadow: inset -1px 0 0 rgb(255 255 255 / 12%);
+  animation: none;
+}
+.hold__card .gcard__frame::before {
+  display: none;
+}
+.hold__card .gcard__pic {
+  border-radius: 13px 0 0 13px;
+}
+/* The ribbon inside the card, above the name plate, clear of the level and the element. */
+.hold__card .gcard__tag {
+  top: auto;
+  bottom: calc(var(--u) * 3.5);
 }
 .hold.is-off {
   cursor: not-allowed;
@@ -4847,7 +4880,7 @@ h2.drost__bname {
   gap: 8px;
   height: var(--ph);
   min-width: 0;
-  padding: 2px 0;
+  padding: 12px 0 10px;
   overflow: hidden;
 }
 
@@ -5172,10 +5205,10 @@ h2.drost__bname {
 
 /* A phone: one holder per line, the card a size down, the strips without their spread. */
 .drost--phone .hold {
-  --cw: 84px;
-  --ph: 176px;
+  --cw: 104px;
+  --ph: 192px;
   gap: 10px;
-  padding: 8px;
+  padding: 0 8px 0 0;
 }
 .pickdrost.drost--phone .drost__holders {
   grid-template-columns: minmax(0, 1fr);
@@ -5183,6 +5216,7 @@ h2.drost__bname {
 }
 .drost--phone .hold__plate {
   gap: 6px;
+  padding: 9px 0 8px;
 }
 .drost--phone .hold__name {
   font-size: 12.5px;
