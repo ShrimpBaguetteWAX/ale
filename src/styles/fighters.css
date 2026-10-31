@@ -5746,7 +5746,8 @@ h2.drost__bname {
   align-content: start;
   gap: 6px;
 }
-.cpick > .rocard {
+.cpick > .rocard,
+.fpeek > .rocard {
   width: 100%;
 }
 .cpick > .rocard.is-dim {
@@ -5770,4 +5771,20 @@ h2.drost__bname {
 .cpick__below img {
   width: 12px;
   height: 12px;
+}
+
+/* The way to the Market's Sell tab, at the end of the roster's modes, drawn as one of them. */
+.drost__seg .drost__seglink {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 0 13px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: var(--fw-bold);
+  color: var(--text-faint);
+  text-decoration: none;
+}
+.drost__seg .drost__seglink:hover {
+  color: var(--white);
 }

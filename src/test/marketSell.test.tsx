@@ -147,7 +147,7 @@ describe('the sell tab', () => {
     fireEvent.click(listBtn(container))
 
     expect(calls).toHaveLength(1)
-    expect(calls[0][0]).toBe(wanted.fighter_id)
+    expect(calls[0][0]).toEqual([wanted.fighter_id])
     expect(calls[0][1]).toBe(10)
     expect(calls[0][2]).toBe(true)
   })

@@ -2400,3 +2400,14 @@ i.mrow__arrow {
   font-size: 11.5px;
   color: var(--text-dim);
 }
+
+/* Several ticked: the terms for all of them above the list on a phone; Clear beside the deal's heading on a desktop. */
+.selltab__many {
+  margin-bottom: 12px;
+  border-radius: 14px;
+  box-shadow: inset 0 0 0 1px rgb(0 186 255 / 45%);
+}
+.selltab__clear {
+  justify-self: start;
+  font-size: 12px;
+}

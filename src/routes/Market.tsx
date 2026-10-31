@@ -12,6 +12,8 @@ import {
 import {
   MARKET_SORTS,
   canBid,
+  MAX_BULK_LISTINGS,
+  bulkListPlan,
   canBuy,
   canCancelAuction,
   canCancelOffer,
@@ -49,7 +51,7 @@ import {
   type Detail,
 } from '@/fight/setup'
 import type { ClassTemplate } from '@/tavern/fighterStats'
-import { addAuction, bidAuction, buyOffer, cancelAuction, cancelOffer } from '@/wharf/actions'
+import { addAuctions, bidAuction, buyOffer, cancelAuction, cancelOffer } from '@/wharf/actions'
 import { asset, artSet } from '@/assets'
 import { DensitySeg, FighterCodex, HolderRow, VIEWS, figuresOf, type View } from '@/fighters/DeskRoster'
 import { CompactPick, useDensity, type Density } from '@/fighters/CompactPick'
@@ -649,17 +651,20 @@ export default function Market() {
                   template: classes.get(f.classname),
                 })
               }
-              onList={(fighterId, startPrice, keep_) =>
+              initialPick={Number(params.get('fighter')) || null}
+              onList={(fighterIds, startPrice, keep_) =>
                 void run(
                   'list',
                   () =>
-                    addAuction(session!, {
-                      fighterId,
+                    addAuctions(session!, {
+                      fighterIds,
                       startPrice,
                       keepAfterAuction: keep_,
                     }),
-                  'Listed. It runs for the next two days.',
-                  opts('addAuction'),
+                  fighterIds.length === 1
+                    ? 'Listed. It runs for the next two days.'
+                    : `Listed ${fighterIds.length} fighters at ${startPrice} gems.`,
+                  opts(fighterIds.length === 1 ? 'addAuction' : 'addAuctions'),
                 )
               }
             />
@@ -840,11 +845,14 @@ function OwnCard({
   picked,
   onPick,
   cue = 'Sell ›',
+  tick,
 }: {
   f: RosterFighter
   picked: boolean
   onPick: () => void
   cue?: string
+  /** The Sell tab's tick, to list several at once. */
+  tick?: React.ReactNode
 }) {
   const { classes, fighters, levelMod, ageDecay } = useConfig()
   const view = useContext(CardView)
@@ -856,7 +864,7 @@ function OwnCard({
   )
   return (
     density === 'compact' ? (
-      <CompactPick f={f} picked={picked} onClick={onPick} below={<span className="mrow__cue">{cue}</span>} />
+      <CompactPick f={f} picked={picked} onClick={onPick} tick={tick} below={<span className="mrow__cue">{cue}</span>} />
     ) : (
     <HolderRow
       f={f}
@@ -867,6 +875,7 @@ function OwnCard({
       blocked={false}
       picked={picked}
       onClick={onPick}
+      tick={tick}
       aside={<span className="mrow__cue">{cue}</span>}
     />
     )
@@ -1817,6 +1826,7 @@ export function SellTab({
   busy,
   onInspect,
   onList,
+  initialPick = null,
 }: {
   sellable: RosterFighter[]
   /* The class bands, so the roll-quality rules have something to grade. */
@@ -1831,10 +1841,43 @@ export function SellTab({
   onInspect: (fighter: RosterFighter) => void
   /** The ascension that frees a locked ability, for the desktop's fighter. */
   unlockLevel?: number
-  onList: (fighterId: number, startPrice: number, keep: boolean) => void
+  /** One fighter, or several ticked at once (up to the market's limit). */
+  onList: (fighterIds: number[], startPrice: number, keep: boolean) => void
+  /** The fighter My Fighters sent here to be listed. */
+  initialPick?: number | null
 }) {
   const minStart = Number(config?.gems_min_start_bid ?? 0)
-  const [pickedId, setPickedId] = useState<number | null>(null)
+  const [pickedId, setPickedId] = useState<number | null>(initialPick)
+  /*
+     Several at once: ticked fighters are listed together at one price, as My
+     Fighters' "Sell on market" did before listing moved here. Up to the
+     market's limit; the ticks clear as the listings land.
+  */
+  const [ticked, setTicked] = useState<number[]>([])
+  const toggleTick = (id: number) =>
+    setTicked((t) => (t.includes(id) ? t.filter((x) => x !== id) : t.length >= MAX_BULK_LISTINGS ? t : [...t, id]))
+  useEffect(() => {
+    setTicked((t) => {
+      const still = t.filter((id) => sellable.some((f) => f.fighter_id === id))
+      return still.length === t.length ? t : still
+    })
+  }, [sellable])
+  const tickFor = (f: RosterFighter) => {
+    const on = ticked.includes(f.fighter_id)
+    return (
+      <span
+        className={`drost__tick is-hit${on ? ' is-on' : ''}`}
+        role="checkbox"
+        aria-checked={on}
+        aria-label={on ? 'Take out of the listing' : 'Add to the listing'}
+        title={on ? 'Take out of the listing' : `Tick up to ${MAX_BULK_LISTINGS} to list together`}
+        onClick={(e) => {
+          e.stopPropagation()
+          toggleTick(f.fighter_id)
+        }}
+      />
+    )
+  }
 
   /*
      Its own filter, not the board’s.
@@ -1892,14 +1935,16 @@ export function SellTab({
   const terms = (f: RosterFighter, details?: () => void) => {
     /* Asked of the fighter these terms are for: on a desktop that is the
        one on show, which is the first before anything is clicked. */
-    const gate = canList(f, price, player!, config)
+    const many = ticked.length > 0
+    const group = sellable.filter((x) => ticked.includes(x.fighter_id))
+    const gate = many ? bulkListPlan(group, price, player!, config).gate : canList(f, price, player!, config)
     const list = (
       <button
         type="button"
         className={`btn btn--primary${details ? ' btn--sm' : ' mdeal__go'}`}
         onClick={() => {
-          setSelling(true)
-          onList(f.fighter_id, price, keep)
+          setSelling(!many)
+          onList(many ? group.map((x) => x.fighter_id) : [f.fighter_id], price, keep)
         }}
         disabled={busy || !gate.ok}
         title={gate.reason}
@@ -1907,8 +1952,8 @@ export function SellTab({
         {busy && <span className="spinner" />}
         {gate.ok ? (
           <span className="msell__go">
-            List for {price}
-            {gemIcon}· costs {listFee}
+            {many ? `List ${group.length} for ${price}` : `List for ${price}`}
+            {gemIcon}· costs {listFee * (many ? group.length : 1)}
             {gemIcon}
           </span>
         ) : (
@@ -2018,6 +2063,14 @@ export function SellTab({
         ) : (
           <>
             {filters}
+            {ticked.length > 0 && (
+              <div className="mcard__terms selltab__many">
+                <span className="msell__cap">
+                  List {ticked.length} together · up to {MAX_BULK_LISTINGS}
+                </span>
+                {terms(sellable.find((x) => ticked.includes(x.fighter_id))!)}
+              </div>
+            )}
             {shown.length === 0 ? (
               <p className="faint">No fighter you can sell matches these filters.</p>
             ) : (
@@ -2031,6 +2084,7 @@ export function SellTab({
                         picked={open}
                         cue={open ? 'Close' : 'Sell ›'}
                         onPick={() => setPickedId(open ? null : f.fighter_id)}
+                        tick={tickFor(f)}
                       />
                       {open && <div className="mcard__terms">{terms(f, () => onInspect(f))}</div>}
                     </div>
@@ -2065,7 +2119,13 @@ export function SellTab({
           ) : (
             <div className="mrows">
               {shown.map((f) => (
-                <OwnCard key={f.fighter_id} f={f} picked={f === deskPicked} onPick={() => setPickedId(f.fighter_id)} />
+                <OwnCard
+                  key={f.fighter_id}
+                  f={f}
+                  picked={f === deskPicked}
+                  onPick={() => setPickedId(f.fighter_id)}
+                  tick={tickFor(f)}
+                />
               ))}
             </div>
           )}
@@ -2082,8 +2142,15 @@ export function SellTab({
       }
       deal={
         deskPicked && (
-          <aside className="mdeal" aria-label="Sell this fighter">
-            <span className="mdeal__cap">Sell this fighter</span>
+          <aside className="mdeal" aria-label={ticked.length > 0 ? 'List the ticked fighters' : 'Sell this fighter'}>
+            <span className="mdeal__cap">
+              {ticked.length > 0 ? `List ${ticked.length} together · up to ${MAX_BULK_LISTINGS}` : 'Sell this fighter'}
+            </span>
+            {ticked.length > 0 && (
+              <button type="button" className="linklike selltab__clear" onClick={() => setTicked([])}>
+                Clear the ticks
+              </button>
+            )}
             {terms(deskPicked)}
           </aside>
         )

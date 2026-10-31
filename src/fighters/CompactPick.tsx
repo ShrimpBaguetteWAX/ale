@@ -56,6 +56,7 @@ export function CompactPick({
   below,
   dim = false,
   title,
+  tick,
 }: {
   f: RosterFighter
   picked: boolean
@@ -65,6 +66,8 @@ export function CompactPick({
   /** Still a choice, but a second one: Ascension's fighter already in another socket. */
   dim?: boolean
   title?: string
+  /** A tick over the portrait's corner: the Market's bulk listing. */
+  tick?: React.ReactNode
 }) {
   const levels = useConfigStore((c) => c.levels)
   const level = levelUpOf(f, levels)
@@ -83,6 +86,7 @@ export function CompactPick({
           xp={level.xpPercent / 100}
           max={levels.length > 0 && level.atMax}
         />
+        {tick}
       </button>
       {below && <div className="cpick__below">{below}</div>}
     </FighterPeek>

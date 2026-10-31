@@ -546,13 +546,22 @@ export function DeskRoster(p: DeskRosterProps) {
         [
           ['inventory', 'Inventory'],
           ['sell', 'Sell'],
-          ['market', 'Sell on market'],
         ] as [Mode, string][]
       ).map(([m, label]) => (
         <button type="button" role="tab" key={m} aria-selected={p.mode === m} onClick={() => p.onMode(m)}>
           {label}
         </button>
       ))}
+      {/*
+        Listing lives in the Market's Sell tab, several at once included: this
+        is the way there, with the fighter on show already picked.
+      */}
+      <Link
+        className="drost__seglink"
+        to={`/market?tab=sell${shownFighter ? `&fighter=${shownFighter.fighter_id}` : ''}`}
+      >
+        Sell on market ›
+      </Link>
     </span>
   )
 
