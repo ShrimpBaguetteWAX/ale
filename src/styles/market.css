@@ -2732,3 +2732,20 @@ i.mrow__arrow {
 .mrows:has(> .cpick) {
   padding-top: 2px;
 }
+
+/* A listing's holder fills its row even before it is drawn: off screen it otherwise came in narrow and snapped wide while scrolling. */
+.mcard > .hold {
+  width: 100%;
+}
+
+/* The bar's word where there is nothing to press: the auction you lead. */
+.mdock__note {
+  flex: none;
+  padding: 0 6px;
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--green, #4ade80);
+}

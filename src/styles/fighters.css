@@ -5574,11 +5574,12 @@ h2.drost__bname {
 }
 .hold {
   content-visibility: auto;
-  contain-intrinsic-size: auto 222px;
+  /* The height only: one length here sets the width too, and an off-screen holder came in 212px wide until drawn. */
+  contain-intrinsic-block-size: auto 222px;
   overflow-clip-margin: 12px;
 }
 .drost--phone .hold {
-  contain-intrinsic-size: auto 198px;
+  contain-intrinsic-block-size: auto 198px;
 }
 
 /* The holder's figures: the number right-aligned in its own column, the grade arrow (and the spread) in fixed ones, so every arrow stands in one line. */

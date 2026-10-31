@@ -429,6 +429,40 @@ export default function Market() {
   /* The listing picked on a phone, whose Details and Bid or Buy sit in the bar at the foot. */
   const dockAuction = phone && tab === 'auctions' ? liveAuctions.find((a) => openRow === `a${a.auction_id}`) : undefined
   const dockOffer = phone && tab === 'offers' ? liveOffers.find((o) => openRow === `o${o.offer_id}`) : undefined
+  /* My listings on a phone: the picked one's Details and Withdraw (or Bid, if outbid) in the same bar. */
+  const dockMine: { listing: Auction | InstantOffer; action: React.ReactNode } | null = (() => {
+    if (!phone || tab !== 'mine' || !openRow) return null
+    const id = Number(openRow.slice(1))
+    const withdraw = (busyKey: string, onClick: () => void) => (
+      <button type="button" className="btn mrow__withdraw" disabled={busy === busyKey} onClick={onClick}>
+        {busy === busyKey && <span className="spinner" />}
+        Withdraw
+      </button>
+    )
+    switch (openRow[0]) {
+      case 'b': {
+        const a = myBids.find((x) => x.auction_id === id)
+        return a ? { listing: a, action: <span className="mdock__note">You lead</span> } : null
+      }
+      case 'x': {
+        const a = myOutbid.find((x) => x.auction_id === id)
+        return a ? { listing: a, action: bidButton(a) } : null
+      }
+      case 's': {
+        const a = myAuctions.find((x) => x.auction_id === id)
+        if (!a) return null
+        const can = canCancelAuction(a, player).ok && !hasEnded(a, now)
+        return { listing: a, action: can ? withdraw(`cancel${a.auction_id}`, () => cancel(a)) : null }
+      }
+      case 'o': {
+        const o = myOffers.find((x) => x.offer_id === id)
+        if (!o) return null
+        const can = canCancelOffer(o, player).ok && !hasEnded(o, now)
+        return { listing: o, action: can ? withdraw(`cancelo${o.offer_id}`, () => withdrawOffer(o)) : null }
+      }
+    }
+    return null
+  })()
   /* A phone's tabs at the top, under the title, as every other screen has them; the desktop's names. */
   const phoneTabs = phone && (
         <nav className="mkbar" role="tablist" aria-label="Market">
@@ -543,7 +577,7 @@ export default function Market() {
 
         {error && <div className="alert alert--error">{error}</div>}
 
-        <section className={`panel market__panel${dockAuction || dockOffer ? ' has-dock' : ''}`} ref={panelRef}>
+        <section className={`panel market__panel${dockAuction || dockOffer || dockMine ? ' has-dock' : ''}`} ref={panelRef}>
           {!phone && (
           <div className="tabs" role="tablist">
             {(
@@ -725,6 +759,17 @@ export default function Market() {
               action={bidButton(dockAuction)}
             />
           )}
+          {dockMine && (
+            <ListingDock
+              listing={dockMine.listing}
+              price={'auction_id' in dockMine.listing ? dockMine.listing.current_bid : dockMine.listing.gems}
+              closing={'auction_id' in dockMine.listing && extendsOnBid(dockMine.listing, config, now)}
+              now={now}
+              onDetails={() => show(dockMine.listing)}
+              onClose={() => setOpenRow(null)}
+              action={dockMine.action}
+            />
+          )}
           {dockOffer && (
             <ListingDock
               listing={dockOffer}
@@ -780,20 +825,15 @@ export default function Market() {
             <PhoneMine
               bids={myBids}
               outbid={myOutbid}
-              onBid={(a) => setDialog({ kind: 'bid', auction: a })}
               auctions={myAuctions}
               offers={myOffers}
               config={config}
               now={now}
-              busy={busy}
-              player={player}
               classes={classes}
               unlockLevel={unlockLevel}
               openRow={openRow}
               onToggle={toggleRow}
               onOpen={show}
-              onCancel={cancel}
-              onCancelOffer={withdrawOffer}
               onSell={() => setTab('sell')}
               markerOf={markerOf}
             />
@@ -1135,39 +1175,6 @@ function ListingDock({
 }
 
 /**
- * Withdraw, inside a listing row.
- *
- * The row is itself a button, and a button may not hold another — the nested
- * one also passed its tap on to the row, which opened behind the withdrawal.
- * So this is a span that acts as a button and keeps its tap to itself, as the
- * row's own tick does.
- */
-function RowWithdraw({ busy, onClick }: { busy: boolean; onClick: () => void }) {
-  const go = (e: React.SyntheticEvent) => {
-    e.stopPropagation()
-    if (!busy) onClick()
-  }
-  return (
-    <span
-      role="button"
-      tabIndex={0}
-      aria-disabled={busy}
-      className="btn btn--sm mrow__withdraw"
-      onClick={go}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault()
-          go(e)
-        }
-      }}
-    >
-      {busy && <span className="spinner" />}
-      Withdraw
-    </span>
-  )
-}
-
-/**
  * Mine, on the phone: a section for each way a listing can stand.
  *
  * Winning — auctions where you hold the top bid. Selling — your auctions,
@@ -1179,40 +1186,30 @@ function RowWithdraw({ busy, onClick }: { busy: boolean; onClick: () => void }) 
 function PhoneMine({
   bids,
   outbid,
-  onBid,
   auctions,
   offers,
   config,
   now,
-  busy,
-  player,
   classes,
   unlockLevel,
   openRow,
   onToggle,
   onOpen,
-  onCancel,
-  onCancelOffer,
   onSell,
   markerOf,
 }: {
   bids: Auction[]
   /** Bid on, topped, still running. */
   outbid: Auction[]
-  onBid: (a: Auction) => void
   auctions: Auction[]
   offers: InstantOffer[]
   config: MarketConfig | undefined
   now: number
-  busy: string | null
-  player: NonNullable<ReturnType<typeof useGame.getState>['player']>
   classes: Map<string, ClassTemplate>
   unlockLevel?: number
   openRow: string | null
   onToggle: (key: string) => void
   onOpen: (l: Auction | InstantOffer) => void
-  onCancel: (a: Auction) => void
-  onCancelOffer: (o: InstantOffer) => void
   onSell: () => void
   /** The player's markers by fighter, for their own listings. */
   markerOf: Map<number, string>
@@ -1249,6 +1246,7 @@ function PhoneMine({
       marker={markerOf.get(l.fighter_id)}
       onOpen={() => onOpen(l)}
       action={action}
+      docked
     />
   )
   return (
@@ -1284,9 +1282,6 @@ function PhoneMine({
                   Top bid <span className="mrow__lead">{a.current_bid}</span> by{' '}
                   <b>{a.current_bidder_gamertag || a.current_bidder}</b>
                 </span>,
-                <button type="button" className="btn btn--primary btn--sm" onClick={() => onBid(a)}>
-                  Bid {minNextBid(a.current_bid, config)}
-                </button>,
               ),
             )}
           </div>
@@ -1302,9 +1297,6 @@ function PhoneMine({
           <div className="mrows drost--phone">
             {sortListings(auctions, 'ending', now).map((a) => {
               const n = Number(a.bids)
-              const gate = canCancelAuction(a, player)
-              const ended = hasEnded(a, now)
-              const cancelling = busy === `cancel${a.auction_id}`
               return row(
                 `s${a.auction_id}`,
                 a,
@@ -1321,7 +1313,6 @@ function PhoneMine({
                       No bids yet · if nobody bids it{' '}
                       {a.keep_after_auction ? `stays listed at ${a.current_bid} gems` : 'comes back to you'}
                     </span>
-                    {gate.ok && !ended && <RowWithdraw busy={cancelling} onClick={() => onCancel(a)} />}
                   </>
                 ),
               )
@@ -1338,8 +1329,6 @@ function PhoneMine({
           </p>
           <div className="mrows drost--phone">
             {sortListings(offers, 'ending', now).map((o) => {
-              const gate = canCancelOffer(o, player)
-              const cancelling = busy === `cancelo${o.offer_id}`
               return row(
                 `o${o.offer_id}`,
                 o,
@@ -1349,7 +1338,6 @@ function PhoneMine({
                   <span className="mrow__line">
                     You net <span className="mrow__lead">{sellerPayout(o.gems, config)}</span> if it sells
                   </span>
-                  {gate.ok && !hasEnded(o, now) && <RowWithdraw busy={cancelling} onClick={() => onCancelOffer(o)} />}
                 </>,
               )
             })}
