@@ -2392,12 +2392,18 @@ a.res {
   display: flex;
   gap: 8px;
 }
-.dasc__filterrow .dasc__order {
+/* The class and the order in the shared bar's controls: a labelled chip over a real select, and the direction arrow. */
+.dasc__filterrow .dasc__class {
   flex: 1 1 0;
   min-width: 0;
-  height: 32px;
-  padding: 0 10px;
-  font-size: 13px;
+}
+.dasc__sort {
+  display: inline-flex;
+  gap: 6px;
+  flex: none;
+}
+.dasc__sortby {
+  cursor: default;
 }
 .dasc__tools {
   flex-wrap: wrap;

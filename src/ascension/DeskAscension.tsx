@@ -207,25 +207,38 @@ export function DeskAscension({
   const complete = filled && !!check?.ok
   const short = credits < fee
   const plural = target ? `${cap(target.classname)}s` : ''
+  /*
+     The order as every list draws it: what it sorts by, and the arrow that
+     turns it round (down: most first; up: fewest first). Ascension's own
+     orders, which the roster's sorts do not have, in the shared bar's look.
+  */
+  const biggestFirst = (list === 'target') === (order === 'first')
+  const orderText =
+    list === 'target'
+      ? order === 'first'
+        ? 'Most sockets ready first'
+        : 'Fewest sockets ready first'
+      : order === 'first'
+        ? 'Lowest level first'
+        : 'Highest level first'
   const orderPick = (
-    <select
-      className="dasc__order"
-      value={order}
-      onChange={(e) => setOrder(e.target.value as 'first' | 'last')}
-      aria-label="Order"
-    >
-      {list === 'target' ? (
-        <>
-          <option value="first">Most sockets ready</option>
-          <option value="last">Fewest sockets ready</option>
-        </>
-      ) : (
-        <>
-          <option value="first">Lowest level first</option>
-          <option value="last">Highest level first</option>
-        </>
-      )}
-    </select>
+    <span className="dasc__sort">
+      <span className="drost__tool dasc__sortby">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M7 4v16M3 16l4 4 4-4M17 20V4M13 8l4-4 4 4" />
+        </svg>
+        <small>Sort</small> {list === 'target' ? 'Sockets ready' : 'Level'}
+      </span>
+      <button
+        type="button"
+        className="drost__dir"
+        onClick={() => setOrder((o) => (o === 'first' ? 'last' : 'first'))}
+        title={orderText}
+        aria-label={orderText}
+      >
+        {biggestFirst ? '↓' : '↑'}
+      </button>
+    </span>
   )
 
   return (
@@ -257,19 +270,23 @@ export function DeskAscension({
         */}
         {!target && (
           <div className="dasc__filterrow">
-            <select
-              className="dasc__order dasc__class"
-              value={cls ?? ''}
-              onChange={(e) => setCls(e.target.value || null)}
-              aria-label="Class"
-            >
-              <option value="">All classes · {ready.length}</option>
-              {classCounts.map(([c, n]) => (
-                <option key={c} value={c}>
-                  {cap(c)} · {n}
-                </option>
-              ))}
-            </select>
+            <label className={`drost__tool pickbar__sort dasc__class${cls ? ' is-on' : ''}`}>
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M3 5h18l-7 8v5l-4 2v-7z" />
+              </svg>
+              <small>Class</small> {cls ? cap(cls) : 'All'}
+              <span className="pickbar__caret" aria-hidden="true">
+                ▾
+              </span>
+              <select value={cls ?? ''} onChange={(e) => setCls(e.target.value || null)} aria-label="Class">
+                <option value="">All classes · {ready.length}</option>
+                {classCounts.map(([c, n]) => (
+                  <option key={c} value={c}>
+                    {cap(c)} · {n}
+                  </option>
+                ))}
+              </select>
+            </label>
             {orderPick}
           </div>
         )}
