@@ -889,7 +889,7 @@
     background: rgb(5 9 19 / 94%);
     box-shadow: 0 1px 0 rgb(255 255 255 / 8%);
   }
-  .guide__step {
+  .guide__chstep {
     height: 40px;
     padding: 0;
     border: 0;
@@ -901,7 +901,31 @@
     font-size: 22px;
     line-height: 1;
   }
-  .guide__step:disabled {
+  .guide__chstep {
+    display: grid;
+    place-items: center;
+  }
+  .guide__chstep svg {
+    width: 18px;
+    height: 18px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  /* The hire bar's narrow parts: the label on two short lines rather than cut off. */
+  .guide__hirebar {
+    height: 52px;
+  }
+  .guide__hirebar > div {
+    padding: 0 4px;
+    font-size: 11px;
+    line-height: 1.15;
+    text-align: center;
+    white-space: normal;
+  }
+  .guide__chstep:disabled {
     opacity: 0.35;
   }
   .guide__pick {
@@ -945,6 +969,11 @@
     opacity: 0;
     color-scheme: dark;
     cursor: pointer;
+  }
+  /* The picker's own list, dark: a Windows list draws white on white otherwise. */
+  .guide__pick select option {
+    color: var(--white);
+    background: #0e1626;
   }
   .guide__main {
     gap: 46px;

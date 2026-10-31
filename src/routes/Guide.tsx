@@ -229,12 +229,14 @@ export default function Guide() {
           <nav className="guide__chips" aria-label="Chapters">
             <button
               type="button"
-              className="guide__step"
+              className="guide__chstep"
               aria-label="Previous chapter"
               disabled={on === 0}
               onClick={() => go(CHAPTERS[on - 1][0])}
             >
-              ‹
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M15 5l-7 7 7 7" />
+              </svg>
             </button>
             <label className="guide__pick">
               <span>
@@ -254,12 +256,14 @@ export default function Guide() {
             </label>
             <button
               type="button"
-              className="guide__step"
+              className="guide__chstep"
               aria-label="Next chapter"
               disabled={on === CHAPTERS.length - 1}
               onClick={() => go(CHAPTERS[on + 1][0])}
             >
-              ›
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M9 5l7 7-7 7" />
+              </svg>
             </button>
           </nav>
 
