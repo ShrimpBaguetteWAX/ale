@@ -2,7 +2,6 @@ import { Link } from 'react-router-dom'
 import type { Player } from '@/chain/types'
 import { hasLegendAccess, LEGEND_REMIND_MS } from '@/account/rules'
 import { legendLeft } from '@/shop/rules'
-import { asset } from '@/assets'
 
 const DAY = 86_400_000
 const HOUR = 3_600_000
@@ -43,16 +42,8 @@ export function AccountPlate({ player, bar = false }: { player: Player; bar?: bo
   }
 
   return (
+    /* The menu's plate is the standing alone, one line: the name is the account's own business, and the line is height the menu needs. */
     <Link className={`plate plate--${state}`} to="/shop?c=account" aria-label={label}>
-      <span className="plate__name">
-        <img
-          src={asset(legend ? '/assets/icons/account-legend.svg' : '/assets/icons/account-trial.svg')}
-          alt=""
-          width={22}
-          height={22}
-        />
-        <b>{name}</b>
-      </span>
       <span className="plate__row">
         <span className="plate__title">{legend ? 'Legend' : 'Trial'}</span>
         <span className="plate__left">{legend ? legendLeft(left) : 'Get the Legend Pass ›'}</span>
