@@ -784,6 +784,7 @@ export default function Dungeon() {
       setDetail({
         kind: 'panel',
         panel: rosterPanel(f, levelMod, ageDecay),
+        fighter: f,
         template: classes.get(f.classname),
       }),
     [classes, levelMod, ageDecay],
@@ -1177,6 +1178,7 @@ export default function Dungeon() {
                     marker={f.marker}
                     preview={() => ({
                       panel: rosterPanel(f, levelMod, ageDecay),
+                      fighter: f,
                       template: classes.get(f.classname),
                     })}
                     onRemove={phone ? undefined : () => toggleFighter(f)}
@@ -1526,8 +1528,12 @@ export default function Dungeon() {
                   phone
                     ? undefined
                     : {
-                        lead: deskDensity === 'full' && <ViewSeg view={cardView} onChange={setCardView} />,
-                        tail: <PickDensitySwitch density={deskDensity} onChange={chooseDeskDensity} />,
+                        lead: (
+                          <>
+                            <PickDensitySwitch density={deskDensity} onChange={chooseDeskDensity} />
+                            {deskDensity === 'full' && <ViewSeg view={cardView} onChange={setCardView} />}
+                          </>
+                        ),
                         filters: (close) => filterPanel(close, 'drost__pop--filters pickfilters'),
                       }
                 }
@@ -1628,6 +1634,7 @@ export default function Dungeon() {
       {detail && (
         <DetailSheet
           panel={detail.panel}
+          fighter={detail.fighter}
           template={detail.template}
           onClose={() => setDetail(null)}
         />

@@ -380,6 +380,7 @@ function PickDetails({ fighter, onClose }: { fighter: RosterFighter; onClose: ()
   return (
     <DetailSheet
       panel={rosterPanel(fighter, levelMod, ageDecay)}
+      fighter={fighter}
       template={classes.get(fighter.classname)}
       onClose={onClose}
     />

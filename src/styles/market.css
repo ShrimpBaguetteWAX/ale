@@ -2722,8 +2722,3 @@ i.mrow__arrow {
 .mrows .rocard.is-picked .gcard {
   transform: none;
 }
-
-/* A phone's Details: the codex page in the sheet, its own frame inside the sheet's. */
-.mcodex {
-  display: grid;
-}

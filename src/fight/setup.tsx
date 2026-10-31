@@ -59,6 +59,7 @@ import {
 import { asset, ipfsImage } from '@/assets'
 import { rarityColor } from '@/map/terrain'
 import { usePhone } from '@/components/usePhone'
+import { CodexSheet } from '@/fighters/CodexSheet'
 import { useMedallions } from '@/fight/matchupStyle'
 import { ELEMENT_RIM } from '@/fight/GildedCards'
 import { useModal } from '@/components/useModal'
@@ -75,7 +76,7 @@ import { useConfigStore } from '@/state/useConfig'
 import { formatDecimals, NUM_LOCALE } from '@/format'
 import { GameImg } from '@/components/GameImg'
 import { RosterCardFace, placeRibbon, type Ribbon } from '@/fighters/RosterCard'
-import { HolderRow, ViewSeg, figuresOf, type View } from '@/fighters/DeskRoster'
+import { DensitySeg, HolderRow, ViewSeg, figuresOf, type View } from '@/fighters/DeskRoster'
 import { portraitCut } from '@/fighters/portraitFrame'
 
 /**
@@ -89,7 +90,13 @@ import { portraitCut } from '@/fighters/portraitFrame'
  */
 
 /** What a fighter detail overlay is showing. */
-export type Detail = { kind: 'panel'; panel: PanelFighter; template?: ClassTemplate } | null
+export type Detail = {
+  kind: 'panel'
+  panel: PanelFighter
+  template?: ClassTemplate
+  /** The player's own fighter behind the panel: a phone opens it as the codex page. */
+  fighter?: RosterFighter
+} | null
 
 /** How long to keep asking the chain for the fight row before giving up. */
 export const POLL_ATTEMPTS = 20
@@ -221,6 +228,10 @@ export function rememberDensity(density: PickDensity, sheet = false): void {
   }
 }
 
+/**
+ * The card size: My Fighters' icon switch, so the control looks and sits the
+ * same on every list (left of what the cards show). 'full' is its Cards.
+ */
 export function PickDensitySwitch({
   density,
   onChange,
@@ -229,24 +240,10 @@ export function PickDensitySwitch({
   onChange: (density: PickDensity) => void
 }) {
   return (
-    <div className="showtabs" role="group" aria-label="Card size">
-      {(
-        [
-          ['full', 'Cards'],
-          ['compact', 'Compact'],
-        ] as [PickDensity, string][]
-      ).map(([key, label]) => (
-        <button
-          type="button"
-          key={key}
-          className="showtabs__btn"
-          aria-pressed={density === key}
-          onClick={() => onChange(key)}
-        >
-          {label}
-        </button>
-      ))}
-    </div>
+    <DensitySeg
+      density={density === 'full' ? 'cards' : 'compact'}
+      onChange={(d) => onChange(d === 'cards' ? 'full' : 'compact')}
+    />
   )
 }
 
@@ -2203,9 +2200,8 @@ export function FighterGrid({
           {/* The readout switch is what the compact card does not have, so it
               goes away with the thing it controls rather than sitting there
               changing nothing. */}
-          {density === 'full' && (rows ? rows.switch : <ViewSeg view={holderView} onChange={setHolderView} />)}
-          <span className="spacer" />
           {!onDensity && <PickDensitySwitch density={density} onChange={chooseDensity} />}
+          {density === 'full' && (rows ? rows.switch : <ViewSeg view={holderView} onChange={setHolderView} />)}
         </div>
       )}
       {density === 'full' ? (
@@ -3469,6 +3465,22 @@ function NftCard({
 /* ---------- detail overlay ---------- */
 
 export function DetailSheet({
+  fighter,
+  ...props
+}: {
+  panel: PanelFighter
+  template?: ClassTemplate
+  /** The player's own fighter, when it is one: a phone shows it as the codex page, as My Fighters does. */
+  fighter?: RosterFighter
+  onClose: () => void
+}) {
+  const phone = usePhone()
+  if (phone && fighter) return <CodexSheet f={fighter} onClose={props.onClose} />
+  return <PanelSheet {...props} />
+}
+
+/** The panel in a sheet: an opponent, the NFT fighter, a desktop's fighter in full. */
+function PanelSheet({
   panel,
   template,
   onClose,

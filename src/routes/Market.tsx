@@ -53,6 +53,7 @@ import {
 import type { ClassTemplate } from '@/tavern/fighterStats'
 import { addAuctions, bidAuction, buyOffer, cancelAuction, cancelOffer } from '@/wharf/actions'
 import { asset, artSet } from '@/assets'
+import { CodexSheet } from '@/fighters/CodexSheet'
 import { DensitySeg, FighterCodex, HolderRow, VIEWS, figuresOf, type View } from '@/fighters/DeskRoster'
 import { CompactPick, useDensity, type Density } from '@/fighters/CompactPick'
 
@@ -393,6 +394,7 @@ export default function Market() {
       setDetail({
         kind: 'panel',
         panel: rosterPanel(f, levelMod, ageDecay),
+        fighter: f,
         template: classes.get(f.classname),
       })
     },
@@ -726,6 +728,7 @@ export default function Market() {
                   : setDetail({
                   kind: 'panel',
                   panel: rosterPanel(f, levelMod, ageDecay),
+                  fighter: f,
                   template: classes.get(f.classname),
                 })
               }
@@ -800,19 +803,17 @@ export default function Market() {
       )}
 
       {codexOf && (
-        <BottomSheet
-          title={`${capWord(codexOf.f.racename)} ${capWord(codexOf.f.classname)}`}
+        <CodexSheet
+          f={codexOf.f}
+          kick={codexOf.facts.join(' · ')}
+          upkeep={codexOf.upkeep}
           onClose={() => setCodexOf(null)}
-        >
-          {/* The phone codex's sizes come with My Fighters' phone class. */}
-          <div className="drost--phone mcodex">
-            <MarketFighter f={codexOf.f} facts={codexOf.facts} upkeep={codexOf.upkeep} />
-          </div>
-        </BottomSheet>
+        />
       )}
       {detail && (
         <DetailSheet
           panel={detail.panel}
+          fighter={detail.fighter}
           template={detail.template}
           onClose={() => setDetail(null)}
         />
@@ -824,8 +825,6 @@ export default function Market() {
   )
 }
 
-
-const capWord = (w: string) => w.charAt(0).toUpperCase() + w.slice(1)
 
 /* ---------- the desktop: My Fighters' card, with the price ---------- */
 

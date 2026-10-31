@@ -1596,11 +1596,13 @@ function BoutCorner({
             setDetail({
               kind: 'panel',
               panel: rosterPanel(fighter, levelMod, ageDecay),
+              fighter,
               template: classes.get(fighter.classname),
             })
           }
           preview={() => ({
             panel: rosterPanel(fighter, levelMod, ageDecay),
+            fighter,
             template: classes.get(fighter.classname),
           })}
         />
@@ -1609,7 +1611,7 @@ function BoutCorner({
       <LineupCard label="Crew" template={crew || undefined} />
       <LineupCard label="Weapon" template={arms || undefined} />
       {shown && (
-        <DetailSheet panel={shown.panel} template={shown.template} onClose={() => setDetail(null)} />
+        <DetailSheet panel={shown.panel} fighter={shown.fighter} template={shown.template} onClose={() => setDetail(null)} />
       )}
 
       {crews.error && <span className="hint">{crews.error}</span>}
@@ -2006,11 +2008,13 @@ export function EntryLineup({ entry }: { entry: EntryRef }) {
             setDetail({
               kind: 'panel',
               panel: rosterPanel(fighter, levelMod, ageDecay),
+              fighter,
               template: classes.get(fighter.classname),
             })
           }
           preview={() => ({
             panel: rosterPanel(fighter, levelMod, ageDecay),
+            fighter,
             template: classes.get(fighter.classname),
           })}
         />
@@ -2025,7 +2029,7 @@ export function EntryLineup({ entry }: { entry: EntryRef }) {
         <span className="faint">These fighters are no longer on chain.</span>
       )}
       {shown && (
-        <DetailSheet panel={shown.panel} template={shown.template} onClose={() => setDetail(null)} />
+        <DetailSheet panel={shown.panel} fighter={shown.fighter} template={shown.template} onClose={() => setDetail(null)} />
       )}
     </div>
   )
@@ -2196,6 +2200,7 @@ function Face({ face, fighter }: { face: CrewFace; fighter?: RosterFighter }) {
       fighter
         ? () => ({
             panel: rosterPanel(fighter, levelMod, ageDecay),
+            fighter,
             template: classes.get(fighter.classname),
           })
         : undefined,
@@ -2630,6 +2635,7 @@ export default function Tournament() {
       setDetail({
         kind: 'panel',
         panel: rosterPanel(f, levelMod, ageDecay),
+        fighter: f,
         template: classes.get(f.classname),
       }),
     [classes, levelMod, ageDecay],
@@ -2936,7 +2942,7 @@ export default function Tournament() {
         onChooseAnother={running.length > 1 ? () => setChosen(null) : undefined}
       />
       {detail && (
-        <DetailSheet panel={detail.panel} template={detail.template} onClose={() => setDetail(null)} />
+        <DetailSheet panel={detail.panel} fighter={detail.fighter} template={detail.template} onClose={() => setDetail(null)} />
       )}
     </div>
   )

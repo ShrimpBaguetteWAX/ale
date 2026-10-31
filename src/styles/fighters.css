@@ -5827,3 +5827,8 @@ h2.drost__bname {
 .drost--phone .hold__score small {
   letter-spacing: 0.02em;
 }
+
+/* The codex page in a phone's sheet, wherever it is opened from (CodexSheet). */
+.codexsheet {
+  display: grid;
+}
