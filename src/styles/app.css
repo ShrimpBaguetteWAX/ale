@@ -3213,3 +3213,77 @@ a.res {
 .dasc__rows > .dasc__peek > .hold {
   width: 100%;
 }
+
+/*
+ * The fighter in full beside its offers, as a page of the codex: the gold
+ * edge round it and the figures as My Fighters reads them. Hovering an offer
+ * lights the stat it changes with the figure it would become.
+ */
+.dasc__fighter.dasc__codex {
+  gap: 8px;
+  border: 3px solid transparent;
+  background:
+    linear-gradient(180deg, rgb(11 20 38 / 94%), rgb(6 12 24 / 97%)) padding-box,
+    linear-gradient(160deg, #ffe39a, #8a5d14 30%, #3a2a08 50%, #8a5d14 70%, #ffe39a) border-box;
+  box-shadow: 0 20px 50px rgb(0 0 0 / 45%);
+}
+.dasc__codex .dasc__fwho b {
+  text-transform: uppercase;
+  color: #fff3c4;
+}
+.codex .drost__bar.is-lit {
+  margin: 0 -6px;
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: rgb(14 212 168 / 12%);
+  box-shadow: inset 3px 0 0 var(--teal);
+}
+.codex .drost__bar.is-lit.is-mixed {
+  background: rgb(246 168 0 / 12%);
+  box-shadow: inset 3px 0 0 #f6a800;
+}
+.codex .drost__bar.is-lit.is-bad {
+  background: rgb(255 90 106 / 12%);
+  box-shadow: inset 3px 0 0 #ff5a6a;
+}
+.codex .drost__bar.is-lit.is-cap {
+  background: rgb(255 197 107 / 14%);
+  box-shadow: inset 3px 0 0 #ffc56b;
+}
+.codex .drost__bar.is-lit .codex__fig > span {
+  color: var(--white);
+}
+.codex .drost__bar.is-lit .codex__fig s,
+.codex .drost__resrow > span.is-lit s {
+  margin-right: 4px;
+  font-family: var(--font-body);
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--text-faint);
+}
+.codex .drost__resrow > span.is-lit {
+  border-radius: 8px;
+  background: rgb(14 212 168 / 14%);
+  box-shadow: inset 0 -3px 0 var(--teal);
+}
+.codex .drost__resrow > span.is-lit.is-bad {
+  background: rgb(255 90 106 / 14%);
+  box-shadow: inset 0 -3px 0 #ff5a6a;
+}
+.codex .drost__resrow > span.is-lit.is-cap,
+.codex .drost__resrow > span.is-lit.is-mixed {
+  background: rgb(255 197 107 / 14%);
+  box-shadow: inset 0 -3px 0 #ffc56b;
+}
+
+/* The fighter's own card on the altar, picked in gold, its ascension on the ribbon. */
+.rocard.dasc__risencard {
+  position: relative;
+  width: 190px;
+  /* One card, always in view: drawn whole, so its gold glow is not clipped to a box. */
+  content-visibility: visible;
+  overflow: visible;
+}
+.dasc__risen > b {
+  margin-top: 10px;
+}

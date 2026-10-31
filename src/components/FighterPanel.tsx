@@ -612,12 +612,17 @@ export function CodexReadout({
   template,
   abilityUnlockLevel,
   part = 'all',
+  highlight,
 }: {
   fighter: PanelFighter
   template?: ClassTemplate
   abilityUnlockLevel?: number
   part?: 'all' | 'stats' | 'res' | 'abilities'
+  /** One stat lit with the figure it would become: Ascension's offer under the pointer. */
+  highlight?: StatHighlight
 }) {
+  /* The figure alone: the codex prints the spread in a column of its own. */
+  const litTo = (h: StatHighlight) => h.to.replace(/\s*\(±[\d.,]+\)/, '')
   const raw = fighter as unknown as Record<string, number>
   const grade = (field: string, value: number) => (template ? gradeStat(field, value, template) : null)
   const heading = (label: string) =>
@@ -639,8 +644,13 @@ export function CodexReadout({
               const ranged = stat.max !== undefined && stat.max !== stat.min
               const shown = ranged ? statDisplay(stat.min, stat.max!) : null
               const g = grade(field, stat.grade ?? (ranged ? midpoint(stat.min, stat.max!) : stat.min))
+              const lit = highlight?.field === field ? highlight : undefined
               return (
-                <span className="drost__bar" key={field} title={g ? GRADE_LABEL[g] : undefined}>
+                <span
+                  className={`drost__bar${lit ? ` is-lit is-${lit.tone}` : ''}`}
+                  key={field}
+                  title={lit?.note ?? (g ? GRADE_LABEL[g] : undefined)}
+                >
                   <small>
                     <img className="drost__si" src={statIcon(field)} alt="" />
                     {STAT_LABEL[field] ?? field}
@@ -650,8 +660,11 @@ export function CodexReadout({
                     style={{ '--n': GRADE_SEGMENTS[g ?? 'middle'] ?? 5 } as React.CSSProperties}
                   />
                   <b className="codex__fig">
-                    <span>{shown ? shown.value : formatScaled(stat.min)}</span>
-                    {shown && shown.spread > 0 ? <em>±{shown.spread}</em> : <i />}
+                    <span>
+                      {lit && <s>{shown ? shown.value : formatScaled(stat.min)}</s>}
+                      {lit ? litTo(lit) : shown ? shown.value : formatScaled(stat.min)}
+                    </span>
+                    {shown && shown.spread > 0 && !lit ? <em>±{shown.spread}</em> : <i />}
                     {g ? <img className="drost__grade" src={GRADE_ICON[g]} alt={GRADE_LABEL[g]} /> : <i />}
                   </b>
                 </span>
@@ -673,15 +686,20 @@ export function CodexReadout({
             {RESISTANCES.map(([key, label]) => {
               const el = label.toLowerCase()
               const g = grade(key, raw[key])
+              const lit = highlight?.field === key ? highlight : undefined
               return (
-                <span key={key} title={`${label} resistance`}>
+                <span
+                  key={key}
+                  className={lit ? `is-lit is-${lit.tone}` : undefined}
+                  title={lit?.note ?? `${label} resistance`}
+                >
                   <span className="codex__hex" style={{ '--ec': RES_RIM[el] ?? RES_RIM.neutral } as React.CSSProperties}>
                     <span>
                       <img src={elementIcon(el)} alt={el} />
                     </span>
                   </span>
                   <b>
-                    {formatResistance(raw[key])}
+                    {lit ? lit.to : formatResistance(raw[key])}
                     {g && <img className="drost__grade" src={GRADE_ICON[g]} alt={GRADE_LABEL[g]} />}
                   </b>
                 </span>

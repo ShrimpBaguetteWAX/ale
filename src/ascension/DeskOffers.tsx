@@ -9,15 +9,9 @@ import {
   upgradeText,
   type UpgradeOutcome,
 } from '@/ascension/rules'
-import {
-  elementBackground,
-  fighterArt,
-  fighterArtFallback,
-  formatResistance,
-  formatStat,
-} from '@/tavern/fighterStats'
-import { FighterAbilities, FighterStats, type StatHighlight } from '@/components/FighterPanel'
-import { GameImg } from '@/components/GameImg'
+import { formatResistance, formatStat } from '@/tavern/fighterStats'
+import { CodexReadout, type StatHighlight } from '@/components/FighterPanel'
+import { RosterCardFace } from '@/fighters/RosterCard'
 import { rosterPanel } from '@/fight/setup'
 import { useConfig } from '@/state/useConfig'
 import { formatNumber } from '@/format'
@@ -120,32 +114,23 @@ export function DeskOffers({
       {/* ---------- the fighter, in full ---------- */}
       <div className="dasc__list">
         <div className="dasc__scroll">
-          {/* Compact, the way the board's other columns are: the face and
-              name in a line, then every stat, the six resistances in a row,
-              and the abilities. */}
-          <section className="dasc__fighter" aria-label={`${cap(fighter.classname)}, in full`}>
-            <div className="dasc__fhero">
-              <span
-                className="dasc__fart"
-                style={{ backgroundImage: `url('${elementBackground(fighter.element)}')` }}
-              >
-                <GameImg src={fighterArt(fighter)} fallback={fighterArtFallback()} alt="" />
+          {/* A page of the codex, as My Fighters reads a fighter: the card
+              stands on the altar, so the page opens on the name. Hovering an
+              offer lights the stat it changes with the figure it would become. */}
+          <section className="dasc__fighter dasc__codex" aria-label={`${cap(fighter.classname)}, in full`}>
+            <span className="dasc__fwho">
+              <small>Ascending to ✦{fighter.ascension_level + 1}</small>
+              <b>{cap(fighter.classname)}</b>
+              <span>
+                {cap(fighter.racename)} · {cap(fighter.element)} · level {levelOf(fighter)}
               </span>
-              <span className="dasc__fwho">
-                <small>Ascending to ✦{fighter.ascension_level + 1}</small>
-                <b>{cap(fighter.classname)}</b>
-                <span>
-                  {cap(fighter.racename)} · {cap(fighter.element)} · level {levelOf(fighter)}
-                </span>
-              </span>
-            </div>
-            <FighterStats fighter={panel} template={classes.get(fighter.classname)} highlight={highlight} />
-            {panel.abilities.length > 0 && (
-              <>
-                <h3 className="dasc__fcap">Abilities · {panel.abilities.length}</h3>
-                <FighterAbilities abilities={panel.abilities} abilityUnlockLevel={fighters?.asc_ability_unlock_lvl} />
-              </>
-            )}
+            </span>
+            <CodexReadout
+              fighter={panel}
+              template={classes.get(fighter.classname)}
+              abilityUnlockLevel={fighters?.asc_ability_unlock_lvl}
+              highlight={highlight}
+            />
           </section>
         </div>
       </div>
@@ -154,8 +139,15 @@ export function DeskOffers({
       <div className="dasc__middle">
         <div className="dasc__risen">
           <span className="dasc__risenglow" aria-hidden="true" />
-          <GameImg src={fighterArt(fighter)} fallback={fighterArtFallback()} alt="" />
-          <span className="dasc__ascbadge">✦{fighter.ascension_level + 1}</span>
+          {/* The fighter's own card, picked in gold, rather than a round portrait. */}
+          <span className="rocard is-picked dasc__risencard">
+            <RosterCardFace
+              f={fighter}
+              ribbon={{ key: 'ascending', label: `Ascending ✦${fighter.ascension_level + 1}` }}
+              xp={1}
+              max
+            />
+          </span>
           <b>{cap(fighter.classname)}</b>
           <small>
             {cap(fighter.racename)} · {cap(fighter.element)} · L{levelOf(fighter)} · ascending to ✦

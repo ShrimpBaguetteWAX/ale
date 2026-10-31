@@ -16,6 +16,7 @@ import '../src/styles/fighters.css'
 import '../src/styles/account.css'
 import '../src/styles/dungeon.css'
 import '../src/styles/tournament.css'
+import '../src/styles/landstage.css'
 
 /* The live `ascend.ale` caps. */
 const CAPS: StatCaps = {
