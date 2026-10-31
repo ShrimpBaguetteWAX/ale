@@ -452,31 +452,10 @@ export function ScopePanel({
         ))}
       </div>
 
-      {board.expired.length > 0 && (
-        <section className="expired">
-          <h2 className="panel__title">
-            Expired ({board.expired.length})
-          </h2>
-          <p className="hint">
-            These ran out before they were finished and pay nothing. They clear
-            the moment you draw new quests.
-          </p>
-          <ul className="expired__list">
-            {board.expired.map((q) => (
-              <li key={questKey(q)}>
-                <span>{questText(q)}</span>
-                <span className="faint">
-                  {progressOf(q, player, now).done.toLocaleString(NUM_LOCALE)} /{' '}
-                  {Math.max(
-                    0,
-                    q.task_end_value - q.task_start_value,
-                  ).toLocaleString(NUM_LOCALE)}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
+      {/*
+        No list of the expired: they pay nothing, and their slots already
+        show as empty ones above, which New quests fills.
+      */}
     </>
   )
 }

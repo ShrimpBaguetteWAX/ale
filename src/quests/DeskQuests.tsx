@@ -179,17 +179,6 @@ export function DeskQuests({
                 </span>
               </div>
             ))}
-            {b.expired.map((q) => (
-              <div className="dquests__row is-expired" key={questKey(q)} title="Ran out before it was finished; pays nothing">
-                <img src={questArt(q)} alt="" loading="lazy" />
-                <span className="dquests__rowtext">
-                  <b>
-                    <QuestName quest={q} />
-                  </b>
-                  <small>Expired · clears with New quests</small>
-                </span>
-              </div>
-            ))}
           </section>
         ))}
       </nav>
