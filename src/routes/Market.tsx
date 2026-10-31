@@ -434,6 +434,23 @@ export default function Market() {
     </>
   )
 
+  /* What the cards show, as on My Fighters: one switch, for every tab. On a
+     phone it sits with the tabs at the top, on the page rather than on a band. */
+  const viewRow = (
+    <span className="mview__row">
+      <DensitySeg density={density} onChange={setDensity} />
+      {density === 'cards' && (
+        <span className="drost__seg drost__seg--sm mview" role="tablist" aria-label="Cards show">
+          {VIEWS.map(([v, label]) => (
+            <button type="button" role="tab" key={v} aria-selected={view === v} onClick={() => setView(v)}>
+              {label}
+            </button>
+          ))}
+        </span>
+      )}
+    </span>
+  )
+
   return (
     <WideBoard.Provider value={wide}>
     <CardView.Provider value={view}>
@@ -454,12 +471,14 @@ export default function Market() {
           <div className="mktop">
             {head}
             {phoneTabs}
+            {viewRow}
             {browseTools}
           </div>
         ) : (
           <>
             {head}
             {phoneTabs}
+            {phone && viewRow}
           </>
         )}
 
@@ -491,19 +510,7 @@ export default function Market() {
           </div>
           )}
 
-          {/* What the cards show, as on My Fighters: one switch, for every tab. */}
-          <span className="mview__row">
-            <DensitySeg density={density} onChange={setDensity} />
-            {density === 'cards' && (
-              <span className="drost__seg drost__seg--sm mview" role="tablist" aria-label="Cards show">
-                {VIEWS.map(([v, label]) => (
-                  <button type="button" role="tab" key={v} aria-selected={view === v} onClick={() => setView(v)}>
-                    {label}
-                  </button>
-                ))}
-              </span>
-            )}
-          </span>
+          {!phone && viewRow}
 
           {!phone && (tab === 'auctions' || tab === 'offers' || tab === 'mine') && (
             <DeskBoard
@@ -1864,7 +1871,12 @@ export function SellTab({
      Fighters' "Sell on market" did before listing moved here. Up to the
      market's limit; the ticks clear as the listings land.
   */
-  const [ticked, setTicked] = useState<number[]>([])
+  /* Asked once here rather than in every tile; a roster is sixty of them. */
+  const phone = usePhone()
+  /* On a phone the fighter My Fighters sent arrives in the sale, the bar at the foot showing it. */
+  const [ticked, setTicked] = useState<number[]>(() => (phone && initialPick ? [initialPick] : []))
+  /* The phone's sale sheet: who is in it, and the terms they are listed on. */
+  const [saleOpen, setSaleOpen] = useState(false)
   const toggleTick = (id: number) =>
     setTicked((t) => (t.includes(id) ? t.filter((x) => x !== id) : t.length >= MAX_BULK_LISTINGS ? t : [...t, id]))
   useEffect(() => {
@@ -1922,8 +1934,6 @@ export function SellTab({
      re-sorted the auction board behind it.
   */
   const [filter, setFilter] = useState<RosterFilter>({ ...EMPTY_FILTER })
-  /* Asked once here rather than in every tile; a roster is sixty of them. */
-  const phone = usePhone()
   const shown = useMemo(
     () => applyFilter(sellable, filter, ageDecay, Date.now(), classes, undefined, levelMod),
     [sellable, filter, ageDecay, classes, levelMod],
@@ -1937,6 +1947,9 @@ export function SellTab({
   const [selling, setSelling] = useState(false)
 
   useEffect(() => setPrice(minStart), [minStart])
+  useEffect(() => {
+    if (ticked.length === 0) setSaleOpen(false)
+  }, [ticked.length])
 
   const hours = Math.round(Number(config?.standard_duration_minutes ?? 0) / 60)
 
@@ -1966,7 +1979,7 @@ export function SellTab({
      listed, what selling at that price would actually pay, and List. The
      phone adds Details beside List; the desktop is already showing them.
   */
-  const terms = (f: RosterFighter, details?: () => void) => {
+  const terms = (f: RosterFighter, details?: () => void, bare = false) => {
     /* Asked of the fighter these terms are for: on a desktop that is the
        one on show, which is the first before anything is clicked. */
     const many = ticked.length > 0
@@ -1986,7 +1999,7 @@ export function SellTab({
         {busy && <span className="spinner" />}
         {gate.ok ? (
           <span className="msell__go">
-            {many ? `List ${group.length} for ${price}` : `List for ${price}`}
+            {group.length > 1 ? `List ${group.length} for ${price}` : `List for ${price}`}
             {gemIcon}· costs {listFee * (many ? group.length : 1)}
             {gemIcon}
           </span>
@@ -2063,7 +2076,7 @@ export function SellTab({
           last {resetHours}h pushes the end back out. Once anybody bids it can't be withdrawn.
         </p>
 
-        {details ? (
+        {bare ? null : details ? (
           <div className="mrow__acts">
             <button type="button" className="btn btn--ghost btn--sm" onClick={details}>
               Details
@@ -2077,6 +2090,32 @@ export function SellTab({
     )
   }
 
+  /* List on its own, for the phone sheet's foot. */
+  const listButton = (f: RosterFighter) => {
+    const group = sellable.filter((x) => ticked.includes(x.fighter_id))
+    const gate = bulkListPlan(group, price, player!, config).gate
+    return (
+      <button
+        type="button"
+        className="btn btn--primary selltab__go"
+        onClick={() => onList(group.length > 0 ? group.map((x) => x.fighter_id) : [f.fighter_id], price, keep)}
+        disabled={busy || !gate.ok}
+        title={gate.reason}
+      >
+        {busy && <span className="spinner" />}
+        {gate.ok ? (
+          <span className="msell__go">
+            {group.length > 1 ? `List ${group.length} for ${price}` : `List for ${price}`}
+            {gemIcon}· costs {listFee * Math.max(1, group.length)}
+            {gemIcon}
+          </span>
+        ) : (
+          gate.reason
+        )}
+      </button>
+    )
+  }
+
   const none = (
     <p className="faint">
       None of your fighters can be listed right now. A fighter has to be active, idle, and not yet asking for a
@@ -2086,49 +2125,78 @@ export function SellTab({
   const filters = <RosterFilters filter={filter} onChange={setFilter} roster={sellable} sheet={{}} />
 
   /*
-     The phone: the roster as the board's rows, under the same filter, and
-     the terms opened in place under the fighter tapped.
+     The phone: the roster as the board's rows, under the same filter. A tap
+     puts a fighter in the sale (or takes it out); nothing opens in the list.
+     The sale gathers in a bar at the foot, and the bar opens it in a sheet:
+     who is in it, the price and the terms, and List.
   */
   if (phone) {
+    const group = sellable.filter((x) => ticked.includes(x.fighter_id))
     return (
-      <div className="selltab selltab--phone">
+      <div className={`selltab selltab--phone${group.length > 0 ? ' has-dock' : ''}`}>
         {sellable.length === 0 ? (
           none
         ) : (
           <>
             {filters}
-            {ticked.length > 0 && (
-              <div className="mcard__terms selltab__many">
-                <span className="msell__cap">
-                  The sale · {ticked.length} of up to {MAX_BULK_LISTINGS}
-                </span>
-                {saleList}
-                {terms(sellable.find((x) => ticked.includes(x.fighter_id))!)}
-              </div>
-            )}
             {shown.length === 0 ? (
               <p className="faint">No fighter you can sell matches these filters.</p>
             ) : (
               <div className="mrows drost--phone">
-                {shown.map((f) => {
-                  const open = f.fighter_id === pickedId
-                  return (
-                    <div key={f.fighter_id} className={`drost--stack mcard${open ? ' is-open' : ''}`}>
-                      <OwnCard
-                        f={f}
-                        picked={open}
-                        cue={open ? 'Close' : 'Sell ›'}
-                        onPick={() => setPickedId(open ? null : f.fighter_id)}
-                        select={tickFor(f)}
-                  marked={ticked.includes(f.fighter_id)}
-                      />
-                      {open && <div className="mcard__terms">{terms(f, () => onInspect(f))}</div>}
-                    </div>
-                  )
-                })}
+                {shown.map((f) => (
+                  <div key={f.fighter_id} className="drost--stack mcard">
+                    <OwnCard
+                      f={f}
+                      picked={false}
+                      onPick={() => toggleTick(f.fighter_id)}
+                      select={tickFor(f)}
+                      marked={ticked.includes(f.fighter_id)}
+                    />
+                  </div>
+                ))}
               </div>
             )}
           </>
+        )}
+        {group.length > 0 && (
+          <div className="selldock" role="region" aria-label="The sale">
+            <span className="selldock__count">
+              <span>
+                <b className="mono">{group.length}</b> selected
+              </span>
+              <small>up to {MAX_BULK_LISTINGS} listed together</small>
+            </span>
+            <button type="button" className="btn btn--ghost btn--sm" onClick={() => setTicked([])}>
+              Clear
+            </button>
+            <button type="button" className="btn btn--primary" onClick={() => setSaleOpen(true)}>
+              Review &amp; list
+            </button>
+          </div>
+        )}
+        {saleOpen && group.length > 0 && (
+          <BottomSheet
+            title={group.length === 1 ? 'Sell this fighter' : `The sale · ${group.length} fighters`}
+            onClose={() => setSaleOpen(false)}
+            foot={<div className="rsheet__actions">{listButton(group[0])}</div>}
+          >
+            <div className="selltab__sheet">
+              <div className="mrows drost--phone selltab__picked">
+                {group.map((f) => (
+                  <CompactPick
+                    key={f.fighter_id}
+                    f={f}
+                    picked={false}
+                    onClick={() => onInspect(f)}
+                    title="Details"
+                    below={tickFor(f)}
+                  />
+                ))}
+              </div>
+              <p className="msell__hint">Tap a card for its details; Sell under it takes it out of the sale.</p>
+              {terms(group[0], undefined, true)}
+            </div>
+          </BottomSheet>
         )}
       </div>
     )

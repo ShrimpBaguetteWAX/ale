@@ -34,6 +34,13 @@ const FOCUSABLE = [
   '[tabindex]:not([tabindex="-1"])',
 ].join(',')
 
+/*
+ * The overlays open right now, the newest last. Escape and Tab belong to the
+ * one on top: the Market's sale sheet opens a fighter's details over itself,
+ * and one Escape closed both.
+ */
+const open: object[] = []
+
 export function useModal(onClose: () => void) {
   const panel = useRef<HTMLDivElement>(null)
 
@@ -56,8 +63,11 @@ export function useModal(onClose: () => void) {
 
   useEffect(() => {
     const opener = document.activeElement as HTMLElement | null
+    const me = {}
+    open.push(me)
 
     const onKey = (e: KeyboardEvent) => {
+      if (open[open.length - 1] !== me) return
       if (e.key === 'Escape') {
         close.current()
         return
@@ -105,6 +115,7 @@ export function useModal(onClose: () => void) {
 
     return () => {
       window.removeEventListener('keydown', onKey)
+      open.splice(open.indexOf(me), 1)
       document.body.style.overflow = prev
       /* Back where it came from, if that is still on the page. */
       if (opener && document.contains(opener)) opener.focus?.()

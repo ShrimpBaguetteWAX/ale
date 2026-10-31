@@ -2317,20 +2317,23 @@ i.mrow__arrow {
   box-shadow: none;
 }
 
-/* A phone: what the cards show stays in reach under the top bar while the list scrolls. */
+/*
+ * A phone: what the cards show sits under the tabs, on the page as on a
+ * desktop, no band behind it. Pinned it is part of the fixed top; on the
+ * tabs that scroll as a page it holds under the top bar, its two switches
+ * opaque enough that the list passes under them rather than through them.
+ */
 @media (max-width: 719px) {
-  .market__panel > .mview__row {
+  .market__inner > .mview__row {
     position: sticky;
     top: var(--topbar-h, 56px);
     z-index: calc(var(--z-sticky) - 3);
-    background: #0a1222;
-    box-shadow:
-      0 0 0 6px rgb(5 10 22 / 96%),
-      0 10px 16px rgb(0 0 0 / 45%);
+    margin-bottom: 10px;
   }
-  /* Pinned, the panel is the list's own scroller: the switch holds at its top. */
-  .market--pinned .market__panel > .mview__row {
-    top: 0;
+  .market__inner > .mview__row > .drost__seg {
+    background: rgb(6 11 24 / 88%);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
   }
 }
 
@@ -2394,11 +2397,75 @@ i.mrow__arrow {
   color: var(--text-dim);
 }
 
-/* Several ticked: the terms for all of them above the list on a phone; Clear beside the deal's heading on a desktop. */
-.selltab__many {
-  margin-bottom: 12px;
-  border-radius: 14px;
-  box-shadow: inset 0 0 0 1px rgb(0 186 255 / 45%);
+/*
+ * The phone's sale, docked above the tab bar: how many are in it, and the
+ * way into the sheet that lists them and holds the terms. An opaque band
+ * with a fade above it, as the candle's Contribute has, so the list scrolls
+ * under it rather than showing through.
+ */
+.selldock {
+  position: fixed;
+  right: 0;
+  bottom: calc(var(--nav-h) + env(safe-area-inset-bottom));
+  left: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: #070d1c;
+  box-shadow: inset 0 1px 0 rgb(192 205 224 / 30%);
+}
+.selldock::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 100%;
+  height: 20px;
+  background: linear-gradient(0deg, #070d1c, transparent);
+  pointer-events: none;
+}
+.selldock__count {
+  display: grid;
+  margin-right: auto;
+  min-width: 0;
+  font-size: 13px;
+  color: var(--text-dim);
+}
+.selldock__count b {
+  font-size: 17px;
+  color: var(--white);
+}
+.selldock__count small {
+  font-size: max(10px, var(--fs-floor));
+  color: var(--text-faint);
+}
+.selldock .btn--primary {
+  min-height: 42px;
+}
+/* Clear in the quiet line the phone sheets use, not the ghost button's violet. */
+.selldock .btn--ghost {
+  --btn-bg: rgb(255 255 255 / 8%);
+  --btn-line: rgb(255 255 255 / 22%);
+  min-height: 42px;
+  box-shadow: none;
+}
+/* The list ends above the band. */
+.selltab--phone.has-dock {
+  padding-bottom: 72px;
+}
+/* The sheet: the fighters in the sale as compact cards, four to a row, then the terms. */
+.selltab__sheet {
+  display: grid;
+  gap: 12px;
+}
+.selltab__sheet > .selltab__picked {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+.selltab__go {
+  width: 100%;
+  min-height: 46px;
 }
 .selltab__clear {
   justify-self: start;
