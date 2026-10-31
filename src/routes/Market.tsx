@@ -845,14 +845,14 @@ function OwnCard({
   picked,
   onPick,
   cue = 'Sell ›',
-  tick,
+  select,
 }: {
   f: RosterFighter
   picked: boolean
   onPick: () => void
   cue?: string
-  /** The Sell tab's tick, to list several at once. */
-  tick?: React.ReactNode
+  /** The Sell tab's checkbox, to list several at once: where the cue was. */
+  select?: React.ReactNode
 }) {
   const { classes, fighters, levelMod, ageDecay } = useConfig()
   const view = useContext(CardView)
@@ -864,7 +864,7 @@ function OwnCard({
   )
   return (
     density === 'compact' ? (
-      <CompactPick f={f} picked={picked} onClick={onPick} tick={tick} below={<span className="mrow__cue">{cue}</span>} />
+      <CompactPick f={f} picked={picked} onClick={onPick} below={select ?? <span className="mrow__cue">{cue}</span>} />
     ) : (
     <HolderRow
       f={f}
@@ -875,8 +875,7 @@ function OwnCard({
       blocked={false}
       picked={picked}
       onClick={onPick}
-      tick={tick}
-      aside={<span className="mrow__cue">{cue}</span>}
+      aside={select ?? <span className="mrow__cue">{cue}</span>}
     />
     )
   )
@@ -1862,20 +1861,41 @@ export function SellTab({
       return still.length === t.length ? t : still
     })
   }, [sellable])
+  /* Who is in the sale, each with a way back out. */
+  const saleList = (
+    <span className="selltab__sale">
+      {sellable
+        .filter((x) => ticked.includes(x.fighter_id))
+        .map((x) => (
+          <button type="button" key={x.fighter_id} onClick={() => toggleTick(x.fighter_id)} title="Take out of the sale">
+            {x.classname} <small>L{x.stats.level}</small> <b aria-hidden="true">×</b>
+          </button>
+        ))}
+    </span>
+  )
   const tickFor = (f: RosterFighter) => {
     const on = ticked.includes(f.fighter_id)
     return (
       <span
-        className={`drost__tick is-hit${on ? ' is-on' : ''}`}
+        className={`msel${on ? ' is-on' : ''}`}
         role="checkbox"
+        tabIndex={0}
         aria-checked={on}
-        aria-label={on ? 'Take out of the listing' : 'Add to the listing'}
-        title={on ? 'Take out of the listing' : `Tick up to ${MAX_BULK_LISTINGS} to list together`}
+        title={on ? 'Take out of the sale' : `Into the sale: up to ${MAX_BULK_LISTINGS} are listed together`}
         onClick={(e) => {
           e.stopPropagation()
           toggleTick(f.fighter_id)
         }}
-      />
+        onKeyDown={(e) => {
+          if (e.key !== ' ' && e.key !== 'Enter') return
+          e.preventDefault()
+          e.stopPropagation()
+          toggleTick(f.fighter_id)
+        }}
+      >
+        <i aria-hidden="true" />
+        {on ? 'In the sale' : 'Sell'}
+      </span>
     )
   }
 
@@ -2066,8 +2086,9 @@ export function SellTab({
             {ticked.length > 0 && (
               <div className="mcard__terms selltab__many">
                 <span className="msell__cap">
-                  List {ticked.length} together · up to {MAX_BULK_LISTINGS}
+                  The sale · {ticked.length} of up to {MAX_BULK_LISTINGS}
                 </span>
+                {saleList}
                 {terms(sellable.find((x) => ticked.includes(x.fighter_id))!)}
               </div>
             )}
@@ -2084,7 +2105,7 @@ export function SellTab({
                         picked={open}
                         cue={open ? 'Close' : 'Sell ›'}
                         onPick={() => setPickedId(open ? null : f.fighter_id)}
-                        tick={tickFor(f)}
+                        select={tickFor(f)}
                       />
                       {open && <div className="mcard__terms">{terms(f, () => onInspect(f))}</div>}
                     </div>
@@ -2124,7 +2145,7 @@ export function SellTab({
                   f={f}
                   picked={f === deskPicked}
                   onPick={() => setPickedId(f.fighter_id)}
-                  tick={tickFor(f)}
+                  select={tickFor(f)}
                 />
               ))}
             </div>
@@ -2144,13 +2165,9 @@ export function SellTab({
         deskPicked && (
           <aside className="mdeal" aria-label={ticked.length > 0 ? 'List the ticked fighters' : 'Sell this fighter'}>
             <span className="mdeal__cap">
-              {ticked.length > 0 ? `List ${ticked.length} together · up to ${MAX_BULK_LISTINGS}` : 'Sell this fighter'}
+              {ticked.length > 0 ? `The sale · ${ticked.length} of up to ${MAX_BULK_LISTINGS}` : 'Sell this fighter'}
             </span>
-            {ticked.length > 0 && (
-              <button type="button" className="linklike selltab__clear" onClick={() => setTicked([])}>
-                Clear the ticks
-              </button>
-            )}
+            {ticked.length > 0 && saleList}
             {terms(deskPicked)}
           </aside>
         )

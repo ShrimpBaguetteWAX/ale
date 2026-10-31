@@ -2411,3 +2411,96 @@ i.mrow__arrow {
   justify-self: start;
   font-size: 12px;
 }
+
+/* The Sell tab's checkbox, where the Sell cue was: a labelled chip, lit cyan once a fighter is in the listing. */
+.msel {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 30px;
+  padding: 0 12px 0 9px;
+  border-radius: 999px;
+  background: rgb(0 186 255 / 8%);
+  box-shadow: inset 0 0 0 1px rgb(0 186 255 / 45%);
+  font-family: var(--font-display);
+  font-size: max(10px, var(--fs-floor));
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: #9ee7ff;
+  cursor: pointer;
+}
+.msel:hover {
+  background: rgb(0 186 255 / 16%);
+}
+.msel:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: 2px;
+}
+.msel i {
+  position: relative;
+  flex: none;
+  width: 15px;
+  height: 15px;
+  border-radius: 4px;
+  box-shadow: inset 0 0 0 2px rgb(158 231 255 / 70%);
+}
+.msel.is-on {
+  background: rgb(0 186 255 / 24%);
+  box-shadow: inset 0 0 0 1.5px var(--cyan);
+  color: var(--white);
+}
+.msel.is-on i {
+  background: var(--cyan);
+  box-shadow: none;
+}
+.msel.is-on i::after {
+  content: '';
+  position: absolute;
+  left: 5px;
+  top: 2px;
+  width: 4px;
+  height: 8px;
+  border: solid #062033;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+/* Under a compact card, the chip across the plate. */
+.cpick__below .msel {
+  width: 100%;
+  justify-content: center;
+  padding: 0 6px;
+  font-size: max(9px, var(--fs-floor));
+}
+
+/* The sale: who is in it, each a chip that takes it back out. */
+.selltab__sale {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.selltab__sale button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 30px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 999px;
+  background: rgb(0 186 255 / 14%);
+  box-shadow: inset 0 0 0 1px rgb(0 186 255 / 55%);
+  font-family: var(--font-display);
+  font-size: max(10px, var(--fs-floor));
+  font-weight: 800;
+  text-transform: uppercase;
+  color: var(--white);
+  cursor: pointer;
+}
+.selltab__sale small {
+  font-family: var(--font-body);
+  color: var(--text-dim);
+}
+.selltab__sale b {
+  color: #9ee7ff;
+}
