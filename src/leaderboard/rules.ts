@@ -1,4 +1,5 @@
 import type { ArenaSeason, DungeonConfigLb, TlmPool } from './types'
+import { countdownText } from '@/format'
 
 /**
  * How the leaderboards pay.
@@ -147,17 +148,7 @@ export function arenaReward(rank: number, season: ArenaSeason | undefined): numb
 /** "6d 04h", "04h 12m", "12m 30s" — a countdown at the right resolution. */
 export function countdown(ms: number): string {
   if (ms <= 0) return 'now'
-
-  const secs = Math.floor(ms / 1000)
-  const d = Math.floor(secs / 86_400)
-  const h = Math.floor((secs % 86_400) / 3600)
-  const m = Math.floor((secs % 3600) / 60)
-  const s = secs % 60
-  const pad = (n: number) => String(n).padStart(2, '0')
-
-  if (d > 0) return `${d}d ${pad(h)}h`
-  if (h > 0) return `${pad(h)}h ${pad(m)}m`
-  return `${pad(m)}m ${pad(s)}s`
+  return countdownText(ms)
 }
 
 /** A wallet's display name, falling back to the wallet when unset. */

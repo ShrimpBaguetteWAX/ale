@@ -1,6 +1,6 @@
 import type { KeyValue, Player } from '@/chain/types'
 import type { Quest, QuestScope } from './types'
-import { NUM_LOCALE, formatDecimals } from '@/format'
+import { NUM_LOCALE, countdownText, formatDecimals } from '@/format'
 import { asset } from '@/assets'
 
 /**
@@ -237,18 +237,7 @@ export function needsRefill(board: ScopeBoard[]): boolean {
  */
 export function formatTimeLeft(ms: number): string {
   if (ms <= 0) return 'expired'
-
-  const secs = Math.floor(ms / 1000)
-  const d = Math.floor(secs / 86_400)
-  const h = Math.floor((secs % 86_400) / 3600)
-  const m = Math.floor((secs % 3600) / 60)
-  const s = secs % 60
-
-  const pad = (n: number) => String(n).padStart(2, '0')
-
-  if (d > 0) return `${d}d ${pad(h)}h ${pad(m)}m`
-  if (h > 0) return `${pad(h)}h ${pad(m)}m`
-  return `${pad(m)}m ${pad(s)}s`
+  return countdownText(ms)
 }
 
 /** Artwork is per task type *and* cadence — 18 × 3 banners. */

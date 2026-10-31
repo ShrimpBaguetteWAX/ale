@@ -52,7 +52,7 @@ import type {
   TournamentSignup,
   TournamentStage,
 } from '@/tournament/types'
-import { formatDecimals, formatNumber } from '@/format'
+import { formatDecimals, formatNumber, tokenText } from '@/format'
 import { asset, ipfsImage } from '@/assets'
 
 const TLM_ICON = asset('/assets/icons/tlm.svg')
@@ -197,7 +197,7 @@ function dayTime(ms: number): string {
 }
 
 const wax = (v: number) => formatDecimals(v, 2)
-const tlm = (v: number) => (v >= 100 ? formatNumber(Math.floor(v)) : formatDecimals(v, 2))
+const tlm = tokenText
 
 function dayLabel(ms: number): string {
   if (!Number.isFinite(ms)) return ''

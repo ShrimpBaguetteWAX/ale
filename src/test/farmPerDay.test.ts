@@ -54,7 +54,7 @@ describe('withWeight', () => {
     expect(after.weight).toBe(580)
     expect(capPerDay(after.weight, config)).toBeCloseTo(0.58)
     /* 100,000 / 580 days, less the 13 minutes already banked. */
-    expect(formatToCap(after.msToCap)).toBe('in 172 days')
+    expect(formatToCap(after.msToCap)).toBe('in 6 months')
   })
 
   it('fills it later with them unstaked, and never below nothing', () => {

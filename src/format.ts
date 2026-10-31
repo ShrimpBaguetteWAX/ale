@@ -105,3 +105,42 @@ export function formatAsset(asset: string, places: number): string {
   })
   return [grouped, ...rest].join(' ')
 }
+
+/**
+ * A countdown, the one way the game writes time left: two units at most,
+ * no leading zero on the first — "2d 4h", "5h 3m", "4m 05s", "12s". Every
+ * screen's clock goes through this, so a quest, a candle and a season all
+ * read alike.
+ */
+export function countdownText(ms: number): string {
+  const secs = Math.max(0, Math.floor(ms / 1000))
+  const d = Math.floor(secs / 86_400)
+  const h = Math.floor((secs % 86_400) / 3600)
+  const m = Math.floor((secs % 3600) / 60)
+  const s = secs % 60
+  if (d > 0) return `${d}d ${h}h`
+  if (h > 0) return `${h}h ${m}m`
+  if (m > 0) return `${m}m ${String(s).padStart(2, '0')}s`
+  return `${s}s`
+}
+
+/** A long span the way a plan reads it: "6 hours", "12 days", "4 months", "2 years". */
+export function spanText(ms: number): string {
+  const hours = ms / 3_600_000
+  if (hours < 48) {
+    const n = Math.max(1, Math.round(hours))
+    return `${n} hour${n === 1 ? '' : 's'}`
+  }
+  const days = hours / 24
+  if (days < 60) return `${Math.round(days)} days`
+  if (days < 730) return `${Math.round(days / 30)} months`
+  return `${Math.round(days / 365)} years`
+}
+
+/**
+ * A token amount (TLM, Shards, WAX), the one way the game writes them: whole
+ * from 100 up, two places below — "1,230", "42.50", "0.75".
+ */
+export function tokenText(value: number): string {
+  return value >= 100 ? formatNumber(Math.floor(value)) : formatDecimals(value, 2)
+}

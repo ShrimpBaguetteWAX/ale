@@ -207,7 +207,8 @@ export function boostShown(percent: number): boolean {
  * percent and another in multiples.
  */
 export function formatBoost(percent: number): string {
-  return (percent / 10).toFixed(1) + 'x'
+  /* The multiplication sign, as every screen writes a boost. */
+  return (percent / 10).toFixed(1) + '×'
 }
 
 /**

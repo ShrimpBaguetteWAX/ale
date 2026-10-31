@@ -2,6 +2,7 @@ import type { Building, LandsConfig } from '@/chain/types'
 import { liveBoostScore, BOOST_MAX, boostRank, boostShown } from '@/map/terrain'
 import type { BuildingCost, LandIncome, OwnedLand } from './types'
 import type { BuildingName } from './queries'
+import { spanText } from '@/format'
 
 /**
  * The economics of owning land, read out of `maps.cpp`.
@@ -184,14 +185,7 @@ export function msUntilDisabled(
 export function formatSpan(ms: number): string {
   if (!Number.isFinite(ms)) return 'never'
   if (ms <= 0) return 'now'
-
-  const hours = ms / 3_600_000
-  if (hours < 48) return `${Math.round(hours)} hours`
-
-  const days = hours / 24
-  if (days < 60) return `${Math.round(days)} days`
-
-  return `${Math.round(days / 30)} months`
+  return spanText(ms)
 }
 
 /**

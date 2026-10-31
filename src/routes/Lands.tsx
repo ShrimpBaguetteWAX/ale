@@ -44,7 +44,7 @@ import { useAction } from '@/wharf/useAction'
 import { useChainQuery } from '@/chain/useChainQuery'
 import { useConfig, useLazyConfig } from '@/state/useConfig'
 import { DIRTIES } from '@/wharf/actions'
-import { formatNumber, formatDecimals } from '@/format'
+import { formatNumber, tokenText } from '@/format'
 import { formatShards } from '@/outpost/rules'
 import { ActionBanner } from '@/components/ActionBanner'
 import { asset } from '@/assets'
@@ -96,7 +96,7 @@ function parseBusy(raw: string | null): Busy {
 }
 
 function tlm(raw: number): string {
-  return formatDecimals(raw / 10_000, 1)
+  return tokenText(raw / 10_000)
 }
 
 /* Whole credits, as every other screen shows them; rounded up, so a price never reads under what is charged. */
@@ -412,7 +412,7 @@ function landBuilding(land: OwnedLand): string {
 
 /* The multiplier the player reads, with a proper times sign. */
 function boostLabel(percent: number): string {
-  return formatBoost(percent).replace('x', '×')
+  return formatBoost(percent)
 }
 
 /*

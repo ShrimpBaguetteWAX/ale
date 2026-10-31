@@ -10,7 +10,7 @@ import { MIN_SHOWN_BOOST, boostRank, boostShown, formatBoost, liveBoostPercent }
  */
 describe('a building too decayed to show', () => {
   it('is hidden below 0.1x and drawn from 0.1x', () => {
-    expect(formatBoost(MIN_SHOWN_BOOST)).toBe('0.1x')
+    expect(formatBoost(MIN_SHOWN_BOOST)).toBe('0.1×')
     expect(boostShown(MIN_SHOWN_BOOST)).toBe(true)
     expect(boostShown(0.99)).toBe(false)
     expect(boostShown(0)).toBe(false)
@@ -44,9 +44,9 @@ describe('boostRank', () => {
   })
 
   it('agrees with the label at a boundary: 2.04x shows as 2.0x and ranks 1', () => {
-    expect(formatBoost(20.4)).toBe('2.0x')
+    expect(formatBoost(20.4)).toBe('2.0×')
     expect(boostRank(20.4)).toBe(1)
-    expect(formatBoost(20.6)).toBe('2.1x')
+    expect(formatBoost(20.6)).toBe('2.1×')
     expect(boostRank(20.6)).toBe(2)
   })
 })

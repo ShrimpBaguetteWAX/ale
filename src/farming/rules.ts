@@ -1,3 +1,4 @@
+import { spanText } from '@/format'
 import type {
   FarmConfig,
   FarmPool,
@@ -195,13 +196,7 @@ export function weightPerDay(user: FarmUser | undefined): number {
 export function formatToCap(ms: number): string {
   if (!Number.isFinite(ms)) return '—'
   if (ms <= 0) return 'reached'
-
-  const hours = ms / 3_600_000
-  if (hours < 48) return `in ${Math.max(1, Math.round(hours))} hours`
-  const days = hours / 24
-  /* A single light card can take years; a count of a thousand days reads as noise. */
-  if (days >= 730) return `in ${Math.round(days / 365)} years`
-  return `in ${Math.round(days)} days`
+  return `in ${spanText(ms)}`
 }
 
 /**

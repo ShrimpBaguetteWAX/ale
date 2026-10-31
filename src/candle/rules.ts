@@ -1,7 +1,7 @@
 import type { KeyValue, Player } from '@/chain/types'
 import type { CandleOffer } from './types'
 import { asset } from '@/assets'
-import { formatDecimals, formatNumber } from '@/format'
+import { countdownText, formatDecimals, formatNumber } from '@/format'
 
 /**
  * How the candle works, from `recovery.ale`.
@@ -72,7 +72,8 @@ export function perGemPlaces(value: number, type: string): number {
  * it keeps the places `placesFor` gives, so a small payout still says what it is.
  */
 export function wholeTokens(value: number, type: string): string {
-  return value >= 1 ? formatNumber(Math.floor(value)) : formatDecimals(value, placesFor(value, type))
+  /* Whole from 100 up, as every token amount in the game reads. */
+  return value >= 100 ? formatNumber(Math.floor(value)) : formatDecimals(value, Math.min(2, placesFor(value, type)))
 }
 
 /** The token's own precision, for anywhere the raw scale is wanted. */
@@ -255,15 +256,5 @@ export function projectShare(offer: CandleOffer, mine: number, gems: number): Sh
 /** "6h 12m", "12m 30s", "2d 04h" — the countdown a day-long campaign needs. */
 export function countdown(ms: number): string {
   if (ms <= 0) return 'now'
-
-  const secs = Math.floor(ms / 1000)
-  const d = Math.floor(secs / 86_400)
-  const h = Math.floor((secs % 86_400) / 3600)
-  const m = Math.floor((secs % 3600) / 60)
-  const s = secs % 60
-  const pad = (n: number) => String(n).padStart(2, '0')
-
-  if (d > 0) return `${d}d ${pad(h)}h`
-  if (h > 0) return `${h}h ${pad(m)}m`
-  return `${m}m ${pad(s)}s`
+  return countdownText(ms)
 }

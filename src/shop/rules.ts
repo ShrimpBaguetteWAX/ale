@@ -1,6 +1,6 @@
 import type { Player } from '@/chain/types'
 import type { ShopCooldown, ShopItem } from './types'
-import { NUM_LOCALE } from '@/format'
+import { NUM_LOCALE, countdownText } from '@/format'
 import { asset } from '@/assets'
 
 /** Legend access is a timestamp on the player, not a flag. */
@@ -145,12 +145,7 @@ export function canBuy(
 
 /** "2h 14m", "45m", "30s" — enough precision to know whether to wait. */
 export function formatCountdown(until: Date): string {
-  const secs = Math.max(0, Math.round((until.getTime() - Date.now()) / 1000))
-  const h = Math.floor(secs / 3600)
-  const m = Math.floor((secs % 3600) / 60)
-  if (h > 0) return `${h}h ${m}m`
-  if (m > 0) return `${m}m`
-  return `${secs}s`
+  return countdownText(until.getTime() - Date.now())
 }
 
 export interface Price {
@@ -347,7 +342,6 @@ export function legendLeft(ms: number): string {
   if (ms <= 0) return 'Ended'
   const days = Math.floor(ms / 86_400_000)
   if (days >= 1) return `${days} day${days === 1 ? '' : 's'} left`
-  const h = Math.floor(ms / 3_600_000)
-  const m = Math.floor((ms % 3_600_000) / 60_000)
-  return h > 0 ? `${h}h ${m}m left` : `${m}m left`
+  /* Seconds are noise on a pass: under the hour, minutes alone. */
+  return ms >= 3_600_000 ? `${countdownText(ms)} left` : `${Math.floor(ms / 60_000)}m left`
 }
