@@ -394,6 +394,8 @@ export function PhoneTournament(p: PhoneTournamentProps) {
               autoPlay
               lockedUntil={sheet.m.winner ? NaN : chainTime(sheet.m.play_time)}
               now={p.now}
+              /* As the sheet's title counts them, so the two agree on a final. */
+              rounds={board.rounds || sheet.round + 1}
             />
           </div>
         </Sheet>

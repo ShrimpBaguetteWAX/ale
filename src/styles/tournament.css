@@ -3761,152 +3761,394 @@
   cursor: pointer;
 }
 
-/* ---- the result ---- */
+/* ---- the result: the fight's MVP, and the side that won (BoutBroadcast's Result) ---- */
 
-.bcast__result {
+/*
+ * Over the player at its own size: the stage steps back into the dark, the
+ * MVP's card turns in on the left with rays behind it, the winner and the team
+ * on the right. Laid out by its own width (a container), so a phone's player
+ * stacks it: the card on top, the winner under it.
+ */
+.bres {
   position: absolute;
   inset: 0;
   z-index: 8;
-  display: grid;
-  /* Opaque: a lit floor and a dark hall, not the fight through a tint. The
-     losing side is not still lying there behind the celebration. */
-  background:
-    radial-gradient(ellipse 70% 62% at 50% 104%, rgb(246 168 0 / 26%), transparent 70%),
-    radial-gradient(ellipse 90% 70% at 50% 120%, rgb(120 70 10 / 30%), transparent 70%),
-    #04070e;
-  animation: bcastfade 520ms var(--ease);
+  container-type: size;
+  overflow: hidden;
+  background: radial-gradient(80% 70% at 50% 55%, rgb(6 4 16 / 62%), rgb(3 2 10 / 92%));
+  backdrop-filter: blur(3px) saturate(0.8);
+  -webkit-backdrop-filter: blur(3px) saturate(0.8);
+  animation: bres-fade 420ms var(--ease) both;
 }
-
-@keyframes bcastfade { from { opacity: 0 } }
-
-.bcast__podium {
+@keyframes bres-fade {
+  from {
+    opacity: 0;
+  }
+}
+.bres__in {
   position: absolute;
   inset: 0;
-  z-index: 0;
   display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: minmax(0, 1fr);
-  align-items: end;
-  justify-items: center;
-  padding: 0 9% 7%;
-  pointer-events: none;
+  grid-template-columns: 29cqw minmax(0, 1fr);
+  align-items: center;
+  gap: 6cqw;
+  padding: 0 6cqw 0 8cqw;
 }
 
-.bcast__pod {
+/* the MVP */
+.bres__mvp {
   position: relative;
-  width: auto;
-  /* Wider than its column, like the fighting lines — the team closes ranks
-     for the picture. */
-  max-width: 210%;
-  /* The height is set per fighter for the stagger; on a phone the column is
-     narrower than the picture wants, and without this the portrait was
-     squeezed to the column and stretched to the height. */
-  object-fit: contain;
-  object-position: center bottom;
-  filter: drop-shadow(0 16px 34px rgb(0 0 0 / 85%));
-  opacity: 0;
-  transform: translateY(30px);
-  animation: bcaststandup 680ms cubic-bezier(0.2, 0.9, 0.25, 1) forwards;
+  display: grid;
+  animation: bres-turn 900ms cubic-bezier(0.2, 0.8, 0.3, 1) both;
 }
-
-@keyframes bcaststandup { to { opacity: 1; transform: none } }
-
-.bcast__shaft {
-  position: absolute;
-  inset: auto 0 0;
-  z-index: -1;
-  height: 86%;
-  background:
-    radial-gradient(ellipse 58% 100% at 50% 100%, rgb(246 168 0 / 40%), transparent 72%),
-    linear-gradient(180deg, transparent, rgb(246 168 0 / 12%));
-  animation: bcastraise 900ms var(--ease) forwards;
+@keyframes bres-turn {
+  from {
+    opacity: 0;
+    transform: perspective(60cqw) rotateY(-70deg) translateX(-6cqw);
+  }
+  to {
+    opacity: 1;
+    transform: perspective(60cqw) rotateY(-8deg);
+  }
 }
-
-@keyframes bcastraise {
-  from { opacity: 0; transform: scaleY(0.6); transform-origin: 50% 100% }
-  to { opacity: 1 }
-}
-
-.bcast__podfloor {
+.bres__rays {
   position: absolute;
   left: 50%;
-  bottom: 7%;
-  transform: translateX(-50%);
-  width: 78%;
-  height: 28px;
+  top: 42%;
+  z-index: -1;
+  width: 54cqw;
+  aspect-ratio: 1;
+  translate: -50% -50%;
   border-radius: 50%;
-  background: radial-gradient(ellipse at 50% 50%, rgb(246 168 0 / 45%), transparent 70%);
+  background: repeating-conic-gradient(from 0deg, rgb(255 220 140 / 16%) 0 6deg, transparent 6deg 18deg);
+  -webkit-mask: radial-gradient(closest-side, #000 30%, transparent);
+  mask: radial-gradient(closest-side, #000 30%, transparent);
+  animation: bres-spin 40s linear infinite;
 }
-
-.bcast__panel {
-  position: relative;
+@keyframes bres-spin {
+  to {
+    rotate: 360deg;
+  }
+}
+.bres__rib {
+  position: absolute;
+  left: 50%;
+  top: -1.8cqw;
   z-index: 2;
-  align-self: start;
+  translate: -50% 0;
+  padding: 0.45cqw 2.2cqw;
+  background: linear-gradient(180deg, #ffe7a0, #d39a33);
+  clip-path: polygon(0 0, 100% 0, 94% 50%, 100% 100%, 0 100%, 6% 50%);
+  font: 900 1.45cqw var(--font-display);
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: #2a1a04;
+}
+.bres__stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.9cqw;
+  margin-top: 1.6cqw;
+}
+.bres__stats > span {
   display: grid;
   justify-items: center;
-  gap: 3px;
-  padding: 14px 12px 10px;
-  text-align: center;
-  background: linear-gradient(
-    180deg,
-    rgb(3 6 12 / 92%) 0%,
-    rgb(3 6 12 / 82%) 62%,
-    transparent 100%
-  );
+  padding: 0.9cqw 0.4cqw;
+  border-radius: 1cqw;
+  background: rgb(8 10 22 / 88%);
+  box-shadow: inset 0 0 0 1px rgb(242 195 90 / 35%);
+}
+.bres__stats b {
+  font: 900 2.4cqw var(--font-display);
+  color: #ffe9a6;
+}
+.bres__stats small {
+  font-size: max(var(--fs-floor), 1.1cqw);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-faint);
 }
 
-.bcast__win {
-  font-family: var(--font-display);
-  font-size: clamp(24px, 5vw, 50px);
-  font-weight: 900;
-  color: #ffdb7d;
-  text-shadow: 0 4px 38px rgb(246 168 0 / 60%), 0 2px 10px rgb(0 0 0 / 95%);
-}
-
-.bcast__margin {
-  justify-self: center;
-  margin-top: 4px;
-  padding: 5px 14px;
-  border-radius: 999px;
-  border: 1px solid rgb(255 255 255 / 12%);
-  background: rgb(3 6 12 / 88%);
-  font-size: 15px;
-  letter-spacing: 0.06em;
-  color: #fff;
-  /* Tight and dark: enough to keep the edge crisp on the plate, not a
-     halo doing the work of a background. */
-  text-shadow: 0 1px 2px rgb(0 0 0 / 90%);
-}
-
-.bcast__again {
+/* the gilded cards: the MVP's big one, the team's small ones */
+.bres__card {
   position: relative;
-  z-index: 3;
-  align-self: end;
-  justify-self: center;
-  margin: 0 0 14px;
-  padding: 7px 16px;
-  border-radius: 8px;
-  border: 1px solid rgb(255 219 125 / 55%);
-  background: rgb(6 12 22 / 80%);
-  color: #ffdb7d;
-  font: inherit;
-  font-size: 0.85rem;
+  display: block;
+  aspect-ratio: 3 / 4.25;
+  padding: 0.25cqw;
+  border-radius: 0.6cqw;
+  background: linear-gradient(160deg, #fff4cf, #e9b54c 30%, #7c5418 60%, #d9a640 85%, #fff0bd);
+  box-shadow: 0 0.5cqw 1cqw rgb(0 0 0 / 55%);
+}
+.bres__card.is-big {
+  padding: 0.55cqw;
+  border-radius: 1.5cqw;
+  background: linear-gradient(160deg, #fff6d6, #f2c35a 25%, #8a5d14 55%, #d9a640 78%, #fff3c4);
+  box-shadow:
+    0 1.6cqw 3cqw rgb(0 0 0 / 60%),
+    0 0 3cqw rgb(255 200 90 / 40%);
+  overflow: hidden;
+}
+.bres__card.is-big::after {
+  content: '';
+  position: absolute;
+  top: -10%;
+  bottom: -10%;
+  width: 30%;
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 45%), transparent);
+  animation: bres-glint 3.6s 1s ease-in-out infinite;
+}
+@keyframes bres-glint {
+  0%,
+  40% {
+    transform: translateX(-120%) skewX(-20deg);
+  }
+  100% {
+    transform: translateX(380%) skewX(-20deg);
+  }
+}
+.bres__pic {
+  position: absolute;
+  inset: 0.25cqw;
+  overflow: hidden;
+  border-radius: 0.4cqw;
+  background-size: cover;
+  background-position: center;
+}
+.bres__card.is-big .bres__pic {
+  inset: 0.55cqw;
+  border-radius: 1.1cqw;
+}
+/* The portrait, cut from the full art at one even scale, as the game's cards cut it. */
+.bres__art {
+  position: absolute;
+  left: var(--px);
+  top: var(--py);
+  width: var(--pz);
+  max-width: none;
+  height: auto;
+  aspect-ratio: 362 / 512;
+}
+.bres__nft {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.bres__cardname {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 6%;
+  z-index: 1;
+  text-align: center;
+  font: 900 2.1cqw var(--font-display);
+  text-transform: uppercase;
+  color: #fff;
+  text-shadow:
+    0 0 0.6cqw #000,
+    0 0 0.6cqw #000;
+}
+.bres__card.is-mvp {
+  box-shadow:
+    0 0 0 0.3cqw #f2c35a,
+    0 0 1.6cqw rgb(242 195 90 / 60%);
+}
+.bres__card.is-ko .bres__pic {
+  filter: grayscale(1) brightness(0.45);
+}
+.bres__card.is-ko {
+  background: linear-gradient(160deg, #9aa0ae, #5a606e 50%, #3a3e48);
+}
+.bres__card.is-ko::after {
+  content: '✕';
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font: 900 3cqw var(--font-display);
+  color: #ff4d5e;
+  text-shadow:
+    0 0 1cqw #000,
+    0 0 0.3cqw #000;
+}
+
+/* the winner */
+.bres__main {
+  display: grid;
+  justify-items: start;
+  gap: 1.4cqw;
+  animation: bres-rise 700ms 350ms cubic-bezier(0.2, 0.8, 0.3, 1) both;
+}
+.bres__main.is-alone {
+  grid-column: 1 / -1;
+  justify-items: center;
+  text-align: center;
+}
+@keyframes bres-rise {
+  from {
+    opacity: 0;
+    transform: translateY(3cqw);
+  }
+}
+.bres__kick {
+  font: 800 1.45cqw var(--font-display);
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: #19d3c5;
+}
+.bres__name {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font: 900 5.4cqw/1.05 var(--font-display);
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: #fff;
+  text-shadow: 0 0 2cqw rgb(25 211 197 / 40%);
+}
+.bres__line {
+  font-size: max(var(--fs-floor), 1.7cqw);
+  color: #cdd6ea;
+}
+.bres__line b {
+  color: #fff;
+}
+.bres__blow {
+  padding: 0.6cqw 1.3cqw;
+  border-radius: 1cqw;
+  background: rgb(255 77 94 / 12%);
+  box-shadow: inset 0 0 0 1px rgb(255 77 94 / 45%);
+  font-size: max(var(--fs-floor), 1.35cqw);
+  font-weight: 700;
+  color: #ffd0d6;
+}
+.bres__blow b {
+  color: #fff;
+  text-transform: capitalize;
+}
+.bres__team {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 0.9cqw;
+  width: min(100%, 50cqw);
+  margin-top: 0.6cqw;
+}
+.bres__again {
+  margin-top: 1cqw;
+  min-height: max(34px, 4.6cqw);
+  padding: 0 2.6cqw;
+  border: 0;
+  border-radius: 1.1cqw;
+  background: linear-gradient(180deg, #ffe7a0, #e0a83c 60%, #b47a1e);
+  box-shadow: 0 0.4cqw 1.6cqw rgb(242 195 90 / 35%);
+  color: #2a1a04;
+  font: 800 max(12px, 1.5cqw) var(--font-display);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
   cursor: pointer;
 }
 
-.bcast__again:hover { background: rgb(246 168 0 / 22%); }
+/* A phone's player, taller than wide: the MVP on top, the winner under it. */
+@container (max-aspect-ratio: 1 / 1) {
+  .bres__in {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto;
+    align-content: center;
+    justify-items: center;
+    gap: 5cqw;
+    padding: 4cqw 5cqw;
+  }
+  .bres__mvp {
+    width: 40cqw;
+  }
+  .bres__rays {
+    width: 110cqw;
+  }
+  .bres__rib {
+    top: -3.4cqw;
+    padding: 0.8cqw 4cqw;
+    font-size: 2.8cqw;
+  }
+  .bres__stats {
+    gap: 1.6cqw;
+    margin-top: 3cqw;
+  }
+  .bres__stats > span {
+    padding: 1.4cqw 0.6cqw;
+    border-radius: 2cqw;
+  }
+  .bres__stats b {
+    font-size: 4.6cqw;
+  }
+  .bres__stats small {
+    font-size: max(var(--fs-floor), 2.3cqw);
+  }
+  .bres__cardname {
+    font-size: 4.2cqw;
+  }
+  .bres__main {
+    justify-items: center;
+    text-align: center;
+    gap: 2.4cqw;
+    width: 100%;
+  }
+  .bres__kick {
+    font-size: 2.9cqw;
+  }
+  .bres__name {
+    font-size: 9cqw;
+  }
+  .bres__line {
+    font-size: max(var(--fs-floor), 3.4cqw);
+  }
+  .bres__blow {
+    display: none;
+  }
+  .bres__team {
+    width: 100%;
+    gap: 1.6cqw;
+  }
+  .bres__card {
+    border-radius: 1.4cqw;
+    padding: 0.6cqw;
+  }
+  .bres__pic {
+    inset: 0.6cqw;
+    border-radius: 1cqw;
+  }
+  .bres__card.is-ko::after {
+    font-size: 7cqw;
+  }
+  .bres__again {
+    min-height: 44px;
+    padding: 0 6cqw;
+    border-radius: 3cqw;
+    font-size: max(13px, 3.6cqw);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bres,
+  .bres__mvp,
+  .bres__main,
+  .bres__rays,
+  .bres__card.is-big::after {
+    animation: none !important;
+  }
+}
 
 @media (prefers-reduced-motion: reduce) {
   .bcast__aim,
   .bcast__art,
   .bcast__hit,
-  .bcast__pod,
-  .bcast__shaft,
   .bcast__wipe {
     animation: none !important;
   }
 
-  .bcast__pod { opacity: 1; transform: none }
 }
 
 /* The band names: off until the arena stacks. */
@@ -6041,7 +6283,7 @@
 .boutstage .bfmain {
   position: relative;
 }
-.boutstage .bcast__result {
+.boutstage .bres {
   /* Over every fighter: the ones in a blow stand at 300. */
   z-index: 1000;
   border-radius: inherit;

@@ -1253,6 +1253,7 @@ export function Battle({
              but it cannot be run before its slot: see BoutRows. */
           lockedUntil={shownAt === liveAt && !shown.winner ? chainTime(shown.play_time) : NaN}
           now={now}
+          rounds={Number(stage.rounds ?? 0)}
         />
       )}
 
@@ -1735,6 +1736,8 @@ export function Results({
           weather={weather}
           mineWallet={wallet}
           autoPlay={!!picked}
+          /* The last round with a fight in it is the final. */
+          rounds={(last?.round ?? 0) + 1}
         />
       )}
 

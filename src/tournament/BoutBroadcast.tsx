@@ -8,9 +8,11 @@ import { fightLook } from '@/fight/fightLook'
 import { COLOSSEUM } from '@/fight/stages'
 import { usePhone } from '@/components/usePhone'
 import { simulateBout, type BoutSide } from '@/tournament/bout'
-import { combineNftFlat } from '@/dungeon/nftFighter'
+import { NFT_FIGHTER_ART, combineNftFlat } from '@/dungeon/nftFighter'
+import { NFT_FIGHTER_ID } from '@/dungeon/rules'
+import { portraitCut } from '@/fighters/portraitFrame'
 import { stateAt } from '@/dungeon/standing'
-import { fighterArt, fighterArtFallback, elementIcon } from '@/tavern/fighterStats'
+import { elementBackground, fighterArt, fighterArtFallback, elementIcon } from '@/tavern/fighterStats'
 import { GameImg } from '@/components/GameImg'
 import { PlayerAvatar } from '@/components/PlayerAvatar'
 import { asset } from '@/assets'
@@ -62,10 +64,13 @@ export function BoutBroadcast({
   autoPlay = false,
   lockedUntil,
   now,
+  rounds = 0,
 }: {
   m: TournamentMatchup
   round: number
   bout: number
+  /** How many rounds the tournament has, so the last one's winner is called its champion. */
+  rounds?: number
   /**
    * Every roll of the round.
    *
@@ -230,7 +235,7 @@ export function BoutBroadcast({
      the tournament's own poster and its own result.
   */
   if (replay && (phase === 'live' || phase === 'done')) {
-    return <BoutStage key={runs} replay={replay} a={tagA} b={tagB} />
+    return <BoutStage key={runs} replay={replay} a={tagA} b={tagB} round={round} final={rounds > 0 && round === rounds - 1} />
   }
 
   /*
@@ -285,7 +290,7 @@ export function BoutBroadcast({
       )}
 
       {replay && phase === 'done' && (
-        <Result replay={replay} a={tagA} b={tagB} onAgain={again} />
+        <Result replay={replay} a={tagA} b={tagB} round={round} final={rounds > 0 && round === rounds - 1} onAgain={again} />
       )}
 
       <span className="bcast__wipe" />
@@ -301,7 +306,7 @@ export function BoutBroadcast({
  * winner screen comes up inside the player, at the player's size, and
  * Watch again runs it from the first blow.
  */
-function BoutStage({ replay, a, b }: { replay: Replay; a: string; b: string }) {
+function BoutStage({ replay, a, b, round, final }: { replay: Replay; a: string; b: string; round: number; final: boolean }) {
   const phone = usePhone()
   const pb = useFightPlayback(replay, true)
   return (
@@ -319,7 +324,7 @@ function BoutStage({ replay, a, b }: { replay: Replay; a: string; b: string }) {
         broadcast
         look={fightLook()}
         ground={COLOSSEUM}
-        overlay={pb.finished ? <Result replay={replay} a={a} b={b} onAgain={pb.restart} /> : null}
+        overlay={pb.finished ? <Result replay={replay} a={a} b={b} round={round} final={final} onAgain={pb.restart} /> : null}
       />
     </div>
   )
@@ -717,56 +722,136 @@ function Line({
   )
 }
 
-/** The winning side, whole, on a floor the fight has been cleared off. */
+/* A fighter's share of the fight: what it dealt, whom it put down, its hardest blow. */
+type Tally = { damage: number; kos: number; best: number }
+const NO_TALLY: Tally = { damage: 0, kos: 0, best: 0 }
+
+const fighterName = (f: SimFighter) =>
+  Number(f.fighter_id) === NFT_FIGHTER_ID ? 'NFT Fighter' : f.classname.charAt(0).toUpperCase() + f.classname.slice(1)
+/* Damage as the fight shows it: stored scaled up, drawn as the stat it is. */
+const amount = (n: number) => formatScaled(n)
+
+/** A fighter on a gilded card: its class art cut as the game's cards cut it, the NFT fighter its own. */
+function ResultCard({ f, ko = false, mvp = false, big = false }: { f: SimFighter; ko?: boolean; mvp?: boolean; big?: boolean }) {
+  const nft = Number(f.fighter_id) === NFT_FIGHTER_ID
+  return (
+    <span className={`bres__card${big ? ' is-big' : ''}${ko ? ' is-ko' : ''}${mvp ? ' is-mvp' : ''}`}>
+      <span className="bres__pic" style={{ backgroundImage: `url('${elementBackground(nft ? 'neutral' : f.element)}')` }}>
+        {nft ? (
+          <GameImg className="bres__nft" src={NFT_FIGHTER_ART} fallback={fighterArtFallback()} alt="" />
+        ) : (
+          <GameImg className="bres__art" style={portraitCut(f.classname, f.racename)} src={fighterArt(f)} fallback={fighterArtFallback()} alt="" />
+        )}
+      </span>
+      {big && <span className="bres__cardname">{fighterName(f)}</span>}
+    </span>
+  )
+}
+
+/**
+ * The winner screen: the fight's MVP, and the side that won.
+ *
+ * The MVP is the winning side's fighter that dealt the most damage, the most
+ * knock-outs breaking a tie: its card turns in with rays behind it, with what
+ * it dealt, how many it put down and its hardest blow. Beside it the winner's
+ * name, how many of the six are still standing, the blow that ended it, and
+ * the whole team, the MVP ringed in gold and the fallen greyed. A final names
+ * its winner champion; an earlier round's advances. A draw has no MVP.
+ */
 function Result({
   replay,
   a,
   b,
+  round,
+  final,
   onAgain,
 }: {
   replay: Replay
   a: string
   b: string
+  round: number
+  final: boolean
   onAgain: () => void
 }) {
   const won = replay.winner
   const team = replay.fighters.filter((f) => f.team === (won === 2 ? 2 : 1))
-
-  const mid = (team.length - 1) / 2
+  const health = new Map(stateAt(replay, replay.turns.length).map((s) => [s.uid, s.health]))
+  const standing = team.filter((f) => (health.get(f.uid) ?? 0) > 0).length
+  const tally = new Map<string, Tally>()
+  for (const t of replay.turns) {
+    const r = tally.get(t.attackerUid) ?? { ...NO_TALLY }
+    r.damage += t.damage
+    if (t.killed) r.kos++
+    r.best = Math.max(r.best, t.damage)
+    tally.set(t.attackerUid, r)
+  }
+  const of = (f: SimFighter) => tally.get(f.uid) ?? NO_TALLY
+  const mvp = won === null ? null : [...team].sort((x, y) => of(y).damage - of(x).damage || of(y).kos - of(x).kos)[0]
+  const blow = won === null ? undefined : [...replay.turns].reverse().find((t) => t.killed)
+  const byUid = new Map(replay.fighters.map((f) => [f.uid, f]))
+  const striker = blow && byUid.get(blow.attackerUid)
+  const struck = blow && byUid.get(blow.defenderUid)
+  const winner = won === 1 ? a : won === 2 ? b : null
+  const loser = won === 1 ? b : a
 
   return (
-    <div className="bcast__result">
-      <span className="bcast__podium" aria-hidden="true">
-        <span className="bcast__shaft" />
-        {team.map((f, i) => {
-          const d = Math.abs(i - mid)
-          return (
-            <GameImg
-              key={f.uid}
-              className="bcast__pod"
-              style={{
-                animationDelay: `${Math.round((mid - d) * 110)}ms`,
-                height: `${86 - d * 6}%`,
-                zIndex: 10 - Math.round(d * 2),
-              }}
-              src={fighterArt({ classname: f.classname, racename: f.racename })}
-              fallback={fighterArtFallback()}
-              alt=""
-            />
-          )
-        })}
-        <span className="bcast__podfloor" />
-      </span>
-
-      <div className="bcast__panel">
-        <span className="bcast__kick">{won === null ? 'DRAW' : 'WINNER'}</span>
-        <span className="bcast__win">{won === null ? 'Nobody' : won === 1 ? a : b}</span>
-        {won === null && <span className="bcast__margin">Neither side could finish it</span>}
+    <div className="bres">
+      <div className="bres__in">
+        {mvp && (
+          <div className="bres__mvp">
+            <span className="bres__rays" aria-hidden="true" />
+            <span className="bres__rib">Match MVP</span>
+            <ResultCard f={mvp} big />
+            <div className="bres__stats">
+              <span>
+                <b>{amount(of(mvp).damage)}</b>
+                <small>Damage</small>
+              </span>
+              <span>
+                <b>{of(mvp).kos}</b>
+                <small>KOs</small>
+              </span>
+              <span>
+                <b>{amount(of(mvp).best)}</b>
+                <small>Best hit</small>
+              </span>
+            </div>
+          </div>
+        )}
+        <div className={`bres__main${mvp ? '' : ' is-alone'}`}>
+          <span className="bres__kick">
+            {won === null ? 'Draw' : final ? 'Champion · Grand Tournament' : `Winner · Round ${round + 1}`}
+          </span>
+          <span className="bres__name">{winner ?? 'Nobody'}</span>
+          <span className="bres__line">
+            {won === null ? (
+              'Neither side could finish it'
+            ) : (
+              <>
+                <b>
+                  {standing} of {team.length} standing
+                </b>{' '}
+                · {final ? '' : 'advances · '}over {loser}
+              </>
+            )}
+          </span>
+          {striker && struck && blow && (
+            <span className="bres__blow">
+              Final blow · <b>{fighterName(striker)}</b> on {fighterName(struck)}, {amount(blow.damage)}
+            </span>
+          )}
+          {mvp && (
+            <div className="bres__team">
+              {team.map((f) => (
+                <ResultCard key={f.uid} f={f} ko={(health.get(f.uid) ?? 0) <= 0} mvp={f === mvp} />
+              ))}
+            </div>
+          )}
+          <button type="button" className="bres__again" onClick={onAgain}>
+            Watch again
+          </button>
+        </div>
       </div>
-
-      <button type="button" className="bcast__again" onClick={onAgain}>
-        Watch again
-      </button>
     </div>
   )
 }
