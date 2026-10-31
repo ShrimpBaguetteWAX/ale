@@ -165,15 +165,20 @@ export default function Guide() {
     const i = CHAPTERS.findIndex(([c]) => c === id)
     clicked.current = { i, until: Date.now() + 600 }
     setOn(i)
-    window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 76, behavior: 'smooth' })
+    /* Under the guide's own bar, or in the game under its top bar (none on a desktop). */
+    const over = inGame ? (parseFloat(getComputedStyle(el).getPropertyValue('--topbar-h')) || 0) + 70 : 76
+    window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - over, behavior: 'smooth' })
   }
 
+  /* In the game's frame for a trainer who is playing (App's GuideFrame): no bar of its own. */
+  const inGame = !!player
   const play = player ? '/map' : account ? '/signup' : '/connect'
   /* Opened from the game's menu, the way back is the game; from the landing page, home. */
   const back = player ? { to: '/map', label: 'Back to game' } : { to: '/', label: 'Home' }
 
   return (
-    <div className="guide">
+    <div className={`guide${inGame ? ' guide--ingame' : ''}`}>
+      {!inGame && (
       <header className="guide__bar">
         <Link to={back.to} className="guide__back" aria-label={back.label}>
           <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -189,6 +194,7 @@ export default function Guide() {
           Play
         </Link>
       </header>
+      )}
 
       <div className="guide__hero" style={{ backgroundImage: `url(${asset('/assets/background/bg-catch-and-conquer.webp')})` }}>
         <div className="guide__heroin">
@@ -638,12 +644,20 @@ export default function Guide() {
                 <p>Once you're in, open Briefing: it lists what you can do right now.</p>
               </div>
               <div className="guide__endbtns">
-                <Link to={back.to} className="guide__home">
-                  {player ? 'Back to the game' : 'Back to home'}
-                </Link>
-                <Link to={play} className="btn btn--primary btn--lg">
-                  Play
-                </Link>
+                {inGame ? (
+                  <Link to="/briefing" className="btn btn--primary btn--lg">
+                    Open Briefing
+                  </Link>
+                ) : (
+                  <>
+                    <Link to={back.to} className="guide__home">
+                      Back to home
+                    </Link>
+                    <Link to={play} className="btn btn--primary btn--lg">
+                      Play
+                    </Link>
+                  </>
+                )}
               </div>
             </div>
           </Chapter>

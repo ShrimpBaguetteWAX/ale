@@ -978,3 +978,47 @@
     flex-direction: column-reverse;
   }
 }
+
+/*
+ * In the game's frame (a trainer who is playing): no bar or backdrop of its
+ * own; the hero a panel at the top of the page, the contents beside the text
+ * held under the game's top bar.
+ */
+.guide.guide--ingame {
+  min-height: 0;
+  background: none;
+}
+.guide--ingame .guide__hero {
+  padding: 40px clamp(20px, 3vw, 40px) 30px;
+  border-radius: 18px;
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 10%);
+}
+.guide--ingame .guide__hero::before {
+  background: linear-gradient(0deg, rgb(5 9 19 / 92%) 8%, rgb(5 9 19 / 70%) 60%, rgb(5 9 19 / 50%));
+}
+.guide--ingame .guide__heroin {
+  max-width: none;
+}
+.guide--ingame .guide__body {
+  max-width: none;
+  gap: 40px;
+  padding: 24px 0 60px;
+  box-sizing: border-box;
+}
+.guide--ingame .guide__toc {
+  top: calc(var(--topbar-h, 0px) + 16px);
+}
+@media (max-width: 719px) {
+  .guide--ingame .guide__hero {
+    padding: 28px 18px 22px;
+  }
+  .guide--ingame .guide__body {
+    padding: 14px 0 40px;
+  }
+  .guide--ingame .guide__chips {
+    top: var(--topbar-h, 56px);
+    background: #070d1c;
+    margin: 0 -16px 20px;
+    padding: 10px 16px;
+  }
+}

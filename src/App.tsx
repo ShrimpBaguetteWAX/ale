@@ -205,6 +205,23 @@ function WarmScreens() {
 
 /* Lives in its own module so a screen can hold it up past its own load. */
 
+/**
+ * The guide's frame: the game's own, menu and all, for a trainer who is
+ * playing, so reading it is part of the game rather than a trip to another
+ * page; a page of its own from the landing page, where there is no game yet.
+ */
+function GuideFrame() {
+  const player = useGame((s) => s.player)
+  return player ? (
+    <>
+      <AppShell />
+      <WarmScreens />
+    </>
+  ) : (
+    <Outlet />
+  )
+}
+
 
 /**
  * Gate for the in-game routes: a wallet must be connected and that wallet must
@@ -303,7 +320,9 @@ export default function App() {
             <Route path="/" element={<Landing />} />
             <Route path="/connect" element={<Connect />} />
             <Route path="/signup" element={<Signup />} />
-            <Route path="/guide" element={<Guide />} />
+            <Route element={<GuideFrame />}>
+              <Route path="/guide" element={<Guide />} />
+            </Route>
 
             <Route element={<RequirePlayer />}>
               <Route
