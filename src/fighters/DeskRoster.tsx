@@ -671,8 +671,14 @@ export function DeskRoster(p: DeskRosterProps) {
       */}
       <span className="drost__headl">
         <DensitySeg density={density} onChange={setDensity} />
-        {density === 'cards' && <ViewSeg view={view} onChange={setView} />}
+        {!phone && density === 'cards' && <ViewSeg view={view} onChange={setView} />}
       </span>
+      {/* A phone: the views on a line of their own, so the layout switch stays where it is when they come and go. */}
+      {phone && density === 'cards' && (
+        <span className="drost__phoneviews">
+          <ViewSeg view={view} onChange={setView} />
+        </span>
+      )}
       {/* The markers at hand beside the views on a desktop; the filter keeps them too, as a phone's does. */}
       {!phone && <MarkerSeg roster={p.roster} filter={p.filter} onFilter={p.onFilter} />}
     </div>

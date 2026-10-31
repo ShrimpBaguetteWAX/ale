@@ -5891,3 +5891,11 @@ h2.drost__bname {
 .drost--phone .drost__toolbar:not(:has(> .drost__markseg, > .drost__note)) {
   display: none;
 }
+/* The views under the pinned row on a phone, full width; the layout switch keeps its place above. */
+.drost__phoneviews {
+  display: flex;
+  flex-basis: 100%;
+}
+.drost--phone .drost__listhead .drost__phoneviews > .drost__seg {
+  flex: 1;
+}
