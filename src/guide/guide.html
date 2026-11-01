@@ -1,0 +1,641 @@
+<div class="gx">
+<header class="hero">
+  <div class="kick">Trainer's guide</div>
+  <h1>A quick guide to <em>Alien Legends</em></h1>
+  <div class="loop" id="loop"></div>
+  <p class="loopnote" id="loopnote"></p>
+</header>
+
+<div class="wrap">
+  <nav class="toc" id="toc">
+    <div class="toc-head"><b>Chapters</b><button id="tocclose" aria-label="Close the chapters">✕</button></div>
+    <div class="search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><input id="q" type="search" placeholder="Search the guide…" aria-label="Search the guide"></div>
+  </nav>
+
+  <main id="main">
+    <div class="mnav" id="mnav"><button class="mnav-all" id="mnavopen" aria-label="All chapters"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button><span class="mnav-t"><small id="mnavpart"></small><b id="mnavtitle"></b></span><button class="mnav-step" id="mnavprev" aria-label="Previous chapter"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button><button class="mnav-step" id="mnavnext" aria-label="Next chapter"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button></div>
+
+    <!-- ======================= START ======================= -->
+    <div class="part">Start</div>
+
+    <section class="ch" id="trainer" data-icon="menu/account.svg">
+      <div class="chhead"><h2>Become a <em>trainer</em></h2></div>
+      <p class="lead">You're a <b>trainer</b>: you recruit alien fighters, send them into fights, and turn wins into <b>TLM</b> and <b>Shards</b>. Getting started takes four steps.</p>
+      <div class="starts">
+        <div><i>1</i><img src="%A%/icons/wax-coin.webp" alt=""><b>Connect your wallet</b><span>Log in with your WAX wallet.</span></div>
+        <div><i>2</i><img src="%A%/icons/menu/account.svg" alt=""><b>Pick a trainer name</b><span>Register once and choose the name other players see.</span></div>
+        <div><i>3</i><img src="%A%/icons/menu/rewards.svg" alt=""><b>Equip your tools</b><span>In Rewards, equip up to 3 Alien Worlds tools. Without them, wins earn almost nothing.</span></div>
+        <div><i>4</i><img src="%A%/icons/menu/briefing.svg" alt=""><b>Follow the Briefing</b><span>It shows your next step, starting with recruiting five fighters.</span></div>
+      </div>
+    </section>
+
+    <section class="ch" id="energy" data-icon="energy.svg">
+      <div class="chhead"><h2><em>Currencies</em></h2></div>
+      <p class="lead">Three currencies to play with, three you earn. <b>Energy</b> matters most: almost every action costs some, and it never refills by itself.</p>
+      <div class="coins" id="coins" role="tablist"></div>
+      <p class="coinhint" id="coinhint">Tap a currency to see where it comes from and what it's for.</p>
+      <div class="coinx" id="coinx"><div><div class="coinbox" id="coinbox"></div></div></div>
+    </section>
+
+    <section class="ch" id="map" data-icon="menu/world.svg">
+      <div class="chhead"><h2>The <em>map</em></h2></div>
+      <p class="lead">Your fighters live on a map of <b>six planets</b>. Travel to a building to use it: the farther you go, the more <b>energy</b> it costs. Try it: tap a building.</p>
+      <div class="gtabs" id="gtabs"></div>
+      <div class="gmapwrap"><div class="gmap" id="gmap"></div></div>
+      <p class="gmaphint">Swipe the map to see the rest.</p>
+      <div class="gkeys">
+        <div class="hotkey"><img src="%A%/markers/buildings/arena.svg" alt=""><span><b>Glowing = best rewards</b>The arenas and dungeons with the highest boost light up.</span></div>
+        <div><img src="%A%/markers/buildings/dungeon.svg" alt=""><span><b>The number is the boost</b>Higher boost, more Reward Power for a win there.</span></div>
+        <div><img src="%A%/markers/buildings/portal-veles.svg" alt=""><span><b>Portals</b>Step on one to warp to the planet it leads to.</span></div>
+        <div><img src="%A%/icons/weather.png" alt=""><span><b>Weather</b>A land's weather can change fighters' stats in a fight there.</span></div>
+      </div>
+    </section>
+
+    <!-- ======================= FIGHTERS ======================= -->
+    <div class="part">Fighters</div>
+
+    <section class="ch" id="recruit" data-icon="/markers/buildings/tavern.svg">
+      <div class="chhead"><h2>Recruit <em>fighters</em></h2></div>
+      <p class="lead">You have your own list of taverns on the map. Travel to one, <b>reveal</b> its recruit (energy), and <b>hire</b> it. Revealing uses that tavern up, and a new one joins your list.</p>
+      <div class="card tav">
+        <div class="tavtop">
+          <div class="tavrec"><b>A recruit is waiting</b><span class="gc big" data-f="lunatic_khaured,fire,1" data-name="Lunatic"></span><small>Khaured · Fire · Level 1</small><span class="ex">example</span></div>
+          <div class="tavdeal">
+            <div class="tavcap"><b>The deal</b><span>show up to 3 NFTs · they are not spent</span></div>
+            <div class="price"><s id="tprev" class="hide">100</s><strong id="tcost"><img src="%A%/icons/energy.svg" alt="">100</strong><small>energy to hire</small></div>
+            <div class="tmeter"><i id="tpay"></i><u id="tcut"></u></div>
+            <div class="tslots" id="tslots"></div>
+            <div class="tavcap"><b>The tavern wants</b><span>each objective is met once</span></div>
+            <div class="wants" id="wants"></div>
+            <div class="tacts"><button class="btn" id="tbest">Best pick</button><button class="btn gold" id="thire">Hire</button></div>
+          </div>
+        </div>
+        <div class="twallet">
+          <div class="tavcap"><b>Your NFTs</b><span>tap a card to put it on the table, tap again to take it back</span></div>
+          <div class="nfts" id="nfts"></div>
+          <div class="explain" id="hirenote"></div>
+        </div>
+      </div>
+      <ul class="pts">
+        <li><b>Objectives</b> are met by showing Alien Worlds NFTs from your own wallet (by rarity, shine, element, race…). Each objective counts once, up to <b>3 cards</b> per hire, and the cards are <b>not spent</b>.</li>
+        <li>You must be <b>standing on the tavern</b> to hire. Revealing at another tavern first replaces a recruit you haven't hired.</li>
+        <li>With a <b>Legend Pass</b>, the recruit is revealed for free when you arrive at one of your taverns.</li>
+      </ul>
+    </section>
+
+    <section class="ch" id="fighter" data-icon="stats/damage.svg">
+      <div class="chhead"><h2>Understanding <em>fighters</em></h2></div>
+      <p class="lead">Every fighter has a <b>codex</b> page: open one from My Fighters, the Market or a fight. Here's one, tap anything on it to see what it means.</p>
+      <div class="cdx">
+        <div class="codex"><div id="codex"></div></div>
+        <div class="cxwhat" id="cxwhat"></div>
+      </div>
+    </section>
+
+    <section class="ch" id="squad" data-icon="/guide/team.svg">
+      <div class="chhead"><h2>Building your <em>team</em></h2></div>
+      <p class="lead">Every fight takes <b>exactly five</b> fighters plus a sixth: the <b>NFT fighter</b>, built from one Alien Worlds <b>crew</b> card and one <b>weapon</b> card. Tap fighters to put them in your team; rest the pointer on one to read it first.</p>
+      <div class="card tm">
+        <div class="tmhead"><b>Your team</b><span id="tmcount">0/5</span></div>
+        <div class="tmslots" id="tmslots"></div>
+        <div class="tmnote" id="tmnote"></div>
+        <div class="tmgrid" id="tmgrid"></div>
+        <div class="tmbar"><span class="mini" id="tmmini"></span><small id="tmbar">Your team · 0/5</small><button class="btn gold" id="tmgo" disabled>Start Fight</button></div>
+      </div>
+      <ul class="pts">
+        <li>The <b>crew</b> card sets the NFT fighter's class, race and targeting; the <b>weapon</b> sets its element. Their stats and abilities add up.</li>
+        <li>Order only matters on a tie: among equals, the fighter placed earlier acts first.</li>
+        <li>A fighter can't join while it's <b>busy</b> (on the Market, defending an arena, in a tournament) or while its <b>payday is overdue</b>.</li>
+      </ul>
+    </section>
+
+    <section class="ch" id="fight" data-icon="swords.svg">
+      <div class="chhead"><h2>How a <em>fight plays</em></h2></div>
+      <p class="lead">Fights are <b>automatic</b> and settled on the chain; the battle screen is a replay. Whoever has the <b>lowest wind-up</b> acts next; after striking, its wind-up grows by its <b>cooldown</b>. Step through it:</p>
+      <div class="card sim">
+        <div class="cap">The battle <span class="ex">example</span></div>
+        <div class="bvw"><div class="bv" id="bv"></div><div class="bvcards" id="bvcards"></div></div>
+        <div class="cap" style="margin:6px 0 0">Who acts when: the same fight as a timeline</div>
+        <div class="lanes" id="lanes"></div>
+        <div class="simctl"><button class="btn cyan" id="simstep">Next blow</button><button class="btn" id="simplay">Play</button><button class="btn" id="simreset">Reset</button></div>
+        <div class="simlog" id="simlog">Lower is better: a fighter with a low wind-up opens the fight, one with a low cooldown strikes often.</div>
+      </div>
+      <div class="card">
+        <div class="cap">Element vs resistance</div>
+        <div class="dmg">
+          <div>
+            <div class="slider"><label>Target's resistance to the blow's element <b id="resv">40%</b></label><input type="range" id="res" min="0" max="100" value="40"></div>
+            <div class="dmgbar"><i class="hit" id="hit"></i><i class="blk" id="blk"></i><span><b id="dealt">60 dealt</b><b id="blocked">40 blocked</b></span></div>
+          </div>
+          <div style="text-align:center"><div class="big" id="dealtbig">60</div><small style="color:var(--faint)">of a 100 blow lands</small></div>
+        </div>
+        <div class="explain" id="resnote">Every blow comes in the attacker's element, and the target's resistance to that element cuts it. There's no element chart: resistances decide.</div>
+      </div>
+      <ul class="pts">
+        <li>Each fighter picks targets by its own <b>targeting rule</b> (for example Highest Taunt or Lowest Health). <b>Taunt</b> draws enemy blows and drops each time the fighter is hit.</li>
+        <li>On a tie in dungeons and arenas, <b>your side acts first</b>. The last team standing wins; a fight still going after 1,000 blows is a draw.</li>
+        <li>Health and damage grow with <b>level</b> and fade with <b>age</b>. The land's <b>weather</b> can change stats for both teams.</li>
+      </ul>
+    </section>
+
+    <!-- ======================= PLAY ======================= -->
+    <div class="part">Play</div>
+
+    <section class="ch" id="dungeons" data-icon="/markers/buildings/dungeon.svg">
+      <div class="chhead"><h2><em>Dungeons</em></h2></div>
+      <p class="lead">Pick a <b>difficulty</b>. Each dungeon can be <b>won once a day</b> (resets 00:00 UTC). A win gives XP and Reward Power; a loss gives nothing, and the energy is still spent.</p>
+      <div class="card dg">
+        <div class="dghead">
+          <div class="dgname">Dungeon</div>
+          <div class="dstep" id="dstep"></div>
+        </div>
+        <div class="dgfig">
+          <div class="dgtile e"><small>Enemy strength</small><b id="dgE">×0.97</b><span>of their full health and damage</span></div>
+          <div class="dgtile r"><small>Rewards</small><b id="dgR">×1.23</b><span>Reward Power for a win</span></div>
+          <div class="dgtile x"><small>XP</small><b id="dgX">126</b><span>for a win <span class="today">today</span></span></div>
+          <div class="dgchart"><svg id="dgchart" viewBox="0 0 300 92" preserveAspectRatio="none"></svg><p>Enemies grow <b>×1.15</b> a level, rewards only <em>×1.07</em>: climb as far as your team still wins.</p></div>
+        </div>
+        <div class="dgteam">
+          <h5>The dungeon <span id="dgsub">fields five fighters at level 3</span></h5>
+          <div class="dgrow" id="dgrow"></div>
+        </div>
+      </div>
+      <div class="tip">Start with low difficulties: XP only comes from wins (and draws), and a loss still costs energy. From difficulty 5 a dungeon fields its own NFT fighter too.</div>
+    </section>
+
+    <section class="ch" id="arenas" data-icon="/markers/buildings/arena.svg">
+      <div class="chhead"><h2><em>Arenas</em></h2></div>
+      <p class="lead">Challenge the defenders other trainers left. You can't challenge an arena that holds any of your fighters. Win, and one of your five (picked at random) and your NFT fighter join its defence.</p>
+      <div class="card ar">
+        <div class="arhead">
+          <div class="arname">Arena</div>
+          <div class="arwins">Wins since yours joined <i id="arpips"></i><b id="arcount">0/5</b></div>
+        </div>
+        <div class="arteam">
+          <h5>Defenders <span>the last five winners' fighters, and the latest winner's NFT fighter <span class="ex">example</span></span></h5>
+          <div class="arow" id="arenaq"></div>
+        </div>
+        <div class="arctl"><button class="btn cyan" id="arenawin">Another trainer wins</button><button class="btn" id="arenareset">Reset</button><div class="simlog" id="arenalog"></div></div>
+      </div>
+    </section>
+
+    <section class="ch" id="quests" data-icon="menu/quests.svg">
+      <div class="chhead"><h2><em>Quests</em></h2></div>
+      <p class="lead">Three <b>daily</b>, three <b>weekly</b> and three <b>monthly</b> quests. Finish one, claim it, and its <b>TLM</b> or <b>Shards</b> go straight to your wallet.</p>
+      <div class="qscopes" id="qscopes"></div>
+      <ul class="pts">
+        <li>A claimed quest is replaced by a new one straight away.</li>
+        <li>Don't like a quest? <b>Re-roll</b> it for credits.</li>
+        <li>Each quest has its own deadline: it stays open until the end of the <b>next</b> day, week or month. If it runs out unfinished, it's gone.</li>
+        <li>Without a Legend Pass, quest rewards are reduced.</li>
+      </ul>
+    </section>
+
+    <section class="ch" id="tournament" data-icon="menu/tournament.svg">
+      <div class="chhead"><h2>The <em>tournament</em></h2></div>
+      <p class="lead">Once a week, trainers' best teams meet in a <b>knockout</b>. Enter once; the fights then play out by themselves while you watch.</p>
+      <div class="card">
+        <div class="cap">A tournament week <span class="today">today</span></div>
+        <div class="tw" id="tw"></div>
+        <div class="twnote" id="twnote"></div>
+      </div>
+
+      <div class="tgrid">
+        <div class="card">
+          <div class="cap">To enter</div>
+          <div class="need">
+            <div><i>1</i><span><b>Five fighters at level 10</b><small>Not busy anywhere else.</small><span class="five" id="tfive"></span></span></div>
+            <div><i>2</i><span><b>A crew card and a weapon card</b><small>In your wallet: they make your NFT fighter.</small><span class="pair"><img src="%A%/cards/141566.webp" alt=""><img src="%A%/cards/19582.webp" alt=""></span></span></div>
+            <div><i>3</i><span><b>100 energy</b> <span class="today">today</span><small>Paid when you sign up.</small></span></div>
+          </div>
+          <div class="warn">Entered fighters are <b>busy</b> until you're out, and an entry <b>can't be withdrawn</b>.</div>
+        </div>
+        <div class="card">
+          <div class="cap">Your team score decides your seed</div>
+          <div class="tscore" id="tscore"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="cap">How the knockout runs <span class="ex">example</span></div>
+        <div class="brk" id="brk"></div>
+        <div class="brkrule">
+          <span><i style="background:rgb(242 195 90 / 45%)"></i>Free pass: a top seed skips the opening round, and it counts as a win</span>
+          <span><i style="background:rgb(25 211 197 / 50%)"></i>Winner, on to the next round</span>
+          <span>Every round, the strongest left meets the weakest left</span>
+        </div>
+      </div>
+
+      <div class="prz">
+        <div class="card">
+          <div class="cap"><img src="%A%/icons/wax-coin.webp" alt="" style="width:18px">WAX: the top 16 share the pot</div>
+          <div class="wax" id="wax"></div>
+          <div class="cap" style="margin:20px 0 0"><img src="%A%/icons/tlm.svg" alt="" style="width:18px">TLM: shared by points</div>
+          <div class="tlm" id="tlmpts"></div>
+        </div>
+        <div class="card">
+          <div class="cap"><img src="%A%/icons/trophy-gold.svg" alt="" style="width:18px">Hall of Fame</div>
+          <div class="podium" id="podium"></div>
+          <p style="margin:14px 0 0;font-size:13.5px;color:var(--dim)">The champion, the runner-up and the two beaten semi-finalists, who <b>share third</b>, are written into the Hall of Fame on the chain, for good.</p>
+        </div>
+      </div>
+      <ul class="pts">
+        <li>Prizes arrive in <b>Rewards</b>: claim them there.</li>
+        <li>Without a Legend Pass, both prizes are <b>a tenth</b>.</li>
+        <li>With fewer than two trainers signed up, the tournament is called off.</li>
+      </ul>
+    </section>
+
+    <section class="ch" id="leaderboards" data-icon="menu/leaderboard.svg">
+      <div class="chhead"><h2><em>Leaderboards</em></h2></div>
+      <div class="grid2">
+        <div class="tile"><h4><img src="%A%/markers/buildings/dungeon.svg" alt="">Dungeons</h4><p>A rating built by winning dungeons that fades a little each day. The top places can <b>claim a reward once a day</b> (UTC), paid in TLM and Shards; higher places get more.</p></div>
+        <div class="tile"><h4><img src="%A%/markers/buildings/arena.svg" alt="">Arena</h4><p>Runs in <b>seasons</b>. You earn points while your fighters hold arenas, more for higher-rated arenas and for holding several. When a season ends the top places share its pot, credited to Rewards, and the board starts over.</p></div>
+      </div>
+      <div class="tip">Your profile also ranks every lifetime stat against other trainers, just for bragging rights.</div>
+    </section>
+
+    <!-- ======================= EARN ======================= -->
+    <div class="part">Earn</div>
+
+    <section class="ch" id="rewards" data-icon="menu/rewards.svg">
+      <div class="chhead"><h2>Rewards &amp; <em>mining</em></h2></div>
+      <p class="lead">Win fights to fill your <b>Reward Power</b> bar. Every full bar is one <b>mine</b>, and each mine pays you <b>TLM</b> and <b>Shards</b> from the prize pool, straight to your wallet.</p>
+
+      <div class="rw-panel">
+        <div class="rw-pool">
+          <div>
+            <div class="rw-label">Prize pool, past 7 days <span class="live" id="potlive">live</span></div>
+            <div class="rw-big"><span><img src="%A%/icons/tlm.svg" alt=""><b id="inTlm">835,479</b><em>TLM</em></span><span><img src="%A%/icons/shards.svg" alt=""><b id="inShr">1,848,000</b><em>Shards</em></span></div>
+          </div>
+        </div>
+        <div class="rw-mine">
+          <table><thead><tr><th>One mine pays right now</th><th>TLM</th><th>Shards</th></tr></thead><tbody id="pools3"></tbody></table>
+        </div>
+      </div>
+
+      <ol class="rw-steps">
+        <li><b>Equip tools</b><span>Up to 3 Alien Worlds tools, in Rewards.</span></li>
+        <li><b>Win fights</b><span>Each win fills your bar with Reward Power.</span></li>
+        <li><b>Reach 100%</b><span>A full bar is one mine. Extra power carries over.</span></li>
+        <li><b>Mine</b><span>Each mine pays 1% of that pool, to your wallet.</span></li>
+      </ol>
+
+      <div class="rw-panel rw-calc">
+        <h4>How fast you fill the bar <span class="ex">example</span></h4>
+        <p>A win is worth your three tools' mining power times the building's boost. Pick a set of Stone tools and a boost:</p>
+        <div class="rw-tools" id="tools"></div>
+        <div class="rw-boost"><span>Building boost</span><input type="range" id="bst" min="5" max="100" value="50"><b id="bstv">×5.0</b></div>
+        <div class="rw-res" id="vsrow"></div>
+        <p class="rw-pays" id="rwpays"></p>
+        <div class="rw-leg"><img src="%A%/icons/account-legend.svg" alt=""><div><b>10× the Reward Power</b><span>Every win counts ten times as much, so you mine ten times as often. It also brings full quest and tournament prizes, free recruit reveals and a bigger daily flask.</span></div><a class="btn gold" href="#shop" data-shop="account">Get it in the Shop</a></div>
+      </div>
+
+      <ul class="rw-notes">
+        <li>These are <b>arena</b> wins. A <b>dungeon</b> win starts lower and grows 7% with every difficulty level: around difficulty 10 it's worth about the same, and more above that.</li>
+        <li><b>Arena Domination</b> fills from holding arenas: the longer your fighters defend, the more you earn.</li>
+        <li>The pools are shared and refill every minute. Prizes from tournaments, leaderboards and your lands also collect in Rewards to claim.</li>
+      </ul>
+    </section>
+
+    <section class="ch" id="farming" data-icon="menu/farming.svg">
+      <div class="chhead"><h2><em>Farming</em></h2></div>
+      <p class="lead">Put the Alien Worlds cards you're not using to work. Stake <b>tools</b>, <b>crew</b> and <b>weapons</b> in the farm, and claim <b>credits</b> from its three pools.</p>
+
+      <div class="rw-panel">
+        <div class="rw-mine" style="border-top:0">
+          <table><thead><tr><th>Farming pools right now <span class="live" style="margin-left:6px;font:700 10px Orbitron;color:var(--faint)">● live</span></th><th>Credits</th></tr></thead><tbody id="fmpools"></tbody></table>
+          <p class="rw-pays" style="margin-top:12px"><b>15% of every credit</b> anyone spends in the game flows into these pools, on top of a daily top-up.</p>
+        </div>
+      </div>
+
+      <ol class="rw-steps">
+        <li><b>Stake cards</b><span>Send tools, crew or weapons to the farm: 1 gem per card.</span></li>
+        <li><b>Let it grow</b><span>Every day, your cards' weight adds to your share of each pool.</span></li>
+        <li><b>Claim</b><span>One claim pays credits from all three pools at once.</span></li>
+        <li><b>Unstake any time</b><span>Your cards come back to your wallet, no fee.</span></li>
+      </ol>
+
+      <div class="rw-panel rw-calc">
+        <h4>What a claim pays <span class="ex">example</span></h4>
+        <p>Rarity and shine decide a card's weight. Tap your card, then set how many and how long since your last claim:</p>
+        <div class="fm-calc">
+          <table class="fm-grid" id="fmgrid"></table>
+          <div class="fm-ctl">
+            <div class="seg" id="fmpool"><button data-p="crew" class="on">Crew</button><button data-p="tool">Tools</button><button data-p="arms">Weapons</button></div>
+            <div class="rw-boost"><span>Cards</span><input type="range" id="fmn" min="1" max="30" value="5"><b id="fmnv">5</b></div>
+            <div class="rw-boost"><span>Days since claim</span><input type="range" id="fmd" min="1" max="60" value="7"><b id="fmdv">7</b></div>
+            <div class="fm-out" id="fmout"></div>
+          </div>
+        </div>
+      </div>
+
+      <ul class="rw-notes">
+        <li>Your share grows with weight × days, up to <b>1% of a pool per claim</b>. Once you reach it, waiting longer adds nothing: claim and start again.</li>
+        <li>Staking or unstaking claims what you've earned first, then starts your clock again.</li>
+        <li><b>Abundant</b> cards can't be staked. The pools are shared, so a claim takes from the same balance everyone draws on.</li>
+      </ul>
+    </section>
+
+    <section class="ch" id="candle" data-icon="menu/candle.svg">
+      <div class="chhead"><h2><em>Candle</em></h2></div>
+      <p class="lead">The Candle runs <b>missions</b>, each with a fixed prize in <b>WAX</b>, <b>TLM</b> or <b>Shards</b>. Put gems into a mission, and when it ends the prize is split by how many gems each trainer put in.</p>
+
+      <div class="rw-panel">
+        <div class="rw-mine" style="border-top:0;padding-bottom:6px"><div class="rw-label">Missions <span class="ex">example</span></div></div>
+        <div class="cd-list" id="cdlist"></div>
+      </div>
+
+      <ol class="rw-steps">
+        <li><b>Meet the requirement</b><span>Each mission asks for a lifetime stat, like distance travelled.</span></li>
+        <li><b>Put gems in</b><span>As many as you like while it runs. Gems you put in are spent.</span></li>
+        <li><b>Wait for it to end</b><span>A mission runs for one day.</span></li>
+        <li><b>Collect</b><span>Shards arrive by themselves. WAX and TLM: claim them in the Candle.</span></li>
+      </ol>
+
+      <div class="rw-panel rw-calc">
+        <h4>Your share <span class="ex">example</span></h4>
+        <p>The prize never grows: every gem anyone adds makes each gem worth a little less.</p>
+        <div class="cd-calc">
+          <div>
+            <div class="rw-boost"><span>Your gems</span><input type="range" id="cy" min="10" max="5000" step="10" value="500"><b id="cyv">500</b></div>
+            <div class="rw-boost"><span>Everyone else's gems</span><input type="range" id="co" min="0" max="30000" step="100" value="12000"><b id="cov">12,000</b></div>
+            <div class="cd-split"><u id="cdbar"></u></div>
+            <p class="rw-pays" id="cdnote"></p>
+          </div>
+          <div class="cd-out"><small>You get</small><b id="cdshare"></b><span id="cdpct"></span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="ch" id="lands" data-icon="menu/lands.svg">
+      <div class="chhead"><h2>My <em>Lands</em></h2></div>
+      <p class="lead">Own an Alien Worlds <b>land</b>? Build a tavern, dungeon or arena on it. Every win other trainers get there mines <b>TLM</b> and <b>Shards</b> for you too.</p>
+
+      <div class="rw-panel">
+        <div class="rw-mine" style="border-top:0;padding-bottom:0"><div class="rw-label">On the map: the higher the boost, the grander the building</div></div>
+        <div class="ld-ranks">
+          <span>Boost</span>
+          <div class="ld-lvl">up to ×2</div><div class="ld-lvl">up to ×4</div><div class="ld-lvl">up to ×6</div><div class="ld-lvl">up to ×8</div><div class="ld-lvl">over ×8</div>
+          <span>Dungeon</span>
+          <figure><img src="%A%/markers/buildings/dungeon-r1.svg" alt=""></figure><figure><img src="%A%/markers/buildings/dungeon-r2.svg" alt=""></figure><figure><img src="%A%/markers/buildings/dungeon-r3.svg" alt=""></figure><figure><img src="%A%/markers/buildings/dungeon-r4.svg" alt=""></figure><figure><img src="%A%/markers/buildings/dungeon-r5.svg" alt=""></figure>
+          <span>Arena</span>
+          <figure><img src="%A%/markers/buildings/arena-r1.svg" alt=""></figure><figure><img src="%A%/markers/buildings/arena-r2.svg" alt=""></figure><figure><img src="%A%/markers/buildings/arena-r3.svg" alt=""></figure><figure><img src="%A%/markers/buildings/arena-r4.svg" alt=""></figure><figure><img src="%A%/markers/buildings/arena-r5.svg" alt=""></figure>
+        </div>
+        <div class="ld-keys">
+          <div><img class="hot" src="%A%/markers/buildings/arena-r5.svg" alt=""><span><b>Glowing</b>The arenas and dungeons with the highest boost right now.</span></div>
+          <div><img src="%A%/markers/buildings/dungeon-r3-muted.svg" alt=""><span><b>Greyed out</b>A dungeon you already won today, or an arena your fighters hold.</span></div>
+          <div><img src="%A%/markers/buildings/tavern.svg" alt=""><span><b>Taverns</b>Have no boost, so they always look the same.</span></div>
+        </div>
+      </div>
+
+      <ol class="rw-steps">
+        <li><b>Own a land</b><span>Any Alien Worlds land NFT in your wallet.</span></li>
+        <li><b>Build</b><span>One tavern, dungeon or arena, paid in credits.</span></li>
+        <li><b>Keep it boosted</b><span>Boost draws trainers and raises every reward there.</span></li>
+        <li><b>Claim</b><span>Shards arrive by themselves; claim the TLM in My Lands.</span></li>
+      </ol>
+
+      <div class="rw-panel rw-calc">
+        <h4>Building costs</h4>
+        <p>Every building costs the same; rarer land takes a discount off it. Tap your land's rarity:</p>
+        <div class="ld-cost" id="ldcost"></div>
+      </div>
+
+      <ul class="rw-notes">
+        <li><b>Boost</b> runs from ×0 to ×10. A new building starts at <b>×3.5</b>. It fades a little every hour and with every reward mined there; at ×0 the building closes. Top it up with credits: each step up costs a bit more than the last.</li>
+        <li>You choose how your share is split between <b>TLM and Shards</b>.</li>
+        <li>Pulling a building down costs <b>1,000 gems</b> and pays out what it was holding.</li>
+      </ul>
+    </section>
+
+    <!-- ======================= GROW & TRADE ======================= -->
+    <div class="part">Grow &amp; trade</div>
+
+    <section class="ch" id="upkeep" data-icon="credits.svg">
+      <div class="chhead"><h2>Keep them <em>fighting</em></h2></div>
+      <p class="lead">Fighters need a little care: pay them, level them up, and watch their age. Their card always shows what each one needs.</p>
+
+      <div class="rw-panel">
+        <div class="rw-mine" style="border-top:0;padding-bottom:0"><div class="rw-label">What a card tells you · tap one</div></div>
+        <div class="kf-states" id="kfstates"></div>
+        <div class="kf-what" id="kfwhat"></div>
+      </div>
+
+      <ol class="rw-steps">
+        <li><b>Pay paydays</b><span>Every 30 days, up to 1,000 credits a fighter.</span></li>
+        <li><b>Level up</b><span>When the XP strip is full: 999 credits, up to level 10.</span></li>
+        <li><b>Watch their age</b><span>Strength fades as a fighter gets older.</span></li>
+        <li><b>Sell back</b><span>Fighters you don't need, for credits.</span></li>
+      </ol>
+
+      <div class="rw-panel rw-calc">
+        <h4>Payday</h4>
+        <p>Paid in credits from My Fighters. Drag the dot along the timeline to see what happens as time passes:</p>
+        <div class="kf-pay">
+          <div id="kfpaycard"></div>
+          <div>
+            <div class="kf-line"><i style="left:0%">Paid</i><i style="left:25%">Payday due</i><i style="left:100%">Deleted</i><input type="range" id="kfd" min="0" max="120" value="12" aria-label="Days since the last payday"></div>
+            <div class="kf-days"><b id="kfdv">12</b> days since the last payday</div>
+            <div class="kf-out" id="kfout"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="rw-panel rw-calc">
+        <h4>Level up</h4>
+        <p>Wins and draws give XP. When the strip under the name is full, the card lights up green: level up in My Fighters.</p>
+        <div class="kf-lvl">
+          <div id="kflvcard"></div>
+          <div class="rw-boost" style="margin:0"><span>Level</span><input type="range" id="lv" min="1" max="10" value="5"><b id="lvv">5</b></div>
+          <div class="kf-big"><small>Health &amp; damage</small><b id="lvmul">×2.01</b><small id="lvex">a 100-damage roll hits for 201</small></div>
+        </div>
+      </div>
+
+      <ul class="rw-notes">
+        <li>Every win also brings the payday a little closer: about <b>3 hours</b> for a dungeon win, <b>6 hours</b> for an arena win.</li>
+        <li>Paying early costs less, but only because less time has passed: the next payday is always 30 days later.</li>
+        <li>A fighter that's <b>busy</b> (on the Market, defending an arena, in a tournament) can't be levelled, sold or picked for a fight until it's free.</li>
+      </ul>
+    </section>
+
+    <section class="ch" id="ascension" data-icon="menu/ascension.svg">
+      <div class="chhead"><h2><em>Ascension</em></h2></div>
+      <p class="lead">Level 10 is the top, but your best fighters can still grow. Give up three fighters of the <b>same class</b> and your fighter gains an upgrade, for good. There's no limit: ascend it again and again.</p>
+
+      <div class="rw-panel">
+        <div class="as-top">
+          <div class="as-hero" id="ashero"></div>
+          <div class="as-socks" id="assocks"></div>
+        </div>
+        <div class="rw-mine" style="padding-bottom:0"><div class="rw-label">Your Arcanists · tap three to sacrifice <span class="ex">try it</span></div></div>
+        <div class="as-roster" id="asroster"></div>
+        <div class="as-act" id="asact"></div>
+        <div class="as-offers" id="asoffers"></div>
+      </div>
+
+      <div class="as5" id="as5">
+        <div>
+          <h4>✦5 opens a <em>hidden ability</em></h4>
+          <p>Every fighter carries a third ability it can't use yet. It stays <b>locked until its fifth ascension</b>, then fights alongside the other two in every battle, for good. This is the big reason to keep ascending.</p>
+          <div class="as5-pips" id="as5pips"></div>
+        </div>
+        <div class="as5-ab" id="as5ab"></div>
+      </div>
+
+      <ol class="rw-steps">
+        <li><b>Reach level 10</b><span>Only a fighter at the top level can ascend.</span></li>
+        <li><b>Pick three sacrifices</b><span>Same class: one same race, one same element, one with the Sacrifice ability.</span></li>
+        <li><b>Ascend</b><span>999 credits. The three are gone for good.</span></li>
+        <li><b>Choose an upgrade</b><span>One of three random offers, or re-roll them for 499 credits.</span></li>
+      </ol>
+
+      <ul class="rw-notes">
+        <li>Upgrades are small but permanent, and they stack: usually a main stat (damage, health, cooldown, wind-up or taunt), sometimes a resistance.</li>
+        <li>Each ascension adds a <b>✦</b> to the card and <b>10 points</b> to your tournament team score.</li>
+      </ul>
+    </section>
+
+    <section class="ch" id="market" data-icon="menu/market.svg">
+      <div class="chhead"><h2><em>Market</em></h2></div>
+      <p class="lead">Buy and sell fighters with other trainers, for <b>gems</b>. Every sale is a <b>48-hour auction</b>: the highest bid when the clock runs out wins.</p>
+
+      <div class="rw-panel">
+        <div class="rw-mine" style="border-top:0;padding-bottom:0"><div class="rw-label">An auction · bid, get outbid, drag the clock <span class="ex">try it</span></div></div>
+        <div class="mk-auc">
+          <div id="mkcard"></div>
+          <div>
+            <div class="mk-stats" id="mkstats"></div>
+            <div class="mk-line" id="mkline"><span class="zone" id="mkzone"></span><span class="end" id="mkend"></span><span class="lbl" style="left:0">Listed</span><input type="range" id="mkt" min="0" max="72" value="20" aria-label="Hours since listing"></div>
+          </div>
+        </div>
+        <div class="mk-act" id="mkact"></div>
+      </div>
+
+      <ol class="rw-steps">
+        <li><b>List</b><span>An idle, paid-up fighter, from 10 gems. Listing costs 1 gem.</span></li>
+        <li><b>Bids come in</b><span>Each bid beats the last by at least 10%.</span></li>
+        <li><b>No sniping</b><span>A bid in the last 12 hours pushes the end to 12 hours later.</span></li>
+        <li><b>Sold</b><span>The fighter goes to the top bidder; the seller gets the price minus 15%.</span></li>
+      </ol>
+
+      <div class="rw-panel rw-calc">
+        <h4>Selling: what you get</h4>
+        <p>Drag to the price your fighter sells for:</p>
+        <div class="mk-sell">
+          <div><div class="rw-boost"><span>Sells for</span><input type="range" id="mkp" min="10" max="1000" step="10" value="200"><b id="mkpv">200</b></div><p class="rw-pays" style="margin-top:14px">The 1-gem listing fee is paid when you list, sold or not. The 15% sale fee only comes off when it sells.</p></div>
+          <div class="mk-bill" id="mkbill"></div>
+        </div>
+      </div>
+
+      <ul class="rw-notes">
+        <li>Your bid's gems are held while you're on top, and come straight back the moment someone outbids you. <b>My listings</b> shows the auctions you've been outbid on.</li>
+        <li>A listing can be withdrawn until the first bid. The 1-gem listing fee isn't returned.</li>
+        <li>No bids? Tick <b>Keep listed</b> and it stays up as a <b>Buy now</b> at your start price until the fighter's next payday.</li>
+        <li>List up to 10 fighters at once.</li>
+      </ul>
+    </section>
+
+    <section class="ch" id="shop" data-icon="menu/shop.svg">
+      <div class="chhead"><h2>Shop &amp; <em>Legend Pass</em></h2></div>
+      <p class="lead"><b>Gems</b> unlock everything premium: the Legend Pass, credits, Market bids and Candle missions. Buy them with <b>WAX</b>, then make every win count ten times as much with the <b>Legend Pass</b>.</p>
+
+      <div class="lp" id="lp">
+        <div class="lp-head"><img src="%A%/icons/account-legend.svg" alt=""><div><h3>Play as a Legend</h3><p>Every reward in the game, at full size. Without it you play as a Trial trainer, and most rewards are cut to a tenth.</p></div></div>
+        <div class="lp-perks">
+          <div><img src="%A%/icons/menu/rewards.svg" alt=""><div><b><em>10×</em> Reward Power</b><span>Every win mines ten times as much.</span></div></div>
+          <div><img src="%A%/icons/menu/quests.svg" alt=""><div><b>Full quest rewards</b><span>Trial trainers get a tenth.</span></div></div>
+          <div><img src="%A%/icons/menu/tournament.svg" alt=""><div><b>Full tournament prizes</b><span>WAX and TLM, not a tenth.</span></div></div>
+          <div><img src="%A%/icons/energy.svg" alt=""><div><b><em>1,000</em> energy a day</b><span>The Legend flask, instead of 100.</span></div></div>
+          <div><img src="%A%/markers/buildings/tavern.svg" alt=""><div><b>Free recruit reveals</b><span>When you arrive at your tavern.</span></div></div>
+          <div><img src="%A%/icons/menu/account.svg" alt=""><div><b>Weekly CPU boost</b><span>So your actions don't fail.</span></div></div>
+        </div>
+        <div class="lp-plans" id="lpplans"></div>
+        <div class="lp-foot"><span id="lpnote"></span><a class="btn gold" href="#shop" data-shop="account">Get it in the Shop</a></div>
+      </div>
+
+      <div class="rw-panel rw-calc">
+        <h4>Trial or Legend</h4>
+        <p>The same game, the same fights. What changes is how much you take home:</p>
+        <table class="tv"><thead><tr><th></th><th>Trial</th><th class="l">Legend Pass</th></tr></thead><tbody>
+          <tr><td>Reward Power per win</td><td>10%</td><td class="l">100%</td></tr>
+          <tr><td>Quest rewards</td><td>10%</td><td class="l">100%</td></tr>
+          <tr><td>Tournament prizes</td><td>10%</td><td class="l">100%</td></tr>
+          <tr><td>Daily energy flask</td><td>100, only while under 2,000</td><td class="l">1,000</td></tr>
+          <tr><td>Recruit reveal</td><td>Costs energy</td><td class="l">Free on arrival</td></tr>
+          <tr><td>Weekly CPU boost</td><td>–</td><td class="l">Included</td></tr>
+        </tbody></table>
+      </div>
+
+      <div class="rw-panel rw-calc">
+        <h4>Gem packs</h4>
+        <p>Paid in WAX. The bigger the pack, the more gems you get for each WAX:</p>
+        <div class="gp" id="gempacks"></div>
+        <div style="display:flex;justify-content:flex-end;margin-top:14px"><a class="btn gold" href="#shop" data-shop="gems">Buy gems in the Shop</a></div>
+      </div>
+
+      <div class="sh-more">
+        <div><h5><img src="%A%/icons/credits.svg" alt="">Credits</h5>Bought with gems, up to 69% more per gem in the big packs.<ul><li>3,500 credits <b>59 gems</b></li><li>40,000 credits <b>599 gems</b></li><li>500,000 credits <b>5,999 gems</b></li></ul></div>
+        <div><h5><img src="%A%/icons/energy.svg" alt="">Energy</h5>Bought with credits, plus the free daily flask.<ul><li>300 energy <b>1,999 credits</b></li><li>1,500 energy <b>8,999 credits</b></li><li>10,000 energy <b>49,999 credits</b></li></ul></div>
+        <div><h5><img src="%A%/icons/shards.svg" alt="">More in the Shop</h5><ul><li>AW Outpost <b>pay in Shards</b></li><li>NFT Market <b>Alien Worlds cards for WAX</b></li><li>Swap <b>TLM to WAX</b></li></ul></div>
+      </div>
+    </section>
+
+    <!-- ======================= ACCOUNT ======================= -->
+    <div class="part">Account</div>
+
+    <section class="ch" id="account" data-icon="menu/account.svg">
+      <div class="chhead"><h2>Your <em>account</em></h2></div>
+      <p class="lead">Your trainer's home: how you look to others, how you sign, and the network power your actions need. Open it from your avatar.</p>
+
+      <div class="rw-panel">
+        <div class="ac-card"><img class="av" src="%A%/avatar/1101.webp" alt=""><div><b>Nova</b><span class="badge"><img src="%A%/icons/account-legend.svg" alt="">Legend</span></div></div>
+        <div class="ac-tabs">
+          <div><b>Avatar</b>Your look and trainer name.</div>
+          <div><b>CPU</b>Free network power for your actions.</div>
+          <div><b>Auto-sign</b>Play without wallet pop-ups.</div>
+          <div><b>Stats</b>Every lifetime stat, and where you rank.</div>
+        </div>
+      </div>
+
+      <div class="rw-panel rw-calc as-panel">
+        <h4>Auto-sign: play without pop-ups</h4>
+        <p>Normally your wallet asks you to approve every action. Turn on auto-sign once, and the everyday actions you choose sign themselves.</p>
+        <div class="as-two">
+          <div><h5>Can sign itself, if you choose</h5><div class="as-chips" id="aschips"></div></div>
+          <div class="ask"><h5>Always asks your wallet</h5><ul><li>Sending WAX, TLM or NFTs</li><li>Buying gems or NFTs with WAX</li><li>Staking cards in the farm</li><li>Paying the sign-up fee</li></ul></div>
+        </div>
+        <div class="as-safe">
+          <div><b>Your wallet stays safe</b>Auto-sign can never send WAX, TLM or NFTs. Buying with WAX or staking cards always asks.</div>
+          <div><b>One approval to set up</b>Pick what to sign in Account › Auto-sign, then approve it once in your wallet.</div>
+          <div><b>Yours to switch off</b>Change or remove it any time. Each browser or device sets up its own.</div>
+        </div>
+      </div>
+
+      <div class="grid2" style="margin-top:22px">
+        <div class="rw-panel rw-calc" style="margin-top:0">
+          <h4>CPU: free with the Legend Pass</h4>
+          <p>Every action uses a little of your wallet's network power (CPU). Run out and actions fail.</p>
+          <div class="cpu"><div class="ring" style="--p:72"><span><b>18</b><small>of 25 left</small></span></div><div style="font-size:14px;color:var(--dim)">Legend trainers get <b style="color:#fff">25 free CPU top-ups a week</b>, paid by the game. They reset every <b style="color:#fff">Monday 00:00 UTC</b>.</div></div>
+        </div>
+        <div class="rw-panel rw-calc" style="margin-top:0">
+          <h4>Avatars and your name</h4>
+          <p>Unlock avatars by reaching milestones in your lifetime stats, like dungeons won, then wear any you've unlocked. Your trainer name is 4 to 12 characters.</p>
+          <div class="avs"><span class="wear"><img src="%A%/avatar/1101.webp" alt=""></span><span><img src="%A%/avatar/1105.webp" alt=""></span><span><img src="%A%/avatar/1002.webp" alt=""></span><span class="lock"><img src="%A%/avatar/1004.webp" alt=""></span><span class="lock"><img src="%A%/avatar/1003.webp" alt=""></span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="ch" id="glossary" data-icon="question.svg">
+      <div class="chhead"><h2><em>Glossary</em></h2></div>
+      <p class="lead">Every word the game uses, in one line each. Tap one to jump to where the guide explains it.</p>
+      <div class="gl-bar">
+        <div class="search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><input id="glq" type="search" placeholder="Find a word…" aria-label="Find a word"></div>
+        <div class="gl-cats" id="glcats"></div>
+      </div>
+      <div class="gloss" id="gloss"></div>
+    </section>
+  </main>
+</div>
+
+</div>
