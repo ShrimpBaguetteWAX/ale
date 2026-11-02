@@ -17,7 +17,7 @@ import { progressOf } from '@/quests/rules'
 import { fetchCandleClaim } from '@/candle/queries'
 import { FARM_SCHEMAS, fetchFarmConfig, fetchFarmUser } from '@/farming/queries'
 import { farmBoard } from '@/farming/rules'
-import { MINE_POWER, poolHasMinimum } from '@/pools/rules'
+import { isHiddenPool, MINE_POWER, poolHasMinimum } from '@/pools/rules'
 
 /**
  * "Is there something waiting for me in here?", once per menu section.
@@ -273,6 +273,7 @@ export const CHORE_CHECKS: ChoreCheck[] = [
     hint: 'You can mine a reward pool',
     async run(player) {
       return (player.reward_power ?? []).some((row) => {
+        if (isHiddenPool(row.pool)) return false
         const power = Math.max(0, Number(row.power ?? 0))
         return poolHasMinimum(row.pool) ? power >= MINE_POWER : power > 0
       })

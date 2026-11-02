@@ -244,6 +244,15 @@ export const MINEABLE_POOLS: {
 const HIDDEN_POOLS = new Set(['shrdarenadom'])
 
 /**
+ * A pool the game never offers to mine. The Rewards menu dot asks this too:
+ * `shrdarenadom` keeps a balance on the chain that nobody can spend, and it
+ * lit the dot for a pool the Rewards page does not even show.
+ */
+export function isHiddenPool(pool: string): boolean {
+  return HIDDEN_POOLS.has(pool)
+}
+
+/**
  * The pools one currency tab should list.
  *
  * Shows the mineable pools whether or not the player has banked anything in
