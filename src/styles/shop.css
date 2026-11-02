@@ -211,8 +211,152 @@
 
 /* ---------- Legend ---------- */
 
-.legendcard {
-  max-width: 62ch;
+/*
+ * Why to buy the Legend Pass, as the guide puts it: a gold frame like a
+ * selected card, the Legend Pass ribbon on its edge, the passport, one line
+ * on what changes and the six perks.
+ */
+.legendpitch {
+  position: relative;
+  margin-top: 14px;
+  padding: 26px 24px 18px;
+  border: 2px solid transparent;
+  border-radius: 18px;
+  background:
+    radial-gradient(60% 120% at 100% 0%, rgb(242 195 90 / 18%), transparent 60%) padding-box,
+    radial-gradient(60% 120% at 0% 100%, rgb(143 123 255 / 18%), transparent 60%) padding-box,
+    linear-gradient(180deg, #1b1810, #100f14) padding-box,
+    linear-gradient(160deg, #fff4cf, #e9b54c 30%, #7c5418 60%, #d9a640 85%, #fff0bd) border-box;
+  box-shadow:
+    0 0 36px rgb(242 195 90 / 25%),
+    0 14px 30px rgb(0 0 0 / 45%);
+}
+.legendpitch::before {
+  content: 'Legend Pass';
+  position: absolute;
+  left: 50%;
+  top: -12px;
+  translate: -50% 0;
+  padding: 3px 22px;
+  clip-path: polygon(8% 0, 92% 0, 100% 50%, 92% 100%, 8% 100%, 0 50%);
+  background: linear-gradient(180deg, #ffe7a0, #d39a33);
+  color: #2a1a04;
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.legendpitch__head {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 18px;
+  align-items: center;
+}
+.legendpitch__head img {
+  width: 64px;
+  filter: drop-shadow(0 0 14px rgb(242 195 90 / 55%));
+}
+.legendpitch__head h3 {
+  margin: 0;
+  color: #ffe9a6;
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+.legendpitch__head p {
+  margin: 4px 0 0;
+  color: #b8c2d6;
+  font-size: 15px;
+}
+.legendpitch__perks {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin: 20px 0 14px;
+}
+.legendpitch__perks > div {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+  padding: 12px;
+  border-radius: 12px;
+  background: rgb(0 0 0 / 28%);
+  box-shadow: inset 0 0 0 1px rgb(242 195 90 / 18%);
+}
+.legendpitch__perks img {
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+}
+.legendpitch__perks b {
+  display: block;
+  line-height: 1.25;
+  color: #fff;
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 800;
+}
+.legendpitch__perks em {
+  color: #ffe9a6;
+  font-style: normal;
+}
+.legendpitch__perks span {
+  display: block;
+  margin-top: 2px;
+  color: #8a96ad;
+  font-size: 12.5px;
+  line-height: 1.35;
+}
+.legendpitch__note {
+  margin: 0;
+  color: #8a96ad;
+  font-size: 12.5px;
+  text-align: center;
+}
+@media (max-width: 719px) {
+  .legendpitch {
+    padding: 22px 12px 12px;
+    border-radius: 14px;
+  }
+  .legendpitch__head {
+    gap: 12px;
+  }
+  .legendpitch__head img {
+    width: 46px;
+  }
+  .legendpitch__head h3 {
+    font-size: 17px;
+  }
+  .legendpitch__head p {
+    font-size: 13px;
+  }
+  .legendpitch__perks {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+    margin: 14px 0 10px;
+  }
+  .legendpitch__perks > div {
+    grid-template-columns: 24px minmax(0, 1fr);
+    gap: 8px;
+    padding: 9px 8px;
+  }
+  .legendpitch__perks img {
+    width: 24px;
+    height: 24px;
+  }
+  .legendpitch__perks b {
+    font-size: 11.5px;
+  }
+  .legendpitch__perks span {
+    font-size: 11px;
+  }
+  .legendpitch__note {
+    font-size: 11px;
+  }
 }
 
 /* ---------- WAX balance ---------- */
@@ -415,10 +559,6 @@
   display: none;
 }
 
-.legendvs {
-  display: none;
-}
-
 /* ---------- A phone: rows, one screen per tab ---------- */
 
 @media (max-width: 719px) {
@@ -592,62 +732,6 @@
   }
   .outpost {
     gap: 8px;
-  }
-
-  /* Legend: the four benefits as a 2 × 2 under the passes. */
-  .legendcard {
-    padding: 0;
-    background: none;
-    border: 0;
-    box-shadow: none;
-  }
-  .legendcard .panel__title {
-    display: none;
-  }
-  /* Trial against Legend, three columns, the Legend one in gold. */
-  .legendvs {
-    display: grid;
-    padding: 6px 12px 4px;
-    border-radius: 12px;
-    background: rgb(8 14 28 / 62%);
-    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 10%);
-  }
-  .legendvs__row {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) 72px 92px;
-    align-items: center;
-    gap: 6px;
-    padding: 7px 0;
-    font-size: 12.5px;
-    font-weight: 600;
-    color: #dfe6f2;
-  }
-  .legendvs__row + .legendvs__row {
-    border-top: 1px solid rgb(255 255 255 / 7%);
-  }
-  .legendvs__row--head {
-    padding: 4px 0 6px;
-    font-family: var(--font-display);
-    font-size: max(9.5px, var(--fs-floor));
-    font-weight: 800;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--text-faint);
-  }
-  .legendvs__row > span:nth-child(n + 2) {
-    text-align: center;
-  }
-  .legendvs__trial {
-    color: var(--text-faint);
-  }
-  .legendvs__legend {
-    font-weight: var(--fw-bold);
-    color: #ffcf4d;
-  }
-  .legendcard .hint {
-    margin: 6px 0 0;
-    font-size: 11px;
-    text-align: center;
   }
 }
 
@@ -901,46 +985,6 @@
   }
   .outpost__rarity--all::before {
     display: none;
-  }
-
-  /* Legend: Trial against Legend, the Legend column in gold. */
-  .shop__main .legendcard {
-    max-width: none;
-  }
-  .shop__main .legendvs {
-    display: grid;
-    margin-top: var(--sp-2);
-  }
-  .shop__main .legendvs__row {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) 110px 130px;
-    align-items: center;
-    gap: 8px;
-    padding: 9px 0;
-    font-size: var(--fs-sm);
-    color: #dfe6f2;
-  }
-  .shop__main .legendvs__row + .legendvs__row {
-    border-top: 1px solid rgb(255 255 255 / 7%);
-  }
-  .shop__main .legendvs__row--head {
-    padding: 2px 0 6px;
-    font-family: var(--font-display);
-    font-size: max(9.5px, var(--fs-floor));
-    font-weight: 800;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--text-faint);
-  }
-  .shop__main .legendvs__row > span:nth-child(n + 2) {
-    text-align: center;
-  }
-  .shop__main .legendvs__trial {
-    color: var(--text-faint);
-  }
-  .shop__main .legendvs__legend {
-    font-weight: var(--fw-bold);
-    color: #ffcf4d;
   }
 
   /* ---------- What each currency is for ---------- */
@@ -1711,15 +1755,6 @@
   .shop .shop__main .pack .btn {
     font-size: 14.5px;
   }
-  .shop .shop__main .legendvs__row {
-    font-size: 15px;
-  }
-  .shop .shop__main .legendvs__row--head {
-    font-size: 11.5px;
-  }
-  .shop .shop__main .legendvs__row > span:nth-child(n + 2) {
-    font-size: 11.5px;
-  }
   /* Outpost: type and time left get a line each, so neither is clipped at the bigger size */
   .shop .shop__main .outpost__card .pack__title {
     white-space: normal;
@@ -2295,14 +2330,3 @@
   object-fit: contain;
 }
 
-/* The two columns head with their passports: the grey booklet and the Legend Pass. */
-.legendvs__col {
-  display: inline-flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-}
-.legendvs__col img {
-  width: 22px;
-  height: 22px;
-}

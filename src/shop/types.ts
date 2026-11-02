@@ -93,14 +93,16 @@ export const SHOP_CATEGORIES: {
 ]
 
 /**
- * What a Legend pass gets you, as a comparison: what a trial account gets and
- * what Legend gets, side by side — the difference is the reason to buy. Not
- * on chain; the contract only stores the seconds granted. The flask row is
- * filled from the shop's own free flasks where it can be.
+ * What a Legend Pass gets you, as the guide sells it: the six things it
+ * brings, each with an icon and one line. Not on chain; the contract only
+ * stores the seconds granted. The flask's numbers are filled from the shop's
+ * own free flasks where it can.
  */
-export const LEGEND_VS_TRIAL: [string, string, string][] = [
-  ['Tavern reveals', 'Paid', 'Free'],
-  ['Rewards', '10%', '100%'],
-  ['CPU boost', '—', '25× a week'],
-  ['Daily flask', 'Smaller', 'Larger'],
+export const LEGEND_PERKS: { icon: string; gold?: string; title: string; line: string; flask?: true }[] = [
+  { icon: '/assets/icons/menu/rewards.svg', gold: '10×', title: 'Reward Power', line: 'Every win mines ten times as much.' },
+  { icon: '/assets/icons/menu/quests.svg', title: 'Full quest rewards', line: 'Trial trainers get a tenth.' },
+  { icon: '/assets/icons/menu/tournament.svg', title: 'Full tournament prizes', line: 'WAX and TLM, not a tenth.' },
+  { icon: '/assets/icons/energy.svg', gold: '1,000', title: 'energy a day', line: 'The Legend flask, instead of 100.', flask: true },
+  { icon: '/assets/markers/buildings/tavern.svg', title: 'Free recruit reveals', line: 'When you arrive at your tavern.' },
+  { icon: '/assets/icons/menu/account.svg', title: 'Weekly CPU boost', line: "So your actions don't fail." },
 ]

@@ -2224,10 +2224,10 @@
 
 /* ---------- the Colosseum of Champions: the Grand Tournament's stage ---------- */
 /*
- * Drawn in one SVG per form (ColosseumStage.tsx), with the dust, the confetti
- * and the fireworks as elements over it. Everything that moves is opacity or
- * transform; the lights that blink go in a few groups, not one by one. A
- * low-effects device keeps the stadium and drops the fireworks and the dust.
+ * Drawn in one SVG per form (ColosseumStage.tsx), with the dust as elements
+ * over it. Everything that moves is opacity or transform; the lights that
+ * blink go in a few groups, not one by one. A low-effects device keeps the
+ * stadium and drops the dust.
  */
 .cstage {
   background: #05061a;
@@ -2426,138 +2426,6 @@
   }
 }
 
-/* confetti: paper, streamers and foil, a few pieces near the camera */
-.cstage__confetti {
-  inset: 0;
-  overflow: hidden;
-}
-.cstage__confetti > span {
-  position: absolute;
-  top: 0;
-  height: 100%;
-  width: 0.5%;
-  animation: cstage-fall linear infinite;
-}
-@keyframes cstage-fall {
-  from {
-    transform: translate(0, -8%);
-  }
-  to {
-    transform: translate(var(--cx, 0), 100%);
-  }
-}
-.cstage__confetti i {
-  display: block;
-  width: 100%;
-  aspect-ratio: 0.6;
-  border-radius: 1px;
-  opacity: 0.9;
-  animation: cstage-turn linear infinite;
-}
-.cstage__confetti i.streamer {
-  aspect-ratio: 0.12;
-  border-radius: 40%;
-}
-.cstage__confetti i.foil {
-  aspect-ratio: 1;
-  background: linear-gradient(135deg, #fff8d8, #e7b44a 50%, #fff3c4) !important;
-  animation: cstage-turn linear infinite, cstage-foil 0.7s steps(2) infinite;
-}
-.cstage__confetti i.near {
-  width: 160%;
-  opacity: 0.7;
-}
-@keyframes cstage-turn {
-  to {
-    transform: rotate(360deg) scaleX(0.35);
-  }
-}
-@keyframes cstage-foil {
-  50% {
-    opacity: 0.45;
-  }
-}
-
-/* fireworks over the stands */
-.cstage__fireworks {
-  position: absolute;
-  inset: 0;
-  overflow: hidden;
-  pointer-events: none;
-}
-.cstage__fw {
-  position: absolute;
-  width: 0;
-  height: 0;
-}
-.cstage__fw > i {
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: 0.42cqw;
-  height: 0.42cqw;
-  margin: -0.21cqw;
-  border-radius: 50%;
-  background: var(--c);
-  box-shadow:
-    0 0 0.8cqw var(--c),
-    0 0 1.6cqw var(--c);
-  opacity: 0;
-  animation: cstage-burst 5.2s cubic-bezier(0.1, 0.7, 0.3, 1) infinite;
-  animation-delay: var(--d);
-}
-@keyframes cstage-burst {
-  0%,
-  6% {
-    transform: rotate(var(--r)) translateX(0) scale(1);
-    opacity: 0;
-  }
-  8% {
-    opacity: 1;
-  }
-  30% {
-    transform: rotate(var(--r)) translateX(var(--len)) scale(0.8);
-    opacity: 0.9;
-  }
-  46% {
-    transform: rotate(var(--r)) translateX(calc(var(--len) * 1.12)) translateY(1.2cqw) scale(0.3);
-    opacity: 0;
-  }
-  100% {
-    opacity: 0;
-  }
-}
-.cstage__fw > b {
-  position: absolute;
-  left: -2.6cqw;
-  top: -2.6cqw;
-  width: 5.2cqw;
-  height: 5.2cqw;
-  border-radius: 50%;
-  background: radial-gradient(closest-side, var(--c), transparent);
-  opacity: 0;
-  animation: cstage-bloom 5.2s ease-out infinite;
-  animation-delay: var(--d);
-}
-@keyframes cstage-bloom {
-  0%,
-  6% {
-    opacity: 0;
-    transform: scale(0.2);
-  }
-  9% {
-    opacity: 0.55;
-    transform: scale(1);
-  }
-  24% {
-    opacity: 0;
-    transform: scale(1.6);
-  }
-  100% {
-    opacity: 0;
-  }
-}
-
 /* each side lit in its own colour, warm light over the middle, the edges darkened */
 .cstage__grade {
   position: absolute;
@@ -2570,8 +2438,7 @@
     radial-gradient(125% 95% at 50% 46%, transparent 56%, rgb(4 2 12 / 55%));
 }
 
-/* a low-effects device: the stadium stays, the fireworks and the dust go */
-:root[data-fx='low'] .cstage__fireworks,
+/* a low-effects device: the stadium stays, the dust goes */
 :root[data-fx='low'] .cstage__motes {
   display: none;
 }
@@ -2586,8 +2453,6 @@
   .cstage *::after {
     animation: none !important;
   }
-  .cstage__confetti,
-  .cstage__fireworks,
   .cstage__motes,
   .cstage__wave {
     display: none;

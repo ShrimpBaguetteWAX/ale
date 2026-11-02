@@ -15,7 +15,6 @@ import { stateAt } from '@/dungeon/standing'
 import { elementBackground, fighterArt, fighterArtFallback, elementIcon } from '@/tavern/fighterStats'
 import { GameImg } from '@/components/GameImg'
 import { PlayerAvatar } from '@/components/PlayerAvatar'
-import { asset } from '@/assets'
 import { formatScaled } from '@/tavern/fighterStats'
 import type { Replay, SimFighter, TurnEvent } from '@/dungeon/sim'
 import type { Weather } from '@/fight/weather'
@@ -243,7 +242,7 @@ export function BoutBroadcast({
      player's own size, so the sheet opens at the size it will stay rather
      than at the poster's and then shrinking.
   */
-  if (autoPlay && !locked && !crews.error) return <StageWaiting />
+  if (autoPlay && !locked && !crews.error) return <StageWaiting a={tagA} b={tagB} final={rounds > 0 && round === rounds - 1} />
 
   return (
     <section
@@ -330,18 +329,28 @@ function BoutStage({ replay, a, b, round, final }: { replay: Replay; a: string; 
   )
 }
 
-/** The player's frame, empty, while the fight is put together. */
-function StageWaiting() {
+/**
+ * The player's frame while the fight is put together: the Colosseum's own
+ * dark, its two sides in their colours and the two trainers' names, not the
+ * old fight artwork the empty field used to carry.
+ */
+function StageWaiting({ a, b, final }: { a: string; b: string; final: boolean }) {
   const phone = usePhone()
   return (
     <div className="boutstage boutstage--wait">
       <div className="bfwrap bfwrap--bcast">
         <div className="bfmain">
-          <div
-            className={`bfield bfield--bcast${phone ? '' : ' bfield--wide'}`}
-            style={{ ['--bf-bg' as string]: `url('${asset('/assets/background/bg-fight.webp')}')` }}
-          >
-            <span className="spinner boutstage__spin" />
+          <div className={`bfield bfield--bcast${phone ? '' : ' bfield--wide'}`}>
+            <div className="boutstage__load" role="status">
+              <small>{final ? 'The final' : 'Grand Tournament'}</small>
+              <p className="boutstage__vs">
+                <b className="is-a">{a}</b>
+                <span>vs</span>
+                <b className="is-b">{b}</b>
+              </p>
+              <span className="spinner boutstage__spin" />
+              <em>Getting the fight ready…</em>
+            </div>
           </div>
           <div className="bcdeck" />
         </div>

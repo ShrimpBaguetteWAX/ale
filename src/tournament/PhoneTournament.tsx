@@ -4,6 +4,7 @@ import type { RosterFighter } from '@/dungeon/types'
 import { BottomSheet } from '@/components/BottomSheet'
 import { useModal } from '@/components/useModal'
 import { GameImg } from '@/components/GameImg'
+import { RosterCardFace } from '@/fighters/RosterCard'
 import { PlayerAvatar } from '@/components/PlayerAvatar'
 import { WeatherPanel } from '@/fight/setup'
 import { weatherTargets, type Weather } from '@/fight/weather'
@@ -59,6 +60,18 @@ import { asset, ipfsImage } from '@/assets'
 const TLM_ICON = asset('/assets/icons/tlm.svg')
 const WAX_ICON = asset('/assets/icons/wax-coin.webp')
 const TROPHY = asset('/assets/icons/trophy-gold.svg')
+/* The winning hand's sparks: where each rises from (% across), its delay and how long it takes. */
+const SPARKS: [number, number, number][] = [
+  [8, 0, 3.4],
+  [18, 1.2, 2.8],
+  [30, 0.4, 3.8],
+  [42, 2, 3.1],
+  [50, 0.8, 2.6],
+  [58, 1.6, 3.5],
+  [70, 0.2, 3],
+  [82, 1.4, 3.6],
+  [92, 0.9, 2.9],
+]
 const ENERGY = asset('/assets/icons/energy.svg')
 
 /** A tournament no longer on the board, kept for its results and replays. */
@@ -1309,7 +1322,7 @@ function useChampion(past: PastTournament | null, hof: TournamentHof[], finalAft
 
 /** The champion's five, read back by id once — they are the spotlight's picture. */
 function useChampionTeam(ids: number[]) {
-  const [team, setTeam] = useState<{ classname: string; racename: string }[]>([])
+  const [team, setTeam] = useState<RosterFighter[]>([])
   const key = ids.join(',')
   useEffect(() => {
     if (!ids.length) {
@@ -1318,7 +1331,7 @@ function useChampionTeam(ids: number[]) {
     }
     let live = true
     fetchFightersByIds(ids)
-      .then((rows) => live && setTeam(rows.map((f) => ({ classname: f.classname, racename: f.racename }))))
+      .then((rows) => live && setTeam(rows))
       .catch(() => live && setTeam([]))
     return () => {
       live = false
@@ -1344,7 +1357,13 @@ function BeforeSignup(
   const team = useChampionTeam(champ?.fighterIds ?? [])
   const opens = p.signupAt
   const steps = p.schedule ?? []
-  const nowKey: NextStep['key'] = p.phase === 'preparing' ? 'preparing' : 'signup'
+  /*
+     The step running now, by the schedule's own times. Between tournaments
+     nothing is running yet, so nothing is lit: lighting "Signup opens" there
+     read as if signup were already open.
+  */
+  const nowKey: NextStep['key'] | null =
+    steps.find((s) => p.now >= s.startMs && p.now < s.endMs)?.key ?? (p.phase === 'preparing' ? 'preparing' : null)
 
   const countdown = (
     <div className="ptour__spotclock">
@@ -1415,16 +1434,36 @@ function BeforeSignup(
   const stage = (
     <div className="ptour__spotstage" aria-hidden="true">
       <span className="ptour__spotlight" />
-      <div className={`ptour__spotteam${silhouettes ? ' is-sil' : ''}`}>
-        {figures.map((f, i) => (
-          <GameImg
-            key={i}
-            src={silhouettes ? fighterSilhouette(f) : fighterArt(f)}
-            fallback={silhouettes ? fighterSilhouetteFallback() : fighterArtFallback()}
-            alt=""
-          />
-        ))}
-      </div>
+      {silhouettes ? (
+        <div className="ptour__spotteam is-sil">
+          {figures.map((f, i) => (
+            <GameImg key={i} src={fighterSilhouette(f)} fallback={fighterSilhouetteFallback()} alt="" />
+          ))}
+        </div>
+      ) : (
+        /*
+           The winning hand: the champion's five as their cards (the face My
+           Fighters and the pickers show), fanned in gold under the trophy,
+           light turning behind them and sparks rising.
+        */
+        <div className="ptour__spotteam is-cards">
+          <span className="ptour__spotrays" />
+          <span className="ptour__spotwin">
+            <img src={TROPHY} alt="" />
+            <b>Winning team</b>
+          </span>
+          {team.map((f) => (
+            <span className="rocard" key={f.fighter_id}>
+              <RosterCardFace f={f} ribbon={null} xp={1} max={Number(f.stats?.level) >= 10} />
+            </span>
+          ))}
+          <span className="ptour__spotsparks">
+            {SPARKS.map(([x, d, t], i) => (
+              <i key={i} style={{ left: `${x}%`, animationDelay: `${d}s`, animationDuration: `${t}s` }} />
+            ))}
+          </span>
+        </div>
+      )}
     </div>
   )
 

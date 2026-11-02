@@ -10,8 +10,9 @@ import type { StageForm } from './stages'
  * flashing), the six element banners, the panelled wall with its gold rail
  * and the running text, a polished floor ringed in gold like a dial with the
  * crest between the teams, and the spotlights from the lamps. Over it: dust in
- * the light, fireworks over the stands, confetti, and each side lit in its
- * own colour.
+ * the light and each side lit in its own colour. No confetti and no
+ * fireworks: falling paper and bursts behind the fighters were too much
+ * movement to follow a fight through; the cameras flashing in the crowd stay.
  *
  * Laid out on the arena's lines (the horizon at 37% of a wide field, 34% of a
  * phone's square; the teams between formation.ts's ground lines). A phone's
@@ -49,7 +50,6 @@ type Geometry = {
   /** Light pooled on the floor under each side: [cx, cy, rx, ry]. */
   pools: [number, number, number, number][]
   /** Fireworks: [x %, y % of the field, delay s]. */
-  fireworks: [number, number, number][]
 }
 
 const GEOMETRY: Record<StageForm, Geometry> = {
@@ -77,12 +77,6 @@ const GEOMETRY: Record<StageForm, Geometry> = {
       [430, 610, 300, 92],
       [1170, 610, 300, 92],
     ],
-    fireworks: [
-      [16, 13, 0],
-      [84, 11, 2.6],
-      [30, 7, 4.1],
-      [70, 8, 1.3],
-    ],
   },
   tall: {
     w: 1000,
@@ -109,10 +103,6 @@ const GEOMETRY: Record<StageForm, Geometry> = {
     pools: [
       [250, 820, 220, 76],
       [750, 820, 220, 76],
-    ],
-    fireworks: [
-      [20, 15, 0],
-      [80, 12, 2.6],
     ],
   },
 }
@@ -254,22 +244,6 @@ const LAYOUT: Record<StageForm, ReturnType<typeof layout>> = { wide: layout('wid
 const MOTES = (() => {
   const rnd = seeded(31)
   return Array.from({ length: 22 }, () => [f1(12 + rnd() * 76), f1(44 + rnd() * 40), f1((rnd() - 0.5) * 4), f1(7 + rnd() * 6), f1(rnd() * 13)])
-})()
-
-/* [x %, fall s, delay s, drift %, colour, kind] */
-const CONFETTI = (() => {
-  const rnd = seeded(77)
-  const colours = ['#f2c35a', '#fff3c4', MINE, THEIRS, '#ffffff']
-  return Array.from({ length: 26 }, (_, i) => {
-    const kind = (i % 7 === 0 ? 'streamer' : i % 5 === 0 ? 'foil' : '') + (i % 9 === 4 ? ' near' : '')
-    return [f1(rnd() * 100), kind.includes('near') ? 4 : f1(6.5 + rnd() * 5), f1(rnd() * 11), f1((rnd() - 0.5) * 6), colours[i % 5], kind.trim()] as const
-  })
-})()
-
-/* Each burst's sparks: [angle deg, extra reach]. */
-const SPARKS = (() => {
-  const rnd = seeded(91)
-  return Array.from({ length: 16 }, (_, i) => [Math.round(i * 22.5 + rnd() * 8), f1(rnd() * 1.6)] as const)
 })()
 
 const RUNNING = Array.from({ length: 28 }, () => '★ ALIEN LEGENDS').join(' ') + ' ★'
@@ -656,29 +630,8 @@ export function ColosseumStage({ form }: { form: StageForm }) {
             />
           ))}
         </div>
-        <div className="cstage__confetti">
-          {CONFETTI.map(([x, fall, delay, drift, colour, kind], i) => (
-            <span key={i} style={{ left: `${x}%`, animationDuration: `${fall}s`, animationDelay: `-${delay}s`, '--cx': `${drift}%` } as React.CSSProperties}>
-              <i className={kind || undefined} style={{ background: colour, animationDuration: `${1 + (i % 3) * 0.4}s` }} />
-            </span>
-          ))}
-        </div>
       </div>
 
-      {/* Fireworks over the stands, placed on the whole field (a phone's are up in the crowd over the square). */}
-      <div className="cstage__fireworks">
-        {g.fireworks.map(([x, y, d], k) => {
-          const c = ['#f2c35a', MINE, THEIRS, '#ffffff'][k % 4]
-          return (
-            <div key={k} className="cstage__fw" style={{ left: `${x}%`, top: `${y}%`, '--c': c, '--d': `-${d}s` } as React.CSSProperties}>
-              <b />
-              {SPARKS.map(([a, reach], i) => (
-                <i key={i} style={{ '--r': `${a}deg`, '--len': `${(form === 'wide' ? 4.2 : 9) + reach}cqw` } as React.CSSProperties} />
-              ))}
-            </div>
-          )
-        })}
-      </div>
       <div className="cstage__grade" />
     </div>
   )

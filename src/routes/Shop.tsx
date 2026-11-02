@@ -24,7 +24,7 @@ import {
   type PackValue,
 } from '@/shop/rules'
 import {
-  LEGEND_VS_TRIAL,
+  LEGEND_PERKS,
   SHOP_CATEGORIES,
   type ShopCooldown,
   type ShopItem,
@@ -121,7 +121,7 @@ export default function Shop() {
   )
   /* "+22%", "save 17%": what each rung gives over the bottom one. */
   const values = useMemo(() => valueAgainst(shown), [shown])
-  /* The daily flask with and without Legend, in energy, for the benefits. */
+  /* The daily flask with and without Legend, in energy, for the Legend perks. */
   const flasks = useMemo(() => dailyFlasks(items ?? []), [items])
   const energy = (n: number) => n.toLocaleString(NUM_LOCALE)
 
@@ -305,35 +305,36 @@ export default function Shop() {
         )}
 
         {category === 'account' && (
-          <section className="panel legendcard">
-            <div className="panel__title">Trial against Legend</div>
-            <div className="legendvs" role="table" aria-label="Trial against Legend">
-              <div className="legendvs__row legendvs__row--head" role="row">
-                <span role="columnheader" />
-                <span role="columnheader" className="legendvs__col">
-                  <img src={asset('/assets/icons/account-trial.svg')} alt="" width={22} height={22} />
-                  Trial
-                </span>
-                <span role="columnheader" className="legendvs__col legendvs__legend">
-                  <img src={asset('/assets/icons/account-legend.svg')} alt="" width={22} height={22} />
-                  Legend
-                </span>
+          /*
+            Why to buy it, as the guide puts it: the Legend Pass in its gold
+            frame, one line on what changes, and the six things it brings.
+          */
+          <section className="legendpitch">
+            <div className="legendpitch__head">
+              <img src={asset('/assets/icons/account-legend.svg')} alt="" />
+              <div>
+                <h3>Play as a Legend</h3>
+                <p>
+                  Every reward in the game, at full size. Without it you play as a Trial trainer, and most rewards
+                  are cut to a tenth.
+                </p>
               </div>
-              {LEGEND_VS_TRIAL.map(([what, trial, legendHas], i) => (
-                <div className="legendvs__row" role="row" key={what}>
-                  <span role="rowheader">{what}</span>
-                  <span role="cell" className="legendvs__trial">
-                    {flasks && i === 3 ? energy(flasks.trial) : trial}
-                  </span>
-                  <span role="cell" className="legendvs__legend">
-                    {flasks && i === 3 ? energy(flasks.legend) : legendHas}
-                  </span>
+            </div>
+            <div className="legendpitch__perks">
+              {LEGEND_PERKS.map((p) => (
+                <div key={p.icon}>
+                  <img src={asset(p.icon)} alt="" />
+                  <div>
+                    <b>
+                      {p.gold && <em>{p.flask && flasks ? energy(flasks.legend) : p.gold}</em>} {p.title}
+                    </b>
+                    <span>{p.flask && flasks ? `The Legend flask, instead of ${energy(flasks.trial)}.` : p.line}</span>
+                  </div>
                 </div>
               ))}
             </div>
-            <p className="hint">
-              A pass extends whatever time you already have — buying again while
-              active adds to it.
+            <p className="legendpitch__note">
+              A pass extends whatever time you already have — buying again while active adds to it.
             </p>
           </section>
         )}
