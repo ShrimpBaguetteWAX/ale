@@ -2767,3 +2767,18 @@ i.mrow__arrow {
 .market__panel .pickbar > .pickbar__sp {
   display: none;
 }
+
+/*
+ * The filters drop over the list from under that bar, as My Fighters' do,
+ * above the shade that closes them. Wider than the list's column, so the
+ * three columns of fields have room; the listing beside it is covered only
+ * while they are open.
+ */
+.mdesk__list {
+  position: relative;
+}
+.mdesk__list > .drost__pop--filters {
+  top: 46px;
+  right: auto;
+  width: min(860px, calc(100vw - 300px));
+}

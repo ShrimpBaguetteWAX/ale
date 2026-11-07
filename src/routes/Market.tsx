@@ -571,7 +571,6 @@ export default function Market() {
                 sort: marketSort,
                 filters: (close) => (
                   <FilterDrop
-                    className="drost__pop--filters pickfilters"
                     fields={{ roster: filterRoster, filter, onFilter: setFilter }}
                     matching={matching}
                     onClear={clearFilters}
