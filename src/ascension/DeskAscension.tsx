@@ -20,6 +20,7 @@ import { useConfig } from '@/state/useConfig'
 import { formatNumber } from '@/format'
 import { asset } from '@/assets'
 import { useStickyFit } from '@/ascension/stickyFit'
+import { useProgressive } from '@/components/useProgressive'
 
 type Busy = 'ascend' | 'reroll' | 'claim' | null
 type List = 'target' | Requirement
@@ -168,6 +169,8 @@ export function DeskAscension({
       (a, b) => (order === 'first' ? 1 : -1) * (levelOf(a) - levelOf(b)) || a.fighter_id - b.fighter_id,
     )
   }, [inClass, marker, list, order, covered])
+  /* A long class is drawn as the list is scrolled, not all before it moves. */
+  const { shown: drawn, more } = useProgressive(rows, { id: `dasc-${list}` })
 
   /*
      The fighter in its holder, as My Fighters and the fight screens show it.
@@ -176,9 +179,9 @@ export function DeskAscension({
   const [now] = useState(() => Date.now())
   const figures = useMemo(() => {
     const m = new Map<number, Figures>()
-    for (const f of rows) m.set(f.fighter_id, figuresOf(f, classes.get(f.classname), fighters, levelMod, ageDecay, now, false))
+    for (const f of drawn) m.set(f.fighter_id, figuresOf(f, classes.get(f.classname), fighters, levelMod, ageDecay, now, false))
     return m
-  }, [rows, classes, fighters, levelMod, ageDecay, now])
+  }, [drawn, classes, fighters, levelMod, ageDecay, now])
   /* The holder, or the compact card with the overlay on hover, as My Fighters offers. */
   const [density, setDensity] = useDensity('ascension')
   const card = (f: RosterFighter, extra: Partial<React.ComponentProps<typeof HolderRow>>) =>
@@ -337,7 +340,7 @@ export function DeskAscension({
           </p>
         ) : (
           <div className={density === 'compact' ? 'dasc__rows dasc__grid' : 'drost__holders dasc__rows'}>
-            {rows.map((f) => {
+            {drawn.map((f) => {
               if (list === 'target') {
                 const n = covered.get(f.fighter_id) ?? 0
                 return (
@@ -379,6 +382,7 @@ export function DeskAscension({
                 </Peek>
               )
             })}
+            {more}
           </div>
         )}
       </div>

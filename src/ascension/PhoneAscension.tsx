@@ -24,6 +24,7 @@ import { useConfig } from '@/state/useConfig'
 import { GameImg } from '@/components/GameImg'
 import { formatNumber } from '@/format'
 import { asset } from '@/assets'
+import { useProgressive } from '@/components/useProgressive'
 
 type Busy = 'ascend' | 'reroll' | 'claim' | null
 
@@ -406,6 +407,8 @@ function TargetSheet({
     return [...counts.entries()].sort((a, b) => b[1] - a[1])
   }, [ready])
   const shown = cls ? ready.filter((f) => f.classname === cls) : ready
+  /* A long list is drawn as the sheet is scrolled, not all before it opens. */
+  const { shown: drawn, more } = useProgressive(shown, { id: 'pasc-target' })
   const [open, setOpen] = useState<number | null>(null)
   const [details, setDetails] = useState<RosterFighter | null>(null)
   const [density, setDensity] = useDensity('ascension')
@@ -432,7 +435,7 @@ function TargetSheet({
             <DensitySeg density={density} onChange={setDensity} />
           </div>
           <div className={density === 'compact' ? 'pasc__picks pasc__grid' : 'drost--phone drost__holders pasc__picks'}>
-            {shown.map((f) => (
+            {drawn.map((f) => (
               <PickRow
                 compact={density === 'compact'}
                 key={f.fighter_id}
@@ -444,6 +447,7 @@ function TargetSheet({
                 onChoose={() => onPick(f.fighter_id)}
               />
             ))}
+            {more}
           </div>
         </>
       )}
@@ -473,6 +477,7 @@ function SocketSheet({
     () => [...candidates].sort((a, b) => levelOf(a) - levelOf(b) || a.fighter_id - b.fighter_id),
     [candidates],
   )
+  const { shown: drawn, more } = useProgressive(rows, { id: 'pasc-socket' })
   const [open, setOpen] = useState<number | null>(null)
   const [details, setDetails] = useState<RosterFighter | null>(null)
   const [density, setDensity] = useDensity('ascension')
@@ -499,7 +504,7 @@ function SocketSheet({
           <DensitySeg density={density} onChange={setDensity} />
         </div>
         <div className={density === 'compact' ? 'pasc__picks pasc__grid' : 'drost--phone drost__holders pasc__picks'}>
-          {rows.map((f) => {
+          {drawn.map((f) => {
             const met = requirementsMet(f, target)
             const elsewhere = REQUIREMENTS.find(
               (r) => r.key !== requirement && slots[r.key] === f.fighter_id,
@@ -526,6 +531,7 @@ function SocketSheet({
               />
             )
           })}
+          {more}
         </div>
         </>
       )}

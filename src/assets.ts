@@ -19,12 +19,24 @@
  * that substitutes it, and the stylesheet lives in `/assets/` — so the menu
  * backdrop went looking for `/assets/assets/background/bg-menu.jpeg` and
  * 404'd. Resolving here settles it once, for every caller.
+ *
+ * Once per path, too: a card asks for its art, its element and its frame on
+ * every draw, and a roster of a thousand made reading `document.baseURI` one
+ * of the costliest things on the page. The router is a hash router, so the
+ * document's base never changes under it.
  */
+const resolved = new Map<string, string>()
+
 export function asset(path: string): string {
   const url = import.meta.env.BASE_URL + path.replace(/^\/+/, '')
   /* No document while the SSR preview harness renders a screen. */
   if (typeof document === 'undefined') return url
-  return new URL(url, document.baseURI).href
+  let href = resolved.get(url)
+  if (href === undefined) {
+    href = new URL(url, document.baseURI).href
+    resolved.set(url, href)
+  }
+  return href
 }
 
 /**

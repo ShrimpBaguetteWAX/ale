@@ -58,6 +58,7 @@ import { CodexSheet } from '@/fighters/CodexSheet'
 import { DensitySeg, FilterDrop, FilterFields, FighterCodex, HolderRow, VIEWS, figuresOf, type View } from '@/fighters/DeskRoster'
 import { CompactPick, useDensity, type Density } from '@/fighters/CompactPick'
 import { EmptyState } from '@/components/EmptyState'
+import { useProgressive } from '@/components/useProgressive'
 
 /**
  * The fighter market.
@@ -712,6 +713,8 @@ export default function Market() {
                   <>
                     {browseTools}
                     <PhoneRows
+                      id={`market-${tab}`}
+                      atLeast={picked ? board.indexOf(picked) : -1}
                       loading={tab === 'auctions' ? !auctions : !offers}
                       empty={
                         tab === 'auctions'
@@ -763,7 +766,7 @@ export default function Market() {
           )}
 
           {tab === 'auctions' && phone && (
-            <PhoneRows loading={!auctions} empty="No auctions are running. List one and it will show up here.">
+            <PhoneRows id="market-auctions" loading={!auctions} empty="No auctions are running. List one and it will show up here.">
               {liveAuctions.map((a) => {
                 return (
                   <ListingRow
@@ -786,6 +789,7 @@ export default function Market() {
 
           {tab === 'offers' && phone && (
             <PhoneRows
+              id="market-offers"
               loading={!offers}
               empty="Nothing is on sale at a fixed price. These only appear when an auction ends unsold and the seller chose to keep it listed."
             >
@@ -1787,9 +1791,25 @@ function OfferDeal({
 /* ---------- listing cards ---------- */
 
 /** The phone's list: rows, a skeleton while reading, a line when empty. */
-function PhoneRows({ loading, empty, children }: { loading: boolean; empty: string; children: React.ReactNode[] }) {
+function PhoneRows({
+  loading,
+  empty,
+  children,
+  id,
+  atLeast,
+}: {
+  loading: boolean
+  empty: string
+  children: React.ReactNode[]
+  /** Remembers how far the list had grown; see useProgressive. */
+  id?: string
+  /** A row that must be drawn: the one picked beside the list. */
+  atLeast?: number
+}) {
   /* The phone holder (its sizes and strips) wherever these rows are on a phone. */
   const rowClass = usePhone() ? 'mrows drost--phone' : 'mrows'
+  /* Hundreds of listings are drawn as the list is scrolled, not all before it moves. */
+  const { shown, more } = useProgressive(children, { id, atLeast })
   if (loading) {
     return (
       <div className={rowClass}>
@@ -1800,7 +1820,12 @@ function PhoneRows({ loading, empty, children }: { loading: boolean; empty: stri
     )
   }
   if (children.length === 0) return <EmptyState>{empty}</EmptyState>
-  return <div className={rowClass}>{children}</div>
+  return (
+    <div className={rowClass}>
+      {shown}
+      {more}
+    </div>
+  )
 }
 
 /* ---------- dialogs ---------- */
@@ -2161,6 +2186,10 @@ export function SellTab({
     () => applyFilter(sellable, filter, ageDecay, Date.now(), classes, undefined, levelMod),
     [sellable, filter, ageDecay, classes, levelMod],
   )
+  const { shown: drawn, more } = useProgressive(shown, {
+    id: 'market-sell',
+    atLeast: pickedId === null ? -1 : shown.findIndex((f) => f.fighter_id === pickedId),
+  })
   const [price, setPrice] = useState(minStart)
   /* Ticked by default: an unsold fighter staying up at the price its seller
      already chose is the outcome most of them want, and the box is right
@@ -2366,7 +2395,7 @@ export function SellTab({
               <p className="faint">No fighter you can sell matches these filters.</p>
             ) : (
               <div className="mrows drost--phone">
-                {shown.map((f) => (
+                {drawn.map((f) => (
                   <div key={f.fighter_id} className="drost--stack mcard">
                     <OwnCard
                       f={f}
@@ -2377,6 +2406,7 @@ export function SellTab({
                     />
                   </div>
                 ))}
+                {more}
               </div>
             )}
           </>
@@ -2445,7 +2475,7 @@ export function SellTab({
             <p className="faint">No fighter you can sell matches these filters.</p>
           ) : (
             <div className="mrows">
-              {shown.map((f) => (
+              {drawn.map((f) => (
                 <OwnCard
                   key={f.fighter_id}
                   f={f}
@@ -2455,6 +2485,7 @@ export function SellTab({
                   marked={ticked.includes(f.fighter_id)}
                 />
               ))}
+              {more}
             </div>
           )}
         </>

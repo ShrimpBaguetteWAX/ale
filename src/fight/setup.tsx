@@ -79,6 +79,7 @@ import { RosterCardFace, placeRibbon, type Ribbon } from '@/fighters/RosterCard'
 import { DensitySeg, HolderRow, ViewSeg, figuresOf, type View } from '@/fighters/DeskRoster'
 import { portraitCut } from '@/fighters/portraitFrame'
 import { EmptyState } from '@/components/EmptyState'
+import { useProgressive } from '@/components/useProgressive'
 import { Link } from 'react-router-dom'
 
 /**
@@ -2212,6 +2213,8 @@ export function FighterGrid({
         : [],
     [roster, filter, ageDecay, classes, matchups, levelMod, atLevelOne],
   )
+  /* A thousand fighters are drawn as the list is scrolled, not all before it moves. */
+  const { shown: drawn, more } = useProgressive(shown, { id: 'fightergrid' })
 
   /* Reported after render, never during one, so the filters redraw with the
      new number rather than this grid re-entering its own render. */
@@ -2270,7 +2273,7 @@ export function FighterGrid({
         /* My Fighters' own list, in its own wrapper, so the cards are drawn exactly as there. */
         <div className={`drost pickdrost${phone ? ' drost--phone drost--stack' : ''}`}>
         <div className="drost__holders">
-          {shown.map((f) => {
+          {drawn.map((f) => {
             const state = fighterAvailable(f)
             const inTeam = teamIds.includes(f.fighter_id)
             return (
@@ -2283,13 +2286,14 @@ export function FighterGrid({
               </Fragment>
             )
           })}
+          {more}
         </div>
         </div>
       ) : (
       <div
         className={`fightergrid${density === 'compact' ? ' fightergrid--compact' : ''}`}
       >
-        {shown.map((f) => {
+        {drawn.map((f) => {
           const state = fighterAvailable(f)
           const inTeam = teamIds.includes(f.fighter_id)
           return (
@@ -2321,6 +2325,7 @@ export function FighterGrid({
             />
           )
         })}
+        {more}
       </div>
       )}
     </>

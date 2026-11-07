@@ -80,6 +80,7 @@ import { elementRim } from '@/fight/GildedCards'
 import { FighterPeek } from '@/fighters/CompactPick'
 import type { PanelFighter, PanelStat } from '@/components/FighterPanel'
 import { EmptyState } from '@/components/EmptyState'
+import { useProgressive } from '@/components/useProgressive'
 
 /**
  * My Fighters on a desktop: the Market's rows, with payday and age.
@@ -465,6 +466,12 @@ export function DeskRoster(p: DeskRosterProps) {
   }, [p.mode])
 
   const list = p.shown
+  /*
+     A thousand fighters are drawn as the list is scrolled, not all before it
+     moves; the fighter that is open always is, wherever it sits.
+  */
+  const openAt = p.selectedId == null ? -1 : list.findIndex((f) => f.fighter_id === p.selectedId)
+  const { shown: drawn, more } = useProgressive(list, { id: 'myfighters', atLeast: openAt })
 
   const counts = useMemo(() => {
     const c = {} as Record<Status, number>
@@ -474,10 +481,10 @@ export function DeskRoster(p: DeskRosterProps) {
 
   const figures = useMemo(() => {
     const m = new Map<number, Figures>()
-    for (const f of list)
+    for (const f of drawn)
       m.set(f.fighter_id, figuresOf(f, p.templates.get(f.classname), p.config, p.levelMod, p.ageDecay, p.now, p.atLevelOne))
     return m
-  }, [list, p.templates, p.config, p.levelMod, p.ageDecay, p.now, p.atLevelOne])
+  }, [drawn, p.templates, p.config, p.levelMod, p.ageDecay, p.now, p.atLevelOne])
 
   const selected = p.roster.find((f) => f.fighter_id === p.selectedId) ?? null
   /* Inventory always shows somebody: the picked fighter, else the first row. */
@@ -871,7 +878,7 @@ export function DeskRoster(p: DeskRosterProps) {
             ) : density === 'compact' ? (
               <div className="drost__grid">
                 {/* Compact always reads in full on a resting pointer (a desktop); a click still picks. */}
-                {list.map((f) => (
+                {drawn.map((f) => (
                   <FighterPeek fighter={f} key={f.fighter_id}>
                   <CompactCard
                     f={f}
@@ -888,11 +895,12 @@ export function DeskRoster(p: DeskRosterProps) {
                   />
                   </FighterPeek>
                 ))}
+                {more}
               </div>
             ) : (
               /* The card in its holder, as the fight screens draw a fighter: one design for a fighter in full. */
               <div className="drost__holders">
-                {list.map((f) => {
+                {drawn.map((f) => {
                   const gate = gateOf(f)
                   const ticking = p.mode !== 'inventory'
                   const checked = p.checked.includes(f.fighter_id)
@@ -935,6 +943,7 @@ export function DeskRoster(p: DeskRosterProps) {
                     />
                   )
                 })}
+                {more}
               </div>
             )}
           </section>
