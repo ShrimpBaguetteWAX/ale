@@ -270,3 +270,72 @@ export function autoPickCardsByOdds<TCard extends { template_id: number }>(optio
   }
   return { crew: winner.crew, weapon: winner.weapon }
 }
+
+/**
+ * The fighters auto-pick ranked, held against the team already in the slots.
+ *
+ * `autoPickFighters` orders on the matchup: each fighter measured on its own
+ * against the enemy line. That is a sound way to find the strong ones and a
+ * poor way to judge a five, for the reason the cards are fought rather than
+ * ranked — it cannot see the taunt that holds the blows off the rest, or two
+ * fighters that hit the same target. So a press could take out a fighter the
+ * player chose, put in one that scores higher on paper, and leave the win
+ * chance lower than it was.
+ *
+ * A fighter already in the team that the mode would pick from is kept unless
+ * a swap wins more fights. One that the mode does not allow (the wrong level,
+ * the wrong marker) or that can no longer fight goes, as before, and its slot
+ * goes to the pick.
+ *
+ *   1. Start from the team as it is, the slots it cannot keep filled from the
+ *      pick in its order.
+ *   2. Bring each fighter of the pick in, best first, in place of the kept
+ *      one whose loss costs least — only where that wins more than before.
+ *   3. The pick as it came, if that beats the lot.
+ *
+ * Every step is measured the way the bar is, on the same hundred rolls, so a
+ * press can only leave the number the player sees where it was or higher.
+ * The pick and the team are five each, so this fights at most twenty-seven
+ * line-ups whatever the size of the roster.
+ */
+export function keepUnlessBeaten(options: {
+  /** The fighters auto-pick chose, best first. */
+  pick: number[]
+  /** The team before the press, in its order. */
+  before: number[]
+  /** The fighters the mode allows that can fight now. */
+  allowed: Set<number>
+  teamSize: number
+  /** Win rate for a line-up. The screen supplies this, bound to its fight. */
+  rate: (ids: number[]) => number
+}): number[] {
+  const { pick, before, allowed, teamSize, rate } = options
+  const held = before.filter((id) => allowed.has(id))
+  if (!held.length) return pick
+
+  const team = [...held, ...pick.filter((id) => !held.includes(id))].slice(0, teamSize)
+  let best = rate(team)
+
+  for (const id of pick) {
+    if (team.includes(id)) continue
+    let swap = -1
+    let swapRate = best
+    team.forEach((out, i) => {
+      /* Only the fighters the player had; the pick's own stay where they are. */
+      if (!held.includes(out)) return
+      const next = [...team]
+      next[i] = id
+      const r = rate(next)
+      if (r > swapRate) {
+        swap = i
+        swapRate = r
+      }
+    })
+    if (swap >= 0) {
+      team[swap] = id
+      best = swapRate
+    }
+  }
+
+  return rate(pick) > best ? pick : team
+}

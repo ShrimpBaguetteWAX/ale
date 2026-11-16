@@ -23,7 +23,7 @@ import {
   type FlatFighter,
 } from '@/fight/matchup'
 import { recallTeam, rememberTeam, restoreTeam } from '@/fight/lastTeam'
-import { autoPickCards, autoPickCardsByOdds, autoPickFighters } from '@/fight/autopick'
+import { autoPickCards, autoPickCardsByOdds, autoPickFighters, keepUnlessBeaten } from '@/fight/autopick'
 import { AutoPickSplit } from '@/fight/AutoPickSplit'
 import { AutoPickCards } from '@/fight/AutoPickCards'
 import { applyWeather, fetchWeather } from '@/fight/weather'
@@ -539,8 +539,33 @@ export default function Arena() {
         const held = new Set(keep)
         const pool = eligible.filter((f) => !held.has(f.fighter_id))
         const ids = autoPickFighters(pool, matchups, TEAM_SIZE - keep.length)
-        setTeamIds([...keep, ...ids])
-        return ids.length
+        /*
+           Replacing a team, the fighters it already had that the mode allows
+           stay unless a swap wins more fights — see keepUnlessBeaten. Filling
+           swaps nothing, and with no fight to simulate yet there is nothing
+           to hold the pick against.
+        */
+        const enemyLine = withNumericIds(arena?.fighters ?? [])
+        const next =
+          keep.length || tauntDeduction === undefined || !enemyLine.length
+            ? [...keep, ...ids]
+            : keepUnlessBeaten({
+                pick: ids,
+                before: teamIds,
+                allowed: new Set(eligible.filter((f) => fighterAvailable(f).available).map((f) => f.fighter_id)),
+                teamSize: TEAM_SIZE,
+                rate: (team) =>
+                  teamOdds({
+                    picked: team.map((id) => byId.get(id)).filter(Boolean) as RosterFighter[],
+                    nft: nftFlat,
+                    enemies: enemyLine,
+                    scaling: { venue: 'arena', power: arenaPower, fullPower: ARENA_POWER_FULL },
+                    tauntDeduction,
+                    fielding: { weather, caps, levelMod, ageDecay },
+                  })?.winRate ?? 0,
+              })
+        setTeamIds(next)
+        return next.length - keep.length
       }}
     />
   )
