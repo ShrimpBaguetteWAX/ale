@@ -88,7 +88,7 @@ export const NAV_ITEMS: NavItem[] = [
     icon: asset('/assets/icons/menu/tournament.svg'),
     /* The screen is built and everything behind it stays where it is; only
        the way in is closed while it is not ready to be found. */
-    soon: true,
+    soon: false,
     line: 'Fight other players for the prize pot',
   },
   { to: '/market', label: 'Market', icon: asset('/assets/icons/menu/market.svg'), line: 'Buy and sell fighters' },
